@@ -1,0 +1,56 @@
+{
+    "extends": [
+      "tslint-config-airbnb",
+      "tslint-react"
+    ],
+    "linterOptions": {
+      "exclude": [
+        "./src/**/__tests__/**/*.json",
+        "./src/js/plugins/**/*.json"
+      ]
+    },
+    "rules": {
+      "array-type": [true, "array"],
+      "arrow-return-shorthand": true,
+      "class-name": true,
+      "curly": true,
+      "cyclomatic-complexity": true,
+      "import-name": false,
+      "import-spacing": true,
+      "interface-over-type-literal": true,
+      "jsx-space-before-trailing-slash": true,
+      "max-line-length": [true, 120],
+      "newline-before-return": true,
+      "no-consecutive-blank-lines": [true, 2],
+      "no-inferrable-types": true,
+      "no-irregular-whitespace": true,
+      // "no-magic-numbers": true,
+      "no-trailing-whitespace": true,
+      "no-unnecessary-callback-wrapper": true,
+      "no-unused-expression": true,
+      "object-curly-spacing": [true, "never"],
+      "object-literal-sort-keys": [true, "ignore-case"],
+      "object-shorthand-properties-first": false,
+      "ordered-imports": [
+        true,
+        {
+          "import-sources-order": "case-insensitive"
+        }
+      ],
+      "semicolon": [true, "never"],
+      "strict-boolean-expressions": false,
+      "triple-equals": true,
+      "typedef-whitespace": [
+        true,
+        {
+          "call-signature": "nospace",
+          "index-signature": "nospace",
+          "parameter": "nospace",
+          "property-declaration": "nospace",
+          "variable-declaration": "nospace"
+        }
+      ],
+      "variable-name": false,
+      "jsx-no-lambda": false
+    }
+  }

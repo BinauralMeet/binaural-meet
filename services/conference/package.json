@@ -1,0 +1,23 @@
+{
+  "name": "conference",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "clean": "rm -rf dist/*",
+    "build": "cross-env TS_NODE_PROJECT=\"tsconfig-for-webpack-config.json\" webpack"
+  },
+  "devDependencies": {
+    "@types/html-webpack-plugin": "^3.2.2",
+    "@types/node": "^13.13.4",
+    "@types/webpack": "^4.41.12",
+    "@types/webpack-dev-server": "^3.10.1",
+    "cross-env": "^7.0.2",
+    "html-webpack-plugin": "^4.2.1",
+    "ts-loader": "^7.0.1",
+    "ts-node": "^8.9.1",
+    "typescript": "^3.8.3",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.11"
+  }
+}
