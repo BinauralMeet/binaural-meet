@@ -5,8 +5,7 @@
     ],
     "linterOptions": {
       "exclude": [
-        "./src/**/__tests__/**/*.json",
-        "./src/js/plugins/**/*.json"
+        "./src/**/__tests__/**/*.json"
       ]
     },
     "rules": {
@@ -29,7 +28,7 @@
       "no-unnecessary-callback-wrapper": true,
       "no-unused-expression": true,
       "object-curly-spacing": [true, "never"],
-      "object-literal-sort-keys": [true, "ignore-case"],
+      "object-literal-sort-keys": false,
       "object-shorthand-properties-first": false,
       "ordered-imports": [
         true,
