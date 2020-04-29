@@ -34,4 +34,8 @@ In the above url, `conference-room-name` would be read as id. And that id would 
    yarn clean
    ```
 
-   
+5. Watch mode
+   ```bash
+   yarn dev
+   ```
+
