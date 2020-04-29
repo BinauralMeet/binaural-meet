@@ -8,3 +8,30 @@ https://this/is/url/conference-room-name
 ```
 In the above url, `conference-room-name` would be read as id. And that id would be used to join corresponding conference.
 
+## Development
+
+1. Install dependencies
+
+   ```bash
+   yarn install
+   ```
+
+2. Lint code
+
+   ```bash
+   yarn lint
+   ```
+
+3. Build
+
+   ```bash
+   yarn build
+   ```
+
+4. Clean
+
+   ```bash
+   yarn clean
+   ```
+
+   
