@@ -39,3 +39,8 @@ In the above url, `conference-room-name` would be read as id. And that id would 
    yarn dev
    ```
 
+6. Test components using storybook
+   ```bash
+   yarn storybook
+   ```
+
