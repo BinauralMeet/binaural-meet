@@ -31,7 +31,7 @@ function captureVideo() {
         video: true,
       }).then(setStream)
     },
-    []
+    [],
   )
 
   return [stream]

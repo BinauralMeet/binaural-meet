@@ -1,5 +1,5 @@
 import {makeStyles} from '@material-ui/core/styles'
-import React, {useCallback} from 'react'
+import React, {useCallback, useEffect, useRef} from 'react'
 
 const useStyles = makeStyles({
   root: (props: StreamAvatarProps) => ({
@@ -24,24 +24,44 @@ interface StreamAvatarProps {
   size?: number
 }
 
+const setStream = (
+  video: HTMLVideoElement,
+  stream: MediaStream,
+  videoLargerWidthClass: string,
+  videoLargerHeightClass: string,
+  ) => {
+  video.srcObject = stream
+  video.autoplay = true
+
+  const settings = stream.getVideoTracks()[0].getSettings()
+  if (settings.width !== undefined && settings.height !== undefined) {
+    video.className = settings.width >= settings.height ? videoLargerWidthClass : videoLargerHeightClass
+  } else {
+    console.error('video stream width || height is undefined')
+    video.className = videoLargerWidthClass
+  }
+}
+
 export const StreamAvatar: React.FC<StreamAvatarProps> = (props: StreamAvatarProps) => {
   const classes = useStyles(props)
+  const ref = useRef<HTMLVideoElement>(null)
+
+  useEffect(
+    () => {
+      if (ref !== null && ref.current !== null) {
+        setStream(ref.current, props.stream, classes.videoLargerWidth, classes.videoLargerHeight)
+      }
+    },
+    [props.stream],
+  )
 
   const videoRef = useCallback(
     (node: HTMLVideoElement | null) => {
       if (node !== null) {
-        node.srcObject = props.stream
-        node.autoplay = true
-
-        const settings = props.stream.getVideoTracks()[0].getSettings()
-        if (settings.width !== undefined && settings.height !== undefined) {
-          node.className = settings.width >= settings.height ? classes.videoLargerWidth : classes.videoLargerHeight
-        } else {
-          node.className = classes.videoLargerWidth
-        }
+        setStream(node, props.stream, classes.videoLargerWidth, classes.videoLargerHeight)
       }
     },
-    [props.stream])
+    [])
 
   const video = React.createElement('video', {
     ref: videoRef,
