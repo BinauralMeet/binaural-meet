@@ -1,6 +1,11 @@
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import * as path from 'path'
+import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin'
 import * as webpack from 'webpack'
+
+// Handle with error of tsconfig-paths-webpack-plugin
+// https://github.com/dividab/tsconfig-paths-webpack-plugin/issues/32
+delete process.env.TS_NODE_PROJECT
 
 const DEV_CONFERENCE_ID = 'conference-name'
 
@@ -12,7 +17,7 @@ const config: webpack.Configuration = {
     compress: true,
     port: 9000,
     contentBasePublicPath: `/${DEV_CONFERENCE_ID}`,
-    openPage: `${DEV_CONFERENCE_ID}`
+    openPage: `${DEV_CONFERENCE_ID}`,
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
@@ -29,11 +34,9 @@ const config: webpack.Configuration = {
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
-    alias: {
-      Models: path.resolve(__dirname, 'src/scripts/models'),
-      Components: path.resolve(__dirname, 'src/scripts/components'),
-      Stores: path.resolve(__dirname, 'src/scripts/stores'),
-    },
+    plugins: [
+      new TsconfigPathsPlugin(),
+    ],
   },
   plugins: [
     new HtmlWebpackPlugin({
