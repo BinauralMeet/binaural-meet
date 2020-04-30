@@ -1,8 +1,10 @@
-import {Participants} from './Participant'
+import {Participant} from './Participant'
 import {Terrain} from './Terrain'
 
 export interface Room {
   id: string
-  participants: Participants
+  participants: {
+    [key: string]: Participant,
+  }
   terrain: Terrain
 }

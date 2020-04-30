@@ -37,6 +37,8 @@
   },
   "dependencies": {
     "@material-ui/core": "^4.9.12",
+    "mobx": "^5.15.4",
+    "mobx-react-lite": "^2.0.6",
     "react": "^16.13.1",
     "react-avatar": "^3.9.3",
     "react-dom": "^16.13.1"

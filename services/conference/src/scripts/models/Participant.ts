@@ -1,7 +1,3 @@
-export interface Participants {
-  [key: string]: Participant
-}
-
 export interface Participant {
   id: string
   pose: Pose
