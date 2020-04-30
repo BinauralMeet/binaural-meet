@@ -3,16 +3,17 @@ import ReactAvatar from 'react-avatar'
 
 import {Information} from '@models/Participant'
 
-interface AvatarProps {
+interface ImageAvatarProps {
   information: Information
 }
 
-export const Avatar: React.SFC<AvatarProps> = (props: AvatarProps) => {
+export const ImageAvatar: React.FC<ImageAvatarProps> = (props: ImageAvatarProps) => {
   return (
     <ReactAvatar
       name={props.information.name}
       email={props.information.email}
       md5Email={props.information.md5Email}
+      round={true}
     />
   )
 }
