@@ -1,4 +1,5 @@
 import {useStore as usePsStore} from '@hooks/ParticipantsStore'
+import {memoComponent} from '@hooks/utils'
 import Card from '@material-ui/core/Card'
 import CardContent from '@material-ui/core/CardContent'
 import CardHeader from '@material-ui/core/CardHeader'
@@ -10,14 +11,16 @@ import TableContainer from '@material-ui/core/TableContainer'
 import TableRow from '@material-ui/core/TableRow'
 import Typography from '@material-ui/core/Typography'
 import {useObserver} from 'mobx-react-lite'
-import React, {useMemo} from 'react'
+import React from 'react'
 
 export const ParticipantsVisualizer: React.FC<{}> = () => {
   console.log('render array')
   const participants = usePsStore()
   const ids = participants.participants.keys()
   const elements = useObserver(() => (Array.from(ids).map(id => (
-    <MemoedParticipant key={id} id={id} />
+      <Grid key={id} item={true} xs={3}>
+        <MemoedParticipant id={id} />
+      </Grid>
   ))))
 
   return (
@@ -71,15 +74,4 @@ const ParticipantVisualizer: React.FC<ParticipantProps> = (props) => {
   )
 }
 
-const MemoedParticipant: React.FC<ParticipantProps> = (props) => {
-  const p = useMemo(
-    () => (
-      <Grid item={true} xs={3}>
-        <ParticipantVisualizer id={props.id} />
-      </Grid>
-    ),
-    [props.id],
-  )
-
-  return <>{p}</>
-}
+const MemoedParticipant: React.FC<ParticipantProps> = memoComponent(ParticipantVisualizer, ['id'])
