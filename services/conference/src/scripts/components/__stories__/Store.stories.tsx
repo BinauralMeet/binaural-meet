@@ -1,7 +1,7 @@
 import {StoreProvider} from '@hooks/ParticipantsStore'
-// import {Participant as IParticipant} from '@models/Participant'
+import {Button, ButtonGroup} from '@material-ui/core'
 import store from '@stores/Participants'
-import React from 'react'
+import React, {useState} from 'react'
 import {ParticipantsVisualizer} from './components/ParticipantsStoreVisualizer'
 
 export default {
@@ -9,25 +9,37 @@ export default {
 }
 
 export const participants = () => {
-  return (
-    <StoreProvider value={store}>
-      <ParticipantsVisualizer />
-    </StoreProvider>
+  const [participantCount, setCount] = useState(0)
+  const noParticipant = participantCount === 0
+  const controller = (
+    <div>
+      <ButtonGroup>
+        <Button onClick={() => {
+          store.join(`participant_${participantCount}`)
+          setCount(participantCount + 1)
+        }}>Add one participant</Button>
+        <Button onClick={() => {
+          store.leave(`participant_${participantCount - 1}`)
+          setCount(participantCount - 1)
+        }} disabled={noParticipant}>Delete one participant</Button>
+      </ButtonGroup>
+      <Button disabled={noParticipant} onClick={() => {
+        const participantStore = store.find('participant_0')
+        if (participantStore === undefined) {
+          return
+        }
+        participantStore.pose.orientation = Math.round(Math.random() * 360)
+      }}>Change participant 0's orientation</Button>
+    </div>
   )
-}
 
-// const templateParticipant: IParticipant = {
-//   id: 'participant',
-//   pose: {
-//     position: [0, 0],
-//     orientation: 0,
-//   },
-//   information: {
-//     name: 'hello',
-//     email: 'hello@gmail.com',
-//   },
-// }
-for (let i = 0; i < 10; i += 1) {
-  store.join(`participant_${i}`)
+  return (
+    <div>
+      {controller}
+      <StoreProvider value={store}>
+        <ParticipantsVisualizer />
+      </StoreProvider>
+    </div>
+  )
 }
 

@@ -3,21 +3,21 @@ import Card from '@material-ui/core/Card'
 import CardContent from '@material-ui/core/CardContent'
 import CardHeader from '@material-ui/core/CardHeader'
 import Grid from '@material-ui/core/Grid'
+import Table from '@material-ui/core/Table'
 import TableBody from '@material-ui/core/TableBody'
 import TableCell from '@material-ui/core/TableCell'
 import TableContainer from '@material-ui/core/TableContainer'
 import TableRow from '@material-ui/core/TableRow'
 import Typography from '@material-ui/core/Typography'
 import {useObserver} from 'mobx-react-lite'
-import React from 'react'
+import React, {useMemo} from 'react'
 
 export const ParticipantsVisualizer: React.FC<{}> = () => {
+  console.log('render array')
   const participants = usePsStore()
   const ids = participants.participants.keys()
   const elements = useObserver(() => (Array.from(ids).map(id => (
-    <Grid key={id} item={true} xs={3}>
-      <ParticipantVisualizer id={id} />
-    </Grid>
+    <MemoedParticipant key={id} id={id} />
   ))))
 
   return (
@@ -36,6 +36,7 @@ interface ParticipantProps {
 }
 const ParticipantVisualizer: React.FC<ParticipantProps> = (props) => {
   const participant = usePsStore().find(props.id) as any
+  console.log('render ', participant.id)
   const elements = useObserver(() => Object.keys(participantMap).map(
     (key) => {
       const childs = participantMap[key].map(child => (
@@ -49,9 +50,11 @@ const ParticipantVisualizer: React.FC<ParticipantProps> = (props) => {
         <div key={key}>
           <Typography variant="h6">{key}</Typography>
           <TableContainer>
-            <TableBody>
-              {childs}
-            </TableBody>
+            <Table>
+              <TableBody>
+                {childs}
+              </TableBody>
+            </Table>
           </TableContainer>
         </div>
       )
@@ -66,4 +69,17 @@ const ParticipantVisualizer: React.FC<ParticipantProps> = (props) => {
       </CardContent>
     </Card>
   )
+}
+
+const MemoedParticipant: React.FC<ParticipantProps> = (props) => {
+  const p = useMemo(
+    () => (
+      <Grid item={true} xs={3}>
+        <ParticipantVisualizer id={props.id} />
+      </Grid>
+    ),
+    [props.id],
+  )
+
+  return <>{p}</>
 }

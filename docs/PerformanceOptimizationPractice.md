@@ -3,7 +3,17 @@
 Participants have nested data structure for UI to render. For example,  `pariticpants - some participant - pose - position`. In [prototype 1](https://github.com/hasevr/jitsi-party), We've found that naive way of updating UI would cause lag after user interaction (like change local participant position with keyboard). For more fluid interaction, the following are our tries to optimize the performance of React.
 
 ## 1. Avoid using props for message passing
-In [round 1](https://medium.com/@alexandereardon/performance-optimisations-for-react-applications-b453c597b191) and [round 2](https://medium.com/@alexandereardon/performance-optimisations-for-react-applications-round-2-2042e5c9af97), author have introduced ways to improve performance. He proposed to use connected components to update specific node on virtual DOM directly. That avoids costs on reconciliation & render on its ancestor nodes.
+### Theory
+
+In [round 1](https://medium.com/@alexandereardon/performance-optimisations-for-react-applications-b453c597b191) and [round 2](https://medium.com/@alexandereardon/performance-optimisations-for-react-applications-round-2-2042e5c9af97), author have introduced ways to improve performance. 
+
+He proposed to use：
+
+1. use `shouldComponentUpdate` to avoid re-render on sibling nodes.
+
+2. connected components to update specific node on virtual DOM directly. That avoids costs on reconciliation & render on its ancestor nodes.
+
+### Practice
 
 In storybook, `store-participants` demonstrate how we put that idea into practice.
 
@@ -27,11 +37,15 @@ const participants = {
 
 We want to render participants list into UI. If we change only one participants' position, let's see how it would works:
 
-1. If we use props to pass the change from root node, a lot of computation time would be wasted on reconciling the things that would not change:
+1. If we use props to pass the change from root node, a lot of computation time would be wasted on reconciling and rendering the data that did not change:
+
+   ![Render Performance 3](./imgs/RenderPerformance3.png)
+
+2. To avoid re-rendering on sibling nodes (yellow ones on the upper image), we can use `useMemo` hook to remember the participant node. Only re-render it  when the id of participant have changed (add / delete).
 
    ![render performance](./imgs/RenderPerformance2.png)
 
-2. If we connect every participant directly to the store, parent nodes would not be reconciliated
+3. If we connect every participant directly to the store (MobX in our case), parent nodes would not be reconciliated.
 
    ![render performance 1](./imgs/RenderPerformance1.png)
 
