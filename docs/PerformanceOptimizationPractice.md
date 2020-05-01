@@ -29,11 +29,11 @@ We want to render participants list into UI. If we change only one participants'
 
 1. If we use props to pass the change from root node, a lot of computation time would be wasted on reconciling the things that would not change:
 
-   ![render performance](./imgs/render performance 2.png)
+   ![render performance](./imgs/RenderPerformance2.png)
 
 2. If we connect every participant directly to the store, parent nodes would not be reconciliated
 
-   ![render performance 1](./imgs/render performance 1.png)
+   ![render performance 1](./imgs/RenderPerformance1.png)
 
 
 ## References

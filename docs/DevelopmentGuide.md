@@ -24,4 +24,4 @@ To use the store with React Hooks, more efforts are needed. In `@hooks` folder, 
 
 ### Related docs
 
-You may also refer to this [doc](./Performance Optimization Practice) to see how connect store directly to components optimize performance of React.
+You may also refer to this [doc](./PerformanceOptimizationPractice.md) to see how connect store directly to components optimize performance of React.
