@@ -15,7 +15,7 @@ He proposed to use：
 
 ### Practice
 
-In storybook, `store-participants` demonstrate how we put that idea into practice.
+In storybook, `store-participants` demonstrate how we put that idea into practice. (MobX + React Hooks)
 
 ```js
 const participants = {
@@ -45,7 +45,7 @@ We want to render participants list into UI. If we change only one participants'
 
    ![render performance](./imgs/RenderPerformance2.png)
 
-3. If we connect every participant directly to the store (MobX in our case), parent nodes would not be reconciliated.
+3. If we connect every participant directly to the store (connect to MobX using `useContext` hook), parent nodes would not be reconciliated.
 
    ![render performance 1](./imgs/RenderPerformance1.png)
 
