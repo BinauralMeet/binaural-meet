@@ -1,9 +1,13 @@
-import {action, observable} from 'mobx'
+import {action, computed, observable} from 'mobx'
 import {Participant} from './Participant'
 
 export class Participants {
-  @observable.shallow remote = new Map<string, Participant>()
+  @observable.shallow readonly remote = new Map<string, Participant>()
   local = new Participant('default_local_participant_id')
+
+  @computed get count(): number {
+    return this.remote.size
+  }
 
   @action
   join(participantId: string) {

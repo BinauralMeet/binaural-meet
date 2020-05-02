@@ -16,12 +16,16 @@ import React from 'react'
 export const ParticipantsVisualizer: React.FC<{}> = () => {
   console.log('render array')
   const participants = usePsStore()
-  const ids = participants.remote.keys()
-  const elements = useObserver(() => (Array.from(ids).map(id => (
+
+  const elements = useObserver(() => {
+    const ids = participants.remote.keys()
+
+    return Array.from(ids).map(id => (
       <Grid key={id} item={true} xs={3}>
         <MemoedParticipant id={id} />
       </Grid>
-  ))))
+    ))
+  })
 
   return (
     <Grid container={true} spacing={3}>
