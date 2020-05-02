@@ -1,3 +1,3 @@
-[submodule "services/conference/src/scripts/models/libs/lib-jitsi-meet"]
-	path = services/conference/src/scripts/models/libs/lib-jitsi-meet
+[submodule "services/conference/libs/lib-jitsi-meet"]
+	path = services/conference/libs/lib-jitsi-meet
 	url = https://github.com/jitsi/lib-jitsi-meet.git
