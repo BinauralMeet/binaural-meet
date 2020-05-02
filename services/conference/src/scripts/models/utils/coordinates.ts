@@ -1,5 +1,4 @@
-import {Pose as Participant2DCoordinate} from '@models/Participant'
-import {Pose as Audio3DCoordinate} from './NodeGroup'
+import {Pose2DMap, Pose3DAudio} from '@models/Participant'
 
 function degree2Radian(degree: number): number {
   return degree * Math.PI / 180
@@ -7,9 +6,9 @@ function degree2Radian(degree: number): number {
 
 // relative pose for coordinate: position orientation direction is from positive axis x to positive axis y
 export function getRelativePose(
-  base: Participant2DCoordinate,
-  relative: Participant2DCoordinate,
-  ): Participant2DCoordinate {
+  base: Pose2DMap,
+  relative: Pose2DMap,
+  ): Pose2DMap {
   const radian = degree2Radian(base.orientation)
   const s = Math.sin(radian)
   const c = Math.cos(radian)
@@ -29,7 +28,7 @@ export function getRelativePose(
   }
 }
 
-export function convertToAudioCoordinate(pose: Participant2DCoordinate): Audio3DCoordinate {
+export function convertToAudioCoordinate(pose: Pose2DMap): Pose3DAudio {
   const radian = degree2Radian(pose.orientation)
 
   return {

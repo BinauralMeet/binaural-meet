@@ -1,17 +1,18 @@
 import {NodeGroup} from './NodeGroup'
-import {Pose} from '@models/Participant'
 
 export class StereoManager {
-  audioContext: AudioContext = new window.AudioContext()
+  private readonly audioContext: AudioContext = new window.AudioContext()
+
   nodes: {
     [key: string]: NodeGroup,
   } = {}
 
-  addSpeaker(id: string, stream: MediaStream, pose: Pose) {
-
+  addSpeaker(id: string) {
+    console.assert(this.nodes[id] === undefined)
+    this.nodes[id] = new NodeGroup(this.audioContext)
   }
 
   removeSpeaker(id: string) {
-
+    delete this.nodes[id]
   }
 }

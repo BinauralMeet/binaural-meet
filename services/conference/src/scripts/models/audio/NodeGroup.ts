@@ -1,9 +1,6 @@
-const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor)
+import {Pose3DAudio} from '@models/Participant'
 
-export interface Pose {
-  position: [number, number, number],
-  orientation: [number, number, number],
-}
+const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor)
 
 const DEFAULT_PANNER_NODE_CONFIG: Partial<PannerNode> & {refDistance: number} = {
   panningModel: 'HRTF',
@@ -18,30 +15,43 @@ const DEFAULT_PANNER_NODE_CONFIG: Partial<PannerNode> & {refDistance: number} = 
 const BROADCAST_DISTANCE = 1000
 
 export class NodeGroup {
-  sourceNode: MediaStreamAudioSourceNode
-  gainNode: GainNode
-  pannerNode: PannerNode
+  private sourceNode: MediaStreamAudioSourceNode | undefined = undefined
+  private audioElement: HTMLAudioElement | undefined = undefined
 
-  constructor(context: AudioContext, stream: MediaStream, pose: Pose) {
-    this.sourceNode = context.createMediaStreamSource(stream)
+  private readonly gainNode: GainNode
+  private readonly pannerNode: PannerNode
+
+  private readonly context: AudioContext
+
+  constructor(context: AudioContext) {
+    this.context = context
+
     this.gainNode = this.createGainNode(context)
     this.pannerNode = this.createPannerNode(context)
 
-    this.updatePose(pose)
-
-    this.sourceNode.connect(this.gainNode)
     this.gainNode.connect(this.pannerNode)
     this.pannerNode.connect(context.destination)
+  }
+
+  updateStream(stream: MediaStream) {
+    if (this.sourceNode !== undefined) {
+      this.sourceNode.disconnect()
+    }
+
+    this.sourceNode = this.context.createMediaStreamSource(stream)
+    this.sourceNode.connect(this.gainNode)
 
     if (isChrome) { // NOTE Chorme would not work if not connect stream to audio tag
-      const a = new Audio()
+      if (this.audioElement === undefined) {
+        this.audioElement = new Audio()
+        this.audioElement.muted = true
+      }
 
-      a.muted = true
-      a.srcObject = stream
+      this.audioElement.srcObject = stream
     }
   }
 
-  updatePose(pose: Pose) {
+  updatePose(pose: Pose3DAudio) {
     this.pannerNode.setPosition(...pose.position)
     this.pannerNode.setOrientation(...pose.orientation)
   }

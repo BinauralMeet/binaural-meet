@@ -2,20 +2,21 @@ import {action, observable} from 'mobx'
 import {Participant} from './Participant'
 
 export class Participants {
-  @observable participants = new Map<string, Participant>()
+  @observable.shallow remote = new Map<string, Participant>()
+  local = new Participant('default_local_participant_id')
 
   @action
   join(participantId: string) {
-    this.participants.set(participantId, new Participant(participantId))
+    this.remote.set(participantId, new Participant(participantId))
   }
 
   @action
   leave(participantId: string) {
-    this.participants.delete(participantId)
+    this.remote.delete(participantId)
   }
 
   find(participantId: string) {
-    return this.participants.get(participantId)
+    return this.remote.get(participantId)
   }
 }
 

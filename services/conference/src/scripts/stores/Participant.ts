@@ -1,9 +1,9 @@
-import {Information, Participant as IParticipant, Pose} from '@models/Participant'
+import {Information, Participant as IParticipant, Pose2DMap} from '@models/Participant'
 import {shallowObservable, Store} from './utils'
 
 export class Participant implements Store<IParticipant> {
   id: string
-  pose = shallowObservable<Pose>({
+  pose = shallowObservable<Pose2DMap>({
     position: [0, 0],
     orientation: 0,
   })
