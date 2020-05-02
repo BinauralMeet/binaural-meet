@@ -3,6 +3,7 @@ export interface Participant {
   pose: Pose2DMap
   information: Information
   perceptibility?: Perceptibility // TODO used for skip rendering for optimize performance
+  stream: Stream
 }
 
 export interface Pose2DMap {  // screen coordinate system
@@ -24,4 +25,9 @@ export interface Information {
 export interface Perceptibility {
   visibility?: boolean
   audibility?: boolean
+}
+
+export interface Stream {
+  videoStream: MediaStream[]
+  audioStream: MediaStream[]
 }
