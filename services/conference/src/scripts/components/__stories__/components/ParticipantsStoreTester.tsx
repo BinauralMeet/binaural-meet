@@ -1,35 +1,35 @@
-import {StoreProvider} from '@hooks/ParticipantsStore'
+import {StoreProvider, useStore as usePsStore} from '@hooks/ParticipantsStore'
 import {Button, ButtonGroup} from '@material-ui/core'
 import store from '@stores/Participants'
 import {action} from 'mobx'
-import React, {useState} from 'react'
+import {useObserver} from 'mobx-react-lite'
+import React from 'react'
 import {ParticipantsVisualizer} from './ParticipantsStoreVisualizer'
 
 export const Participants: React.FC<{}> = () => {
-  const [participantCount, setCount] = useState(0)
-  const noParticipant = participantCount === 0
-  const controller = (
-    <div>
-      <ButtonGroup>
-        <Button onClick={() => {
-          store.join(`participant_${participantCount}`)
-          setCount(participantCount + 1)
-        }}>Add one participant</Button>
-        <Button onClick={() => {
-          store.leave(`participant_${participantCount - 1}`)
-          setCount(participantCount - 1)
-        }} disabled={noParticipant}>Delete one participant</Button>
-      </ButtonGroup>
-      <Button disabled={noParticipant} onClick={updateP0Orientation}>Change participant 0's orientation</Button>
-    </div>
+  return (
+    <StoreProvider value={store}>
+      <Controller />
+      <ParticipantsVisualizer />
+    </StoreProvider>
   )
+}
+
+const Controller: React.FC<{}> = () => {
+  const participants = usePsStore()
+  const noParticipant = useObserver(() => participants.count === 0)
 
   return (
     <div>
-      {controller}
-      <StoreProvider value={store}>
-        <ParticipantsVisualizer />
-      </StoreProvider>
+      <ButtonGroup>
+        <Button onClick={() => {
+          store.join(`participant_${participants.count}`)
+        }}>Add one participant</Button>
+        <Button onClick={() => {
+          store.leave(`participant_${participants.count - 1}`)
+        }} disabled={noParticipant}>Delete one participant</Button>
+      </ButtonGroup>
+      <Button disabled={noParticipant} onClick={updateP0Orientation}>Change participant 0's orientation</Button>
     </div>
   )
 }
