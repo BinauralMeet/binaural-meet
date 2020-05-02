@@ -1,3 +1,4 @@
+import {assert} from '@models/utils'
 import {NodeGroup} from './NodeGroup'
 
 export class StereoManager {
@@ -8,7 +9,7 @@ export class StereoManager {
   } = {}
 
   addSpeaker(id: string) {
-    console.assert(this.nodes[id] === undefined)
+    assert(this.nodes[id] === undefined)
     this.nodes[id] = new NodeGroup(this.audioContext)
   }
 
