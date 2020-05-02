@@ -1,6 +1,7 @@
+import {assert, convertToAudioCoordinate, getRelativePose} from '@models/utils'
 import store from '@stores/Participants'
+import {autorun, IReactionDisposer} from 'mobx'
 import {StereoManager} from './StereoManager'
-import { autorun, IReactionDisposer } from 'mobx'
 
 export class ConnectedManager {
   private readonly manager = new StereoManager()
@@ -22,11 +23,23 @@ export class ConnectedManager {
   }
 
   private remove = (id: string) => {
-
+    this.disposers[id]()
   }
 
   private add = (id: string) => {
+    this.manager.addSpeaker(id)
 
+    const remote = store.find(id)
+    assert(remote !== undefined)
+    const local = store.local
+
+    this.disposers[id] = autorun(
+      () => {
+        const relativePose = getRelativePose(local.pose, remote.pose)
+        const pose = convertToAudioCoordinate(relativePose)
+        this.manager.nodes[id].updatePose(pose)
+      },
+    )
   }
 }
 
