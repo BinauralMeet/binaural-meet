@@ -1,4 +1,4 @@
-import {Information, Participant as IParticipant, Pose2DMap, Stream} from '@models/Participant'
+import {Information, Participant as IParticipant, Perceptibility, Pose2DMap, Stream} from '@models/Participant'
 import {shallowObservable, Store} from './utils'
 
 export class Participant implements Store<IParticipant> {
@@ -11,6 +11,9 @@ export class Participant implements Store<IParticipant> {
     name: 'Name',
     email: undefined,
     md5Email: undefined,
+  })
+  perceptibility = shallowObservable<Perceptibility>({
+    audibility: true,
   })
   stream = shallowObservable<Stream>({
     videoStream: [],

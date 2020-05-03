@@ -1,3 +1,4 @@
+import 'mobx-react-lite/batchingForReactDom'
 import {Participants} from './components/ParticipantsStoreTester'
 
 export default {

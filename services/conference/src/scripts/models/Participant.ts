@@ -2,7 +2,7 @@ export interface Participant {
   id: string
   pose: Pose2DMap
   information: Information
-  perceptibility?: Perceptibility // TODO used for skip rendering for optimize performance
+  perceptibility: Perceptibility // TODO used for skip rendering for optimize performance
   stream: Stream
 }
 
@@ -24,7 +24,7 @@ export interface Information {
 
 export interface Perceptibility {
   visibility?: boolean
-  audibility?: boolean
+  audibility: boolean
 }
 
 export interface Stream {

@@ -20,6 +20,11 @@ export class Participants {
   }
 
   find(participantId: string) {
+    if (participantId === this.local.id) {
+
+      return this.local
+    }
+
     return this.remote.get(participantId)
   }
 }

@@ -1,13 +1,14 @@
-import {assert, convertToAudioCoordinate, getRelativePose} from '@models/utils'
+import {assert} from '@models/utils'
 import store from '@stores/Participants'
-import {autorun, IReactionDisposer} from 'mobx'
+import {autorun} from 'mobx'
+import {ConnectedGroup} from './ConnectedGroup'
 import {StereoManager} from './StereoManager'
 
 export class ConnectedManager {
   private readonly manager = new StereoManager()
 
-  private readonly disposers: {
-    [key: string]: IReactionDisposer,
+  private readonly connectedGroups: {
+    [key: string]: ConnectedGroup,
   } = {}
 
   private participantsMemo: string[] = []
@@ -23,23 +24,20 @@ export class ConnectedManager {
   }
 
   private remove = (id: string) => {
-    this.disposers[id]()
+    this.connectedGroups[id].dispose()
+    delete this.connectedGroups[id]
+
+    this.manager.removeSpeaker(id)
   }
 
   private add = (id: string) => {
-    this.manager.addSpeaker(id)
+    const group = this.manager.addSpeaker(id)
 
     const remote = store.find(id)
     assert(remote !== undefined)
     const local = store.local
 
-    this.disposers[id] = autorun(
-      () => {
-        const relativePose = getRelativePose(local.pose, remote.pose)
-        const pose = convertToAudioCoordinate(relativePose)
-        this.manager.nodes[id].updatePose(pose)
-      },
-    )
+    this.connectedGroups[id] = new ConnectedGroup(local, remote, group)
   }
 }
 

@@ -4,7 +4,7 @@ import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 
 import {makeStyles} from '@material-ui/core'
-import {Audiotrack} from '@material-ui/icons'
+import {Audiotrack, Hearing} from '@material-ui/icons'
 import {assert} from 'models/utils'
 
 const useStylesPs = makeStyles({
@@ -19,16 +19,22 @@ export const ParticipantsVisualizer: React.FC<{}> = () => {
 
   const elements = useObserver(() => {
     const ids = Array.from(participants.remote.keys())
-    console.log('ids', ids)
 
     return ids.map(id => (
-      <MemoedParticipant key={id} id={id} />
+      <MemoedParticipant key={id} id={id} type={'remote'} />
     ))
+  })
+
+  const local = useObserver(() => {
+    const store = participants.local
+
+    return <MemoedParticipant key={store.id} id={store.id} type={'local'} />
   })
 
   return (
     <div className={classes.root}>
       {elements}
+      {local}
     </div>
   )
 }
@@ -43,6 +49,7 @@ const useStylesP = makeStyles({
 
 interface ParticipantProps {
   id: string
+  type: 'remote' | 'local'
 }
 const ParticipantVisualizer: React.FC<ParticipantProps> = (props) => {
   const participant = usePsStore().find(props.id)
@@ -53,7 +60,7 @@ const ParticipantVisualizer: React.FC<ParticipantProps> = (props) => {
 
   return (
     <div className={classes.root}>
-      <Audiotrack />
+      {props.type === 'remote' ? <Audiotrack /> : <Hearing />}
     </div>
   )
 }
