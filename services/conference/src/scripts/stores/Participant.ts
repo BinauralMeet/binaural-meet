@@ -16,8 +16,9 @@ export class Participant implements Store<IParticipant> {
     audibility: true,
   })
   stream = shallowObservable<Stream>({
-    videoStream: [],
-    audioStream: [],
+    stream: undefined,
+    audioTrackId: undefined,
+    videoTrackId: undefined,
   })
 
   constructor(id: string) {
