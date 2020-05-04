@@ -29,8 +29,9 @@ export interface Perceptibility {
 }
 
 export interface Stream {
-  videoStream: MediaStream[]
-  audioStream: MediaStream[]
+  stream: MediaStream | undefined
+  videoTrackId: string | undefined
+  audioTrackId: string | undefined
 }
 
 export interface Physics {
