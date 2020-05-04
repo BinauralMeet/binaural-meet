@@ -50,9 +50,13 @@ const randomPositionLocal = action(() => {
 
 const bindAudioStream = action(() => {
   const source = new AudioSource()
-  store.remote.forEach(p => p.stream.audioStream = [source.stream])
+  store.remote.forEach((p) => {
+    p.stream.audioStream = source.stream
+  })
 })
 
 const unbindAudioStream = action(() => {
-  store.remote.forEach(p => p.stream.audioStream = [])
+  store.remote.forEach((p) => {
+    p.stream.audioStream = undefined
+  })
 })

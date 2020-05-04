@@ -17,8 +17,7 @@ export class ConnectedGroup {
 
     this.disposers.push(autorun(
       () => {
-        const audioStreams = remote.stream.audioStream
-        const stream = audioStreams.length === 0 ? undefined : audioStreams[0]
+        const stream: MediaStream | undefined = remote.stream.audioStream
         group.updateStream(stream)
       },
     ))
