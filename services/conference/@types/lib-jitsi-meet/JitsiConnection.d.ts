@@ -5,10 +5,14 @@
 declare module '@libs/lib-jitsi-meet/JitsiConnection' {
     import JitsiConference from "@libs/lib-jitsi-meet/JitsiConference";
 
+    interface JitsiConnectionOptions {
+        id: string;
+        password: string;
+    }
     class JitsiConnection {
         constructor(appId: string, token: string, options: Object);
 
-        connect(options: any): void;
+        connect(options?: JitsiConnectionOptions): void;
         attach(options: any): void;
         disconnect(...args: any): Promise<any>;
         getJid(): string;

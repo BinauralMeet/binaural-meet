@@ -2,7 +2,7 @@
 // Project: [~THE PROJECT NAME~]
 // Definitions by: [~YOUR NAME~] <[~A URL FOR YOU~]>
 
-declare module '@libs/lib-jitsi-meet/JitsiTrack' {
+declare module '@libs/lib-jitsi-meet/modules/RTC/JitsiTrack' {
     import { EventEmitter } from "events";
 
     interface MediaType {

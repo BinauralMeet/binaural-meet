@@ -4,7 +4,7 @@
 
 declare module '@libs/lib-jitsi-meet/JitsiConference' {
     import JitsiConnection from "@libs/lib-jitsi-meet/JitsiConnection";
-    import JitsiTrack, { MediaType, JitsiLocalTrack } from "@libs/lib-jitsi-meet/JitsiTrack";
+    import JitsiTrack, { MediaType, JitsiLocalTrack } from "@libs/lib-jitsi-meet/modules/RTC/JitsiTrack";
     import JitsiParticipant from "@libs/lib-jitsi-meet/JitsiParticipant";
     import { Transcriber } from "@libs/lib-jitsi-meet/module";
 
@@ -32,8 +32,8 @@ declare module '@libs/lib-jitsi-meet/JitsiConference' {
         getLocalTracks(mediaType: MediaType): JitsiTrack[];
         getLocalAudioTrack(): JitsiLocalTrack | null;
         getLocalVideoTrack(): JitsiLocalTrack | null;
-        on(eventId: number, handler: Function): void;
-        off(eventId: number, handler: Function): void;
+        on(eventId: string, handler: Function): void;
+        off(eventId: string, handler: Function): void;
         addEventListener: (eventId: number, handler: Function) => void;
         removeEventListener: (eventId: number, handler: Function) => void;
         addCommandListener(command: string, handler: Function): void;
