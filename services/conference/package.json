@@ -57,6 +57,12 @@
       "ts",
       "tsx",
       "js"
-    ]
+    ],
+    "testPathIgnorePatterns": [
+      "<rootDir>/libs"
+    ],
+    "moduleNameMapper": {
+      "^@libs/(.*)": "<rootDir>/libs/$1"
+    }
   }
 }

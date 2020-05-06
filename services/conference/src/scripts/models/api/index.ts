@@ -79,6 +79,7 @@ class Connection extends EventEmitter {
 
                 // Join room.
                 this._jitsiConference?.join("");
+                console.info(tracks);
             }
         );
     }
