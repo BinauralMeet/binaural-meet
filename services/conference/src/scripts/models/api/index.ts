@@ -1,4 +1,4 @@
-import { JitsiMeetJS } from "@libs/lib-jitsi-meet";
+import JitsiMeetJS from "@libs/lib-jitsi-meet";
 import { EventEmitter } from "events";
 
 const JitsiEvents = JitsiMeetJS.events;
