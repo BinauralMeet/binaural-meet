@@ -4,7 +4,8 @@ const { compilerOptions } = require('./tsconfig');
 
 module.exports = {
   transform: {
-    ".(ts|tsx)": "ts-jest"
+    "^.+\\.tsx?$": "ts-jest",
+    "^.+\\.jsx?$": "babel-jest"
   },
   testRegex: "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
   moduleFileExtensions: [
