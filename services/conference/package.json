@@ -47,22 +47,5 @@
     "react": "^16.13.1",
     "react-avatar": "^3.9.3",
     "react-dom": "^16.13.1"
-  },
-  "jest": {
-    "transform": {
-      ".(ts|tsx)": "./node_modules/ts-jest/preprocessor.js"
-    },
-    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
-    "moduleFileExtensions": [
-      "ts",
-      "tsx",
-      "js"
-    ],
-    "testPathIgnorePatterns": [
-      "<rootDir>/libs"
-    ],
-    "moduleNameMapper": {
-      "^@libs/(.*)": "<rootDir>/libs/$1"
-    }
   }
 }
