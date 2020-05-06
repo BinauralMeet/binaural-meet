@@ -8,13 +8,15 @@
     "build": "cross-env TS_NODE_PROJECT=\"tsconfig-for-webpack-config.json\" webpack",
     "lint": "tslint --fix -p .",
     "dev": "webpack-dev-server --open",
-    "storybook": "start-storybook"
+    "storybook": "start-storybook",
+    "test": "jest"
   },
   "devDependencies": {
     "@babel/core": "^7.9.6",
     "@storybook/addon-info": "^5.3.18",
     "@storybook/react": "^5.3.18",
     "@types/html-webpack-plugin": "^3.2.2",
+    "@types/jest": "^25.2.1",
     "@types/node": "^13.13.4",
     "@types/webpack": "^4.41.12",
     "@types/webpack-dev-server": "^3.10.1",
@@ -22,7 +24,9 @@
     "cross-env": "^7.0.2",
     "del-cli": "^3.0.0",
     "html-webpack-plugin": "^4.2.1",
+    "jest": "^26.0.1",
     "react-docgen-typescript-loader": "^3.7.2",
+    "ts-jest": "^25.4.0",
     "ts-loader": "^7.0.1",
     "ts-node": "^8.9.1",
     "tsconfig-paths-webpack-plugin": "^3.2.0",
@@ -43,5 +47,16 @@
     "react": "^16.13.1",
     "react-avatar": "^3.9.3",
     "react-dom": "^16.13.1"
+  },
+  "jest": {
+    "transform": {
+      ".(ts|tsx)": "./node_modules/ts-jest/preprocessor.js"
+    },
+    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js"
+    ]
   }
 }
