@@ -23,5 +23,8 @@ module.exports = {
     "ts-jest": {
       tsConfig: "tsconfig.json"
     }
-  }
+  },
+  transformIgnorePatterns: [
+    "libs/lib-jitsi-meet/node_modules/(?!(js-utils|@jitsi)/)"
+  ]
 }
