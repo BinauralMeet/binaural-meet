@@ -11,9 +11,12 @@ export class StereoManager {
   addSpeaker(id: string) {
     assert(this.nodes[id] === undefined)
     this.nodes[id] = new NodeGroup(this.audioContext)
+
+    return this.nodes[id]
   }
 
   removeSpeaker(id: string) {
+    console.log('remove speaker')
     delete this.nodes[id]
   }
 }

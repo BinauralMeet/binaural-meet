@@ -33,9 +33,15 @@ export class NodeGroup {
     this.pannerNode.connect(context.destination)
   }
 
-  updateStream(stream: MediaStream) {
+  updateStream(stream: MediaStream | undefined) {
     if (this.sourceNode !== undefined) {
       this.sourceNode.disconnect()
+    }
+
+    if (stream === undefined) {
+      this.sourceNode = undefined
+
+      return
     }
 
     this.sourceNode = this.context.createMediaStreamSource(stream)
@@ -56,11 +62,19 @@ export class NodeGroup {
     this.pannerNode.setOrientation(...pose.orientation)
   }
 
-  toggleBroadcast() {
-    if (this.isBroadcast) {
+  updateBroadcast(broadcast: boolean) {
+    if (broadcast === false) {
       this.pannerNode.refDistance = DEFAULT_PANNER_NODE_CONFIG.refDistance
     } else {
       this.pannerNode.refDistance = BROADCAST_DISTANCE
+    }
+  }
+
+  updateAudibility(audibility: boolean) {
+    if (audibility === true) {
+      this.gainNode.connect(this.pannerNode)
+    } else {
+      this.gainNode.disconnect()
     }
   }
 
