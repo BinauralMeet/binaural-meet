@@ -4,6 +4,42 @@ import { EventEmitter } from "events";
 const JitsiEvents = JitsiMeetJS.events;
 console.log(`JitsiMeetJS Version: ${JitsiMeetJS.version}`);
 
+const options = {
+    hosts: {
+        domain: 'jitsi-meet.example.com',
+        muc: 'conference.jitsi-meet.example.com' // FIXME: use XEP-0030
+    },
+    bosh: '//jitsi-meet.example.com/http-bind', // FIXME: use xep-0156 for that
+
+    // The name of client node advertised in XEP-0115 'c' stanza
+    clientNode: 'http://jitsi.org/jitsimeet'
+};
+
+const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
+    useIPv6: false,
+    disableSimulcast: false,
+    enableWindowOnErrorHandler: false,
+    enableAnalyticsLogging: false,
+    disableThiredPartyRequests: false,
+    disableAudioLevels: true,
+
+    // The ID of the jidesha extension for Chrome.
+    desktopSharingChromeExtId: 'mbocklcggfhnbahlnepmldehdhpjfcjp',
+
+    // Whether desktop sharing should be disabled on Chrome.
+    desktopSharingChromeDisabled: false,
+
+    // The media sources to use when using screen sharing with the Chrome
+    // extension.
+    desktopSharingChromeSources: ['screen', 'window'],
+
+    // Required version of Chrome extension
+    desktopSharingChromeMinExtVersion: '0.1',
+
+    // Whether desktop sharing should be disabled on Firefox.
+    desktopSharingFirefoxDisabled: true
+};
+
 class Connection extends EventEmitter {
     static createConnection(): Connection {
         return new Connection();
@@ -12,24 +48,27 @@ class Connection extends EventEmitter {
     private _jitsiConnection?: JitsiMeetJS.JitsiConnection;
     private _jitsiConference?: JitsiMeetJS.JitsiConference;
 
-    constructor(useJitsiMeet: boolean = true) {
+    constructor() {
         super();
-        if (useJitsiMeet) {
-            this._initJitsiConnection().then(
-                () => {
-                    this._initJitsiConference();
-                }
-            )
-        }
-
     }
+
+    public init(): Promise<string> {
+        console.log("Start initialization.");
+        return this._initJitsiConnection().then(
+            () => {
+                this._initJitsiConference();
+                return Promise.resolve("Successed.");
+            }
+        )
+    }
+
 
     private _initJitsiConnection(): Promise<void> {
         return new Promise(
             (resolve, reject) => {
-                JitsiMeetJS.init();
+                JitsiMeetJS.init(initOptions);
 
-                this._jitsiConnection = new JitsiMeetJS.JitsiConnection("test", "", {});
+                this._jitsiConnection = new JitsiMeetJS.JitsiConnection("test", "", options);
 
                 this._jitsiConnection.addEventListener(
                     JitsiEvents.connection.CONNECTION_ESTABLISHED,
@@ -85,4 +124,4 @@ class Connection extends EventEmitter {
     }
 }
 
-export { Connection }
+export { Connection };

@@ -30,6 +30,55 @@ const config: webpack.Configuration = {
         use: 'ts-loader',
         exclude: /node_modules/,
       },
+      {
+        // Version this build of the lib-jitsi-meet library.
+
+        loader: 'string-replace-loader',
+        options: {
+          flags: 'g',
+          replace:
+            process.env.LIB_JITSI_MEET_COMMIT_HASH || 'development',
+          search: '{#COMMIT_HASH#}'
+        },
+        test: `${__dirname}/JitsiMeetJS.js`
+      }, {
+        // Transpile ES2015 (aka ES6) to ES5.
+
+        exclude: [
+          new RegExp(`${__dirname}/node_modules/(?!js-utils)`)
+        ],
+        loader: 'babel-loader',
+        options: {
+          presets: [
+            [
+              '@babel/preset-env',
+
+              // Tell babel to avoid compiling imports into CommonJS
+              // so that webpack may do tree shaking.
+              {
+                modules: false,
+
+                // Specify our target browsers so no transpiling is
+                // done unnecessarily. For browsers not specified
+                // here, the ES2015+ profile will be used.
+                targets: {
+                  chrome: 58,
+                  electron: 2,
+                  firefox: 54,
+                  safari: 11
+                }
+              }
+            ],
+            '@babel/preset-flow'
+          ],
+          plugins: [
+            '@babel/plugin-transform-flow-strip-types',
+            '@babel/plugin-proposal-class-properties',
+            '@babel/plugin-proposal-export-namespace-from'
+          ]
+        },
+        test: /\.js$/
+      }
     ],
   },
   resolve: {

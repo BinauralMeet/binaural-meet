@@ -102,9 +102,9 @@ declare module 'JitsiMeetJS' {
 
     const errors: JitsiMeetErrors;
 
-    interface IJitsiMeetJSOptions {
+    export interface IJitsiMeetJSOptions {
         useIPv6: boolean;
-        desktopSharingChromeExtId: boolean;
+        desktopSharingChromeExtId: string;
         desktopSharingChromeDisabled: boolean;
         desktopSharingChromeSources: Array<string>;
         desktopSharingChromeMinExtVersion: string;
