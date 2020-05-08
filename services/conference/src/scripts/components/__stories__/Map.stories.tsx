@@ -1,11 +1,7 @@
-import {Background} from '@components/map/Base/Background'
-import React from 'react'
-
+import Background from './Map/Background'
 
 export default {
   title: 'Map',
 }
 
-export const background = () => {
-  return <Background />
-}
+export const background = Background

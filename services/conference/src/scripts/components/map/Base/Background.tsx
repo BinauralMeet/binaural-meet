@@ -31,14 +31,8 @@ const useStyles = makeStyles({
     width: 20,
     height: 20,
     backgroundColor: 'red',
+    pointerEvents: 'none',
   }),
-  mouse2: {
-    position: 'absolute',
-    width: 20,
-    height: 20,
-    backgroundColor: 'blue',
-    transform: (props: StyleProps) => props.matrix.inverse().toString(),
-  },
 })
 
 function useMatrix() {
@@ -75,11 +69,8 @@ export const Background: React.FC<{}> = () => {
 
   const bind = useGesture({
     onDragEnd: onEnd,
-    onDrag: ({down, offset, xy}) => {
+    onDrag: ({down, offset}) => {
       if (down) {
-        const div = container.current as HTMLDivElement
-        setMouse(subV(xy, [div.offsetLeft, div.offsetTop] as [number, number]))
-
         onChangeOnBase((matrix) => {
           return matrix.translate(...global2LocalCoordinate(offset, matrix))
         })
@@ -90,16 +81,18 @@ export const Background: React.FC<{}> = () => {
       console.log(d, a)
     },
     onWheelEnd: onEnd,
-    onWheel: ({down, movement}) => {
-      if (down) {
-        onChangeOnCurrent((matrix) => {
-          const rawScale = movement[1] / 90
-          const scale = rawScale > 0 ? rawScale : rawScale < 0 ? -1 / rawScale : 1
+    onWheel: ({movement}) => {
+      onChangeOnCurrent((matrix) => {
+        const rawScale = movement[1] / 90
+        const scale = rawScale > 0 ? rawScale : rawScale < 0 ? -1 / rawScale : 1
 
-          return matrix.scale(scale, scale, 1, ...global2LocalCoordinate(mouse, matrix))
-        })
-      }
+        return matrix.scale(scale, scale, 1, ...global2LocalCoordinate(mouse, matrix))
+      })
     },
+    onMove: ({xy}) => {
+      const div = container.current as HTMLDivElement
+      setMouse(subV(xy, [div.offsetLeft, div.offsetTop] as [number, number]))
+    }
   })
 
   const relativeMouse = matrix.inverse().transformPoint(new DOMPoint(...mouse))
@@ -113,7 +106,6 @@ export const Background: React.FC<{}> = () => {
     <div className={classes.root} ref={container}>
       <div id="map-transform" className={classes.transform} {...bind()}>
         <div className={classes.background} />
-        <div id="mouse-indicator-2" className={classes.mouse2} />
         <div id="mouse-indicator" className={classes.mouse} />
       </div>
     </div>
