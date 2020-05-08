@@ -10,7 +10,8 @@ delete process.env.TS_NODE_PROJECT
 const DEV_CONFERENCE_ID = 'conference-name'
 
 const config: webpack.Configuration = {
-  entry: './src/scripts/index.ts',
+  mode: 'development',
+  entry: './src/scripts/index.tsx',
   devtool: 'inline-source-map',
   devServer: {
     contentBase: 'dist',
