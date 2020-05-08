@@ -13,11 +13,10 @@ const config: webpack.Configuration = {
   entry: './src/scripts/index.ts',
   devtool: 'inline-source-map',
   devServer: {
-    contentBase: path.join(__dirname, 'dist'),
+    contentBase: 'dist',
     compress: true,
     port: 9000,
-    contentBasePublicPath: `/${DEV_CONFERENCE_ID}`,
-    openPage: `${DEV_CONFERENCE_ID}`,
+    openPage: `?name=${DEV_CONFERENCE_ID}`,
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
