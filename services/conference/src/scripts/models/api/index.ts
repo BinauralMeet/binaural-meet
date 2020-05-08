@@ -1,19 +1,11 @@
 import JitsiMeetJS from "@libs/lib-jitsi-meet";
 import { EventEmitter } from "events";
+import { config } from "./test.config";
+// import store from "@stores/ConnectionInfo";
 
 const JitsiEvents = JitsiMeetJS.events;
 console.log(`JitsiMeetJS Version: ${JitsiMeetJS.version}`);
 
-const options = {
-    hosts: {
-        domain: 'jitsi-meet.example.com',
-        muc: 'conference.jitsi-meet.example.com' // FIXME: use XEP-0030
-    },
-    bosh: '//jitsi-meet.example.com/http-bind', // FIXME: use xep-0156 for that
-
-    // The name of client node advertised in XEP-0115 'c' stanza
-    clientNode: 'http://jitsi.org/jitsimeet'
-};
 
 const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
     useIPv6: false,
@@ -40,20 +32,38 @@ const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
     desktopSharingFirefoxDisabled: true
 };
 
+const ConnectionEvents = {
+    CONNECTION_ESTABLISHED: 'connection_established',
+    CONNECTION_DISCONNECTED: 'connection_disconnected',
+}
+
+enum ConnectionStates {
+    Connected, Disconnected
+}
+
 class Connection extends EventEmitter {
     static createConnection(): Connection {
         return new Connection();
     }
 
+
+
     private _jitsiConnection?: JitsiMeetJS.JitsiConnection;
     private _jitsiConference?: JitsiMeetJS.JitsiConference;
+    public state: ConnectionStates;
+    public version: string;
 
     constructor() {
         super();
+
+        this.state = ConnectionStates.Disconnected;
+        this.version = '0.0.1';
     }
 
     public init(): Promise<string> {
         console.log("Start initialization.");
+        this._registerEventHandlers();
+
         return this._initJitsiConnection().then(
             () => {
                 this._initJitsiConference();
@@ -62,18 +72,26 @@ class Connection extends EventEmitter {
         )
     }
 
+    private _registerEventHandlers() {
+        this.on(
+            ConnectionEvents.CONNECTION_ESTABLISHED,
+            this._onConnectionEstablished.bind(this)
+        );
+    }
+
 
     private _initJitsiConnection(): Promise<void> {
         return new Promise(
             (resolve, reject) => {
                 JitsiMeetJS.init(initOptions);
 
-                this._jitsiConnection = new JitsiMeetJS.JitsiConnection("test", "", options);
+                this._jitsiConnection = new JitsiMeetJS.JitsiConnection("test", "", config);
 
                 this._jitsiConnection.addEventListener(
                     JitsiEvents.connection.CONNECTION_ESTABLISHED,
                     () => {
                         console.log("Connection has been established.");
+                        this.emit(ConnectionEvents.CONNECTION_ESTABLISHED);
                         resolve();
                     }
                 );
@@ -88,6 +106,7 @@ class Connection extends EventEmitter {
                     JitsiEvents.connection.CONNECTION_DISCONNECTED,
                     () => {
                         console.log("Disconnected from remote server.");
+                        this.emit(ConnectionEvents.CONNECTION_DISCONNECTED);
                     }
                 );
 
@@ -122,6 +141,13 @@ class Connection extends EventEmitter {
             }
         );
     }
+
+    private _onConnectionEstablished() {
+        this.state = ConnectionStates.Connected;
+        // store.state = this.state;
+    }
 }
 
-export { Connection };
+const connection = new Connection();
+export { Connection, ConnectionStates, connection };
+

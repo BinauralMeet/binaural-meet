@@ -1,4 +1,4 @@
-import 'models/api';
+import '@models/api';
 
 function component() {
   const element = document.createElement('div')

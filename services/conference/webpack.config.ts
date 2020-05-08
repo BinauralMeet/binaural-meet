@@ -10,8 +10,13 @@ delete process.env.TS_NODE_PROJECT
 const DEV_CONFERENCE_ID = 'conference-name'
 
 const config: webpack.Configuration = {
+  stats: 'normal',
   entry: './src/scripts/index.ts',
-  devtool: 'inline-source-map',
+  devtool: 'source-map',
+  mode: "development",
+  optimization: {
+    minimize: false
+  },
   devServer: {
     contentBase: path.join(__dirname, 'dist'),
     compress: true,
@@ -29,23 +34,11 @@ const config: webpack.Configuration = {
         test: /\.tsx?$/,
         use: 'ts-loader',
         exclude: /node_modules/,
-      },
-      {
-        // Version this build of the lib-jitsi-meet library.
-
-        loader: 'string-replace-loader',
-        options: {
-          flags: 'g',
-          replace:
-            process.env.LIB_JITSI_MEET_COMMIT_HASH || 'development',
-          search: '{#COMMIT_HASH#}'
-        },
-        test: `${__dirname}/JitsiMeetJS.js`
       }, {
         // Transpile ES2015 (aka ES6) to ES5.
 
         exclude: [
-          new RegExp(`${__dirname}/node_modules/(?!js-utils)`)
+          new RegExp(`${__dirname}/libs/lib-jitsi-meet/node_modules/(?!js-utils)`)
         ],
         loader: 'babel-loader',
         options: {
@@ -78,10 +71,13 @@ const config: webpack.Configuration = {
           ]
         },
         test: /\.js$/
-      }
+      },
     ],
   },
   resolve: {
+    alias: {
+      '@libs/lib-jitsi-meet': path.resolve(__dirname, 'dist', 'lib-jitsi-meet.min')
+    },
     extensions: ['.tsx', '.ts', '.js'],
     plugins: [
       new TsconfigPathsPlugin(),
@@ -94,7 +90,7 @@ const config: webpack.Configuration = {
       filename: 'index.html',
       hash: true,
     }),
-  ],
+  ]
 }
 
 export default config
