@@ -1,6 +1,6 @@
 import {makeStyles} from '@material-ui/core'
-import {transformPoint2D, rotateVector2D} from '@models/utils'
-import React, {useRef, useState} from 'react'
+import {rotateVector2D, transformPoint2D} from '@models/utils'
+import React, {useEffect, useRef, useState} from 'react'
 import {addV, subV, useGesture} from 'react-use-gesture'
 
 interface StyleProps {
@@ -36,55 +36,50 @@ const useStyles = makeStyles({
   }),
 })
 
-function useMatrix() {
-  const [matrix, setMatrix] = useState<DOMMatrixReadOnly>(new DOMMatrixReadOnly())
-  const [baseMatrix, setBaseMatrix] = useState<DOMMatrixReadOnly>(new DOMMatrixReadOnly())
-
-  function onChangeOnBase(applyChange: (baseMatrix: DOMMatrixReadOnly) => DOMMatrixReadOnly) {
-    setMatrix(applyChange(baseMatrix))
-  }
-
-  function onChangeOnCurrent(applyChange: (baseMatrix: DOMMatrixReadOnly) => DOMMatrixReadOnly) {
-    setMatrix(applyChange(matrix))
-  }
-
-  function onEnd() {
-    setBaseMatrix(DOMMatrixReadOnly.fromMatrix(matrix))
-    console.log('on end')
-  }
-
-  return {matrix, onEnd, onChangeOnBase, onChangeOnCurrent}
-}
-
 export const Background: React.FC<{}> = () => {
   const container = useRef<HTMLDivElement>(null)
 
   const [mouse, setMouse] = useState<[number, number]>([0, 0])
   const [matrix, setMatrix] = useState<DOMMatrixReadOnly>(new DOMMatrixReadOnly())
 
-  const bind = useGesture({
-    onDrag: ({down, delta}) => {
-      if (down) {
-        const diff = rotateVector2D(matrix.inverse(), delta)
-        console.log(delta, diff)
-        const newMatrix = matrix.translate(...diff)
+  const bind = useGesture(
+    {
+      onDrag: ({down, delta, event}) => {
+        if (down) {
+          event?.preventDefault()
+          const diff = rotateVector2D(matrix.inverse(), delta)
+          const newMatrix = matrix.translate(...diff)
+          setMatrix(newMatrix)
+        }
+      },
+      onPinch: ({da: [d, a], event}) => {
+        event?.preventDefault()
+        console.log(d, a)
+      },
+      onWheel: ({movement}) => {
+        const rawScale = movement[1] / 90
+        const scale = rawScale > 0 ? rawScale : rawScale < 0 ? -1 / rawScale : 1
+        const newMatrix = matrix.scale(scale, scale, 1, ...transformPoint2D(matrix.inverse(), mouse))
         setMatrix(newMatrix)
-      }
+      },
+      onMove: ({xy}) => {
+        const div = container.current as HTMLDivElement
+        setMouse(subV(xy, [div.offsetLeft, div.offsetTop] as [number, number]))
+      },
     },
-    onPinch: ({da: [d, a]}) => {
-      console.log(d, a)
+    {
+      domTarget: window,
+      eventOptions: {
+        passive: false,
+      },
     },
-    onWheel: ({movement}) => {
-      const rawScale = movement[1] / 90
-      const scale = rawScale > 0 ? rawScale : rawScale < 0 ? -1 / rawScale : 1
-      const newMatrix = matrix.scale(scale, scale, 1, ...transformPoint2D(matrix.inverse(), mouse))
-      setMatrix(newMatrix)
+  )
+  useEffect(
+    () => {
+      bind()
     },
-    onMove: ({xy}) => {
-      const div = container.current as HTMLDivElement
-      setMouse(subV(xy, [div.offsetLeft, div.offsetTop] as [number, number]))
-    },
-  })
+    [bind],
+  )
 
   const relativeMouse = matrix.inverse().transformPoint(new DOMPoint(...mouse))
   const styleProps: StyleProps = {
@@ -95,7 +90,7 @@ export const Background: React.FC<{}> = () => {
 
   return (
     <div className={classes.root} ref={container}>
-      <div id="map-transform" className={classes.transform} {...bind()}>
+      <div id="map-transform" className={classes.transform}>
         <div className={classes.background} />
         <div id="mouse-indicator" className={classes.mouse} />
       </div>
