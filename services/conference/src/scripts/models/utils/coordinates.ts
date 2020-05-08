@@ -36,3 +36,11 @@ export function convertToAudioCoordinate(pose: Pose2DMap): Pose3DAudio {
     orientation: [Math.sin(radian), 0, Math.cos(radian)],
   }
 }
+
+export function multiplyMatrixAndPoint2D(
+  matrix: DOMMatrixReadOnly | DOMMatrix, point: [number, number]): [number, number] {
+  return [
+    matrix.a * point[0] + matrix.b * point[1] + matrix.e,
+    matrix.c * point[0] + matrix.d * point[1] + matrix.f,
+  ]
+}

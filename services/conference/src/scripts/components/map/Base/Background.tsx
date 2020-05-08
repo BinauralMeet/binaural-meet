@@ -1,6 +1,7 @@
 import {makeStyles} from '@material-ui/core'
+import {multiplyMatrixAndPoint2D} from '@models/utils'
 import React, {useRef, useState} from 'react'
-import {subV, useGesture} from 'react-use-gesture'
+import {addV, subV, useGesture} from 'react-use-gesture'
 
 interface StyleProps {
   matrix: DOMMatrixReadOnly,
@@ -55,24 +56,24 @@ function useMatrix() {
   return {matrix, onEnd, onChangeOnBase, onChangeOnCurrent}
 }
 
-function global2LocalCoordinate(position: [number, number], matrix: DOMMatrixReadOnly): [number, number] {
-  const point = matrix.inverse().transformPoint(new DOMPoint(...position))
-
-  return [point.x, point.y]
-}
-
 export const Background: React.FC<{}> = () => {
   const container = useRef<HTMLDivElement>(null)
   const {matrix, onEnd, onChangeOnBase, onChangeOnCurrent} = useMatrix()
 
   const [mouse, setMouse] = useState<[number, number]>([0, 0])
+  const [translate, setTranslate] = useState<[number, number]>([0, 0])
 
   const bind = useGesture({
     onDragEnd: onEnd,
-    onDrag: ({down, offset}) => {
+    onDrag: ({down, offset, delta}) => {
       if (down) {
         onChangeOnBase((matrix) => {
-          return matrix.translate(...global2LocalCoordinate(offset, matrix))
+          const diff = multiplyMatrixAndPoint2D(matrix.inverse(), delta)
+          const newTranslate = addV(translate, diff)
+          console.log(diff, newTranslate)
+          setTranslate(newTranslate)
+
+          return matrix.translate(...newTranslate)
         })
       }
     },
@@ -86,7 +87,7 @@ export const Background: React.FC<{}> = () => {
         const rawScale = movement[1] / 90
         const scale = rawScale > 0 ? rawScale : rawScale < 0 ? -1 / rawScale : 1
 
-        return matrix.scale(scale, scale, 1, ...global2LocalCoordinate(mouse, matrix))
+        return matrix.scale(scale, scale, 1, ...multiplyMatrixAndPoint2D(matrix.inverse(), mouse))
       })
     },
     onMove: ({xy}) => {
