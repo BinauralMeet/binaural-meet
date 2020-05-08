@@ -37,10 +37,18 @@ export function convertToAudioCoordinate(pose: Pose2DMap): Pose3DAudio {
   }
 }
 
-export function multiplyMatrixAndPoint2D(
+export function transformPoint2D(
   matrix: DOMMatrixReadOnly | DOMMatrix, point: [number, number]): [number, number] {
   return [
-    matrix.a * point[0] + matrix.b * point[1] + matrix.e,
-    matrix.c * point[0] + matrix.d * point[1] + matrix.f,
+    matrix.a * point[0] + matrix.c * point[1] + matrix.e,
+    matrix.b * point[0] + matrix.d * point[1] + matrix.f,
+  ]
+}
+
+export function rotateVector2D(
+  matrix: DOMMatrixReadOnly | DOMMatrix, point: [number, number]): [number, number] {
+  return [
+    matrix.a * point[0] + matrix.c * point[1],
+    matrix.b * point[0] + matrix.d * point[1],
   ]
 }

@@ -1,5 +1,5 @@
 import {makeStyles} from '@material-ui/core'
-import {multiplyMatrixAndPoint2D} from '@models/utils'
+import {transformPoint2D, rotateVector2D} from '@models/utils'
 import React, {useRef, useState} from 'react'
 import {addV, subV, useGesture} from 'react-use-gesture'
 
@@ -58,42 +58,32 @@ function useMatrix() {
 
 export const Background: React.FC<{}> = () => {
   const container = useRef<HTMLDivElement>(null)
-  const {matrix, onEnd, onChangeOnBase, onChangeOnCurrent} = useMatrix()
 
   const [mouse, setMouse] = useState<[number, number]>([0, 0])
-  const [translate, setTranslate] = useState<[number, number]>([0, 0])
+  const [matrix, setMatrix] = useState<DOMMatrixReadOnly>(new DOMMatrixReadOnly())
 
   const bind = useGesture({
-    onDragEnd: onEnd,
-    onDrag: ({down, offset, delta}) => {
+    onDrag: ({down, delta}) => {
       if (down) {
-        onChangeOnBase((matrix) => {
-          const diff = multiplyMatrixAndPoint2D(matrix.inverse(), delta)
-          const newTranslate = addV(translate, diff)
-          console.log(diff, newTranslate)
-          setTranslate(newTranslate)
-
-          return matrix.translate(...newTranslate)
-        })
+        const diff = rotateVector2D(matrix.inverse(), delta)
+        console.log(delta, diff)
+        const newMatrix = matrix.translate(...diff)
+        setMatrix(newMatrix)
       }
     },
-    onPinchEnd: onEnd,
     onPinch: ({da: [d, a]}) => {
       console.log(d, a)
     },
-    onWheelEnd: onEnd,
     onWheel: ({movement}) => {
-      onChangeOnCurrent((matrix) => {
-        const rawScale = movement[1] / 90
-        const scale = rawScale > 0 ? rawScale : rawScale < 0 ? -1 / rawScale : 1
-
-        return matrix.scale(scale, scale, 1, ...multiplyMatrixAndPoint2D(matrix.inverse(), mouse))
-      })
+      const rawScale = movement[1] / 90
+      const scale = rawScale > 0 ? rawScale : rawScale < 0 ? -1 / rawScale : 1
+      const newMatrix = matrix.scale(scale, scale, 1, ...transformPoint2D(matrix.inverse(), mouse))
+      setMatrix(newMatrix)
     },
     onMove: ({xy}) => {
       const div = container.current as HTMLDivElement
       setMouse(subV(xy, [div.offsetLeft, div.offsetTop] as [number, number]))
-    }
+    },
   })
 
   const relativeMouse = matrix.inverse().transformPoint(new DOMPoint(...mouse))
