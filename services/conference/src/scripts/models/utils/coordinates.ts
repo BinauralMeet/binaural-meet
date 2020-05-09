@@ -52,3 +52,7 @@ export function rotateVector2D(
     matrix.b * point[0] + matrix.d * point[1],
   ]
 }
+
+export function multiply(matrix: (DOMMatrix | DOMMatrixReadOnly)[]) {
+  return matrix.reduce((p: DOMMatrix, c) => p.multiplySelf(c), new DOMMatrix())
+}
