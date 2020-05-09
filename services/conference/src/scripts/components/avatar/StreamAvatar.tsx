@@ -19,7 +19,7 @@ const useStyles = makeStyles({
   },
 })
 
-interface StreamAvatarProps {
+export interface StreamAvatarProps {
   stream: MediaStream
   size?: number
 }

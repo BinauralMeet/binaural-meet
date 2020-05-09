@@ -3,8 +3,9 @@ import ReactAvatar from 'react-avatar'
 
 import {Information} from '@models/Participant'
 
-interface ImageAvatarProps {
+export interface ImageAvatarProps {
   information: Information
+  size?: number
 }
 
 export const ImageAvatar: React.FC<ImageAvatarProps> = (props: ImageAvatarProps) => {

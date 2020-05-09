@@ -26,7 +26,7 @@ const useStyles = makeStyles({
   },
 })
 
-export const BaseStory: React.FC<{}> = () => {
+const BaseStory: React.FC<{}> = () => {
   const classes = useStyles()
 
   return (
