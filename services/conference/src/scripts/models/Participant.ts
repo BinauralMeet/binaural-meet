@@ -21,6 +21,7 @@ export interface Information {
   name: string
   email?: string
   md5Email?: string
+  avatarSrc?: string
 }
 
 export interface Perceptibility {

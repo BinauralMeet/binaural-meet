@@ -9,12 +9,16 @@ export interface ImageAvatarProps {
 }
 
 export const ImageAvatar: React.FC<ImageAvatarProps> = (props: ImageAvatarProps) => {
+  const size = props.size !== undefined ? `${props.size}px` : undefined
+
   return (
     <ReactAvatar
       name={props.information.name}
       email={props.information.email}
       md5Email={props.information.md5Email}
       round={true}
+      size={size}
+      src={props.information.avatarSrc}
     />
   )
 }

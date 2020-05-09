@@ -1,6 +1,5 @@
 import {useStore as usePsStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
-import {assert} from '@models/utils'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {ComposedAvatar} from './ComposedAvatar'
@@ -12,7 +11,6 @@ export interface ConnectedAvatarProps {
 
 const ConnectedAvatar: React.FC<ConnectedAvatarProps> = (props) => {
   const participant = usePsStore().find(props.participantId)
-  assert(participant !== undefined)
 
   const {
     information,

@@ -1,6 +1,5 @@
 import {useStore} from '@hooks/ParticipantsStore'
 import {Button, ButtonGroup} from '@material-ui/core'
-import {assert} from '@models/utils'
 import store from '@stores/Participants'
 import {action} from 'mobx'
 import {useObserver} from 'mobx-react-lite'
@@ -39,7 +38,6 @@ const addRandomRemoteParticipants = action((id: number) => {
   const name = `participant_${id}`
   store.join(name)
   const remote = store.find(name)
-  assert(remote !== undefined)
   remote.pose.position = randomPosition()
 })
 

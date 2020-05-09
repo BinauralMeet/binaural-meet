@@ -2,7 +2,6 @@ import {Avatar, AvatarProps} from '@components/avatar'
 import {useStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
 import {makeStyles} from '@material-ui/core'
-import {assert} from '@models/utils'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 
@@ -22,7 +21,6 @@ type ParticipantProps = AvatarProps
 
 const Participant: React.FC<ParticipantProps> = (props) => {
   const participant = useStore().find(props.participantId)
-  assert(participant !== undefined)
   const position = useObserver(() => {
     return participant.pose.position
   })

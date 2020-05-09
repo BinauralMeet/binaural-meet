@@ -1,3 +1,4 @@
+import {assert} from '@models/utils'
 import {action, computed, observable} from 'mobx'
 import {Participant} from './Participant'
 
@@ -19,13 +20,16 @@ export class Participants {
     this.remote.delete(participantId)
   }
 
-  find(participantId: string) {
+  find(participantId: string): Participant {
     if (participantId === this.local.id) {
 
       return this.local
     }
 
-    return this.remote.get(participantId)
+    const res = this.remote.get(participantId)
+    assert(res !== undefined)
+
+    return res
   }
 }
 
