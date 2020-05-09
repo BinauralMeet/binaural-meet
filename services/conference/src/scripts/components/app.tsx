@@ -1,6 +1,6 @@
 import React from 'react'
-import {Background} from './map/Base/Background'
+import {Base} from './map/Base'
 
 export const App: React.FC<{}> = () => {
-  return <Background />
+  return <Base />
 }

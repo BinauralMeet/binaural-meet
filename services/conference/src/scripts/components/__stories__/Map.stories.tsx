@@ -4,4 +4,4 @@ export default {
   title: 'Map',
 }
 
-export const background = Background
+export const base = Background
