@@ -27,6 +27,9 @@
       ],
       "@libs/*": [
         "../../libs/*"
+      ],
+      "@test-utils/*": [
+        "__tests__/utils/*"
       ]
     },
     "typeRoots": [

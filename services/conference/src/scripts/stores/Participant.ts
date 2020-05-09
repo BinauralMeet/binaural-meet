@@ -14,6 +14,7 @@ export class Participant implements Store<IParticipant> {
     avatarSrc: undefined,
   })
   perceptibility = shallowObservable<Perceptibility>({
+    visibility: true,
     audibility: true,
   })
   stream = shallowObservable<Stream>({

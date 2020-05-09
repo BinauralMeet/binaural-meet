@@ -1,14 +1,9 @@
 import {Base} from '@components/map/Base'
 import {makeStyles} from '@material-ui/core'
 import React from 'react'
+import {useBaseStyles} from './utils'
 
 const useStyles = makeStyles({
-  root: {
-    width: '80vw',
-    height: '80vh',
-    overflow: 'hidden',
-    border: '1px solid black',
-  },
   background1: {
     position: 'absolute',
     backgroundColor: '#DFDBE5',
@@ -28,14 +23,13 @@ const useStyles = makeStyles({
 
 const BaseStory: React.FC<{}> = () => {
   const classes = useStyles()
+  const baseClasses = useBaseStyles()
 
   return (
-    <div className={classes.root}>
-      <Base>
-        <div className={classes.background1} />
-        <div className={classes.background2} />
-      </Base>
-    </div>
+    <Base className={baseClasses.root}>
+      <div className={classes.background1} />
+      <div className={classes.background2} />
+    </Base>
   )
 }
 

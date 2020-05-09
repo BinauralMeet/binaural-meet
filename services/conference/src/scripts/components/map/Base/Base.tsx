@@ -1,3 +1,4 @@
+import {BaseProps as BP} from '@components/utils'
 import {makeStyles} from '@material-ui/core'
 import {multiply, rotateVector2D, transformPoint2D} from '@models/utils'
 import React, {useEffect, useRef, useState} from 'react'
@@ -29,7 +30,7 @@ const useStyles = makeStyles({
   }),
 })
 
-interface BaseProps {
+interface BaseProps extends BP {
   children?: React.ReactElement | React.ReactElement[]
 }
 
@@ -110,7 +111,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   const classes = useStyles(styleProps)
 
   return (
-    <div className={classes.root} ref={container}>
+    <div className={[classes.root, props.className].join(' ')} ref={container}>
       <div id="map-transform" className={classes.transform}>
         {props.children}
       </div>

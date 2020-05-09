@@ -25,7 +25,7 @@ export interface Information {
 }
 
 export interface Perceptibility {
-  visibility?: boolean
+  visibility: boolean
   audibility: boolean
 }
 
