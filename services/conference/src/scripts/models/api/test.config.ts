@@ -5,10 +5,10 @@ if (subdomain) {
 }
 export const config = {
     hosts: {
-        domain: 'meet.jit.si',
+        domain: 'beta.meet.jit.si',
 
-        muc: 'conference.' + subdomain + 'meet.jit.si', // FIXME: use XEP-0030
-        focus: 'focus.meet.jit.si',
+        muc: 'conference.beta.meet.jit.si', // FIXME: use XEP-0030
+        focus: 'focus.beta.meet.jit.si',
     },
     disableSimulcast: false,
     enableRemb: true,
@@ -28,7 +28,7 @@ export const config = {
             }
         }
     },
-    externalConnectUrl: '//meet.jit.si/http-pre-bind',
+    externalConnectUrl: '//beta.meet.jit.si/http-pre-bind',
     analytics: {
         amplitudeAPPKey: "fafdba4c3b47fe5f151060ca37f02d2f",
         whiteListedEvents: ['conference.joined', 'page.reload.scheduled', 'rejoined', 'transport.stats'],
@@ -44,8 +44,8 @@ export const config = {
     useStunTurn: true, // use XEP-0215 to fetch TURN servers for the JVB connection
     useIPv6: false, // ipv6 support. use at your own risk
     useNicks: false,
-    bosh: '//meet.jit.si/http-bind', // FIXME: use xep-0156 for that
-    websocket: 'wss://meet.jit.si/xmpp-websocket', // FIXME: use xep-0156 for that
+    bosh: 'https://beta.meet.jit.si/http-bind', // FIXME: use xep-0156 for that
+    websocket: 'wss://beta.meet.jit.si/xmpp-websocket', // FIXME: use xep-0156 for that
 
 
     clientNode: 'http://jitsi.org/jitsimeet', // The name of client node advertised in XEP-0115 'c' stanza

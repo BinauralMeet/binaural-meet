@@ -1,4 +1,10 @@
 {
-  "presets": ["@babel/preset-env"],
-  "plugins": ["@babel/plugin-proposal-export-namespace-from", "@babel/plugin-transform-flow-strip-types"]
+  "presets": [
+    "@babel/preset-env"
+  ],
+  "plugins": [
+    "@babel/plugin-proposal-export-namespace-from",
+    "@babel/plugin-transform-flow-strip-types",
+    "@babel/plugin-transform-modules-commonjs"
+  ]
 }
