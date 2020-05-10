@@ -40,5 +40,8 @@
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "traceResolution": true
-  }
+  },
+  "include": [
+    "src/scripts/**/*"
+  ]
 }
