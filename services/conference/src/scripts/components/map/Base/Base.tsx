@@ -1,6 +1,6 @@
 import {BaseProps as BP} from '@components/utils'
 import {makeStyles} from '@material-ui/core'
-import {multiply, rotateVector2D, transformPoint2D} from '@models/utils'
+import {extractScaleX, multiply, rotateVector2D, transformPoint2D} from '@models/utils'
 import React, {useEffect, useRef, useState} from 'react'
 import {subV, useGesture} from 'react-use-gesture'
 
@@ -19,19 +19,15 @@ const useStyles = makeStyles({
     position: 'absolute',
     transform: (props: StyleProps) => props.matrix.toString(),
   },
-  mouse: (props: StyleProps) => ({
-    position: 'absolute',
-    left: props.mouse[0],
-    top: props.mouse[1],
-    width: 20,
-    height: 20,
-    backgroundColor: 'red',
-    pointerEvents: 'none',
-  }),
 })
 
 interface BaseProps extends BP {
   children?: React.ReactElement | React.ReactElement[]
+}
+
+const options = {
+  minScale: 0.2,
+  maxScale: 5,
 }
 
 export const Base: React.FC<BaseProps> = (props: BaseProps) => {
@@ -66,7 +62,8 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
         console.log(center)
 
-        const scale = d / md
+        let scale = d / md
+        scale = limitScale(extractScaleX(matrix), scale)
 
         const changeMatrix = (new DOMMatrix()).scaleSelf(scale, scale, 1).rotateSelf(0, 0, a - ma)
 
@@ -80,7 +77,8 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         return [d, a]
       },
       onWheel: ({movement}) => {
-        const scale = Math.pow(1.2, movement[1] / 1000)
+        let scale = Math.pow(1.2, movement[1] / 1000)
+        scale = limitScale(extractScaleX(matrix), scale)
         const newMatrix = matrix.scale(scale, scale, 1, ...transformPoint2D(matrix.inverse(), mouse))
         setMatrix(newMatrix)
       },
@@ -90,7 +88,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       },
     },
     {
-      domTarget: window,
+      domTarget: container,
       eventOptions: {
         passive: false,
       },
@@ -117,4 +115,18 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       </div>
     </div>
   )
+}
+
+function limitScale(currentScale: number, scale: number): number {
+  const targetScale = currentScale * scale
+
+  if (targetScale > options.maxScale) {
+    return options.maxScale / currentScale
+  }
+
+  if (targetScale < options.minScale) {
+    return options.minScale / currentScale
+  }
+
+  return scale
 }
