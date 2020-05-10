@@ -1,9 +1,9 @@
-import JitsiMeetJS from '@libs/lib-jitsi-meet'
+import JitsiMeetJS from 'lib-jitsi-meet'
 import store from '@stores/ConnectionInfo'
-import {EventEmitter} from 'events'
-import {ConnectionStates} from './Constants'
-import ApiLogger, {ILoggerHandler} from './Logger'
-import {config} from './test.config'
+import { EventEmitter } from 'events'
+import { ConnectionStates } from './Constants'
+import ApiLogger, { ILoggerHandler } from './Logger'
+import { config } from './test.config'
 
 
 // import a global variant $ for lib-jitsi-meet
@@ -14,8 +14,8 @@ global.$ = jquery
 global.jQuery = jquery
 
 const JitsiEvents = JitsiMeetJS.events
+type JitsiTrack = JitsiMeetJS.JitsiTrack
 console.log(`JitsiMeetJS Version: ${JitsiMeetJS.version}`)
-
 
 const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
   useIPv6: false,
@@ -25,20 +25,20 @@ const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
   disableThiredPartyRequests: false,
   disableAudioLevels: true,
 
-    // The ID of the jidesha extension for Chrome.
+  // The ID of the jidesha extension for Chrome.
   desktopSharingChromeExtId: 'mbocklcggfhnbahlnepmldehdhpjfcjp',
 
-    // Whether desktop sharing should be disabled on Chrome.
+  // Whether desktop sharing should be disabled on Chrome.
   desktopSharingChromeDisabled: false,
 
-    // The media sources to use when using screen sharing with the Chrome
-    // extension.
+  // The media sources to use when using screen sharing with the Chrome
+  // extension.
   desktopSharingChromeSources: ['screen', 'window'],
 
-    // Required version of Chrome extension
+  // Required version of Chrome extension
   desktopSharingChromeMinExtVersion: '0.1',
 
-    // Whether desktop sharing should be disabled on Firefox.
+  // Whether desktop sharing should be disabled on Firefox.
   desktopSharingFirefoxDisabled: true,
 }
 
@@ -72,60 +72,60 @@ class Connection extends EventEmitter {
     this.registerEventHandlers()
 
     return this.initJitsiConnection().then(
-            () => {
-              this.initJitsiConference()
+      () => {
+        this.initJitsiConference()
 
-              return Promise.resolve('Successed.')
-            },
-        )
+        return Promise.resolve('Successed.')
+      },
+    )
   }
 
   private registerEventHandlers() {
     this.on(
-            ConnectionEvents.CONNECTION_ESTABLISHED,
-            this.onConnectionEstablished.bind(this),
-        )
+      ConnectionEvents.CONNECTION_ESTABLISHED,
+      this.onConnectionEstablished.bind(this),
+    )
 
     this.on(
-            ConnectionEvents.CONNECTION_DISCONNECTED,
-            this.onConnectionDisposed.bind(this),
-        )
+      ConnectionEvents.CONNECTION_DISCONNECTED,
+      this.onConnectionDisposed.bind(this),
+    )
   }
 
 
   private initJitsiConnection(): Promise<void> {
     return new Promise(
-            (resolve, reject) => {
-              JitsiMeetJS.init(initOptions)
+      (resolve, reject) => {
+        JitsiMeetJS.init(initOptions)
 
-              this._jitsiConnection = new JitsiMeetJS.JitsiConnection('test', '', config)
+        this._jitsiConnection = new JitsiMeetJS.JitsiConnection('test', '', config)
 
-              this._jitsiConnection.addEventListener(
-                    JitsiEvents.connection.CONNECTION_ESTABLISHED,
-                    () => {
-                      this._loggerHandler?.log('Connection has been established.')
-                      this.emit(ConnectionEvents.CONNECTION_ESTABLISHED)
-                      resolve()
-                    },
-                )
-              this._jitsiConnection.addEventListener(
-                    JitsiEvents.connection.CONNECTION_FAILED,
-                    () => {
-                      this._loggerHandler?.log('Failed to connect.')
-                      reject()
-                    },
-                )
-              this._jitsiConnection.addEventListener(
-                    JitsiEvents.connection.CONNECTION_DISCONNECTED,
-                    () => {
-                      this._loggerHandler?.log('Disconnected from remote server.')
-                      this.emit(ConnectionEvents.CONNECTION_DISCONNECTED)
-                    },
-                )
-
-              this._jitsiConnection.connect()
-            },
+        this._jitsiConnection.addEventListener(
+          JitsiEvents.connection.CONNECTION_ESTABLISHED,
+          () => {
+            this._loggerHandler?.log('Connection has been established.')
+            this.emit(ConnectionEvents.CONNECTION_ESTABLISHED)
+            resolve()
+          },
         )
+        this._jitsiConnection.addEventListener(
+          JitsiEvents.connection.CONNECTION_FAILED,
+          () => {
+            this._loggerHandler?.log('Failed to connect.')
+            reject()
+          },
+        )
+        this._jitsiConnection.addEventListener(
+          JitsiEvents.connection.CONNECTION_DISCONNECTED,
+          () => {
+            this._loggerHandler?.log('Disconnected from remote server.')
+            this.emit(ConnectionEvents.CONNECTION_DISCONNECTED)
+          },
+        )
+
+        this._jitsiConnection.connect()
+      },
+    )
   }
 
   public disconnect(): void {
@@ -137,27 +137,27 @@ class Connection extends EventEmitter {
     this._jitsiConference = this._jitsiConnection?.initJitsiConference('conference1', {})
 
     this._jitsiConference?.on(
-            (JitsiEvents.conference.TRACK_ADDED),
-            () => {
-              this._loggerHandler?.log('Joined a conference room.')
-            },
-        )
+      (JitsiEvents.conference.TRACK_ADDED),
+      () => {
+        this._loggerHandler?.log('Joined a conference room.')
+      },
+    )
     this._jitsiConference?.on(
-            JitsiEvents.conference.CONFERENCE_JOINED,
-            () => {
-              this._loggerHandler?.log('Joined a conference room.')
-            },
-        )
+      JitsiEvents.conference.CONFERENCE_JOINED,
+      () => {
+        this._loggerHandler?.log('Joined a conference room.')
+      },
+    )
 
     JitsiMeetJS.createLocalTracks().then(
-            (tracks) => {
-                // Do something on local tracks.
+      (tracks: Array<JitsiTrack>) => {
+        // Do something on local tracks.
 
-                // Join room.
-              this._jitsiConference?.join('')
-              console.info(tracks)
-            },
-        )
+        // Join room.
+        this._jitsiConference?.join('')
+        console.info(tracks)
+      },
+    )
   }
 
   private onConnectionEstablished() {
@@ -174,5 +174,5 @@ class Connection extends EventEmitter {
 }
 
 const connection = new Connection()
-export {Connection, connection}
+export { Connection, connection }
 

@@ -43,12 +43,4 @@
 //     export function foo(): void;
 // }
 
-// lib-jitsi-meet
-// export as namespace JitsiMeetLib;
-// export = JitsiMeetLib;
-
-declare module '@libs/lib-jitsi-meet' {
-    import * as JitsiMeetJS from "JitsiMeetJS";
-
-    export default JitsiMeetJS;
-}
+export * from './JitsiMeetJS';
