@@ -1,4 +1,4 @@
-import JitsiMeetJS from '@libs/lib-jitsi-meet'
+const JitsiMeetJS = require('@libs/lib-jitsi-meet')
 import store from '@stores/ConnectionInfo'
 import {EventEmitter} from 'events'
 import {ConnectionStates} from './Constants'
@@ -17,7 +17,7 @@ const JitsiEvents = JitsiMeetJS.events
 console.log(`JitsiMeetJS Version: ${JitsiMeetJS.version}`)
 
 
-const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
+const initOptions = {
   useIPv6: false,
   disableSimulcast: false,
   enableWindowOnErrorHandler: false,
@@ -53,8 +53,8 @@ class Connection extends EventEmitter {
     return new Connection()
   }
 
-  private _jitsiConnection?: JitsiMeetJS.JitsiConnection
-  private _jitsiConference?: JitsiMeetJS.JitsiConference
+  private _jitsiConnection?: any
+  private _jitsiConference?: any
   private _loggerHandler: ILoggerHandler | undefined
   public state: ConnectionStates
   public version: string
@@ -150,7 +150,7 @@ class Connection extends EventEmitter {
         )
 
     JitsiMeetJS.createLocalTracks().then(
-            (tracks) => {
+            (tracks: any) => {
                 // Do something on local tracks.
 
                 // Join room.
