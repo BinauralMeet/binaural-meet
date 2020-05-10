@@ -1,7 +1,11 @@
 import {Pose2DMap, Pose3DAudio} from '@models/Participant'
 
-function degree2Radian(degree: number): number {
+export function degree2Radian(degree: number): number {
   return degree * Math.PI / 180
+}
+
+export function radian2Degree(radian: number): number {
+  return radian * 180 / Math.PI
 }
 
 // relative pose for coordinate: position orientation direction is from positive axis x to positive axis y
@@ -70,4 +74,8 @@ export function extractScale(matrix: DOMMatrix | DOMMatrixReadOnly): [number, nu
     extractScaleX(matrix),
     extractScaleY(matrix),
   ]
+}
+
+export function extractRotation(matrix: DOMMatrix | DOMMatrixReadOnly): number {
+  return Math.atan2(-matrix.c, matrix.a)
 }
