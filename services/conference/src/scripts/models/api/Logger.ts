@@ -17,22 +17,23 @@ class Logger {
     if (this.handlers.has(name)) {
       throw 'Duplicate handler name'
     } else {
-      this.handlers.set(name, this._createHandler(name, 'log'))
+      this.handlers.set(name, this.createHandler(name, 'log'))
+
       return this.handlers.get(name)
     }
 
   }
 
-  private _createHandler(handlerName: string, defaultLevel: string): ILoggerHandler {
+  private createHandler(handlerName: string, defaultLevel: string): ILoggerHandler {
     return {
       defaultLevel,
-      log: this._wrappedLoggging(handlerName, console.log),
-      warn: this._wrappedLoggging(handlerName, console.warn),
-      error: this._wrappedLoggging(handlerName, console.error),
+      log: this.wrappedLoggging(handlerName, console.log),
+      warn: this.wrappedLoggging(handlerName, console.warn),
+      error: this.wrappedLoggging(handlerName, console.error),
     }
   }
 
-  private _wrappedLoggging(handlerName: string, level: Function) {
+  private wrappedLoggging(handlerName: string, level: Function) {
     return (msg: string) => level(`[${handlerName}] - ${msg}`)
   }
 }

@@ -50,8 +50,8 @@ const ConnectionEvents = {
 
 class Connection extends EventEmitter {
   static createConnection(): Connection {
-      return new Connection()
-    }
+    return new Connection()
+  }
 
   private _jitsiConnection?: JitsiMeetJS.JitsiConnection
   private _jitsiConference?: JitsiMeetJS.JitsiConference
@@ -60,40 +60,41 @@ class Connection extends EventEmitter {
   public version: string
 
   constructor() {
-      super()
+    super()
 
-      this.state = ConnectionStates.Disconnected
-      this.version = '0.0.1'
-      this._loggerHandler = ApiLogger.setHandler('Party-Conncetion')
-    }
+    this.state = ConnectionStates.Disconnected
+    this.version = '0.0.1'
+    this._loggerHandler = ApiLogger.setHandler('Party-Conncetion')
+  }
 
   public init(): Promise<string> {
-      this._loggerHandler?.log('Start initialization.')
-      this._registerEventHandlers()
+    this._loggerHandler?.log('Start initialization.')
+    this.registerEventHandlers()
 
-      return this._initJitsiConnection().then(
+    return this.initJitsiConnection().then(
             () => {
-              this._initJitsiConference()
+              this.initJitsiConference()
+
               return Promise.resolve('Successed.')
             },
         )
-    }
+  }
 
-  private _registerEventHandlers() {
-      this.on(
+  private registerEventHandlers() {
+    this.on(
             ConnectionEvents.CONNECTION_ESTABLISHED,
-            this._onConnectionEstablished.bind(this),
+            this.onConnectionEstablished.bind(this),
         )
 
-      this.on(
+    this.on(
             ConnectionEvents.CONNECTION_DISCONNECTED,
-            this._onConnectionDisposed.bind(this),
+            this.onConnectionDisposed.bind(this),
         )
-    }
+  }
 
 
-  private _initJitsiConnection(): Promise<void> {
-      return new Promise(
+  private initJitsiConnection(): Promise<void> {
+    return new Promise(
             (resolve, reject) => {
               JitsiMeetJS.init(initOptions)
 
@@ -125,30 +126,30 @@ class Connection extends EventEmitter {
               this._jitsiConnection.connect()
             },
         )
-    }
+  }
 
   public disconnect(): void {
-      this._jitsiConnection?.disconnect()
-      this._loggerHandler?.log('Disconnection order has been sent.')
-    }
+    this._jitsiConnection?.disconnect()
+    this._loggerHandler?.log('Disconnection order has been sent.')
+  }
 
-  private _initJitsiConference() {
-      this._jitsiConference = this._jitsiConnection?.initJitsiConference('conference1', {})
+  private initJitsiConference() {
+    this._jitsiConference = this._jitsiConnection?.initJitsiConference('conference1', {})
 
-      this._jitsiConference?.on(
+    this._jitsiConference?.on(
             (JitsiEvents.conference.TRACK_ADDED),
             () => {
               this._loggerHandler?.log('Joined a conference room.')
             },
         )
-      this._jitsiConference?.on(
+    this._jitsiConference?.on(
             JitsiEvents.conference.CONFERENCE_JOINED,
             () => {
               this._loggerHandler?.log('Joined a conference room.')
             },
         )
 
-      JitsiMeetJS.createLocalTracks().then(
+    JitsiMeetJS.createLocalTracks().then(
             (tracks) => {
                 // Do something on local tracks.
 
@@ -157,19 +158,19 @@ class Connection extends EventEmitter {
               console.info(tracks)
             },
         )
-    }
+  }
 
-  private _onConnectionEstablished() {
-      this.state = ConnectionStates.Connected
-      this._loggerHandler?.log('Action[changeState] will be triggered.')
-      store.changeState(this.state)
-    }
+  private onConnectionEstablished() {
+    this.state = ConnectionStates.Connected
+    this._loggerHandler?.log('Action[changeState] will be triggered.')
+    store.changeState(this.state)
+  }
 
-  private _onConnectionDisposed() {
-      this.state = ConnectionStates.Disconnected
-      this._loggerHandler?.log('Action[changeState] will be triggered.')
-      store.changeState(this.state)
-    }
+  private onConnectionDisposed() {
+    this.state = ConnectionStates.Disconnected
+    this._loggerHandler?.log('Action[changeState] will be triggered.')
+    store.changeState(this.state)
+  }
 }
 
 const connection = new Connection()

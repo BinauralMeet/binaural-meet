@@ -1,46 +1,46 @@
 
 let subdomain = ''
 if (subdomain) {
-  subdomain = subdomain.substr(0, subdomain.length - 1).split('.').join('_').toLowerCase() + '.'
+  subdomain = `${subdomain.substr(0, subdomain.length - 1).split('.').join('_').toLowerCase()}.`
 }
 export const config = {
   hosts: {
-      domain: 'beta.meet.jit.si',
+    domain: 'beta.meet.jit.si',
 
-      muc: 'conference.beta.meet.jit.si', // FIXME: use XEP-0030
-      focus: 'focus.beta.meet.jit.si',
-    },
+    muc: 'conference.beta.meet.jit.si', // FIXME: use XEP-0030
+    focus: 'focus.beta.meet.jit.si',
+  },
   disableSimulcast: false,
   enableRemb: true,
   enableTcc: true,
   resolution: 720,
   constraints: {
-      video: {
-          height: {
-              ideal: 720,
-              max: 720,
-              min: 180,
-            },
-          width: {
-              ideal: 1280,
-              max: 1280,
-              min: 320,
-            },
-        },
+    video: {
+      height: {
+        ideal: 720,
+        max: 720,
+        min: 180,
+      },
+      width: {
+        ideal: 1280,
+        max: 1280,
+        min: 320,
+      },
     },
+  },
   externalConnectUrl: '//beta.meet.jit.si/http-pre-bind',
   analytics: {
-      amplitudeAPPKey: 'fafdba4c3b47fe5f151060ca37f02d2f',
-      whiteListedEvents: ['conference.joined', 'page.reload.scheduled', 'rejoined', 'transport.stats'],
-    },
+    amplitudeAPPKey: 'fafdba4c3b47fe5f151060ca37f02d2f',
+    whiteListedEvents: ['conference.joined', 'page.reload.scheduled', 'rejoined', 'transport.stats'],
+  },
   enableP2P: true, // flag to control P2P connections
     // New P2P options
   p2p: {
-      enabled: true,
-      preferH264: true,
-      disableH264: true,
-      useStunTurn: true, // use XEP-0215 to fetch STUN and TURN servers for the P2P connection
-    },
+    enabled: true,
+    preferH264: true,
+    disableH264: true,
+    useStunTurn: true, // use XEP-0215 to fetch STUN and TURN servers for the P2P connection
+  },
   useStunTurn: true, // use XEP-0215 to fetch TURN servers for the JVB connection
   useIPv6: false, // ipv6 support. use at your own risk
   useNicks: false,
@@ -91,8 +91,8 @@ export const config = {
 
   hiddenDomain: 'recorder.meet.jit.si',
   dropbox: {
-      appKey: '3v5iyto7n7az02w',
-    },
+    appKey: '3v5iyto7n7az02w',
+  },
   transcribingEnabled: false,
   enableRecording: true,
   liveStreamingEnabled: true,
@@ -119,49 +119,49 @@ export const config = {
   enableLayerSuspension: false,
   feedbackPercentage: 0,
   chromeExtensionBanner: {
-      url: 'https://chrome.google.com/webstore/detail/jitsi-meetings/kglhbbefdnlheedjiejgomgmfplipfeb',
-      chromeExtensionsInfo: [{path: 'jitsi-logo-48x48.png', id: 'kglhbbefdnlheedjiejgomgmfplipfeb'}],
-    },
+    url: 'https://chrome.google.com/webstore/detail/jitsi-meetings/kglhbbefdnlheedjiejgomgmfplipfeb',
+    chromeExtensionsInfo: [{path: 'jitsi-logo-48x48.png', id: 'kglhbbefdnlheedjiejgomgmfplipfeb'}],
+  },
   hepopAnalyticsUrl: '',
   hepopAnalyticsEvent: {
-      product: 'lib-jitsi-meet',
-      subproduct: 'meet-jit-si',
-      name: 'jitsi.page.load.failed',
-      action: 'page.load.failed',
-      actionSubject: 'page.load',
-      type: 'page.load.failed',
+    product: 'lib-jitsi-meet',
+    subproduct: 'meet-jit-si',
+    name: 'jitsi.page.load.failed',
+    action: 'page.load.failed',
+    actionSubject: 'page.load',
+    type: 'page.load.failed',
+    source: 'page.load',
+    attributes: {
+      type: 'operational',
       source: 'page.load',
-      attributes: {
-          type: 'operational',
-          source: 'page.load',
-        },
-      server: 'meet.jit.si',
     },
+    server: 'meet.jit.si',
+  },
   deploymentInfo: {
-      environment: 'meet-jit-si',
-      envType: 'prod',
-      releaseNumber: '631',
-      shard: 'meet-jit-si-ap-se-1b-s107',
-      region: 'ap-southeast-1',
-      userRegion: 'ap-southeast-1',
-      crossRegion: (!'ap-southeast-1' || 'ap-southeast-1' === 'ap-southeast-1') ? 0 : 1,
-    },
+    environment: 'meet-jit-si',
+    envType: 'prod',
+    releaseNumber: '631',
+    shard: 'meet-jit-si-ap-se-1b-s107',
+    region: 'ap-southeast-1',
+    userRegion: 'ap-southeast-1',
+    crossRegion: (!'ap-southeast-1' || 'ap-southeast-1' === 'ap-southeast-1') ? 0 : 1,
+  },
   rttMonitor: {
-      enabled: false,
-      initialDelay: 30000,
-      getStatsInterval: 10000,
-      analyticsInterval: 60000,
-      stunServers: {'us-east-1': 'all-us-east-1-turn.jitsi.net:443', 'ap-se-2': 'all-ap-se-2-turn.jitsi.net:443', 'ap-se-1': 'all-ap-se-1-turn.jitsi.net:443', 'us-west-2': 'all-us-west-2-turn.jitsi.net:443', 'eu-central-1': 'all-eu-central-1-turn.jitsi.net:443', 'eu-west-1': 'all-eu-west-1-turn.jitsi.net:443'},
-    },
+    enabled: false,
+    initialDelay: 30000,
+    getStatsInterval: 10000,
+    analyticsInterval: 60000,
+    stunServers: {'us-east-1': 'all-us-east-1-turn.jitsi.net:443', 'ap-se-2': 'all-ap-se-2-turn.jitsi.net:443', 'ap-se-1': 'all-ap-se-1-turn.jitsi.net:443', 'us-west-2': 'all-us-west-2-turn.jitsi.net:443', 'eu-central-1': 'all-eu-central-1-turn.jitsi.net:443', 'eu-west-1': 'all-eu-west-1-turn.jitsi.net:443'},
+  },
   e2eping: {
-      pingInterval: -1,
-    },
+    pingInterval: -1,
+  },
   abTesting: {
-    },
+  },
   testing: {
-      capScreenshareBitrate: 1,
-      octo: {
-          probability: 1,
-        },
+    capScreenshareBitrate: 1,
+    octo: {
+      probability: 1,
     },
+  },
 }

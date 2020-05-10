@@ -14,14 +14,14 @@ export class ConnectionInfo implements Store<IConnectionInfo> {
     state: ConnectionStates
 
   constructor() {
-      this.apiVersion = 'INVALID'
-      this.state = ConnectionStates.Disconnected
-    }
+    this.apiVersion = 'INVALID'
+    this.state = ConnectionStates.Disconnected
+  }
 
   @action
     changeState(newState: ConnectionStates) {
-      this.state = newState
-    }
+    this.state = newState
+  }
 }
 
 export default new ConnectionInfo()
