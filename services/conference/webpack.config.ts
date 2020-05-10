@@ -11,18 +11,17 @@ const DEV_CONFERENCE_ID = 'conference-name'
 
 const config: webpack.Configuration = {
   stats: 'normal',
-  entry: './src/scripts/index.ts',
+  entry: './src/scripts/index.tsx',
   devtool: 'source-map',
   mode: "development",
   optimization: {
     minimize: false
   },
   devServer: {
-    contentBase: path.join(__dirname, 'dist'),
+    contentBase: 'dist',
     compress: true,
     port: 9000,
-    contentBasePublicPath: `/${DEV_CONFERENCE_ID}`,
-    openPage: `${DEV_CONFERENCE_ID}`,
+    openPage: `?name=${DEV_CONFERENCE_ID}`,
   },
   output: {
     path: path.resolve(__dirname, 'dist'),

@@ -1,4 +1,3 @@
-import {assert} from '@models/utils'
 import store from '@stores/Participants'
 import {autorun} from 'mobx'
 import {ConnectedGroup} from './ConnectedGroup'
@@ -34,7 +33,6 @@ export class ConnectedManager {
     const group = this.manager.addSpeaker(id)
 
     const remote = store.find(id)
-    assert(remote !== undefined)
     const local = store.local
 
     this.connectedGroups[id] = new ConnectedGroup(local, remote, group)

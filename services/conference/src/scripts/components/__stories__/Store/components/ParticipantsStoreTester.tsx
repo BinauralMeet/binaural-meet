@@ -36,8 +36,5 @@ const Controller: React.FC<{}> = () => {
 
 const updateP0Orientation = action('Change participant 0\'s orientation', () => {
   const participantStore = store.find('participant_0')
-  if (participantStore === undefined) {
-    return
-  }
   participantStore.pose.orientation = Math.round(Math.random() * 360)
 })

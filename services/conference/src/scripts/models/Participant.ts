@@ -21,10 +21,11 @@ export interface Information {
   name: string
   email?: string
   md5Email?: string
+  avatarSrc?: string
 }
 
 export interface Perceptibility {
-  visibility?: boolean
+  visibility: boolean
   audibility: boolean
 }
 

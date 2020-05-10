@@ -5,7 +5,6 @@ import React from 'react'
 
 import {makeStyles} from '@material-ui/core'
 import {Audiotrack, Hearing} from '@material-ui/icons'
-import {assert} from 'models/utils'
 
 const useStylesPs = makeStyles({
   root: {
@@ -53,7 +52,6 @@ interface ParticipantProps {
 }
 const ParticipantVisualizer: React.FC<ParticipantProps> = (props) => {
   const participant = usePsStore().find(props.id)
-  assert(participant !== undefined)
   console.log('render ', participant.id)
 
   const classes = useObserver(() => useStylesP(participant.pose.position))

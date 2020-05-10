@@ -10,6 +10,7 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noImplicitReturns": true,
+    "downlevelIteration": true,
     "baseUrl": "src/scripts/",
     "paths": {
       "@models/*": [
@@ -26,6 +27,9 @@
       ],
       "@libs/*": [
         "../../libs/*"
+      ],
+      "@test-utils/*": [
+        "__tests__/utils/*"
       ]
     },
     "typeRoots": [
