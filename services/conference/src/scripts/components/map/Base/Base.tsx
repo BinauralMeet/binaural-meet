@@ -56,12 +56,8 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
         const [md, ma] = memo
 
-        console.log(d, a)
-
         const div = container.current as HTMLDivElement
         const center = subV(origin as [number, number], [div.offsetLeft, div.offsetTop] as [number, number])
-
-        console.log(center)
 
         let scale = d / md
         scale = limitScale(extractScaleX(matrix), scale)
