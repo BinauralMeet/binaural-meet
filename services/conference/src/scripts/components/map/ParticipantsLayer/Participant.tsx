@@ -4,6 +4,7 @@ import {memoComponent} from '@hooks/utils'
 import {makeStyles} from '@material-ui/core/styles'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
+import {useClass as useCounterRotationClass} from '../utils/counterRotation'
 
 interface StyleProps {
   position: [number, number]
@@ -28,7 +29,9 @@ const Participant: React.FC<ParticipantProps> = (props) => {
     position,
   })
 
-  return <div className={classes.root}>
+  const antiRotationClass = useCounterRotationClass()
+
+  return <div className={[classes.root, antiRotationClass].join(' ')}>
     <Avatar {...props} />
   </div>
 }

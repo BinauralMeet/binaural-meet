@@ -3,6 +3,7 @@ import {makeStyles} from '@material-ui/core/styles'
 import {extractScaleX, multiply, rotateVector2D, transformPoint2D} from '@models/utils'
 import React, {useEffect, useRef, useState} from 'react'
 import {subV, useGesture} from 'react-use-gesture'
+import {Provider as CRProvider, useStyles as useCRStyles} from '../utils/counterRotation'
 
 interface StyleProps {
   matrix: DOMMatrixReadOnly,
@@ -107,12 +108,15 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
     mouse: [relativeMouse.x, relativeMouse.y],
   }
   const classes = useStyles(styleProps)
+  const antiRotationClass = useCRStyles({matrix}).antiRotation
 
   return (
     <div className={[classes.root, props.className].join(' ')} ref={container}>
-      <div id="map-transform" className={classes.transform}>
-        {props.children}
-      </div>
+      <CRProvider value={antiRotationClass}>
+        <div id="map-transform" className={classes.transform}>
+          {props.children}
+        </div>
+      </CRProvider>
     </div>
   )
 }
