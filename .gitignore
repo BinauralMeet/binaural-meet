@@ -99,3 +99,4 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.gitignore.io/api/git,react,macos,windows,visualstudiocode
+services/conference/src/scripts/models/api/haselab.config.js
