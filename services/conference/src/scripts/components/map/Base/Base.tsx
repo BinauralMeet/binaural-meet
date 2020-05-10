@@ -1,5 +1,5 @@
 import {BaseProps as BP} from '@components/utils'
-import {makeStyles} from '@material-ui/core'
+import {makeStyles} from '@material-ui/core/styles'
 import {extractScaleX, multiply, rotateVector2D, transformPoint2D} from '@models/utils'
 import React, {useEffect, useRef, useState} from 'react'
 import {subV, useGesture} from 'react-use-gesture'

@@ -1,27 +1,27 @@
-import { Store } from "./utils";
-import { ConnectionStates } from "@models/api";
-import { observable, action } from "mobx";
+import {ConnectionStates} from '@models/api'
+import {action, observable} from 'mobx'
+import {Store} from './utils'
 
 interface IConnectionInfo {
-    apiVersion: string,
-    state: ConnectionStates;
+  apiVersion: string,
+  state: ConnectionStates
 }
 
 export class ConnectionInfo implements Store<IConnectionInfo> {
-    apiVersion: string;
+  apiVersion: string
 
-    @observable
-    state: ConnectionStates;
+  @observable
+    state: ConnectionStates
 
-    constructor() {
-        this.apiVersion = "INVALID";
-        this.state = ConnectionStates.Disconnected;
+  constructor() {
+      this.apiVersion = 'INVALID'
+      this.state = ConnectionStates.Disconnected
     }
 
-    @action
+  @action
     changeState(newState: ConnectionStates) {
-        this.state = newState;
+      this.state = newState
     }
 }
 
-export default new ConnectionInfo();
+export default new ConnectionInfo()

@@ -63,7 +63,7 @@ export class NodeGroup {
   }
 
   updateBroadcast(broadcast: boolean) {
-    if (broadcast === false) {
+    if (!broadcast) {
       this.pannerNode.refDistance = DEFAULT_PANNER_NODE_CONFIG.refDistance
     } else {
       this.pannerNode.refDistance = BROADCAST_DISTANCE
@@ -71,7 +71,7 @@ export class NodeGroup {
   }
 
   updateAudibility(audibility: boolean) {
-    if (audibility === true) {
+    if (audibility) {
       this.gainNode.connect(this.pannerNode)
     } else {
       this.gainNode.disconnect()

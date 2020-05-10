@@ -13,7 +13,7 @@ const config: webpack.Configuration = {
   stats: 'normal',
   entry: './src/scripts/index.tsx',
   devtool: 'source-map',
-  mode: "development",
+  mode: 'development',
   optimization: {
     minimize: false
   },

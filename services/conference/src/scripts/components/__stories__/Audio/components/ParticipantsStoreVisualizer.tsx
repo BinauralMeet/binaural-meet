@@ -3,7 +3,7 @@ import {memoComponent} from '@hooks/utils'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 
-import {makeStyles} from '@material-ui/core'
+import {makeStyles} from '@material-ui/core/styles'
 import {Audiotrack, Hearing} from '@material-ui/icons'
 
 const useStylesPs = makeStyles({

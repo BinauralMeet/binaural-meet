@@ -3,4 +3,4 @@ enum ConnectionStates {
     Disconnected, Connected,
 }
 
-export { ConnectionStates }
+export {ConnectionStates}

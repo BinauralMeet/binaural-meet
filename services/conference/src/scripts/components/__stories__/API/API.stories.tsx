@@ -1,25 +1,26 @@
-import { connection as connectionInstance } from "@models/api";
+import {connection as connectionInstance} from '@models/api'
 
-import React from 'react';
-import { StoreProvider, useStore } from "@hooks/ConnectionInfoStore";
-import store from "@stores/ConnectionInfo";
+import {StoreProvider, useStore} from '@hooks/ConnectionInfoStore'
+import store from '@stores/ConnectionInfo'
+import React from 'react'
 
-import { ButtonGroup, Button } from "@material-ui/core";
-import { useObserver } from "mobx-react-lite";
+import Button from '@material-ui/core/Button'
+import ButtonGroup from '@material-ui/core/ButtonGroup'
+import {useObserver} from 'mobx-react-lite'
 
 export default {
   title: 'Connection',
 }
 
 const Controller: React.FC<{}> = () => {
-  const connectionInfo = useStore();
+  const connectionInfo = useStore()
 
   const callbackConnect = () => {
-    connectionInstance.init();
+    connectionInstance.init()
   }
 
   const callbackDisconnect = () => {
-    connectionInstance.disconnect();
+    connectionInstance.disconnect()
   }
 
   return (
@@ -44,7 +45,7 @@ export const connection: React.FC<{}> = () => {
           <div>Connection.Version: {store.apiVersion}</div>
         </div>
       )
-    }
+    },
   )
 
   return (
