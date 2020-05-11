@@ -5,7 +5,7 @@ import Participant from './Participant'
 
 export const ParticipantsLayer: React.FC<{}> = () => {
   const store = useStore()
-  const ids = useObserver(() => Array.from(store.remote.keys()).filter(id => (
+  const ids = useObserver(() => Array.from(store.remote.keys()).concat([store.localId]).filter(id => (
     store.find(id).perceptibility.visibility
   )))
   const elements = ids.map(id => <Participant key={id} participantId={id} size={50} />)

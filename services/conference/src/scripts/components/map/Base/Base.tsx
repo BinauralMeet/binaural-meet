@@ -3,7 +3,7 @@ import {makeStyles} from '@material-ui/core/styles'
 import {extractScaleX, multiply, rotateVector2D, transformPoint2D} from '@models/utils'
 import React, {useEffect, useRef, useState} from 'react'
 import {subV, useGesture} from 'react-use-gesture'
-import {Provider as CRProvider, useStyles as useCRStyles} from '../utils/counterRotation'
+import {Provider as TransformProvider, createValue} from '../utils/useTransform'
 
 interface StyleProps {
   matrix: DOMMatrixReadOnly,
@@ -56,8 +56,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
         const [md, ma] = memo
 
-        const div = container.current as HTMLDivElement
-        const center = subV(origin as [number, number], [div.offsetLeft, div.offsetTop] as [number, number])
+        const center = subV(origin as [number, number], getContainerAnchor(container))
 
         let scale = d / md
         scale = limitScale(extractScaleX(matrix), scale)
@@ -80,8 +79,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         setMatrix(newMatrix)
       },
       onMove: ({xy}) => {
-        const div = container.current as HTMLDivElement
-        setMouse(subV(xy, [div.offsetLeft, div.offsetTop] as [number, number]))
+        setMouse(subV(xy, getContainerAnchor(container)))
       },
     },
     {
@@ -104,15 +102,16 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
     mouse: [relativeMouse.x, relativeMouse.y],
   }
   const classes = useStyles(styleProps)
-  const antiRotationClass = useCRStyles({matrix}).antiRotation
+
+  const transfromValue = createValue(matrix, getContainerAnchor(container))
 
   return (
     <div className={[classes.root, props.className].join(' ')} ref={container}>
-      <CRProvider value={antiRotationClass}>
+      <TransformProvider value={transfromValue}>
         <div id="map-transform" className={classes.transform}>
           {props.children}
         </div>
-      </CRProvider>
+      </TransformProvider>
     </div>
   )
 }
@@ -129,4 +128,10 @@ function limitScale(currentScale: number, scale: number): number {
   }
 
   return scale
+}
+
+function getContainerAnchor(container: React.RefObject<HTMLDivElement>): [number, number] {
+  if (container.current === null) return [0, 0]
+  const div = container.current
+  return [div.offsetLeft, div.offsetTop]
 }
