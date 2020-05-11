@@ -80,13 +80,13 @@ Calling `render` is not the only way to update styles.
 
 ### Practice
 
-### Problem
+#### Problem
 
 In `Map` component, we allow user to rotate their map. However, user would not willing to see their video avatars also being rotated. Thus, we have to counter rotate those avatars.
 
 The most simple way is to pass down the transform matrix $M$ down to every `Participant`. However, that would cause every `Participant` component render function being re-executed when user change `Map` rotation.
 
-### Solution
+#### Solution
 
 A better way is to create a same CSS class for all `Participant`s. In that class we update the transform to the counter rotation of current $M$. Then we pass the class name to all participants.
 
