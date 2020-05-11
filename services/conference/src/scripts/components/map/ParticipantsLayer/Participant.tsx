@@ -70,4 +70,5 @@ const Participant: React.FC<ParticipantProps> = (props) => {
   )
 }
 
-export default memoComponent(Participant, ['participantId', 'size'])
+export const MemoedParticipant = memoComponent(Participant, ['participantId', 'size'])
+MemoedParticipant.displayName = 'MemorizedParticipant'

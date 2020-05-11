@@ -1,7 +1,7 @@
 import {useStore} from '@hooks/ParticipantsStore'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
-import Participant from './Participant'
+import {MemoedParticipant as Participant} from './Participant'
 
 export const ParticipantsLayer: React.FC<{}> = () => {
   const store = useStore()
@@ -14,3 +14,4 @@ export const ParticipantsLayer: React.FC<{}> = () => {
     {elements}
   </div>
 }
+ParticipantsLayer.displayName = 'ParticipantsLayer'

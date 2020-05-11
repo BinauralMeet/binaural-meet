@@ -30,3 +30,4 @@ const ConnectedAvatar: React.FC<ConnectedAvatarProps> = (props) => {
 }
 
 export const MemoedAvatar = memoComponent(ConnectedAvatar, ['participantId', 'size'])
+MemoedAvatar.displayName = 'MemorizedAvatar'
