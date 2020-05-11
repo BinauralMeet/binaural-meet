@@ -49,6 +49,52 @@ We want to render participants list into UI. If we change only one participants'
 
    ![render performance 1](./imgs/RenderPerformance1.png)
 
+## 2. Batch state updates
+
+### Practice
+
+#### Problem
+
+In map, we allow user to transform 2 things: 1. the pose of map itself, 2. pose of local participant relative to the map.  That means we have 2 coordinates: 1. screen coordinate, what mouse use, 2. map coordinate, what local participant use.
+
+For a point P, $P_{ScreenCoordinate} = M * P_{MapCoordinate}$, where $M$ is transform matrix of map coordinate to screen coordinate.
+
+So, 
+
+- In `Map` component, we would update $M$ when user drag the map. 
+- In every `Participant` component, we would have to refer to $M$ when user drag the participant, to convert mouse position from screen coordinate to map coordinate. Then we could update the position of dragged participant.
+
+The problem is, since we use context to pass $M$ to `Participant`, every time we drag `Map`, every `Participant` would have to update because $M$ changed.
+
+#### Solution
+
+To avoid updating `Participant` when only `Map` is dragged with the assumption: only **one component** would be dragged at the one time.
+
+With above assumption, we could hide the change on $M$ to `Participant` when `Map` is being dragged. Only when drag gesture is ended, we commit the final $M$ to a new state $CommitedM$, and pass $CommitedM$ to `Participant`.
+
+## 3. Using dynamic CSS
+
+### Theory
+
+Calling `render` is not the only way to update styles. 
+
+### Practice
+
+### Problem
+
+In `Map` component, we allow user to rotate their map. However, user would not willing to see their video avatars also being rotated. Thus, we have to counter rotate those avatars.
+
+The most simple way is to pass down the transform matrix $M$ down to every `Participant`. However, that would cause every `Participant` component render function being re-executed when user change `Map` rotation.
+
+### Solution
+
+A better way is to create a same CSS class for all `Participant`s. In that class we update the transform to the counter rotation of current $M$. Then we pass the class name to all participants.
+
+Since the class name would not change. React would not re-render those `Participant`s when rotating `Map`. CSS would automatically apply new styles to them.
 
 ## References
+
 - [Dragging React Performance Forward](https://medium.com/@alexandereardon/dragging-react-performance-forward-688b30d40a33)
+
+### 
+
