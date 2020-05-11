@@ -1,5 +1,8 @@
 {
-    "editor.tabSize": 2,
-    "editor.detectIndentation": false,
-    "files.trimTrailingWhitespace": true
+  "editor.tabSize": 2,
+  "editor.detectIndentation": false,
+  "files.trimTrailingWhitespace": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.tslint": true
+  }
 }
