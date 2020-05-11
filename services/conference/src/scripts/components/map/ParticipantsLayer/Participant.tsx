@@ -4,8 +4,8 @@ import {memoComponent} from '@hooks/utils'
 import {makeStyles} from '@material-ui/core/styles'
 import {action} from 'mobx'
 import {useObserver} from 'mobx-react-lite'
-import React, {useEffect, useRef} from 'react'
-import {subV, useDrag, useGesture} from 'react-use-gesture'
+import React, {useEffect, useRef, useState} from 'react'
+import {addV, subV, useDrag, useGesture} from 'react-use-gesture'
 import {useValue as useTransform} from '../utils/useTransform'
 
 interface StyleProps {
@@ -39,16 +39,12 @@ const Participant: React.FC<ParticipantProps> = (props) => {
   if (participants.isLocal(participant.id)) {
     const bind = useGesture(
       {
-        onDragStart: ({down, event}) => {
+        onDrag: ({down, delta, event}) => {
           if (down) {
             event?.stopPropagation()
-          }
-        },
-        onDrag: ({down, offset, event}) => {
-          if (down) {
-            event?.stopPropagation()
-            console.log('on drag')
-            participant.pose.position = transform.global2Local(offset)
+            event?.preventDefault()
+            participant.pose.position = addV(
+              subV(transform.global2Local(delta), transform.global2Local([0, 0])), position)
           }
         },
       },
