@@ -2,7 +2,7 @@ import {Information, Participant as IParticipant, Perceptibility, Pose2DMap, Str
 import {shallowObservable, Store} from './utils'
 
 export class Participant implements Store<IParticipant> {
-  id: string
+  readonly id: string
   pose = shallowObservable<Pose2DMap>({
     position: [0, 0],
     orientation: 0,
