@@ -1,6 +1,6 @@
 import {connection as connectionInstance} from '@models/api'
 
-import {StoreProvider, useStore} from '@hooks/ConnectionInfoStore'
+import {StoreProvider as ConnectionInfoProvider, useStore} from '@hooks/ConnectionInfoStore'
 import store from '@stores/ConnectionInfo'
 import React from 'react'
 
@@ -36,7 +36,6 @@ const Controller: React.FC<{}> = () => {
 
 
 export const connection: React.FC<{}> = () => {
-  // const connectionInfo = useStore();
   const displayElements = useObserver(
     () => {
       return (
@@ -49,9 +48,12 @@ export const connection: React.FC<{}> = () => {
   )
 
   return (
-    <StoreProvider value={store}>
-      <Controller />
-      {displayElements}
-    </StoreProvider>
+    <ConnectionInfoProvider value={store}>
+      {/* <DummyProvider value={storeDummy}> */}
+        <Controller />
+        {displayElements}
+        {/* <LocalVideo /> */}
+      {/* </DummyProvider> */}
+    </ConnectionInfoProvider>
   )
 }

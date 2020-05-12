@@ -1,6 +1,6 @@
 
 enum ConnectionStates {
-    Disconnected, Connected,
+    Disconnected, Connecting, Connected,
 }
 
 export {ConnectionStates}

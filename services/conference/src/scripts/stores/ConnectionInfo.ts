@@ -2,7 +2,7 @@ import {ConnectionStates} from '@models/api'
 import {action, observable} from 'mobx'
 import {Store} from './utils'
 
-interface IConnectionInfo {
+export interface IConnectionInfo {
   apiVersion: string,
   state: ConnectionStates
 }
@@ -11,7 +11,7 @@ export class ConnectionInfo implements Store<IConnectionInfo> {
   apiVersion: string
 
   @observable
-    state: ConnectionStates
+  state: ConnectionStates
 
   constructor() {
     this.apiVersion = 'INVALID'

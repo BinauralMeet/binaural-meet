@@ -1,12 +1,14 @@
+import store, {ConnectionInfo} from '@stores/ConnectionInfo'
+import {EventEmitter} from 'events'
 import JitsiMeetJS from 'lib-jitsi-meet'
-import store from '@stores/ConnectionInfo'
-import { EventEmitter } from 'events'
-import { ConnectionStates } from './Constants'
-import ApiLogger, { ILoggerHandler } from './Logger'
-import { config } from './test.config'
-
+import {Store} from '../../stores/utils'
+import {ConnectionStates} from './Constants'
+import ApiLogger, {ILoggerHandler} from './Logger'
+import {config} from './test.config'
+// import _ from 'lodash'
 
 // import a global variant $ for lib-jitsi-meet
+import {DummyConnectionStore} from '@test-utils/DummyParticipants'
 import jquery from 'jquery'
 
 declare var global: any
@@ -45,26 +47,27 @@ const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
 const ConnectionEvents = {
   CONNECTION_ESTABLISHED: 'connection_established',
   CONNECTION_DISCONNECTED: 'connection_disconnected',
+  CONNECTION_CONNECTING: 'connection_connecting',
 }
 
 
 class Connection extends EventEmitter {
-  static createConnection(): Connection {
-    return new Connection()
-  }
 
   private _jitsiConnection?: JitsiMeetJS.JitsiConnection
   private _jitsiConference?: JitsiMeetJS.JitsiConference
   private _loggerHandler: ILoggerHandler | undefined
+  private _store: Store<ConnectionInfo>
   public state: ConnectionStates
   public version: string
 
-  constructor() {
+
+  constructor(store: Store<ConnectionInfo>, handlerName = 'PartyConnection') {
     super()
 
     this.state = ConnectionStates.Disconnected
     this.version = '0.0.1'
-    this._loggerHandler = ApiLogger.setHandler('Party-Conncetion')
+    this._loggerHandler = ApiLogger.setHandler(handlerName)
+    this._store = store
   }
 
   public init(): Promise<string> {
@@ -87,6 +90,11 @@ class Connection extends EventEmitter {
     )
 
     this.on(
+      ConnectionEvents.CONNECTION_CONNECTING,
+      this.onConnectionConnecting.bind(this),
+    )
+
+    this.on(
       ConnectionEvents.CONNECTION_DISCONNECTED,
       this.onConnectionDisposed.bind(this),
     )
@@ -101,7 +109,7 @@ class Connection extends EventEmitter {
         this._jitsiConnection = new JitsiMeetJS.JitsiConnection('test', '', config)
 
         this._jitsiConnection.addEventListener(
-          JitsiEvents.connection.CONNECTION_ESTABLISHED,
+          JitsiMeetJS.events.connection.CONNECTION_ESTABLISHED,
           () => {
             this._loggerHandler?.log('Connection has been established.')
             this.emit(ConnectionEvents.CONNECTION_ESTABLISHED)
@@ -109,14 +117,14 @@ class Connection extends EventEmitter {
           },
         )
         this._jitsiConnection.addEventListener(
-          JitsiEvents.connection.CONNECTION_FAILED,
+          JitsiMeetJS.events.connection.CONNECTION_FAILED,
           () => {
             this._loggerHandler?.log('Failed to connect.')
             reject()
           },
         )
         this._jitsiConnection.addEventListener(
-          JitsiEvents.connection.CONNECTION_DISCONNECTED,
+          JitsiMeetJS.events.connection.CONNECTION_DISCONNECTED,
           () => {
             this._loggerHandler?.log('Disconnected from remote server.')
             this.emit(ConnectionEvents.CONNECTION_DISCONNECTED)
@@ -124,6 +132,7 @@ class Connection extends EventEmitter {
         )
 
         this._jitsiConnection.connect()
+        this.emit(ConnectionEvents.CONNECTION_CONNECTING)
       },
     )
   }
@@ -137,42 +146,47 @@ class Connection extends EventEmitter {
     this._jitsiConference = this._jitsiConnection?.initJitsiConference('conference1', {})
 
     this._jitsiConference?.on(
-      (JitsiEvents.conference.TRACK_ADDED),
+      (JitsiMeetJS.events.conference.TRACK_ADDED),
       () => {
         this._loggerHandler?.log('Joined a conference room.')
       },
     )
     this._jitsiConference?.on(
-      JitsiEvents.conference.CONFERENCE_JOINED,
+      JitsiMeetJS.events.conference.CONFERENCE_JOINED,
       () => {
         this._loggerHandler?.log('Joined a conference room.')
       },
     )
 
-    JitsiMeetJS.createLocalTracks().then(
-      (tracks: Array<JitsiTrack>) => {
-        // Do something on local tracks.
+    // JitsiMeetJS.createLocalTracks().then(
+    //   (tracks: JitsiTrack[]) => {
+    //     // Do something on local tracks.
 
-        // Join room.
-        this._jitsiConference?.join('')
-        console.info(tracks)
-      },
-    )
+    //     // Join room.
+    //     this._jitsiConference?.join('')
+    //     console.info(tracks)
+    //   },
+    // )
   }
 
   private onConnectionEstablished() {
     this.state = ConnectionStates.Connected
     this._loggerHandler?.log('Action[changeState] will be triggered.')
-    store.changeState(this.state)
+    this._store.changeState(this.state)
   }
 
   private onConnectionDisposed() {
     this.state = ConnectionStates.Disconnected
     this._loggerHandler?.log('Action[changeState] will be triggered.')
-    store.changeState(this.state)
+    this._store.changeState(this.state)
+  }
+
+  private onConnectionConnecting() {
+    this.state = ConnectionStates.Connecting
+    this._store.changeState(this.state)
   }
 }
 
-const connection = new Connection()
-export { Connection, connection }
+const connection = new Connection(store)
+export {Connection, connection}
 
