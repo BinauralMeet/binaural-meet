@@ -4,10 +4,14 @@ import {Participant} from './Participant'
 
 export class Participants {
   @observable.shallow readonly remote = new Map<string, Participant>()
-  local = new Participant('default_local_participant_id')
+  local = observable.box(new Participant('default_local_participant_id'))
 
   @computed get count(): number {
     return this.remote.size
+  }
+
+  @computed get localId(): string {
+    return this.local.get().id
   }
 
   @action
@@ -20,16 +24,25 @@ export class Participants {
     this.remote.delete(participantId)
   }
 
-  find(participantId: string): Participant {
-    if (participantId === this.local.id) {
+  @action
+  resetLocal(participantId: string) {
+    this.local.set(new Participant(participantId))
+  }
 
-      return this.local
+  find(participantId: string): Participant {
+    if (participantId === this.localId) {
+
+      return this.local.get()
     }
 
     const res = this.remote.get(participantId)
     assert(res !== undefined)
 
     return res
+  }
+
+  isLocal(participantId: string) {
+    return participantId === this.localId
   }
 }
 

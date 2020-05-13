@@ -2,6 +2,7 @@ import HtmlWebpackPlugin from 'html-webpack-plugin'
 import * as path from 'path'
 import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin'
 import * as webpack from 'webpack'
+const Visualizer = require('webpack-visualizer-plugin')
 
 // Handle with error of tsconfig-paths-webpack-plugin
 // https://github.com/dividab/tsconfig-paths-webpack-plugin/issues/32
@@ -88,6 +89,9 @@ const config: webpack.Configuration = {
       template: './src/index.html',
       filename: 'index.html',
       hash: true,
+    }),
+    new Visualizer({
+      filename: './statistics.html',
     }),
   ]
 }

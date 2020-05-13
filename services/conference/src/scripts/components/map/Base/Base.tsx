@@ -3,7 +3,7 @@ import {makeStyles} from '@material-ui/core/styles'
 import {extractScaleX, multiply, rotateVector2D, transformPoint2D} from '@models/utils'
 import React, {useEffect, useRef, useState} from 'react'
 import {subV, useGesture} from 'react-use-gesture'
-import {Provider as CRProvider, useStyles as useCRStyles} from '../utils/counterRotation'
+import {createValue, Provider as TransformProvider} from '../utils/useTransform'
 
 interface StyleProps {
   matrix: DOMMatrixReadOnly,
@@ -37,6 +37,9 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   const [mouse, setMouse] = useState<[number, number]>([0, 0])
   const [matrix, setMatrix] = useState<DOMMatrixReadOnly>(new DOMMatrixReadOnly())
 
+  // changed only when event end, like drag end
+  const [commitedMatrix, setCommitedMatrix] = useState<DOMMatrixReadOnly>(new DOMMatrixReadOnly())
+
   const bind = useGesture(
     {
       onDrag: ({down, delta, event}) => {
@@ -47,6 +50,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
           setMatrix(newMatrix)
         }
       },
+      onDragEnd: () => setCommitedMatrix(matrix),
       onPinch: ({da: [d, a], origin, event, memo}) => {
         event?.preventDefault()
 
@@ -56,12 +60,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
         const [md, ma] = memo
 
-        console.log(d, a)
-
-        const div = container.current as HTMLDivElement
-        const center = subV(origin as [number, number], [div.offsetLeft, div.offsetTop] as [number, number])
-
-        console.log(center)
+        const center = subV(origin as [number, number], getContainerAnchor(container))
 
         let scale = d / md
         scale = limitScale(extractScaleX(matrix), scale)
@@ -77,15 +76,16 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
         return [d, a]
       },
+      onPinchEnd: () => setCommitedMatrix(matrix),
       onWheel: ({movement}) => {
         let scale = Math.pow(1.2, movement[1] / 1000)
         scale = limitScale(extractScaleX(matrix), scale)
         const newMatrix = matrix.scale(scale, scale, 1, ...transformPoint2D(matrix.inverse(), mouse))
         setMatrix(newMatrix)
       },
+      onWheelEnd: () => setCommitedMatrix(matrix),
       onMove: ({xy}) => {
-        const div = container.current as HTMLDivElement
-        setMouse(subV(xy, [div.offsetLeft, div.offsetTop] as [number, number]))
+        setMouse(subV(xy, getContainerAnchor(container)))
       },
     },
     {
@@ -108,15 +108,16 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
     mouse: [relativeMouse.x, relativeMouse.y],
   }
   const classes = useStyles(styleProps)
-  const antiRotationClass = useCRStyles({matrix}).antiRotation
+
+  const transfromValue = createValue(commitedMatrix, getContainerAnchor(container))
 
   return (
     <div className={[classes.root, props.className].join(' ')} ref={container}>
-      <CRProvider value={antiRotationClass}>
+      <TransformProvider value={transfromValue}>
         <div id="map-transform" className={classes.transform}>
           {props.children}
         </div>
-      </CRProvider>
+      </TransformProvider>
     </div>
   )
 }
@@ -133,4 +134,13 @@ function limitScale(currentScale: number, scale: number): number {
   }
 
   return scale
+}
+
+function getContainerAnchor(container: React.RefObject<HTMLDivElement>): [number, number] {
+  if (container.current === null) {
+    return [0, 0]
+  }
+  const div = container.current
+
+  return [div.offsetLeft, div.offsetTop]
 }

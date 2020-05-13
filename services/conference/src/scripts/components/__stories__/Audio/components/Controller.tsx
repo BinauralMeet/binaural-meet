@@ -43,7 +43,7 @@ const addRandomRemoteParticipants = action((id: number) => {
 })
 
 const randomPositionLocal = action(() => {
-  const local = store.local
+  const local = store.local.get()
   local.pose.position = randomPosition()
 })
 
