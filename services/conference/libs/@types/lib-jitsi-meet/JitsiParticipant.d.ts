@@ -16,5 +16,5 @@ declare class JitsiParticipant {
   );
 }
 
-export { JitsiParticipant };
+export default JitsiParticipant;
 

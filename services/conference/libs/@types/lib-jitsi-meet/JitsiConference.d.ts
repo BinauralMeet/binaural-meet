@@ -5,7 +5,7 @@
 import { JitsiConnection } from "./JitsiConnection";
 import JitsiTrack, {TMediaType} from "./modules/RTC/JitsiTrack";
 import JitsiLocalTrack from './modules/RTC/JitsiLocalTrack'
-import { JitsiParticipant } from "./JitsiParticipant";
+import JitsiParticipant from "./JitsiParticipant";
 import { Transcriber } from "./modules";
 
 declare class JitsiConference {

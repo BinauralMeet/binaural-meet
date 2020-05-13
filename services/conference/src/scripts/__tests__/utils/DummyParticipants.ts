@@ -1,4 +1,4 @@
-import {Connection, ConnectionStates} from '@models/api'
+import {ConnectionStates} from '@models/api'
 import {IConnectionInfo} from '@stores/ConnectionInfo'
 import {Store} from '@stores/utils'
 import {action, observable} from 'mobx'
@@ -25,9 +25,9 @@ export const StoreProvider = StoreContext.Provider
 export const useStore = () => useContext(StoreContext)
 
 export const dummyConnectionStore = new DummyConnectionStore()
-const dummyConnection = new Connection(dummyConnectionStore, 'DummyConnection')
+// const dummyConnection = new Connection(dummyConnectionStore, 'DummyConnection')
 
 // Working Draft
 
 
-export {dummyConnection}
+// export {dummyConnection}

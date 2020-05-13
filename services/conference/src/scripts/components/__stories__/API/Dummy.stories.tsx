@@ -1,5 +1,5 @@
-import {ConnectionStates, Logger} from '@models/api'
-import {dummyConnection as connection, dummyConnectionStore as store, StoreProvider, useStore} from '@test-utils/DummyParticipants'
+import {dummyConnection as connection, ConnectionStates, Logger} from '@models/api'
+import {dummyConnectionStore as store, StoreProvider, useStore} from '@test-utils/DummyParticipants'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 
@@ -22,7 +22,7 @@ interface ExtendedHTMLVideoElement extends HTMLVideoElement {
 const LocalVideo: React.FC<{}> = () => {
   const dummyConnectionStore = useStore()
   const localVideoEl = useRef<ExtendedHTMLVideoElement>(null)
-  const callbackOncanPlay = () => {
+  const callbackOnLoadedData = () => {
     let stream: MediaStream
 
     if (localVideoEl.current?.captureStream) {
@@ -43,7 +43,9 @@ const LocalVideo: React.FC<{}> = () => {
   useEffect(
     () => {
       try {
-        connection.init()
+        if (connection.state === ConnectionStates.Disconnected) {
+          connection.init()
+        }
       } catch {
         logger?.log('Something is wrong.')
       }
@@ -55,8 +57,8 @@ const LocalVideo: React.FC<{}> = () => {
       <video
         id="dummy_video"
         ref={localVideoEl}
-        onCanPlay={callbackOncanPlay}
-        playsInline={true} controls={true} muted={true}>
+        onLoadedData={connection.state === ConnectionStates.Connected ? callbackOnLoadedData : undefined}
+        controls={true} loop={true} autoPlay={true}>
         <source src="video/chrome.mp4" type="video/mp4" />
       </video>
     </div>

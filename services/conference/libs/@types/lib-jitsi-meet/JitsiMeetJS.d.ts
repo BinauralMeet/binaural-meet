@@ -4,9 +4,11 @@
 
 export as namespace JitsiMeetJS;
 
-import { JitsiTrack, TrackInfo, JitsiLocalTrack, VideoType, MediaType } from "./modules/RTC/JitsiTrack";
+import JitsiTrack, { TrackInfo, VideoType, MediaType } from "./modules/RTC/JitsiTrack"
+import JitsiLocalTrack from './modules/RTC/JitsiLocalTrack'
 import { JitsiConnection } from './JitsiConnection';
 import { JitsiConference } from "./JitsiConference";
+import JitsiParticipant from "./JitsiParticipant";
 
 export const version: string;
 export const events: JitsiMeetEvents;
