@@ -3,7 +3,8 @@
 // Definitions by: [~YOUR NAME~] <[~A URL FOR YOU~]>
 
 import { JitsiConnection } from "./JitsiConnection";
-import { JitsiTrack, MediaType, JitsiLocalTrack } from "./modules/RTC/JitsiTrack";
+import JitsiTrack, {TMediaType} from "./modules/RTC/JitsiTrack";
+import JitsiLocalTrack from './modules/RTC/JitsiLocalTrack'
 import { JitsiParticipant } from "./JitsiParticipant";
 import { Transcriber } from "./modules";
 
@@ -28,7 +29,7 @@ declare class JitsiConference {
   getAuthLogin(): Object;
   isExternalAuthEnabled(): boolean;
   getExternalAuthUrl(urlForPopup: boolean): Promise<any>;
-  getLocalTracks(mediaType: MediaType): JitsiTrack[];
+  getLocalTracks(mediaType: TMediaType): JitsiTrack[];
   getLocalAudioTrack(): JitsiLocalTrack | null;
   getLocalVideoTrack(): JitsiLocalTrack | null;
   on(eventId: string, handler: Function): void;

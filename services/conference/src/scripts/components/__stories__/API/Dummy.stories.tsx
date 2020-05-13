@@ -1,4 +1,4 @@
-import {ConnectionStates} from '@models/api'
+import {ConnectionStates, Logger} from '@models/api'
 import {dummyConnection as connection, dummyConnectionStore as store, StoreProvider, useStore} from '@test-utils/DummyParticipants'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
@@ -7,11 +7,17 @@ export default {
   title: 'Dummy Connection',
 }
 
+const logger = Logger.default.setHandler('DummyStories')
 
 interface ExtendedHTMLVideoElement extends HTMLVideoElement {
   captureStream?: () => MediaStream
   mozCaptureStream?: () => MediaStream
 }
+
+// const RemoteVideo: React.FC<{}> = () => {
+//   const remoteConnection
+// }
+
 
 const LocalVideo: React.FC<{}> = () => {
   const dummyConnectionStore = useStore()
@@ -27,7 +33,11 @@ const LocalVideo: React.FC<{}> = () => {
       throw new Error('captureStream() is undefined.')
     }
 
-    console.log('got a new stream.')
+    logger?.log('got a new stream.')
+    connection.createJitisLocalTracksFromStream(stream)
+      .then((tracks) => {
+        return connection.joinConference(tracks)
+      })
   }
 
   useEffect(
@@ -35,14 +45,18 @@ const LocalVideo: React.FC<{}> = () => {
       try {
         connection.init()
       } catch {
-        console.log('Something is wrong.')
+        logger?.log('Something is wrong.')
       }
     },
     [],
   )
   const videoEl = (
     <div id="dummy_video_container">
-      <video id="dummy_video" ref={localVideoEl} onCanPlay={callbackOncanPlay}>
+      <video
+        id="dummy_video"
+        ref={localVideoEl}
+        onCanPlay={callbackOncanPlay}
+        playsInline={true} controls={true} muted={true}>
         <source src="video/chrome.mp4" type="video/mp4" />
       </video>
     </div>

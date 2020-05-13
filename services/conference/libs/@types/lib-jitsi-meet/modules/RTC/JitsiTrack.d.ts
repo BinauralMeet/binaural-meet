@@ -4,24 +4,34 @@
 
 import { EventEmitter } from "events";
 
-interface MediaType {
-  AUDIO: 'audio';
-  PRESENTER: 'presenter';
-  VIDEO: 'video';
+// DOMString - audio and video
+export declare namespace MediaType {
+  export const AUDIO: 'audio'
+  export const PRESENTER: 'presenter'
+  export const VIDEO: 'video'
 }
 
+export type TMediaType = typeof MediaType.AUDIO | typeof MediaType.PRESENTER | typeof MediaType.VIDEO
+
+export declare namespace VideoType {
+  export const CAMERA: 'camera'
+  export const DESKTOP: 'desktop'
+}
+
+export type TVideoType = typeof VideoType.CAMERA | typeof VideoType.DESKTOP
+
 interface TrackInfo {
-  deviceId: number;
-  facingMode: any;
-  mediaType: MediaType;
+  deviceId: string;
+  facingMode: string;
+  mediaType: TMediaType;
   resolution: any;
   rtcId: number;
-  sourceId: any;
-  sourceType: any;
+  sourceId?: string;
+  sourceType?: string;
   stream: MediaStream;
   track: any;
-  videoType: any;
-  effects: Object;
+  videoType: TVideoType | null;
+  effects?: Object;
 }
 
 declare class JitsiTrack extends EventEmitter {
@@ -30,13 +40,12 @@ declare class JitsiTrack extends EventEmitter {
     stream: MediaStream,
     track: MediaStreamTrack,
     streamInactiveHandler: Function,
-    trackMediaType: MediaType,
+    trackMediaType: TMediaType,
     videoType: string,
   );
 }
 
-declare class JitsiLocalTrack extends JitsiTrack {
-  constructor(trackInfo: TrackInfo);
-}
 
-export { MediaType, TrackInfo, JitsiLocalTrack, JitsiTrack };
+
+export { TrackInfo };
+export default JitsiTrack

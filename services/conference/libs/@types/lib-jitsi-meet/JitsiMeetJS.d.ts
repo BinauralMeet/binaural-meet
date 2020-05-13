@@ -1,9 +1,10 @@
 // Type definitions for [~THE LIBRARY NAME~] [~OPTIONAL VERSION NUMBER~]
 // Project: [~THE PROJECT NAME~]
 // Definitions by: [~YOUR NAME~] <[~A URL FOR YOU~]>
+
 export as namespace JitsiMeetJS;
 
-import { JitsiTrack } from "./modules/RTC/JitsiTrack";
+import { JitsiTrack, TrackInfo, JitsiLocalTrack, VideoType, MediaType } from "./modules/RTC/JitsiTrack";
 import { JitsiConnection } from './JitsiConnection';
 import { JitsiConference } from "./JitsiConference";
 
@@ -74,7 +75,7 @@ export function init(options?: IJitsiMeetJSOptions): void;
 export function setLogLevel(level: any): void;
 export function createLocalTracks(options?: JitsiTrackOptions, firePermissionPromptIsShownEvent?: boolean): Promise<Array<JitsiTrack>>;
 
-export { JitsiConnection, JitsiConference, JitsiTrack };
+export { JitsiConnection, JitsiConference, JitsiTrack, TrackInfo, JitsiLocalTrack, VideoType, MediaType };
 
 
 

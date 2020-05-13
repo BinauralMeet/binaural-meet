@@ -10,6 +10,8 @@ import {config} from './test.config'
 // import a global variant $ for lib-jitsi-meet
 import {DummyConnectionStore} from '@test-utils/DummyParticipants'
 import jquery from 'jquery'
+// import JitsiTrack from 'lib-jitsi-meet/modules/RTC/JitsiTrack'
+import JitsiLocalTrack from 'lib-jitsi-meet/modules/RTC/JitsiLocalTrack'
 
 declare var global: any
 global.$ = jquery
@@ -57,6 +59,7 @@ class Connection extends EventEmitter {
   private _jitsiConference?: JitsiMeetJS.JitsiConference
   private _loggerHandler: ILoggerHandler | undefined
   private _store: Store<ConnectionInfo>
+  private _isForTest: boolean
   public state: ConnectionStates
   public version: string
 
@@ -68,6 +71,7 @@ class Connection extends EventEmitter {
     this.version = '0.0.1'
     this._loggerHandler = ApiLogger.setHandler(handlerName)
     this._store = store
+    this._isForTest = (handlerName === 'DummyConnection')
   }
 
   public init(): Promise<string> {
@@ -148,7 +152,7 @@ class Connection extends EventEmitter {
     this._jitsiConference?.on(
       (JitsiMeetJS.events.conference.TRACK_ADDED),
       () => {
-        this._loggerHandler?.log('Joined a conference room.')
+        this._loggerHandler?.log('Added a track.')
       },
     )
     this._jitsiConference?.on(
@@ -157,7 +161,6 @@ class Connection extends EventEmitter {
         this._loggerHandler?.log('Joined a conference room.')
       },
     )
-
     // JitsiMeetJS.createLocalTracks().then(
     //   (tracks: JitsiTrack[]) => {
     //     // Do something on local tracks.
@@ -167,6 +170,15 @@ class Connection extends EventEmitter {
     //     console.info(tracks)
     //   },
     // )
+  }
+
+  public joinConference(localTracks: JitsiLocalTrack[]) {
+    this._loggerHandler?.log('Method[joinConference] called.')
+    if (this._jitsiConference) {
+      this.addTracks(localTracks)
+      this._jitsiConference.join('')
+      this._loggerHandler?.log('Conference room joined.')
+    }
   }
 
   private onConnectionEstablished() {
@@ -184,6 +196,49 @@ class Connection extends EventEmitter {
   private onConnectionConnecting() {
     this.state = ConnectionStates.Connecting
     this._store.changeState(this.state)
+  }
+
+  public createJitisLocalTracksFromStream(stream: MediaStream): Promise<JitsiLocalTrack[]> {
+    const videoTrack: MediaStreamTrack = stream.getVideoTracks()[0]
+    const audioTrack: MediaStreamTrack = stream.getAudioTracks()[0]
+    const videoStream: MediaStream = new MediaStream([videoTrack])
+    const audioStream: MediaStream = new MediaStream([audioTrack])
+    const videoTrackInfo: JitsiMeetJS.TrackInfo = {
+      videoType: 'camera',
+      mediaType: 'video',
+      rtcId: 1,
+      stream: videoStream,
+      track: videoTrack,
+      effects: undefined,
+      resolution: videoTrack.getSettings().height,
+      deviceId: 'videofile_chrome',
+      facingMode: 'environment',
+    }
+    const audioTrackInfo: JitsiMeetJS.TrackInfo = {
+      videoType: null,
+      mediaType: 'audio',
+      rtcId: 0,
+      stream: audioStream,
+      track: audioTrack,
+      effects: undefined,
+      resolution: audioTrack.getSettings().height,
+      deviceId: 'videofile_chrome',
+      facingMode: 'environment',
+    }
+
+    return Promise.resolve([
+      new JitsiLocalTrack(videoTrackInfo),
+      new JitsiLocalTrack(audioTrackInfo),
+    ])
+  }
+  public addTracks(tracks: JitsiLocalTrack[]) {
+    if (this._jitsiConference) {
+      for (const track of tracks) {
+        this._jitsiConference.addTrack(track)
+      }
+
+      this._loggerHandler?.log('JitsiLocalTracks have been added.')
+    }
   }
 }
 

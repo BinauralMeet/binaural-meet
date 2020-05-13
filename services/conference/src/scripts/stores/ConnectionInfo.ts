@@ -4,12 +4,11 @@ import {Store} from './utils'
 
 export interface IConnectionInfo {
   apiVersion: string,
-  state: ConnectionStates
+  state: ConnectionStates,
 }
 
 export class ConnectionInfo implements Store<IConnectionInfo> {
   apiVersion: string
-
   @observable
   state: ConnectionStates
 

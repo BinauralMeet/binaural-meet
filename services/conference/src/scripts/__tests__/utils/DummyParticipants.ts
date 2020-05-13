@@ -4,7 +4,6 @@ import {Store} from '@stores/utils'
 import {action, observable} from 'mobx'
 import {createContext, useContext} from 'react'
 
-
 export class DummyConnectionStore implements Store<IConnectionInfo> {
   apiVersion: string
   @observable
