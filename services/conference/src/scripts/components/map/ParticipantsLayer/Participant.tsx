@@ -7,9 +7,14 @@ import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef, useState} from 'react'
 import {addV, subV, useDrag, useGesture} from 'react-use-gesture'
 import {useValue as useTransform} from '../utils/useTransform'
+import Pointer from './Pointer.svg'
+
+const pointerAvatarRatio = 2
 
 interface StyleProps {
-  position: [number, number]
+  position: [number, number],
+  orientation: number,
+  size: number,
 }
 
 const useStyles = makeStyles({
@@ -17,19 +22,33 @@ const useStyles = makeStyles({
     position: 'absolute',
     left: props.position[0],
     top: props.position[1],
+    transform: `rotate(${props.orientation}deg)`,
+  }),
+  avatar: (props: StyleProps) => ({
+    position: 'absolute',
+    left: `-${props.size / 2}px`,
+    top: `-${props.size / 2}px`,
+  }),
+  pointer: (props: StyleProps) => ({
+    position: 'absolute',
+    width: `${pointerAvatarRatio * props.size / 2}`,
+    left: `-${pointerAvatarRatio * props.size / 2}px`,
+    top: `-${pointerAvatarRatio * props.size / 2}px`,
   }),
 })
 
-type ParticipantProps = AvatarProps
+type ParticipantProps = Required<AvatarProps>
 
 const Participant: React.FC<ParticipantProps> = (props) => {
   const participants = useStore()
   const participant = participants.find(props.participantId)
-  const position = useObserver(() => {
-    return participant.pose.position
-  })
+  const participantProps = useObserver(() => ({
+    position: participant.pose.position,
+    orientation: participant.pose.orientation,
+  }))
   const classes = useStyles({
-    position,
+    ...participantProps,
+    size: props.size,
   })
 
   const transform = useTransform()
@@ -44,7 +63,7 @@ const Participant: React.FC<ParticipantProps> = (props) => {
             event?.stopPropagation()
             event?.preventDefault()
             participant.pose.position = addV(
-              subV(transform.global2Local(delta), transform.global2Local([0, 0])), position)
+              subV(transform.global2Local(delta), transform.global2Local([0, 0])), participantProps.position)
           }
         },
       },
@@ -64,8 +83,13 @@ const Participant: React.FC<ParticipantProps> = (props) => {
   }
 
   return (
-    <div className={[classes.root, transform.antiRotationClass].join(' ')} ref={container}>
-      <Avatar {...props} />
+    <div className={classes.root} ref={container}>
+      <div className={classes.pointer}>
+        <Pointer />
+      </div>
+      <div className={[classes.avatar, transform.antiRotationClass].join(' ')}>
+        <Avatar {...props} />
+      </div>
     </div>
   )
 }

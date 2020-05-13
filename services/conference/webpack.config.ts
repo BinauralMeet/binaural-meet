@@ -2,6 +2,7 @@ import HtmlWebpackPlugin from 'html-webpack-plugin'
 import * as path from 'path'
 import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin'
 import * as webpack from 'webpack'
+import * as webpackDevServer from 'webpack-dev-server'
 const Visualizer = require('webpack-visualizer-plugin')
 
 // Handle with error of tsconfig-paths-webpack-plugin
@@ -16,7 +17,7 @@ const config: webpack.Configuration = {
   devtool: 'source-map',
   mode: 'development',
   optimization: {
-    minimize: false
+    minimize: false,
   },
   devServer: {
     contentBase: 'dist',
@@ -38,7 +39,7 @@ const config: webpack.Configuration = {
         // Transpile ES2015 (aka ES6) to ES5.
 
         exclude: [
-          new RegExp(`${__dirname}/libs/lib-jitsi-meet/node_modules/(?!js-utils)`)
+          new RegExp(`${__dirname}/libs/lib-jitsi-meet/node_modules/(?!js-utils)`),
         ],
         loader: 'babel-loader',
         options: {
@@ -58,25 +59,28 @@ const config: webpack.Configuration = {
                   chrome: 58,
                   electron: 2,
                   firefox: 54,
-                  safari: 11
-                }
-              }
+                  safari: 11,
+                },
+              },
             ],
-            '@babel/preset-flow'
+            '@babel/preset-flow',
           ],
           plugins: [
             '@babel/plugin-transform-flow-strip-types',
             '@babel/plugin-proposal-class-properties',
-            '@babel/plugin-proposal-export-namespace-from'
-          ]
+            '@babel/plugin-proposal-export-namespace-from',
+          ],
         },
-        test: /\.js$/
+        test: /\.js$/,
+      }, {
+        test: /\.svg$/,
+        use: ['@svgr/webpack'],
       },
     ],
   },
   resolve: {
     alias: {
-      '@libs/lib-jitsi-meet': path.resolve(__dirname, 'dist', 'lib-jitsi-meet.min')
+      '@libs/lib-jitsi-meet': path.resolve(__dirname, 'dist', 'lib-jitsi-meet.min'),
     },
     extensions: ['.tsx', '.ts', '.js'],
     plugins: [
@@ -93,7 +97,7 @@ const config: webpack.Configuration = {
     new Visualizer({
       filename: './statistics.html',
     }),
-  ]
+  ],
 }
 
 export default config
