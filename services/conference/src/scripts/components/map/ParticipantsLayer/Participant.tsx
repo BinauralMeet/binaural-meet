@@ -22,12 +22,14 @@ const useStyles = makeStyles({
     position: 'absolute',
     left: props.position[0],
     top: props.position[1],
-    transform: `rotate(${props.orientation}deg)`,
   }),
   avatar: (props: StyleProps) => ({
     position: 'absolute',
     left: `-${props.size / 2}px`,
     top: `-${props.size / 2}px`,
+  }),
+  pointerRotate: (props: StyleProps) => ({
+    transform: `rotate(${props.orientation}deg)`,
   }),
   pointer: (props: StyleProps) => ({
     position: 'absolute',
@@ -84,8 +86,8 @@ const Participant: React.FC<ParticipantProps> = (props) => {
 
   return (
     <div className={classes.root} ref={container}>
-      <div className={classes.pointer}>
-        <Pointer />
+      <div className={classes.pointerRotate}>
+        <Pointer className={classes.pointer} />
       </div>
       <div className={[classes.avatar, transform.antiRotationClass].join(' ')}>
         <Avatar {...props} />
