@@ -8,7 +8,7 @@
     "build": "cross-env TS_NODE_PROJECT=\"tsconfig-for-webpack-config.json\" webpack",
     "lint": "tslint --fix -p .",
     "dev": "webpack-dev-server --open",
-    "storybook": "start-storybook -s ./src/scripts/__tests__/blob/",
+    "storybook": "start-storybook -s ./src/scripts/__tests__/blob/ -p 9999",
     "test": "jest"
   },
   "devDependencies": {
@@ -28,6 +28,7 @@
     "@types/lodash": "^4.14.150",
     "@types/node": "^13.13.4",
     "@types/react-dom": "^16.9.7",
+    "@types/storybook__addon-info": "^5.2.1",
     "@types/webpack": "^4.41.12",
     "@types/webpack-dev-server": "^3.10.1",
     "babel-jest": "^26.0.1",
@@ -49,6 +50,7 @@
     "tslint-react": "^5.0.0",
     "tslint-react-hooks": "^2.2.2",
     "typescript": "^3.8.3",
+    "webm-wasm": "^0.4.1",
     "webpack": "^4.43.0",
     "webpack-cli": "^3.3.11",
     "webpack-dev-server": "^3.10.3",

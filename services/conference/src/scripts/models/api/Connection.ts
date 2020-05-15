@@ -233,7 +233,6 @@ class Connection extends EventEmitter {
           this._loggerHandler?.log(`Remote participant ID: ${(<JitsiRemoteTrack>track).getParticipantId()}`)
           this.emit(
             ConferenceEvents.REMOTE_TRACK_ADDED,
-            // TODO: Add JitsiRemoteTrack
             track as JitsiRemoteTrack,
           )
         }
