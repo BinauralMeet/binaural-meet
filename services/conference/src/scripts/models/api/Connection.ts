@@ -73,7 +73,7 @@ class Connection extends EventEmitter {
   private _isForTest: boolean
   public state: ConnectionStates
   public version: string
-  public participants: Map<string, { jitsiInstance: JitsiParticipant, isLocal: boolean}>
+  public participants: Map<string, { jitsiInstance?: JitsiParticipant, isLocal: boolean}>
   public localId: string
 
   // public remotes: JitsiParticipant[]
@@ -188,12 +188,12 @@ class Connection extends EventEmitter {
   private initJitsiConference() {
     this._jitsiConference = this._jitsiConnection?.initJitsiConference('conference1', {})
 
-    this._jitsiConference?.on(
-      (JitsiMeetJS.events.conference.TRACK_ADDED),
-      () => {
-        this._loggerHandler?.log('(Jitsi) Added a track.')
-      },
-    )
+    // this._jitsiConference?.on(
+    //   (JitsiMeetJS.events.conference.TRACK_ADDED),
+    //   () => {
+    //     this._loggerHandler?.log('(Jitsi) Added a track.')
+    //   },
+    // )
     this._jitsiConference?.on(
       JitsiMeetJS.events.conference.CONFERENCE_JOINED,
       () => {
@@ -222,7 +222,7 @@ class Connection extends EventEmitter {
     this._jitsiConference?.on(
       JitsiMeetJS.events.conference.TRACK_ADDED,
       (track: JitsiTrack) => {
-        this._loggerHandler?.log(`Added a ${track.isLocal ? 'local' : 'remote'} track.`, 'Jitsi')
+        this._loggerHandler?.log(`Added a ${track.isLocal() ? 'local' : 'remote'} track.`, 'Jitsi')
 
         if (track.isLocal()) {
           this.emit(
@@ -240,15 +240,15 @@ class Connection extends EventEmitter {
       },
     )
 
-    // JitsiMeetJS.createLocalTracks().then(
-    //   (tracks: JitsiTrack[]) => {
-    //     // Do something on local tracks.
+    JitsiMeetJS.createLocalTracks({ devices: [ 'audio', 'video' ] }).then(
+      (tracks: JitsiTrack[]) => {
+        // Do something on local tracks.
 
-    //     // Join room.
-    //     this._jitsiConference?.join('')
-    //     console.info(tracks)
-    //   },
-    // )
+        // Join room.
+        this._jitsiConference?.join('')
+        // console.info(tracks)
+      },
+    )
   }
 
   private setLocalParticipant() {
@@ -261,6 +261,11 @@ class Connection extends EventEmitter {
         if (local) {
           local.isLocal = true
         }
+      } else {
+        this.participants.set(
+          this.localId,
+          {isLocal: true},
+        )
       }
     }
   }
@@ -352,7 +357,7 @@ class Connection extends EventEmitter {
 
   private onRemoteTrackAdded(track: JitsiRemoteTrack) {
     const remote = ParticiantsStore.remote.get(track.getParticipantId())
-    const warppedT = toTracks(track.getTrack)
+    const warppedT = toTracks(track.getTrack.bind(track))
 
     if (remote) {
       if (track.isAudioTrack()) {
@@ -367,7 +372,7 @@ class Connection extends EventEmitter {
 
   private onLocalTrackAdded(track: JitsiLocalTrack) {
     const local = ParticiantsStore.local.get()
-    const warppedT = toTracks(track.getTrack)
+    const warppedT = toTracks(track.getTrack.bind(track))
 
     if (track.isAudioTrack()) {
       local.stream.audioStream = new MediaStream(warppedT)

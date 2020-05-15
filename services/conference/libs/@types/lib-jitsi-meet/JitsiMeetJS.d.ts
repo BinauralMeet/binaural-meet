@@ -63,14 +63,14 @@ export interface IJitsiMeetJSOptions {
 }
 
 interface JitsiTrackOptions {
-  devices: Array<string>;
-  resolution: string;
-  constraints: any;
-  cameraDeviceId: string;
-  micDeviceId: string;
-  minFps: string;
-  maxFps: string;
-  facingMode: 'user' | 'environment'
+  devices: string[];
+  resolution?: string;
+  constraints?: any;
+  cameraDeviceId?: string;
+  micDeviceId?: string;
+  minFps?: string;
+  maxFps?: string;
+  facingMode?: 'user' | 'environment'
 }
 
 export function init(options?: IJitsiMeetJSOptions): void;
