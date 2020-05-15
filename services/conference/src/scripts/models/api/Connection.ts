@@ -240,15 +240,9 @@ class Connection extends EventEmitter {
       },
     )
 
-    JitsiMeetJS.createLocalTracks({ devices: [ 'audio', 'video' ] }).then(
-      (tracks: JitsiTrack[]) => {
-        // Do something on local tracks.
-
-        // Join room.
-        this._jitsiConference?.join('')
-        // console.info(tracks)
-      },
-    )
+    if (!this._isForTest) {
+      this._jitsiConference?.join('')
+    }
   }
 
   private setLocalParticipant() {
@@ -353,6 +347,18 @@ class Connection extends EventEmitter {
   private onLocalParticipantJoined() {
     this.setLocalParticipant()
     ParticiantsStore.local.set(new Participant(this.localId))
+    JitsiMeetJS.createLocalTracks({ devices: [ 'audio', 'video' ] }).then(
+      (tracks: JitsiTrack[]) => {
+        // Do something on local tracks.
+        for (const track of tracks) {
+          this.emit(
+            ConferenceEvents.LOCAL_TRACK_ADDED,
+            track,
+          )
+          this._loggerHandler?.log('Add localtrack.', 'Track')
+        }
+      },
+    )
   }
 
   private onRemoteTrackAdded(track: JitsiRemoteTrack) {
