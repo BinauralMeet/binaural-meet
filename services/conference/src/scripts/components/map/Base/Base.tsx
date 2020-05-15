@@ -65,7 +65,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         const center = subV(origin as [number, number], getContainerAnchor(container))
 
         let scale = d / md
-        scale = limitScale(extractScaleX(matrix), scale)
+        scale = limitScale(Math.abs(extractScaleX(matrix)), scale)
 
         const changeMatrix = (new DOMMatrix()).scaleSelf(scale, scale, 1).rotateSelf(0, 0, a - ma)
 
