@@ -2,6 +2,7 @@ import {ConnectionInfo, default as ConnectionInfoStore} from '@stores/Connection
 import {default as ParticiantsStore} from '@stores/Participants'
 import {EventEmitter} from 'events'
 import JitsiMeetJS from 'lib-jitsi-meet'
+import JitsiTrack from 'lib-jitsi-meet/modules/RTC/JitsiTrack'
 import {Store} from '../../stores/utils'
 import {ConnectionStates} from './Constants'
 import ApiLogger, {ILoggerHandler} from './Logger'
@@ -14,6 +15,7 @@ import jquery from 'jquery'
 import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
 // import JitsiTrack from 'lib-jitsi-meet/modules/RTC/JitsiTrack'
 import JitsiLocalTrack from 'lib-jitsi-meet/modules/RTC/JitsiLocalTrack'
+import JitsiRemoteTrack from 'lib-jitsi-meet/modules/RTC/JitsiRemoteTrack'
 import { Participant } from '@stores/Participant'
 
 declare var global: any
@@ -21,7 +23,6 @@ global.$ = jquery
 global.jQuery = jquery
 
 const JitsiEvents = JitsiMeetJS.events
-type JitsiTrack = JitsiMeetJS.JitsiTrack
 console.log(`JitsiMeetJS Version: ${JitsiMeetJS.version}`)
 
 const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
@@ -59,6 +60,8 @@ const ConferenceEvents = {
   CONFERENCE_JOINED: 'conference_joined',
   REMOTE_PARTICIPANT_JOINED: 'remote_participant_joined',
   LOCAL_PARTICIPANT_JOINED: 'local_participant_joined',
+  REMOTE_TRACK_ADDED: 'remote_track_added',
+  LOCAL_TRACK_ADDED: 'local_track_added',
 }
 
 class Connection extends EventEmitter {
@@ -129,6 +132,14 @@ class Connection extends EventEmitter {
     this.on(
       ConferenceEvents.REMOTE_PARTICIPANT_JOINED,
       this.onRemoteParticipantJoined.bind(this),
+    )
+    this.on(
+      ConferenceEvents.LOCAL_TRACK_ADDED,
+      this.onLocalTrackAdded.bind(this),
+    )
+    this.on(
+      ConferenceEvents.REMOTE_TRACK_ADDED,
+      this.onRemoteTrackAdded.bind(this),
     )
   }
 
@@ -208,6 +219,27 @@ class Connection extends EventEmitter {
         this.participants.delete(id)
       },
     )
+    this._jitsiConference?.on(
+      JitsiMeetJS.events.conference.TRACK_ADDED,
+      (track: JitsiTrack) => {
+        this._loggerHandler?.log(`Added a ${track.isLocal ? 'local' : 'remote'} track.`, 'Jitsi')
+
+        if (track.isLocal()) {
+          this.emit(
+            ConferenceEvents.LOCAL_TRACK_ADDED,
+            track as JitsiLocalTrack,
+          )
+        } else {
+          this._loggerHandler?.log(`Remote participant ID: ${(<JitsiRemoteTrack>track).getParticipantId()}`)
+          this.emit(
+            ConferenceEvents.REMOTE_TRACK_ADDED,
+            // TODO: Add JitsiRemoteTrack
+            track as JitsiRemoteTrack,
+          )
+        }
+      },
+    )
+
     // JitsiMeetJS.createLocalTracks().then(
     //   (tracks: JitsiTrack[]) => {
     //     // Do something on local tracks.
@@ -317,6 +349,38 @@ class Connection extends EventEmitter {
     this.setLocalParticipant()
     ParticiantsStore.local.set(new Participant(this.localId))
   }
+
+  private onRemoteTrackAdded(track: JitsiRemoteTrack) {
+    const remote = ParticiantsStore.remote.get(track.getParticipantId())
+    const warppedT = toTracks(track.getTrack)
+
+    if (remote) {
+      if (track.isAudioTrack()) {
+        remote.stream.audioStream = new MediaStream(warppedT)
+      } else if (track.isVideoTrack() && track.isScreenSharing()) {
+        remote.stream.screenStream = new MediaStream(warppedT)
+      } else {
+        remote.stream.avatarStream = new MediaStream(warppedT)
+      }
+    }
+  }
+
+  private onLocalTrackAdded(track: JitsiLocalTrack) {
+    const local = ParticiantsStore.local.get()
+    const warppedT = toTracks(track.getTrack)
+
+    if (track.isAudioTrack()) {
+      local.stream.audioStream = new MediaStream(warppedT)
+    } else if (track.isVideoTrack() && track.isScreenSharing()) {
+      local.stream.screenStream = new MediaStream(warppedT)
+    } else {
+      local.stream.avatarStream = new MediaStream(warppedT)
+    }
+  }
+}
+
+const toTracks = (f: () => MediaStreamTrack): MediaStreamTrack[] => {
+  return [f()]
 }
 
 const connection = new Connection(ConnectionInfoStore)

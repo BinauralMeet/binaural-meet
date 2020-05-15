@@ -1,9 +1,9 @@
 
 export interface ILoggerHandler {
   defaultLevel: 'error' | 'warning' | 'log' | string,
-  log: (msg: string) => void
-  warn: (msg: string) => void
-  error: (msg: string) => void
+  log: (msg: string, context?: string) => void
+  warn: (msg: string, context?: string) => void
+  error: (msg: string, context?: string) => void
 }
 
 class Logger {
@@ -34,7 +34,7 @@ class Logger {
   }
 
   private wrappedLoggging(handlerName: string, level: Function) {
-    return (msg: string) => level(`[${handlerName}] - ${msg}`)
+    return (msg: string, context = '') => level(`[${handlerName}](${context}) - ${msg}`)
   }
 }
 
