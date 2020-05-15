@@ -1,6 +1,5 @@
 import {makeStyles} from '@material-ui/core/styles'
-import {extractRotation} from '@models/utils'
-import {transformPoint2D} from '@models/utils'
+import {extractRotation, transformPoint2D} from '@models/utils'
 import {createContext, useContext, useMemo} from 'react'
 import {addV, subV} from 'react-use-gesture'
 
