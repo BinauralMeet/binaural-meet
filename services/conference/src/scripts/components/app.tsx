@@ -1,6 +1,12 @@
+import {StoreProvider} from '@hooks/ParticipantsStore'
+import participantsStore from '@stores/Participants'
 import React from 'react'
-import {Base} from './map/Base'
+import {Map} from './map/map'
 
 export const App: React.FC<{}> = () => {
-  return <Base />
+  return (
+    <StoreProvider value={participantsStore}>
+      <Map />
+    </StoreProvider>
+  )
 }

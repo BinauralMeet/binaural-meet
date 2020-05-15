@@ -1,16 +1,26 @@
 import {App} from '@components/app'
+import {resolveAtEnd} from '@models/utils'
+import * as store from '@stores/index' // init store (DO NOT delete)
 import React from 'react'
 import ReactDOM from 'react-dom'
 
-function component() {
-  const element = document.createElement('div')
+main()
 
-  element.innerHTML = 'Hello webpack'
-
-  return element
+function main() {
+  const startPromise = resolveAtEnd(onStart)()
+  startPromise.then(resolveAtEnd(renderDOM))
+  startPromise.then(resolveAtEnd(connectConference))
 }
 
-document.body.appendChild(component())
+function onStart() {
+  console.log('start')
+}
 
-const root = document.querySelector('#root')
-ReactDOM.render(<App />, root)
+function renderDOM() {
+  const root = document.querySelector('#root')
+  ReactDOM.render(<App />, root)
+}
+
+function connectConference() {
+  // TODO add code
+}

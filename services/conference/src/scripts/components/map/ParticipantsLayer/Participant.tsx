@@ -2,14 +2,17 @@ import {Avatar, AvatarProps} from '@components/avatar'
 import {useStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
 import {makeStyles} from '@material-ui/core/styles'
-import {action} from 'mobx'
 import {useObserver} from 'mobx-react-lite'
-import React, {useEffect, useRef, useState} from 'react'
-import {addV, subV, useDrag, useGesture} from 'react-use-gesture'
+import React, {forwardRef} from 'react'
 import {useValue as useTransform} from '../utils/useTransform'
+import Pointer from './Pointer.svg'
+
+const pointerAvatarRatio = 2
 
 interface StyleProps {
-  position: [number, number]
+  position: [number, number],
+  orientation: number,
+  size: number,
 }
 
 const useStyles = makeStyles({
@@ -18,57 +21,52 @@ const useStyles = makeStyles({
     left: props.position[0],
     top: props.position[1],
   }),
+  avatar: (props: StyleProps) => ({
+    position: 'absolute',
+    left: `-${props.size / 2}px`,
+    top: `-${props.size / 2}px`,
+  }),
+  pointerRotate: (props: StyleProps) => ({
+    transform: `rotate(${props.orientation}deg)`,
+  }),
+  pointer: (props: StyleProps) => ({
+    position: 'absolute',
+    width: `${pointerAvatarRatio * props.size / 2}`,
+    left: `-${pointerAvatarRatio * props.size / 2}px`,
+    top: `-${pointerAvatarRatio * props.size / 2}px`,
+  }),
 })
 
-type ParticipantProps = AvatarProps
+export type ParticipantProps = Required<AvatarProps>
 
-const Participant: React.FC<ParticipantProps> = (props) => {
+const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , ParticipantProps> = (props, ref) => {
   const participants = useStore()
   const participant = participants.find(props.participantId)
-  const position = useObserver(() => {
-    return participant.pose.position
-  })
+  const participantProps = useObserver(() => ({
+    position: participant.pose.position,
+    orientation: participant.pose.orientation,
+  }))
   const classes = useStyles({
-    position,
+    ...participantProps,
+    size: props.size,
   })
 
   const transform = useTransform()
 
-  const container = useRef<HTMLDivElement>(null)
-
-  if (participants.isLocal(participant.id)) {
-    const bind = useGesture(
-      {
-        onDrag: ({down, delta, event}) => {
-          if (down) {
-            event?.stopPropagation()
-            event?.preventDefault()
-            participant.pose.position = addV(
-              subV(transform.global2Local(delta), transform.global2Local([0, 0])), position)
-          }
-        },
-      },
-      {
-        domTarget: container,
-        eventOptions: {
-          passive: false,
-        },
-      },
-    )
-    useEffect(
-      () => {
-        bind()
-      },
-      [bind],
-    )
-  }
-
   return (
-    <div className={[classes.root, transform.antiRotationClass].join(' ')} ref={container}>
-      <Avatar {...props} />
+    <div className={classes.root} ref={ref}>
+      <div className={classes.pointerRotate}>
+        <Pointer className={classes.pointer} />
+      </div>
+      <div className={[classes.avatar, transform.counterRotationClass].join(' ')}>
+        <Avatar {...props} />
+      </div>
     </div>
   )
 }
+
+export const Participant = forwardRef(RawParticipant)
+Participant.displayName = 'Participant'
 
 export const MemoedParticipant = memoComponent(Participant, ['participantId', 'size'])
 MemoedParticipant.displayName = 'MemorizedParticipant'

@@ -16,6 +16,14 @@ module.exports = {
       ],
     });
 
+    // modify storybook's file-loader rule to avoid conflicts with your inline svg
+    const fileLoaderRule = config.module.rules.find(rule => rule.test.test('.svg'));
+    fileLoaderRule.exclude = /\.svg$/;
+    config.module.rules.push({
+      test: /\.svg$/,
+      use: ['@svgr/webpack'],
+    });
+
     config.module.rules.push({
       exclude: [
         new RegExp(`${__dirname}/libs/lib-jitsi-meet/node_modules/(?!js-utils)`)

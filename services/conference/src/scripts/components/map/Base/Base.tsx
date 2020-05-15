@@ -1,6 +1,7 @@
 import {BaseProps as BP} from '@components/utils'
+import {useStore} from '@hooks/ParticipantsStore'
 import {makeStyles} from '@material-ui/core/styles'
-import {extractScaleX, multiply, rotateVector2D, transformPoint2D} from '@models/utils'
+import {extractRotation, extractScaleX, multiply, radian2Degree, rotateVector2D, transformPoint2D} from '@models/utils'
 import React, {useEffect, useRef, useState} from 'react'
 import {subV, useGesture} from 'react-use-gesture'
 import {createValue, Provider as TransformProvider} from '../utils/useTransform'
@@ -33,6 +34,7 @@ const options = {
 
 export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   const container = useRef<HTMLDivElement>(null)
+  const participants = useStore()
 
   const [mouse, setMouse] = useState<[number, number]>([0, 0])
   const [matrix, setMatrix] = useState<DOMMatrixReadOnly>(new DOMMatrixReadOnly())
@@ -63,7 +65,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         const center = subV(origin as [number, number], getContainerAnchor(container))
 
         let scale = d / md
-        scale = limitScale(extractScaleX(matrix), scale)
+        scale = limitScale(Math.abs(extractScaleX(matrix)), scale)
 
         const changeMatrix = (new DOMMatrix()).scaleSelf(scale, scale, 1).rotateSelf(0, 0, a - ma)
 
@@ -73,6 +75,8 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
         const newMatrix = multiply([itm, changeMatrix, tm, matrix])
         setMatrix(newMatrix)
+
+        participants.local.get().pose.orientation = -radian2Degree(extractRotation(newMatrix))
 
         return [d, a]
       },
