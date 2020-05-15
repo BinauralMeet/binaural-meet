@@ -2,10 +2,8 @@ import {Avatar, AvatarProps} from '@components/avatar'
 import {useStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
 import {makeStyles} from '@material-ui/core/styles'
-import {action} from 'mobx'
 import {useObserver} from 'mobx-react-lite'
-import React, {useEffect, useRef, useState} from 'react'
-import {addV, subV, useDrag, useGesture} from 'react-use-gesture'
+import React, {forwardRef} from 'react'
 import {useValue as useTransform} from '../utils/useTransform'
 import Pointer from './Pointer.svg'
 
@@ -39,9 +37,9 @@ const useStyles = makeStyles({
   }),
 })
 
-type ParticipantProps = Required<AvatarProps>
+export type ParticipantProps = Required<AvatarProps>
 
-const Participant: React.FC<ParticipantProps> = (props) => {
+const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , ParticipantProps> = (props, ref) => {
   const participants = useStore()
   const participant = participants.find(props.participantId)
   const participantProps = useObserver(() => ({
@@ -55,46 +53,20 @@ const Participant: React.FC<ParticipantProps> = (props) => {
 
   const transform = useTransform()
 
-  const container = useRef<HTMLDivElement>(null)
-
-  if (participants.isLocal(participant.id)) {
-    const bind = useGesture(
-      {
-        onDrag: ({down, delta, event}) => {
-          if (down) {
-            event?.stopPropagation()
-            event?.preventDefault()
-            participant.pose.position = addV(
-              subV(transform.global2Local(delta), transform.global2Local([0, 0])), participantProps.position)
-          }
-        },
-      },
-      {
-        domTarget: container,
-        eventOptions: {
-          passive: false,
-        },
-      },
-    )
-    useEffect(
-      () => {
-        bind()
-      },
-      [bind],
-    )
-  }
-
   return (
-    <div className={classes.root} ref={container}>
+    <div className={classes.root} ref={ref}>
       <div className={classes.pointerRotate}>
         <Pointer className={classes.pointer} />
       </div>
-      <div className={[classes.avatar, transform.antiRotationClass].join(' ')}>
+      <div className={[classes.avatar, transform.counterRotationClass].join(' ')}>
         <Avatar {...props} />
       </div>
     </div>
   )
 }
+
+export const Participant = forwardRef(RawParticipant)
+Participant.displayName = 'Participant'
 
 export const MemoedParticipant = memoComponent(Participant, ['participantId', 'size'])
 MemoedParticipant.displayName = 'MemorizedParticipant'
