@@ -16,8 +16,11 @@ function nextMessage(target: Worker): Promise<any> {
 }
 
 const baseUrl = 'worker'
-export const worker = new Worker(`${baseUrl}/dist/webm-worker.js`)
-export function init(): Promise<any> {
+export let worker = new Worker(`${baseUrl}/dist/webm-worker.js`)
+export function resetWorker() {
+  worker = new Worker(`${baseUrl}/dist/webm-worker.js`)
+}
+export function init(message = ''): Promise<any> {
   worker.postMessage('webm-wasm.wasm')
 
   return nextMessage(worker).then(
@@ -41,7 +44,7 @@ export function init(): Promise<any> {
           ctx.fillStyle = gradient
           ctx.fillRect((1 / 4) * width, (1 / 4) * height, width / 2, height / 2)
           ctx.font = '48px Arial'
-          ctx.fillText('Hello World', (1 / 4) * width, (1 / 4) * height)
+          ctx.fillText(`Hello World${message}`, (1 / 4) * width, (1 / 4) * height)
           const imageData = ctx.getImageData(0, 0, width, height)
           worker.postMessage(imageData.data.buffer, [imageData.data.buffer])
         }

@@ -6,7 +6,8 @@ import Card from '@material-ui/core/Card'
 import CardContent from "@material-ui/core/CardContent";
 import CardHeader from '@material-ui/core/CardHeader'
 import Grid from "@material-ui/core/Grid";
-import { Button, ButtonGroup, TableRow, TableContainer, Table, TableBody } from '@material-ui/core'
+import { Button, ButtonGroup, TableRow, TableContainer, Table, TableBody, CircularProgress } from '@material-ui/core'
+import { init, worker, resetWorker } from '@test-utils/worker'
 
 
 export default {
@@ -83,15 +84,22 @@ const LocalVideo: React.FC<{}> = () => {
 
 const DummyParticipantVisualizer: React.FC<{}> = () => {
   const [participants, setParticipants] = useState<number[]>([])
+  const [participantStates, setParticipantStates] = useState<boolean[]>([])
+  const [videoElements, setMount] = useState<JSX.Element[]>([])
+
   const handleAddOnClick = () => {
     const currParticipants = [...participants]
     currParticipants.push(currParticipants.length + 1)
+    participantStates.push(false)
     setParticipants(currParticipants)
+    setParticipantStates(participantStates)
   }
   const handleDeleteOnClick = () => {
     const currParticipants = [...participants]
     currParticipants.pop()
+    participantStates.pop()
     setParticipants(currParticipants)
+    setParticipantStates(participantStates)
   }
   const controls = (
     <div id="controls_container">
@@ -102,25 +110,50 @@ const DummyParticipantVisualizer: React.FC<{}> = () => {
     </div>
   )
   const elements = participants.map(
-    (value: number) => {
+    (value: number, index: number) => {
       return (
         <Card key={value}>
-          <CardHeader title={`Pariticipant ${value}`}>
-          </CardHeader>
+          <CardHeader title={`Pariticipant ${value}`} />
           <CardContent>
-            <p>Just a line content for placement.</p>
+            {participantStates[index] ? videoElements[index] : <CircularProgress /> }
           </CardContent>
         </Card>
       )
     },
   )
 
-  // useEffect(
-  //   () => {
+  useEffect(
+    () => {
+      participantStates.map(
+        (state: boolean, index: number) => {
+          if (!state) {
+            init(`Participants${participants[index]}`).then(
+              (ret) => {
+                const webm = ret
+                const blob = new Blob([webm], {type: 'video/webm'})
+                const url = URL.createObjectURL(blob)
 
-  //   },
-  //   [],
-  // )
+                const videoEl = (
+                  <video id="dummy_video" loop={true} autoPlay={true} controls={true}>
+                    <source src={url} />
+                  </video>
+                )
+
+                worker.terminate()
+                resetWorker()
+
+                videoElements.push(videoEl)
+                participantStates[index] = true
+
+                setMount([...videoElements])
+                setParticipantStates([...participantStates])
+              },
+            )
+          }
+        },
+      )
+    },
+  )
 
   return (
     <div>
