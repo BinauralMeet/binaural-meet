@@ -44,7 +44,7 @@ export function init(message = ''): Promise<any> {
           ctx.fillStyle = gradient
           ctx.fillRect((1 / 4) * width, (1 / 4) * height, width / 2, height / 2)
           ctx.font = '48px Arial'
-          ctx.fillText(`Hello World${message}`, (1 / 4) * width, (1 / 4) * height)
+          ctx.fillText(`${message}`, (1 / 4) * width, (1 / 4) * height)
           const imageData = ctx.getImageData(0, 0, width, height)
           worker.postMessage(imageData.data.buffer, [imageData.data.buffer])
         }

@@ -1,6 +1,13 @@
 
-enum ConnectionStates {
-    Disconnected, Connecting, Connected,
+const ConnectionStates = {
+  DISCONNECTED: 'disconnected',
+  CONNECTING: 'connecting',
+  CONNECTED: 'connected',
 }
 
-export {ConnectionStates}
+type ConnectionStatesType =
+  typeof ConnectionStates.DISCONNECTED |
+  typeof ConnectionStates.CONNECTING |
+  typeof ConnectionStates.CONNECTED
+
+export {ConnectionStates, ConnectionStatesType}

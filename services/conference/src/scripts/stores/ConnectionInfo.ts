@@ -1,24 +1,24 @@
-import {ConnectionStates} from '@models/api'
+import {ConnectionStates, ConnectionStatesType} from '@models/api'
 import {action, observable} from 'mobx'
 import {Store} from './utils'
 
 export interface IConnectionInfo {
   apiVersion: string,
-  state: ConnectionStates,
+  state: ConnectionStatesType,
 }
 
 export class ConnectionInfo implements Store<IConnectionInfo> {
   apiVersion: string
   @observable
-  state: ConnectionStates
+  state: ConnectionStatesType
 
   constructor() {
     this.apiVersion = 'INVALID'
-    this.state = ConnectionStates.Disconnected
+    this.state = ConnectionStates.DISCONNECTED
   }
 
   @action
-    changeState(newState: ConnectionStates) {
+    changeState(newState: ConnectionStatesType) {
     this.state = newState
   }
 }

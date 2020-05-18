@@ -1,6 +1,8 @@
 
 export interface ILoggerHandler {
   defaultLevel: 'error' | 'warning' | 'log' | string,
+  trace: (msg: string, context?: string) => void
+  debug: (msg: string, context?: string) => void
   log: (msg: string, context?: string) => void
   warn: (msg: string, context?: string) => void
   error: (msg: string, context?: string) => void
@@ -27,6 +29,8 @@ class Logger {
   private createHandler(handlerName: string, defaultLevel: string): ILoggerHandler {
     return {
       defaultLevel,
+      trace: this.wrappedLoggging(handlerName, console.trace),
+      debug: this.wrappedLoggging(handlerName, console.debug),
       log: this.wrappedLoggging(handlerName, console.log),
       warn: this.wrappedLoggging(handlerName, console.warn),
       error: this.wrappedLoggging(handlerName, console.error),
