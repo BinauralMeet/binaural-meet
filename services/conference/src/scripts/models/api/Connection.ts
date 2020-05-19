@@ -394,7 +394,7 @@ class Connection extends EventEmitter {
     }
   }
 
-  public onConferenceJoined() {
+  private onConferenceJoined() {
     this._loggerHandler?.log('Joined conference room.', 'Party')
   }
   private onLocalParticipantJoined() {

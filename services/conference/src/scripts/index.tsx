@@ -24,5 +24,7 @@ function renderDOM() {
 
 function connectConference() {
   // TODO add code
-  connection.init()
+  connection.init().then(
+    () => connection.joinConference('haselabtest')
+  )
 }
