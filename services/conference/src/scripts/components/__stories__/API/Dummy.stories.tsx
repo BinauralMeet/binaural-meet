@@ -9,11 +9,13 @@ import Grid from "@material-ui/core/Grid";
 import { Button, ButtonGroup, TableRow, TableContainer, Table, TableBody, CircularProgress } from '@material-ui/core'
 import { init as initWorker, worker, resetWorker } from '@test-utils/worker'
 import { FastForward } from '@material-ui/icons'
+import { DummyAudio } from '@test-utils/tone';
 
 
 export default {
   title: 'Dummy Connection',
 }
+
 
 const logger = Logger.default.setHandler('DummyStories')
 
@@ -123,11 +125,16 @@ const DummyParticipantVisualizer: React.FC<{}> = () => {
     // setParticipants(currParticipants)
     // setParticipantStates(participantStates)
   }
+  const handleSoundClick = () => {
+    // runTone()
+    DummyAudio.start()
+  }
   const controls = (
     <div id="controls_container">
       <ButtonGroup>
         <Button onClick={handleAddOnClick}>Add participant</Button>
         <Button onClick={handleDeleteOnClick}>Delete last participant</Button>
+        <Button onClick={handleSoundClick}>Trigger a sound</Button>
       </ButtonGroup>
     </div>
   )
@@ -149,7 +156,7 @@ const DummyParticipantVisualizer: React.FC<{}> = () => {
         <Card key={p.participantId}>
           <CardHeader title={`Pariticipant ${p.participantId}`} />
           <CardContent>
-            {p.participantState ? <Video url={p.url as string} connection={p.connection as Connection}/> : <CircularProgress /> }
+            {p.participantState ? <Video id={p.participantId} url={p.url as string} connection={p.connection as Connection}/> : <CircularProgress /> }
           </CardContent>
         </Card>
       )
@@ -206,6 +213,7 @@ const DummyParticipantVisualizer: React.FC<{}> = () => {
 }
 
 interface IVideoProps {
+  id: number
   url: string
   connection: Connection
 }
@@ -214,6 +222,7 @@ const Video: React.FC<IVideoProps> = (props: IVideoProps) => {
   const videoElRef = useRef<ExtendedHTMLVideoElement>(null)
   const callbackOnLoadedData = () => {
     let stream: MediaStream
+    const audioStream = new DummyAudio().createNewStream(props.id)
 
     if (videoElRef.current?.captureStream) {
       stream = videoElRef.current?.captureStream()
@@ -223,7 +232,10 @@ const Video: React.FC<IVideoProps> = (props: IVideoProps) => {
       throw new Error('captureStream() is undefined.')
     }
 
-    logger?.log('got a new stream.')
+    stream.addTrack(audioStream.getAudioTracks()[0])
+
+    logger?.debug('Got stream')
+    console.log(stream)
     props.connection.createJitisLocalTracksFromStream(stream)
       .then((tracks) => {
         props.connection.joinConference('haselabtest')

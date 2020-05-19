@@ -161,6 +161,7 @@ class Connection extends EventEmitter {
     return new Promise<string>(
       (resolve, reject) => {
         JitsiMeetJS.init(initOptions)
+        JitsiMeetJS.setLogLevel('warn')
 
         this._jitsiConnection = new JitsiMeetJS.JitsiConnection('Jitsi-Party', '', config)
 
