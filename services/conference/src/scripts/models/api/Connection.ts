@@ -400,7 +400,6 @@ class Connection extends EventEmitter {
   private onLocalParticipantJoined() {
     this.setLocalParticipant()
 
-
     if (!this._isForTest) {
       ParticiantsStore.local.set(new Participant(this.localId))
       JitsiMeetJS.createLocalTracks({devices: [ 'audio', 'video' ]}).then(
@@ -420,6 +419,7 @@ class Connection extends EventEmitter {
 
   private onParticipantLeft(id: string) {
     this.participants.delete(id)
+    ParticiantsStore.leave(id)
   }
 
   private onRemoteTrackAdded(track: JitsiRemoteTrack) {
