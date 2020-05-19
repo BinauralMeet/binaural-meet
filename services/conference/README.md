@@ -44,3 +44,15 @@ In the above url, `conference-room-name` would be read as id. And that id would 
    yarn storybook
    ```
 
+7. Test dev build with dummy participants
+
+   In this part, we need two seperate bash to hold two developments environments.
+      ```bash
+      yarn storybook
+      ```
+
+      ```bash
+      yarn dev
+      ```
+
+   To add dummy participants for test purpose, please enter `Dummy Connection` tab and press `Add a participant` button.
