@@ -52,7 +52,7 @@ class DummyAudio {
     this._destinations = []
   }
 
-  public createNewStream(idx: number): MediaStream {
+  public createNewStream(): MediaStream {
     const synth = new Tone.PolySynth()
     const pattern = new Tone.Pattern(addMelody(synth), randomNoteCollection(), 'upDown')
     // const melody = new Tone.Sequence(
@@ -80,17 +80,19 @@ class DummyAudio {
 
 
     synth.fan(dest)
-    pattern.start()
+    // pattern.start()
 
     // Tone.Transport.start(0)
     return dest.stream
   }
 
-  static start() {
+  public start() {
+    this._melodies.forEach(m => m.start())
     Tone.Transport.start(0)
   }
 
-  static stop() {
+  public stop() {
+    this._melodies.forEach(m => m.stop())
     Tone.Transport.stop()
   }
 }

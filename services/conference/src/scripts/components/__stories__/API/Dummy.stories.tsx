@@ -9,15 +9,28 @@ import Grid from "@material-ui/core/Grid";
 import { Button, ButtonGroup, TableRow, TableContainer, Table, TableBody, CircularProgress } from '@material-ui/core'
 import { init as initWorker, worker, resetWorker } from '@test-utils/worker'
 import { FastForward } from '@material-ui/icons'
-import { DummyAudio } from '@test-utils/tone';
+import { DummyAudio } from '@test-utils/tone'
+import TextField from "@material-ui/core/TextField"
+import {createStyles, makeStyles, Theme} from '@material-ui/core/styles'
 
 
 export default {
   title: 'Dummy Connection',
 }
 
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    root: {
+      '& > *': {
+        margin: theme.spacing(1),
+        width: '25ch',
+      },
+    },
+  }),
+)
 
 const logger = Logger.default.setHandler('DummyStories')
+const dummyAudio = new DummyAudio()
 
 interface ExtendedHTMLVideoElement extends HTMLVideoElement {
   captureStream?: () => MediaStream
@@ -91,14 +104,14 @@ interface IDummyParticipant {
   participantState: boolean,
   url?: string,
   connection?: Connection,
+  audioStream?: MediaStream,
 }
 
 const DummyParticipantVisualizer: React.FC<{}> = () => {
-  // const [participants, setParticipants] = useState<number[]>([])
-  // const [participantStates, setParticipantStates] = useState<boolean[]>([])
-  // const [videoElements, setMount] = useState<JSX.Element[]>([])
-
+  const textFieldRef = useRef(null)
   const [dummies, setDummies] = useState<IDummyParticipant[]>([])
+  const [conferenceName, setConferenceName] = useState<string>('haselabtest')
+  const classes = useStyles()
 
   const handleAddOnClick = () => {
     dummies.push({
@@ -107,56 +120,48 @@ const DummyParticipantVisualizer: React.FC<{}> = () => {
     })
 
     setDummies([...dummies])
-
-    // const currParticipants = [...participants]
-    // currParticipants.push(currParticipants.length + 1)
-    // participantStates.push(false)
-    // setParticipants(currParticipants)
-    // setParticipantStates(participantStates)
   }
   const handleDeleteOnClick = () => {
     dummies.pop()
 
     setDummies([...dummies])
+  }
+  const handleStartSoundClick = () => dummyAudio.start()
+  const handleStopSoundClick = () => dummyAudio.stop()
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setConferenceName(e.target.value)
+  }
 
-    // const currParticipants = [...participants]
-    // currParticipants.pop()
-    // participantStates.pop()
-    // setParticipants(currParticipants)
-    // setParticipantStates(participantStates)
-  }
-  const handleSoundClick = () => {
-    // runTone()
-    DummyAudio.start()
-  }
   const controls = (
     <div id="controls_container">
+      <form className={classes.root} noValidate={true} autoComplete="off">
+        <TextField
+          id="ConferenceName"
+          label="Conference Name"
+          onChange={handleTextChange}
+          defaultValue={conferenceName} />
+      </form>
       <ButtonGroup>
         <Button onClick={handleAddOnClick}>Add participant</Button>
         <Button onClick={handleDeleteOnClick}>Delete last participant</Button>
-        <Button onClick={handleSoundClick}>Trigger a sound</Button>
+        <Button onClick={handleStartSoundClick}>Start a sound</Button>
+        <Button onClick={handleStopSoundClick}>Stop a sound</Button>
       </ButtonGroup>
     </div>
   )
-  // const elements = participants.map(
-  //   (value: number, index: number) => {
-  //     return (
-  //       <Card key={value}>
-  //         <CardHeader title={`Pariticipant ${value}`} />
-  //         <CardContent>
-  //           {participantStates[index] ? videoElements[index] : <CircularProgress /> }
-  //         </CardContent>
-  //       </Card>
-  //     )
-  //   },
-  // )
   const elements = dummies.map(
-    (p: IDummyParticipant, index: number) => {
+    (p: IDummyParticipant) => {
       return (
         <Card key={p.participantId}>
           <CardHeader title={`Pariticipant ${p.participantId}`} />
           <CardContent>
-            {p.participantState ? <Video id={p.participantId} url={p.url as string} connection={p.connection as Connection}/> : <CircularProgress /> }
+            {p.participantState ?
+              <Video
+                conferenceName={conferenceName}
+                audioStream={p.audioStream}
+                url={p.url as string}
+                connection={p.connection as Connection} />
+                : <CircularProgress /> }
           </CardContent>
         </Card>
       )
@@ -184,14 +189,11 @@ const DummyParticipantVisualizer: React.FC<{}> = () => {
                     p.participantState = true
                     p.connection = connection
                     p.url = url
+                    p.audioStream = dummyAudio.createNewStream()
                     dummies[index] = {...p}
 
                     setDummies([...dummies])
-                    // videoElements.push(videoEl)
-                    // participantStates[index] = true
-
-                    // setMount([...videoElements])
-                    // setParticipantStates([...participantStates])
+                    dummyAudio.start()
                   },
                 )
               },
@@ -213,7 +215,8 @@ const DummyParticipantVisualizer: React.FC<{}> = () => {
 }
 
 interface IVideoProps {
-  id: number
+  audioStream?: MediaStream
+  conferenceName: string
   url: string
   connection: Connection
 }
@@ -222,7 +225,6 @@ const Video: React.FC<IVideoProps> = (props: IVideoProps) => {
   const videoElRef = useRef<ExtendedHTMLVideoElement>(null)
   const callbackOnLoadedData = () => {
     let stream: MediaStream
-    const audioStream = new DummyAudio().createNewStream(props.id)
 
     if (videoElRef.current?.captureStream) {
       stream = videoElRef.current?.captureStream()
@@ -232,13 +234,15 @@ const Video: React.FC<IVideoProps> = (props: IVideoProps) => {
       throw new Error('captureStream() is undefined.')
     }
 
-    stream.addTrack(audioStream.getAudioTracks()[0])
+    if (props.audioStream) {
+      stream.addTrack(props.audioStream.getAudioTracks()[0])
+    }
 
     logger?.debug('Got stream')
     console.log(stream)
     props.connection.createJitisLocalTracksFromStream(stream)
       .then((tracks) => {
-        props.connection.joinConference('haselabtest')
+        props.connection.joinConference(props.conferenceName)
         props.connection.addTracks(tracks)
       })
   }
