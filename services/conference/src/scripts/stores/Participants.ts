@@ -16,6 +16,7 @@ export class Participants {
 
   @action
   join(participantId: string) {
+    console.log(`${participantId} join`)
     this.remote.set(participantId, new Participant(participantId))
   }
 

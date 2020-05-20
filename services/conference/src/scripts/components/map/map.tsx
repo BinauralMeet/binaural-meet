@@ -8,3 +8,4 @@ export const Map: React.FC<BaseProps> = (props) => {
     <ParticipantsLayer />
   </Base>
 }
+Map.displayName = 'Map'

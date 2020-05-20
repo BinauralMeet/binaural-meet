@@ -9,8 +9,9 @@ export const ParticipantsLayer: React.FC<{}> = () => {
   const ids = useObserver(() => Array.from(store.remote.keys()).filter(id => (
     store.find(id).perceptibility.visibility
   )))
+  const localId = useObserver(() => store.localId)
   const remoteElements = ids.map(id => <Participant key={id} participantId={id} size={50} />)
-  const localElement = (<LocalParticipant key={store.localId} participantId={store.localId} size={50} />)
+  const localElement = (<LocalParticipant key={localId} participantId={localId} size={50} />)
 
   return <div>
     {remoteElements}
