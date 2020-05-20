@@ -118,17 +118,18 @@ class Connection extends EventEmitter {
 
   private bindStore(local: Participant) {
     const localParticipantId = local.id
+    // const localParticipant = this.participants.get(localParticipantId)
 
-    this.participants.get(localParticipantId)?.jitsiInstance?.setProperty(
-      'pose',
-      local.pose,
-    )
+    // this._jitsiConference?.setLocalParticipantProperty('pose', {children: local.pose})
+    // localParticipant?.jitsiInstance?.setProperty(
+    //   'pose',
+    //   local.pose,
+    // )
     this._loggerHandler?.debug('Initialize local pose.', 'bindStore')
 
-    const throttledUpdateFunc = throttle(200, (newPose) => {
+    const throttledUpdateFunc = throttle(200, (newPose: Pose2DMap) => {
       this._loggerHandler?.debug('Update local pose.', 'bindStore')
-      this.participants
-        .get(localParticipantId)?.jitsiInstance?.setProperty('pose', newPose)
+      this._jitsiConference?.setLocalParticipantProperty('pose', JSON.stringify(newPose))
     })
 
     const disposer = autorun(
@@ -138,7 +139,7 @@ class Connection extends EventEmitter {
           orientation: local.pose.orientation,
         }
         throttledUpdateFunc(newPose)
-      }
+      },
     )
     // const disposer = local.observe(
     //   throttle(200, (change) => {
@@ -323,16 +324,17 @@ class Connection extends EventEmitter {
 
     conference.on(
       JitsiMeetJS.events.conference.PARTICIPANT_PROPERTY_CHANGED,
-      (participant: JitsiParticipant, name: string, oldValue: Pose2DMap, value: Pose2DMap) => {
+      (participant: JitsiParticipant, name: string, oldValue: string, value: string) => {
         this._loggerHandler?.debug('Participant property has changed.', 'Jitsi')
 
         // Change store
         if (name === 'pose') {
+          const pose: Pose2DMap = JSON.parse(value)
           const id = participant.getId()
           const target = ParticiantsStore.find(id)
 
-          target.pose.orientation = value.orientation
-          target.pose.position = value.position
+          target.pose.orientation = pose.orientation
+          target.pose.position = pose.position
         }
       },
     )
@@ -352,18 +354,30 @@ class Connection extends EventEmitter {
     if (this._jitsiConference) {
       this.localId = this._jitsiConference?.myUserId()
 
-      if (this.participants.size > 0) {
-
-        const local = this.participants.get(this.localId)
-        if (local) {
-          local.isLocal = true
-        }
+      const local = this.participants.get(this.localId)
+      if (local) {
+        local.isLocal = true
       } else {
         this.participants.set(
           this.localId,
-          {isLocal: true},
+          {
+            isLocal: true,
+          },
         )
       }
+
+      // if (this.participants.size > 0) {
+
+      //   const local = this.participants.get(this.localId)
+      //   if (local) {
+      //     local.isLocal = true
+      //   }
+      // } else {
+      //   this.participants.set(
+      //     this.localId,
+      //     {jitsiInstance: jitsiLocal, isLocal: true},
+      //   )
+      // }
     }
   }
 
@@ -457,6 +471,7 @@ class Connection extends EventEmitter {
       const local = new Participant(this.localId)
 
       ParticiantsStore.local.set(local)
+
       this.bindStore(local)
 
       JitsiMeetJS.createLocalTracks({devices: [ 'audio', 'video' ]}).then(
