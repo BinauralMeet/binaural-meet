@@ -476,13 +476,14 @@ class Connection extends EventEmitter {
 
       JitsiMeetJS.createLocalTracks({devices: [ 'audio', 'video' ]}).then(
         (tracks: JitsiTrack[]) => {
+          this.addTracks(tracks as JitsiLocalTrack[])
           // Do something on local tracks.
           for (const track of tracks) {
             this.emit(
               ConferenceEvents.LOCAL_TRACK_ADDED,
               track,
             )
-            this._loggerHandler?.log('Add localtrack.', 'Track')
+            this._loggerHandler?.log(`Add ${track.isAudioTrack() ? 'audio' : 'video'} localtrack.`, 'Track')
           }
         },
       )
