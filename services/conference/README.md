@@ -56,3 +56,17 @@ In the above url, `conference-room-name` would be read as id. And that id would 
       ```
 
    To add dummy participants for test purpose, please enter `Dummy Connection` tab and press `Add a participant` button.
+
+## How to install lib-jitsi-meet
+
+### yarn link
+```bash
+cd libs/lib-jitsi-meet
+yarn link
+cd ../../
+yarn link lib-jitsi-meet
+
+cd libs/@types/lib-jitsi-meet
+yarn link
+cd ../../../
+yarn link @types/lib-jitsi-meet
