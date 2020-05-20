@@ -61,6 +61,10 @@ In the above url, `conference-room-name` would be read as id. And that id would 
 
 ### yarn link
 ```bash
+yarn link
+```
+
+```bash
 cd libs/lib-jitsi-meet
 yarn link
 cd ../../

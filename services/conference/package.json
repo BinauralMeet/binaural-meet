@@ -9,7 +9,10 @@
     "lint": "tslint --fix -p .",
     "dev": "webpack-dev-server --open",
     "storybook": "start-storybook -s ./src/scripts/__tests__/blob/ -p 9999",
-    "test": "jest"
+    "test": "jest",
+    "link-lib-jitsi-meet": "cd libs/lib-jitsi-meet; yarn link; cd ../../; yarn link; lib-jitsi-meet",
+    "link-typing-lib-jitsi-meet": "cd libs/@types/lib-jitsi-meet; yarn link; cd ../../../; yarn link @types/lib-jitsi-meet",
+    "link": "yarn run link-lib-jitsi-meet; yarn run link-typing-lib-jitsi-meet"
   },
   "devDependencies": {
     "@babel/core": "^7.9.6",
