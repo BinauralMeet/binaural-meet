@@ -1,1 +1,1 @@
-export {Background as BackgroundLayer} from './background'
+export {Background as BackgroundLayer} from './Background'
