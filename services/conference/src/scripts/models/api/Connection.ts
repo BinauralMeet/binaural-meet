@@ -17,6 +17,9 @@ import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
 // import JitsiTrack from 'lib-jitsi-meet/modules/RTC/JitsiTrack'
 import JitsiLocalTrack from 'lib-jitsi-meet/modules/RTC/JitsiLocalTrack'
 import JitsiRemoteTrack from 'lib-jitsi-meet/modules/RTC/JitsiRemoteTrack'
+import { Pose2DMap } from '@models/Participant'
+import { observe, IObservableValue, autorun } from 'mobx'
+import { throttle } from "throttle-debounce";
 
 declare var global: any
 global.$ = jquery
@@ -113,6 +116,39 @@ class Connection extends EventEmitter {
     throw new Error('No connection has been established.')
   }
 
+  private bindStore(local: Participant) {
+    const localParticipantId = local.id
+
+    this.participants.get(localParticipantId)?.jitsiInstance?.setProperty(
+      'pose',
+      local.pose,
+    )
+    this._loggerHandler?.debug('Initialize local pose.', 'bindStore')
+
+    const throttledUpdateFunc = throttle(200, (newPose) => {
+      this._loggerHandler?.debug('Update local pose.', 'bindStore')
+      this.participants
+        .get(localParticipantId)?.jitsiInstance?.setProperty('pose', newPose)
+    })
+
+    const disposer = autorun(
+      () => {
+        const newPose = {
+          position: local.pose.position,
+          orientation: local.pose.orientation,
+        }
+        throttledUpdateFunc(newPose)
+      }
+    )
+    // const disposer = local.observe(
+    //   throttle(200, (change) => {
+    //     this._loggerHandler?.debug('Update local pose.', 'bindStore')
+    //     console.log(change.oldValue, '->', change.newValue)
+    //     this.participants
+    //       .get(localParticipantId)?.jitsiInstance?.setProperty('pose', change.newValue.pose)
+    //   }),
+    // )
+  }
   private registerEventHandlers() {
 
     // Connection events
@@ -168,7 +204,7 @@ class Connection extends EventEmitter {
         this._jitsiConnection.addEventListener(
           JitsiMeetJS.events.connection.CONNECTION_ESTABLISHED,
           () => {
-            this._loggerHandler?.trace('Connection has been established.', 'Jitsi')
+            this._loggerHandler?.debug('Connection has been established.', 'Jitsi')
             this.emit(
               ConnectionEvents.CONNECTION_ESTABLISHED,
               ConnectionStates.CONNECTED,
@@ -179,14 +215,14 @@ class Connection extends EventEmitter {
         this._jitsiConnection.addEventListener(
           JitsiMeetJS.events.connection.CONNECTION_FAILED,
           () => {
-            this._loggerHandler?.trace('Failed to connect.', 'Jitsi')
+            this._loggerHandler?.debug('Failed to connect.', 'Jitsi')
             reject(ConnectionStates.DISCONNECTED)
           },
         )
         this._jitsiConnection.addEventListener(
           JitsiMeetJS.events.connection.CONNECTION_DISCONNECTED,
           () => {
-            this._loggerHandler?.trace('Disconnected from remote server.', 'Jitsi')
+            this._loggerHandler?.debug('Disconnected from remote server.', 'Jitsi')
             this.emit(
               ConnectionEvents.CONNECTION_DISCONNECTED,
               ConnectionStates.DISCONNECTED,
@@ -284,6 +320,23 @@ class Connection extends EventEmitter {
         }
       },
     )
+
+    conference.on(
+      JitsiMeetJS.events.conference.PARTICIPANT_PROPERTY_CHANGED,
+      (participant: JitsiParticipant, name: string, oldValue: Pose2DMap, value: Pose2DMap) => {
+        this._loggerHandler?.debug('Participant property has changed.', 'Jitsi')
+
+        // Change store
+        if (name === 'pose') {
+          const id = participant.getId()
+          const target = ParticiantsStore.find(id)
+
+          target.pose.orientation = value.orientation
+          target.pose.position = value.position
+        }
+      },
+    )
+
   }
 
   private initJitsiConference(name: string) {
@@ -335,7 +388,7 @@ class Connection extends EventEmitter {
 
   private onConnectionStateChanged(state: ConnectionStatesType) {
     this.state = state
-    this._loggerHandler?.trace(`Current Connection State: ${state}`, 'ConnctionStateChanged')
+    this._loggerHandler?.debug(`Current Connection State: ${state}`, 'ConnctionStateChanged')
 
     if (this._store) {
       this._store.changeState(this.state)
@@ -401,7 +454,11 @@ class Connection extends EventEmitter {
     this.setLocalParticipant()
 
     if (!this._isForTest) {
-      ParticiantsStore.local.set(new Participant(this.localId))
+      const local = new Participant(this.localId)
+
+      ParticiantsStore.local.set(local)
+      this.bindStore(local)
+
       JitsiMeetJS.createLocalTracks({devices: [ 'audio', 'video' ]}).then(
         (tracks: JitsiTrack[]) => {
           // Do something on local tracks.

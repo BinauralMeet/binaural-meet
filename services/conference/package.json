@@ -63,13 +63,15 @@
   "dependencies": {
     "@material-ui/core": "^4.9.12",
     "@material-ui/icons": "^4.9.1",
+    "@types/throttle-debounce": "^2.1.0",
     "jquery": "^3.5.1",
     "mobx": "^5.15.4",
     "mobx-react-lite": "^2.0.6",
     "react": "^16.13.1",
     "react-avatar": "^3.9.3",
     "react-dom": "^16.13.1",
-    "react-use-gesture": "^7.0.15"
+    "react-use-gesture": "^7.0.15",
+    "throttle-debounce": "^2.1.0"
   },
   "jest": {
     "transform": {
