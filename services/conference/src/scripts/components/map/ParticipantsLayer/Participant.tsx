@@ -39,7 +39,8 @@ const useStyles = makeStyles({
 
 export type ParticipantProps = Required<AvatarProps>
 
-const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , ParticipantProps> = (props, ref) => {
+const RawParticipant: React.ForwardRefRenderFunction<
+HTMLDivElement , React.PropsWithChildren<ParticipantProps>> = (props, ref) => {
   const participants = useStore()
   const participant = participants.find(props.participantId)
   const participantProps = useObserver(() => ({
@@ -54,11 +55,12 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
   const transform = useTransform()
 
   return (
-    <div className={classes.root} ref={ref}>
+    <div className={classes.root}>
+      {props.children}
       <div className={classes.pointerRotate}>
         <Pointer className={classes.pointer} />
       </div>
-      <div className={[classes.avatar, transform.counterRotationClass].join(' ')}>
+      <div className={[classes.avatar, transform.counterRotationClass].join(' ')} ref={ref}>
         <Avatar {...props} />
       </div>
     </div>

@@ -5,6 +5,7 @@ import React, {useEffect, useRef} from 'react'
 import {addV, subV, useGesture} from 'react-use-gesture'
 import {useValue as useTransform} from '../utils/useTransform'
 import {Participant, ParticipantProps} from './Participant'
+import {RotateHandle} from './RotateHandle'
 
 type LocalParticipantProps = ParticipantProps
 
@@ -46,7 +47,9 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   )
 
   return (
-    <Participant {...props} ref={container} />
+    <Participant {...props} ref={container}>
+      <RotateHandle size={props.size * 3} orientation={0} />
+    </Participant>
   )
 }
 
