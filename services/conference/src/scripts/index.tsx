@@ -1,7 +1,8 @@
 import {App} from '@components/app'
 import {connection} from '@models/api'
+import '@models/audio'  // init manager (DO NOT delete)
 import {resolveAtEnd} from '@models/utils'
-import * as store from '@stores/index' // init store (DO NOT delete)
+import '@stores/index' // init store (DO NOT delete)
 import React from 'react'
 import ReactDOM from 'react-dom'
 

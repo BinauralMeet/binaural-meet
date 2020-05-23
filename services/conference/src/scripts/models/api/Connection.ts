@@ -10,6 +10,7 @@ import {config} from './test.config'
 // import _ from 'lodash'
 
 // import a global variant $ for lib-jitsi-meet
+import {Pose2DMap} from '@models/Participant'
 import {Participant} from '@stores/Participant'
 import {DummyConnectionStore, dummyConnectionStore} from '@test-utils/DummyParticipants'
 import jquery from 'jquery'
@@ -17,9 +18,8 @@ import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
 // import JitsiTrack from 'lib-jitsi-meet/modules/RTC/JitsiTrack'
 import JitsiLocalTrack from 'lib-jitsi-meet/modules/RTC/JitsiLocalTrack'
 import JitsiRemoteTrack from 'lib-jitsi-meet/modules/RTC/JitsiRemoteTrack'
-import { Pose2DMap } from '@models/Participant'
-import { observe, IObservableValue, autorun } from 'mobx'
-import { throttle } from "throttle-debounce";
+import {autorun, IObservableValue, observe} from 'mobx'
+import {throttle} from 'throttle-debounce';
 
 declare var global: any
 global.$ = jquery
@@ -128,11 +128,10 @@ class Connection extends EventEmitter {
     this._loggerHandler?.debug('Initialize local pose.', 'bindStore')
 
     const throttledUpdateFunc = throttle(200, (newPose: Pose2DMap) => {
-      this._loggerHandler?.debug('Update local pose.', 'bindStore')
       this._jitsiConference?.setLocalParticipantProperty('pose', JSON.stringify(newPose))
     })
 
-    const disposer = autorun(
+    const disposer = autorun(   // FIXME disposer not used
       () => {
         const newPose = {
           position: local.pose.position,
@@ -474,7 +473,7 @@ class Connection extends EventEmitter {
 
       this.bindStore(local)
 
-      JitsiMeetJS.createLocalTracks({devices: [ 'audio', 'video' ]}).then(
+      JitsiMeetJS.createLocalTracks({devices: ['audio', 'video']}).then(
         (tracks: JitsiTrack[]) => {
           this.addTracks(tracks as JitsiLocalTrack[])
           // Do something on local tracks.
