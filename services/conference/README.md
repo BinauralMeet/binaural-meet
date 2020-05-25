@@ -60,7 +60,7 @@ In the above url, `conference-room-name` would be read as id. And that id would 
    
    ```bash
    yarn dev
-```
+   ```
    
 - Storybook
    ```bash
@@ -71,12 +71,12 @@ In the above url, `conference-room-name` would be read as id. And that id would 
 
    In this part, we need two separate bash to hold two developments environments.  
    
-      ```bash  
+   ```bash  
    yarn storybook
-      ```
+   ```
 
-      ```bash
+   ```bash
    yarn dev
-      ```
+   ```
 
    To add dummy participants for test purpose, please enter `Dummy Connection` tab and press `Add a participant` button.
