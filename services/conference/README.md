@@ -20,7 +20,7 @@ In the above url, `conference-room-name` would be read as id. And that id would 
 
 2. Install lib-jitsi-meet
 
-   1. donwload lib-jitsi-meet and install dependencies
+   1. Download lib-jitsi-meet and install dependencies
 
       ```bash
       git submodule update --init
@@ -29,7 +29,7 @@ In the above url, `conference-room-name` would be read as id. And that id would 
       cd ../../
       ```
    
-   2. link to our project
+   2. Link to our project
 
       ```bash
       yarn run link
@@ -54,26 +54,29 @@ In the above url, `conference-room-name` would be read as id. And that id would 
    yarn clean
    ```
 
+### Test
+
 - Watch mode
+   
    ```bash
    yarn dev
-   ```
-
-- Test components using storybook
+```
+   
+- Storybook
    ```bash
    yarn storybook
    ```
 
 - Test dev build with dummy participants
 
-   In this part, we need two seperate bash to hold two developments environments.  
+   In this part, we need two separate bash to hold two developments environments.  
    
       ```bash  
-      yarn storybook
+   yarn storybook
       ```
 
       ```bash
-      yarn dev
+   yarn dev
       ```
 
    To add dummy participants for test purpose, please enter `Dummy Connection` tab and press `Add a participant` button.
