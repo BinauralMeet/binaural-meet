@@ -17,7 +17,7 @@ In the above url, `conference-room-name` would be read as id. And that id would 
    ```bash
    yarn install
    ```
-   
+
 2. Install lib-jitsi-meet
 
    ```bash
@@ -73,7 +73,6 @@ In the above url, `conference-room-name` would be read as id. And that id would 
       ```
 
    To add dummy participants for test purpose, please enter `Dummy Connection` tab and press `Add a participant` button.
-<<<<<<< HEAD
 
 ## How to install lib-jitsi-meet
 ```bash
@@ -101,5 +100,3 @@ yarn link
 cd ../../../
 yarn link @types/lib-jitsi-meet
 ```
-=======
->>>>>>> fd9b6841eb103acc74202baf58e7e267aac6f9be
