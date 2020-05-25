@@ -20,16 +20,19 @@ In the above url, `conference-room-name` would be read as id. And that id would 
 
 2. Install lib-jitsi-meet
 
-   ```bash
-   cd libs/lib-jitsi-meet
-   yarn link
-   cd ../../
-   yarn link lib-jitsi-meet
+   1. donwload lib-jitsi-meet and install dependencies
 
-   cd libs/@types/lib-jitsi-meet
-   yarn link
-   cd ../../../
-   yarn link @types/lib-jitsi-meet
+   ```bash
+   git submodule update --init
+   cd libs/lib-jitsi-meet
+   yarn install
+   cd ../../
+   ```
+   
+   2. link to our project
+
+   ```bash
+   yarn run link
    ```
 
 ### Tools
@@ -73,30 +76,3 @@ In the above url, `conference-room-name` would be read as id. And that id would 
       ```
 
    To add dummy participants for test purpose, please enter `Dummy Connection` tab and press `Add a participant` button.
-
-## How to install lib-jitsi-meet
-```bash
-git submodule update --init
-cd libs/lib-jitsi-meet
-yarn install
-cd ../../
-```
-
-### yarn run link
-```bash
-yarn run link
-```
-
-### Details in link scripts
-> You don't need to run this script indeed.
-```bash
-cd libs/lib-jitsi-meet
-yarn link
-cd ../../
-yarn link lib-jitsi-meet
-
-cd libs/@types/lib-jitsi-meet
-yarn link
-cd ../../../
-yarn link @types/lib-jitsi-meet
-```
