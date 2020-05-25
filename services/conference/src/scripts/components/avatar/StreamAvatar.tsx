@@ -73,3 +73,4 @@ export const StreamAvatar: React.FC<StreamAvatarProps> = (props: StreamAvatarPro
 StreamAvatar.defaultProps = {
   size: 100,
 }
+StreamAvatar.displayName = 'StreamAvatar'

@@ -22,3 +22,4 @@ export const ImageAvatar: React.FC<ImageAvatarProps> = (props: ImageAvatarProps)
     />
   )
 }
+ImageAvatar.displayName = 'ImageAvatar'
