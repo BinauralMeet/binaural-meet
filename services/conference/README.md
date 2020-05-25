@@ -10,41 +10,58 @@ In the above url, `conference-room-name` would be read as id. And that id would 
 
 ## Development
 
-1. Install dependencies
+### Install dependencies
+
+1. Install packages
 
    ```bash
    yarn install
    ```
+   
+2. Install lib-jitsi-meet
 
-2. Lint code
+   ```bash
+   cd libs/lib-jitsi-meet
+   yarn link
+   cd ../../
+   yarn link lib-jitsi-meet
+
+   cd libs/@types/lib-jitsi-meet
+   yarn link
+   cd ../../../
+   yarn link @types/lib-jitsi-meet
+   ```
+
+### Tools
+- Lint code
 
    ```bash
    yarn lint
    ```
 
-3. Build
+- Build
 
    ```bash
    yarn build
    ```
 
-4. Clean
+- Clean
 
    ```bash
    yarn clean
    ```
 
-5. Watch mode
+- Watch mode
    ```bash
    yarn dev
    ```
 
-6. Test components using storybook
+- Test components using storybook
    ```bash
    yarn storybook
    ```
 
-7. Test dev build with dummy participants
+- Test dev build with dummy participants
 
    In this part, we need two seperate bash to hold two developments environments.
       ```bash
@@ -56,21 +73,3 @@ In the above url, `conference-room-name` would be read as id. And that id would 
       ```
 
    To add dummy participants for test purpose, please enter `Dummy Connection` tab and press `Add a participant` button.
-
-## How to install lib-jitsi-meet
-
-### yarn link
-```bash
-yarn link
-```
-
-```bash
-cd libs/lib-jitsi-meet
-yarn link
-cd ../../
-yarn link lib-jitsi-meet
-
-cd libs/@types/lib-jitsi-meet
-yarn link
-cd ../../../
-yarn link @types/lib-jitsi-meet
