@@ -22,18 +22,18 @@ In the above url, `conference-room-name` would be read as id. And that id would 
 
    1. donwload lib-jitsi-meet and install dependencies
 
-   ```bash
-   git submodule update --init
-   cd libs/lib-jitsi-meet
-   yarn install
-   cd ../../
-   ```
+      ```bash
+      git submodule update --init
+      cd libs/lib-jitsi-meet
+      yarn install
+      cd ../../
+      ```
    
    2. link to our project
 
-   ```bash
-   yarn run link
-   ```
+      ```bash
+      yarn run link
+      ```
 
 ### Tools
 - Lint code
@@ -66,8 +66,9 @@ In the above url, `conference-room-name` would be read as id. And that id would 
 
 - Test dev build with dummy participants
 
-   In this part, we need two seperate bash to hold two developments environments.
-      ```bash
+   In this part, we need two seperate bash to hold two developments environments.  
+   
+      ```bash  
       yarn storybook
       ```
 
