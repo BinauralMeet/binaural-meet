@@ -19,7 +19,7 @@ import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
 import JitsiLocalTrack from 'lib-jitsi-meet/modules/RTC/JitsiLocalTrack'
 import JitsiRemoteTrack from 'lib-jitsi-meet/modules/RTC/JitsiRemoteTrack'
 import {autorun, IObservableValue, observe} from 'mobx'
-import {throttle} from 'throttle-debounce';
+import {throttle} from 'throttle-debounce'
 
 declare var global: any
 global.$ = jquery
@@ -531,7 +531,7 @@ class Connection extends EventEmitter {
 }
 
 const toTracks = (f: () => MediaStreamTrack): MediaStreamTrack[] => {
-  return [f()]
+  return [f().clone()]
 }
 
 const connection = new Connection('PartyConnection')
