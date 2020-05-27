@@ -4,6 +4,7 @@ import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin'
 import * as webpack from 'webpack'
 import * as webpackDevServer from 'webpack-dev-server'
 const Visualizer = require('webpack-visualizer-plugin')
+const WebpackGitHash = require('webpack-git-hash')
 
 // Handle with error of tsconfig-paths-webpack-plugin
 // https://github.com/dividab/tsconfig-paths-webpack-plugin/issues/32
@@ -27,7 +28,7 @@ const config: webpack.Configuration = {
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'conference.bundle.js',
+    filename: 'conference.bundle.[githash].js',
   },
   module: {
     rules: [
@@ -96,6 +97,9 @@ const config: webpack.Configuration = {
     }),
     new Visualizer({
       filename: './statistics.html',
+    }),
+    new WebpackGitHash({
+      cleanup: true,
     }),
   ],
 }
