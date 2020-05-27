@@ -8,6 +8,12 @@ export class StereoManager {
     [key: string]: NodeGroup,
   } = {}
 
+  constructor() {
+    // For Chrome, resume audio context when loaded (https://goo.gl/7K7WLu)
+    // AudioContext must be resumed (or created) after a user gesture on the page.
+    setTimeout(() => this.audioContext.resume(), 0)
+  }
+
   addSpeaker(id: string) {
     assert(this.nodes[id] === undefined)
     this.nodes[id] = new NodeGroup(this.audioContext)
@@ -17,6 +23,7 @@ export class StereoManager {
 
   removeSpeaker(id: string) {
     console.log('remove speaker')
+    this.nodes[id].disconnect()
     delete this.nodes[id]
   }
 }

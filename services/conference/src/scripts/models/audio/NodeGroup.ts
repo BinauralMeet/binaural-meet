@@ -78,6 +78,15 @@ export class NodeGroup {
     }
   }
 
+  disconnect() {
+    if (this.sourceNode) {
+      this.sourceNode.disconnect()
+    }
+
+    this.gainNode.disconnect()
+    this.pannerNode.disconnect()
+  }
+
   get isBroadcast(): boolean {
     return this.pannerNode.refDistance === BROADCAST_DISTANCE
   }
