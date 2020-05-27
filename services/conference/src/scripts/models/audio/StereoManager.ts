@@ -1,4 +1,4 @@
-import {assert} from '@models/utils'
+import {assert, isChrome} from '@models/utils'
 import {NodeGroup} from './NodeGroup'
 
 export class StereoManager {
@@ -11,7 +11,17 @@ export class StereoManager {
   constructor() {
     // For Chrome, resume audio context when loaded (https://goo.gl/7K7WLu)
     // AudioContext must be resumed (or created) after a user gesture on the page.
-    setTimeout(() => this.audioContext.resume(), 0)
+    const interval = setInterval(
+      () => {
+        if (this.audioContext.state !== 'suspended') {
+          console.log('AudioContext successfully resumed')
+          clearInterval(interval)
+        }
+
+        this.audioContext.resume()
+      },
+      1000,
+    )
   }
 
   addSpeaker(id: string) {

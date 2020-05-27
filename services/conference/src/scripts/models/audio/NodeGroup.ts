@@ -1,6 +1,5 @@
 import {Pose3DAudio} from '@models/Participant'
-
-const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor)
+import {isChrome} from '@models/utils'
 
 const DEFAULT_PANNER_NODE_CONFIG: Partial<PannerNode> & {refDistance: number} = {
   panningModel: 'HRTF',
