@@ -274,7 +274,7 @@ class Connection extends EventEmitter {
     conference.on(
       JitsiMeetJS.events.conference.USER_JOINED,
       (id: string, user: JitsiParticipant) => {
-        this._loggerHandler?.log('New participant joined.', logField)
+        this._loggerHandler?.log(`New participant[${id}] joined.`, logField)
         this.emit(
           ConferenceEvents.REMOTE_PARTICIPANT_JOINED,
           id,
@@ -304,7 +304,7 @@ class Connection extends EventEmitter {
     conference.on(
       JitsiMeetJS.events.conference.TRACK_ADDED,
       (track: JitsiTrack) => {
-        this._loggerHandler?.debug(`Added a ${track.isLocal() ? 'local' : 'remote'} track.`, logField)
+        this._loggerHandler?.debug(`Added a ${track.isLocal() ? 'Local' : 'Remote'}Track.`, logField)
 
         if (track.isLocal()) {
           this.emit(
@@ -312,11 +312,13 @@ class Connection extends EventEmitter {
             track as JitsiLocalTrack,
           )
         } else {
-          this._loggerHandler?.log(`Remote participant ID: ${(<JitsiRemoteTrack>track).getParticipantId()}`)
-          this.emit(
-            ConferenceEvents.REMOTE_TRACK_ADDED,
-            track as JitsiRemoteTrack,
-          )
+          if ((track as JitsiRemoteTrack).isP2P) {
+            this._loggerHandler?.log(`Remote participant ID: ${(<JitsiRemoteTrack>track).getParticipantId()}`, 'TRACK_ADDED')
+            this.emit(
+              ConferenceEvents.REMOTE_TRACK_ADDED,
+              track as JitsiRemoteTrack,
+            )
+          }
         }
       },
     )
@@ -477,13 +479,6 @@ class Connection extends EventEmitter {
         (tracks: JitsiTrack[]) => {
           this.addTracks(tracks as JitsiLocalTrack[])
           // Do something on local tracks.
-          for (const track of tracks) {
-            this.emit(
-              ConferenceEvents.LOCAL_TRACK_ADDED,
-              track,
-            )
-            this._loggerHandler?.log(`Add ${track.isAudioTrack() ? 'audio' : 'video'} localtrack.`, 'Track')
-          }
         },
       )
     }
