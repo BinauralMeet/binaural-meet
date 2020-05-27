@@ -3,6 +3,7 @@ import {JitsiConference} from '../../JitsiConference'
 import {VideoType} from '../../service/RTC/VideoType'
 
 declare class JitsiRemoteTrack extends JitsiTrack {
+  public isP2P: boolean
   constructor(
     rtc: any,
     conference: JitsiConference,
