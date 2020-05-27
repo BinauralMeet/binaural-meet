@@ -3,7 +3,7 @@ interface Params {
   name: string | null  // conference name
 }
 
-export function decodeParams(url: string): Params {
+export function decodeGetParams(url: string): Params {
   const urlObj = new URL(url)
   const props = ['name']
 
@@ -11,10 +11,12 @@ export function decodeParams(url: string): Params {
     (pre, prop) => {
       pre[prop] = urlObj.searchParams.get(prop)
 
-      return res
+      return pre
     },
     {} as Params,
   )
 
   return res
 }
+
+export const getParameters = decodeGetParams(window.location.href)

@@ -1,10 +1,12 @@
 import {App} from '@components/app'
 import {connection} from '@models/api'
-import '@models/audio'  // init manager (DO NOT delete)
+import '@models/audio'  // init audio manager (DO NOT delete)
 import {resolveAtEnd} from '@models/utils'
+import {getParameters} from '@models/utils/url'
 import '@stores/index' // init store (DO NOT delete)
 import React from 'react'
 import ReactDOM from 'react-dom'
+
 
 main()
 
@@ -24,8 +26,9 @@ function renderDOM() {
 }
 
 function connectConference() {
-  // TODO add code
+  const conferenceName = getParameters.name || 'haselabtest'
+
   connection.init().then(
-    () => connection.joinConference('haselabtest'),
+    () => connection.joinConference(conferenceName),
   )
 }
