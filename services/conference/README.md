@@ -54,10 +54,18 @@ In the above url, `conference-room-name` would be read as id. And that id would 
    yarn clean
    ```
 
+- Publish to Github pages
+
+  ```bash
+  yarn publish-demo
+  ```
+
+  
+
 ### Test
 
 - Watch mode
-   
+  
    ```bash
    yarn dev
    ```
