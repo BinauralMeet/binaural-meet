@@ -33,12 +33,18 @@ const setStream = (
   video.srcObject = stream
   video.autoplay = true
 
-  const settings = stream.getVideoTracks()[0].getSettings()
-  if (settings.width !== undefined && settings.height !== undefined) {
-    video.className = settings.width >= settings.height ? videoLargerWidthClass : videoLargerHeightClass
-  } else {
-    console.error('video stream width || height is undefined')
-    video.className = videoLargerWidthClass
+  video.onloadedmetadata = () => {
+    const settings = {
+      width: video.width,
+      height: video.height,
+    }
+
+    if (settings.width !== undefined && settings.height !== undefined) {
+      video.className = settings.width >= settings.height ? videoLargerWidthClass : videoLargerHeightClass
+    } else {
+      console.error('video stream width || height is undefined')
+      video.className = videoLargerWidthClass
+    }
   }
 }
 
