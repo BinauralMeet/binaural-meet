@@ -20,6 +20,7 @@ import JitsiLocalTrack from 'lib-jitsi-meet/modules/RTC/JitsiLocalTrack'
 import JitsiRemoteTrack from 'lib-jitsi-meet/modules/RTC/JitsiRemoteTrack'
 import {autorun, IObservableValue, observe} from 'mobx'
 import {throttle} from 'throttle-debounce'
+import TraceablePeerConnection from 'lib-jitsi-meet/modules/RTC/TraceablePeerConnection'
 
 declare var global: any
 global.$ = jquery
@@ -497,33 +498,16 @@ class Connection extends EventEmitter {
 
     if (remote) {
       if (track.isAudioTrack()) {
-        const oldTrack = remote.stream.audioStream?.getTracks()[0]
-
-        if (oldTrack) {
-          remote.stream.audioStream?.removeTrack(oldTrack)
-          remote.stream.audioStream?.addTrack(track.getTrack())
-        } else {
-          remote.stream.audioStream = new MediaStream(warppedT)
-        }
+        remote.stream.audioStream = new MediaStream(warppedT)
       } else if (track.isVideoTrack() && track.isScreenSharing()) {
-        const oldTrack = remote.stream.screenStream?.getTracks()[0]
-
-        if (oldTrack) {
-          remote.stream.screenStream?.removeTrack(oldTrack)
-          remote.stream.screenStream?.addTrack(track.getTrack())
-        } else {
-          remote.stream.screenStream = new MediaStream(warppedT)
-        }
+        remote.stream.screenStream = new MediaStream(warppedT)
       } else {
-        const oldTrack = remote.stream.avatarStream?.getTracks()[0]
-
-        if (oldTrack) {
-          remote.stream.avatarStream?.removeTrack(oldTrack)
-          remote.stream.avatarStream?.addTrack(track.getTrack())
-        } else {
-          remote.stream.avatarStream = new MediaStream(warppedT)
-        }
+        remote.stream.avatarStream = new MediaStream(warppedT)
       }
+    }
+
+    if (track.isP2P) {
+      track.setMute(false)
     }
   }
 
@@ -545,7 +529,7 @@ class Connection extends EventEmitter {
 }
 
 const toTracks = (f: () => MediaStreamTrack): MediaStreamTrack[] => {
-  return [f().clone()]
+  return [f()]
 }
 
 const connection = new Connection('PartyConnection')
