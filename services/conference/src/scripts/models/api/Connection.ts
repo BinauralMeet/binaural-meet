@@ -312,13 +312,11 @@ class Connection extends EventEmitter {
             track as JitsiLocalTrack,
           )
         } else {
-          if ((track as JitsiRemoteTrack).isP2P) {
-            this._loggerHandler?.log(`Remote participant ID: ${(<JitsiRemoteTrack>track).getParticipantId()}`, 'TRACK_ADDED')
-            this.emit(
-              ConferenceEvents.REMOTE_TRACK_ADDED,
-              track as JitsiRemoteTrack,
-            )
-          }
+          this._loggerHandler?.log(`Remote ${(track as JitsiRemoteTrack).isP2P ? 'P2P' : 'JVB' }participant ID: ${(<JitsiRemoteTrack>track).getParticipantId()}`, 'TRACK_ADDED')
+          this.emit(
+            ConferenceEvents.REMOTE_TRACK_ADDED,
+            track as JitsiRemoteTrack,
+          )
         }
       },
     )
@@ -499,11 +497,32 @@ class Connection extends EventEmitter {
 
     if (remote) {
       if (track.isAudioTrack()) {
-        remote.stream.audioStream = new MediaStream(warppedT)
+        const oldTrack = remote.stream.audioStream?.getTracks()[0]
+
+        if (oldTrack) {
+          remote.stream.audioStream?.removeTrack(oldTrack)
+          remote.stream.audioStream?.addTrack(track.getTrack())
+        } else {
+          remote.stream.audioStream = new MediaStream(warppedT)
+        }
       } else if (track.isVideoTrack() && track.isScreenSharing()) {
-        remote.stream.screenStream = new MediaStream(warppedT)
+        const oldTrack = remote.stream.screenStream?.getTracks()[0]
+
+        if (oldTrack) {
+          remote.stream.screenStream?.removeTrack(oldTrack)
+          remote.stream.screenStream?.addTrack(track.getTrack())
+        } else {
+          remote.stream.screenStream = new MediaStream(warppedT)
+        }
       } else {
-        remote.stream.avatarStream = new MediaStream(warppedT)
+        const oldTrack = remote.stream.avatarStream?.getTracks()[0]
+
+        if (oldTrack) {
+          remote.stream.avatarStream?.removeTrack(oldTrack)
+          remote.stream.avatarStream?.addTrack(track.getTrack())
+        } else {
+          remote.stream.avatarStream = new MediaStream(warppedT)
+        }
       }
     }
   }
