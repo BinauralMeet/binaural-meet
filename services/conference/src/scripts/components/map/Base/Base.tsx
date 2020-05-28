@@ -62,6 +62,9 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
             const cosAngle = crossProduct(radius1, radius2) / (vectorLength(radius1) * vectorLength(radius2))
             const flag = crossProduct(rotate90ClockWise(radius1), delta) > 0 ? -1 : 1
             const angle = Math.acos(cosAngle) * flag
+            if (isNaN(angle)) {  // due to accuracy, angle might be NaN when cosAngle is larger than 1
+              return  // no need to update matrix
+            }
 
             const changeMatrix = (new DOMMatrix()).rotateSelf(0, 0, radian2Degree(angle))
 
