@@ -73,8 +73,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
             setMatrix(newMatrix)
 
             participants.local.get().pose.orientation = -radian2Degree(extractRotation(newMatrix))
-          }
-          else {  // left mouse drag or touch screen drag - translate map
+          } else {  // left mouse drag or touch screen drag - translate map
             const diff = rotateVector2D(matrix.inverse(), delta)
             const newMatrix = matrix.translate(...diff)
             setMatrix(newMatrix)
