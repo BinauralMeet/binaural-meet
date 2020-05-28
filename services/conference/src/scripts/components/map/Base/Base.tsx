@@ -28,7 +28,7 @@ interface BaseProps extends BP {
 }
 
 const options = {
-  minScale: 0.2,
+  minScale: 0.8,
   maxScale: 5,
 }
 

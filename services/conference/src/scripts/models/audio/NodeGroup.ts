@@ -4,11 +4,11 @@ import {isChrome} from '@models/utils'
 const DEFAULT_PANNER_NODE_CONFIG: Partial<PannerNode> & {refDistance: number} = {
   panningModel: 'HRTF',
   distanceModel: 'inverse',
-  refDistance: 1,
-  maxDistance: 100,
+  refDistance: 10,
+  maxDistance: 10000,
   rolloffFactor: 1,
-  coneInnerAngle: 360,
-  coneOuterAngle: 0,
+  coneInnerAngle: 45,
+  coneOuterAngle: 360,
   coneOuterGain: 0,
 }
 const BROADCAST_DISTANCE = 1000
