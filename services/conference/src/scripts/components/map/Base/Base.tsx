@@ -53,11 +53,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         if (down) {
           event?.preventDefault()
 
-          if (buttons === 1) {  // left mouse drag - translate map
-            const diff = rotateVector2D(matrix.inverse(), delta)
-            const newMatrix = matrix.translate(...diff)
-            setMatrix(newMatrix)
-          } else if (buttons === 2) {  // right mouse drag - rotate map
+          if (buttons === 2) {  // right mouse drag - rotate map
             const center = transformPoint2D(matrix, localParticipantPosition)
             const target = subV(xy, getContainerAnchor(container))
             const radius1 = subV(target, center)
@@ -77,6 +73,11 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
             setMatrix(newMatrix)
 
             participants.local.get().pose.orientation = -radian2Degree(extractRotation(newMatrix))
+          }
+          else {  // left mouse drag or touch screen drag - translate map
+            const diff = rotateVector2D(matrix.inverse(), delta)
+            const newMatrix = matrix.translate(...diff)
+            setMatrix(newMatrix)
           }
         }
       },
