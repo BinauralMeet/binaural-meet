@@ -79,3 +79,15 @@ export function extractScale(matrix: DOMMatrix | DOMMatrixReadOnly): [number, nu
 export function extractRotation(matrix: DOMMatrix | DOMMatrixReadOnly): number {
   return Math.atan2(-matrix.c, matrix.a)
 }
+
+export function crossProduct(vec1: [number, number], vec2: [number, number]): number {
+  return vec1[0] * vec2[0] + vec1[1] * vec2[1]
+}
+
+export function vectorLength(vec: [number, number]): number {
+  return Math.sqrt(vec.reduce((pre, val) => pre + val * val, 0))
+}
+
+export function rotate90ClockWise(vec: [number, number]): [number, number] {
+  return [vec[1], -vec[0]]
+}

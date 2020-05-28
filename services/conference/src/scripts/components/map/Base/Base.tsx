@@ -1,7 +1,11 @@
 import {BaseProps as BP} from '@components/utils'
 import {useStore} from '@hooks/ParticipantsStore'
 import {makeStyles} from '@material-ui/core/styles'
-import {extractRotation, extractScaleX, multiply, radian2Degree, rotateVector2D, transformPoint2D} from '@models/utils'
+import {
+  crossProduct, extractRotation, extractScaleX, multiply,
+  radian2Degree, rotate90ClockWise, rotateVector2D, transformPoint2D, vectorLength, 
+} from '@models/utils'
+import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef, useState} from 'react'
 import {subV, useGesture} from 'react-use-gesture'
 import {createValue, Provider as TransformProvider} from '../utils/useTransform'
@@ -35,8 +39,9 @@ const options = {
 export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   const container = useRef<HTMLDivElement>(null)
   const participants = useStore()
+  const localParticipantPosition = useObserver(() => participants.local.get().pose.position)
 
-  const [mouse, setMouse] = useState<[number, number]>([0, 0])
+  const [mouse, setMouse] = useState<[number, number]>([0, 0])  // mouse position relative to container
   const [matrix, setMatrix] = useState<DOMMatrixReadOnly>(new DOMMatrixReadOnly())
 
   // changed only when event end, like drag end
@@ -44,14 +49,38 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
   const bind = useGesture(
     {
-      onDrag: ({down, delta, event}) => {
+      onDrag: ({down, delta, event, xy, buttons}) => {
         if (down) {
           event?.preventDefault()
-          const diff = rotateVector2D(matrix.inverse(), delta)
-          const newMatrix = matrix.translate(...diff)
-          setMatrix(newMatrix)
+
+          if (buttons === 1) {  // left mouse drag - translate map
+            const diff = rotateVector2D(matrix.inverse(), delta)
+            const newMatrix = matrix.translate(...diff)
+            setMatrix(newMatrix)
+          } else if (buttons === 2) {  // right mouse drag - rotate map
+            const center = transformPoint2D(matrix, localParticipantPosition)
+            const target = subV(xy, getContainerAnchor(container))
+            const radius1 = subV(target, center)
+            const radius2 = subV(radius1, delta)
+
+            const cosAngle = crossProduct(radius1, radius2) / (vectorLength(radius1) * vectorLength(radius2))
+            const flag = crossProduct(rotate90ClockWise(radius1), delta) > 0 ? -1 : 1
+            const angle = Math.acos(cosAngle) * flag
+
+            const changeMatrix = (new DOMMatrix()).rotateSelf(0, 0, radian2Degree(angle))
+
+            const tm = (new DOMMatrix()).translate(
+              ...subV([0, 0] as [number, number], center))
+            const itm = (new DOMMatrix()).translateSelf(...center)
+
+            const newMatrix = multiply([itm, changeMatrix, tm, matrix])
+            setMatrix(newMatrix)
+
+            participants.local.get().pose.orientation = -radian2Degree(extractRotation(newMatrix))
+          }
         }
       },
+      onContextMenu: event => event?.preventDefault(),
       onDragEnd: () => setCommitedMatrix(matrix),
       onPinch: ({da: [d, a], origin, event, memo}) => {
         event?.preventDefault()
