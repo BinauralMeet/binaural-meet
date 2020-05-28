@@ -3,7 +3,7 @@ import {useStore} from '@hooks/ParticipantsStore'
 import {makeStyles} from '@material-ui/core/styles'
 import {
   crossProduct, extractRotation, extractScaleX, multiply,
-  radian2Degree, rotate90ClockWise, rotateVector2D, transformPoint2D, vectorLength, 
+  radian2Degree, rotate90ClockWise, rotateVector2D, transformPoint2D, vectorLength,
 } from '@models/utils'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef, useState} from 'react'
