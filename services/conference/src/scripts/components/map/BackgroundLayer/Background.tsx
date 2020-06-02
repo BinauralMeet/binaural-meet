@@ -13,13 +13,24 @@ const useStyles = makeStyles({
     height: SIZE,
     width: SIZE,
   },
+  logo:{
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    margin: 'auto',
+    height: '10em',
+  }
 })
 
 export const Background: React.FC<{}> = () => {
   const classes = useStyles()
 
   return (
-    <div className={classes.img} />
+    <div className={classes.img}>
+      <img className={classes.logo} src="images/Poweredby_Jitsi_logo_white_04_2020_white.png" />
+    </div>
   )
 }
 Background.displayName = 'Background'

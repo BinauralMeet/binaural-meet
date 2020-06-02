@@ -10,6 +10,7 @@ import React, {useEffect, useRef, useState} from 'react'
 import {subV, useGesture} from 'react-use-gesture'
 import {createValue, Provider as TransformProvider} from '../utils/useTransform'
 
+
 interface StyleProps {
   matrix: DOMMatrixReadOnly,
   mouse: [number, number],
@@ -23,6 +24,8 @@ const useStyles = makeStyles({
   },
   transform: {
     position: 'absolute',
+    left: '40%',
+    top: '40%',
     transform: (props: StyleProps) => props.matrix.toString(),
   },
 })
@@ -42,7 +45,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   const localParticipantPosition = useObserver(() => participants.local.get().pose.position)
 
   const [mouse, setMouse] = useState<[number, number]>([0, 0])  // mouse position relative to container
-  const [matrix, setMatrix] = useState<DOMMatrixReadOnly>(new DOMMatrixReadOnly())
+  const [matrix, setMatrix] = useState<DOMMatrixReadOnly>(new DOMMatrixReadOnly().translate(100,100))
 
   // changed only when event end, like drag end
   const [commitedMatrix, setCommitedMatrix] = useState<DOMMatrixReadOnly>(new DOMMatrixReadOnly())

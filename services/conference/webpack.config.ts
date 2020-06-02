@@ -1,4 +1,5 @@
 import HtmlWebpackPlugin from 'html-webpack-plugin'
+import CopyFilePlugin from 'copy-webpack-plugin'
 import * as path from 'path'
 import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin'
 import * as webpack from 'webpack'
@@ -94,6 +95,15 @@ const config: webpack.Configuration = {
       template: './src/index.html',
       filename: 'index.html',
       hash: true,
+    }),
+    new CopyFilePlugin({
+      patterns: [
+        {
+            context: "src/images",
+            from: "*.png",
+            to: path.resolve(__dirname, "dist/images")
+        }
+      ]
     }),
     new Visualizer({
       filename: './statistics.html',
