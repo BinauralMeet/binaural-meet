@@ -8,7 +8,8 @@ const useStyles = makeStyles({
     alignItems: 'center',
     width: props.size,
     height: props.size,
-    borderRadius: (props.size || 0) / 2,
+//    borderRadius: (props.size || 0) / 2,
+    clipPath: 'circle(' + (props.size || 0) / 2 + 'px  at center)',
     overflow: 'hidden',
   }),
   videoLargerWidth: {
