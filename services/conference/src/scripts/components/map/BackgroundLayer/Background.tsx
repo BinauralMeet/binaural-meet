@@ -1,4 +1,5 @@
 import {Base} from '@components/map/Base'
+import jitsiIcon from '@images/jitsi/Poweredby_Jitsi_logo_white_04_2020_white.png'
 import {makeStyles} from '@material-ui/core/styles'
 import React from 'react'
 
@@ -21,7 +22,7 @@ const useStyles = makeStyles({
     left: 0,
     margin: 'auto',
     height: '10em',
-  }
+  },
 })
 
 export const Background: React.FC<{}> = () => {
@@ -29,7 +30,7 @@ export const Background: React.FC<{}> = () => {
 
   return (
     <div className={classes.img}>
-      <img className={classes.logo} src="images/Poweredby_Jitsi_logo_white_04_2020_white.png" />
+      <img className={classes.logo} src={jitsiIcon} />
     </div>
   )
 }

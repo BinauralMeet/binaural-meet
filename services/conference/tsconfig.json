@@ -30,6 +30,9 @@
       ],
       "@test-utils/*": [
         "__tests__/utils/*"
+      ],
+      "@images/*": [
+        "../images/*"
       ]
     },
     "allowSyntheticDefaultImports": true,
