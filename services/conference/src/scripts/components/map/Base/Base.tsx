@@ -41,6 +41,7 @@ const options = {
 
 export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   const container = useRef<HTMLDivElement>(null)
+  const transform = useRef<HTMLDivElement>(null)
   const participants = useStore()
   const localParticipantPosition = useObserver(() => participants.local.get().pose.position)
 
@@ -58,7 +59,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
           if (buttons === 2) {  // right mouse drag - rotate map
             const center = transformPoint2D(matrix, localParticipantPosition)
-            const target = subV(xy, getContainerAnchor(container))
+            const target = subV(xy, getDivAnchor(transform))
             const radius1 = subV(target, center)
             const radius2 = subV(radius1, delta)
 
@@ -97,7 +98,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
         const [md, ma] = memo
 
-        const center = subV(origin as [number, number], getContainerAnchor(container))
+        const center = subV(origin as [number, number], getDivAnchor(transform))
 
         let scale = d / md
         scale = limitScale(Math.abs(extractScaleX(matrix)), scale)
@@ -124,7 +125,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       },
       onWheelEnd: () => setCommitedMatrix(matrix),
       onMove: ({xy}) => {
-        setMouse(subV(xy, getContainerAnchor(container)))
+        setMouse(subV(xy, getDivAnchor(transform)))
       },
     },
     {
@@ -148,12 +149,12 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   }
   const classes = useStyles(styleProps)
 
-  const transfromValue = createValue(commitedMatrix, getContainerAnchor(container))
+  const transfromValue = createValue(commitedMatrix, getDivAnchor(transform))
 
   return (
     <div className={[classes.root, props.className].join(' ')} ref={container}>
       <TransformProvider value={transfromValue}>
-        <div id="map-transform" className={classes.transform}>
+        <div id="map-transform" className={classes.transform} ref={transform}>
           {props.children}
         </div>
       </TransformProvider>
@@ -176,11 +177,10 @@ function limitScale(currentScale: number, scale: number): number {
   return scale
 }
 
-function getContainerAnchor(container: React.RefObject<HTMLDivElement>): [number, number] {
-  if (container.current === null) {
+function getDivAnchor(container: React.RefObject<HTMLDivElement>): [number, number] {
+  const div = container.current;
+  if (div === null){
     return [0, 0]
   }
-  const div = container.current
-
   return [div.offsetLeft, div.offsetTop]
 }
