@@ -10,7 +10,6 @@ import React, {useEffect, useRef, useState} from 'react'
 import {subV, useGesture} from 'react-use-gesture'
 import {createValue, Provider as TransformProvider} from '../utils/useTransform'
 
-
 interface StyleProps {
   matrix: DOMMatrixReadOnly,
   mouse: [number, number],
@@ -40,7 +39,6 @@ const options = {
 }
 
 export const Base: React.FC<BaseProps> = (props: BaseProps) => {
-  const container = useRef<HTMLDivElement>(null)
   const transform = useRef<HTMLDivElement>(null)
   const participants = useStore()
   const localParticipantPosition = useObserver(() => participants.local.get().pose.position)
@@ -55,8 +53,6 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
     {
       onDrag: ({down, delta, event, xy, buttons}) => {
         if (down) {
-          event?.preventDefault()
-
           if (buttons === 2) {  // right mouse drag - rotate map
             const center = transformPoint2D(matrix, localParticipantPosition)
             const target = subV(xy, getDivAnchor(transform))
@@ -129,19 +125,11 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       },
     },
     {
-      domTarget: container,
       eventOptions: {
         passive: false,
-      },
+      }
     },
   )
-  useEffect(
-    () => {
-      bind()
-    },
-    [bind],
-  )
-
   const relativeMouse = matrix.inverse().transformPoint(new DOMPoint(...mouse))
   const styleProps: StyleProps = {
     matrix,
@@ -151,8 +139,15 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
   const transfromValue = createValue(commitedMatrix, getDivAnchor(transform))
 
+  function onPaste(evt: React.ClipboardEvent<HTMLDivElement>){
+    console.log("onPaste called")
+    console.dir(evt)
+  }
+
   return (
-    <div className={[classes.root, props.className].join(' ')} ref={container}>
+    <div className={[classes.root, props.className].join(' ')} {...bind()}
+      onPaste={onPaste}
+     >
       <TransformProvider value={transfromValue}>
         <div id="map-transform" className={classes.transform} ref={transform}>
           {props.children}
@@ -177,8 +172,8 @@ function limitScale(currentScale: number, scale: number): number {
   return scale
 }
 
-function getDivAnchor(container: React.RefObject<HTMLDivElement>): [number, number] {
-  const div = container.current;
+function getDivAnchor(e: React.RefObject<HTMLDivElement>): [number, number] {
+  const div = e.current;
   if (div === null){
     return [0, 0]
   }
