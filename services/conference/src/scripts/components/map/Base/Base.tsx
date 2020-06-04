@@ -39,7 +39,7 @@ const options = {
 }
 
 export const Base: React.FC<BaseProps> = (props: BaseProps) => {
-  const transform = useRef<HTMLDivElement>(null)
+  const container = useRef<HTMLDivElement>(null)
   const participants = useStore()
   const localParticipantPosition = useObserver(() => participants.local.get().pose.position)
 
@@ -53,9 +53,10 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
     {
       onDrag: ({down, delta, event, xy, buttons}) => {
         if (down) {
+          event?.preventDefault()
           if (buttons === 2) {  // right mouse drag - rotate map
             const center = transformPoint2D(matrix, localParticipantPosition)
-            const target = subV(xy, getDivAnchor(transform))
+            const target = subV(xy, getDivAnchor(container))
             const radius1 = subV(target, center)
             const radius2 = subV(radius1, delta)
 
@@ -94,7 +95,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
         const [md, ma] = memo
 
-        const center = subV(origin as [number, number], getDivAnchor(transform))
+        const center = subV(origin as [number, number], getDivAnchor(container))
 
         let scale = d / md
         scale = limitScale(Math.abs(extractScaleX(matrix)), scale)
@@ -121,7 +122,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       },
       onWheelEnd: () => setCommitedMatrix(matrix),
       onMove: ({xy}) => {
-        setMouse(subV(xy, getDivAnchor(transform)))
+        setMouse(subV(xy, getDivAnchor(container)))
       },
     },
     {
@@ -137,7 +138,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   }
   const classes = useStyles(styleProps)
 
-  const transfromValue = createValue(commitedMatrix, getDivAnchor(transform))
+  const transfromValue = createValue(commitedMatrix, getDivAnchor(container))
 
   function onPaste(evt: React.ClipboardEvent<HTMLDivElement>){
     console.log("onPaste called")
@@ -149,7 +150,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       onPaste={onPaste}
      >
       <TransformProvider value={transfromValue}>
-        <div id="map-transform" className={classes.transform} ref={transform}>
+        <div id="map-transform" className={classes.transform} ref={container}>
           {props.children}
         </div>
       </TransformProvider>
