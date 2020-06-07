@@ -199,7 +199,10 @@ class Connection extends EventEmitter {
         JitsiMeetJS.init(initOptions)
         JitsiMeetJS.setLogLevel('warn')
 
-        this._jitsiConnection = new JitsiMeetJS.JitsiConnection('Jitsi-Party', '', config)
+        console.log("config:")
+        console.dir(config)
+
+        this._jitsiConnection = new JitsiMeetJS.JitsiConnection(null as unknown as string, undefined as unknown as string, config)
 
         this._jitsiConnection.addEventListener(
           JitsiMeetJS.events.connection.CONNECTION_ESTABLISHED,
@@ -322,6 +325,11 @@ class Connection extends EventEmitter {
         }
       },
     )
+    conference.on(
+      JitsiMeetJS.events.conference.P2P_STATUS,
+      (jitsiConference: any, p2p: boolean) =>
+        0 //TODO hasevr
+          );
 
     conference.on(
       JitsiMeetJS.events.conference.PARTICIPANT_PROPERTY_CHANGED,

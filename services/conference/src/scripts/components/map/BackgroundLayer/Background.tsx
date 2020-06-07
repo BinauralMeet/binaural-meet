@@ -22,6 +22,7 @@ const useStyles = makeStyles({
     left: 0,
     margin: 'auto',
     height: '10em',
+    userDrag: 'none',
   },
 })
 
