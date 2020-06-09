@@ -8,6 +8,12 @@ interface JitsiConnectionOptions {
   id: string;
   password: string;
 }
+declare class XmppConnection{
+  options: any
+}
+declare class XMPP{
+  connection: XmppConnection
+}
 declare class JitsiConnection {
   constructor(appId: string, token: string, options: Object);
 
@@ -22,6 +28,7 @@ declare class JitsiConnection {
   getConnectionTimes(): number;
   addFeature(feature: string, submit: boolean): any;
   removeFeature(feature: string, submit: boolean): any;
+  xmpp: XMPP;
 }
 
 export { JitsiConnection };

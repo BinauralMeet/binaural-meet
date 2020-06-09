@@ -197,12 +197,15 @@ class Connection extends EventEmitter {
     return new Promise<string>(
       (resolve, reject) => {
         JitsiMeetJS.init(initOptions)
-        JitsiMeetJS.setLogLevel('warn')
+        JitsiMeetJS.setLogLevel('debug')
 
         console.log("config:")
         console.dir(config)
 
         this._jitsiConnection = new JitsiMeetJS.JitsiConnection(null as unknown as string, undefined as unknown as string, config)
+//    I don't have to add Origin header browser will add it.
+//        let opt = this._jitsiConnection.xmpp.connection.options;
+//        opt['customHeaders'] = {Origin: 'https://localhost:9000'}
 
         this._jitsiConnection.addEventListener(
           JitsiMeetJS.events.connection.CONNECTION_ESTABLISHED,
@@ -325,11 +328,6 @@ class Connection extends EventEmitter {
         }
       },
     )
-    conference.on(
-      JitsiMeetJS.events.conference.P2P_STATUS,
-      (jitsiConference: any, p2p: boolean) =>
-        0 //TODO hasevr
-          );
 
     conference.on(
       JitsiMeetJS.events.conference.PARTICIPANT_PROPERTY_CHANGED,
@@ -352,7 +350,7 @@ class Connection extends EventEmitter {
 
   private initJitsiConference(name: string) {
     if (this._jitsiConnection) {
-      this._jitsiConference = this._jitsiConnection.initJitsiConference(name, {})
+      this._jitsiConference = this._jitsiConnection.initJitsiConference(name, config)
       this.registerJistiConferenceEvents(this._jitsiConference)
 
       this._jitsiConference.join('')

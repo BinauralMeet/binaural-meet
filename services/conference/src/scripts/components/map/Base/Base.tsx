@@ -6,7 +6,7 @@ import {
   radian2Degree, rotate90ClockWise, rotateVector2D, transformPoint2D, vectorLength,
 } from '@models/utils'
 import {useObserver} from 'mobx-react-lite'
-import React, {useRef, useState} from 'react'
+import React, {useRef, useEffect, useState} from 'react'
 import {subV, useGesture} from 'react-use-gesture'
 import {createValue, Provider as TransformProvider} from '../utils/useTransform'
 
@@ -39,6 +39,7 @@ const options = {
 }
 
 export const Base: React.FC<BaseProps> = (props: BaseProps) => {
+  const outer = useRef<HTMLDivElement>(null)
   const container = useRef<HTMLDivElement>(null)
   const participants = useStore()
   const localParticipantPosition = useObserver(() => participants.local.get().pose.position)
@@ -53,8 +54,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
     {
       onDrag: ({down, delta, event, xy, buttons}) => {
         if (down) {
-          //  this also prevent onPaste event.
-          //  event?.preventDefault()
+          event?.preventDefault()
           if (buttons === 2) {  // right mouse drag - rotate map
             const center = transformPoint2D(matrix, localParticipantPosition)
             const target = subV(xy, getDivAnchor(container))
@@ -132,6 +132,20 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       }
     },
   )
+  useEffect(
+    () => {
+      bind()
+      window.document.body.addEventListener(
+        'paste',
+        (event) => {
+          onPaste(event)
+          event.preventDefault()
+        }
+      )
+    },
+    [bind],
+  )
+
   const relativeMouse = matrix.inverse().transformPoint(new DOMPoint(...mouse))
   const styleProps: StyleProps = {
     matrix,
@@ -141,34 +155,35 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
   const transfromValue = createValue(commitedMatrix, getDivAnchor(container))
 
-  function onPaste(evt: React.ClipboardEvent<HTMLDivElement>){
+  function onPaste(evt: ClipboardEvent){
     console.log("onPaste called")
     console.dir(evt)
     console.dir(evt.clipboardData)
-    console.dir(evt.clipboardData.items);
-
-    console.log("text:" + evt.clipboardData.getData("text"))
-    console.log("url:" + evt.clipboardData.getData("url"))
-    const imageFile = evt.clipboardData.items[0].getAsFile()
-    console.dir(imageFile);
-    if (imageFile){
-      const formData = new FormData();
-      formData.append('access_token', 'e9889a51fca19f2712ec046016b7ec0808953103e32cd327b91f11bfddaa8533')
-      formData.append('imagedata', imageFile)
-      fetch('https://upload.gyazo.com/api/upload', {method: 'POST', body: formData})
-      .then((response) => response.json())
-      .then((responseJson) => {
-        console.log("URL = " + responseJson.url)
-        //  To do, add URL and ask user position to place the image
-      })
-      .catch((error) =>{
-        console.error(error);
-      });
+    if (evt.clipboardData){
+      console.dir(evt.clipboardData.items);
+      console.log("text:" + evt.clipboardData.getData("text"))
+      console.log("url:" + evt.clipboardData.getData("url"))
+      const imageFile = evt.clipboardData.items[0].getAsFile()
+      console.dir(imageFile);
+      if (imageFile){
+        const formData = new FormData();
+        formData.append('access_token', 'e9889a51fca19f2712ec046016b7ec0808953103e32cd327b91f11bfddaa8533')
+        formData.append('imagedata', imageFile)
+        fetch('https://upload.gyazo.com/api/upload', {method: 'POST', body: formData})
+        .then((response) => response.json())
+        .then((responseJson) => {
+          console.log("URL = " + responseJson.url)
+          //  To do, add URL and ask user position to place the image
+        })
+        .catch((error) =>{
+          console.error(error);
+        });
+      }
     }
   }
 
   return (
-    <div className={[classes.root, props.className].join(' ')} {...bind()} onPaste={onPaste} >
+    <div className={[classes.root, props.className].join(' ')} ref={outer}>
       <TransformProvider value={transfromValue}>
         <div id="map-transform" className={classes.transform} ref={container}>
           {props.children}
