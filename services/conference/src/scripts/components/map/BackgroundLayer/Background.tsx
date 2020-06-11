@@ -23,6 +23,7 @@ const useStyles = makeStyles({
     margin: 'auto',
     height: '10em',
     userDrag: 'none',
+    userSelect: 'none',
   },
 })
 

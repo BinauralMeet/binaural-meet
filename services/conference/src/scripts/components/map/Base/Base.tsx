@@ -20,6 +20,8 @@ const useStyles = makeStyles({
     position: 'relative',
     width: '100%',
     height: '100%',
+    userDrag: 'none',
+    userSelect: 'none',
   },
   transform: {
     position: 'absolute',

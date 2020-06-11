@@ -25,7 +25,7 @@ export const App: React.FC<{}> = () => {
     <StoreProvider value={participantsStore}>
       <div className={classes.map}>
         <Map />
-        //<Footer />  //  floating action buttons
+        {/* <Footer />  */}
       </div>
     </StoreProvider>
   )
