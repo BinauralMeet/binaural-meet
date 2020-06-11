@@ -129,6 +129,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       },
     },
     {
+      domTarget: outer,
       eventOptions: {
         passive: false,
       }
