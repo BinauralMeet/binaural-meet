@@ -197,7 +197,7 @@ class Connection extends EventEmitter {
     return new Promise<string>(
       (resolve, reject) => {
         JitsiMeetJS.init(initOptions)
-        JitsiMeetJS.setLogLevel('debug')
+        JitsiMeetJS.setLogLevel('info')
 
         console.log("config:")
         console.dir(config)
@@ -319,7 +319,13 @@ class Connection extends EventEmitter {
           )
         } else {
           if ((track as JitsiRemoteTrack).isP2P) {
-            this._loggerHandler?.log(`Remote participant ID: ${(<JitsiRemoteTrack>track).getParticipantId()}`, 'TRACK_ADDED')
+            this._loggerHandler?.log(`P2P Remote participant ID: ${(<JitsiRemoteTrack>track).getParticipantId()}`, 'TRACK_ADDED')
+            this.emit(
+              ConferenceEvents.REMOTE_TRACK_ADDED,
+              track as JitsiRemoteTrack,
+            )
+          }else{
+            this._loggerHandler?.log(`JVB Remote participant ID: ${(<JitsiRemoteTrack>track).getParticipantId()}`, 'TRACK_ADDED')
             this.emit(
               ConferenceEvents.REMOTE_TRACK_ADDED,
               track as JitsiRemoteTrack,
