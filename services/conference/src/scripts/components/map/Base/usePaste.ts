@@ -1,8 +1,19 @@
-import {useEffect} from 'react'
+import React, {useEffect} from 'react'
 
-export function usePaste(target: HTMLElement) {
+function isRefObject<T>(obj: T | React.RefObject<T>): obj is React.RefObject<T> {
+  return (obj as React.RefObject<T>).current !== undefined
+}
+
+export function usePaste(target: HTMLElement | React.RefObject<HTMLElement>) {
   useEffect(
     () => {
+      const element = isRefObject(target) ? target.current : target
+      if (element === null) {
+        console.error('The ref object (target) is not assigned')
+
+        return
+      }
+
       const onPaste = (evt: ClipboardEvent) => {
         console.log('onPaste called')
         console.dir(evt)
@@ -33,17 +44,21 @@ export function usePaste(target: HTMLElement) {
 
       }
 
-      target.addEventListener(
+      const pasteListener = (event: ClipboardEvent) => {
+        onPaste(event)
+        event.preventDefault()
+      }
+
+      console.log('add event listener', element)
+
+      element.addEventListener(
         'paste',
-        (event) => {
-          onPaste(event)
-          event.preventDefault()
-        },
+        pasteListener,
       )
 
-      const disposer = () => target.removeEventListener(
+      const disposer = () => element.removeEventListener(
         'paste',
-        onPaste,
+        pasteListener,
       )
 
       return disposer
