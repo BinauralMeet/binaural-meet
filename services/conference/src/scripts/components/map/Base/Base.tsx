@@ -9,6 +9,7 @@ import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef, useState} from 'react'
 import {subV, useGesture} from 'react-use-gesture'
 import {createValue, Provider as TransformProvider} from '../utils/useTransform'
+import {usePaste} from './usePaste'
 
 interface StyleProps {
   matrix: DOMMatrixReadOnly,
@@ -46,7 +47,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   const participants = useStore()
   const localParticipantPosition = useObserver(() => participants.local.get().pose.position)
 
-  const [mouse, setMouse] = useState<[number, number]>([0, 0])  // mouse position relative to container
+  const [mouse, setMouse] = useState<[number, number]>([0, 0])  // mouse position relative to outer container
   const [matrix, setMatrix] = useState<DOMMatrixReadOnly>(new DOMMatrixReadOnly())
 
   // changed only when event end, like drag end
@@ -138,16 +139,11 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   useEffect(
     () => {
       bind()
-      window.document.body.addEventListener(
-        'paste',
-        (event) => {
-          onPaste(event)
-          event.preventDefault()
-        },
-      )
     },
     [bind],
   )
+
+  usePaste(window.document.body)
 
   const relativeMouse = matrix.inverse().transformPoint(new DOMPoint(...mouse))
   const styleProps: StyleProps = {
@@ -157,33 +153,6 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   const classes = useStyles(styleProps)
 
   const transfromValue = createValue(commitedMatrix, getDivAnchor(container))
-
-  function onPaste(evt: ClipboardEvent) {
-    console.log('onPaste called')
-    console.dir(evt)
-    console.dir(evt.clipboardData)
-    if (evt.clipboardData) {
-      console.dir(evt.clipboardData.items)
-      console.log(`text:${evt.clipboardData.getData('text')}`)
-      console.log(`url:${evt.clipboardData.getData('url')}`)
-      const imageFile = evt.clipboardData.items[0].getAsFile()
-      console.dir(imageFile)
-      if (imageFile) {
-        const formData = new FormData()
-        formData.append('access_token', 'e9889a51fca19f2712ec046016b7ec0808953103e32cd327b91f11bfddaa8533')
-        formData.append('imagedata', imageFile)
-        fetch('https://upload.gyazo.com/api/upload', {method: 'POST', body: formData})
-        .then(response => response.json())
-        .then((responseJson) => {
-          console.log(`URL = ${responseJson.url}`)
-          //  To do, add URL and ask user position to place the image
-        })
-        .catch((error) => {
-          console.error(error)
-        })
-      }
-    }
-  }
 
   return (
     <div className={[classes.root, props.className].join(' ')} ref={outer}>
