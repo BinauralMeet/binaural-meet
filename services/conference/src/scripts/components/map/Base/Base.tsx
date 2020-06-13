@@ -126,7 +126,9 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       },
       onWheelEnd: () => setCommitedMatrix(matrix),
       onMove: ({xy}) => {
-        setMouse(subV(xy, getDivAnchor(container)))
+        setMouse(subV(xy, getDivAnchor(container)));
+        const xyOnMap  = transformPoint2D(matrix.inverse(), subV(xy, getDivAnchor(container)));
+        (global as any).mousePositionOnMap = xyOnMap;
       },
     },
     {
@@ -142,9 +144,6 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
     },
     [bind],
   )
-
-  usePaste(window.document.body)
-
   const relativeMouse = matrix.inverse().transformPoint(new DOMPoint(...mouse))
   const styleProps: StyleProps = {
     matrix,
@@ -153,7 +152,6 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   const classes = useStyles(styleProps)
 
   const transfromValue = createValue(commitedMatrix, getDivAnchor(container))
-
   return (
     <div className={[classes.root, props.className].join(' ')} ref={outer}>
       <TransformProvider value={transfromValue}>

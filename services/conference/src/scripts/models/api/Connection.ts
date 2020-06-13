@@ -20,6 +20,7 @@ import JitsiLocalTrack from 'lib-jitsi-meet/modules/RTC/JitsiLocalTrack'
 import JitsiRemoteTrack from 'lib-jitsi-meet/modules/RTC/JitsiRemoteTrack'
 import {autorun, IObservableValue, observe} from 'mobx'
 import {throttle} from 'throttle-debounce'
+import { SharedContent } from '@stores/SharedContent'
 
 declare var global: any
 global.$ = jquery
@@ -77,6 +78,7 @@ class Connection extends EventEmitter {
   public state: ConnectionStatesType
   public version: string
   public participants: Map<string, { jitsiInstance?: JitsiParticipant, isLocal: boolean}>
+  public SharedContents: Map<string, SharedContent>
   public localId: string
 
   // public remotes: JitsiParticipant[]
@@ -90,6 +92,7 @@ class Connection extends EventEmitter {
     this.localId = ''
     // this.remotes = []
     this.participants = new Map<string, { jitsiInstance: JitsiParticipant, isLocal: boolean}>()
+    this.SharedContents = new Map<string, SharedContent>()
 
     this._loggerHandler = ApiLogger.setHandler(connectionName)
     this._isForTest = isForTest
