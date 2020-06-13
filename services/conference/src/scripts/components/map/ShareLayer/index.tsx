@@ -1,1 +1,1 @@
-//export {ShareLayer} from './ShareLayer'
+export {ShareLayer} from './ShareLayer'

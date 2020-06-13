@@ -5,8 +5,6 @@ import React from 'react'
 import {Map} from './map/map'
 import {Footer} from './footer/footer'
 
-(global as any).ps = participantsStore;
-
 const useStyles = makeStyles({
   map: {
     position: 'absolute',
