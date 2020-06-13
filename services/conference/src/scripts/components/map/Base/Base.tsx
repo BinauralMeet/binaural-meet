@@ -6,9 +6,10 @@ import {
   radian2Degree, rotate90ClockWise, rotateVector2D, transformPoint2D, vectorLength,
 } from '@models/utils'
 import {useObserver} from 'mobx-react-lite'
-import React, {useRef, useEffect, useState} from 'react'
+import React, {useEffect, useRef, useState} from 'react'
 import {subV, useGesture} from 'react-use-gesture'
 import {createValue, Provider as TransformProvider} from '../utils/useTransform'
+import {usePaste} from './usePaste'
 
 interface StyleProps {
   matrix: DOMMatrixReadOnly,
@@ -46,7 +47,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   const participants = useStore()
   const localParticipantPosition = useObserver(() => participants.local.get().pose.position)
 
-  const [mouse, setMouse] = useState<[number, number]>([0, 0])  // mouse position relative to container
+  const [mouse, setMouse] = useState<[number, number]>([0, 0])  // mouse position relative to outer container
   const [matrix, setMatrix] = useState<DOMMatrixReadOnly>(new DOMMatrixReadOnly())
 
   // changed only when event end, like drag end
@@ -134,7 +135,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       domTarget: outer,
       eventOptions: {
         passive: false,
-      }
+      },
     },
   )
   useEffect(
@@ -178,9 +179,10 @@ function limitScale(currentScale: number, scale: number): number {
 }
 
 function getDivAnchor(e: React.RefObject<HTMLDivElement>): [number, number] {
-  const div = e.current;
-  if (div === null){
+  const div = e.current
+  if (div === null) {
     return [0, 0]
   }
+
   return [div.offsetLeft, div.offsetTop]
 }
