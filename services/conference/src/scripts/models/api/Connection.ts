@@ -1,7 +1,7 @@
 import {ConnectionInfo, default as ConnectionInfoStore} from '@stores/ConnectionInfo'
 import {default as ParticiantsStore} from '@stores/Participants'
 import {EventEmitter} from 'events'
-import JitsiMeetJS from 'lib-jitsi-meet'
+import JitsiMeetJS, { JitsiValues } from 'lib-jitsi-meet'
 import JitsiTrack from 'lib-jitsi-meet/modules/RTC/JitsiTrack'
 import {Store} from '../../stores/utils'
 import {ConnectionStates, ConnectionStatesType} from './Constants'
@@ -12,7 +12,9 @@ import {config} from './test.config'
 // import a global variant $ for lib-jitsi-meet
 import {Pose2DMap} from '@models/Participant'
 import {Participant} from '@stores/Participant'
-import {DummyConnectionStore, dummyConnectionStore} from '@test-utils/DummyParticipants'
+import {SharedContent as ISharedContent} from '@models/SharedContent'
+import {SharedContent as SharedContentStore} from '@stores/SharedContent'
+import {dummyConnectionStore} from '@test-utils/DummyParticipants'
 import jquery from 'jquery'
 import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
 // import JitsiTrack from 'lib-jitsi-meet/modules/RTC/JitsiTrack'
@@ -20,7 +22,8 @@ import JitsiLocalTrack from 'lib-jitsi-meet/modules/RTC/JitsiLocalTrack'
 import JitsiRemoteTrack from 'lib-jitsi-meet/modules/RTC/JitsiRemoteTrack'
 import {autorun, IObservableValue, observe} from 'mobx'
 import {throttle} from 'throttle-debounce'
-import { SharedContent } from '@stores/SharedContent'
+import { default as sharedContents, SharedContents } from '@stores/SharedContents'
+import { SharedContent } from '@components/map/ShareLayer/SharedContent'
 
 declare var global: any
 global.$ = jquery
@@ -68,6 +71,13 @@ const ConferenceEvents = {
   PARTICIPANT_LEFT: 'participant_left',
 }
 
+const ParticipantProperties = {
+  PPROP_POSE: 'pose',
+  PPROP_CONTENTS: 'contents',
+  PPROP_CONTENTS_ORDER: 'contentsOrder',
+}
+
+
 class Connection extends EventEmitter {
 
   private _jitsiConnection?: JitsiMeetJS.JitsiConnection
@@ -78,7 +88,6 @@ class Connection extends EventEmitter {
   public state: ConnectionStatesType
   public version: string
   public participants: Map<string, { jitsiInstance?: JitsiParticipant, isLocal: boolean}>
-  public SharedContents: Map<string, SharedContent>
   public localId: string
 
   // public remotes: JitsiParticipant[]
@@ -92,7 +101,6 @@ class Connection extends EventEmitter {
     this.localId = ''
     // this.remotes = []
     this.participants = new Map<string, { jitsiInstance: JitsiParticipant, isLocal: boolean}>()
-    this.SharedContents = new Map<string, SharedContent>()
 
     this._loggerHandler = ApiLogger.setHandler(connectionName)
     this._isForTest = isForTest
@@ -115,8 +123,21 @@ class Connection extends EventEmitter {
 
       return
     }
-
     throw new Error('No connection has been established.')
+  }
+
+  public sendSharedContents(cs: Map<string, ISharedContent>){
+    const acs = Array.from(cs);
+    this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_CONTENTS, JSON.stringify(acs))
+  }
+  public sendSharedContentsOrder(cs: Map<string, ISharedContent>){
+    const keys = Array.from(cs.keys());
+    this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_CONTENTS_ORDER, JSON.stringify(keys))
+  }
+  public sendCommand(name: string, values: JitsiValues){
+    if (this._jitsiConference){
+      this._jitsiConference.sendCommand(name, values)
+    }
   }
 
   private bindStore(local: Participant) {
@@ -131,7 +152,7 @@ class Connection extends EventEmitter {
     this._loggerHandler?.debug('Initialize local pose.', 'bindStore')
 
     const throttledUpdateFunc = throttle(200, (newPose: Pose2DMap) => {
-      this._jitsiConference?.setLocalParticipantProperty('pose', JSON.stringify(newPose))
+      this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_POSE, JSON.stringify(newPose))
     })
 
     const disposer = autorun(   // FIXME disposer not used
@@ -202,13 +223,12 @@ class Connection extends EventEmitter {
         JitsiMeetJS.init(initOptions)
         JitsiMeetJS.setLogLevel('info')
 
-        console.log("config:")
-        console.dir(config)
-
         this._jitsiConnection = new JitsiMeetJS.JitsiConnection(null as unknown as string, undefined as unknown as string, config)
-//    I don't have to add Origin header browser will add it.
-//        let opt = this._jitsiConnection.xmpp.connection.options;
-//        opt['customHeaders'] = {Origin: 'https://localhost:9000'}
+
+        /*    I don't have to add Origin header. Browser will add it.
+            //  add Origin header
+            let opt = this._jitsiConnection.xmpp.connection.options;
+            opt['customHeaders'] = {Origin: 'https://localhost:9000'} */
 
         this._jitsiConnection.addEventListener(
           JitsiMeetJS.events.connection.CONNECTION_ESTABLISHED,
@@ -344,13 +364,32 @@ class Connection extends EventEmitter {
         this._loggerHandler?.debug('Participant property has changed.', 'Jitsi')
 
         // Change store
-        if (name === 'pose') {
+        if (name === ParticipantProperties.PPROP_POSE) {
           const pose: Pose2DMap = JSON.parse(value)
           const id = participant.getId()
           const target = ParticiantsStore.find(id)
 
           target.pose.orientation = pose.orientation
           target.pose.position = pose.position
+        }else if (name === ParticipantProperties.PPROP_CONTENTS){
+          const contentsAsArray = JSON.parse(value)
+          const contents = new Map<string, ISharedContent>(contentsAsArray)
+          const id = participant.getId()
+          const target = ParticiantsStore.find(id)
+          target.setContents(contents)
+        }else if (name === ParticipantProperties.PPROP_CONTENTS_ORDER){
+          const keys = JSON.parse(value) as Array<string>
+          const newOrder = keys.map((key): [string, SharedContentStore] => {
+            const part = ParticiantsStore.find(key.split('_')[0])
+            const cont = (part !== undefined) ? part.contents.get(key) : undefined
+            if (cont !== undefined){
+              return [key, cont]
+            }else{
+              return [key, new SharedContentStore()]
+            }
+          })
+          sharedContents.order = new Map(newOrder)
+          console.log("PPROP_CONTENTS_ORDER ", newOrder)
         }
       },
     )
@@ -361,7 +400,6 @@ class Connection extends EventEmitter {
     if (this._jitsiConnection) {
       this._jitsiConference = this._jitsiConnection.initJitsiConference(name, config)
       this.registerJistiConferenceEvents(this._jitsiConference)
-
       this._jitsiConference.join('')
     }
   }
@@ -539,6 +577,7 @@ class Connection extends EventEmitter {
     }
   }
 }
+
 
 const toTracks = (f: () => MediaStreamTrack): MediaStreamTrack[] => {
   return [f().clone()]

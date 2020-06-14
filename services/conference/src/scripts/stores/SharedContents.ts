@@ -1,13 +1,16 @@
 import {assert} from '@models/utils'
 import {action, computed, observable} from 'mobx'
 import {SharedContent} from './SharedContent'
+import { connection } from '@models/api'
 
 export class SharedContents {
-  @observable.shallow readonly shared: Array<SharedContent> = new Array<SharedContent>()
-  uploaded: SharedContent|null = null
-
+  //  All shared objects. Z order is kept
+  order: Map<string, SharedContent> = new Map<string, SharedContent>()
   @computed get count(): number {
-    return this.shared.length
+    return this.order.size
+  }
+  @action sendOrder(){
+    connection.sendSharedContentsOrder(this.order)
   }
 }
 

@@ -1,5 +1,12 @@
 import {Information, Participant as IParticipant, Perceptibility, Pose2DMap, Stream} from '@models/Participant'
 import {shallowObservable, Store} from './utils'
+import {SharedContent} from './SharedContent'
+import {action, computed, observable} from 'mobx'
+import {default as sharedContents} from './SharedContents'
+import {default as participants} from './Participants'
+import { SignalCellularConnectedNoInternet0BarSharp } from '@material-ui/icons'
+import { connection } from '@models/api'
+import { BackdropProps } from '@material-ui/core'
 
 export class Participant implements Store<IParticipant> {
   readonly id: string
@@ -22,7 +29,54 @@ export class Participant implements Store<IParticipant> {
     avatarStream: undefined,
     screenStream: undefined,
   })
-
+  contents = new Map<string, SharedContent>()
+  ///  Add a new content to the local pariticipant
+  @action addContent(newCont: SharedContent):string{
+    console.log('addContent: ', newCont)
+    if (!participants.isLocal(this.id)) {
+      console.log("Error: addContent is only for local participant")
+      return ''
+    }
+    // fin key for new content
+    //  find max count + 1
+    var count = 0
+    this.contents.forEach((val, key) => {
+      const c = parseInt(key.split('_')[1]);
+      count = (c > count) ? c : count
+    })
+    const key = this.id + '_' + (count+1)
+    this.contents.set(key, newCont)
+    if (!sharedContents.order.has(key)){
+      sharedContents.order.set(key, newCont)
+      sharedContents.sendOrder()
+      connection.sendSharedContents(this.contents)
+    }
+    return key
+  }
+  ///  remove a content to the local pariticipant
+  @action removeContent(key: string):boolean{
+    const rv = this.contents.delete(key)
+    sharedContents.order.delete(key)
+    sharedContents.sendOrder()
+    connection.sendSharedContents(this.contents)
+    return rv;
+  }
+  /// Set contents to a remote or local partitipant
+  @action setContents(newConts: Map<string, SharedContent>):void{
+    console.log("setContents: ", newConts)
+    const toDel = this.contents.diff(newConts)
+    const toAdd = newConts.diff(this.contents)
+    this.contents = newConts
+    sharedContents.order = sharedContents.order.diff(toDel)
+    const toSet = toAdd.diff(sharedContents.order)
+    const toAssign = toAdd.diff(toSet)
+    toAssign.forEach((val, key) => Object.assign(sharedContents.order.get(key), val))
+    toSet.forEach((val,key) => sharedContents.order.set(key, val) )
+    if (participants.isLocal(this.id)){ //  if this is local participant
+      if ((toSet.size > 0 || toDel.size > 0)) sharedContents.sendOrder()  // send order first
+      if (toAdd.size > 0 || toDel.size > 0) connection.sendSharedContents(this.contents)  //  send contents
+    }
+  }
   constructor(id: string) {
     this.id = id
   }

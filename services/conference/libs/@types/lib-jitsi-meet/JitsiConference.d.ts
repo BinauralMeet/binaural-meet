@@ -8,6 +8,18 @@ import JitsiLocalTrack from './modules/RTC/JitsiLocalTrack'
 import JitsiParticipant from "./JitsiParticipant";
 import { Transcriber } from "./modules";
 
+declare interface JitsiValuesChildren {
+  tagName:string
+  value:string
+  attributes: {}
+  children: Array<JitsiValuesChildren>
+}
+declare interface JitsiValues {
+  value:string
+  attributes: {}
+  children: Array<JitsiValuesChildren>
+}
+
 declare class JitsiConference {
   constructor(options: any);
 
@@ -36,10 +48,10 @@ declare class JitsiConference {
   off(eventId: string, handler: Function): void;
   addEventListener: (eventId: number, handler: Function) => void;
   removeEventListener: (eventId: number, handler: Function) => void;
-  addCommandListener(command: string, handler: Function): void;
-  removeCommandListener(command: string, handler: Function): void;
-  sendCommand(name: string, values: Object): void;
-  sendCommandOnce(name: string, values: Object): void;
+  addCommandListener(command: string, handler: (values: JitsiValues, jid:string, from:any) => void): void;
+  removeCommandListener(command: string, handler: (values: JitsiValues) => void): void;
+  sendCommand(name: string, values: JitsiValues): void;
+  sendCommandOnce(name: string, values: JitsiValues): void;
   removeCommand(name: string): void;
   setDisplayName(name: string): void;
   setSubject(subject: string): void;
@@ -102,4 +114,5 @@ declare class JitsiConference {
 
 }
 
+export { JitsiValues, JitsiValuesChildren};
 export { JitsiConference };
