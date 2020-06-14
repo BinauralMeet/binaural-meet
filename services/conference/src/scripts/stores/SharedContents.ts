@@ -5,7 +5,7 @@ import { connection } from '@models/api'
 
 export class SharedContents {
   //  All shared objects. Z order is kept
-  order: Map<string, SharedContent> = new Map<string, SharedContent>()
+  @observable order: Map<string, SharedContent> = new Map<string, SharedContent>()
   @computed get count(): number {
     return this.order.size
   }

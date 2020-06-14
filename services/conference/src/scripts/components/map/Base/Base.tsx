@@ -45,6 +45,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   const outer = useRef<HTMLDivElement>(null)
   const container = useRef<HTMLDivElement>(null)
   const participants = useStore()
+  //  todo how to access participant ?
   const localParticipantPosition = useObserver(() => participants.local.get().pose.position)
 
   const [mouse, setMouse] = useState<[number, number]>([0, 0])  // mouse position relative to outer container

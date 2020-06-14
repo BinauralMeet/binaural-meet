@@ -1,11 +1,12 @@
-import {useStore} from '@hooks/SharedContentStore'
 import {useObserver} from 'mobx-react-lite'
 import {makeStyles} from '@material-ui/core/styles'
 //import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useState} from 'react'
-import {default as sharedContentStore} from '@stores/SharedContents'
 import {SharedContent} from './SharedContent'
 import {PastedContent} from './PastedContent'
+
+import {useStore, StoreProvider as ContentsProvider} from '@hooks/SharedContentsStore'
+import sharedContentsStore from '@stores/SharedContents'
 
 const useStyles = makeStyles({
   container: {
@@ -17,11 +18,8 @@ const useStyles = makeStyles({
     userSelect: 'none',
   },
 })
-
-export const ShareLayer: React.FC<{}> = () => {
+export const SharedContents: React.FC<{}> = () => {
   const store = useStore()
-  const order = store.order
-  console.log("order:", order)
   const contents = useObserver(() => Array.from(store.order.values()))
   const classes = useStyles()
   const sharedContents = contents.map(val => <SharedContent content={val} />)
@@ -32,4 +30,12 @@ export const ShareLayer: React.FC<{}> = () => {
     </div>
   )
 }
+export const ShareLayer: React.FC<{}> = () => {
+  return(
+    <ContentsProvider value={sharedContentsStore}>
+      <SharedContents />
+    </ContentsProvider>
+  )
+}
+
 ShareLayer.displayName = 'ShareLayer'

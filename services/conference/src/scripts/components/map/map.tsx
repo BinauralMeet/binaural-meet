@@ -5,11 +5,19 @@ import {BaseProps} from '@components/utils'
 import React from 'react'
 import {BackgroundLayer} from './BackgroundLayer'
 
+import {StoreProvider as ParticipantsProvider} from '@hooks/ParticipantsStore'
+import participantsStore from '@stores/Participants'
+
+
 export const Map: React.FC<BaseProps> = (props) => {
-  return <Base {...props}>
-    <BackgroundLayer />
-    <ShareLayer />
-    <ParticipantsLayer />
-  </Base>
+  return (
+  <ParticipantsProvider value={participantsStore}>
+    <Base {...props}>
+      <BackgroundLayer />
+      <ShareLayer />
+      <ParticipantsLayer />
+    </Base>
+  </ParticipantsProvider>)
 }
 Map.displayName = 'Map'
+

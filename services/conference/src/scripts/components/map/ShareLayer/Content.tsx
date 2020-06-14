@@ -8,6 +8,11 @@ const useStyles = makeStyles({
     height: props.size[1],
     verticalAlign: 'bottom',
   }),
+  iframe: (props: ISharedContent) => ({
+    width: props.size[0],
+    height: props.size[1],
+    borderStyle:'solid', borderColor:'black', borderWidth:2
+  }),
   text: (props: ISharedContent) => ({
     width: props.size[0]
   }),
@@ -18,7 +23,11 @@ export const Content: React.FC<any> = (props) => {
   const classes = useStyles(content)
   if (content.type == 'img'){
     return <img className={classes.img} src={content.url} />
-  }else{
+  }else if (content.type == 'iframe'){
+    return <iframe className={classes.iframe} src={content.url} />
+  }else if (content.type == 'text'){
     return <div className={classes.text} >{content.url}</div>
+  }else{
+    return <div className={classes.text} >Unknow type:{content.type} for {content.url}</div>
   }
 }

@@ -9,9 +9,13 @@ import { Content } from './Content'
 
 const useStyles = makeStyles({
   cont: (props: ISharedContent) => ({
+    display: props.type==''? 'none' : 'block',
     position: 'absolute',
-    left: props.pose.position[0],
-    top: props.pose.position[1],
+    borderStyle: 'solid',
+    borderColor: 'orchid',
+    borderWidth: '0.3em',
+    left: `calc(${props.pose.position[0]}px - 0.3em)`,
+    top: `calc(${props.pose.position[1]}px - 0.3em)`,
     transform:'rotate(' + props.pose.orientation + 'deg)',
   }),
 })
@@ -70,18 +74,8 @@ export const PastedContent: React.FC = () => {
   function onClick(evt: React.MouseEvent<HTMLInputElement>){
     console.log("onClick b:", evt.button, " bs:" ,evt.buttons, " d:", evt.detail, " p:", evt.eventPhase)
     if (evt.detail == 2){
-      //  remove the pasted content move it to share
+      //  Add the pasted content to localPaticipant's contents and remove it.
       participants.local.get().addContent(content);
-      /*  //test code
-      const values:JitsiValues = {
-        value: "value",
-        attributes:{attr1:"atter1Value", attr2:"attr2Value"},
-        children: []
-      }
-      values.children = [Object.assign({}, values) as JitsiValuesChildren]
-      values.children[0].tagName = "newTag";
-      connection.sendCommand(JitsiCommands.SHARE_CONTENTS, values);
-      */
       setContent(nullContent);
     }
   }
@@ -119,12 +113,18 @@ export const PastedContent: React.FC = () => {
         }
       }else if (evt.clipboardData.types.includes("text/plain")){
         evt.clipboardData.items[0].getAsString((str:string)=>{
-          content.type = "text"
           content.url = str
-          content.pose.position = (global as any).mousePositionOnMap
-          const slen = Math.sqrt(str.length)
-          content.size[0] = slen*14*2;
-          content.size[1] = slen*14/2;
+          if (content.url.indexOf('http://') === 0 || content.url.indexOf('https://') === 0){
+            content.type = 'iframe'
+            content.size[0] = 600;
+            content.size[1] = 800;
+          }else{
+            content.type = 'text'
+            content.pose.position = (global as any).mousePositionOnMap
+            const slen = Math.sqrt(str.length)
+            content.size[0] = slen*14*2;
+            content.size[1] = slen*14/2;
+          }
           setContent(Object.assign({}, content))
         })
       }
@@ -145,9 +145,7 @@ export const PastedContent: React.FC = () => {
   )
   const classes = useStyles(content)
   return (
-    <div className={classes.cont} ref={container} onClick = {onClick}
-      style = {{borderStyle: 'solid', borderWidth: '0.3em', borderColor: 'orchid'}}
-    >
+    <div className={classes.cont} ref={container} onClick = {onClick}>
     <Content content={content} />
     </div>
   )
