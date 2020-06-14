@@ -1,4 +1,5 @@
 import {useStore} from '@hooks/SharedContentStore'
+import {useObserver} from 'mobx-react-lite'
 import {makeStyles} from '@material-ui/core/styles'
 //import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useState} from 'react'
@@ -18,9 +19,12 @@ const useStyles = makeStyles({
 })
 
 export const ShareLayer: React.FC<{}> = () => {
+  const store = useStore()
+  const order = store.order
+  console.log("order:", order)
+  const contents = useObserver(() => Array.from(store.order.values()))
   const classes = useStyles()
-  const sharedContents = Array()
-  sharedContentStore.order.forEach(val => sharedContents.push(<SharedContent content={val} /> ))
+  const sharedContents = contents.map(val => <SharedContent content={val} />)
   return(
     <div className={classes.container} >
       {sharedContents}
