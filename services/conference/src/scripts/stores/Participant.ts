@@ -67,7 +67,8 @@ export class Participant implements Store<IParticipant> {
     const toDel = this.contents.diff(newConts)
     const toAdd = newConts.diff(this.contents)
     this.contents = newConts
-    sharedContents.order = sharedContents.order.diff(toDel)
+    const order = new Map<string, SharedContent>(sharedContents.order)
+    sharedContents.order = order.diff(toDel)  //  diff is defined only for pure Map
     const toSet = toAdd.diff(sharedContents.order)
     const toAssign = toAdd.diff(toSet)
     toAssign.forEach((val, key) => Object.assign(sharedContents.order.get(key), val))

@@ -9,12 +9,13 @@ const useStyles = makeStyles({
     verticalAlign: 'bottom',
   }),
   iframe: (props: ISharedContent) => ({
-    width: props.size[0],
-    height: props.size[1],
-    borderStyle:'solid', borderColor:'black', borderWidth:2
+    width: '100%',
+    height: '100%',
   }),
   text: (props: ISharedContent) => ({
-    width: props.size[0]
+    //width: '100%',
+    //height: '100%',
+    overflow: 'hidden',
   }),
 })
 

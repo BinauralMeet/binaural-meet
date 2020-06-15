@@ -4,31 +4,41 @@ import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {subV, useGesture} from 'react-use-gesture'
 import { default as participants } from '@stores/Participants'
 import { Content } from './Content'
+import { Rnd } from 'react-rnd';
+import { ProgressPlugin } from 'webpack'
+import { red } from '@material-ui/core/colors'
 
 (global as any).mousePositionOnMap = [0, 0]
 
 const useStyles = makeStyles({
-  cont: (props: ISharedContent) => ({
+  rnd: (props: ISharedContent) => ({
     display: props.type==''? 'none' : 'block',
-    position: 'absolute',
-    borderStyle: 'solid',
-    borderColor: 'orchid',
-    borderWidth: '0.3em',
-    left: `calc(${props.pose.position[0]}px - 0.3em)`,
-    top: `calc(${props.pose.position[1]}px - 0.3em)`,
-    transform:'rotate(' + props.pose.orientation + 'deg)',
+    boxShadow: '0.2em 0.2em 0.2em 0.2em rgba(0,0,0,0.4)',
+//    transform:'rotate(' + props.pose.orientation + 'deg)',
+    backgroundColor: 'rgba(0,0,0,0.2)',
   }),
+  note: {
+    position:'absolute',
+    bottom:0,
+    right:0,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    color: 'red',
+    fontSize: 'small',
+    overflow: 'hidden',
+    //whiteSpace: 'pre'
+  }
 })
 
 var preciseOrientation = 0
-export const PastedContent: React.FC = () => {
+export const PastedContent: React.FC<{}> = () => {
   const nullContent = {
     type:'', url:'',
     pose:{position:[0,0], orientation:0},
     size: [0,0]
   } as ISharedContent
   const [content, setContent] = useState(nullContent);
-  const container = useRef<HTMLDivElement>(null)
+/*
+  const container = useRef<Rnd>(null)
   const bind = useGesture(
     {
       onDrag: ({down, delta, event, xy, buttons, ctrlKey, shiftKey}) => {
@@ -71,6 +81,7 @@ export const PastedContent: React.FC = () => {
       }
     },
   )
+  */
   function onClick(evt: React.MouseEvent<HTMLInputElement>){
     console.log("onClick b:", evt.button, " bs:" ,evt.buttons, " d:", evt.detail, " p:", evt.eventPhase)
     if (evt.detail == 2){
@@ -132,7 +143,7 @@ export const PastedContent: React.FC = () => {
   }
   useEffect(
     () => {
-      bind()
+//      bind()
       window.document.body.addEventListener(
         'paste',
         (event) => {
@@ -141,12 +152,35 @@ export const PastedContent: React.FC = () => {
         }
       )
     },
-    [bind],
+    [
+    //  bind
+    ],
   )
   const classes = useStyles(content)
-  return (
-    <div className={classes.cont} ref={container} onClick = {onClick}>
-    <Content content={content} />
-    </div>
-  )
+  if (content.type==''){
+    return <div />
+  }else{
+    return (
+      <Rnd className={classes.rnd}
+        position={{x: content.pose.position[0], y: content.pose.position[1]}}
+        size = {{width:content.size[0], height:content.size[1]}}
+        onDrag = { (evt)=>{ evt.stopPropagation() } }
+        onDragStop = { (e, data) => {
+          content.pose.position[0] = data.x
+          content.pose.position[1] = data.y
+          setContent(Object.assign({}, content))
+        } }
+        onResize = { (evt)=>{ evt.stopPropagation() } }
+        onResizeStop = { (e,dir,elem, delta, pos) => {
+          content.size[0] = elem.clientWidth
+          content.size[1] = elem.clientHeight
+          setContent(Object.assign({}, content))
+        } }
+        onClick = {onClick}
+      >
+        <Content content={content} />
+        <div className={classes.note}>Double click to share</div>
+      </Rnd>
+    )
+  }
 }
