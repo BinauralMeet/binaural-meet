@@ -131,8 +131,8 @@ class Connection extends EventEmitter {
     this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_CONTENTS, JSON.stringify(acs))
   }
   public sendSharedContentsOrder(cs: Map<string, ISharedContent>){
-    const keys = Array.from(cs.keys());
-    this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_CONTENTS_ORDER, JSON.stringify(keys))
+    const entries = Array.from(cs.entries());
+    this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_CONTENTS_ORDER, JSON.stringify(entries))
   }
   public sendCommand(name: string, values: JitsiValues){
     if (this._jitsiConference){
@@ -378,22 +378,20 @@ class Connection extends EventEmitter {
           const target = ParticiantsStore.find(id)
           target.setContents(contents)
         }else if (name === ParticipantProperties.PPROP_CONTENTS_ORDER){
-          const keys = JSON.parse(value) as Array<string>
-          const newOrder = keys.map((key): [string, SharedContentStore] => {
-            const part = ParticiantsStore.find(key.split('_')[0])
-            const cont = (part !== undefined) ? part.contents.get(key) : undefined
-            if (cont !== undefined){
-              return [key, cont]
-            }else{
-              return [key, new SharedContentStore()]
+          const newOrder = JSON.parse(value) as Array<[string, SharedContentStore]>
+          const newMap = new Map(newOrder)
+          const local = ParticiantsStore.local.get()
+          newMap.forEach((val, key)=>{
+            const got = local.contents.get(key)
+            if (got){
+              local.contents.set(key, val)
             }
           })
-          sharedContents.order = new Map(newOrder)
+          sharedContents.order = newMap;
           console.log("PPROP_CONTENTS_ORDER ", newOrder)
         }
       },
     )
-
   }
 
   private initJitsiConference(name: string) {

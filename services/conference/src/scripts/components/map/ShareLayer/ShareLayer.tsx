@@ -17,7 +17,8 @@ export const SharedContents: React.FC<{}> = () => {
   const store = useStore()
   const contents = useObserver(() => Array.from(store.order.entries()))
   const classes = useStyles()
-  const sharedContents = contents.map((val) => <SharedContent key={val[0]} content={val[1]}/>)
+  const sharedContents = contents.map((val) =>
+    <SharedContent key={val[0]} content={val[1]} contents={store}/>)
   return(
     <div className={classes.slContainer} >
       {sharedContents}

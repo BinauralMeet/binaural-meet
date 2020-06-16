@@ -1,34 +1,12 @@
 import {makeStyles} from '@material-ui/core/styles'
 import React, {useRef, useEffect, useState} from 'react'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {subV, useGesture} from 'react-use-gesture'
 import { default as participants } from '@stores/Participants'
 import { Content } from './Content'
 import { Rnd } from 'react-rnd';
-import { ProgressPlugin } from 'webpack'
-import { red } from '@material-ui/core/colors'
+import { SharedContent } from '@stores/SharedContent'
 
 (global as any).mousePositionOnMap = [0, 0]
-
-const useStyles = makeStyles({
-  rnd: (props: ISharedContent) => ({
-    display: props.type==''? 'none' : 'block',
-    boxShadow: '0.2em 0.2em 0.2em 0.2em rgba(0,0,0,0.4)',
-//    transform:'rotate(' + props.pose.orientation + 'deg)',
-    backgroundColor: 'rgba(0,0,0,0.2)',
-  }),
-  note: {
-    position:'absolute',
-    bottom:0,
-    right:0,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    color: 'red',
-    fontSize: 'small',
-    overflow: 'hidden',
-    //whiteSpace: 'pre'
-  }
-})
-
 var preciseOrientation = 0
 export const PastedContent: React.FC<{}> = () => {
   const nullContent = {
@@ -83,15 +61,15 @@ export const PastedContent: React.FC<{}> = () => {
   )
   */
   function onClick(evt: React.MouseEvent<HTMLInputElement>){
-    console.log("onClick b:", evt.button, " bs:" ,evt.buttons, " d:", evt.detail, " p:", evt.eventPhase)
+    //console.log("onClick b:", evt.button, " bs:" ,evt.buttons, " d:", evt.detail, " p:", evt.eventPhase)
     if (evt.detail == 2){
       //  Add the pasted content to localPaticipant's contents and remove it.
-      participants.local.get().addContent(content);
+      participants.local.get().addContent(Object.assign(new SharedContent(), content));
       setContent(nullContent);
     }
   }
   function onPaste(evt: ClipboardEvent){
-    console.log("onPaste called")
+    //console.log("onPaste called")
     if (evt.clipboardData){
       if (evt.clipboardData.types.includes("Files")){   //  If file is pasted (an image is also a file)
         const imageFile = evt.clipboardData.items[0].getAsFile()
@@ -156,35 +134,68 @@ export const PastedContent: React.FC<{}> = () => {
     //  bind
     ],
   )
+
+  const rnd = useRef<Rnd>(null)
+  const note = useRef<HTMLDivElement>(null)
+
+  const useStyles = makeStyles({
+    container: (props: ISharedContent) => ({
+      display: props.type==''? 'none' : 'block',
+    }),
+    content: (content: ISharedContent) => ({
+      width: content.size[0],
+      height: content.size[1]
+    }),
+    rnd: (props: ISharedContent) => ({
+      display: props.type==''? 'none' : 'block',
+      boxShadow: '0.2em 0.2em 0.2em 0.2em rgba(0,0,0,0.4)',
+  //    transform:'rotate(' + props.pose.orientation + 'deg)',
+      backgroundColor: 'rgba(0,0,0,0.2)',
+    }),
+    note: {
+      position:'absolute',
+      bottom:0,
+      right:0,
+      backgroundColor: 'rgba(0,0,0,0.4)',
+      color: 'red',
+      fontSize: 'small',
+      overflow: 'hidden',
+      //whiteSpace: 'pre'
+    }
+  })
   const classes = useStyles(content)
-  if (content.type==''){
-    return <div />
-  }else{
-    return (
-      <Rnd className={classes.rnd}
-        position={{x: content.pose.position[0], y: content.pose.position[1]}}
-        size = {{width:content.size[0], height:content.size[1]}}
-        onDrag = { (evt)=>{ evt.stopPropagation() } }
-        onDragStop = { (e, data) => {
-          content.pose.position[0] = data.x
-          content.pose.position[1] = data.y
-          setContent(Object.assign({}, content))
-        } }
-        onResize = {
-          (evt)=>{ evt.stopPropagation()
-            console.log("onResize() called")
-          }
-        }
-        onResizeStop = { (e,dir,elem, delta, pos) => {
-          content.size[0] = elem.clientWidth
-          content.size[1] = elem.clientHeight
-          setContent(Object.assign({}, content))
-        } }
-        onClick = {onClick}
-      >
-        <Content content={content} />
-        <div className={classes.note}>Double click to share</div>
-      </Rnd>
-    )
-  }
+
+  useEffect( () => {
+    const noteHeight = note.current ? note.current.clientHeight : 20
+    rnd.current?.updatePosition({x:content.pose.position[0], y:content.pose.position[1]})
+    rnd.current?.updateSize({width:content.size[0], height:content.size[1] + noteHeight})
+  } )
+  return (
+    <div className={classes.container}>
+      <Rnd className={classes.rnd} ref={rnd}
+      onDrag = { (evt)=>{ evt.stopPropagation(); evt.preventDefault() } }
+      onDragStop = { (e, data) => {
+        content.pose.position[0] = data.x
+        content.pose.position[1] = data.y
+        setContent(Object.assign({}, content))
+      } }
+      onResize = { (evt,dir,elem, delta, pos)=>{
+        evt.stopPropagation(); evt.preventDefault()
+        const noteHeight = note.current ? note.current.clientHeight : 20
+        content.size[0] = elem.clientWidth
+        content.size[1] = elem.clientHeight - noteHeight
+        setContent(Object.assign({}, content))
+      } }
+      onResizeStop = { (e,dir,elem, delta, pos) => {
+        const noteHeight = note.current ? note.current.clientHeight : 20
+        content.size[0] = elem.clientWidth
+        content.size[1] = elem.clientHeight - noteHeight
+        setContent(Object.assign({}, content))
+      } }
+      onClick = {onClick}
+    >
+      <div className={classes.content}><Content content={content} /></div>
+      <div ref={note} className={classes.note}>Double click to share</div>
+    </Rnd></div>
+  )
 }
