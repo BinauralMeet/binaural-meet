@@ -15,9 +15,9 @@ const useStyles = makeStyles({
 })
 export const SharedContents: React.FC<{}> = () => {
   const store = useStore()
-  const contents = useObserver(() => Array.from(store.order.values()))
+  const contents = useObserver(() => Array.from(store.order.entries()))
   const classes = useStyles()
-  const sharedContents = contents.map((val, idx) => <SharedContent key={idx} content={val}/>)
+  const sharedContents = contents.map((val) => <SharedContent key={val[0]} content={val[1]}/>)
   return(
     <div className={classes.slContainer} >
       {sharedContents}

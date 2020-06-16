@@ -54,10 +54,16 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   // changed only when event end, like drag end
   const [commitedMatrix, setCommitedMatrix] = useState<DOMMatrixReadOnly>(new DOMMatrixReadOnly())
 
+  const [startDrag, setStartDrag] = useState(false)
+
   const bind = useGesture(
     {
+      onDragStart: () => {
+        setStartDrag(true)
+      },
       onDrag: ({down, delta, event, xy, buttons}) => {
-        if (down) {
+        console.log("startDrag:", startDrag)
+        if (startDrag && down) {
           event?.preventDefault()
           if (buttons === 2) {  // right mouse drag - rotate map
             const center = transformPoint2D(matrix, localParticipantPosition)
@@ -90,7 +96,10 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         }
       },
       onContextMenu: event => event?.preventDefault(),
-      onDragEnd: () => setCommitedMatrix(matrix),
+      onDragEnd: () => {
+        setCommitedMatrix(matrix)
+        setStartDrag(false)
+      },
       onPinch: ({da: [d, a], origin, event, memo}) => {
         event?.preventDefault()
 

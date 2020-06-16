@@ -170,7 +170,11 @@ export const PastedContent: React.FC<{}> = () => {
           content.pose.position[1] = data.y
           setContent(Object.assign({}, content))
         } }
-        onResize = { (evt)=>{ evt.stopPropagation() } }
+        onResize = {
+          (evt)=>{ evt.stopPropagation()
+            console.log("onResize() called")
+          }
+        }
         onResizeStop = { (e,dir,elem, delta, pos) => {
           content.size[0] = elem.clientWidth
           content.size[1] = elem.clientHeight
