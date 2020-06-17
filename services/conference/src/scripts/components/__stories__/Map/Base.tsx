@@ -1,10 +1,10 @@
 import {Base} from '@components/map/Base'
 import {BaseProps} from '@components/utils'
+import {StoreProvider} from '@hooks/ParticipantsStore'
 import {makeStyles} from '@material-ui/core/styles'
+import participantsStore from '@stores/Participants'
 import React from 'react'
 import {useBaseStyles} from './utils'
-import {StoreProvider} from '@hooks/ParticipantsStore'
-import participantsStore from '@stores/Participants'
 
 
 const useStyles = makeStyles({
@@ -31,10 +31,10 @@ const BaseStory: React.FC<{}> = () => {
 
   return (
     <StoreProvider value={participantsStore}>
-    <Base className={baseClasses.root}>
-      <div className={classes.background1} />
-      <div className={classes.background2} />
-    </Base>
+      <Base className={baseClasses.root}>
+        <div className={classes.background1} />
+        <div className={classes.background2} />
+      </Base>
     </StoreProvider>
   )
 }
