@@ -6,24 +6,27 @@ import React, {useEffect, useRef, useState} from 'react'
 import {Rnd} from 'react-rnd'
 import {Content} from './Content'
 
+(global as any).mousePositionOnMap = [0, 0]
+let preciseOrientation = 0
+
 const useStyles = makeStyles({
   container: (props: ISharedContent) => ({
-    display: props.type === ''? 'none' : 'block',
+    display: props.type === '' ? 'none' : 'block',
   }),
   content: (content: ISharedContent) => ({
     width: content.size[0],
-    height: content.size[1]
+    height: content.size[1],
   }),
   rnd: (props: ISharedContent) => ({
-    display: props.type==''? 'none' : 'block',
+    display: props.type == '' ? 'none' : 'block',
     boxShadow: '0.2em 0.2em 0.2em 0.2em rgba(0,0,0,0.4)',
-//    transform:'rotate(' + props.pose.orientation + 'deg)',
+    //    transform:'rotate(' + props.pose.orientation + 'deg)',
     backgroundColor: 'rgba(0,0,0,0.2)',
   }),
   notePos: {
     position:'absolute',
     width:'100%',
-    height:0
+    height:0,
   },
   note: {
     position:'absolute',
@@ -35,61 +38,18 @@ const useStyles = makeStyles({
     whiteSpace: 'pre',
     boxShadow: '0.2em 0 0.2em 0.2em rgba(0,0,0,0.4)',
     borderRadius: '0.3em 0.3em 0 0',
-  }
+  },
 })
 
-(global as any).mousePositionOnMap = [0, 0]
-var preciseOrientation = 0
 export const PastedContent: React.FC<any> = (props:any) => {
   const nullContent = {
     type:'', url:'',
     pose:{position:[0, 0], orientation:0},
     size: [0, 0],
   } as ISharedContent
-  var defContent: ISharedContent = props.content ? props.content : nullContent
-  const [content, setContent] = useState(defContent);
-/*
-  const container = useRef<Rnd>(null)
-  const bind = useGesture(
-    {
-      onDrag: ({down, delta, event, xy, buttons, ctrlKey, shiftKey}) => {
-        //console.log("onDrag called d=", delta, " b=" , buttons)
-        if (down) {
-          event?.stopPropagation()
-          event?.preventDefault()
-          if (buttons === 2) {  // right mouse drag - rotate map
-            preciseOrientation += delta[0] + delta[1];
-            preciseOrientation %= 360;
-            if (shiftKey || ctrlKey){
-              content.pose.orientation = preciseOrientation;
-            }else{
-              for(var i=0; i<2; ++i) content.pose.position[i] += delta[i];
-            }
-            setContent(Object.assign({}, content))
-          }
-        },
-        onContextMenu: event => event?.preventDefault(),
-        onWheel: ({movement}) => {
-          event?.preventDefault()
-          event?.stopPropagation()
-          let scale = Math.pow(1.2, movement[1] / 1000)
-          var size :[number,number] = [content.size[0] * scale, content.size[1] * scale];
-          if (20 < size[0] && size[0] < 10000 && 20 < size[1] && size[1] < 10000){
-            var d = subV(size, content.size);
-            content.size = size;
-            for(var i=0; i<2; ++i) content.pose.position[i] -= d[i]/2;
-          }
-          setContent(Object.assign({}, content));
-        },
-      },
-      {
-        domTarget: container,
-        eventOptions: {
-          passive: false,
-        }
-      },
-    )
-  */
+  const defContent: ISharedContent = props.content ? props.content : nullContent
+  const [content, setContent] = useState(defContent)
+
   function onClick(evt: React.MouseEvent<HTMLInputElement>) {
     // console.log("onClick b:", evt.button, " bs:" ,evt.buttons, " d:", evt.detail, " p:", evt.eventPhase)
     if (evt.detail === 2) {
@@ -170,26 +130,27 @@ export const PastedContent: React.FC<any> = (props:any) => {
 
   const classes = useStyles(content)
 
-  useEffect( () => {
+  useEffect(() => {
     rnd.current?.updatePosition({x:content.pose.position[0], y:content.pose.position[1]})
     rnd.current?.updateSize({width:content.size[0], height:content.size[1]})
-  } )
+  })
+
   return (
     <div className={classes.container}>
       <Rnd className={classes.rnd} ref={rnd}
-      onDrag = { (evt)=>{ evt.stopPropagation(); evt.preventDefault() } }
+      onDrag = { (evt) => { evt.stopPropagation(); evt.preventDefault() } }
       onDragStop = { (e, data) => {
         content.pose.position[0] = data.x
         content.pose.position[1] = data.y
         setContent(Object.assign({}, content))
       } }
-      onResize = { (evt,dir,elem, delta, pos)=>{
+      onResize = { (evt, dir, elem, delta, pos) => {
         evt.stopPropagation(); evt.preventDefault()
         content.size[0] = elem.clientWidth
         content.size[1] = elem.clientHeight
         setContent(Object.assign({}, content))
       } }
-      onResizeStop = { (e,dir,elem, delta, pos) => {
+      onResizeStop = { (e, dir, elem, delta, pos) => {
         content.size[0] = elem.clientWidth
         content.size[1] = elem.clientHeight
         setContent(Object.assign({}, content))
