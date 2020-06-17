@@ -2,14 +2,13 @@ import {BaseProps as BP} from '@components/utils'
 import {useStore} from '@hooks/ParticipantsStore'
 import {makeStyles} from '@material-ui/core/styles'
 import {
-  crossProduct, extractRotation, extractScaleX, multiply,
+  assert, crossProduct, extractRotation, extractScaleX, multiply,
   radian2Degree, rotate90ClockWise, rotateVector2D, transformPoint2D, vectorLength,
 } from '@models/utils'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef, useState} from 'react'
 import {subV, useGesture} from 'react-use-gesture'
 import {createValue, Provider as TransformProvider} from '../utils/useTransform'
-import {usePaste} from './usePaste'
 
 interface StyleProps {
   matrix: DOMMatrixReadOnly,
@@ -58,13 +57,11 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
   const bind = useGesture(
     {
-      onDragStart: () => {
+      onDragStart: ({event}) => {
         setStartDrag(true)
       },
       onDrag: ({down, delta, event, xy, buttons}) => {
-        console.log("startDrag:", startDrag)
         if (startDrag && down) {
-          event?.preventDefault()
           if (buttons === 2) {  // right mouse drag - rotate map
             const center = transformPoint2D(matrix, localParticipantPosition)
             const target = subV(xy, getDivAnchor(container))
@@ -95,14 +92,11 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
           }
         }
       },
-      onContextMenu: event => event?.preventDefault(),
       onDragEnd: () => {
         setCommitedMatrix(matrix)
         setStartDrag(false)
       },
       onPinch: ({da: [d, a], origin, event, memo}) => {
-        event?.preventDefault()
-
         if (memo === undefined) {
           return [d, a]
         }
@@ -136,24 +130,30 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       },
       onWheelEnd: () => setCommitedMatrix(matrix),
       onMove: ({xy}) => {
-        setMouse(subV(xy, getDivAnchor(container)));
+        setMouse(subV(xy, getDivAnchor(container)))
         const xyOnMap  = transformPoint2D(matrix.inverse(), subV(xy, getDivAnchor(container)));
-        (global as any).mousePositionOnMap = xyOnMap;
-      },
-    },
-    {
-      domTarget: outer,
-      eventOptions: {
-        passive: false,
+        (global as any).mousePositionOnMap = xyOnMap
       },
     },
   )
+
+  // prevent show context menu with right mouse click
   useEffect(
     () => {
-      bind()
+      assert(outer !== null)
+
+      const cb = (e: Event) => {
+        e.preventDefault()
+
+        return false
+      }
+      outer.current?.addEventListener('contextmenu', cb)
+
+      return () => outer.current?.removeEventListener('contextmenu', cb)
     },
-    [bind],
+    [outer],
   )
+
   const relativeMouse = matrix.inverse().transformPoint(new DOMPoint(...mouse))
   const styleProps: StyleProps = {
     matrix,
@@ -162,8 +162,9 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   const classes = useStyles(styleProps)
 
   const transfromValue = createValue(commitedMatrix, getDivAnchor(container))
+
   return (
-    <div className={[classes.root, props.className].join(' ')} ref={outer}>
+    <div className={[classes.root, props.className].join(' ')} ref={outer} {...bind()}>
       <TransformProvider value={transfromValue}>
         <div id="map-transform" className={classes.transform} ref={container}>
           {props.children}
