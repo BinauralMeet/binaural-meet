@@ -8,13 +8,14 @@ import { SharedContent } from '@stores/SharedContent'
 
 (global as any).mousePositionOnMap = [0, 0]
 var preciseOrientation = 0
-export const PastedContent: React.FC<{}> = () => {
+export const PastedContent: React.FC<any> = (props:any) => {
   const nullContent = {
     type:'', url:'',
     pose:{position:[0,0], orientation:0},
     size: [0,0]
   } as ISharedContent
-  const [content, setContent] = useState(nullContent);
+  var defContent: ISharedContent = props.content ? props.content : nullContent
+  const [content, setContent] = useState(defContent);
 /*
   const container = useRef<Rnd>(null)
   const bind = useGesture(
@@ -152,23 +153,28 @@ export const PastedContent: React.FC<{}> = () => {
   //    transform:'rotate(' + props.pose.orientation + 'deg)',
       backgroundColor: 'rgba(0,0,0,0.2)',
     }),
+    notePos: {
+      position:'absolute',
+      width:'100%',
+      height:0
+    },
     note: {
       position:'absolute',
       bottom:0,
-      right:0,
-      backgroundColor: 'rgba(0,0,0,0.4)',
-      color: 'red',
-      fontSize: 'small',
+      left:0,
+      width:'100%',
+      backgroundColor: 'rgba(0,0,0,0.1)',
       overflow: 'hidden',
-      //whiteSpace: 'pre'
+      whiteSpace: 'pre',
+      boxShadow: '0.2em 0 0.2em 0.2em rgba(0,0,0,0.4)',
+      borderRadius: '0.3em 0.3em 0 0',
     }
   })
   const classes = useStyles(content)
 
   useEffect( () => {
-    const noteHeight = note.current ? note.current.clientHeight : 20
     rnd.current?.updatePosition({x:content.pose.position[0], y:content.pose.position[1]})
-    rnd.current?.updateSize({width:content.size[0], height:content.size[1] + noteHeight})
+    rnd.current?.updateSize({width:content.size[0], height:content.size[1]})
   } )
   return (
     <div className={classes.container}>
@@ -181,21 +187,21 @@ export const PastedContent: React.FC<{}> = () => {
       } }
       onResize = { (evt,dir,elem, delta, pos)=>{
         evt.stopPropagation(); evt.preventDefault()
-        const noteHeight = note.current ? note.current.clientHeight : 20
         content.size[0] = elem.clientWidth
-        content.size[1] = elem.clientHeight - noteHeight
+        content.size[1] = elem.clientHeight
         setContent(Object.assign({}, content))
       } }
       onResizeStop = { (e,dir,elem, delta, pos) => {
-        const noteHeight = note.current ? note.current.clientHeight : 20
         content.size[0] = elem.clientWidth
-        content.size[1] = elem.clientHeight - noteHeight
+        content.size[1] = elem.clientHeight
         setContent(Object.assign({}, content))
       } }
       onClick = {onClick}
     >
+      <div className={classes.notePos}>
+        <div ref={note} className={classes.note}>Double click to share</div>
+      </div>
       <div className={classes.content}><Content content={content} /></div>
-      <div ref={note} className={classes.note}>Double click to share</div>
     </Rnd></div>
   )
 }
