@@ -9606,6 +9606,13 @@ react-dev-utils@^9.0.0:
     strip-ansi "5.2.0"
     text-table "0.2.0"
 
+react-dimensions-hook@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/react-dimensions-hook/-/react-dimensions-hook-1.0.3.tgz#f5b83a4bf1232f465e7061d0aeed77295b658829"
+  integrity sha512-ZPODF7vEBgcO6hTn5rWyjcmFzOYYwOPPdl/uvvLHadG+2VfVD0quJa3RIK6J7Tis+UH3jzxn+BYxh8hd/l2pvw==
+  dependencies:
+    resize-observer-polyfill "^1.5.1"
+
 react-docgen-typescript-loader@^3.7.2:
   version "3.7.2"
   resolved "https://registry.yarnpkg.com/react-docgen-typescript-loader/-/react-docgen-typescript-loader-3.7.2.tgz#45cb2305652c0602767242a8700ad1ebd66bbbbd"

@@ -1,44 +1,66 @@
 import {makeStyles} from '@material-ui/core/styles'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {default as participants} from '@stores/Participants'
-import {SharedContent} from '@stores/SharedContent'
+import {SharedContent, Pose2DMap} from '@stores/SharedContent'
 import React, {useEffect, useRef, useState} from 'react'
 import {Rnd} from 'react-rnd'
 import {Content} from './Content'
+import CloseRoundedIcon from '@material-ui/icons/CloseRounded'
+import {useDimensions, Dimensions} from 'react-dimensions-hook';
+import {useGesture} from 'react-use-gesture'
+
 
 (global as any).mousePositionOnMap = [0, 0]
 let preciseOrientation = 0
 
+interface StyleProps{
+  content: ISharedContent,
+  pose: Pose2DMap,
+  totalSize: [number, number],
+  dimensions: Dimensions
+}
+
 const useStyles = makeStyles({
-  container: (props: ISharedContent) => ({
-    display: props.type === '' ? 'none' : 'block',
+  container: (props: StyleProps) => ({
+    display: props.content.type === '' ? 'none' : 'block',
+    transform:'rotate(' + props.pose.orientation + 'deg)',
   }),
-  content: (content: ISharedContent) => ({
-    width: content.size[0],
-    height: content.size[1],
-  }),
-  rnd: (props: ISharedContent) => ({
-    display: props.type == '' ? 'none' : 'block',
+  rnd: (props: StyleProps) => ({
+    borderRadius: '0.5em 0.5em 0 0',
+    backgroundColor: 'rgba(200,200,200,0.5)',
     boxShadow: '0.2em 0.2em 0.2em 0.2em rgba(0,0,0,0.4)',
-    //    transform:'rotate(' + props.pose.orientation + 'deg)',
-    backgroundColor: 'rgba(0,0,0,0.2)',
   }),
-  notePos: {
-    position:'absolute',
+  content: (props: StyleProps) => ({
+    width: '100%',
+    height: props.totalSize[1] - props.dimensions.height,
+  }),
+  titleContainer: {
+    display:'flex',
     width:'100%',
-    height:0,
-  },
-  note: {
-    position:'absolute',
-    bottom:0,
-    left:0,
-    width:'100%',
-    backgroundColor: 'rgba(0,0,0,0.1)',
     overflow: 'hidden',
-    whiteSpace: 'pre',
-    boxShadow: '0.2em 0 0.2em 0.2em rgba(0,0,0,0.4)',
-    borderRadius: '0.3em 0.3em 0 0',
+    userSelect: 'none',
+    userDrag: 'none',
+    cursor: 'move',
   },
+  note:{
+    whiteSpace: 'pre',
+    borderRadius: '0.5em 0 0 0',
+    '&:hover': {
+      backgroundColor: 'firebrick',
+    },
+  },
+  close: (props: StyleProps) => ({
+    position:'absolute',
+    right:0,
+    margin:0,
+    padding:0,
+    height:props.dimensions.height,
+    borderRadius: '0 0.5em 0 0',
+    cursor: 'default',
+    '&:hover': {
+      backgroundColor: 'firebrick',
+    }
+  })
 })
 
 export const PastedContent: React.FC<any> = (props:any) => {
@@ -49,15 +71,43 @@ export const PastedContent: React.FC<any> = (props:any) => {
   } as ISharedContent
   const defContent: ISharedContent = props.content ? props.content : nullContent
   const [content, setContent] = useState(defContent)
+  const [pose, setPose] = useState(content.pose)
+  const [totalSize, setTotalSize] = useState(content.size)
 
   function onClick(evt: React.MouseEvent<HTMLInputElement>) {
     // console.log("onClick b:", evt.button, " bs:" ,evt.buttons, " d:", evt.detail, " p:", evt.eventPhase)
-    if (evt.detail === 2) {
-      //  Add the pasted content to localPaticipant's contents and remove it.
-      participants.local.get().addContent(Object.assign(new SharedContent(), content))
-      setContent(nullContent)
-    }
+    //  Add the pasted content to localPaticipant's contents and remove it.
+    participants.local.get().addContent(Object.assign(new SharedContent(), content))
+    setContent(nullContent)
   }
+  function onClickClose(evt: React.MouseEvent<HTMLDivElement>){
+    setContent(nullContent)
+    evt.stopPropagation()
+  }
+  const bindTitle = useGesture({
+    onDrag: ({down, delta, event, xy, buttons}) => {
+      //console.log('onDragTitle:', delta)
+      if (down){
+        event?.stopPropagation()
+        if (buttons === 2) {
+          preciseOrientation += delta[0] + delta[1];
+          preciseOrientation %= 360;
+          if (event?.shiftKey || event?.ctrlKey){
+            pose.orientation = preciseOrientation;
+          }else{
+            pose.orientation = preciseOrientation - preciseOrientation % 15;
+          }
+          setPose(Object.assign({}, pose))
+        }else{
+          for(let i=0; i<2; ++i) pose.position[i] += delta[i]
+          setPose(Object.assign({}, pose))
+        }
+      }else{
+        content.pose = pose
+        setContent(Object.assign({}, content))
+      }
+    }
+  })
   function onPaste(evt: ClipboardEvent) {
     // console.log("onPaste called")
     if (evt.clipboardData) {
@@ -124,43 +174,49 @@ export const PastedContent: React.FC<any> = (props:any) => {
     //  bind
     ],
   )
-
   const rnd = useRef<Rnd>(null)
-  const note = useRef<HTMLDivElement>(null)
-
-  const classes = useStyles(content)
-
+  const {ref, dimensions} = useDimensions()
+  const classes = useStyles({content, totalSize, pose, dimensions})
   useEffect(() => {
-    rnd.current?.updatePosition({x:content.pose.position[0], y:content.pose.position[1]})
-    rnd.current?.updateSize({width:content.size[0], height:content.size[1]})
-  })
+    setPose(content.pose)
+  },
+  [content])
+  useEffect(() => {
+    rnd.current?.updatePosition({x:pose.position[0], y:pose.position[1]})
+    rnd.current?.updateSize({width:totalSize[0], height:totalSize[1]})
+  },
+  [pose, totalSize])
 
   return (
-    <div className={classes.container}>
-      <Rnd className={classes.rnd} ref={rnd}
-      onDrag = { (evt) => { evt.stopPropagation(); evt.preventDefault() } }
+    <div className={classes.container} >
+    <Rnd className={classes.rnd} ref={rnd}
+      onDrag = { (evt, data) => {
+        evt.stopPropagation()
+        evt.preventDefault()
+        pose.position = [data.x, data.y]
+        setPose(Object.assign({}, pose))
+      } }
       onDragStop = { (e, data) => {
-        content.pose.position[0] = data.x
-        content.pose.position[1] = data.y
-        setContent(Object.assign({}, content))
+        pose.position = [data.x, data.y]
+        content.pose = pose;
+        setPose(Object.assign({}, pose))
       } }
       onResize = { (evt, dir, elem, delta, pos) => {
         evt.stopPropagation(); evt.preventDefault()
-        content.size[0] = elem.clientWidth
-        content.size[1] = elem.clientHeight
-        setContent(Object.assign({}, content))
+        setTotalSize([elem.clientWidth, elem.clientHeight])
       } }
       onResizeStop = { (e, dir, elem, delta, pos) => {
-        content.size[0] = elem.clientWidth
-        content.size[1] = elem.clientHeight
+        setTotalSize([elem.clientWidth, elem.clientHeight])
+        content.size = [elem.clientWidth, elem.clientHeight - dimensions.height]
         setContent(Object.assign({}, content))
       } }
-      onClick = {onClick}
     >
-      <div className={classes.notePos}>
-        <div ref={note} className={classes.note}>Double click to share</div>
+      <div className={classes.titleContainer} {...bindTitle()} ref={ref}>
+        <div className={classes.note} onClick = {onClick}>Share</div>
+        <div className={classes.close} onClick={onClickClose}><CloseRoundedIcon/></div>
       </div>
-      <div className={classes.content}><Content content={content} /></div>
-    </Rnd></div>
+      <div className={classes.content} ><Content content={content} /></div>
+    </Rnd>
+  </div>
   )
 }
