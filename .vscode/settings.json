@@ -4,5 +4,6 @@
   "files.trimTrailingWhitespace": true,
   "editor.codeActionsOnSave": {
     "source.fixAll.tslint": true
-  }
+  },
+  "tslint.packageManager": "yarn"
 }
