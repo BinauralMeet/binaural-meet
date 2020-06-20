@@ -35,8 +35,8 @@ const ShareLayerStory: React.FC<{}> = () => {
   const store = new SharedContentsStore()
   addFakeSharedContents(store)
   const contents = useObserver(() => Array.from(store.order.entries()))
-  const sharedContents = contents.map((val) =>
-    <SharedContent key={val[0]} content={val[1]} contents={store} />)
+//  const sharedContents = contents.map((val, idx) =>
+//    <SharedContent key={idx} mapKey={val[0]} content={val[1]} contents={store} />)
 
   return (
     <ContentsProvider value={store}>

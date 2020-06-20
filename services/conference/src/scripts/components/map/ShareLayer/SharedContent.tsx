@@ -7,29 +7,27 @@ import React, {useEffect, useState} from 'react'
 import {RndContent} from './RndContent'
 
 export interface SharedContentProps{
-  key: string,
+  key: number,
+  mapKey: string,
   content: SharedContentStore,
   contents: SharedContentsStore
-}
-interface StyleProp {
-  props: SharedContentProps,
-  barVisible: boolean
 }
 
 export const SharedContent: React.FC<SharedContentProps> = (props:SharedContentProps) => {
   useObserver(() => props.content)
+  console.log('SharedContent', props)
 
   return (
     <RndContent content={props.content} autoHideTitle={true}
       onClose={
         (evt: React.MouseEvent<HTMLDivElement>) => {
           evt.stopPropagation()
-          props.contents.order.delete(props.key)
+          props.contents.order.delete(props.mapKey)
         }
       }
       onUpdate={
         (newContent: ISharedContent) => {
-          props.contents.order.set(props.key, newContent)
+          props.contents.order.set(props.mapKey, newContent)
         }
       }
     />

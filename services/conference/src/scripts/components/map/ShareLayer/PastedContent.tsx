@@ -53,6 +53,7 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
           content.url = str
           if (content.url.indexOf('http://') === 0 || content.url.indexOf('https://') === 0) {
             content.type = 'iframe'
+            content.pose.position = (global as any).mousePositionOnMap
             content.size[0] = 600
             content.size[1] = 800
           }else {
@@ -85,7 +86,7 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
       onShare = {(evt: React.MouseEvent<HTMLDivElement>) => {
         // console.log("onClick b:", evt.button, " bs:" ,evt.buttons, " d:", evt.detail, " p:", evt.eventPhase)
         //  Add the pasted content to localPaticipant's contents and remove it.
-        participants.local.get().addContent(Object.assign(new SharedContent(), content))
+        participants.local.get().addContent(JSON.parse(JSON.stringify(content)))
         setContent(nullContent)
       }}
       onClose = {(evt: React.MouseEvent<HTMLDivElement>) => {

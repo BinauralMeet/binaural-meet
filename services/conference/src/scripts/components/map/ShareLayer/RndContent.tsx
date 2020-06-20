@@ -7,7 +7,6 @@ import React, {useEffect, useRef, useState} from 'react'
 import {Dimensions, useDimensions} from 'react-dimensions-hook'
 import {Rnd} from 'react-rnd'
 import {addV, subV, useGesture} from 'react-use-gesture'
-import {Background} from '../BackgroundLayer/Background'
 import {Content} from './Content'
 
 export interface RndContentProps{
@@ -30,9 +29,28 @@ interface StyleProps{
 export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => {
   const [pose, setPose] = useState(props.content.pose)
   const [size, setSize] = useState(props.content.size)
-
   const {ref, dimensions} = useDimensions()
   const [showTitle, setShowTitle] = useState(!props.autoHideTitle)
+  const [content, setContent] = useState(props.content)
+  useEffect(
+    () => {
+      if (content !== props.content) {
+        setPose(props.content.pose)
+        setSize(props.content.size)
+        setContent(props.content)
+      }
+    },
+  )
+  useEffect(
+    () => {
+      const titleHeight = showTitle ? dimensions.height : 0
+      rnd.current?.updatePosition({x:pose.position[0], y:pose.position[1] - titleHeight})
+      rnd.current?.updateSize({width:size[0], height:size[1] + titleHeight})
+      //  if (rnd.curr {ent) console.log('update pose and size:', pose, s }ize)
+    },
+    [pose, size, showTitle, dimensions],
+  )
+
   function onClickShare(evt: React.MouseEvent<HTMLDivElement>) { props.onShare?.call(null, evt) }
   function onClickClose(evt: React.MouseEvent<HTMLDivElement>) { props.onClose?.call(null, evt) }
   function onPaste(evt: ClipboardEvent) { props.onPaste?.call(null, evt) }
@@ -40,6 +58,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     const newContent = Object.assign({}, props.content)
     newContent.pose = pose
     newContent.size = size
+    // console.log('onUpdate', newContent)
     props.onUpdate?.call(null, newContent)
   }
   const [preciseOrientation, setPreciseOrientation] = useState(pose.orientation)
@@ -62,7 +81,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       // console.log('onDragTitle:', delta)
       if (down) {
         event?.stopPropagation()
-        event?.preventDefault()
+        //  event?.preventDefault()
         dragHandler(delta, buttons, event)
       }else {
         updateHandler()
@@ -83,15 +102,6 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   )
   const rnd = useRef<Rnd>(null)
   const classes = useStyles({props, pose, size, dimensions, showTitle})
-  useEffect(
-    () => {
-      const titleHeight = showTitle ? dimensions.height : 0
-      rnd.current?.updatePosition({x:pose.position[0], y:pose.position[1] - titleHeight})
-      rnd.current?.updateSize({width:size[0], height:size[1] + titleHeight})
-      //  if (rnd.curr {ent) console.log('update pose and size:', pose, s }ize)
-    },
-    [pose, size, showTitle, dimensions],
-  )
   //  console.log('render: dimensions.height:', dimensions.height)
 
   return (
@@ -112,9 +122,23 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
           updateHandler()
         } }
         onResize = { (evt, dir, elem, delta, pos) => {
+          // console.log('resize: ', dir, delta, pos)
           evt.stopPropagation(); evt.preventDefault()
           const titleHeight = showTitle ? dimensions.height : 0
-          setSize([elem.clientWidth, elem.clientHeight - titleHeight])
+          const newSize:[number, number] = [elem.clientWidth, elem.clientHeight - titleHeight]
+          let posChange = false
+          if (dir === 'left' || dir === 'topLeft' || dir === 'bottomLeft') {
+            pose.position[0] -= newSize[0] - size[0]
+            posChange = posChange || (newSize[0] !== size[0])
+          }
+          if (dir === 'top' || dir === 'topLeft' || dir === 'topRight') {
+            pose.position[1] -= newSize[1] - size[1]
+            posChange = posChange || (newSize[1] !== size[1])
+          }
+          if (posChange) {
+            setPose(Object.assign({}, pose))
+          }
+          setSize(newSize)
         } }
         onResizeStop = { (e, dir, elem, delta, pos) => {
           const titleHeight = showTitle ? dimensions.height : 0
@@ -133,7 +157,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
         </div>
         <div className={classes.content} ><Content content={props.content} /></div>
       </Rnd>
-    </div>
+    </div >
   )
 }
 
