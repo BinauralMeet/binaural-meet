@@ -1,27 +1,28 @@
-import {autorun, observable} from 'mobx'
-import React from 'react'
+import React, {useEffect, useRef} from 'react'
 
 export default {
   title: 'Test',
 }
 
 export const test = () => {
-  return <div />
+  const parent = useRef<HTMLDivElement | null>(null)
+  const child = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    parent?.current?.addEventListener('click', callbackFactory('DOM click parent'))
+  },        [parent])
+
+  useEffect(() => {
+    child?.current?.addEventListener('click', callbackFactory('DOM click child'))
+  },        [child])
+
+  return <div id="parent" onClick={callbackFactory('react click parent')} ref={parent}>
+    <div id="child" onClick={callbackFactory('react click child')} ref={child}> hello </div>
+  </div>
 }
 
-const m = observable({
-  l1: {
-    l2: {
-      l3: 0,
-    },
-  },
-})
-
-autorun(() => {
-  console.log(m.l1.l2.l3)
-})
-
-m.l1.l2.l3 = 1
-m.l1.l2 = {
-  l3: 2,
+function callbackFactory(message: string) {
+  return () => {
+    console.log(message)
+  }
 }
