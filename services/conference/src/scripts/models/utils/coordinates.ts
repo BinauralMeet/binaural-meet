@@ -57,6 +57,18 @@ export function rotateVector2D(
   ]
 }
 
+export function rotateVector2DByDegree(
+  degree: number, vector: [number, number]): [number, number] {
+  const rad = degree * (Math.PI / 180)
+  const c = Math.cos(rad)
+  const s = Math.sin(rad)
+
+  return [
+    c * vector[0] - s * vector[1],
+    s * vector[0] + c * vector[1],
+  ]
+}
+
 export function multiply(matrix: (DOMMatrix | DOMMatrixReadOnly)[]) {
   return matrix.reduce((p: DOMMatrix, c) => p.multiplySelf(c), new DOMMatrix())
 }
