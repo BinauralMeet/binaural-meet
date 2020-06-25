@@ -1,6 +1,6 @@
 import {StoreProvider as ContentsProvider, useStore} from '@hooks/SharedContentsStore'
 import {makeStyles} from '@material-ui/core/styles'
-import sharedContentsStore from '@stores/SharedContents'
+import {default as sharedContentsStore} from '@stores/SharedContents'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {PastedContent} from './PastedContent'

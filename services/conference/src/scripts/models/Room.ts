@@ -1,4 +1,5 @@
 import {Participant} from './Participant'
+import {SharedContent} from './SharedContent'
 import {Terrain} from './Terrain'
 
 export interface Room {
@@ -7,4 +8,7 @@ export interface Room {
     [key: string]: Participant,
   }
   terrain: Terrain
+  sharedContents: {
+    [key: string]: SharedContent,
+  }
 }

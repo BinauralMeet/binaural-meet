@@ -1,7 +1,9 @@
+import {StoreProvider as AppLevelProvider, useStore} from '@hooks/AppLevelStore'
 import {makeStyles} from '@material-ui/core/styles'
+import {default as appLevelStore} from '@stores/AppLevel'
 import React from 'react'
-import {Map} from './map/map'
 import {Footer} from './footer/footer'
+import {Map} from './map/map'
 
 const useStyles = makeStyles({
   map: {
@@ -18,10 +20,12 @@ export const App: React.FC<{}> = () => {
   const classes = useStyles()
 
   return (
+    <AppLevelProvider value={appLevelStore}>
     <div className={classes.map}>
       <Map />
-      {/* <Footer />  */}
+      <Footer />
     </div>
+    </AppLevelProvider>
   )
 }
 App.displayName = 'App'
