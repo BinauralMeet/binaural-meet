@@ -4,9 +4,10 @@ import CloseRoundedIcon from '@material-ui/icons/CloseRounded'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {rotateVector2DByDegree} from '@models/utils'
 import {Pose2DMap} from '@stores/SharedContent'
+import {default as sharedContents} from '@stores/SharedContents'
 import React, {useEffect, useLayoutEffect, useRef, useState} from 'react'
 import {Dimensions, useDimensions} from 'react-dimensions-hook'
-import {Props as RndProps, Rnd} from 'react-rnd'
+import {Rnd} from 'react-rnd'
 import {addV, subV, useGesture} from 'react-use-gesture'
 import {useValue as useTransform} from '../utils/useTransform'
 import {Content} from './Content'
@@ -74,6 +75,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
         setPose(props.content.pose)
         setSize(props.content.size)
         setContent(props.content)
+        sharedContents.sendOrder()
       }
     },
   )

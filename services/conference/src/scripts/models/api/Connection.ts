@@ -1,7 +1,8 @@
 import {ConnectionInfo, default as ConnectionInfoStore} from '@stores/ConnectionInfo'
 import {default as ParticiantsStore} from '@stores/Participants'
+import {default as sharedContents, SharedContents} from '@stores/SharedContents'
 import {EventEmitter} from 'events'
-import JitsiMeetJS, { JitsiValues } from 'lib-jitsi-meet'
+import JitsiMeetJS, {JitsiValues} from 'lib-jitsi-meet'
 import JitsiTrack from 'lib-jitsi-meet/modules/RTC/JitsiTrack'
 import {Store} from '../../stores/utils'
 import {ConnectionStates, ConnectionStatesType} from './Constants'
@@ -10,9 +11,10 @@ import {config} from './test.config'
 // import _ from 'lodash'
 
 // import a global variant $ for lib-jitsi-meet
+import {SharedContent} from '@components/map/ShareLayer/SharedContent'
 import {Pose2DMap} from '@models/Participant'
-import {Participant} from '@stores/Participant'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
+import {Participant} from '@stores/Participant'
 import {SharedContent as SharedContentStore} from '@stores/SharedContent'
 import {dummyConnectionStore} from '@test-utils/DummyParticipants'
 import jquery from 'jquery'
@@ -22,8 +24,6 @@ import JitsiLocalTrack from 'lib-jitsi-meet/modules/RTC/JitsiLocalTrack'
 import JitsiRemoteTrack from 'lib-jitsi-meet/modules/RTC/JitsiRemoteTrack'
 import {autorun, IObservableValue, observe} from 'mobx'
 import {throttle} from 'throttle-debounce'
-import { default as sharedContents, SharedContents } from '@stores/SharedContents'
-import { SharedContent } from '@components/map/ShareLayer/SharedContent'
 
 declare var global: any
 global.$ = jquery
@@ -126,16 +126,31 @@ class Connection extends EventEmitter {
     throw new Error('No connection has been established.')
   }
 
-  public sendSharedContents(cs: Map<string, ISharedContent>){
-    const acs = Array.from(cs);
+  public sendSharedContents(cs: Map<string, ISharedContent>) {
+    const acs = Array.from(cs)
     this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_CONTENTS, JSON.stringify(acs))
   }
-  public sendSharedContentsOrder(cs: Map<string, ISharedContent>){
-    const entries = Array.from(cs.entries());
-    this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_CONTENTS_ORDER, JSON.stringify(entries))
+  public sendSharedContentsOrder(cs: Map<string, ISharedContent>) {
+    const entries = Array.from(cs.entries())
+    this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_CONTENTS_ORDER,
+                                                       JSON.stringify(entries))
   }
-  public sendCommand(name: string, values: JitsiValues){
-    if (this._jitsiConference){
+  public getSharedContentsOrder(pid: string): Map<string, ISharedContent> {
+    const participant = this._jitsiConference?.getParticipantById(pid)
+    if (participant) {
+      const str = participant.getProperty(ParticipantProperties.PPROP_CONTENTS_ORDER)
+      if (str && str.length > 0) {
+        const entries = JSON.parse(str)
+        const map = new Map<string, ISharedContent>(entries)
+
+        return map
+      }
+    }
+
+    return new Map<string, ISharedContent>()
+  }
+  public sendCommand(name: string, values: JitsiValues) {
+    if (this._jitsiConference) {
       this._jitsiConference.sendCommand(name, values)
     }
   }
@@ -347,7 +362,7 @@ class Connection extends EventEmitter {
               ConferenceEvents.REMOTE_TRACK_ADDED,
               track as JitsiRemoteTrack,
             )
-          }else{
+          }else {
             this._loggerHandler?.log(`JVB Remote participant ID: ${(<JitsiRemoteTrack>track).getParticipantId()}`, 'TRACK_ADDED')
             this.emit(
               ConferenceEvents.REMOTE_TRACK_ADDED,
@@ -371,24 +386,24 @@ class Connection extends EventEmitter {
 
           target.pose.orientation = pose.orientation
           target.pose.position = pose.position
-        }else if (name === ParticipantProperties.PPROP_CONTENTS){
+        }else if (name === ParticipantProperties.PPROP_CONTENTS) {
           const contentsAsArray = JSON.parse(value)
           const contents = new Map<string, ISharedContent>(contentsAsArray)
           const id = participant.getId()
           const target = ParticiantsStore.find(id)
           target.setContents(contents)
-        }else if (name === ParticipantProperties.PPROP_CONTENTS_ORDER){
-          const newOrder = JSON.parse(value) as Array<[string, SharedContentStore]>
+        }else if (name === ParticipantProperties.PPROP_CONTENTS_ORDER) {
+          const newOrder = JSON.parse(value) as [string, SharedContentStore][]
           const newMap = new Map(newOrder)
           const local = ParticiantsStore.local.get()
-          newMap.forEach((val, key)=>{
+          newMap.forEach((val, key) => {
             const got = local.contents.get(key)
-            if (got){
+            if (got) {
               local.contents.set(key, val)
             }
           })
-          sharedContents.order = newMap;
-          console.log("PPROP_CONTENTS_ORDER ", newOrder)
+          sharedContents.order = newMap
+          console.log('PPROP_CONTENTS_ORDER ', newOrder)
         }
       },
     )
@@ -439,6 +454,7 @@ class Connection extends EventEmitter {
     }
     this.participants.set(id, participant)
     ParticiantsStore.join(id)
+    sharedContents.join(id)
   }
 
   // public joinConference(localTracks: JitsiLocalTrack[]) {
