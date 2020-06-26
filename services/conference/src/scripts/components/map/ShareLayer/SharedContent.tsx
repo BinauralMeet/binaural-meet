@@ -7,7 +7,6 @@ import React, {useEffect, useState} from 'react'
 import {RndContent} from './RndContent'
 
 export interface SharedContentProps{
-  key: number,
   mapKey: string,
   content: SharedContentStore,
   contents: SharedContentsStore
