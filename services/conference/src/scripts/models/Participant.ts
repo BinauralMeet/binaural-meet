@@ -5,6 +5,7 @@ export interface Participant {
   perceptibility: Perceptibility // used for skip rendering for optimizing performance
   stream: Stream
   physics?: Physics
+  control: Control
 }
 
 export interface Pose2DMap {  // screen coordinate system
@@ -37,4 +38,10 @@ export interface Stream {
 
 export interface Physics {
   onStage: boolean
+}
+
+export interface Control {
+  muteAudio: boolean
+  muteVideo: boolean
+  attenuation: number
 }

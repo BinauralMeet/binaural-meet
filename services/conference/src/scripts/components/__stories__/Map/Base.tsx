@@ -2,7 +2,7 @@ import {Base} from '@components/map/Base'
 import {BaseProps} from '@components/utils'
 import {StoreProvider} from '@hooks/ParticipantsStore'
 import {makeStyles} from '@material-ui/core/styles'
-import participantsStore from '@stores/Participants'
+import participantsStore from '@stores/participants/Participants'
 import React from 'react'
 import {useBaseStyles} from './utils'
 

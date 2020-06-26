@@ -1,7 +1,7 @@
 import {StoreProvider, useStore as usePsStore} from '@hooks/ParticipantsStore'
 import Button from '@material-ui/core/Button'
 import ButtonGroup from '@material-ui/core/ButtonGroup'
-import store from '@stores/Participants'
+import store from '@stores/participants/Participants'
 import {action} from 'mobx'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'

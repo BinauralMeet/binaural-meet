@@ -1,6 +1,6 @@
 import {Map} from '@components/map/map'
 import {StoreProvider} from '@hooks/ParticipantsStore'
-import {Participants} from '@stores/Participants'
+import {Participants} from '@stores/participants/Participants'
 import {addFakeParticipants} from '@test-utils/store'
 import React from 'react'
 import {useBaseStyles} from './utils'

@@ -1,8 +1,8 @@
-import {Participants} from '@stores/Participants'
+import {Participants} from '@stores/participants/Participants'
+import { Pose2DMap, SharedContent as SharedContentStore } from '@stores/SharedContent'
 import {SharedContents} from '@stores/SharedContents'
 import faker from 'faker'
 import {action} from 'mobx'
-import { SharedContent as SharedContentStore, Pose2DMap } from '@stores/SharedContent'
 
 interface FakeParticipantOptions {
   count?: number

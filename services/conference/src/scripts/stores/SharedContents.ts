@@ -2,8 +2,8 @@ import {connection} from '@models/api'
 import {assert} from '@models/utils'
 import {action, computed, observable} from 'mobx'
 import {connectionInfo} from '.'
-import {Participant} from './Participant'
-import {default as participants, Participants} from './Participants'
+import {Participant} from './participants/Participant'
+import {default as participants, Participants} from './participants/Participants'
 import {SharedContent} from './SharedContent'
 
 export class SharedContents {

@@ -6,7 +6,7 @@ import React from 'react'
 import {BackgroundLayer} from './BackgroundLayer'
 
 import {StoreProvider as ParticipantsProvider} from '@hooks/ParticipantsStore'
-import participantsStore from '@stores/Participants'
+import participantsStore from '@stores/participants/Participants'
 
 
 export const Map: React.FC<BaseProps> = (props) => {
