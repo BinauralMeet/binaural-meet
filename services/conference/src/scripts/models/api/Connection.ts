@@ -391,15 +391,15 @@ class Connection extends EventEmitter {
           const contents = new Map<string, ISharedContent>(contentsAsArray)
           const id = participant.getId()
           const target = ParticiantsStore.find(id)
-          target.setContents(contents)
+          target.plugins.contents.setContents(contents)
         }else if (name === ParticipantProperties.PPROP_CONTENTS_ORDER) {
           const newOrder = JSON.parse(value) as [string, SharedContentStore][]
           const newMap = new Map(newOrder)
           const local = ParticiantsStore.local.get()
           newMap.forEach((val, key) => {
-            const got = local.contents.get(key)
+            const got = local.plugins.contents.value.get(key)
             if (got) {
-              local.contents.set(key, val)
+              local.plugins.contents.value.set(key, val)
             }
           })
           sharedContents.order = newMap

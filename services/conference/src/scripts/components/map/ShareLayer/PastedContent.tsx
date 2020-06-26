@@ -86,7 +86,7 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
       onShare = {(evt: React.MouseEvent<HTMLDivElement>) => {
         // console.log("onClick b:", evt.button, " bs:" ,evt.buttons, " d:", evt.detail, " p:", evt.eventPhase)
         //  Add the pasted content to localPaticipant's contents and remove it.
-        participants.local.get().addContent(JSON.parse(JSON.stringify(content)))
+        participants.local.get().plugins.contents.addContent(JSON.parse(JSON.stringify(content)))
         setContent(nullContent)
       }}
       onClose = {(evt: React.MouseEvent<HTMLDivElement>) => {

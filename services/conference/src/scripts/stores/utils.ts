@@ -9,15 +9,16 @@ export type Store<T> = {
 }
 
 declare global {
-  interface Map<K,V> {
+  interface Map<K, V> {
       /** set difference */
-      diff(b: Map<K,V>): Map<K,V>;
+    diff(b: Map<K, V>): Map<K, V>
   }
 }
-Map.prototype.diff = function(b) {
-  var diff = new Map(this);
-  for (var elem of b) {
-      diff.delete(elem[0]);
+Map.prototype.diff = function (b) {
+  const diff = new Map(this)
+  for (const elem of b) {
+    diff.delete(elem[0])
   }
-  return diff;
+
+  return diff
 }
