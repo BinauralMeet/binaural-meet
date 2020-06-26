@@ -106,7 +106,7 @@ const config: webpack.Configuration = {
     }),
   ],
   watchOptions: {
-    ignored: ['node_modules/**'],
+    ignored: ['node_modules/**', 'libs/**'],
   },
 }
 
