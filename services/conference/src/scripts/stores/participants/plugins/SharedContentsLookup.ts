@@ -64,7 +64,6 @@ export class SharedContentsLookup extends ParticipantStorePlugin {
 decorate(
   SharedContentsLookup,
   {
-    value: observable,
     addContent: action,
     removeContent: action,
     setContents: action,
