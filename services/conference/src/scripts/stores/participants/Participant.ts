@@ -1,4 +1,4 @@
-import {Control, Information, Participant as IParticipant, Perceptibility, Pose2DMap, Stream} from '@models/Participant'
+import {Information, Participant as IParticipant, Perceptibility, Pose2DMap, Stream} from '@models/Participant'
 import {shallowObservable, Store} from '../utils'
 import {Plugins} from './plugins'
 
@@ -14,6 +14,8 @@ export class Participant implements Store<IParticipant> {
     md5Email: undefined,
     avatarSrc: undefined,
   })
+
+  // perceptibility is influenced by distance, determines whether the participant would be rendered or not
   perceptibility = shallowObservable<Perceptibility>({
     visibility: true,
     audibility: true,
@@ -22,11 +24,6 @@ export class Participant implements Store<IParticipant> {
     audioStream: undefined,
     avatarStream: undefined,
     screenStream: undefined,
-  })
-  control = shallowObservable<Control>({
-    muteVideo: false,
-    muteAudio: false,
-    attenuation: 1,
   })
   plugins: Plugins
 

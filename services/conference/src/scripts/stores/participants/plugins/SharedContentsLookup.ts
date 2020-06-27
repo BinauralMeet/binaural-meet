@@ -9,6 +9,7 @@ export class SharedContentsLookup extends ParticipantStorePlugin {
   value = new Map<string, SharedContent>()
 
   ///  Add a new content to the local pariticipant
+  @action
   addContent(newCont: SharedContent):string {
     console.log('addContent: ', newCont)
     if (!participants.isLocal(this.parent.id)) {
@@ -33,7 +34,9 @@ export class SharedContentsLookup extends ParticipantStorePlugin {
 
     return key
   }
+
   ///  remove a content to the local pariticipant
+  @action
   removeContent(key: string):boolean {
     const rv = this.value.delete(key)
     sharedContents.order.delete(key)
@@ -42,7 +45,9 @@ export class SharedContentsLookup extends ParticipantStorePlugin {
 
     return rv
   }
+
   /// Set contents to a remote or local partitipant
+  @action
   setContents(newConts: Map<string, SharedContent>):void {
     console.log('setContents: ', newConts)
     const toDel = this.value.diff(newConts)
@@ -60,12 +65,3 @@ export class SharedContentsLookup extends ParticipantStorePlugin {
     }
   }
 }
-
-decorate(
-  SharedContentsLookup,
-  {
-    addContent: action,
-    removeContent: action,
-    setContents: action,
-  },
-)
