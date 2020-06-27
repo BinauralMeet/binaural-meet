@@ -4,6 +4,7 @@ import {memoComponent} from '@hooks/utils'
 import {makeStyles} from '@material-ui/core/styles'
 import {useObserver} from 'mobx-react-lite'
 import React, {forwardRef} from 'react'
+import {MapObjectContainer} from '../utils/MapObjectContainer'
 import {useValue as useTransform} from '../utils/useTransform'
 import Pointer from './Pointer.svg'
 
@@ -16,11 +17,6 @@ interface StyleProps {
 }
 
 const useStyles = makeStyles({
-  root: (props: StyleProps) => ({
-    position: 'absolute',
-    left: props.position[0],
-    top: props.position[1],
-  }),
   avatar: (props: StyleProps) => ({
     position: 'absolute',
     left: `-${props.size / 2}px`,
@@ -54,14 +50,14 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
   const transform = useTransform()
 
   return (
-    <div className={classes.root} ref={ref}>
+    <MapObjectContainer pose={participantProps} ref={ref}>
       <div className={classes.pointerRotate}>
         <Pointer className={classes.pointer} />
       </div>
       <div className={[classes.avatar, transform.counterRotationClass].join(' ')}>
         <Avatar {...props} />
       </div>
-    </div>
+    </MapObjectContainer>
   )
 }
 
