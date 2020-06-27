@@ -49,21 +49,15 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
 
   const transform = useTransform()
 
-  const [showConfigButton, setShowConfigButton] = useState<boolean>(false)
-
   return (
     <MapObjectContainer pose={participantProps} ref={ref} openConfiuration={() => {}} buttonSpacing={{
       top: -pointerAvatarRatio * props.size / 2,
       right: -pointerAvatarRatio * props.size / 2,
-    }} showButton={showConfigButton}>
+    }}>
       <div className={classes.pointerRotate}>
         <Pointer className={classes.pointer} />
       </div>
-      <div
-        className={[classes.avatar, transform.counterRotationClass].join(' ')}
-        onMouseEnter={() => setShowConfigButton(true)}
-        onMouseLeave={() => setTimeout(() => setShowConfigButton(false), 500)}
-      >
+      <div className={[classes.avatar, transform.counterRotationClass].join(' ')}>
         <Avatar {...props} />
       </div>
     </MapObjectContainer>

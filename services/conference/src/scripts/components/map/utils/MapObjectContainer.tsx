@@ -4,13 +4,12 @@ import Tooltip from '@material-ui/core/Tooltip'
 import Zoom from '@material-ui/core/Zoom'
 import MoreVertIcon from '@material-ui/icons/MoreVert'
 import {Pose2DMap} from '@models/MapObject'
-import React from 'react'
+import React, {useState} from 'react'
 
 interface MapObjectContainerProps {
   pose: Pose2DMap
   openConfiuration?: () => void
   buttonSpacing?: ButtonSpacing
-  showButton?: boolean
 }
 
 interface ButtonSpacing {
@@ -42,8 +41,10 @@ HTMLDivElement, React.PropsWithChildren<MapObjectContainerProps>> = (props, ref)
     spacing: props.buttonSpacing,
   })
 
+  const [s, ss] = useState<boolean>(false)
+
   const fab = (
-    <Zoom in={props.showButton === undefined ? true : props.showButton}>
+    <Zoom in={s}>
       <Tooltip className={className.fab} title="Configure" aria-label="configure">
         <IconButton color="secondary" onClick={props.openConfiuration} size={'small'}>
           <MoreVertIcon />
@@ -52,7 +53,11 @@ HTMLDivElement, React.PropsWithChildren<MapObjectContainerProps>> = (props, ref)
     </Zoom>
   )
 
-  return <div className={className.root} ref={ref}>
+  return <div
+    className={className.root} ref={ref}
+    onMouseOver={() => ss(true)}
+    onMouseOut={() => ss(false)}
+  >
     {props.children}
     {props.openConfiuration ? fab : undefined}
   </div>
