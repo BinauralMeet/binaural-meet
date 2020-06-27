@@ -8,7 +8,7 @@ import React, {useState} from 'react'
 
 interface MapObjectContainerProps {
   pose: Pose2DMap
-  openConfiuration?: () => void
+  openConfiuration?: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void
   buttonSpacing?: ButtonSpacing
 }
 
@@ -41,10 +41,10 @@ HTMLDivElement, React.PropsWithChildren<MapObjectContainerProps>> = (props, ref)
     spacing: props.buttonSpacing,
   })
 
-  const [s, ss] = useState<boolean>(false)
+  const [showButton, setShowButton] = useState<boolean>(false)
 
   const fab = (
-    <Zoom in={s}>
+    <Zoom in={showButton}>
       <Tooltip className={className.fab} title="Configure" aria-label="configure">
         <IconButton color="secondary" onClick={props.openConfiuration} size={'small'}>
           <MoreVertIcon />
@@ -55,8 +55,8 @@ HTMLDivElement, React.PropsWithChildren<MapObjectContainerProps>> = (props, ref)
 
   return <div
     className={className.root} ref={ref}
-    onMouseOver={() => ss(true)}
-    onMouseOut={() => ss(false)}
+    onMouseOver={() => setShowButton(true)}
+    onMouseOut={() => setShowButton(false)}
   >
     {props.children}
     {props.openConfiuration ? fab : undefined}
