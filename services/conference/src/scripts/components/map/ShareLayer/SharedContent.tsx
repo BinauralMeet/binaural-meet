@@ -13,7 +13,6 @@ export interface SharedContentProps{
 }
 
 export const SharedContent: React.FC<SharedContentProps> = (props:SharedContentProps) => {
-  useObserver(() => props.content)
   console.log('SharedContent', props)
 
   return (

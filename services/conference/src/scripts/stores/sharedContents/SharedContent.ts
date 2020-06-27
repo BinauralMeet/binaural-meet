@@ -1,16 +1,22 @@
+import {Perceptibility, Pose2DMap} from '@models/MapObject'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {MapObject} from '@stores/MapObject'
-import {observable} from 'mobx'
-import {Store} from '../utils'
+import {defaultValue as mapObjectDefaultValue} from '@stores/MapObject'
 
-export class SharedContent extends MapObject implements Store<ISharedContent> {
-  @observable type = ''
-  @observable url = ''
-  @observable size: [number, number] = [0, 0]
+const defaultValue: ISharedContent = Object.assign({}, mapObjectDefaultValue, {
+  type: '',
+  url: '',
+  size: [0, 0] as [number, number],
+})
 
-  // static fromPlain(content: ISharedContent): SharedContent {
-  //   const superStore = MapObject.fromPlain(content)
-  //   const store = observable
-  //   return observable(content)
-  // }
+// NOTE currently SharedContent does not use observable, to change view in component, object assign is required
+export class SharedContent implements ISharedContent {
+  pose!: Pose2DMap
+  perceptibility!: Perceptibility
+  type!: string
+  url!: string
+  size!: [number, number]
+
+  constructor() {
+    Object.assign(this, defaultValue)
+  }
 }
