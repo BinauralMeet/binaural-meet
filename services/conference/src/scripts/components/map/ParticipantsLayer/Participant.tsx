@@ -3,7 +3,7 @@ import {useStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
 import {makeStyles} from '@material-ui/core/styles'
 import {useObserver} from 'mobx-react-lite'
-import React, {forwardRef} from 'react'
+import React, {forwardRef, useState} from 'react'
 import {MapObjectContainer} from '../utils/MapObjectContainer'
 import {useValue as useTransform} from '../utils/useTransform'
 import Pointer from './Pointer.svg'
@@ -49,12 +49,21 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
 
   const transform = useTransform()
 
+  const [showConfigButton, setShowConfigButton] = useState<boolean>(false)
+
   return (
-    <MapObjectContainer pose={participantProps} ref={ref}>
+    <MapObjectContainer pose={participantProps} ref={ref} openConfiuration={() => {}} buttonSpacing={{
+      top: -pointerAvatarRatio * props.size / 2,
+      right: -pointerAvatarRatio * props.size / 2,
+    }} showButton={showConfigButton}>
       <div className={classes.pointerRotate}>
         <Pointer className={classes.pointer} />
       </div>
-      <div className={[classes.avatar, transform.counterRotationClass].join(' ')}>
+      <div
+        className={[classes.avatar, transform.counterRotationClass].join(' ')}
+        onMouseEnter={() => setShowConfigButton(true)}
+        onMouseLeave={() => setTimeout(() => setShowConfigButton(false), 500)}
+      >
         <Avatar {...props} />
       </div>
     </MapObjectContainer>
