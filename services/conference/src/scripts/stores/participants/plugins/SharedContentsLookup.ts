@@ -1,7 +1,7 @@
 import {connection} from '@models/api'
 import {action, decorate, observable} from 'mobx'
-import {SharedContent} from '../../SharedContent'
-import {default as sharedContents} from '../../SharedContents'
+import {SharedContent} from '../../sharedContents/SharedContent'
+import {default as sharedContents} from '../../sharedContents/SharedContents'
 import {default as participants} from '../Participants'
 import {ParticipantStorePlugin} from './utils'
 
