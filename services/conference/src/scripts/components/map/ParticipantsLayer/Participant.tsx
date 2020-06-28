@@ -64,7 +64,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
 
   return (
     <ClickAwayListener onClickAway={() => setShowConfig(false)}>
-      <MapObjectContainer pose={participantProps} ref={ref}
+      <MapObjectContainer pose={participantProps} ref={ref} disableRotation={true}
         openConfiuration={(event) => {
           setShowConfig(true)
           setDialogPosition([event.clientX, event.clientY])

@@ -3,13 +3,20 @@ import {makeStyles} from '@material-ui/core/styles'
 import Tooltip from '@material-ui/core/Tooltip'
 import Zoom from '@material-ui/core/Zoom'
 import MoreVertIcon from '@material-ui/icons/MoreVert'
-import {Pose2DMap} from '@models/MapObject'
+import {MapObject, Pose2DMap} from '@models/MapObject'
 import React, {useState} from 'react'
 
-interface MapObjectContainerProps {
+interface MapObjectContainerProps extends Partial<MapObject> {
   pose: Pose2DMap
+  disableRotation?: boolean
   openConfiuration?: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void
   buttonSpacing?: ButtonSpacing
+}
+
+const defaultProps: Partial<MapObjectContainerProps> = {
+  disableRotation: false,
+  openConfiuration: undefined,
+  buttonSpacing: undefined,
 }
 
 interface ButtonSpacing {
@@ -27,6 +34,9 @@ const useStyles = makeStyles(theme => ({
     left: props.position[0],
     top: props.position[1],
   }),
+  rootRotation: (props: StyleProps) => ({
+    transform: `rotate(${props.orientation}deg)`,
+  }),
   fab: (props: StyleProps) => ({
     position: 'absolute',
     top: props.spacing ? props.spacing.top : theme.spacing(2),
@@ -36,9 +46,16 @@ const useStyles = makeStyles(theme => ({
 
 const RawMapObjectContainer: React.ForwardRefRenderFunction<
 HTMLDivElement, React.PropsWithChildren<MapObjectContainerProps>> = (props, ref) => {
+  const {
+    pose,
+    disableRotation,
+    openConfiuration,
+    buttonSpacing,
+  } = Object.assign({}, defaultProps, props)
+
   const className = useStyles({
-    ...props.pose,
-    spacing: props.buttonSpacing,
+    ...pose,
+    spacing: buttonSpacing,
   })
 
   const [showButton, setShowButton] = useState<boolean>(false)
@@ -46,20 +63,25 @@ HTMLDivElement, React.PropsWithChildren<MapObjectContainerProps>> = (props, ref)
   const fab = (
     <Zoom in={showButton}>
       <Tooltip className={className.fab} title="Configure" aria-label="configure">
-        <IconButton color="secondary" onClick={props.openConfiuration} size={'small'}>
+        <IconButton color="secondary" onClick={openConfiuration} size={'small'}>
           <MoreVertIcon />
         </IconButton>
       </Tooltip>
     </Zoom>
   )
 
+  const rootClass = [className.root]
+  if (!disableRotation) {
+    rootClass.push(className.rootRotation)
+  }
+
   return <div
-    className={className.root} ref={ref}
+    className={rootClass.join(' ')} ref={ref}
     onMouseOver={() => setShowButton(true)}
     onMouseOut={() => setShowButton(false)}
   >
     {props.children}
-    {props.openConfiuration ? fab : undefined}
+    {openConfiuration ? fab : undefined}
   </div>
 }
 
