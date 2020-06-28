@@ -74,11 +74,13 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
           right: -pointerAvatarRatio * props.size / 2,
         }}
       >
-          <div className={classes.pointerRotate}>
-            <Pointer className={classes.pointer} />
-          </div>
-          <div className={[classes.avatar, transform.counterRotationClass].join(' ')}>
-            <Avatar {...props} />
+          <div className="participantWrapper">
+            <div className={classes.pointerRotate}>
+              <Pointer className={classes.pointer} />
+            </div>
+            <div className={[classes.avatar, transform.counterRotationClass].join(' ')}>
+              <Avatar {...props} />
+            </div>
           </div>
           {showConfig ? configuration : null}
       </MapObjectContainer >
