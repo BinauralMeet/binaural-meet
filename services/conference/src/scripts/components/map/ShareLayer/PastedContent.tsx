@@ -1,6 +1,6 @@
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {default as participants} from '@stores/participants/Participants'
-import {SharedContent} from '@stores/SharedContent'
+import {SharedContent} from '@stores/sharedContents/SharedContent'
 import React, {useEffect, useState} from 'react'
 import {RndContent} from './RndContent'
 

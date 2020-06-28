@@ -1,4 +1,5 @@
-import {Pose2DMap, Pose3DAudio} from '@models/Participant'
+import {Pose2DMap} from '@models/MapObject'
+import {Pose3DAudio} from '@models/Participant'
 
 export function degree2Radian(degree: number): number {
   return degree * Math.PI / 180
