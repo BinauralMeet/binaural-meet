@@ -1,5 +1,6 @@
 import {BaseProps} from '@components/utils'
 import {useStore} from '@hooks/AppLevelStore'
+import {useStore as useParticipantsStore} from '@hooks/ParticipantsStore'
 import Fab from '@material-ui/core/Fab'
 import Menu from '@material-ui/core/Menu'
 import MenuItem from '@material-ui/core/MenuItem'
@@ -37,6 +38,7 @@ const useStyles = makeStyles((theme) => {
 export const Footer: React.FC<BaseProps> = (props) => {
   const classes = useStyles()
   const store = useStore()
+  const participants = useParticipantsStore()
 
   const [micMenuEl, setMicMenuEl] = React.useState<Element|null>(null)
   const closeMicMenu = () => { setMicMenuEl(null) }
@@ -65,7 +67,7 @@ export const Footer: React.FC<BaseProps> = (props) => {
         <MenuItem onClick={closeMicMenu}>Mic 3</MenuItem>
       </Menu>
       <Fab className={classes.margin} size = "small" color={store.cameraOn ? 'secondary' : 'primary'}
-         aria-label="camera"onClick = { () => { store.cameraOn = !store.cameraOn }}>
+          aria-label="camera"onClick = { () => { store.cameraOn = !store.cameraOn }}>
         {store.cameraOn ? <VideoIcon /> : <VideoOffIcon /> }
       </Fab>
       <Fab className={classes.small} size="small"

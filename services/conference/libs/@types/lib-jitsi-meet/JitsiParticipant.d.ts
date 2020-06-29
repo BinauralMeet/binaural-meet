@@ -4,7 +4,7 @@
 
 import { JitsiConference } from "./JitsiConference";
 import JitsiTrack from './modules/RTC/JitsiTrack'
-import { MediaType } from "./modules/RTC/JitsiTrack";
+import { TMediaType } from "./modules/RTC/JitsiTrack";
 
 declare class JitsiParticipant {
   constructor(
@@ -23,7 +23,7 @@ declare class JitsiParticipant {
   getConnectionStatus: () => string
   setProperty: (name: string, value: any) => void
   getTracks: () => JitsiTrack[]
-  getTracksByMediaType: (mediaType: typeof MediaType) => JitsiTrack[]
+  getTracksByMediaType: (mediaType: TMediaType) => JitsiTrack[]
   getId: () => string
   getJid: () => string
   getDisplayName: ()=> string

@@ -11,7 +11,7 @@ export const ComposedAvatar: React.FC<ComposedAvatarProps> = (props: ComposedAva
     ...remainProps
   } = props
 
-  if (stream === undefined) {
+  if (stream === undefined || !stream.getVideoTracks()[0].enabled) {
     return <ImageAvatar information={information} {...remainProps} />
   }
 

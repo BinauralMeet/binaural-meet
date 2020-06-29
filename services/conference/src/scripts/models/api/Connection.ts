@@ -89,7 +89,7 @@ class Connection extends EventEmitter {
   public version: string
   public participants: Map<string, { jitsiInstance?: JitsiParticipant, isLocal: boolean}>
   public localId: string
-
+  public localTracks: JitsiLocalTrack[] = []
   // public remotes: JitsiParticipant[]
 
 
@@ -520,6 +520,7 @@ class Connection extends EventEmitter {
     Promise.resolve([new JitsiLocalTrack(videoTrackInfo)])
   }
   public addTracks(tracks: JitsiLocalTrack[]) {
+    this.localTracks = tracks
     if (this._jitsiConference) {
       for (const track of tracks) {
         this._jitsiConference.addTrack(track)
