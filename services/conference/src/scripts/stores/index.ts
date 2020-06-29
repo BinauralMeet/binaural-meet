@@ -1,4 +1,4 @@
 import connectionInfo from './ConnectionInfo'
-import participants from './Participants'
+import participants from './participants/Participants'
 
 export {connectionInfo, participants}

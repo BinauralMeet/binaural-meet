@@ -1,4 +1,4 @@
-import store from '@stores/Participants'
+import store from '@stores/participants/Participants'
 import {autorun} from 'mobx'
 import {ConnectedGroup} from './ConnectedGroup'
 import {StereoManager} from './StereoManager'

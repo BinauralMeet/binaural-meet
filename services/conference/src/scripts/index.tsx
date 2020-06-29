@@ -5,6 +5,7 @@ import '@models/audio'  // init audio manager (DO NOT delete)
 import {resolveAtEnd} from '@models/utils'
 import {getParameters} from '@models/utils/url'
 import '@stores/index' // init store (DO NOT delete)
+import 'mobx-react-lite/batchingForReactDom'
 import React from 'react'
 import ReactDOM from 'react-dom'
 

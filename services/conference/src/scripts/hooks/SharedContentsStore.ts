@@ -1,4 +1,4 @@
-import {SharedContents} from '@stores/SharedContents'
+import {SharedContents} from '@stores/sharedContents/SharedContents'
 import {createContext, useContext} from 'react'
 
 export const StoreContext = createContext<SharedContents>({} as SharedContents)

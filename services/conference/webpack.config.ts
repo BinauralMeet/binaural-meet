@@ -105,6 +105,9 @@ const config: webpack.Configuration = {
       cleanup: true,
     }),
   ],
+  watchOptions: {
+    ignored: ['node_modules/**', 'libs/**'],
+  },
 }
 
 export default config

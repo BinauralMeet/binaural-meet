@@ -1,6 +1,6 @@
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {default as participants} from '@stores/Participants'
-import {SharedContent} from '@stores/SharedContent'
+import {default as participants} from '@stores/participants/Participants'
+import {SharedContent} from '@stores/sharedContents/SharedContent'
 import React, {useEffect, useState} from 'react'
 import {RndContent} from './RndContent'
 
@@ -86,7 +86,7 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
       onShare = {(evt: React.MouseEvent<HTMLDivElement>) => {
         // console.log("onClick b:", evt.button, " bs:" ,evt.buttons, " d:", evt.detail, " p:", evt.eventPhase)
         //  Add the pasted content to localPaticipant's contents and remove it.
-        participants.local.get().addContent(JSON.parse(JSON.stringify(content)))
+        participants.local.get().plugins.contents.addContent(JSON.parse(JSON.stringify(content)))
         setContent(nullContent)
       }}
       onClose = {(evt: React.MouseEvent<HTMLDivElement>) => {

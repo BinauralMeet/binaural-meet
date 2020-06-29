@@ -1,9 +1,7 @@
-import {Pose2DMap} from './Participant'
-import {Terrain} from './Terrain'
+import {MapObject} from './MapObject'
 
-export interface SharedContent {
+export interface SharedContent extends MapObject {
   type: string  //  object type ('img', etc)
   url: string
-  pose: Pose2DMap
   size: [number, number]
 }

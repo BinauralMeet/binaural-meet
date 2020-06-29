@@ -1,5 +1,5 @@
 import {convertToAudioCoordinate, getRelativePose} from '@models/utils'
-import {Participant} from '@stores/Participant'
+import {Participant} from '@stores/participants/Participant'
 import {autorun, IObservableValue, IReactionDisposer} from 'mobx'
 import {NodeGroup} from './NodeGroup'
 

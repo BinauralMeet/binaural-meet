@@ -1,6 +1,6 @@
 import {ConnectionInfo, default as ConnectionInfoStore} from '@stores/ConnectionInfo'
-import {default as ParticiantsStore} from '@stores/Participants'
-import {default as sharedContents, SharedContents} from '@stores/SharedContents'
+import {default as ParticiantsStore} from '@stores/participants/Participants'
+import {default as sharedContents, SharedContents} from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
 import JitsiMeetJS, {JitsiValues} from 'lib-jitsi-meet'
 import JitsiTrack from 'lib-jitsi-meet/modules/RTC/JitsiTrack'
@@ -12,10 +12,10 @@ import {config} from './test.config'
 
 // import a global variant $ for lib-jitsi-meet
 import {SharedContent} from '@components/map/ShareLayer/SharedContent'
-import {Pose2DMap} from '@models/Participant'
+import {Pose2DMap} from '@models/MapObject'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {Participant} from '@stores/Participant'
-import {SharedContent as SharedContentStore} from '@stores/SharedContent'
+import {Participant} from '@stores/participants/Participant'
+import {SharedContent as SharedContentStore} from '@stores/sharedContents/SharedContent'
 import {dummyConnectionStore} from '@test-utils/DummyParticipants'
 import jquery from 'jquery'
 import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
@@ -391,15 +391,15 @@ class Connection extends EventEmitter {
           const contents = new Map<string, ISharedContent>(contentsAsArray)
           const id = participant.getId()
           const target = ParticiantsStore.find(id)
-          target.setContents(contents)
+          target.plugins.contents.setContents(contents)
         }else if (name === ParticipantProperties.PPROP_CONTENTS_ORDER) {
           const newOrder = JSON.parse(value) as [string, SharedContentStore][]
           const newMap = new Map(newOrder)
           const local = ParticiantsStore.local.get()
           newMap.forEach((val, key) => {
-            const got = local.contents.get(key)
+            const got = local.plugins.contents.value.get(key)
             if (got) {
-              local.contents.set(key, val)
+              local.plugins.contents.value.set(key, val)
             }
           })
           sharedContents.order = newMap

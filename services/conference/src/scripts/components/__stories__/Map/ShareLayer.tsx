@@ -1,10 +1,9 @@
 import {PastedContent} from '@components/map/ShareLayer/PastedContent'
-import {SharedContent} from '@components/map/ShareLayer/SharedContent'
 import {SharedContents} from '@components/map/ShareLayer/ShareLayer'
 import {StoreProvider as ContentsProvider} from '@hooks/SharedContentsStore'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {Pose2DMap, SharedContent as SharedContentStore} from '@stores/SharedContent'
-import {SharedContents as SharedContentsStore} from '@stores/SharedContents'
+import {SharedContent as SharedContentStore} from '@stores/sharedContents/SharedContent'
+import {SharedContents as SharedContentsStore} from '@stores/sharedContents/SharedContents'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 
@@ -29,6 +28,10 @@ const pc: ISharedContent = {
     orientation: 0,
   },
   size: [100, 100],
+  perceptibility: {
+    audibility: true,
+    visibility: true,
+  },
 }
 
 const ShareLayerStory: React.FC<{}> = () => {

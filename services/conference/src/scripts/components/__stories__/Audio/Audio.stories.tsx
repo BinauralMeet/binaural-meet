@@ -1,6 +1,6 @@
 import {StoreProvider} from '@hooks/ParticipantsStore'
 import '@models/audio'
-import store from '@stores/Participants'
+import store from '@stores/participants/Participants'
 import React from 'react'
 import {Controller} from './components/Controller'
 import {ParticipantsVisualizer} from './components/ParticipantsStoreVisualizer'

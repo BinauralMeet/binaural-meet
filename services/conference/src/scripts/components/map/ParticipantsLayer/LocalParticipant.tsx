@@ -1,5 +1,6 @@
 import {useStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
+import {makeStyles} from '@material-ui/core/styles'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import {addV, subV, useGesture} from 'react-use-gesture'
@@ -15,6 +16,18 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     position: participant.pose.position,
     orientation: participant.pose.orientation,
   }))
+
+  const useStyles = makeStyles({
+    local: () => ({
+      '& .participantWrapper': {
+        '& circle, & path': {
+          stroke: '#e5da00',
+        },
+      },
+    }),
+  })
+
+  const classes = useStyles()
 
   const transform = useTransform()
 
@@ -46,7 +59,9 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   )
 
   return (
-    <Participant {...props} ref={container} />
+    <div className={classes.local}>
+      <Participant {...props} ref={container} />
+    </div>
   )
 }
 

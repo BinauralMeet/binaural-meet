@@ -1,20 +1,18 @@
 import {makeStyles} from '@material-ui/core/styles'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {SharedContent as SharedContentStore} from '@stores/SharedContent'
-import {SharedContents as SharedContentsStore} from '@stores/SharedContents'
+import {SharedContent as SharedContentStore} from '@stores/sharedContents/SharedContent'
+import {SharedContents as SharedContentsStore} from '@stores/sharedContents/SharedContents'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useState} from 'react'
 import {RndContent} from './RndContent'
 
 export interface SharedContentProps{
-  key: number,
   mapKey: string,
   content: SharedContentStore,
   contents: SharedContentsStore
 }
 
 export const SharedContent: React.FC<SharedContentProps> = (props:SharedContentProps) => {
-  useObserver(() => props.content)
   console.log('SharedContent', props)
 
   return (
