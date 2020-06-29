@@ -5,18 +5,21 @@ import Zoom from '@material-ui/core/Zoom'
 import MoreVertIcon from '@material-ui/icons/MoreVert'
 import {MapObject, Pose2DMap} from '@models/MapObject'
 import React, {useState} from 'react'
+import {useValue as useTransform} from './useTransform'
 
 interface MapObjectContainerProps extends Partial<MapObject> {
   pose: Pose2DMap
   disableRotation?: boolean
   openConfiuration?: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void
   buttonSpacing?: ButtonSpacing
+  counterRotateButtons?: boolean
 }
 
 const defaultProps: Partial<MapObjectContainerProps> = {
   disableRotation: false,
   openConfiuration: undefined,
   buttonSpacing: undefined,
+  counterRotateButtons: false,
 }
 
 interface ButtonSpacing {
@@ -51,6 +54,7 @@ HTMLDivElement, React.PropsWithChildren<MapObjectContainerProps>> = (props, ref)
     disableRotation,
     openConfiuration,
     buttonSpacing,
+    counterRotateButtons,
   } = Object.assign({}, defaultProps, props)
 
   const className = useStyles({
@@ -60,7 +64,7 @@ HTMLDivElement, React.PropsWithChildren<MapObjectContainerProps>> = (props, ref)
 
   const [showButton, setShowButton] = useState<boolean>(false)
 
-  const fab = (
+  let fab = (
     <Zoom in={showButton}>
       <Tooltip className={className.fab} title="Configure" aria-label="configure">
         <IconButton color="secondary" onClick={openConfiuration} size={'small'}>
@@ -69,6 +73,15 @@ HTMLDivElement, React.PropsWithChildren<MapObjectContainerProps>> = (props, ref)
       </Tooltip>
     </Zoom>
   )
+
+  const counterRotationClass = useTransform().counterRotationClass
+  if (counterRotateButtons) {
+    fab = (
+      <div className={counterRotationClass}>
+        {fab}
+      </div>
+    )
+  }
 
   const rootClass = [className.root]
   if (!disableRotation) {
