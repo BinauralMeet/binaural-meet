@@ -1,6 +1,8 @@
 import {StoreProvider as AppLevelProvider, useStore} from '@hooks/AppLevelStore'
+import {StoreProvider as ParticipantsProvider} from '@hooks/ParticipantsStore'
 import {makeStyles} from '@material-ui/core/styles'
 import {default as appLevelStore} from '@stores/AppLevel'
+import participantsStore from '@stores/participants/Participants'
 import React from 'react'
 import {Footer} from './footer/footer'
 import {Map} from './map/map'
@@ -21,10 +23,12 @@ export const App: React.FC<{}> = () => {
 
   return (
     <AppLevelProvider value={appLevelStore}>
+    <ParticipantsProvider value={participantsStore}>
     <div className={classes.map}>
       <Map />
       <Footer />
     </div>
+    </ParticipantsProvider>)
     </AppLevelProvider>
   )
 }

@@ -89,7 +89,7 @@ class Connection extends EventEmitter {
   public version: string
   public participants: Map<string, { jitsiInstance?: JitsiParticipant, isLocal: boolean}>
   public localId: string
-
+  public localTracks: JitsiLocalTrack[] = []
   // public remotes: JitsiParticipant[]
 
 
@@ -373,6 +373,24 @@ class Connection extends EventEmitter {
       },
     )
 
+    /**
+     * Event: JitsiMeetJS.events.conference.TRACK_MUTE_CHANGED
+     * @emits ConferenceEvents.TRACK_MUTE_CHANGED
+     */
+    conference.on(
+      JitsiMeetJS.events.conference.TRACK_MUTE_CHANGED,
+      (track: JitsiTrack) => {
+        this._loggerHandler?.debug(`Mute changed on a ${track.isLocal() ? 'Local' : 'Remote'}Track.`, logField)
+        if (track.isLocal()) return
+        const rt = track as JitsiRemoteTrack
+        const target = ParticiantsStore.find(rt.getParticipantId())
+        if (rt.isVideoTrack()){
+          console.log(rt)
+          target.plugins.streamControl.muteVideo = rt.isMuted()
+        }
+      },
+    )
+
     conference.on(
       JitsiMeetJS.events.conference.PARTICIPANT_PROPERTY_CHANGED,
       (participant: JitsiParticipant, name: string, oldValue: string, value: string) => {
@@ -520,6 +538,7 @@ class Connection extends EventEmitter {
     Promise.resolve([new JitsiLocalTrack(videoTrackInfo)])
   }
   public addTracks(tracks: JitsiLocalTrack[]) {
+    this.localTracks = tracks
     if (this._jitsiConference) {
       for (const track of tracks) {
         this._jitsiConference.addTrack(track)
