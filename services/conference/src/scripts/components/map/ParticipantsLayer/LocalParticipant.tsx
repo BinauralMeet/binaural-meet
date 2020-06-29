@@ -41,7 +41,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   }
 
   return (
-    <DraggableCore handle=".handle" onDrag={dragEventHandler}>
+    <DraggableCore handle=".handle, path" onDrag={dragEventHandler}>
       <div className={classes.local}>
         <Participant {...props} />
       </div>
