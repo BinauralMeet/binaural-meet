@@ -1,5 +1,6 @@
 import {App} from '@components/app'
 import {connection} from '@models/api'
+import '@models/TrackMiddleware'
 import '@models/audio'  // init audio manager (DO NOT delete)
 import {resolveAtEnd} from '@models/utils'
 import {getParameters} from '@models/utils/url'
