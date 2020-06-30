@@ -24,7 +24,7 @@ const ConnectedAvatar: React.FC<ConnectedAvatarProps> = (props) => {
         md5Email: participant.information.md5Email,
       },
       stream: participant.stream.avatarStream,
-      showVideo: participant.plugins.streamControl.showVideo
+      showVideo: participant.plugins.streamControl.showVideo,
     }
   })
 

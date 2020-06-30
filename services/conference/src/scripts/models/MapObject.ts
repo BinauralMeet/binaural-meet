@@ -5,8 +5,9 @@ export interface Pose2DMap {
 }
 
 export interface Perceptibility {
-  visibility: boolean
-  audibility: boolean
+  visibility: boolean             // the whole object is visible
+  coreContentVisibility: boolean  // core content (e.g. video stream for remote participant) is visible
+  audibility: boolean             // the audio of object could be heard
 }
 
 export interface MapObject {
