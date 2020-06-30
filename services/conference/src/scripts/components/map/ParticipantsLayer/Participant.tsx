@@ -78,7 +78,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
             <div className={classes.pointerRotate}>
               <Pointer className={classes.pointer} />
             </div>
-            <div className={[classes.avatar, transform.counterRotationClass, 'handle'].join(' ')}>
+            <div className={[classes.avatar, transform.counterRotationClass, 'draggableHandle'].join(' ')}>
               <Avatar {...props} />
             </div>
           </div>
