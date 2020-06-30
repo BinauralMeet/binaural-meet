@@ -15,8 +15,8 @@ Each participant has followings as participant as properties of Jitsi conference
 Participant{
     order: string[]  	// Z order of all contents (id only) 
     contents:Content[]	// contents owned by this participant
-    update: Content[] 	//	Update requrest to other participants. Once the content in the 'contents' is updated. The object must be removed from this array.
-	remove: string[]	//	Remove requiest to other participants. Once the content is removed, the id from removed from this array.
+    update: Content[] 	// Update requrest to other participants. Once the content in the 'contents' is updated. The object must be removed from this array.
+    remove: string[]	// Remove requiest to other participants. Once the content is removed, the id from removed from this array.
 }```
 ```
 
