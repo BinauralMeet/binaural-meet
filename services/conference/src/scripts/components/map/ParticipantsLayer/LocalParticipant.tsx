@@ -2,8 +2,9 @@ import {useStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
 import {makeStyles} from '@material-ui/core/styles'
 import {useObserver} from 'mobx-react-lite'
-import React, {useEffect, useRef} from 'react'
-import {addV, subV, useGesture} from 'react-use-gesture'
+import React from 'react'
+import {DraggableCore, DraggableData, DraggableEvent, DraggableEventHandler} from 'react-draggable'
+import {addV, subV} from 'react-use-gesture'
 import {useValue as useTransform} from '../utils/useTransform'
 import {Participant, ParticipantProps} from './Participant'
 
@@ -31,37 +32,20 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
 
   const transform = useTransform()
 
-  const container = useRef<HTMLDivElement>(null)
-
-  const bind = useGesture(
-    {
-      onDrag: ({down, delta, event}) => {
-        if (down) {
-          event?.stopPropagation()
-          event?.preventDefault()
-          participant.pose.position = addV(
-            subV(transform.global2Local(delta), transform.global2Local([0, 0])), participantProps.position)
-        }
-      },
-    },
-    {
-      domTarget: container,
-      eventOptions: {
-        passive: false,
-      },
-    },
-  )
-  useEffect(
-    () => {
-      bind()
-    },
-    [bind],
-  )
+  const dragEventHandler: DraggableEventHandler = (e: DraggableEvent, data: DraggableData) => {
+    e.stopPropagation()
+    e.preventDefault()
+    const delta: [number, number] = [data.deltaX, data.deltaY]
+    participant.pose.position = addV(
+      subV(transform.global2Local(delta), transform.global2Local([0, 0])), participantProps.position)
+  }
 
   return (
-    <div className={classes.local}>
-      <Participant {...props} ref={container} />
-    </div>
+    <DraggableCore handle=".draggableHandle, path" onDrag={dragEventHandler}>
+      <div className={classes.local}>
+        <Participant {...props} />
+      </div>
+    </DraggableCore>
   )
 }
 

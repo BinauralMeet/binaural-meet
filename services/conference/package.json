@@ -80,6 +80,7 @@
     "react-avatar": "^3.9.3",
     "react-dimensions-hook": "https://github.com/hasevr/react-dimensions-hook.git",
     "react-dom": "^16.13.1",
+    "react-draggable": "^4.4.3",
     "react-rnd": "https://github.com/hasevr/react-rnd.git",
     "react-use-gesture": "^7.0.15",
     "tern": "^0.24.3",
