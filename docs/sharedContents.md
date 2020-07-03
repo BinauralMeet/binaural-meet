@@ -5,7 +5,10 @@
 - Each participant can share new contents. 
   - Contents has id, type, text (URL), pose, size and timestamp properties. 
 ```tsx
-class Content{
+class MapObject{
+  pose: Pose2D
+}
+class Content: MapObject{
   id:string
   type:string
   url:string
