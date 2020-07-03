@@ -81,7 +81,7 @@ export const Footer: React.FC<BaseProps> = (props) => {
         aria-label="cameraSelect" onClick = { () => { console.log('camera select') }}>
         <MoreIcon onClick = {(ev) => { setVideoMenuEl(ev.currentTarget) }} />
       </Fab>
-      <Fab className={classes.margin} size = "small" color={true ? 'secondary' : 'primary'}
+      <Fab className={classes.margin} size = "small" color={false ? 'secondary' : 'primary'}
         aria-label="share">
         <ScreenShareIcon />
       </Fab>
