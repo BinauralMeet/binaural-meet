@@ -67,7 +67,11 @@ export const Footer: React.FC<BaseProps> = (props) => {
         <MenuItem onClick={closeMicMenu}>Mic 3</MenuItem>
       </Menu>
       <Fab className={classes.margin} size = "small" color={muteV ? 'primary' : 'secondary'}
-          aria-label="camera" onClick = { () => { participants.local.get().plugins.streamControl.muteVideo = !muteV }}>
+          aria-label="camera" onClick = { () => {
+            participants.local.get().plugins.streamControl.muteVideo = !muteV
+            console.log("muteV:", muteV)
+          }
+      }>
         {muteV ? <VideoOffIcon /> : <VideoIcon /> }
       </Fab>
       <Fab className={classes.small} size="small"
