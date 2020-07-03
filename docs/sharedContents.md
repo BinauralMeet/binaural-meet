@@ -12,7 +12,6 @@ class Content: MapObject{
   id:string
   type:string
   url:string
-  pose: PoseMap2D
   size: [number, number]
   zorder: number //  unix timestamp when shared or moved to top.
 }```
