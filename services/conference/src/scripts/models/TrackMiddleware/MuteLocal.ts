@@ -1,26 +1,23 @@
 import {reaction} from 'mobx'
-import {default as appLevel} from '@stores/AppLevel'
 import {connection} from '@models/api'
-import participants from '@stores/Participants'
+import participants from '@stores/participants/Participants'
 
-reaction(() => appLevel.micOn,
-(micOn) => {
+reaction(() => participants.local.get().plugins.streamControl.muteAudio,
+(muteAudio) => {
   const tracks = connection.localTracks
   for (const track of tracks) {
     if (track.getType() === 'audio') {
-      micOn ? track.unmute() : track.mute()
+      muteAudio ? track.mute() : track.unmute()
     }
   }
 },
 )
-reaction(() => appLevel.cameraOn,
-  (cameraOn) => {
+reaction(() => participants.local.get().plugins.streamControl.muteVideo,
+  (muteVideo) => {
     const tracks = connection.localTracks
     for (const track of tracks) {
       if (track.getType() === 'video') {
-        cameraOn ? track.unmute() : track.mute()
-        const stream = participants.local.get().stream.avatarStream
-        if (stream) { stream.getTracks()[0].enabled = cameraOn }
+        muteVideo ? track.mute() : track.unmute()
       }
     }
   },

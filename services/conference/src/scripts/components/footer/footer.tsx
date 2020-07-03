@@ -1,5 +1,4 @@
 import {BaseProps} from '@components/utils'
-import {useStore} from '@hooks/AppLevelStore'
 import {useStore as useParticipantsStore} from '@hooks/ParticipantsStore'
 import Fab from '@material-ui/core/Fab'
 import Menu from '@material-ui/core/Menu'
@@ -37,19 +36,20 @@ const useStyles = makeStyles((theme) => {
 
 export const Footer: React.FC<BaseProps> = (props) => {
   const classes = useStyles()
-  const store = useStore()
   const participants = useParticipantsStore()
 
   const [micMenuEl, setMicMenuEl] = React.useState<Element|null>(null)
   const closeMicMenu = () => { setMicMenuEl(null) }
   const [videoMenuEl, setVideoMenuEl] = React.useState<Element|null>(null)
   const closeVideoMenu = () => { setVideoMenuEl(null) }
+  const muteA = participants.local.get().plugins.streamControl.muteAudio
+  const muteV = participants.local.get().plugins.streamControl.muteVideo
 
   return useObserver(() => (
     <div className={classes.box}>
-      <Fab className={classes.margin} size = "small" color={store.micOn ? 'secondary' : 'primary'}
-        aria-label="mic" onClick = { () => { store.micOn = !store.micOn }}>
-        {store.micOn ? <MicIcon /> : <MicOffIcon /> }
+      <Fab className={classes.margin} size = "small" color={muteA ? 'primary' : 'secondary' }
+        aria-label="mic" onClick = { () => { participants.local.get().plugins.streamControl.muteAudio = !muteA }}>
+        {muteA ? <MicOffIcon /> : <MicIcon /> }
       </Fab>
       <Fab className={classes.small} size="small"
         aria-label="micSelect" onClick = { () => { console.log('mic select') }}>
@@ -66,15 +66,15 @@ export const Footer: React.FC<BaseProps> = (props) => {
         <MenuItem onClick={closeMicMenu}>Mic 2</MenuItem>
         <MenuItem onClick={closeMicMenu}>Mic 3</MenuItem>
       </Menu>
-      <Fab className={classes.margin} size = "small" color={store.cameraOn ? 'secondary' : 'primary'}
-          aria-label="camera"onClick = { () => { store.cameraOn = !store.cameraOn }}>
-        {store.cameraOn ? <VideoIcon /> : <VideoOffIcon /> }
+      <Fab className={classes.margin} size = "small" color={muteV ? 'primary' : 'secondary'}
+          aria-label="camera" onClick = { () => { participants.local.get().plugins.streamControl.muteVideo = !muteV }}>
+        {muteV ? <VideoOffIcon /> : <VideoIcon /> }
       </Fab>
       <Fab className={classes.small} size="small"
         aria-label="cameraSelect" onClick = { () => { console.log('camera select') }}>
         <MoreIcon onClick = {(ev) => { setVideoMenuEl(ev.currentTarget) }} />
       </Fab>
-      <Fab className={classes.margin} size = "small" color={store.screenShareOn ? 'secondary' : 'primary'}
+      <Fab className={classes.margin} size = "small" color={true ? 'secondary' : 'primary'}
         aria-label="share">
         <ScreenShareIcon />
       </Fab>

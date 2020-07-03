@@ -13,6 +13,6 @@ export class StreamControl extends ParticipantStorePlugin {
 
   // determines whether the video would be rendered
   @computed get showVideo () {
-    return !this.muteVideo && this.parent.perceptibility.visibility
+    return !this.muteVideo && this.parent.perceptibility.coreContentVisibility
   }
 }

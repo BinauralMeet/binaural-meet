@@ -9,6 +9,7 @@ export const defaultValue: IMapObject = {
   },
   perceptibility: {
     visibility: true,
+    coreContentVisibility: true,
     audibility: true,
   },
 }

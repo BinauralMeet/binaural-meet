@@ -15,6 +15,7 @@ const ConnectedAvatar: React.FC<ConnectedAvatarProps> = (props) => {
   const {
     information,
     stream,
+    showVideo,
   } = useObserver(() => {
     return {
       information: {
@@ -23,6 +24,7 @@ const ConnectedAvatar: React.FC<ConnectedAvatarProps> = (props) => {
         md5Email: participant.information.md5Email,
       },
       stream: participant.stream.avatarStream,
+      showVideo: participant.plugins.streamControl.showVideo,
     }
   })
 

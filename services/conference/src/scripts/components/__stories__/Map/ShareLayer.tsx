@@ -20,7 +20,9 @@ function addFakeSharedContents(store: SharedContentsStore) {
   })
   store.order.set('test', sc)
 }
+
 const pc: ISharedContent = {
+  id: 'new',
   type : 'img',
   url: 'https://i.gyazo.com/d05570612dbbe84c65dd684ef665606e.png', // 'Pasted text',
   pose: {
@@ -28,8 +30,10 @@ const pc: ISharedContent = {
     orientation: 0,
   },
   size: [100, 100],
+  zorder: 1,
   perceptibility: {
     audibility: true,
+    coreContentVisibility: true,
     visibility: true,
   },
 }
