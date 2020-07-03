@@ -42,14 +42,17 @@ export const Footer: React.FC<BaseProps> = (props) => {
   const closeMicMenu = () => { setMicMenuEl(null) }
   const [videoMenuEl, setVideoMenuEl] = React.useState<Element|null>(null)
   const closeVideoMenu = () => { setVideoMenuEl(null) }
-  const muteA = participants.local.get().plugins.streamControl.muteAudio
-  const muteV = participants.local.get().plugins.streamControl.muteVideo
 
-  return useObserver(() => (
+  const mute = useObserver(() => ({
+    muteA: participants.local.get().plugins.streamControl.muteAudio,
+    muteV: participants.local.get().plugins.streamControl.muteVideo,
+  }))
+
+  return (
     <div className={classes.box}>
-      <Fab className={classes.margin} size = "small" color={muteA ? 'primary' : 'secondary' }
-        aria-label="mic" onClick = { () => { participants.local.get().plugins.streamControl.muteAudio = !muteA }}>
-        {muteA ? <MicOffIcon /> : <MicIcon /> }
+      <Fab className={classes.margin} size = "small" color={mute.muteA ? 'primary' : 'secondary' }
+        aria-label="mic" onClick = { () => { participants.local.get().plugins.streamControl.muteAudio = !mute.muteA }}>
+        {mute.muteA ? <MicOffIcon /> : <MicIcon /> }
       </Fab>
       <Fab className={classes.small} size="small"
         aria-label="micSelect" onClick = { () => { console.log('mic select') }}>
@@ -66,13 +69,13 @@ export const Footer: React.FC<BaseProps> = (props) => {
         <MenuItem onClick={closeMicMenu}>Mic 2</MenuItem>
         <MenuItem onClick={closeMicMenu}>Mic 3</MenuItem>
       </Menu>
-      <Fab className={classes.margin} size = "small" color={muteV ? 'primary' : 'secondary'}
+      <Fab className={classes.margin} size = "small" color={mute.muteV ? 'primary' : 'secondary'}
           aria-label="camera" onClick = { () => {
-            participants.local.get().plugins.streamControl.muteVideo = !muteV
-            console.log("muteV:", muteV)
+            participants.local.get().plugins.streamControl.muteVideo = !mute.muteV
+            console.log('muteV:', mute.muteV)
           }
       }>
-        {muteV ? <VideoOffIcon /> : <VideoIcon /> }
+        {mute.muteV ? <VideoOffIcon /> : <VideoIcon /> }
       </Fab>
       <Fab className={classes.small} size="small"
         aria-label="cameraSelect" onClick = { () => { console.log('camera select') }}>
@@ -83,6 +86,6 @@ export const Footer: React.FC<BaseProps> = (props) => {
         <ScreenShareIcon />
       </Fab>
    </div>
-  ))
+  )
 }
 Footer.displayName = 'Footer'
