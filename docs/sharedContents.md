@@ -5,7 +5,7 @@
 - Each participant can share new contents. 
   - Contents has id, type, text (URL), pose, size and timestamp properties. 
 ```tsx
-class Participant{
+class Content{
   id:string
   type:string
   url:string
@@ -22,7 +22,7 @@ class Participant{
 Each participant has followings as participant as properties of Jitsi conference as: 
 
 ```tsx
-class Participant{
+ParticipantProperty{
   //  properties for contents
   contents:Content[]	// contents owned by this participant
   
