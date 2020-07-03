@@ -62,7 +62,7 @@ export interface IJitsiMeetJSOptions {
   preferH264?: boolean;
 }
 
-interface JitsiTrackOptions {
+export interface JitsiTrackOptions {
   devices: string[];
   resolution?: string;
   constraints?: any;
@@ -75,7 +75,7 @@ interface JitsiTrackOptions {
 
 export function init(options?: IJitsiMeetJSOptions): void;
 export function setLogLevel(level: any): void;
-export function createLocalTracks(options?: JitsiTrackOptions, firePermissionPromptIsShownEvent?: boolean): Promise<Array<JitsiTrack>>;
+export function createLocalTracks(options?: JitsiTrackOptions, firePermissionPromptIsShownEvent?: boolean): Promise<Array<JitsiLocalTrack>>;
 
 export { JitsiConnection, JitsiConference, JitsiTrack, TrackInfo, JitsiLocalTrack, VideoType, MediaType, JitsiValues};
 

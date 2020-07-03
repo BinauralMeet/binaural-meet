@@ -60,7 +60,7 @@ declare class JitsiConference {
   addTrack(track: JitsiLocalTrack): Promise<JitsiLocalTrack>;
   onLocalTrackRemoved(track: JitsiTrack): void;
   removeTrack(track: JitsiLocalTrack): Promise<any>;
-  replaceTrack(oldTrack: JitsiLocalTrack, newTrack: JitsiLocalTrack): Promise<any>;
+  replaceTrack(oldTrack: JitsiLocalTrack|null, newTrack: JitsiLocalTrack|null): Promise<any>;
   getRole(): string;
   isHidden(): boolean | null;
   isModerator(): boolean | null;

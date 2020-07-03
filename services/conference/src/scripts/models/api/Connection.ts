@@ -90,6 +90,9 @@ class Connection extends EventEmitter {
   public participants: Map<string, { jitsiInstance?: JitsiParticipant, isLocal: boolean}>
   public localId: string
   public localTracks: JitsiLocalTrack[] = []
+  public get conference(): JitsiMeetJS.JitsiConference|undefined {
+    return this._jitsiConference
+  }
   // public remotes: JitsiParticipant[]
 
 

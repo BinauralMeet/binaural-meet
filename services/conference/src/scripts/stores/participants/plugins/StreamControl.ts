@@ -5,6 +5,9 @@ export class StreamControl extends ParticipantStorePlugin {
   @observable muteAudio = false
   @observable muteVideo = false
   @observable attenuation = 1
+  @observable audioInputDevice = ''
+  @observable videoInputDevice = ''
+  @observable audioOutputDevice = ''
 
   // determines whether the audio would be rendered
   @computed get showAudio () {
