@@ -42,4 +42,15 @@ export class StereoManager {
     this.nodes[id].disconnect()
     delete this.nodes[id]
   }
+
+  setAudioOutput(deviceId:string) {
+    const audio: any = this.audioElement
+    if (audio.setSinkId) {
+      audio.setSinkId(deviceId).then(
+        () => { console.log('audio.setSinkId:', deviceId, ' success') },
+      ).catch(
+        () => { console.log('audio.setSinkId:', deviceId, ' failed') },
+      )
+    }
+  }
 }

@@ -16,8 +16,8 @@ export class ConnectedManager {
     autorun(this.onPopulationChange)
   }
 
-  setAudioOutput(did:string) {
-    this.manager.setAudioOutput(did)
+  setAudioOutput(deviceId:string) {
+    this.manager.setAudioOutput(deviceId)
   }
 
   private onPopulationChange = () => {
