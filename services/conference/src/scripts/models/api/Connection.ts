@@ -89,7 +89,7 @@ class Connection extends EventEmitter {
   public version: string
   public participants: Map<string, { jitsiInstance?: JitsiParticipant, isLocal: boolean}>
   public localId: string
-  public localTracks: JitsiLocalTrack[] = []
+//  public localTracks: JitsiLocalTrack[] = []
   public get conference(): JitsiMeetJS.JitsiConference|undefined {
     return this._jitsiConference
   }
@@ -541,7 +541,6 @@ class Connection extends EventEmitter {
     Promise.resolve([new JitsiLocalTrack(videoTrackInfo)])
   }
   public addTracks(tracks: JitsiLocalTrack[]) {
-    this.localTracks = tracks
     if (this._jitsiConference) {
       for (const track of tracks) {
         this._jitsiConference.addTrack(track)
@@ -564,12 +563,30 @@ class Connection extends EventEmitter {
 
       this.bindStore(local)
 
-      JitsiMeetJS.createLocalTracks({devices: ['audio', 'video']}).then(
-        (tracks: JitsiTrack[]) => {
-          this.addTracks(tracks as JitsiLocalTrack[])
-          // Do something on local tracks.
-        },
-      )
+      navigator.mediaDevices.enumerateDevices()
+      .then((infos) => {
+        const options = {
+          devices: ['audio', 'video'],
+          cameraDeviceId: '',
+          micDeviceId: '',
+        }
+        infos.forEach( (info) => {
+          if (!options.micDeviceId && info.kind === 'audioinput'){
+            options.micDeviceId = info.deviceId
+            ParticiantsStore.local.get().plugins.streamControl.audioInputDevice = info.deviceId
+          }
+          if (!options.cameraDeviceId && info.kind === 'videoinput'){
+            options.cameraDeviceId = info.deviceId
+            ParticiantsStore.local.get().plugins.streamControl.videoInputDevice = info.deviceId
+          }
+        } )
+        JitsiMeetJS.createLocalTracks(options).then(
+          (tracks: JitsiTrack[]) => {
+            this.addTracks(tracks as JitsiLocalTrack[])
+          },
+        )
+      })
+      .catch(()=>{ console.log('Device enumeration error') })
     }
   }
 

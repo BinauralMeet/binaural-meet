@@ -32,6 +32,11 @@ const useStyles = makeStyles((theme) => {
       transform: 'scale(0.5)',
       margin: '1.2em 0 0 -2.1em',
     },
+    itemSelected: {
+      color: 'primary',
+    },
+    item:{
+    }
   })
 })
 
@@ -42,53 +47,59 @@ export const Footer: React.FC<BaseProps> = (props) => {
 
   const [micMenuEl, setMicMenuEl] = React.useState<Element|null>(null)
   const closeMicMenu = (did:string) => {
-    participants.local.get().plugins.streamControl.audioInputDevice = did
+    if (did) participants.local.get().plugins.streamControl.audioInputDevice = did
     setMicMenuEl(null)
   }
   const [speakerMenuEl, setSpeakerMenuEl] = React.useState<Element|null>(null)
   const closeSpeakerMenu = (did:string) => {
-    participants.local.get().plugins.streamControl.audioOutputDevice = did
+    if (did) participants.local.get().plugins.streamControl.audioOutputDevice = did
     setSpeakerMenuEl(null)
   }
   const [videoMenuEl, setVideoMenuEl] = React.useState<Element|null>(null)
   const closeVideoMenu = (did:string) => {
-    console.log("Device ", did, " selected")
-    participants.local.get().plugins.streamControl.videoInputDevice = did
+    if (did) participants.local.get().plugins.streamControl.videoInputDevice = did
     setVideoMenuEl(null)
   }
   const [deviceInfos, setDeviceInfos] = React.useState<MediaDeviceInfo[]>([])
 
   const mute = useObserver(() => ({
     muteA: participants.local.get().plugins.streamControl.muteAudio,  //  mic
-    muteS: participants.local.get().plugins.streamControl.muteAudio,  //  speaker
+    muteS: participants.local.get().plugins.streamControl.muteSpeaker,  //  speaker
     muteV: participants.local.get().plugins.streamControl.muteVideo,  //  camera
   }))
-  function gotDevices(di: MediaDeviceInfo[]){
-    setDeviceInfos(di)
+
+  function makeMenuItem(info: MediaDeviceInfo, close:(did:string)=>void):JSX.Element{
+    /*  To check if the device can be really used may need this kinds of code
+    navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: info.deviceId } } }).then(
+     (mediaStream) => {}
+    ).catch(
+      (mediaStream) => {}
+    )
+    */
+    const selected = info.deviceId === participants.local.get().plugins.streamControl.audioInputDevice
+      || info.deviceId === participants.local.get().plugins.streamControl.audioOutputDevice
+      || info.deviceId === participants.local.get().plugins.streamControl.videoInputDevice
+    return <MenuItem key={info.deviceId}
+      onClick={()=>{close(info.deviceId)}}
+      > { (selected ? '✔ ' : '  ') + info.label }</MenuItem>
   }
   const micMenuItems:JSX.Element[] = []
   const speakerMenuItems:JSX.Element[] = []
   const videoMenuItems:JSX.Element[] = []
   deviceInfos.map((info) => {
     if (info.kind === 'audioinput'){
-      micMenuItems.push(<MenuItem key={info.deviceId}
-        onClick={()=>{closeMicMenu(info.deviceId)}}
-        > { info.label }</MenuItem>)
+      micMenuItems.push( makeMenuItem(info, closeMicMenu) )
     }
     if (info.kind === 'audiooutput'){
-      speakerMenuItems.push(<MenuItem key={info.deviceId}
-        onClick={()=>{closeSpeakerMenu(info.deviceId)}}
-        > { info.label }</MenuItem>)
+      speakerMenuItems.push( makeMenuItem(info, closeSpeakerMenu) )
     }
     if (info.kind === 'videoinput'){
-      videoMenuItems.push(<MenuItem key={info.deviceId}
-        onClick={()=>{closeVideoMenu(info.deviceId)}}
-        > { info.label }</MenuItem>)
+      videoMenuItems.push( makeMenuItem(info, closeVideoMenu) )
     }
   })
   function updateDevices(ev:React.MouseEvent){
     navigator.mediaDevices.enumerateDevices()
-    .then(gotDevices)
+    .then(setDeviceInfos)
     .catch(()=>{ console.log('Device enumeration error') })
   }
 
@@ -96,7 +107,7 @@ export const Footer: React.FC<BaseProps> = (props) => {
     <div className={classes.box}>
       <Fab className={classes.margin} size = "small" color={mute.muteS ? 'primary' : 'secondary' }
         aria-label="speaker" onClick = {
-           () => { participants.local.get().plugins.streamControl.muteAudio = !mute.muteS }
+           () => { participants.local.get().plugins.streamControl.muteSpeaker = !mute.muteS }
         }>
         {mute.muteS ? <SpeakerOffIcon /> : <SpeakerOnIcon /> }
       </Fab>
