@@ -8,6 +8,13 @@ function replaceTrack(newTrack:JitsiLocalTrack) {
   if (oldTracks !== undefined) {
     connection.conference?.replaceTrack(oldTracks[0], newTrack)
   }
+  const did_ = newTrack.getTrack().getSettings().deviceId
+  const did:string = did_ ? did_ : ''
+  if (newTrack.getType() === 'audio'){
+    participants.local.get().devicePreference.audioInputDevice = did
+  }else if (newTrack.getType() === 'video'){
+    participants.local.get().devicePreference.videoInputDevice = did
+  }
 }
 
 reaction(
@@ -27,5 +34,13 @@ reaction(
         replaceTrack(tracks[0])
       },
     )
+  },
+)
+
+reaction(
+  () => participants.local.get().devicePreference.audioOutputDevice,
+  (did) => {
+    JitsiMeetJS.mediaDevices.setAudioOutputDevice(did)  //  this not works
+    //  participants.local.get().devicePreference.audioOutputDevice = JitsiMeetJS.mediaDevices.getAudioOutputDevice()
   },
 )

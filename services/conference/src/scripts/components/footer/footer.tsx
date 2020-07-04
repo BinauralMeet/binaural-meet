@@ -10,8 +10,8 @@ import MicOffIcon from '@material-ui/icons/MicOff'
 import ScreenShareIcon from '@material-ui/icons/ScreenShare'
 import VideoIcon from '@material-ui/icons/Videocam'
 import VideoOffIcon from '@material-ui/icons/VideocamOff'
-import SpeakerOnIcon from '@material-ui/icons/VolumeUp'
 import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
+import SpeakerOnIcon from '@material-ui/icons/VolumeUp'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 
@@ -36,7 +36,7 @@ const useStyles = makeStyles((theme) => {
       color: 'primary',
     },
     item:{
-    }
+    },
   })
 })
 
@@ -47,17 +47,17 @@ export const Footer: React.FC<BaseProps> = (props) => {
 
   const [micMenuEl, setMicMenuEl] = React.useState<Element|null>(null)
   const closeMicMenu = (did:string) => {
-    if (did) participants.local.get().devicePreference.audioInputDevice = did
+    if (did) { participants.local.get().devicePreference.audioInputDevice = did }
     setMicMenuEl(null)
   }
   const [speakerMenuEl, setSpeakerMenuEl] = React.useState<Element|null>(null)
   const closeSpeakerMenu = (did:string) => {
-    if (did) participants.local.get().devicePreference.audioOutputDevice = did
+    if (did) { participants.local.get().devicePreference.audioOutputDevice = did }
     setSpeakerMenuEl(null)
   }
   const [videoMenuEl, setVideoMenuEl] = React.useState<Element|null>(null)
   const closeVideoMenu = (did:string) => {
-    if (did) participants.local.get().devicePreference.videoInputDevice = did
+    if (did) { participants.local.get().devicePreference.videoInputDevice = did }
     setVideoMenuEl(null)
   }
   const [deviceInfos, setDeviceInfos] = React.useState<MediaDeviceInfo[]>([])
@@ -68,39 +68,38 @@ export const Footer: React.FC<BaseProps> = (props) => {
     muteV: participants.local.get().plugins.streamControl.muteVideo,  //  camera
   }))
 
-  function makeMenuItem(info: MediaDeviceInfo, close:(did:string)=>void):JSX.Element{
-    /*  To check if the device can be really used may need this kinds of code
-    navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: info.deviceId } } }).then(
-     (mediaStream) => {}
-    ).catch(
-      (mediaStream) => {}
-    )
-    */
-    const selected = info.deviceId === participants.local.get().devicePreference.audioInputDevice
-      || info.deviceId === participants.local.get().devicePreference.audioOutputDevice
-      || info.deviceId === participants.local.get().devicePreference.videoInputDevice
+  function makeMenuItem(info: MediaDeviceInfo, close:(did:string) => void):JSX.Element {
+    let selected = false
+    if (info.kind === 'audioinput') {
+      selected = info.deviceId === participants.local.get().devicePreference.audioInputDevice
+    }else if (info.kind === 'audiooutput') {
+      selected = info.deviceId === participants.local.get().devicePreference.audioOutputDevice
+    }else if (info.kind === 'videoinput') {
+      selected = info.deviceId === participants.local.get().devicePreference.videoInputDevice
+    }
+
     return <MenuItem key={info.deviceId}
-      onClick={()=>{close(info.deviceId)}}
-      > { (selected ? '✔ ' : '  ') + info.label }</MenuItem>
+      onClick={() => { close(info.deviceId) }}
+      > { (selected ? '✔ ' : '  ') + info.label }</MenuItem>
   }
   const micMenuItems:JSX.Element[] = []
   const speakerMenuItems:JSX.Element[] = []
   const videoMenuItems:JSX.Element[] = []
   deviceInfos.map((info) => {
-    if (info.kind === 'audioinput'){
-      micMenuItems.push( makeMenuItem(info, closeMicMenu) )
+    if (info.kind === 'audioinput') {
+      micMenuItems.push(makeMenuItem(info, closeMicMenu))
     }
-    if (info.kind === 'audiooutput'){
-      speakerMenuItems.push( makeMenuItem(info, closeSpeakerMenu) )
+    if (info.kind === 'audiooutput') {
+      speakerMenuItems.push(makeMenuItem(info, closeSpeakerMenu))
     }
-    if (info.kind === 'videoinput'){
-      videoMenuItems.push( makeMenuItem(info, closeVideoMenu) )
+    if (info.kind === 'videoinput') {
+      videoMenuItems.push(makeMenuItem(info, closeVideoMenu))
     }
   })
-  function updateDevices(ev:React.MouseEvent){
+  function updateDevices(ev:React.MouseEvent) {
     navigator.mediaDevices.enumerateDevices()
     .then(setDeviceInfos)
-    .catch(()=>{ console.log('Device enumeration error') })
+    .catch(() => { console.log('Device enumeration error') })
   }
 
   return (
@@ -112,12 +111,13 @@ export const Footer: React.FC<BaseProps> = (props) => {
         {mute.muteS ? <SpeakerOffIcon /> : <SpeakerOnIcon /> }
       </Fab>
       <Fab className={classes.small} size="small" onClick = { (ev) => {
-          updateDevices(ev)
-          setSpeakerMenuEl(ev.currentTarget)
-        }}>
+        updateDevices(ev)
+        setSpeakerMenuEl(ev.currentTarget)
+      }}>
         <MoreIcon />
       </Fab>
-      <Menu anchorEl={speakerMenuEl} keepMounted={true} open={Boolean(speakerMenuEl)} onClose={()=>{closeSpeakerMenu('')}}>
+      <Menu anchorEl={speakerMenuEl} keepMounted={true}
+        open={Boolean(speakerMenuEl)} onClose={() => { closeSpeakerMenu('') }}>
         {speakerMenuItems}
       </Menu>
 
@@ -126,12 +126,13 @@ export const Footer: React.FC<BaseProps> = (props) => {
         {mute.muteA ? <MicOffIcon /> : <MicIcon /> }
       </Fab>
       <Fab className={classes.small} size="small" onClick = { (ev) => {
-          updateDevices(ev)
-          setMicMenuEl(ev.currentTarget)
-        }}>
+        updateDevices(ev)
+        setMicMenuEl(ev.currentTarget)
+      }}>
         <MoreIcon />
       </Fab>
-      <Menu anchorEl={micMenuEl} keepMounted={true} open={Boolean(micMenuEl)} onClose={()=>{closeMicMenu('')}}>
+      <Menu anchorEl={micMenuEl} keepMounted={true}
+        open={Boolean(micMenuEl)} onClose={() => { closeMicMenu('') }}>
         {micMenuItems}
       </Menu>
 
@@ -150,7 +151,8 @@ export const Footer: React.FC<BaseProps> = (props) => {
         }}>
         <MoreIcon />
       </Fab>
-      <Menu anchorEl={videoMenuEl} keepMounted={true} open={Boolean(videoMenuEl)} onClose={()=>{closeVideoMenu('')}}>
+      <Menu anchorEl={videoMenuEl} keepMounted={true}
+        open={Boolean(videoMenuEl)} onClose={() => { closeVideoMenu('') }}>
         {videoMenuItems}
       </Menu>
 

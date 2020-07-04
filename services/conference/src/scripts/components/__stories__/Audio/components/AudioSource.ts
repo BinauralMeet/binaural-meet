@@ -1,3 +1,4 @@
+const NOTE_FREQ = 440
 export class AudioSource {
   context = new AudioContext()
   oscillator = this.context.createOscillator()
@@ -5,7 +6,7 @@ export class AudioSource {
 
   constructor() {
     this.oscillator.type = 'sawtooth'
-    this.oscillator.frequency.value = 440
+    this.oscillator.frequency.value = NOTE_FREQ
     this.oscillator.start()
 
     this.oscillator.connect(this.destination)

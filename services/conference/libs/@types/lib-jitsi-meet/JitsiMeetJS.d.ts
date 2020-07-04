@@ -141,3 +141,9 @@ export namespace JitsiConnectionEvents {
   const CONNECTION_FAILED: string;
   const WRONG_STATE: string;
 }
+
+export interface JitsiMediaDevices{
+  setAudioOutputDevice(deviceId: string):void
+  getAudioOutputDevice():string
+}
+export const mediaDevices: JitsiMediaDevices

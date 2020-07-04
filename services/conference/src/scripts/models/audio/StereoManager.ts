@@ -11,6 +11,7 @@ export class StereoManager {
   constructor() {
     // For Chrome, resume audio context when loaded (https://goo.gl/7K7WLu)
     // AudioContext must be resumed (or created) after a user gesture on the page.
+    const AUDIO_CONTEXT_RESUME_INTERVAL = 1000
     const interval = setInterval(
       () => {
         if (this.audioContext.state !== 'suspended') {
@@ -20,7 +21,7 @@ export class StereoManager {
 
         this.audioContext.resume()
       },
-      1000,
+      AUDIO_CONTEXT_RESUME_INTERVAL,
     )
   }
 
