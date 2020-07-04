@@ -41,7 +41,7 @@ declare class JitsiConference {
   getAuthLogin(): Object;
   isExternalAuthEnabled(): boolean;
   getExternalAuthUrl(urlForPopup: boolean): Promise<any>;
-  getLocalTracks(mediaType: TMediaType): JitsiTrack[];
+  getLocalTracks(mediaType: TMediaType): JitsiLocalTrack[];
   getLocalAudioTrack(): JitsiLocalTrack | null;
   getLocalVideoTrack(): JitsiLocalTrack | null;
   on(eventId: string, handler: Function): void;

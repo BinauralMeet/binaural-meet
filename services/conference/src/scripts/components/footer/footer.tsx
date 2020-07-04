@@ -52,6 +52,7 @@ export const Footer: React.FC<BaseProps> = (props) => {
   }
   const [videoMenuEl, setVideoMenuEl] = React.useState<Element|null>(null)
   const closeVideoMenu = (did:string) => {
+    console.log("Device ", did, " selected")
     participants.local.get().plugins.streamControl.videoInputDevice = did
     setVideoMenuEl(null)
   }
