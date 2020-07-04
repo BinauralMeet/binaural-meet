@@ -1,10 +1,11 @@
 import {assert} from '@models/utils'
 import {action, computed, observable} from 'mobx'
+import {LocalParticipant} from './LocalParticipant'
 import {Participant} from './Participant'
 
 export class Participants {
   @observable.shallow readonly remote = new Map<string, Participant>()
-  local = observable.box(new Participant('default_local_participant_id'))
+  local = observable.box(new LocalParticipant('default_local_participant_id'))
 
   @computed get count(): number {
     return this.remote.size
@@ -27,7 +28,7 @@ export class Participants {
 
   @action
   resetLocal(participantId: string) {
-    this.local.set(new Participant(participantId))
+    this.local.set(new LocalParticipant(participantId))
   }
 
   find(participantId: string): Participant {
