@@ -22,12 +22,15 @@ export class StereoManager {
         }
 
         this.audioContext.resume()
+        this.audioElement.play()  //  play() must be delayed
       },
       1000,
     )
 
     this.audioElement.srcObject = this.audioDestination.stream
-    this.audioElement.play()
+    //  this.audioElement.play()  //  this cause
+    //  "StereoManager.ts:30 Uncaught (in promise) DOMException: play() failed
+    //  because the user didn't interact with the document first. https://goo.gl/xX8pDD "
   }
 
   addSpeaker(id: string) {
@@ -52,5 +55,13 @@ export class StereoManager {
         () => { console.log('audio.setSinkId:', deviceId, ' failed') },
       )
     }
+  }
+
+  set audioOutputMuted(muted: boolean) {
+    this.audioDestination.stream.getTracks().forEach((track) => { track.enabled = !muted })
+  }
+  get audioOutputMuted():boolean {
+    return !(this.audioDestination.stream.getTracks().length > 0
+      && this.audioDestination.stream.getTracks()[0].enabled)
   }
 }

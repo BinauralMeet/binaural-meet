@@ -20,6 +20,13 @@ export class ConnectedManager {
     this.manager.setAudioOutput(deviceId)
   }
 
+  get audioOutputMuted():boolean {
+    return this.manager.audioOutputMuted
+  }
+  set audioOutputMuted(muted: boolean) {
+    this.manager.audioOutputMuted = muted
+  }
+
   private onPopulationChange = () => {
     const currentParticipants = Array.from(store.remote.keys())
     linearReconciliator(this.participantsMemo, currentParticipants, this.remove, this.add)
