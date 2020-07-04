@@ -11,7 +11,7 @@ function replaceTrack(newTrack:JitsiLocalTrack) {
 }
 
 reaction(
-  () => participants.local.get().plugins.streamControl.audioInputDevice,
+  () => participants.local.get().devicePreference.audioInputDevice,
   (did) => {
     JitsiMeetJS.createLocalTracks({devices:['audio'], micDeviceId: did}).then(
       (tracks: JitsiLocalTrack[]) => { replaceTrack(tracks[0]) },
@@ -20,7 +20,7 @@ reaction(
 )
 
 reaction(
-  () => participants.local.get().plugins.streamControl.videoInputDevice,
+  () => participants.local.get().devicePreference.videoInputDevice,
   (did) => {
     JitsiMeetJS.createLocalTracks({devices:['video'], cameraDeviceId: did}).then(
       (tracks: JitsiLocalTrack[]) => {

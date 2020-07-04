@@ -47,17 +47,17 @@ export const Footer: React.FC<BaseProps> = (props) => {
 
   const [micMenuEl, setMicMenuEl] = React.useState<Element|null>(null)
   const closeMicMenu = (did:string) => {
-    if (did) participants.local.get().plugins.streamControl.audioInputDevice = did
+    if (did) participants.local.get().devicePreference.audioInputDevice = did
     setMicMenuEl(null)
   }
   const [speakerMenuEl, setSpeakerMenuEl] = React.useState<Element|null>(null)
   const closeSpeakerMenu = (did:string) => {
-    if (did) participants.local.get().plugins.streamControl.audioOutputDevice = did
+    if (did) participants.local.get().devicePreference.audioOutputDevice = did
     setSpeakerMenuEl(null)
   }
   const [videoMenuEl, setVideoMenuEl] = React.useState<Element|null>(null)
   const closeVideoMenu = (did:string) => {
-    if (did) participants.local.get().plugins.streamControl.videoInputDevice = did
+    if (did) participants.local.get().devicePreference.videoInputDevice = did
     setVideoMenuEl(null)
   }
   const [deviceInfos, setDeviceInfos] = React.useState<MediaDeviceInfo[]>([])
@@ -76,9 +76,9 @@ export const Footer: React.FC<BaseProps> = (props) => {
       (mediaStream) => {}
     )
     */
-    const selected = info.deviceId === participants.local.get().plugins.streamControl.audioInputDevice
-      || info.deviceId === participants.local.get().plugins.streamControl.audioOutputDevice
-      || info.deviceId === participants.local.get().plugins.streamControl.videoInputDevice
+    const selected = info.deviceId === participants.local.get().devicePreference.audioInputDevice
+      || info.deviceId === participants.local.get().devicePreference.audioOutputDevice
+      || info.deviceId === participants.local.get().devicePreference.videoInputDevice
     return <MenuItem key={info.deviceId}
       onClick={()=>{close(info.deviceId)}}
       > { (selected ? '✔ ' : '  ') + info.label }</MenuItem>

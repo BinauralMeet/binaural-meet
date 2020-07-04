@@ -1,4 +1,5 @@
 import {ConnectionInfo, default as ConnectionInfoStore} from '@stores/ConnectionInfo'
+import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {default as ParticiantsStore} from '@stores/participants/Participants'
 import {default as sharedContents, SharedContents} from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
@@ -384,10 +385,10 @@ class Connection extends EventEmitter {
       JitsiMeetJS.events.conference.TRACK_MUTE_CHANGED,
       (track: JitsiTrack) => {
         this._loggerHandler?.debug(`Mute changed on a ${track.isLocal() ? 'Local' : 'Remote'}Track.`, logField)
-        if (track.isLocal()) return
+        if (track.isLocal()) { return }
         const rt = track as JitsiRemoteTrack
         const target = ParticiantsStore.find(rt.getParticipantId())
-        if (rt.isVideoTrack()){
+        if (rt.isVideoTrack()) {
           console.log(rt)
           target.plugins.streamControl.muteVideo = rt.isMuted()
         }
@@ -546,7 +547,7 @@ class Connection extends EventEmitter {
     this.setLocalParticipant()
 
     if (!this._isForTest) {
-      const local = new Participant(this.localId)
+      const local = new LocalParticipant(this.localId)
 
       ParticiantsStore.local.set(local)
 
@@ -559,23 +560,23 @@ class Connection extends EventEmitter {
           cameraDeviceId: '',
           micDeviceId: '',
         }
-        infos.forEach( (info) => {
-          if (!options.micDeviceId && info.kind === 'audioinput'){
+        infos.forEach((info) => {
+          if (!options.micDeviceId && info.kind === 'audioinput') {
             options.micDeviceId = info.deviceId
-            ParticiantsStore.local.get().plugins.streamControl.audioInputDevice = info.deviceId
+            ParticiantsStore.local.get().devicePreference.audioInputDevice = info.deviceId
           }
-          if (!options.cameraDeviceId && info.kind === 'videoinput'){
+          if (!options.cameraDeviceId && info.kind === 'videoinput') {
             options.cameraDeviceId = info.deviceId
-            ParticiantsStore.local.get().plugins.streamControl.videoInputDevice = info.deviceId
+            ParticiantsStore.local.get().devicePreference.videoInputDevice = info.deviceId
           }
-        } )
+        })
         JitsiMeetJS.createLocalTracks(options).then(
           (tracks: JitsiTrack[]) => {
             this.addTracks(tracks as JitsiLocalTrack[])
           },
         )
       })
-      .catch(()=>{ console.log('Device enumeration error') })
+      .catch(() => { console.log('Device enumeration error') })
     */
       JitsiMeetJS.createLocalTracks({devices: ['audio', 'video']}).then(
         (tracks: JitsiTrack[]) => {
