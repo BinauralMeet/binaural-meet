@@ -22,14 +22,14 @@ export class NodeGroup {
 
   private readonly context: AudioContext
 
-  constructor(context: AudioContext) {
+  constructor(context: AudioContext, destination: MediaStreamAudioDestinationNode) {
     this.context = context
 
     this.gainNode = this.createGainNode(context)
     this.pannerNode = this.createPannerNode(context)
 
     this.gainNode.connect(this.pannerNode)
-    this.pannerNode.connect(context.destination)
+    this.pannerNode.connect(destination)
   }
 
   updateStream(stream: MediaStream | undefined) {

@@ -3,6 +3,9 @@ import {NodeGroup} from './NodeGroup'
 
 export class StereoManager {
   private readonly audioContext: AudioContext = new window.AudioContext()
+  private readonly audioDestination = this.audioContext.createMediaStreamDestination()
+
+  private readonly audioElement = new Audio()
 
   nodes: {
     [key: string]: NodeGroup,
@@ -22,11 +25,14 @@ export class StereoManager {
       },
       1000,
     )
+
+    this.audioElement.srcObject = this.audioDestination.stream
+    this.audioElement.play()
   }
 
   addSpeaker(id: string) {
     assert(this.nodes[id] === undefined)
-    this.nodes[id] = new NodeGroup(this.audioContext)
+    this.nodes[id] = new NodeGroup(this.audioContext, this.audioDestination)
 
     return this.nodes[id]
   }
