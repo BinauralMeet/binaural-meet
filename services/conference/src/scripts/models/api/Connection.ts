@@ -478,17 +478,6 @@ class Connection extends EventEmitter {
     sharedContents.join(id)
   }
 
-  // public joinConference(localTracks: JitsiLocalTrack[]) {
-  //   if (this._jitsiConference) {
-  //     if (this._isForTest) {
-  //       this.addTracks(localTracks)
-  //     }
-
-  //     this._jitsiConference.join('')
-  //     this._loggerHandler?.log('Joining a conference room.', 'Party')
-  //   }
-  // }
-
   private onConnectionStateChanged(state: ConnectionStatesType) {
     this.state = state
     this._loggerHandler?.debug(`Current Connection State: ${state}`, 'ConnctionStateChanged')
@@ -563,7 +552,7 @@ class Connection extends EventEmitter {
 
       this.bindStore(local)
 
-      navigator.mediaDevices.enumerateDevices()
+/*      navigator.mediaDevices.enumerateDevices()
       .then((infos) => {
         const options = {
           devices: ['audio', 'video'],
@@ -587,6 +576,12 @@ class Connection extends EventEmitter {
         )
       })
       .catch(()=>{ console.log('Device enumeration error') })
+    */
+      JitsiMeetJS.createLocalTracks({devices: ['audio', 'video']}).then(
+        (tracks: JitsiTrack[]) => {
+          this.addTracks(tracks as JitsiLocalTrack[])
+        },
+      ).catch(() => { console.log('Device enumeration error') })
     }
   }
 
