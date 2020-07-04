@@ -3,6 +3,7 @@ import {ParticipantStorePlugin} from './utils'
 
 export class StreamControl extends ParticipantStorePlugin {
   @observable muteAudio = false
+  @observable muteSpeaker = false
   @observable muteVideo = false
   @observable attenuation = 1
   @observable audioInputDevice = ''
