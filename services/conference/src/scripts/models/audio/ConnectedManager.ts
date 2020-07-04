@@ -16,6 +16,10 @@ export class ConnectedManager {
     autorun(this.onPopulationChange)
   }
 
+  setAudioOutput(did:string) {
+    this.manager.setAudioOutput(did)
+  }
+
   private onPopulationChange = () => {
     const currentParticipants = Array.from(store.remote.keys())
     linearReconciliator(this.participantsMemo, currentParticipants, this.remove, this.add)

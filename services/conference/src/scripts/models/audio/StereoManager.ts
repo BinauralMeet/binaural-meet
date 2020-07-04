@@ -1,4 +1,4 @@
-import {assert, isChrome} from '@models/utils'
+import {assert} from '@models/utils'
 import {NodeGroup} from './NodeGroup'
 
 export class StereoManager {

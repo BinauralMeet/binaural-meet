@@ -170,7 +170,8 @@ class Connection extends EventEmitter {
     // )
     this._loggerHandler?.debug('Initialize local pose.', 'bindStore')
 
-    const throttledUpdateFunc = throttle(200, (newPose: Pose2DMap) => {
+    const UPDATE_INTERVAL = 200
+    const throttledUpdateFunc = throttle(UPDATE_INTERVAL, (newPose: Pose2DMap) => {
       this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_POSE, JSON.stringify(newPose))
     })
 
@@ -242,7 +243,8 @@ class Connection extends EventEmitter {
         JitsiMeetJS.init(initOptions)
         JitsiMeetJS.setLogLevel('info')
 
-        this._jitsiConnection = new JitsiMeetJS.JitsiConnection(null as unknown as string, undefined as unknown as string, config)
+        this._jitsiConnection = new JitsiMeetJS.JitsiConnection(
+          null as unknown as string, undefined as unknown as string, config)
 
         /*    I don't have to add Origin header. Browser will add it.
             //  add Origin header
@@ -479,17 +481,6 @@ class Connection extends EventEmitter {
     sharedContents.join(id)
   }
 
-  // public joinConference(localTracks: JitsiLocalTrack[]) {
-  //   if (this._jitsiConference) {
-  //     if (this._isForTest) {
-  //       this.addTracks(localTracks)
-  //     }
-
-  //     this._jitsiConference.join('')
-  //     this._loggerHandler?.log('Joining a conference room.', 'Party')
-  //   }
-  // }
-
   private onConnectionStateChanged(state: ConnectionStatesType) {
     this.state = state
     this._loggerHandler?.debug(`Current Connection State: ${state}`, 'ConnctionStateChanged')
@@ -564,30 +555,22 @@ class Connection extends EventEmitter {
 
       this.bindStore(local)
 
-      navigator.mediaDevices.enumerateDevices()
-      .then((infos) => {
-        const options = {
-          devices: ['audio', 'video'],
-          cameraDeviceId: '',
-          micDeviceId: '',
-        }
-        infos.forEach((info) => {
-          if (!options.micDeviceId && info.kind === 'audioinput') {
-            options.micDeviceId = info.deviceId
-            ParticiantsStore.local.get().devicePreference.audioInputDevice = info.deviceId
-          }
-          if (!options.cameraDeviceId && info.kind === 'videoinput') {
-            options.cameraDeviceId = info.deviceId
-            ParticiantsStore.local.get().devicePreference.videoInputDevice = info.deviceId
-          }
-        })
-        JitsiMeetJS.createLocalTracks(options).then(
-          (tracks: JitsiTrack[]) => {
-            this.addTracks(tracks as JitsiLocalTrack[])
-          },
-        )
-      })
-      .catch(() => { console.log('Device enumeration error') })
+      JitsiMeetJS.createLocalTracks({devices: ['audio', 'video']}).then(
+        (tracks: JitsiTrack[]) => {
+          tracks.forEach((track) => {
+            const did_ = track.getTrack().getSettings().deviceId
+            const did:string = did_ ? did_ : ''
+            if (track.getType() === 'audio') {
+              ParticiantsStore.local.get().devicePreference.audioInputDevice = did
+            }else if (track.getType() === 'video') {
+              ParticiantsStore.local.get().devicePreference.videoInputDevice = did
+            }
+          })
+          this.addTracks(tracks as JitsiLocalTrack[])
+          ParticiantsStore.local.get().devicePreference.audioOutputDevice
+           = JitsiMeetJS.mediaDevices.getAudioOutputDevice()
+        },
+      ). catch(() => { console.log('Device enumeration error') })
     }
   }
 
