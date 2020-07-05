@@ -50,9 +50,9 @@ export class StereoManager {
     const audio: any = this.audioElement
     if (audio.setSinkId) {
       audio.setSinkId(deviceId).then(
-        () => { console.log('audio.setSinkId:', deviceId, ' success') },
+        () => { console.info('audio.setSinkId:', deviceId, ' success') },
       ).catch(
-        () => { console.log('audio.setSinkId:', deviceId, ' failed') },
+        () => { console.warn('audio.setSinkId:', deviceId, ' failed') },
       )
     }
   }

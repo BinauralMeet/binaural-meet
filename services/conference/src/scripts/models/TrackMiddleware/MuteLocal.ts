@@ -15,9 +15,3 @@ reaction(() => participants.local.get().plugins.streamControl.muteVideo,
            if (track) { muteVideo ? track.mute() : track.unmute() }
          },
 )
-
-reaction(() => participants.local.get().plugins.streamControl.muteSpeaker,
-         (muteSpeaker) => {
-           audioManager.audioOutputMuted = muteSpeaker
-         },
-)
