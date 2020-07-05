@@ -73,6 +73,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
           top: -pointerAvatarRatio * props.size / 2,
           right: -pointerAvatarRatio * props.size / 2,
         }}
+        counterRotateButtons={true}
       >
           <div className="participantWrapper">
             <div className={classes.pointerRotate}>
