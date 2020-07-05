@@ -1,5 +1,5 @@
 import store from '@stores/participants/Participants'
-import {autorun} from 'mobx'
+import {autorun, reaction} from 'mobx'
 import {ConnectedGroup} from './ConnectedGroup'
 import {StereoManager} from './StereoManager'
 
@@ -14,6 +14,20 @@ export class ConnectedManager {
 
   constructor() {
     autorun(this.onPopulationChange)
+
+    reaction(
+      () => store.local.get().plugins.streamControl.muteSpeaker,
+      (muteSpeaker) => {
+        this.manager.audioOutputMuted = muteSpeaker
+      },
+    )
+
+    reaction(
+      () => store.local.get().devicePreference.audioOutputDevice,
+      (deviceId) => {
+        this.manager.setAudioOutput(deviceId)
+      },
+    )
   }
 
   private onPopulationChange = () => {

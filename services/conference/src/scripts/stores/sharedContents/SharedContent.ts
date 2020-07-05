@@ -6,6 +6,8 @@ const defaultValue: ISharedContent = Object.assign({}, mapObjectDefaultValue, {
   type: '',
   url: '',
   size: [0, 0] as [number, number],
+  id: '',
+  zorder: 0,
 })
 
 // NOTE currently SharedContent does not use observable, to change view in component, object assign is required
@@ -15,6 +17,8 @@ export class SharedContent implements ISharedContent {
   type!: string
   url!: string
   size!: [number, number]
+  id: string = ''
+  zorder: number = 0
 
   constructor() {
     Object.assign(this, defaultValue)

@@ -41,7 +41,7 @@ declare class JitsiConference {
   getAuthLogin(): Object;
   isExternalAuthEnabled(): boolean;
   getExternalAuthUrl(urlForPopup: boolean): Promise<any>;
-  getLocalTracks(mediaType: TMediaType): JitsiTrack[];
+  getLocalTracks(mediaType: TMediaType): JitsiLocalTrack[];
   getLocalAudioTrack(): JitsiLocalTrack | null;
   getLocalVideoTrack(): JitsiLocalTrack | null;
   on(eventId: string, handler: Function): void;
@@ -60,7 +60,7 @@ declare class JitsiConference {
   addTrack(track: JitsiLocalTrack): Promise<JitsiLocalTrack>;
   onLocalTrackRemoved(track: JitsiTrack): void;
   removeTrack(track: JitsiLocalTrack): Promise<any>;
-  replaceTrack(oldTrack: JitsiLocalTrack, newTrack: JitsiLocalTrack): Promise<any>;
+  replaceTrack(oldTrack: JitsiLocalTrack|null, newTrack: JitsiLocalTrack|null): Promise<any>;
   getRole(): string;
   isHidden(): boolean | null;
   isModerator(): boolean | null;

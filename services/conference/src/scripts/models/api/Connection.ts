@@ -1,4 +1,5 @@
 import {ConnectionInfo, default as ConnectionInfoStore} from '@stores/ConnectionInfo'
+import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {default as ParticiantsStore} from '@stores/participants/Participants'
 import {default as sharedContents, SharedContents} from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
@@ -89,7 +90,10 @@ class Connection extends EventEmitter {
   public version: string
   public participants: Map<string, { jitsiInstance?: JitsiParticipant, isLocal: boolean}>
   public localId: string
-
+//  public localTracks: JitsiLocalTrack[] = []
+  public get conference(): JitsiMeetJS.JitsiConference|undefined {
+    return this._jitsiConference
+  }
   // public remotes: JitsiParticipant[]
 
 
@@ -166,7 +170,8 @@ class Connection extends EventEmitter {
     // )
     this._loggerHandler?.debug('Initialize local pose.', 'bindStore')
 
-    const throttledUpdateFunc = throttle(200, (newPose: Pose2DMap) => {
+    const UPDATE_INTERVAL = 200
+    const throttledUpdateFunc = throttle(UPDATE_INTERVAL, (newPose: Pose2DMap) => {
       this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_POSE, JSON.stringify(newPose))
     })
 
@@ -238,7 +243,8 @@ class Connection extends EventEmitter {
         JitsiMeetJS.init(initOptions)
         JitsiMeetJS.setLogLevel('info')
 
-        this._jitsiConnection = new JitsiMeetJS.JitsiConnection(null as unknown as string, undefined as unknown as string, config)
+        this._jitsiConnection = new JitsiMeetJS.JitsiConnection(
+          null as unknown as string, undefined as unknown as string, config)
 
         /*    I don't have to add Origin header. Browser will add it.
             //  add Origin header
@@ -373,6 +379,24 @@ class Connection extends EventEmitter {
       },
     )
 
+    /**
+     * Event: JitsiMeetJS.events.conference.TRACK_MUTE_CHANGED
+     * @emits ConferenceEvents.TRACK_MUTE_CHANGED
+     */
+    conference.on(
+      JitsiMeetJS.events.conference.TRACK_MUTE_CHANGED,
+      (track: JitsiTrack) => {
+        this._loggerHandler?.debug(`Mute changed on a ${track.isLocal() ? 'Local' : 'Remote'}Track.`, logField)
+        if (track.isLocal()) { return }
+        const rt = track as JitsiRemoteTrack
+        const target = ParticiantsStore.find(rt.getParticipantId())
+        if (rt.isVideoTrack()) {
+          console.log(rt)
+          target.plugins.streamControl.muteVideo = rt.isMuted()
+        }
+      },
+    )
+
     conference.on(
       JitsiMeetJS.events.conference.PARTICIPANT_PROPERTY_CHANGED,
       (participant: JitsiParticipant, name: string, oldValue: string, value: string) => {
@@ -457,17 +481,6 @@ class Connection extends EventEmitter {
     sharedContents.join(id)
   }
 
-  // public joinConference(localTracks: JitsiLocalTrack[]) {
-  //   if (this._jitsiConference) {
-  //     if (this._isForTest) {
-  //       this.addTracks(localTracks)
-  //     }
-
-  //     this._jitsiConference.join('')
-  //     this._loggerHandler?.log('Joining a conference room.', 'Party')
-  //   }
-  // }
-
   private onConnectionStateChanged(state: ConnectionStatesType) {
     this.state = state
     this._loggerHandler?.debug(`Current Connection State: ${state}`, 'ConnctionStateChanged')
@@ -536,7 +549,7 @@ class Connection extends EventEmitter {
     this.setLocalParticipant()
 
     if (!this._isForTest) {
-      const local = new Participant(this.localId)
+      const local = new LocalParticipant(this.localId)
 
       ParticiantsStore.local.set(local)
 
@@ -544,10 +557,20 @@ class Connection extends EventEmitter {
 
       JitsiMeetJS.createLocalTracks({devices: ['audio', 'video']}).then(
         (tracks: JitsiTrack[]) => {
+          tracks.forEach((track) => {
+            const did_ = track.getTrack().getSettings().deviceId
+            const did:string = did_ ? did_ : ''
+            if (track.getType() === 'audio') {
+              ParticiantsStore.local.get().devicePreference.audioInputDevice = did
+            }else if (track.getType() === 'video') {
+              ParticiantsStore.local.get().devicePreference.videoInputDevice = did
+            }
+          })
           this.addTracks(tracks as JitsiLocalTrack[])
-          // Do something on local tracks.
+          ParticiantsStore.local.get().devicePreference.audioOutputDevice
+           = JitsiMeetJS.mediaDevices.getAudioOutputDevice()
         },
-      )
+      ). catch(() => { console.log('Device enumeration error') })
     }
   }
 

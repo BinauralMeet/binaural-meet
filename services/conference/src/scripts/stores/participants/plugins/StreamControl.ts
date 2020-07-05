@@ -3,6 +3,7 @@ import {ParticipantStorePlugin} from './utils'
 
 export class StreamControl extends ParticipantStorePlugin {
   @observable muteAudio = false
+  @observable muteSpeaker = false
   @observable muteVideo = false
   @observable attenuation = 1
 
@@ -13,6 +14,6 @@ export class StreamControl extends ParticipantStorePlugin {
 
   // determines whether the video would be rendered
   @computed get showVideo () {
-    return !this.muteVideo && this.parent.perceptibility.visibility
+    return !this.muteVideo && this.parent.perceptibility.coreContentVisibility
   }
 }

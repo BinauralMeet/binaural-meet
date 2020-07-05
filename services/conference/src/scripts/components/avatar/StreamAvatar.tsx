@@ -34,6 +34,8 @@ const setStream = (
   video.srcObject = stream
   video.autoplay = true
 
+  console.log('set stream')
+
   video.onloadedmetadata = () => {
     const settings = {
       width: video.width,
@@ -51,30 +53,28 @@ const setStream = (
 
 export const StreamAvatar: React.FC<StreamAvatarProps> = (props: StreamAvatarProps) => {
   const classes = useStyles(props)
-  const ref = useRef<HTMLVideoElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(
     () => {
-      if (ref !== null && ref.current !== null) {
-        setStream(ref.current, props.stream, classes.videoLargerWidth, classes.videoLargerHeight)
+      console.log('use effect')
+      if (videoRef !== null && videoRef.current !== null) {
+        setStream(videoRef.current, props.stream, classes.videoLargerWidth, classes.videoLargerHeight)
       }
     },
     [props.stream],
   )
 
-  const videoRef = useCallback(
-    (node: HTMLVideoElement | null) => {
-      if (node !== null) {
-        setStream(node, props.stream, classes.videoLargerWidth, classes.videoLargerHeight)
+  useEffect(
+    () => {
+      if (videoRef !== null && videoRef.current !== null) {
+        setStream(videoRef.current, props.stream, classes.videoLargerWidth, classes.videoLargerHeight)
       }
     },
-    [])
+    [videoRef],
+  )
 
-  const video = React.createElement('video', {
-    ref: videoRef,
-  })
-
-  return <div className={classes.root}>{video}</div>
+  return <div className={classes.root}><video ref={videoRef} /></div>
 }
 
 StreamAvatar.defaultProps = {

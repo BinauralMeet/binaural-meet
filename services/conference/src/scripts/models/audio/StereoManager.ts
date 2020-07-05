@@ -1,8 +1,11 @@
-import {assert, isChrome} from '@models/utils'
+import {assert} from '@models/utils'
 import {NodeGroup} from './NodeGroup'
 
 export class StereoManager {
   private readonly audioContext: AudioContext = new window.AudioContext()
+  private readonly audioDestination = this.audioContext.createMediaStreamDestination()
+
+  private readonly audioElement = new Audio()
 
   nodes: {
     [key: string]: NodeGroup,
@@ -19,14 +22,20 @@ export class StereoManager {
         }
 
         this.audioContext.resume()
+        this.audioElement.play()  //  play() must be delayed
       },
       1000,
     )
+
+    this.audioElement.srcObject = this.audioDestination.stream
+    //  this.audioElement.play()  //  this cause
+    //  "StereoManager.ts:30 Uncaught (in promise) DOMException: play() failed
+    //  because the user didn't interact with the document first. https://goo.gl/xX8pDD "
   }
 
   addSpeaker(id: string) {
     assert(this.nodes[id] === undefined)
-    this.nodes[id] = new NodeGroup(this.audioContext)
+    this.nodes[id] = new NodeGroup(this.audioContext, this.audioDestination)
 
     return this.nodes[id]
   }
@@ -35,5 +44,24 @@ export class StereoManager {
     console.log('remove speaker')
     this.nodes[id].disconnect()
     delete this.nodes[id]
+  }
+
+  setAudioOutput(deviceId:string) {
+    const audio: any = this.audioElement
+    if (audio.setSinkId) {
+      audio.setSinkId(deviceId).then(
+        () => { console.info('audio.setSinkId:', deviceId, ' success') },
+      ).catch(
+        () => { console.warn('audio.setSinkId:', deviceId, ' failed') },
+      )
+    }
+  }
+
+  set audioOutputMuted(muted: boolean) {
+    this.audioDestination.stream.getTracks().forEach((track) => { track.enabled = !muted })
+  }
+  get audioOutputMuted():boolean {
+    return !(this.audioDestination.stream.getTracks().length > 0
+      && this.audioDestination.stream.getTracks()[0].enabled)
   }
 }
