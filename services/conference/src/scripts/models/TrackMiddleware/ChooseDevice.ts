@@ -37,12 +37,3 @@ reaction(
     )
   },
 )
-
-reaction(
-  () => participants.local.get().devicePreference.audioOutputDevice,
-  (deviceId) => {
-    JitsiMeetJS.mediaDevices.setAudioOutputDevice(deviceId)  //  this not works
-
-    //  participants.local.get().devicePreference.audioOutputDevice = JitsiMeetJS.mediaDevices.getAudioOutputDevice()
-  },
-)
