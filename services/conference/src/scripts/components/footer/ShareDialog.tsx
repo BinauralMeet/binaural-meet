@@ -9,17 +9,19 @@ import React from 'react'
 
 interface ShareDialogProps {
   open: boolean
+  onClose: () => void
 }
 
 export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
   const {
     open,
+    onClose,
   } = props
 
-  return  <Dialog open={open} >
+  return  <Dialog open={open} onClose={onClose} >
     <DialogTitle id="simple-dialog-title">Share</DialogTitle>
     <List>
-      <ListItem key="shareScreen">
+      <ListItem button key="shareScreen">
         <ListItemAvatar>
           <ScreenShare />
         </ListItemAvatar>
