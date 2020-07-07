@@ -14,6 +14,7 @@ import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
 import SpeakerOnIcon from '@material-ui/icons/VolumeUp'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
+import {StereoAudioSwitch} from './StereoAudioSwitch'
 
 const useStyles = makeStyles((theme) => {
   return ({
@@ -160,6 +161,8 @@ export const Footer: React.FC<BaseProps> = (props) => {
         aria-label="share">
         <ScreenShareIcon />
       </Fab>
+
+      <StereoAudioSwitch />
    </div>
   )
 }
