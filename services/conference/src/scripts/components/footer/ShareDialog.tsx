@@ -1,5 +1,10 @@
-import {Dialog, DialogTitle, List, ListItem, ListItemAvatar, ListItemText} from '@material-ui/core'
-import {ScreenShare} from '@material-ui/icons'
+import Dialog from '@material-ui/core/Dialog'
+import DialogTitle from '@material-ui/core/DialogTitle'
+import List from '@material-ui/core/List'
+import ListItem from '@material-ui/core/ListItem'
+import ListItemAvatar from '@material-ui/core/ListItemAvatar'
+import ListItemText from '@material-ui/core/ListItemText'
+import ScreenShare from '@material-ui/icons/ScreenShare'
 import React from 'react'
 
 interface ShareDialogProps {
