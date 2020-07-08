@@ -34,8 +34,6 @@ const setStream = (
   video.srcObject = stream
   video.autoplay = true
 
-  console.log('set stream')
-
   video.onloadedmetadata = () => {
     const settings = {
       width: video.width,
@@ -57,7 +55,6 @@ export const StreamAvatar: React.FC<StreamAvatarProps> = (props: StreamAvatarPro
 
   useEffect(
     () => {
-      console.log('use effect')
       if (videoRef !== null && videoRef.current !== null) {
         setStream(videoRef.current, props.stream, classes.videoLargerWidth, classes.videoLargerHeight)
       }

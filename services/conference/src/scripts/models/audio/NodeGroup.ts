@@ -13,6 +13,8 @@ const DEFAULT_PANNER_NODE_CONFIG: Partial<PannerNode> & {refDistance: number} = 
 }
 const BROADCAST_DISTANCE = 1000
 
+export type PlayMode = 'Context' | 'Element'
+
 export class NodeGroup {
   private sourceNode: MediaStreamAudioSourceNode | undefined = undefined
   private audioElement: HTMLAudioElement | undefined = undefined
@@ -21,8 +23,9 @@ export class NodeGroup {
   private readonly pannerNode: PannerNode
 
   private readonly context: AudioContext
+  private playMode: PlayMode
 
-  constructor(context: AudioContext, destination: MediaStreamAudioDestinationNode) {
+  constructor(context: AudioContext, destination: MediaStreamAudioDestinationNode, playMode: PlayMode = 'Context') {
     this.context = context
 
     this.gainNode = this.createGainNode(context)
@@ -30,30 +33,43 @@ export class NodeGroup {
 
     this.gainNode.connect(this.pannerNode)
     this.pannerNode.connect(destination)
+
+    this.playMode = playMode
+  }
+
+  usePlayMode(playMode: PlayMode) {
+    this.playMode = playMode
+
+    switch (playMode) {
+      case 'Context': {
+        this.sourceNode?.connect(this.gainNode)
+
+        if (this.audioElement !== undefined) {
+          this.audioElement.muted = true
+        }
+
+        break
+      }
+      case 'Element': {
+        this.sourceNode?.disconnect()
+
+        if (this.audioElement === undefined) {
+          this.audioElement = new Audio()
+        }
+        this.audioElement.muted = false
+        this.audioElement.play()
+
+        break
+      }
+      default:
+        console.error(`Unknown output: ${playMode}`)
+        break
+    }
   }
 
   updateStream(stream: MediaStream | undefined) {
-    if (this.sourceNode !== undefined) {
-      this.sourceNode.disconnect()
-    }
-
-    if (stream === undefined) {
-      this.sourceNode = undefined
-
-      return
-    }
-
-    this.sourceNode = this.context.createMediaStreamSource(stream)
-    this.sourceNode.connect(this.gainNode)
-
-    if (isChrome) { // NOTE Chorme would not work if not connect stream to audio tag
-      if (this.audioElement === undefined) {
-        this.audioElement = new Audio()
-        this.audioElement.muted = true
-      }
-
-      this.audioElement.srcObject = stream
-    }
+    this.updateSourceStream(stream)
+    this.usePlayMode(this.playMode)
   }
 
   updatePose(pose: Pose3DAudio) {
@@ -106,5 +122,27 @@ export class NodeGroup {
     }
 
     return panner
+  }
+
+  private updateSourceStream(stream: MediaStream | undefined) {
+    if (this.sourceNode !== undefined) {
+      this.sourceNode.disconnect()
+    }
+
+    if (stream === undefined) {
+      this.sourceNode = undefined
+
+      return
+    }
+
+    this.sourceNode = this.context.createMediaStreamSource(stream)
+
+    if (isChrome) { // NOTE Chorme would not work if not connect stream to audio tag
+      if (this.audioElement === undefined) {
+        this.audioElement = new Audio()
+      }
+
+      this.audioElement.srcObject = stream
+    }
   }
 }

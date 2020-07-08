@@ -28,6 +28,13 @@ export class ConnectedManager {
         this.manager.setAudioOutput(deviceId)
       },
     )
+
+    reaction(
+      () => store.local.get().useStereoAudio,
+      (useStereoAudio) => {
+        this.manager.switchPlayMode(useStereoAudio ? 'Context' : 'Element')
+      },
+    )
   }
 
   private onPopulationChange = () => {
