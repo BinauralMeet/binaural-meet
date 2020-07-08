@@ -80,7 +80,7 @@ export const Footer: React.FC<BaseProps> = (props) => {
 
     return <MenuItem key={info.deviceId}
       onClick={() => { close(info.deviceId) }}
-      > { (selected ? '✔ ' : '  ') + info.label }</MenuItem>
+      > { (selected ? '✔\u00A0' : '\u2003') + info.label }</MenuItem>  //  \u00A0: NBSP, u2003: EM space.
   }
   const micMenuItems:JSX.Element[] = []
   const speakerMenuItems:JSX.Element[] = []
