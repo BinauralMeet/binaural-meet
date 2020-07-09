@@ -5,6 +5,7 @@ import {default as sharedContents} from '../../sharedContents/SharedContents'
 import {default as participants} from '../Participants'
 import {ParticipantStorePlugin} from './utils'
 
+/*
 export class SharedContentsLookup extends ParticipantStorePlugin {
   value = new Map<string, SharedContent>()
 
@@ -65,3 +66,4 @@ export class SharedContentsLookup extends ParticipantStorePlugin {
     }
   }
 }
+*/

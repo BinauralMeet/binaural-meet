@@ -1,3 +1,4 @@
+import {StoreProvider as ContentsProvider, useStore} from '@hooks/SharedContentsStore'
 import {makeStyles} from '@material-ui/core/styles'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {SharedContent as SharedContentStore} from '@stores/sharedContents/SharedContent'
@@ -7,25 +8,24 @@ import React, {useEffect, useState} from 'react'
 import {RndContent} from './RndContent'
 
 export interface SharedContentProps{
-  mapKey: string,
   content: SharedContentStore,
-  contents: SharedContentsStore
 }
 
 export const SharedContent: React.FC<SharedContentProps> = (props:SharedContentProps) => {
-  console.log('SharedContent', props)
+  const store = useStore()
 
   return (
     <RndContent content={props.content} autoHideTitle={true}
       onClose={
         (evt: React.MouseEvent<HTMLDivElement>) => {
           evt.stopPropagation()
-          props.contents.order.delete(props.mapKey)
+          store.removeContents([props.content.id])
         }
       }
       onUpdate={
         (newContent: ISharedContent) => {
-          props.contents.order.set(props.mapKey, newContent)
+          console.log('RndContent onUpdate called for', props.content)
+          store.updateContents([newContent])
         }
       }
     />

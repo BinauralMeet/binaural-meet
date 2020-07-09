@@ -42,7 +42,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   function rotateG2C(gv: [number, number]) {
     const lv = transform.rotateG2L(gv)
     const cv = rotateVector2DByDegree(-pose.orientation, lv)
-    console.log('rotateG2C called ori', pose.orientation, ' tran:', transform.rotation)
+    //  console.log('rotateG2C called ori', pose.orientation, ' tran:', transform.rotation)
 
     return cv
   }
@@ -75,7 +75,6 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
         setPose(props.content.pose)
         setSize(props.content.size)
         setContent(props.content)
-        sharedContents.sendOrder()
       }
     },
   )
