@@ -1,6 +1,8 @@
 import {TheatersOutlined} from '@material-ui/icons'
 import {ParticipantContents as IParticipantContents, SharedContent as ISharedContent} from '@models/SharedContent'
 import {default as participantsStore} from '@stores/participants/Participants'
+import {diffMap} from '@stores/utils'
+import {EventEmitter} from 'events'
 import _ from 'lodash'
 import {computed, observable} from 'mobx'
 import {SharedContent} from './SharedContent'
@@ -10,33 +12,47 @@ function contentComp(a:ISharedContent, b:ISharedContent) {
 }
 
 export class ParticipantContents implements IParticipantContents {
+  constructor(pid: string) {
+    this.participantId = pid
+  }
   participantId = ''
-  @observable.deep myContents = new Map<string, SharedContent>()
-  @observable.deep updateRequest = new Map<string, SharedContent>()
-  @observable.deep removeRequest = new Set<string>()
+  @observable.shallow myContents = new Map<string, SharedContent>()
+  @observable.shallow updateRequest = new Map<string, SharedContent>()
+  @observable.shallow removeRequest = new Set<string>()
 }
 
-
-export class SharedContents {
-  //  All shared objects in Z order
-  @observable.deep all: SharedContent[] = []
+export const SharedContentsEvents = {
+  REMOTE_JOIN: 'join',
+  REMOTE_LEAVE: 'leave',
+}
+export class SharedContents extends EventEmitter {
+  private localId = ''
+  //  All shared objects in Z order. Observed by component.
+  @observable.shallow all: SharedContent[] = []
   //  contents by owner
-  @observable.shallow participants: Map<string, ParticipantContents> = new Map<string, ParticipantContents>()
+  participants: Map<string, ParticipantContents> = new Map<string, ParticipantContents>()
 
   @computed get localParticipant(): ParticipantContents {
-    if (!participantsStore.localId) {
-      console.log('Invalid local participant ID')
-    }
-    const p = this.participants.get(participantsStore.localId)
+    if (!this.localId) { this.localId = participantsStore.localId }
+    const p = this.participants.get(this.localId)
     if (!p) {
-      const n = new ParticipantContents
-      this.participants.set(participantsStore.localId, n)
+      const n = new ParticipantContents(this.localId)
+      this.participants.set(this.localId, n)
+      console.log('Create ParticipantContents for local participant ', this.localId)
 
       return n
+    }
+    if (this.localId !== participantsStore.localId) {  //  update local id
+      p.participantId = participantsStore.localId
+      this.participants.delete(this.localId)
+      this.participants.set(p.participantId, p)
+      this.localId = p.participantId
+      console.log('Set new local id ', p.participantId)
     }
 
     return p
   }
+
   //  map from contentId to participantId
   owner: Map <string, string> = new Map<string, string>()
 
@@ -47,6 +63,7 @@ export class SharedContents {
     })
     this.all.slice().sort(contentComp)
   }
+
   //  add
   addLocalContent(c:SharedContent) {
     if (!participantsStore.localId) {
@@ -59,6 +76,7 @@ export class SharedContents {
     this.owner.set(c.id, participantsStore.localId)
     this.updateAll()
   }
+
   //  replace contents of one participant. A content can be new one (add) or exsiting one (update).
   replaceContents(pid: string, cs:SharedContent[]) { //  entries = [pid, content][]
     if (pid === participantsStore.localId) {  //  this is for remote participant
@@ -70,13 +88,15 @@ export class SharedContents {
     //  prepare participantContents
     let participant = this.participants.get(pid)
     if (!participant) {
-      participant = new ParticipantContents()
+      participant = new ParticipantContents(pid)
       this.participants.set(pid, participant)
+      this.emit(SharedContentsEvents.REMOTE_JOIN,  participant)
     }
 
+    const newCs = new Map(cs.map(c => [c.id, c]))
+    const removed = diffMap(participant.myContents, newCs)
+
     //  Check remove request and remove it.
-    const removed = new Map(participant.myContents)
-    cs.forEach(c => removed.delete(c.id))
     removed.forEach(c => this.localParticipant.removeRequest.delete(c.id))
 
     //  Check update request and remove request
@@ -86,6 +106,7 @@ export class SharedContents {
         this.localParticipant?.updateRequest.delete(c.id)
       }
     })
+
     //  update contents
     removed.forEach((c) => {
       participant?.myContents.delete(c.id)
@@ -122,9 +143,18 @@ export class SharedContents {
     })
   }
 
+  //
+  removeParticipant(pid:string) {
+    const participant = this.participants.get(pid)
+    if (participant) {
+      this.emit(SharedContentsEvents.REMOTE_LEAVE,  participant)
+      this.participants.delete(pid)
+    }
+  }
+
   private getUniqueId(pid: string) {
     if (!this.participants.has(pid)) {
-      this.participants.set(pid, new ParticipantContents())
+      this.participants.set(pid, new ParticipantContents(pid))
     }
     const participant = this.participants.get(pid)
     let number = 0
