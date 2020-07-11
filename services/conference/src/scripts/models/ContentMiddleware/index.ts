@@ -1,1 +1,1 @@
-import './ShareContents'
+import './SyncContents'

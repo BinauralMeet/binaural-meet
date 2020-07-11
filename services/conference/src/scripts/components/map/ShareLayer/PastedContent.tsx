@@ -2,6 +2,7 @@ import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {default as participants} from '@stores/participants/Participants'
 import {SharedContent} from '@stores/sharedContents/SharedContent'
 import {default as sharedContents} from '@stores/sharedContents/SharedContents'
+import _ from 'lodash'
 import React, {useEffect, useState} from 'react'
 import {RndContent} from './RndContent'
 
@@ -10,12 +11,7 @@ export interface PastedContentProps{
 }
 
 export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentProps) => {
-  const nullContent = {
-    type:'', url:'',
-    pose:{position:[0, 0], orientation:0},
-    size: [0, 0],
-  } as ISharedContent
-  const defContent: ISharedContent = props.content ? props.content : nullContent
+  const defContent: ISharedContent = props.content ? props.content : new SharedContent()
   const [content, setContent] = useState(defContent)
 
   function onPaste(evt: ClipboardEvent) {
@@ -38,8 +34,10 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
             img.onload = () => {
               content.size = [img.width, img.height]
               // console.log("mousePos:" + (global as any).mousePositionOnMap)
-              content.pose.position = (global as any).mousePositionOnMap
-              for (let i = 0; i < 2; i += 1) { content.pose.position[i] -= content.size[i] / 2 }
+              const CENTER = 0.5
+              for (let i = 0; i < content.pose.position.length; i += 1) {
+                content.pose.position[i] = (global as any).mousePositionOnMap[i] - CENTER * content.size[i]
+              }
               content.url = responseJson.url
               content.type = 'img'
               setContent(Object.assign({}, content))
@@ -55,14 +53,18 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
           if (content.url.indexOf('http://') === 0 || content.url.indexOf('https://') === 0) {
             content.type = 'iframe'
             content.pose.position = (global as any).mousePositionOnMap
-            content.size[0] = 600
-            content.size[1] = 800
+            const IFRAME_WIDTH = 600
+            const IFRAME_HEIGHT = 800
+            content.size[0] = IFRAME_WIDTH
+            content.size[1] = IFRAME_HEIGHT
           }else {
             content.type = 'text'
             content.pose.position = (global as any).mousePositionOnMap
             const slen = Math.sqrt(str.length)
-            content.size[0] = slen * 14 * 2
-            content.size[1] = slen * 14 / 2
+            const STRING_SCALE_W = 20
+            const STRING_SCALE_H = 10
+            content.size[0] = slen * STRING_SCALE_W
+            content.size[1] = slen * STRING_SCALE_H
           }
           setContent(Object.assign({}, content))
         })
@@ -87,11 +89,11 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
       onShare = {(evt: React.MouseEvent<HTMLDivElement>) => {
         // console.log("onClick b:", evt.button, " bs:" ,evt.buttons, " d:", evt.detail, " p:", evt.eventPhase)
         //  Add the pasted content to sharedContents and clear the pastedContent.
-        sharedContents.addLocalContent(content)
-        setContent(nullContent)
+        sharedContents.addLocalContent(_.cloneDeep(content))
+        setContent(new SharedContent)
       }}
       onClose = {(evt: React.MouseEvent<HTMLDivElement>) => {
-        setContent(nullContent)
+        setContent(new SharedContent)
         evt.stopPropagation()
       }}
       onUpdate = {(nc: ISharedContent) => {

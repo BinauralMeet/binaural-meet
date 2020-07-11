@@ -409,23 +409,23 @@ class Connection extends EventEmitter {
           target.pose.orientation = pose.orientation
           target.pose.position = pose.position
         }else if (name === ParticipantProperties.PPROP_CONTENTS) {
-          console.log('Jitsi: content of ', participant.getId(), ' is updated')
+          console.log('Jitsi: content of ', participant.getId(), ' is updated to ', value)
           const contentsAsArray = JSON.parse(value)
           console.log(contentsAsArray)
           sharedContents.replaceContents(participant.getId(), contentsAsArray)
         }else if (name === ParticipantProperties.PPROP_CONTENTS_UPDATE) {
-          console.log('Jitsi: update request of ', participant.getId(), ' is updated')
+          console.log('Jitsi: update request of ', participant.getId(), ' is updated to:', value)
           const update = JSON.parse(value) as SharedContentStore[]
           const local = ParticiantsStore.local.get()
           if (participant.getId() !== local.id) {
             sharedContents.updateContents(update)
           }
         }else if (name === ParticipantProperties.PPROP_CONTENTS_REMOVE) {
-          console.log('Jitsi: remove request of ', participant.getId(), ' is updated')
-          const remove = JSON.parse(value) as string[]
+          console.log('Jitsi: remove request of ', participant.getId(), ' is updated to:', value)
+          const removes = JSON.parse(value) as string[]
           const local = ParticiantsStore.local.get()
           if (participant.getId() !== local.id) {
-            sharedContents.removeContents(remove)
+            sharedContents.removeContents(local.id, removes)
           }
         }
       },

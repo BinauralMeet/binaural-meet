@@ -18,8 +18,12 @@ export const SharedContent: React.FC<SharedContentProps> = (props:SharedContentP
     <RndContent content={props.content} autoHideTitle={true}
       onClose={
         (evt: React.MouseEvent<HTMLDivElement>) => {
+          console.log('RndContent onClose for ', props.content.id)
           evt.stopPropagation()
-          store.removeContents([props.content.id])
+          const pid = store.owner.get(props.content.id)
+          if (pid) {
+            store.removeContents(pid, [props.content.id])
+          }
         }
       }
       onUpdate={
@@ -32,7 +36,7 @@ export const SharedContent: React.FC<SharedContentProps> = (props:SharedContentP
               identical = true
             }
           }
-          console.log('RndContent onUpdate from ', old, ' to ', newContent, ` ==? ${identical} `)
+          //console.log('RndContent onUpdate from ', old, ' to ', newContent, ` ==? ${identical} `)
           store.updateContents([newContent])
         }
       }

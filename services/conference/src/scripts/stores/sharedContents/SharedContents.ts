@@ -15,6 +15,7 @@ export class ParticipantContents implements IParticipantContents {
   constructor(pid: string) {
     this.participantId = pid
   }
+  contentIdCounter = 0
   participantId = ''
   @observable.shallow myContents = new Map<string, SharedContent>()
   @observable.shallow updateRequest = new Map<string, SharedContent>()
@@ -62,6 +63,7 @@ export class SharedContents extends EventEmitter {
       this.all.push(... participant.myContents.values())
     })
     this.all.slice().sort(contentComp)
+    //  console.log('update all len=', this.all.length, ' all=', JSON.stringify(this.all))
   }
 
   //  add
@@ -84,6 +86,7 @@ export class SharedContents extends EventEmitter {
 
       return
     }
+    console.log('replaceContents for participant=', pid, ' n=', cs.length)
 
     //  prepare participantContents
     let participant = this.participants.get(pid)
@@ -93,8 +96,8 @@ export class SharedContents extends EventEmitter {
       this.emit(SharedContentsEvents.REMOTE_JOIN,  participant)
     }
 
-    const newCs = new Map(cs.map(c => [c.id, c]))
-    const removed = diffMap(participant.myContents, newCs)
+    const newContents = new Map(cs.map(c => [c.id, c]))
+    const removed = diffMap(participant.myContents, newContents)
 
     //  Check remove request and remove it.
     removed.forEach(c => this.localParticipant.removeRequest.delete(c.id))
@@ -109,13 +112,10 @@ export class SharedContents extends EventEmitter {
 
     //  update contents
     removed.forEach((c) => {
-      participant?.myContents.delete(c.id)
       this.owner.delete(c.id)
     })
-    cs.forEach((c) => {
-      this.owner.set(c.id, pid)
-      participant?.myContents.set(c.id, c)
-    })
+    cs.forEach((c) => { this.owner.set(c.id, pid) })
+    participant.myContents = newContents
     this.updateAll()
   }
 
@@ -125,22 +125,36 @@ export class SharedContents extends EventEmitter {
       const pid = this.owner.get(c.id)
       if (pid) {
         const participant = this.participants.get(pid)
+        console.log('myContents=', JSON.stringify(participant?.myContents))
+        console.log('updateContents for participant=', pid, ' ', JSON.stringify(c))
+
         participant?.myContents.set(c.id, c)
+      }else {
+        console.log('unpdateContents called for ', c.id, ' with invalid owner pid=', pid)
       }
     })
     this.updateAll()
   }
 
   //  Remove contents when the content is owned by local participant
-  removeContents(cids: string[]) {
-    cids.forEach((cid) => {
-      const pid = this.owner.get(cid)
-      if (pid) {
-        this.participants.get(pid)?.myContents.delete(cid)
-        const i = this.all.findIndex(c => c.id === cid)
-        this.all.splice(i, 1)
+  removeContents(pid: string, cids: string[]) {
+    const participant = this.participants.get(pid)
+    if (participant) {
+      // remove them from myContents
+      const my = new Map<string, SharedContent>(participant.myContents)
+      cids.forEach(cid => my.delete(cid))
+      participant.myContents = my
+      this.updateAll()
+      if (pid !== this.localId) {
+        const newRemoveRequest = new Set<string>(this.localParticipant.removeRequest)
+        cids.forEach(cid => newRemoveRequest.add(cid))
+        this.localParticipant.removeRequest = newRemoveRequest
+        console.log('removeContents update remove request', newRemoveRequest)
       }
-    })
+      console.log('removeContents cids=', cids, ' all=', this.all.length, this.all)
+    }else {
+      console.log('removeContents failed to find pid=', pid)
+    }
   }
 
   //
@@ -157,13 +171,18 @@ export class SharedContents extends EventEmitter {
       this.participants.set(pid, new ParticipantContents(pid))
     }
     const participant = this.participants.get(pid)
-    let number = 0
-    participant?.myContents.forEach(c => {
-      const n = Number(c.id.slice(c.id.indexOf('_') + 1))
-      number = number > n ? number : n
-    })
+    if (participant) {
+      while (1) {
+        participant.contentIdCounter += 1
+        const id = `${participant.participantId}_${participant.contentIdCounter}`
+        if (!this.owner.has(id)) {
+          return id
+        }
+      }
+    }
+    console.log('Error in getUniqueId()')
 
-    return `${pid}_${String(number + 1)}`
+    return ''
   }
 }
 const sharedContents = new SharedContents()
