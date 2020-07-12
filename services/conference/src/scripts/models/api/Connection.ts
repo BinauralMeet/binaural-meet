@@ -409,22 +409,25 @@ class Connection extends EventEmitter {
           target.pose.orientation = pose.orientation
           target.pose.position = pose.position
         }else if (name === ParticipantProperties.PPROP_CONTENTS) {
-          console.log('Jitsi: content of ', participant.getId(), ' is updated to ', value)
-          const contentsAsArray = JSON.parse(value)
-          console.log(contentsAsArray)
-          sharedContents.replaceContents(participant.getId(), contentsAsArray)
-        }else if (name === ParticipantProperties.PPROP_CONTENTS_UPDATE) {
-          console.log('Jitsi: update request of ', participant.getId(), ' is updated to:', value)
-          const update = JSON.parse(value) as SharedContentStore[]
           const local = ParticiantsStore.local.get()
           if (participant.getId() !== local.id) {
+            console.log('Jitsi: content of ', participant.getId(), ' is updated to ', value)
+            const contentsAsArray = JSON.parse(value)
+            console.log(contentsAsArray)
+            sharedContents.replaceRemoteContents(participant.getId(), contentsAsArray)
+          }
+        }else if (name === ParticipantProperties.PPROP_CONTENTS_UPDATE) {
+          const local = ParticiantsStore.local.get()
+          if (participant.getId() !== local.id) {
+            console.log('Jitsi: update request of ', participant.getId(), ' is updated to:', value)
+            const update = JSON.parse(value) as SharedContentStore[]
             sharedContents.updateContents(update)
           }
         }else if (name === ParticipantProperties.PPROP_CONTENTS_REMOVE) {
-          console.log('Jitsi: remove request of ', participant.getId(), ' is updated to:', value)
-          const removes = JSON.parse(value) as string[]
           const local = ParticiantsStore.local.get()
           if (participant.getId() !== local.id) {
+            console.log('Jitsi: remove request of ', participant.getId(), ' is updated to:', value)
+            const removes = JSON.parse(value) as string[]
             sharedContents.removeContents(local.id, removes)
           }
         }
@@ -575,6 +578,7 @@ class Connection extends EventEmitter {
   private onParticipantLeft(id: string) {
     this.participants.delete(id)
     ParticiantsStore.leave(id)
+    sharedContents.onParticipantLeft(id)
   }
 
   private onRemoteTrackAdded(track: JitsiRemoteTrack) {

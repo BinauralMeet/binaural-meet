@@ -1,4 +1,5 @@
 import {connection} from '@models/api'
+import {default as ParticipantsStore} from '@stores/participants/Participants'
 import {default as sharedContents, ParticipantContents, SharedContentsEvents} from '@stores/sharedContents/SharedContents'
 import _ from 'lodash'
 import {IReactionDisposer, reaction} from 'mobx'
@@ -29,6 +30,9 @@ reaction(() => Array.from(sharedContents.localParticipant.removeRequest.values()
 //  When user edit contents owned by remote participants, set update request.
 const disposers:Map<string, IReactionDisposer> = new Map<string, IReactionDisposer>()
 sharedContents.on(SharedContentsEvents.REMOTE_JOIN, (participant: ParticipantContents) => {
+  if (participant.participantId === ParticipantsStore.localId) {
+    console.log('SharedContentsEvents.REMOTE_JOIN emitted for local pid = ', participant.participantId)
+  }
   console.log('Start to observe myContents pid = ', participant.participantId)
   const dispo = reaction(() => Array.from(participant.myContents.values()), () => {
     console.log('participant.myContents changed for pid = ', participant.participantId)

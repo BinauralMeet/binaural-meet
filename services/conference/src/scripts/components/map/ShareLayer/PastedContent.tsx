@@ -89,6 +89,8 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
       onShare = {(evt: React.MouseEvent<HTMLDivElement>) => {
         // console.log("onClick b:", evt.button, " bs:" ,evt.buttons, " d:", evt.detail, " p:", evt.eventPhase)
         //  Add the pasted content to sharedContents and clear the pastedContent.
+        const TIME_RESOLUTION_IN_MS = 100
+        content.zorder = Math.floor(Date.now() / TIME_RESOLUTION_IN_MS)
         sharedContents.addLocalContent(_.cloneDeep(content))
         setContent(new SharedContent)
       }}
