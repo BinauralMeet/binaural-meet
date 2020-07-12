@@ -77,6 +77,25 @@ const ParticipantProperties = {
   PPROP_CONTENTS: 'contents',
   PPROP_CONTENTS_ORDER: 'contentsOrder',
 }
+export const defaultVideoConstraints = {
+  video:{
+    facingMode:'user',
+    width:{
+      max:1280,
+      min:160,
+      ideal:320,
+    },
+    height:{
+      max:720,
+      min:120,
+      ideal:240,
+    },
+    frameRate: {
+      ideal: 12,
+      max: 30,
+    },
+  },
+}
 
 
 class Connection extends EventEmitter {
@@ -555,7 +574,7 @@ class Connection extends EventEmitter {
 
       this.bindStore(local)
 
-      JitsiMeetJS.createLocalTracks({devices: ['audio', 'video']}).then(
+      JitsiMeetJS.createLocalTracks({devices: ['audio', 'video'], constraints: defaultVideoConstraints}).then(
         (tracks: JitsiTrack[]) => {
           tracks.forEach((track) => {
             const did_ = track.getTrack().getSettings().deviceId
@@ -563,6 +582,7 @@ class Connection extends EventEmitter {
             if (track.getType() === 'audio') {
               ParticiantsStore.local.get().devicePreference.audioInputDevice = did
             }else if (track.getType() === 'video') {
+              console.log('Video track created:', JSON.stringify(track))
               ParticiantsStore.local.get().devicePreference.videoInputDevice = did
             }
           })

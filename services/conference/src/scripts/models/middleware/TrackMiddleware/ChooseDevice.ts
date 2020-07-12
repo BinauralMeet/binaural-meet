@@ -1,4 +1,4 @@
-import {connection} from '@models/api'
+import {connection, defaultVideoConstraints} from '@models/api'
 import {manager as audioManager} from '@models/audio'
 import participants from '@stores/participants/Participants'
 import JitsiMeetJS, {JitsiLocalTrack, JitsiTrackOptions, JitsiValues} from 'lib-jitsi-meet'
@@ -30,7 +30,7 @@ reaction(
 reaction(
   () => participants.local.get().devicePreference.videoInputDevice,
   (did) => {
-    JitsiMeetJS.createLocalTracks({devices:['video'], cameraDeviceId: did}).then(
+    JitsiMeetJS.createLocalTracks({devices:['video'], constraints: defaultVideoConstraints, cameraDeviceId: did}).then(
       (tracks: JitsiLocalTrack[]) => {
         replaceTrack(tracks[0])
       },
