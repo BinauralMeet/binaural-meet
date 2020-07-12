@@ -1,11 +1,12 @@
 interface Params {
   [key: string]: string | null
   name: string | null  // conference name
+  audio: audioOutputType | null // mono or stereo audio output
 }
 
 export function decodeGetParams(url: string): Params {
   const urlObj = new URL(url)
-  const props = ['name']
+  const props = ['name', 'audio']
 
   const res: Params = props.reduce(
     (pre, prop) => {
@@ -19,4 +20,4 @@ export function decodeGetParams(url: string): Params {
   return res
 }
 
-export const getParameters = decodeGetParams(window.location.href)
+type audioOutputType = 'mono' | 'stereo'
