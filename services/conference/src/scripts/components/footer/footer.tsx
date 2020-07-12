@@ -105,6 +105,8 @@ export const Footer: React.FC<BaseProps> = (props) => {
 
   return (
     <div className={classes.box}>
+      <StereoAudioSwitch className={classes.margin} />
+
       <Fab className={classes.margin} size = "small" color={mute.muteS ? 'primary' : 'secondary' }
         aria-label="speaker" onClick = {
            () => { participants.local.get().plugins.streamControl.muteSpeaker = !mute.muteS }
@@ -162,7 +164,6 @@ export const Footer: React.FC<BaseProps> = (props) => {
         <ScreenShareIcon />
       </Fab>
 
-      <StereoAudioSwitch />
    </div>
   )
 }
