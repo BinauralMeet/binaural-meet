@@ -14,7 +14,7 @@ import {config} from './test.config'
 // import a global variant $ for lib-jitsi-meet
 import {SharedContent} from '@components/map/ShareLayer/SharedContent'
 import {Pose2DMap} from '@models/MapObject'
-import {SharedContent as ISharedContent} from '@models/SharedContent'
+import {SharedContent as ISharedContent} from '@models/sharedContent/SharedContent'
 import {Participant} from '@stores/participants/Participant'
 import {SharedContent as SharedContentStore} from '@stores/sharedContents/SharedContent'
 import {dummyConnectionStore} from '@test-utils/DummyParticipants'

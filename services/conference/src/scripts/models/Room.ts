@@ -1,5 +1,5 @@
 import {Participant} from './Participant'
-import {SharedContent} from './SharedContent'
+import {SharedContent} from './sharedContent/SharedContent'
 import {Terrain} from './Terrain'
 
 export interface Room {

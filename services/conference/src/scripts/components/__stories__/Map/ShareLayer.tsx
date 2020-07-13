@@ -1,7 +1,7 @@
 import {PastedContent} from '@components/map/ShareLayer/PastedContent'
 import {SharedContents} from '@components/map/ShareLayer/ShareLayer'
 import {StoreProvider as ContentsProvider} from '@hooks/SharedContentsStore'
-import {SharedContent as ISharedContent} from '@models/SharedContent'
+import {SharedContent as ISharedContent} from '@models/sharedContent/SharedContent'
 import {SharedContent as SharedContentStore} from '@stores/sharedContents/SharedContent'
 import {SharedContents as SharedContentsStore} from '@stores/sharedContents/SharedContents'
 import {useObserver} from 'mobx-react-lite'
