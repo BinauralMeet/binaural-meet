@@ -75,9 +75,9 @@ const ConferenceEvents = {
 const ParticipantProperties = {
   PPROP_POSE: 'pose',
   PPROP_CONTENTS: 'contents',
-  PPROP_CONTENTS_ORDER: 'contentsOrder',
+  PPROP_CONTENTS_UPDATE: 'contents_update',
+  PPROP_CONTENTS_REMOVE: 'contents_remove',
 }
-
 
 class Connection extends EventEmitter {
 
@@ -130,28 +130,26 @@ class Connection extends EventEmitter {
     throw new Error('No connection has been established.')
   }
 
-  public sendSharedContents(cs: Map<string, ISharedContent>) {
-    const acs = Array.from(cs)
-    this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_CONTENTS, JSON.stringify(acs))
+  public sendSharedContents(cs: ISharedContent[]) {
+    this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_CONTENTS, JSON.stringify(cs))
   }
-  public sendSharedContentsOrder(cs: Map<string, ISharedContent>) {
-    const entries = Array.from(cs.entries())
-    this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_CONTENTS_ORDER,
-                                                       JSON.stringify(entries))
+  public sendSharedContentsUpdateRequest(cs: ISharedContent[]) {
+    this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_CONTENTS_UPDATE, JSON.stringify(cs))
   }
-  public getSharedContentsOrder(pid: string): Map<string, ISharedContent> {
+  public sendSharedContentsRemoveRequest(ids: string[]) {
+    this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_CONTENTS_REMOVE, JSON.stringify(ids))
+  }
+  public getSharedContents(pid: string): ISharedContent[] {
     const participant = this._jitsiConference?.getParticipantById(pid)
     if (participant) {
-      const str = participant.getProperty(ParticipantProperties.PPROP_CONTENTS_ORDER)
+      const str = participant.getProperty(ParticipantProperties.PPROP_CONTENTS)
       if (str && str.length > 0) {
-        const entries = JSON.parse(str)
-        const map = new Map<string, ISharedContent>(entries)
 
-        return map
+        return JSON.parse(str)
       }
     }
 
-    return new Map<string, ISharedContent>()
+    return []
   }
   public sendCommand(name: string, values: JitsiValues) {
     if (this._jitsiConference) {
@@ -411,23 +409,27 @@ class Connection extends EventEmitter {
           target.pose.orientation = pose.orientation
           target.pose.position = pose.position
         }else if (name === ParticipantProperties.PPROP_CONTENTS) {
-          const contentsAsArray = JSON.parse(value)
-          const contents = new Map<string, ISharedContent>(contentsAsArray)
-          const id = participant.getId()
-          const target = ParticiantsStore.find(id)
-          target.plugins.contents.setContents(contents)
-        }else if (name === ParticipantProperties.PPROP_CONTENTS_ORDER) {
-          const newOrder = JSON.parse(value) as [string, SharedContentStore][]
-          const newMap = new Map(newOrder)
           const local = ParticiantsStore.local.get()
-          newMap.forEach((val, key) => {
-            const got = local.plugins.contents.value.get(key)
-            if (got) {
-              local.plugins.contents.value.set(key, val)
-            }
-          })
-          sharedContents.order = newMap
-          console.log('PPROP_CONTENTS_ORDER ', newOrder)
+          if (participant.getId() !== local.id) {
+            console.log('Jitsi: content of ', participant.getId(), ' is updated to ', value)
+            const contentsAsArray = JSON.parse(value)
+            console.log(contentsAsArray)
+            sharedContents.replaceRemoteContents(participant.getId(), contentsAsArray)
+          }
+        }else if (name === ParticipantProperties.PPROP_CONTENTS_UPDATE) {
+          const local = ParticiantsStore.local.get()
+          if (participant.getId() !== local.id) {
+            console.log('Jitsi: update request of ', participant.getId(), ' is updated to:', value)
+            const update = JSON.parse(value) as SharedContentStore[]
+            sharedContents.updateContents(update)
+          }
+        }else if (name === ParticipantProperties.PPROP_CONTENTS_REMOVE) {
+          const local = ParticiantsStore.local.get()
+          if (participant.getId() !== local.id) {
+            console.log('Jitsi: remove request of ', participant.getId(), ' is updated to:', value)
+            const removes = JSON.parse(value) as string[]
+            sharedContents.removeContents(local.id, removes)
+          }
         }
       },
     )
@@ -478,7 +480,6 @@ class Connection extends EventEmitter {
     }
     this.participants.set(id, participant)
     ParticiantsStore.join(id)
-    sharedContents.join(id)
   }
 
   private onConnectionStateChanged(state: ConnectionStatesType) {
@@ -577,6 +578,7 @@ class Connection extends EventEmitter {
   private onParticipantLeft(id: string) {
     this.participants.delete(id)
     ParticiantsStore.leave(id)
+    sharedContents.onParticipantLeft(id)
   }
 
   private onRemoteTrackAdded(track: JitsiRemoteTrack) {

@@ -1,4 +1,5 @@
 import {MapObject} from './MapObject'
+import {SharedContent} from './SharedContent'
 
 export interface Participant extends MapObject{
   id: string

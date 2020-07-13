@@ -4,14 +4,13 @@ import CloseRoundedIcon from '@material-ui/icons/CloseRounded'
 import {Pose2DMap} from '@models/MapObject'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {rotateVector2DByDegree} from '@models/utils'
-import {default as sharedContents} from '@stores/sharedContents/SharedContents'
+import _ from 'lodash'
 import React, {useEffect, useLayoutEffect, useRef, useState} from 'react'
 import {Dimensions, useDimensions} from 'react-dimensions-hook'
 import {Rnd} from 'react-rnd'
 import {addV, subV, useGesture} from 'react-use-gesture'
 import {useValue as useTransform} from '../utils/useTransform'
 import {Content} from './Content'
-
 
 function mulV<S extends number, T extends number[]>(s: S, v2: T): T {
   return v2.map(v => s * v) as T
@@ -42,7 +41,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   function rotateG2C(gv: [number, number]) {
     const lv = transform.rotateG2L(gv)
     const cv = rotateVector2DByDegree(-pose.orientation, lv)
-    console.log('rotateG2C called ori', pose.orientation, ' tran:', transform.rotation)
+    //  console.log('rotateG2C called ori', pose.orientation, ' tran:', transform.rotation)
 
     return cv
   }
@@ -75,7 +74,6 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
         setPose(props.content.pose)
         setSize(props.content.size)
         setContent(props.content)
-        sharedContents.sendOrder()
       }
     },
   )
@@ -107,25 +105,38 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   function onClickClose(evt: React.MouseEvent<HTMLDivElement>) { props.onClose?.call(null, evt) }
   function onPaste(evt: ClipboardEvent) { props.onPaste?.call(null, evt) }
   function  updateHandler() {
-    const newContent = Object.assign({}, props.content)
-    newContent.pose = pose
-    newContent.size = size
-    // console.log('onUpdate', newContent)
-    props.onUpdate?.call(null, newContent)
+    let bChange = false
+    if (! _.isEqual(pose, props.content.pose)) {
+      bChange = true
+    }
+    if (! _.isEqual(size, props.content.size)) {
+      bChange = true
+    }
+    if (bChange) {
+      const newContent = Object.assign({}, props.content)
+      newContent.size = size
+      newContent.pose = pose
+      // console.log('onUpdate', newContent)
+      props.onUpdate?.call(null, newContent)
+    }
   }
   //  drag for title area
   const [preciseOrientation, setPreciseOrientation] = useState(pose.orientation)
   function dragHandler(delta:[number, number], buttons:number, event:any) {
-    if (buttons === 2) {
-      setPreciseOrientation((preciseOrientation + delta[0] + delta[1]) % 360)
+    const MOUSE_RIGHT = 2
+    const ROTATION_IN_DEGREE = 360
+    const ROTATION_STEP = 15
+    if (buttons === MOUSE_RIGHT) {
+      setPreciseOrientation((preciseOrientation + delta[0] + delta[1]) % ROTATION_IN_DEGREE)
       let newOri
       if (event?.shiftKey || event?.ctrlKey) {
         newOri = preciseOrientation
       }else {
-        newOri = preciseOrientation - preciseOrientation % 15
+        newOri = preciseOrientation - preciseOrientation % ROTATION_STEP
       }
       //    mat.translateSelf(...addV(props.pose.position, mulV(0.5, size)))
-      const center = addV(pose.position, mulV(0.5, size))
+      const CENTER_IN_RATIO = 0.5
+      const center = addV(pose.position, mulV(CENTER_IN_RATIO, size))
       pose.position = addV(pose.position,
                            subV(rotateVector2DByDegree(pose.orientation - newOri, center), center))
       pose.orientation = newOri

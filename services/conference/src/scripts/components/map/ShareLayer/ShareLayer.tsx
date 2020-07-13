@@ -13,18 +13,16 @@ const useStyles = makeStyles({
     userSelect: 'none',
   },
 })
+
 export const SharedContents: React.FC<{}> = () => {
   const store = useStore()
-  const contents = useObserver(() => Array.from(store.order.entries()))
   const classes = useStyles()
-  console.log('SharedContents:', contents)
-  const sharedContents = contents.map(
-    val => <SharedContent key={val[0]} mapKey={val[0]} content={val[1]} contents={store} />,
-  )
+  const contents = useObserver(() =>
+    store.all.map(val => <SharedContent key={val.id} content={val} />))
 
   return(
     <div className={classes.slContainer} >
-      {sharedContents}
+      {contents}
       <PastedContent />
     </div>
   )

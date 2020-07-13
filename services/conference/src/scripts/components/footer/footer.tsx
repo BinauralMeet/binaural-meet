@@ -81,7 +81,7 @@ export const Footer: React.FC<BaseProps> = (props) => {
 
     return <MenuItem key={info.deviceId}
       onClick={() => { close(info.deviceId) }}
-      > { (selected ? '✔ ' : '  ') + info.label }</MenuItem>
+      > { (selected ? '✔\u00A0' : '\u2003') + info.label }</MenuItem>  //  \u00A0: NBSP, u2003: EM space.
   }
   const micMenuItems:JSX.Element[] = []
   const speakerMenuItems:JSX.Element[] = []
@@ -105,6 +105,8 @@ export const Footer: React.FC<BaseProps> = (props) => {
 
   return (
     <div className={classes.box}>
+      <StereoAudioSwitch className={classes.margin} />
+
       <Fab className={classes.margin} size = "small" color={mute.muteS ? 'primary' : 'secondary' }
         aria-label="speaker" onClick = {
            () => { participants.local.get().plugins.streamControl.muteSpeaker = !mute.muteS }
@@ -162,7 +164,6 @@ export const Footer: React.FC<BaseProps> = (props) => {
         <ScreenShareIcon />
       </Fab>
 
-      <StereoAudioSwitch />
    </div>
   )
 }
