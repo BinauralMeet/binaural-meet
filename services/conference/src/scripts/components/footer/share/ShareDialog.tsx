@@ -3,6 +3,7 @@ import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
 import React, {useState} from 'react'
 import {Entrance} from './Entrance'
+import {ImageInput} from './ImageInput'
 import {Step, stepTitle} from './Step'
 import {TextInput} from './TextInput'
 
@@ -59,8 +60,7 @@ function getPage(step: Step, setStep: (step: Step) => void): JSX.Element | undef
           textLabel = "URL"
         />
     case 'image':
-      // TODO
-      return <div>todo: drag and drop interface</div>
+      return <ImageInput setStep={setStep} />
     default:
       throw new Error(`Unknown step: ${step}`)
   }
