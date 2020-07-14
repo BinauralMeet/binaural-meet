@@ -79,25 +79,6 @@ const ParticipantProperties = {
   PPROP_CONTENTS_UPDATE: 'contents_update',
   PPROP_CONTENTS_REMOVE: 'contents_remove',
 }
-export const defaultVideoConstraints = {
-  video:{
-    facingMode:'user',
-    width:{
-      max:1280,
-      min:160,
-      ideal:320,
-    },
-    height:{
-      max:720,
-      min:120,
-      ideal:240,
-    },
-    frameRate: {
-      ideal: 12,
-      max: 30,
-    },
-  },
-}
 
 class Connection extends EventEmitter {
 
@@ -393,6 +374,33 @@ class Connection extends EventEmitter {
               ConferenceEvents.REMOTE_TRACK_ADDED,
               track as JitsiRemoteTrack,
             )
+            //  reduce bit rate
+            //  peerconnection as TraceablePeerConnection
+            //  peerconnection.peerconnection as RTCPeerConnection
+            if (config.rtc && this._jitsiConference && this._jitsiConference.jvbJingleSession) {
+              const jingleSession = this._jitsiConference.jvbJingleSession
+              if (!jingleSession.bitRateAlreadyReduced && jingleSession.peerconnection.peerconnection) {
+                jingleSession.bitRateAlreadyReduced = true
+                const pc = jingleSession.peerconnection.peerconnection
+                // console.log('RTCPeerConnect:', pc)
+                pc.getSenders().forEach((sender) => {
+                  // console.log(sender)
+                  if (sender && sender.track) {
+                    const params = sender.getParameters()
+                    // console.log('params:', params)
+                    params.encodings.forEach((encording) => {
+                      const ONE_KILO = 1024
+                      if (sender.track!.kind === 'video' && config.rtc.maxBitrateForVideo) {
+                        encording.maxBitrate = config.rtc.maxBitrateForVideo * ONE_KILO
+                      }else if (sender.track!.kind === 'audio') {
+                        encording.maxBitrate = config.rtc.maxBitrateForAudio * ONE_KILO
+                      }
+                    })
+                    sender.setParameters(params)
+                  }
+                })
+              }
+            }
           }
         }
       },
@@ -577,17 +585,8 @@ class Connection extends EventEmitter {
 
       this.bindStore(local)
 
-      JitsiMeetJS.createLocalTracks({devices: ['audio', 'video'], constraints: defaultVideoConstraints}).then(
+      JitsiMeetJS.createLocalTracks({devices: ['audio', 'video'], constraints: config.rtc.videoConstraints}).then(
         (tracks: JitsiTrack[]) => {
-          //  reduce bit rate
-          //  peerconnection as TraceablePeerConnection
-          //  peerconnection.peerconnection as RTCPeerConnection
-          if ((this._jitsiConference as any).jvbJingleSession) {
-            const jingleSession = (this._jitsiConference as any).jvbJingleSession
-            const pc = jingleSession.peerconnection.peerconnection as RTCPeerConnection
-            console.log(pc)
-          }
-
           tracks.forEach((track) => {
             const did_ = track.getTrack().getSettings().deviceId
             const did:string = did_ ? did_ : ''

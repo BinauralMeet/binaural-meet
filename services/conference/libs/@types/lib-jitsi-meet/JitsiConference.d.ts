@@ -7,6 +7,7 @@ import JitsiTrack, {TMediaType} from "./modules/RTC/JitsiTrack";
 import JitsiLocalTrack from './modules/RTC/JitsiLocalTrack'
 import JitsiParticipant from "./JitsiParticipant";
 import { Transcriber } from "./modules";
+import TraceablePeerConnection from "./modules/RTC/TraceablePeerConnection";
 
 declare interface JitsiValuesChildren {
   tagName:string
@@ -19,7 +20,10 @@ declare interface JitsiValues {
   attributes: {}
   children: Array<JitsiValuesChildren>
 }
-
+declare class JingleSessionPC{
+  bitRateAlreadyReduced?: boolean
+  peerconnection: TraceablePeerConnection
+}
 declare class JitsiConference {
   constructor(options: any);
 
@@ -112,6 +116,7 @@ declare class JitsiConference {
   isP2PActive(): boolean;
   getP2PConnectionState(): string | null;
 
+  jvbJingleSession:JingleSessionPC
 }
 
 export { JitsiValues, JitsiValuesChildren};
