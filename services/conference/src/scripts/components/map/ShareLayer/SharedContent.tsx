@@ -1,3 +1,4 @@
+import {StoreProvider as ContentsProvider, useStore} from '@hooks/SharedContentsStore'
 import {makeStyles} from '@material-ui/core/styles'
 import {SharedContent as ISharedContent} from '@models/sharedContent/SharedContent'
 import {SharedContent as SharedContentStore} from '@stores/sharedContents/SharedContent'
@@ -7,25 +8,36 @@ import React, {useEffect, useState} from 'react'
 import {RndContent} from './RndContent'
 
 export interface SharedContentProps{
-  mapKey: string,
   content: SharedContentStore,
-  contents: SharedContentsStore
 }
 
 export const SharedContent: React.FC<SharedContentProps> = (props:SharedContentProps) => {
-  console.log('SharedContent', props)
+  const store = useStore()
 
   return (
     <RndContent content={props.content} autoHideTitle={true}
       onClose={
         (evt: React.MouseEvent<HTMLDivElement>) => {
+          console.log('RndContent onClose for ', props.content.id)
           evt.stopPropagation()
-          props.contents.order.delete(props.mapKey)
+          const pid = store.owner.get(props.content.id)
+          if (pid) {
+            store.removeContents(pid, [props.content.id])
+          }
         }
       }
       onUpdate={
         (newContent: ISharedContent) => {
-          props.contents.order.set(props.mapKey, newContent)
+          const old:ISharedContent = props.content
+          let identical = false
+          if (old.zorder === newContent.zorder) {
+            old.zorder += 1
+            if (old.zorder === newContent.zorder) {
+              identical = true
+            }
+          }
+          //console.log('RndContent onUpdate from ', old, ' to ', newContent, ` ==? ${identical} `)
+          store.updateContents([newContent])
         }
       }
     />
