@@ -1,10 +1,10 @@
 import Dialog from '@material-ui/core/Dialog'
+import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
-import React, {useEffect, useState} from 'react'
+import React, {useState} from 'react'
 import {Entrance} from './Entrance'
 import {Step, stepTitle} from './Step'
 import {TextInput} from './TextInput'
-
 
 interface ShareDialogProps {
   open: boolean
@@ -30,9 +30,9 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
   const title = stepTitle[step]
   const page: JSX.Element | undefined = getPage(step, wrappedSetStep)
 
-  return  <Dialog open={open} onClose={onClose} onExited={() => setStep('entrance')}>
+  return  <Dialog open={open} onClose={onClose} onExited={() => setStep('entrance')} maxWidth="sm" fullWidth={true}>
     <DialogTitle id="simple-dialog-title">{title}</DialogTitle>
-    {page}
+    <DialogContent>{page}</DialogContent>
   </Dialog>
 }
 
@@ -65,3 +65,4 @@ function getPage(step: Step, setStep: (step: Step) => void): JSX.Element | undef
       throw new Error(`Unknown step: ${step}`)
   }
 }
+ShareDialog.displayName = 'ShareDialog'

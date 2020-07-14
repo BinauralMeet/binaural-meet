@@ -21,25 +21,25 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
       <ShareDialogItem
         key="shareIframe"
         icon={<HttpIcon />}
-        text="Share Iframe"
+        text="Iframe"
         onClick={() => setStep('iframe')}
       />
       <ShareDialogItem
         key="shareText"
         icon={<SubjectIcon />}
-        text="Share Text"
+        text="Text"
         onClick={() => setStep('text')}
       />
       <ShareDialogItem
         key="shareImage"
         icon={<ImageIcon />}
-        text="Share Image"
+        text="Image"
         onClick={() => setStep('image')}
       />
       <ShareDialogItem
         key="shareScreen"
         icon={<ScreenShareIcon />}
-        text="Share Screen"
+        text="Screen"
         onClick={() => {
           startCapture().then(shareScreenStream)
           setStep('none')
@@ -48,6 +48,7 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
     </List>
   )
 }
+Entrance.displayName = 'Entrance'
 
 async function startCapture(displayMediaOptions: any = {}) {
   let captureStream = null
