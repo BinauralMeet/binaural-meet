@@ -23,6 +23,7 @@ import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
 // import JitsiTrack from 'lib-jitsi-meet/modules/RTC/JitsiTrack'
 import JitsiLocalTrack from 'lib-jitsi-meet/modules/RTC/JitsiLocalTrack'
 import JitsiRemoteTrack from 'lib-jitsi-meet/modules/RTC/JitsiRemoteTrack'
+import {default as rtcUtils} from 'lib-jitsi-meet/modules/RTC/RTCUtils'
 import {autorun, IObservableValue, observe} from 'mobx'
 import {throttle} from 'throttle-debounce'
 
@@ -260,7 +261,8 @@ class Connection extends EventEmitter {
     return new Promise<string>(
       (resolve, reject) => {
         JitsiMeetJS.init(initOptions)
-        JitsiMeetJS.setLogLevel('info')
+        // JitsiMeetJS.setLogLevel('info')
+        JitsiMeetJS.setLogLevel('warn')
 
         this._jitsiConnection = new JitsiMeetJS.JitsiConnection(
           null as unknown as string, undefined as unknown as string, config)
@@ -576,13 +578,22 @@ class Connection extends EventEmitter {
 
       JitsiMeetJS.createLocalTracks({devices: ['audio', 'video'], constraints: defaultVideoConstraints}).then(
         (tracks: JitsiTrack[]) => {
+          //  reduce bit rate
+          //  peerconnection as TraceablePeerConnection
+          //  peerconnection.peerconnection as RTCPeerConnection
+          if ((this._jitsiConference as any).jvbJingleSession) {
+            const jingleSession = (this._jitsiConference as any).jvbJingleSession
+            const pc = jingleSession.peerconnection.peerconnection as RTCPeerConnection
+            console.log(pc)
+          }
+
           tracks.forEach((track) => {
             const did_ = track.getTrack().getSettings().deviceId
             const did:string = did_ ? did_ : ''
             if (track.getType() === 'audio') {
               ParticiantsStore.local.get().devicePreference.audioInputDevice = did
             }else if (track.getType() === 'video') {
-              console.log('Video track created:', JSON.stringify(track))
+              // console.log('Video track created:', JSON.stringify(track))
               ParticiantsStore.local.get().devicePreference.videoInputDevice = did
             }
           })

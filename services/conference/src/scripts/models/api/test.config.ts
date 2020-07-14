@@ -9,18 +9,18 @@ const config_jitsi_haselab_net = {
   focusUserJid: 'focus@auth.meet.jitsi',
   testing: {
     enableFirefoxSimulcast: false,
-    p2pTestMode: false
+    p2pTestMode: false,
   },
   enableNoAudioDetection: true,
   enableNoisyMicDetection: true,
   desktopSharingChromeExtId: null,
-  desktopSharingChromeSources: [ 'screen', 'window', 'tab' ],
+  desktopSharingChromeSources: ['screen', 'window', 'tab'],
   desktopSharingChromeMinExtVersion: '0.1',
   channelLastN: -1,
   p2p: {
     enabled: false,
     stunServers: [
-      { urls: 'stun:meet-jit-si-turnrelay.jitsi.net:443' }
+      {urls: 'stun:meet-jit-si-turnrelay.jitsi.net:443'},
     ],
     preferH264: true,
   },
