@@ -1,10 +1,9 @@
 import Dialog from '@material-ui/core/Dialog'
 import DialogTitle from '@material-ui/core/DialogTitle'
-import List from '@material-ui/core/List'
-import ScreenShare from '@material-ui/icons/ScreenShare'
-import {shareScreenStream} from '@models/share/shareScreenStream'
-import React from 'react'
-import {ShareDialogItem} from './SharedDialogItem'
+import React, {useEffect, useState} from 'react'
+import {Entrance} from './Entrance'
+import {Step, stepTitle} from './Step'
+import {TextInput} from './TextInput'
 
 
 interface ShareDialogProps {
@@ -18,32 +17,51 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
     onClose,
   } = props
 
-  return  <Dialog open={open} onClose={onClose} >
-    <DialogTitle id="simple-dialog-title">Share</DialogTitle>
-    <List>
-      <ShareDialogItem
-        key="shareScreen"
-        icon={<ScreenShare />}
-        text="Share Screen"
-        onClick={() => {
-          startCapture().then(shareScreenStream)
-          onClose()
-        }}
-      />
-    </List>
+  const [step, setStep] = useState<Step>('entrance')
+
+  const wrappedSetStep = (step: Step) => {
+    if (step === 'none') {
+      onClose()
+    } else {
+      setStep(step)
+    }
+  }
+
+  const title = stepTitle[step]
+  const page: JSX.Element | undefined = getPage(step, wrappedSetStep)
+
+  return  <Dialog open={open} onClose={onClose} onExited={() => setStep('entrance')}>
+    <DialogTitle id="simple-dialog-title">{title}</DialogTitle>
+    {page}
   </Dialog>
 }
 
-async function startCapture(displayMediaOptions: any = {}) {
-  let captureStream = null
-
-  try {
-    // @ts-ignore FIXME: https://github.com/microsoft/TypeScript/issues/33232
-    captureStream = await navigator.mediaDevices.getDisplayMedia(displayMediaOptions)
-  } catch (err) {
-    console.error(`Share screen error: ${err}`)
-    throw err
+function getPage(step: Step, setStep: (step: Step) => void): JSX.Element | undefined {
+  switch (step) {
+    case 'entrance':
+      return <Entrance setStep={setStep} />
+    case 'text':
+      return <TextInput
+          setStep={setStep}
+          onFinishInput={(value) => {
+            // TODO modify store
+            console.debug(`share text: ${value}`)
+          }}
+          textLabel = "Text"
+        />
+    case 'iframe':
+      return <TextInput
+          setStep={setStep}
+          onFinishInput={(value) => {
+            // TODO modify store
+            console.debug(`share iframe: ${value}`)
+          }}
+          textLabel = "URL"
+        />
+    case 'image':
+      // TODO
+      return <div>todo: drag and drop interface</div>
+    default:
+      throw new Error(`Unknown step: ${step}`)
   }
-
-  return captureStream as MediaStream
 }
