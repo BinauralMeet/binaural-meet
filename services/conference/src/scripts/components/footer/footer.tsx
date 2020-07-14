@@ -14,7 +14,7 @@ import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
 import SpeakerOnIcon from '@material-ui/icons/VolumeUp'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
-import {ShareButton} from './ShareButton'
+import {ShareButton} from './share/ShareButton'
 
 const useStyles = makeStyles((theme) => {
   return ({
