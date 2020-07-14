@@ -1,9 +1,16 @@
 import {useStore as useParticipantsStore} from '@hooks/ParticipantsStore'
+import {Tooltip} from '@material-ui/core'
 import Fab from '@material-ui/core/Fab'
+import HeadsetIcon from '@material-ui/icons/HeadsetMic'
+import SpeakerIcon from '@material-ui/icons/Speaker'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 
-export const StereoAudioSwitch: React.FunctionComponent = () => {
+export interface StereoAudioSwitchProps{
+  className?: string
+}
+
+export const StereoAudioSwitch: React.FunctionComponent<StereoAudioSwitchProps> = (props:StereoAudioSwitchProps) => {
   const participants = useParticipantsStore()
   const stereo = useObserver(() => participants.local.get().useStereoAudio)
 
@@ -11,6 +18,13 @@ export const StereoAudioSwitch: React.FunctionComponent = () => {
     participants.local.get().useStereoAudio = !stereo
   }
 
-  return <Fab onClick={switchStereo}>{stereo ? 'Stereo' : 'Mono'}</Fab>
+  return <Tooltip
+    title={
+      <React.Fragment>
+        {'Stereo headset'} <strong>{'without echo canceller'}</strong><br />{'/ Monaural speaker with echo canceller'}
+      </React.Fragment>
+    }>
+    <Fab {...props} size="small" onClick={switchStereo}>{stereo ? <HeadsetIcon /> : <SpeakerIcon />}</Fab>
+  </Tooltip>
 }
 StereoAudioSwitch.displayName = 'StereoAudioSwtich'
