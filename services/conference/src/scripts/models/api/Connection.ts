@@ -8,11 +8,8 @@ import JitsiTrack from 'lib-jitsi-meet/modules/RTC/JitsiTrack'
 import {Store} from '../../stores/utils'
 import {ConnectionStates, ConnectionStatesType} from './Constants'
 import ApiLogger, {ILoggerHandler} from './Logger'
-import {config} from './test.config'
-// import _ from 'lodash'
 
 // import a global variant $ for lib-jitsi-meet
-import {SharedContent} from '@components/map/ShareLayer/SharedContent'
 import {Pose2DMap} from '@models/MapObject'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {Participant} from '@stores/participants/Participant'
@@ -20,12 +17,14 @@ import {SharedContent as SharedContentStore} from '@stores/sharedContents/Shared
 import {dummyConnectionStore} from '@test-utils/DummyParticipants'
 import jquery from 'jquery'
 import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
-// import JitsiTrack from 'lib-jitsi-meet/modules/RTC/JitsiTrack'
 import JitsiLocalTrack from 'lib-jitsi-meet/modules/RTC/JitsiLocalTrack'
 import JitsiRemoteTrack from 'lib-jitsi-meet/modules/RTC/JitsiRemoteTrack'
-import {default as rtcUtils} from 'lib-jitsi-meet/modules/RTC/RTCUtils'
-import {autorun, IObservableValue, observe} from 'mobx'
+import {autorun} from 'mobx'
 import {throttle} from 'throttle-debounce'
+
+// load config.js or config.test.ts
+// import {config} from './test.config'   //  from ./test.config.ts
+declare const config:any                  //  from ../../config.js included from index.html
 
 declare var global: any
 global.$ = jquery
