@@ -34,23 +34,23 @@ sharedContents.on(SharedContentsEvents.REMOTE_JOIN, (participant: ParticipantCon
     console.log('SharedContentsEvents.REMOTE_JOIN emitted for local pid = ', participant.participantId)
   }
   console.log('Start to observe myContents pid = ', participant.participantId)
-  const dispo = reaction(() => Array.from(participant.myContents.values()), () => {
+  const disposer = reaction(() => Array.from(participant.myContents.values()), () => {
     console.log('participant.myContents changed for pid = ', participant.participantId)
     const remoteContents = connection.getSharedContents(participant.participantId)
-    remoteContents.forEach((rc) => {
-      const my = participant.myContents.get(rc.id)
+    remoteContents.forEach((remoteContent) => {
+      const my = participant.myContents.get(remoteContent.id)
       if (my) {
-        if (! _.isEqual(my, rc)) {
+        if (! _.isEqual(my, remoteContent)) {
           console.log('Add update request for ', my.id)
           sharedContents.localParticipant.updateRequest.set(my.id, my)
         }
       }else {
-        console.log('Add remove request for ', rc.id)
-        sharedContents.localParticipant.removeRequest.add(rc.id)
+        console.log('Add remove request for ', remoteContent.id)
+        sharedContents.localParticipant.removeRequest.add(remoteContent.id)
       }
     })
   })
-  disposers.set(participant.participantId, dispo)
+  disposers.set(participant.participantId, disposer)
 })
 
 //  when paticipant leave, remove reaction handelr.

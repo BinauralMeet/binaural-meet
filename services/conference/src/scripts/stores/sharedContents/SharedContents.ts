@@ -131,17 +131,17 @@ export class SharedContents extends EventEmitter {
   }
 
   //  Update contents. For update requset.
-  updateContents(cs: SharedContent[]) {
-    cs.forEach((c) => {
-      const pid = this.owner.get(c.id)
+  updateContents(contents: SharedContent[]) {
+    contents.forEach((content) => {
+      const pid = this.owner.get(content.id)
       if (pid) {
         const participant = this.participants.get(pid)
         console.log('myContents=', JSON.stringify(participant?.myContents))
-        console.log('updateContents for participant=', pid, ' ', JSON.stringify(c))
+        console.log('updateContents for participant=', pid, ' ', JSON.stringify(content))
 
-        participant?.myContents.set(c.id, c)
+        participant?.myContents.set(content.id, content)
       }else {
-        console.log('unpdateContents called for ', c.id, ' with invalid owner pid=', pid)
+        console.log('unpdateContents called for ', content.id, ' with invalid owner pid=', pid)
       }
     })
     this.updateAll()

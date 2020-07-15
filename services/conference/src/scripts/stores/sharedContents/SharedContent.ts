@@ -1,3 +1,4 @@
+import {PropTypes} from '@material-ui/core'
 import {
   BaseSharedContent as IBaseSharedContent,
   IframeSharedContent as IIframeSharedContent,
@@ -12,50 +13,32 @@ import {
 import {MapObject} from '@stores/MapObject'
 import {observable} from 'mobx'
 
-abstract class BaseSharedContent extends MapObject implements Omit<IBaseSharedContent, 'type'> {
+class BaseSharedContent<T extends IBaseSharedContent> extends MapObject implements Omit<IBaseSharedContent, 'type'> {
   readonly id: string
+  readonly type: T['type']
 
   @observable size = [0, 0] as [number, number]
   @observable zorder = 0
 
-  constructor(id: string) {
+  constructor(id: string, type: T['type']) {
     super()
     this.id = id
-  }
-}
-
-export class ImgSharedContent extends BaseSharedContent implements IImgSharedContent {
-  readonly type: typeof IMG_TYPE
-  @observable url = ''
-  constructor(id: string, type: typeof IMG_TYPE) {
-    super(id)
     this.type = type
   }
 }
 
-export class IframeSharedContent extends BaseSharedContent implements IIframeSharedContent {
-  readonly type: typeof IFRAME_TYPE
+export class ImgSharedContent extends BaseSharedContent<IImgSharedContent> implements IImgSharedContent {
   @observable url = ''
-  constructor(id: string, type: typeof IFRAME_TYPE) {
-    super(id)
-    this.type = type
-  }
 }
 
-export class TextSharedContent extends BaseSharedContent implements ITextSharedContent {
-  readonly type: typeof TEXT_TYPE
+export class IframeSharedContent extends BaseSharedContent<IIframeSharedContent> implements IIframeSharedContent {
+  @observable url = ''
+}
+
+export class TextSharedContent extends BaseSharedContent<ITextSharedContent> implements ITextSharedContent {
   @observable text = ''
-  constructor(id: string, type: typeof TEXT_TYPE) {
-    super(id)
-    this.type = type
-  }
 }
 
-export class VideoSharedContent extends BaseSharedContent implements IVideoSharedContent {
-  readonly type: typeof VIDEO_TYPE
-  stream = undefined
-  constructor(id: string, type: typeof VIDEO_TYPE) {
-    super(id)
-    this.type = type
-  }
+export class VideoSharedContent extends BaseSharedContent<IVideoSharedContent> implements IVideoSharedContent {
+  @observable stream = undefined
 }
