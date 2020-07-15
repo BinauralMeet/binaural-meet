@@ -27,6 +27,8 @@ class BaseSharedContent<T extends IBaseSharedContent> extends MapObject implemen
   }
 }
 
+export type SharedContent = ImgSharedContent | IframeSharedContent | TextSharedContent | VideoSharedContent
+
 export class ImgSharedContent extends BaseSharedContent<IImgSharedContent> implements IImgSharedContent {
   @observable url = ''
 }

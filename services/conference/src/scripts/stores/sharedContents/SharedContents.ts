@@ -18,8 +18,6 @@ export class ParticipantContents implements IParticipantContents {
   contentIdCounter = 0
   participantId = ''
   @observable.shallow myContents = new Map<string, SharedContent>()
-  @observable.shallow updateRequest = new Map<string, SharedContent>()
-  @observable.shallow removeRequest = new Set<string>()
 }
 
 export const SharedContentsEvents = {
@@ -33,6 +31,9 @@ export class SharedContents extends EventEmitter {
   //  contents by owner
   participants: Map<string, ParticipantContents> = new Map<string, ParticipantContents>()
   leavingParticipants: Map<string, ParticipantContents> = new Map<string, ParticipantContents>()
+
+  @observable.shallow updateRequest = new Map<string, SharedContent>()
+  @observable.shallow removeRequest = new Set<string>()
 
   @computed get localParticipant(): ParticipantContents {
     if (!this.localId) { this.localId = participantsStore.localId }
@@ -68,15 +69,17 @@ export class SharedContents extends EventEmitter {
   }
 
   //  add
-  addLocalContent(c:SharedContent) {
+  addLocalContent(content:SharedContent) {
     if (!participantsStore.localId) {
       console.log('addLocalContant() failed. Invalid Participant ID.')
 
       return
     }
-    if (!c.id) { c.id = this.getUniqueId(participantsStore.localId) }
-    this.localParticipant.myContents.set(c.id, c)
-    this.owner.set(c.id, participantsStore.localId)
+    if (!content.id) {
+      content.id = this.getUniqueId(participantsStore.localId)
+    }
+    this.localParticipant.myContents.set(content.id, content)
+    this.owner.set(content.id, participantsStore.localId)
     this.updateAll()
   }
 
@@ -101,13 +104,13 @@ export class SharedContents extends EventEmitter {
     const removed = diffMap(participant.myContents, newContents)
 
     //  Check remove request and remove it.
-    removed.forEach(c => this.localParticipant.removeRequest.delete(c.id))
+    removed.forEach(c => this.removeRequest.delete(c.id))
 
     //  Check update request and remove request
     newContents.forEach((c) => {
-      const updateReq = this.localParticipant?.updateRequest.get(c.id)
+      const updateReq = this.updateRequest.get(c.id)
       if (updateReq && _.isEqual(c, updateReq)) {
-        this.localParticipant?.updateRequest.delete(c.id)
+        this.updateRequest.delete(c.id)
       }
     })
 
@@ -157,9 +160,9 @@ export class SharedContents extends EventEmitter {
       participant.myContents = my
       this.updateAll()
       if (pid !== this.localId) {
-        const newRemoveRequest = new Set<string>(this.localParticipant.removeRequest)
+        const newRemoveRequest = new Set<string>(this.removeRequest)
         cids.forEach(cid => newRemoveRequest.add(cid))
-        this.localParticipant.removeRequest = newRemoveRequest
+        this.removeRequest = newRemoveRequest
         console.log('removeContents update remove request', newRemoveRequest)
       }
       console.log('removeContents cids=', cids, ' all=', this.all.length, this.all)
