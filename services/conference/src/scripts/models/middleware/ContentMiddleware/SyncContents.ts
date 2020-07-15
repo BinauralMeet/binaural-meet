@@ -13,14 +13,14 @@ reaction(() => Array.from(sharedContents.localParticipant.myContents.values()),
 )
 
 //  send request from local when updated.
-reaction(() => Array.from(sharedContents.localParticipant.updateRequest.values()),
+reaction(() => Array.from(sharedContents.updateRequest.values()),
          (updates) => {
            connection.sendSharedContentsUpdateRequest(updates)
            console.log('send contents update request: ', JSON.stringify(updates))
          },
 )
 //  send request from local when updated.
-reaction(() => Array.from(sharedContents.localParticipant.removeRequest.values()),
+reaction(() => Array.from(sharedContents.removeRequest.values()),
          (removes) => {
            connection.sendSharedContentsRemoveRequest(removes)
            console.log('send contents remove request: ', JSON.stringify(removes))
@@ -42,11 +42,11 @@ sharedContents.on(SharedContentsEvents.REMOTE_JOIN, (participant: ParticipantCon
       if (my) {
         if (! _.isEqual(my, remoteContent)) {
           console.log('Add update request for ', my.id)
-          sharedContents.localParticipant.updateRequest.set(my.id, my)
+          sharedContents.updateRequest.set(my.id, my)
         }
       }else {
         console.log('Add remove request for ', remoteContent.id)
-        sharedContents.localParticipant.removeRequest.add(remoteContent.id)
+        sharedContents.removeRequest.add(remoteContent.id)
       }
     })
   })
