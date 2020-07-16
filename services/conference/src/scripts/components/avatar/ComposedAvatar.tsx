@@ -7,14 +7,14 @@ type ComposedAvatarProps = ImageAvatarProps & Partial<StreamAvatarProps>
 export const ComposedAvatar: React.FC<ComposedAvatarProps> = (props: ComposedAvatarProps) => {
   const {
     information,
-    stream,
+    track,
     ...remainProps
   } = props
 
-  if (stream === undefined) {
+  if (track === undefined) {
     return <ImageAvatar information={information} {...remainProps} />
   }
 
-  return <StreamAvatar stream={stream} {...remainProps} />
+  return <StreamAvatar track={track} {...remainProps} />
 }
 ComposedAvatar.displayName = 'ComposedAvatar'

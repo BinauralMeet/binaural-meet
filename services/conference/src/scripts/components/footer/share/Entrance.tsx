@@ -4,6 +4,7 @@ import ImageIcon from '@material-ui/icons/Image'
 import ScreenShareIcon from '@material-ui/icons/ScreenShare'
 import SubjectIcon from '@material-ui/icons/Subject'
 import {shareScreenStream} from '@models/share/shareScreenStream'
+import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'
 import React from 'react'
 import {DialogPageProps} from './DialogPage'
 import {ShareDialogItem} from './SharedDialogItem'
@@ -51,16 +52,18 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
 Entrance.displayName = 'Entrance'
 
 async function startCapture(displayMediaOptions: any = {}) {
-  let captureStream = null
+  let captureTracks = null
 
   try {
     // @ts-ignore FIXME: https://github.com/microsoft/TypeScript/issues/33232
-    captureStream = await navigator.mediaDevices.getDisplayMedia(displayMediaOptions)
+    captureTracks = await JitsiMeetJS.createLocalTracks({devices:['desktop']})
+    //  captureStream = await navigator.mediaDevices.getDisplayMedia(displayMediaOptions)
   } catch (err) {
     console.error(`Share screen error: ${err}`)
     throw err
 
   }
+  console.log('got desktop track', captureTracks)
 
-  return captureStream as MediaStream
+  return captureTracks as JitsiLocalTrack[]
 }

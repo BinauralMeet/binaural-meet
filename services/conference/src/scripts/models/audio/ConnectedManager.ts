@@ -53,7 +53,7 @@ export class ConnectedManager {
   private add = (id: string) => {
     const group = this.manager.addSpeaker(id)
 
-    const remote = store.find(id)
+    const remote = store.findRemote(id)
     const local = store.local
 
     this.connectedGroups[id] = new ConnectedGroup(local, remote, group)
