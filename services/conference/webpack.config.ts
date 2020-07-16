@@ -1,8 +1,10 @@
+import CopyPlugin from 'copy-webpack-plugin'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import * as path from 'path'
 import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin'
 import * as webpack from 'webpack'
 import * as webpackDevServer from 'webpack-dev-server'
+
 const Visualizer = require('webpack-visualizer-plugin')
 const WebpackGitHash = require('webpack-git-hash')
 
@@ -103,6 +105,14 @@ const config: webpack.Configuration = {
     }),
     new WebpackGitHash({
       cleanup: true,
+    }),
+    new CopyPlugin({
+      patterns: [
+        {from: './src/config.js', to: path.resolve(__dirname, 'dist')},
+      ],
+      options: {
+        concurrency: 100,
+      },
     }),
   ],
   watchOptions: {

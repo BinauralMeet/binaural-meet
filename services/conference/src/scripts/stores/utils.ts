@@ -8,14 +8,9 @@ export type Store<T> = {
   [K in keyof T]: T[K] | (T[K] & IObservable)
 }
 
-declare global {
-  interface Map<K, V> {
-      /** set difference */
-    diff(b: Map<K, V>): Map<K, V>
-  }
-}
-Map.prototype.diff = function (b) {
-  const diff = new Map(this)
+/// a - b for 2 maps
+export function diffMap<K, V1, V2>(a:Map<K, V1>, b:Map<K, V2>) {
+  const diff = new Map<K, V1>(a)
   for (const elem of b) {
     diff.delete(elem[0])
   }

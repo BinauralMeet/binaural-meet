@@ -1,9 +1,9 @@
 import {App} from '@components/app'
 import {connection} from '@models/api'
 import '@models/audio'  // init audio manager (DO NOT delete)
-import '@models/TrackMiddleware'
+import '@models/middleware'
+import {urlParameters} from '@models/url'
 import {resolveAtEnd} from '@models/utils'
-import {getParameters} from '@models/utils/url'
 import '@stores/index' // init store (DO NOT delete)
 import 'mobx-react-lite/batchingForReactDom'
 import React from 'react'
@@ -28,7 +28,7 @@ function renderDOM() {
 }
 
 function connectConference() {
-  const conferenceName = getParameters.name || 'haselabtest'
+  const conferenceName = urlParameters.name || 'haselabtest'
 
   connection.init().then(
     () => connection.joinConference(conferenceName),
