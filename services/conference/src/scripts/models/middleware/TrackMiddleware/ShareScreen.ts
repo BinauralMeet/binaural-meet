@@ -7,14 +7,18 @@ import {MediaType} from 'lib-jitsi-meet'
 reaction(() => participants.local.get().tracks.screen,
   (screen) => {
     if (screen){
-      console.log('add screen track')
       //  const tracks = connection.conference?.getLocalTracks(MediaType.VIDEO)
       //  if (tracks && tracks[0]) connection.conference?.removeTrack(tracks[0])
       connection.conference?.addTrack(screen)
+      console.log('Screen track added')
     }else{
-      console.log('remove screen track')
-      const tracks = connection.conference?.getLocalTracks(MediaType.PRESENTER)
-      if (tracks && tracks[0]) connection.conference?.removeTrack(tracks[0])
+      const tracks = connection.conference?.getLocalTracks(MediaType.VIDEO)
+      tracks?.forEach((track) => {
+        if (track.isScreenSharing()){
+          connection.conference?.removeTrack(tracks[0])
+          console.log('Screen track removed')
+        }
+      })
     }
   }
 )
