@@ -11,6 +11,16 @@ function contentComp(a:ISharedContent, b:ISharedContent) {
   return a.zorder - b.zorder
 }
 
+export function generateSharedContentId(): string {
+  if (!participantsStore.localId) {
+    throw new Error('addLocalContant() failed. Invalid Participant ID.')
+
+    return ''
+  }
+
+  return sharedContents.getUniqueId(participantsStore.localId)
+}
+
 export class ParticipantContents implements IParticipantContents {
   constructor(pid: string) {
     this.participantId = pid
@@ -70,14 +80,6 @@ export class SharedContents extends EventEmitter {
 
   //  add
   addLocalContent(content:SharedContent) {
-    if (!participantsStore.localId) {
-      console.log('addLocalContant() failed. Invalid Participant ID.')
-
-      return
-    }
-    if (!content.id) {
-      content.id = this.getUniqueId(participantsStore.localId)
-    }
     this.localParticipant.myContents.set(content.id, content)
     this.owner.set(content.id, participantsStore.localId)
     this.updateAll()
@@ -211,7 +213,7 @@ export class SharedContents extends EventEmitter {
     }
   }
 
-  private getUniqueId(pid: string) {
+  getUniqueId(pid: string) {
     if (!this.participants.has(pid)) {
       this.participants.set(pid, new ParticipantContents(pid))
     }
