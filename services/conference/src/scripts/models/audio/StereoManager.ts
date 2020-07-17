@@ -15,7 +15,8 @@ export class StereoManager {
   constructor() {
     this.audioElement.srcObject = this.audioDestination.stream
 
-    this.switchPlayMode('Element')
+    //  TODO: this must be match to store/LocalParticipant's useStereo
+    this.switchPlayMode('Context', false)
   }
 
   addSpeaker(id: string) {
@@ -31,7 +32,7 @@ export class StereoManager {
     delete this.nodes[id]
   }
 
-  switchPlayMode(playMode: PlayMode) {
+  switchPlayMode(playMode: PlayMode, muted: boolean) {
     if (playMode === this.playMode) {
       return
     }
@@ -72,6 +73,7 @@ export class StereoManager {
         console.error(`Unsupported play mode: ${playMode}`)
         break
     }
+    this.audioOutputMuted = muted
   }
 
   setAudioOutput(deviceId:string) {
@@ -87,10 +89,8 @@ export class StereoManager {
 
   set audioOutputMuted(muted: boolean) {
     console.log('audioOutputMuted', muted)
-    if (muted) {
-      this.audioElement.pause()
-    }else {
-      this.audioElement.play()
+    for (const id in this.nodes) {
+      this.nodes[id].setMute(muted)
     }
     this.audioDestination.stream.getTracks().forEach((track) => { track.enabled = !muted })
   }
