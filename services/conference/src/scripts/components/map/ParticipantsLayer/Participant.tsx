@@ -1,11 +1,8 @@
 import {Avatar, AvatarProps} from '@components/avatar'
-import {ConfigurationDialog, resolveConfigurationPlugin} from '@components/configuration'
 import {LOCAL_PARTICIPANT_CONFIG} from '@components/configuration/plugin/plugins/LocalParticipantConfig'
 import {useStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
-import ClickAwayListener from '@material-ui/core/ClickAwayListener'
 import {makeStyles} from '@material-ui/core/styles'
-import {event} from 'jquery'
 import {useObserver} from 'mobx-react-lite'
 import React, {forwardRef, useState} from 'react'
 import {MapObjectContainer} from '../utils/MapObjectContainer'
@@ -53,39 +50,24 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
 
   const transform = useTransform()
 
-  const [showConfig, setShowConfig] = useState<boolean>(false)
-  const [dialogPosition, setDialogPosition] = useState<[number, number]>([0, 0])
-  const ConfigurationPlugin = resolveConfigurationPlugin(LOCAL_PARTICIPANT_CONFIG)
-  const configuration = (
-    <ConfigurationDialog position={dialogPosition}>
-        <ConfigurationPlugin />
-    </ConfigurationDialog>
-  )
-
   return (
-    <ClickAwayListener onClickAway={() => setShowConfig(false)}>
-      <MapObjectContainer pose={participantProps} ref={ref} disableRotation={true}
-        openConfiuration={(event) => {
-          setShowConfig(true)
-          setDialogPosition([event.clientX, event.clientY])
-        }}
-        buttonSpacing={{
-          top: -pointerAvatarRatio * props.size / 2,
-          right: -pointerAvatarRatio * props.size / 2,
-        }}
-        counterRotateButtons={true}
-      >
-          <div className="participantWrapper">
-            <div className={classes.pointerRotate}>
-              <Pointer className={classes.pointer} />
-            </div>
-            <div className={[classes.avatar, transform.counterRotationClass, 'draggableHandle'].join(' ')}>
-              <Avatar {...props} />
-            </div>
+    <MapObjectContainer pose={participantProps} ref={ref} disableRotation={true}
+      configurationPluginName={LOCAL_PARTICIPANT_CONFIG}
+      buttonSpacing={{
+        top: -pointerAvatarRatio * props.size / 2,
+        right: -pointerAvatarRatio * props.size / 2,
+      }}
+      counterRotateButtons={true}
+    >
+        <div className="participantWrapper">
+          <div className={classes.pointerRotate}>
+            <Pointer className={classes.pointer} />
           </div>
-          {showConfig ? configuration : null}
-      </MapObjectContainer >
-    </ClickAwayListener>
+          <div className={[classes.avatar, transform.counterRotationClass, 'draggableHandle'].join(' ')}>
+            <Avatar {...props} />
+          </div>
+        </div>
+    </MapObjectContainer >
   )
 }
 

@@ -1,10 +1,23 @@
+import {JitsiLocalTrack, JitsiTrack} from 'lib-jitsi-meet'
 import {MapObject} from './MapObject'
-import {SharedContent} from './SharedContent'
 
-export interface Participant extends MapObject{
+export interface ParticipantBase extends MapObject{
   id: string
   information: Information
-  stream: Stream
+  physics?: Physics
+  tracks: Tracks<JitsiTrack>
+}
+
+export interface RemoteParticipant extends ParticipantBase{
+  id: string
+  information: Information
+  physics?: Physics
+}
+
+export interface LocalParticipant extends ParticipantBase{
+  id: string
+  information: Information
+  tracks: Tracks<JitsiLocalTrack>
   physics?: Physics
 }
 
@@ -19,13 +32,14 @@ export interface Information {
   md5Email?: string
   avatarSrc?: string
 }
-
-export interface Stream {
+export interface Tracks<T extends JitsiTrack> {
+  audio: T | undefined
+  avatar: T | undefined
+  screen: T | undefined
   audioStream: MediaStream | undefined
   avatarStream: MediaStream | undefined
   screenStream: MediaStream | undefined
 }
-
 export interface Physics {
   onStage: boolean
 }

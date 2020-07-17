@@ -1,23 +1,21 @@
-import IconButton from '@material-ui/core/IconButton'
 import {makeStyles} from '@material-ui/core/styles'
-import Tooltip from '@material-ui/core/Tooltip'
-import Zoom from '@material-ui/core/Zoom'
-import MoreVertIcon from '@material-ui/icons/MoreVert'
+import {CallMissedSharp} from '@material-ui/icons'
 import {MapObject, Pose2DMap} from '@models/MapObject'
 import React, {useState} from 'react'
+import {ConfigurationButton} from './ConfigurationButton'
 import {useValue as useTransform} from './useTransform'
 
 interface MapObjectContainerProps extends Partial<MapObject> {
   pose: Pose2DMap
   disableRotation?: boolean
-  openConfiuration?: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void
+  configurationPluginName?: string
   buttonSpacing?: ButtonSpacing
   counterRotateButtons?: boolean
 }
 
 const defaultProps: Partial<MapObjectContainerProps> = {
   disableRotation: false,
-  openConfiuration: undefined,
+  configurationPluginName: undefined,
   buttonSpacing: undefined,
   counterRotateButtons: false,
 }
@@ -52,7 +50,7 @@ HTMLDivElement, React.PropsWithChildren<MapObjectContainerProps>> = (props, ref)
   const {
     pose,
     disableRotation,
-    openConfiuration,
+    configurationPluginName,
     buttonSpacing,
     counterRotateButtons,
   } = Object.assign({}, defaultProps, props)
@@ -64,15 +62,11 @@ HTMLDivElement, React.PropsWithChildren<MapObjectContainerProps>> = (props, ref)
 
   const [showButton, setShowButton] = useState<boolean>(false)
 
-  let fab = (
-    <Zoom in={showButton}>
-      <Tooltip className={className.fab} title="Configure" aria-label="configure">
-        <IconButton color="secondary" onClick={openConfiuration} size={'small'}>
-          <MoreVertIcon />
-        </IconButton>
-      </Tooltip>
-    </Zoom>
-  )
+  let fab = configurationPluginName ? React.createElement(ConfigurationButton, {
+    plugin: configurationPluginName,
+    className: className.fab,
+    show: showButton,
+  }) : undefined
 
   const counterRotationClass = useTransform().counterRotationClass
   if (counterRotateButtons) {
@@ -94,7 +88,7 @@ HTMLDivElement, React.PropsWithChildren<MapObjectContainerProps>> = (props, ref)
     onMouseOut={() => setShowButton(false)}
   >
     {props.children}
-    {openConfiuration ? fab : undefined}
+    {configurationPluginName  ? fab : undefined}
   </div>
 }
 
