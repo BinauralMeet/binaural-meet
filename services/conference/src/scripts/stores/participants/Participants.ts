@@ -31,12 +31,6 @@ export class Participants {
     this.local.set(new LocalParticipant(participantId))
   }
 
-  findRemote(participantId: string): RemoteParticipant {
-    const res = this.remote.get(participantId)
-    assert(res !== undefined)
-
-    return res
-  }
   find(participantId: string): ParticipantBase {
     if (participantId === this.localId) {
 
