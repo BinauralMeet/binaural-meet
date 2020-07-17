@@ -1,14 +1,9 @@
-import {PropTypes} from '@material-ui/core'
 import {
   BaseSharedContent as IBaseSharedContent,
   IframeSharedContent as IIframeSharedContent,
-  IFRAME_TYPE,
   ImgSharedContent as IImgSharedContent,
-  IMG_TYPE,
   TextSharedContent as ITextSharedContent,
-  TEXT_TYPE,
   VideoSharedContent as IVideoSharedContent,
-  VIDEO_TYPE,
 } from '@models/sharedContent'
 import {MapObject} from '@stores/MapObject'
 import {observable} from 'mobx'
@@ -31,16 +26,28 @@ export type SharedContent = ImgSharedContent | IframeSharedContent | TextSharedC
 
 export class ImgSharedContent extends BaseSharedContent<IImgSharedContent> implements IImgSharedContent {
   @observable url = ''
+  constructor(id: string) {
+    super(id, 'img')
+  }
 }
 
 export class IframeSharedContent extends BaseSharedContent<IIframeSharedContent> implements IIframeSharedContent {
   @observable url = ''
+  constructor(id: string) {
+    super(id, 'iframe')
+  }
 }
 
 export class TextSharedContent extends BaseSharedContent<ITextSharedContent> implements ITextSharedContent {
   @observable text = ''
+  constructor(id: string) {
+    super(id, 'text')
+  }
 }
 
 export class VideoSharedContent extends BaseSharedContent<IVideoSharedContent> implements IVideoSharedContent {
   @observable stream = undefined
+  constructor(id: string) {
+    super(id, 'video')
+  }
 }

@@ -1,6 +1,8 @@
 import {makeStyles} from '@material-ui/core/styles'
-import {SharedContent as ISharedContent} from '@models/sharedContent/SharedContent'
-import React, {useEffect, useRef, useState} from 'react'
+import {IFRAME_TYPE, IMG_TYPE, TEXT_TYPE, VIDEO_TYPE} from '@models/sharedContent'
+import {SharedContent} from '@stores/sharedContents/SharedContent'
+import{useObserver} from 'mobx-react-lite'
+import React from 'react'
 
 const useStyles = makeStyles({
   img: {
@@ -17,16 +19,34 @@ const useStyles = makeStyles({
   },
 })
 
+interface ContentProps {
+  content: SharedContent
+}
+
 export const Content: React.FC<any> = (props) => {
-  const content = props.content as ISharedContent
+  const {
+    content,
+  } = props
+
   const classes = useStyles()
-  if (content.type == 'img') {
-    return <img className={classes.img} src={content.url} />
-  } if (content.type == 'iframe') {
-    return <iframe className={classes.iframe} src={content.url} />
-  }else if (content.type == 'text') {
-    return <div className={classes.text} >{content.url}</div>
-  }else {
-    return <div className={classes.text} >Unknow type:{content.type} for {content.url}</div>
+  if (content.type === IMG_TYPE) {
+    return useObserver(() => <img className={classes.img} src={content.url} />)
   }
+
+  if (content.type === IFRAME_TYPE) {
+    return useObserver(() => <iframe className={classes.iframe} src={content.url} />)
+  }
+
+  if (content.type === TEXT_TYPE) {
+    return useObserver(() => <div className={classes.text} >{content.text}</div>)
+  }
+
+  if (content.type === VIDEO_TYPE) {
+    // TODO add support for video type
+    throw new Error('Share video not implemented')
+
+    return useObserver(() => <div />)
+  }
+
+  return <div className={classes.text} >Unknow type:{content.type}</div>
 }

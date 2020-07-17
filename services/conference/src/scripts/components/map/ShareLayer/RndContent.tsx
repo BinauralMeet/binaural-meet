@@ -5,6 +5,7 @@ import {Pose2DMap} from '@models/MapObject'
 import {SharedContent as ISharedContent} from '@models/sharedContent/SharedContent'
 import {rotateVector2DByDegree} from '@models/utils'
 import _ from 'lodash'
+import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useLayoutEffect, useRef, useState} from 'react'
 import {Dimensions, useDimensions} from 'react-dimensions-hook'
 import {Rnd} from 'react-rnd'
@@ -23,7 +24,7 @@ export interface RndContentProps{
   onShare?: (evt: React.MouseEvent<HTMLDivElement>) => void
   onClose?: (evt: React.MouseEvent<HTMLDivElement>) => void
   onPaste?: (evt: ClipboardEvent) => void
-  onUpdate?: (newContent: ISharedContent) => void
+  afterUpdate?: () => void
 }
 interface StyleProps{
   props: RndContentProps,
@@ -36,7 +37,22 @@ interface StyleProps{
 
 //  -----------------------------------------------------------------------------------
 //  The RnDContent component
-export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => {
+export const RndContent: React.FC<RndContentProps> = (props) => {
+  const {
+    content,
+    afterUpdate,
+  } = props
+
+  const {
+    pose,
+    size,
+  } = useObserver(
+    () => ({
+      pose: content.pose,
+      size: content.size,
+    }),
+  )
+
   const transform = useTransform()
   function rotateG2C(gv: [number, number]) {
     const lv = transform.rotateG2L(gv)
@@ -58,25 +74,12 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   }
 
   // states
-  const [pose, setPose] = useState(props.content.pose)  //  pose of content
-  const [size, setSize] = useState(props.content.size)  //  size of content
   const [resizeBase, setResizeBase] = useState(size)    //  size when resize start
   const [resizeBasePos, setResizeBasePos] = useState(pose.position)    //  position when resize start
   const rnd = useRef<Rnd>(null)                         //  ref to rnd to update position and size
   const {ref, dimensions} = useDimensions()             //  title dimensions measured
   const [showTitle, setShowTitle] = useState(!props.autoHideTitle)
-  const [content, setContent] = useState(props.content) //  the content
 
-  //  effects
-  useEffect(  //  Always update pose, size, content
-    () => {
-      if (content !== props.content) {
-        setPose(props.content.pose)
-        setSize(props.content.size)
-        setContent(props.content)
-      }
-    },
-  )
   useLayoutEffect(  //  reflect pose etc. to rnd size
     () => {
       if (rnd.current) { rnd.current.resizable.orientation = pose.orientation + transform.rotation }
@@ -104,22 +107,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   function onClickShare(evt: React.MouseEvent<HTMLDivElement>) { props.onShare?.call(null, evt) }
   function onClickClose(evt: React.MouseEvent<HTMLDivElement>) { props.onClose?.call(null, evt) }
   function onPaste(evt: ClipboardEvent) { props.onPaste?.call(null, evt) }
-  function  updateHandler() {
-    let bChange = false
-    if (! _.isEqual(pose, props.content.pose)) {
-      bChange = true
-    }
-    if (! _.isEqual(size, props.content.size)) {
-      bChange = true
-    }
-    if (bChange) {
-      const newContent = Object.assign({}, props.content)
-      newContent.size = size
-      newContent.pose = pose
-      // console.log('onUpdate', newContent)
-      props.onUpdate?.call(null, newContent)
-    }
-  }
+
   //  drag for title area
   const [preciseOrientation, setPreciseOrientation] = useState(pose.orientation)
   function dragHandler(delta:[number, number], buttons:number, event:any) {
@@ -140,10 +128,8 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       pose.position = addV(pose.position,
                            subV(rotateVector2DByDegree(pose.orientation - newOri, center), center))
       pose.orientation = newOri
-      setPose(Object.assign({}, pose))
     }else {
       pose.position = addV(pose.position, rotateG2C(delta))
-      setPose(Object.assign({}, pose))
     }
   }
   const gesture = useGesture({
@@ -153,10 +139,9 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
         event?.stopPropagation()
         //  event?.preventDefault()
         dragHandler(delta, buttons, event)
-      }else {
-        updateHandler()
       }
     },
+    onDragEnd: () => afterUpdate?.call(null),
   })
   function onResize(evt:MouseEvent | TouchEvent, dir: any, elem:HTMLDivElement, delta:any, pos:any) {
     evt.stopPropagation(); evt.preventDefault()
@@ -180,9 +165,8 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     }
     if (posChange) {
       pose.position = addV(resizeBasePos, deltaPos)
-      setPose(Object.assign({}, pose))
     }
-    setSize(addV(resizeBase, cd))
+    content.size = addV(resizeBase, cd)
   }
 
   const classes = useStyles({props, pose, size, dimensions, showTitle})
@@ -205,7 +189,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
         onResize = {onResize}
         onResizeStop = { (e, dir, elem, delta, pos) => {
           onResize(e, dir, elem, delta, pos)
-          updateHandler()
+          afterUpdate?.call(null)
         } }
       >
         <div className={classes.rndContainer} {...gesture()}>
@@ -218,7 +202,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
               <div className={classes.close} onClick={onClickClose}><CloseRoundedIcon /></div>
             </div>
           </div>
-          <div className={classes.content} ><Content content={props.content} /></div>
+          <div className={classes.content} ><Content content={content} /></div>
         </div>
       </Rnd>
       </div>

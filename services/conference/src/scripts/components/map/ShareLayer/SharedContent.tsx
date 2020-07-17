@@ -12,6 +12,10 @@ export interface SharedContentProps{
 }
 
 export const SharedContent: React.FC<SharedContentProps> = (props:SharedContentProps) => {
+  const {
+    content,
+  } = props
+
   const store = useStore()
 
   return (
@@ -26,17 +30,9 @@ export const SharedContent: React.FC<SharedContentProps> = (props:SharedContentP
           }
         }
       }
-      onUpdate={
-        (newContent: ISharedContent) => {
-          const old:ISharedContent = props.content
-          let identical = false
-          if (old.zorder === newContent.zorder) {
-            old.zorder += 1
-            if (old.zorder === newContent.zorder) {
-              identical = true
-            }
-          }
-          //console.log('RndContent onUpdate from ', old, ' to ', newContent, ` ==? ${identical} `)
+      afterUpdate={
+        () => {
+          content.zorder += 1
           store.updateContents([newContent])
         }
       }

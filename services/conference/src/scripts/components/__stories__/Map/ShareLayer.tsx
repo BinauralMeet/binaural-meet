@@ -1,14 +1,12 @@
-import {PastedContent} from '@components/map/ShareLayer/PastedContent'
 import {SharedContents} from '@components/map/ShareLayer/ShareLayer'
 import {StoreProvider as ContentsProvider} from '@hooks/SharedContentsStore'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {SharedContent as SharedContentStore} from '@stores/sharedContents/SharedContent'
+import {ImgSharedContent} from '@stores/sharedContents/SharedContent'
 import {SharedContents as SharedContentsStore} from '@stores/sharedContents/SharedContents'
-import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 
 function addFakeSharedContents(store: SharedContentsStore) {
-  const sc: SharedContentStore = new SharedContentStore()
+  const sc = new ImgSharedContent('image_id')
   Object.assign(sc, {
     type : 'img',
     url: 'https://i.gyazo.com/d05570612dbbe84c65dd684ef665606e.png',
@@ -45,7 +43,7 @@ const ShareLayerStory: React.FC<{}> = () => {
   return (
     <ContentsProvider value={store}>
       <SharedContents />
-      <PastedContent content={pc} />
+      {/* TODO here paste content reference is deleted. Need handle paste event */}
     </ContentsProvider>
   )
 }
