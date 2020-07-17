@@ -1,6 +1,6 @@
 import {ImageAvatar, StreamAvatar} from '@components/avatar'
 import {Information} from '@models/Participant'
-import JitsiMeetJS, {JitsiTrack} from 'lib-jitsi-meet'
+import JitsiMeetJS from 'lib-jitsi-meet'
 import React, {useEffect, useState} from 'react'
 
 export default {
@@ -23,26 +23,26 @@ export const gavatar = () => {
 }
 
 function captureVideo() {
-  const [track, setTrack] = useState<JitsiTrack | undefined>(undefined)
+  const [stream, setStream] = useState<MediaStream | undefined>(undefined)
 
   useEffect(
     () => {
       JitsiMeetJS.createLocalTracks({devices:['video']})
       .then((tracks) => {
-        setTrack(tracks[0])
+        setStream(tracks[0].getOriginalStream())
       })
     },
     [],
   )
 
-  return [track]
+  return [stream]
 }
 export const video = () => {
-  const [track] = captureVideo()
+  const [stream] = captureVideo()
 
-  if (track === undefined) {
+  if (stream === undefined) {
     return <div />
   }
 
-  return <StreamAvatar track={track} />
+  return <StreamAvatar stream={stream} />
 }

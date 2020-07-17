@@ -23,7 +23,7 @@ const useStyles = makeStyles({
 })
 
 export interface StreamAvatarProps {
-  track: JitsiTrack
+  stream: MediaStream
   size?: number
 }
 
@@ -58,17 +58,17 @@ export const StreamAvatar: React.FC<StreamAvatarProps> = (props: StreamAvatarPro
   useEffect(
     () => {
       if (videoRef !== null && videoRef.current !== null) {
-        setStream(videoRef.current, props.track.getOriginalStream(),
+        setStream(videoRef.current, props.stream,
                   classes.videoLargerWidth, classes.videoLargerHeight)
       }
     },
-    [props.track],
+    [props.stream],
   )
 
   useEffect(
     () => {
       if (videoRef !== null && videoRef.current !== null) {
-        setStream(videoRef.current, props.track.getOriginalStream(),
+        setStream(videoRef.current, props.stream,
                   classes.videoLargerWidth, classes.videoLargerHeight)
       }
     },

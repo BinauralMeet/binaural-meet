@@ -1,5 +1,5 @@
 import {connection} from '@models/api'
-import {LocalTracks} from '@models/Participant'
+import {Tracks} from '@models/Participant'
 import participants from '@stores/participants/Participants'
 import {observe, reaction} from 'mobx'
 import {MediaType, JitsiTrack} from 'lib-jitsi-meet'
