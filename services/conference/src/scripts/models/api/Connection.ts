@@ -68,6 +68,8 @@ const ConferenceEvents = {
   LOCAL_PARTICIPANT_JOINED: 'local_participant_joined',
   REMOTE_TRACK_ADDED: 'remote_track_added',
   LOCAL_TRACK_ADDED: 'local_track_added',
+  REMOTE_TRACK_REMOVED: 'remote_track_removed',
+  LOCAL_TRACK_REMOVED: 'local_track_removed',
   PARTICIPANT_LEFT: 'participant_left',
 }
 
@@ -228,8 +230,16 @@ class Connection extends EventEmitter {
       this.onLocalTrackAdded.bind(this),
     )
     this.on(
+      ConferenceEvents.LOCAL_TRACK_REMOVED,
+      this.onLocalTrackRemoved.bind(this),
+    )
+    this.on(
       ConferenceEvents.REMOTE_TRACK_ADDED,
       this.onRemoteTrackAdded.bind(this),
+    )
+    this.on(
+      ConferenceEvents.REMOTE_TRACK_REMOVED,
+      this.onRemoteTrackRemoved.bind(this),
     )
   }
 
@@ -295,6 +305,37 @@ class Connection extends EventEmitter {
     }
 
     return Promise.reject('No connection has been established.')
+  }
+
+  /**
+   * reduce bit rate
+   * peerconnection as TraceablePeerConnection
+   * peerconnection.peerconnection as RTCPeerConnection */
+  reduceBitrate() {
+    if (config.rtc && this._jitsiConference && this._jitsiConference.jvbJingleSession) {
+      const jingleSession = this._jitsiConference.jvbJingleSession
+      if (!jingleSession.bitRateAlreadyReduced && jingleSession.peerconnection.peerconnection) {
+        jingleSession.bitRateAlreadyReduced = true
+        const pc = jingleSession.peerconnection.peerconnection
+        // console.log('RTCPeerConnect:', pc)
+        pc.getSenders().forEach((sender) => {
+          // console.log(sender)
+          if (sender && sender.track) {
+            const params = sender.getParameters()
+            // console.log('params:', params)
+            params.encodings.forEach((encording) => {
+              const ONE_KILO = 1024
+              if (sender.track!.kind === 'video' && config.rtc.maxBitrateForVideo) {
+                encording.maxBitrate = config.rtc.maxBitrateForVideo * ONE_KILO
+              }else if (sender.track!.kind === 'audio') {
+                encording.maxBitrate = config.rtc.maxBitrateForAudio * ONE_KILO
+              }
+            })
+            sender.setParameters(params)
+          }
+        })
+      }
+    }
   }
 
   /**
@@ -372,33 +413,38 @@ class Connection extends EventEmitter {
               ConferenceEvents.REMOTE_TRACK_ADDED,
               track as JitsiRemoteTrack,
             )
-            //  reduce bit rate
-            //  peerconnection as TraceablePeerConnection
-            //  peerconnection.peerconnection as RTCPeerConnection
-            if (config.rtc && this._jitsiConference && this._jitsiConference.jvbJingleSession) {
-              const jingleSession = this._jitsiConference.jvbJingleSession
-              if (!jingleSession.bitRateAlreadyReduced && jingleSession.peerconnection.peerconnection) {
-                jingleSession.bitRateAlreadyReduced = true
-                const pc = jingleSession.peerconnection.peerconnection
-                // console.log('RTCPeerConnect:', pc)
-                pc.getSenders().forEach((sender) => {
-                  // console.log(sender)
-                  if (sender && sender.track) {
-                    const params = sender.getParameters()
-                    // console.log('params:', params)
-                    params.encodings.forEach((encording) => {
-                      const ONE_KILO = 1024
-                      if (sender.track!.kind === 'video' && config.rtc.maxBitrateForVideo) {
-                        encording.maxBitrate = config.rtc.maxBitrateForVideo * ONE_KILO
-                      }else if (sender.track!.kind === 'audio') {
-                        encording.maxBitrate = config.rtc.maxBitrateForAudio * ONE_KILO
-                      }
-                    })
-                    sender.setParameters(params)
-                  }
-                })
-              }
-            }
+            this.reduceBitrate()
+          }
+        }
+      },
+    )
+
+    /**
+     * Event: JitsiMeetJS.events.conference.TRACK_REMOVED
+     * @emits ConferenceEvents.LOCAL_TRACK_REMOVED
+     * @emits ConferenceEvents.REMOTE_TRACK_REMOVED
+     */
+    conference.on(
+      JitsiMeetJS.events.conference.TRACK_REMOVED,
+      (track: JitsiTrack) => {
+        if (track.isLocal()) {
+          this.emit(
+            ConferenceEvents.LOCAL_TRACK_REMOVED,
+            track as JitsiLocalTrack,
+          )
+        } else {
+          if ((track as JitsiRemoteTrack).isP2P) {
+            this._loggerHandler?.log(`P2P Remote participant ID: ${(<JitsiRemoteTrack>track).getParticipantId()}`, 'TRACK_REMOVED')
+            this.emit(
+              ConferenceEvents.REMOTE_TRACK_REMOVED,
+              track as JitsiRemoteTrack,
+            )
+          }else {
+            this._loggerHandler?.log(`JVB Remote participant ID: ${(<JitsiRemoteTrack>track).getParticipantId()}`, 'TRACK_REMOVED')
+            this.emit(
+              ConferenceEvents.REMOTE_TRACK_REMOVED,
+              track as JitsiRemoteTrack,
+            )
           }
         }
       },
@@ -615,8 +661,6 @@ class Connection extends EventEmitter {
     }
 
     const remote = ParticiantsStore.remote.get(track.getParticipantId())
-    // const warppedT = toTracks(track.getTrack.bind(track))
-
     if (remote) {
       if (track.isAudioTrack()) {
         remote.tracks.audio = track
@@ -627,14 +671,24 @@ class Connection extends EventEmitter {
       }
     }
   }
+  private onRemoteTrackRemoved(track: JitsiLocalTrack) {
+    const remote = ParticiantsStore.remote.get(track.getParticipantId())
+    if (remote) {
+      if (track.isAudioTrack()) {
+        remote.tracks.audio = undefined
+      } else if (track.isVideoTrack() && track.isScreenSharing()) {
+        remote.tracks.screen = undefined
+      } else {
+        remote.tracks.avatar = undefined
+      }
+    }
+  }
 
   private onLocalTrackAdded(track: JitsiLocalTrack) {
     if (this._isForTest) {
       return
     }
     const local = ParticiantsStore.local.get()
-    // const warppedT = toTracks(track.getTrack.bind(track))
-
     if (track.isAudioTrack()) {
       local.tracks.audio = track
     } else if (track.isVideoTrack() && track.isScreenSharing()) {
@@ -643,11 +697,17 @@ class Connection extends EventEmitter {
       local.tracks.avatar = track
     }
   }
-}
+  private onLocalTrackRemoved(track: JitsiLocalTrack) {
+    const local = ParticiantsStore.local.get()
+    if (track.isAudioTrack()) {
+      local.tracks.audio = undefined
+    } else if (track.isVideoTrack() && track.isScreenSharing()) {
+      local.tracks.screen = undefined
+    } else {
+      local.tracks.avatar = undefined
+    }
+  }
 
-
-const toTracks = (f: () => MediaStreamTrack): MediaStreamTrack[] => {
-  return [f().clone()]
 }
 
 const connection = new Connection('PartyConnection')
