@@ -1,4 +1,4 @@
-import {ParticipantBase} from '@stores/participants/Participant'
+import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import {createContext, useContext} from 'react'
 
 export const StoreContext = createContext<ParticipantBase>({} as ParticipantBase)

@@ -1,19 +1,14 @@
-import {LocalParticipant as ILocalParticipant, LocalTracks} from '@models/Participant'
+import {LocalParticipant as ILocalParticipant, Tracks} from '@models/Participant'
+import {JitsiLocalTrack} from 'lib-jitsi-meet'
 import {observable} from 'mobx'
 import {shallowObservable, Store} from '../utils'
 import {DevicePreference} from './localPlugins'
-import {ParticipantBase} from './Participant'
+import {ParticipantBase, TracksStore} from './ParticipantBase'
 
 export class LocalParticipant extends ParticipantBase implements Store<ILocalParticipant> {
   devicePreference = new DevicePreference()
-  tracks = shallowObservable<LocalTracks>({
-    audio: undefined,
-    avatar: undefined,
-    screen: undefined,
-  })
-
+  tracks = shallowObservable<TracksStore<JitsiLocalTrack>>(new TracksStore())
   @observable useStereoAudio = true
-
   constructor(id: string) {
     super(id)
   }

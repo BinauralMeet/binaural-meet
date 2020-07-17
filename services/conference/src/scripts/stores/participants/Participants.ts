@@ -1,8 +1,8 @@
 import {assert} from '@models/utils'
 import {action, computed, observable} from 'mobx'
 import {LocalParticipant} from './LocalParticipant'
-import {ParticipantBase, RemoteParticipant} from './Participant'
-
+import {ParticipantBase} from './ParticipantBase'
+import {RemoteParticipant} from './RemoteParticipant'
 export class Participants {
   @observable.shallow readonly remote = new Map<string, RemoteParticipant>()
   local = observable.box(new LocalParticipant('default_local_participant_id'))

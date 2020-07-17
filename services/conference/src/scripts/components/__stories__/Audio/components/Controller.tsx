@@ -48,7 +48,7 @@ const randomPositionLocal = action(() => {
 })
 
 const bindAudioStream = action(() => {
-  console.log('TODO: create JitsiLocalTrack from MediaStream is needed but not done.')
+  console.error('TODO: create JitsiLocalTrack from MediaStream is needed but not done.')
   /*  const source = new AudioSource()
   store.remote.forEach((p) => {
     p.tracks.audio =

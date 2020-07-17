@@ -5,19 +5,19 @@ export interface ParticipantBase extends MapObject{
   id: string
   information: Information
   physics?: Physics
+  tracks: Tracks<JitsiTrack>
 }
 
 export interface RemoteParticipant extends ParticipantBase{
   id: string
   information: Information
-  tracks: Tracks
   physics?: Physics
 }
 
 export interface LocalParticipant extends ParticipantBase{
   id: string
   information: Information
-  tracks: LocalTracks
+  tracks: Tracks<JitsiLocalTrack>
   physics?: Physics
 }
 
@@ -32,18 +32,14 @@ export interface Information {
   md5Email?: string
   avatarSrc?: string
 }
-
-export interface Tracks {
-  audio: JitsiTrack | undefined
-  avatar: JitsiTrack | undefined
-  screen: JitsiTrack | undefined
+export interface Tracks<T extends JitsiTrack> {
+  audio: T | undefined
+  avatar: T | undefined
+  screen: T | undefined
+  audioStream: MediaStream | undefined
+  avatarStream: MediaStream | undefined
+  screenStream: MediaStream | undefined
 }
-export interface LocalTracks {
-  audio: JitsiLocalTrack | undefined
-  avatar: JitsiLocalTrack | undefined
-  screen: JitsiLocalTrack | undefined
-}
-
 export interface Physics {
   onStage: boolean
 }

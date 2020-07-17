@@ -1,7 +1,5 @@
 import {useStore as usePsStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
-import {LocalParticipant} from '@stores/participants/LocalParticipant'
-import {RemoteParticipant} from '@stores/participants/Participant'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {ComposedAvatar} from './ComposedAvatar'
@@ -16,15 +14,9 @@ const ConnectedAvatar: React.FC<ConnectedAvatarProps> = (props) => {
 
   const {
     information,
-    track,
+    stream,
     showVideo,
   } = useObserver(() => {
-    let track = undefined
-    if (participant instanceof LocalParticipant) {
-      track = participant.tracks.avatar
-    }else if (participant instanceof RemoteParticipant) {
-      track = participant.tracks.avatar
-    }
 
     return {
       information: {
@@ -32,12 +24,12 @@ const ConnectedAvatar: React.FC<ConnectedAvatarProps> = (props) => {
         email: participant.information.email,
         md5Email: participant.information.md5Email,
       },
-      track,
+      stream: participant.tracks.avatarStream,
       showVideo: participant.plugins.streamControl.showVideo,
     }
   })
 
-  return <ComposedAvatar information={information} track={showVideo ? track : undefined} size={props.size} />
+  return <ComposedAvatar information={information} stream={showVideo ? stream : undefined} size={props.size} />
 }
 
 export const MemoedAvatar = memoComponent(ConnectedAvatar, ['participantId', 'size'])

@@ -1,8 +1,8 @@
 import {connection} from '@models/api'
-import {LocalTracks} from '@models/Participant'
+import {Tracks} from '@models/Participant'
 import participants from '@stores/participants/Participants'
 import {observe, reaction} from 'mobx'
-import {MediaType} from 'lib-jitsi-meet'
+import {MediaType, JitsiLocalTrack} from 'lib-jitsi-meet'
 
 reaction(() => participants.local.get().tracks.screen,
   (screen) => {
@@ -27,8 +27,8 @@ reaction(() => participants.local.get().tracks.screen,
 observe(participants.local.get().tracks, (change) => {
   console.log('observe called')
   if (change.type === 'update'){
-    const newTracks = change.newValue as LocalTracks
-    const oldTracks = change.newValue as LocalTracks
+    const newTracks = change.newValue as Tracks<JitsiLocalTrack>
+    const oldTracks = change.newValue as Tracks<JitsiLocalTrack>
     if (oldTracks.screen){
       connection.conference?.removeTrack(oldTracks.screen)
     }
