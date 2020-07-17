@@ -17,9 +17,11 @@ interface StyleProps {
 
 const useStyles = makeStyles({
   root: {
-    position: 'relative',
+    position: 'absolute',
     width: '100%',
     height: '100%',
+    top: 0,
+    left: 0,
     userDrag: 'none',
     userSelect: 'none',
   },

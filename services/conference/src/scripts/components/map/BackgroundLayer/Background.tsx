@@ -25,16 +25,24 @@ const useStyles = makeStyles({
       width: SIZE,
     }
   },
-  logo: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    margin: 'auto',
-    height: '10em',
-    userDrag: 'none',
-    userSelect: 'none',
+  logo: (props:BackgroundProps) => {
+    if (props.isTransparnet) {
+      return {
+        display:'none',
+      }
+    }
+
+    return {
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      margin: 'auto',
+      height: '10em',
+      userDrag: 'none',
+      userSelect: 'none',
+    }
   },
 })
 
