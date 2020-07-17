@@ -6,13 +6,12 @@ import React, {useEffect, useRef} from 'react'
 const useStyles = makeStyles({
   container: {
     height: '90%',
-    width: '100%',
-    transform:'none',
     backgroundColor: 'red',
     opacity: 0.2,
+    marginLeft: 'auto',
+    marginRight: 'auto',
   },
   video:{
-    margin: '0 auto',
   },
 })
 
@@ -27,9 +26,8 @@ const setStream = (
 export const MainScreen: React.FC = () => {
   const classes = useStyles()
   const store = useContentsStore()
-  const tracks = useObserver(() => (store.mainTracks))
+  const track = useObserver(() => (store.mainTrack))
   const videoRef = useRef<HTMLVideoElement>(null)
-  const track = (tracks && tracks.length) ? tracks[0] : undefined
 
   useEffect(
     () => {

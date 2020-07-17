@@ -7,14 +7,15 @@ import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {BackgroundLayer} from './BackgroundLayer'
 
+
 export const Map: React.FC<BaseProps> = (props) => {
   const store = useContentsStore()
-  const length = useObserver(() => store.mainTracks.length)
+  const track = useObserver(() => store.mainTrack)
 
   return (
     <Base {...props}>
-      {length ? <div /> : <BackgroundLayer />}
-      {length ? <div /> : <ShareLayer />}
+      {<BackgroundLayer isTransparnet={track !== undefined} />}
+      {track ? <div /> : <ShareLayer />}
       <ParticipantsLayer />
     </Base>
   )

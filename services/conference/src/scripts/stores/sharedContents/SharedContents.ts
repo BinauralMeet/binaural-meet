@@ -31,7 +31,7 @@ export class SharedContents extends EventEmitter {
   private localId = ''
 
   //  track for FrontScreen
-  @observable.shallow mainTracks: JitsiTrack[] = []
+  @observable.ref mainTrack: JitsiTrack|undefined = undefined
   //  All shared objects in Z order. Observed by component.
   @observable.shallow all: SharedContent[] = []
   //  contents by owner
