@@ -2,7 +2,8 @@ import {connection} from '@models/api'
 import {LocalTracks} from '@models/Participant'
 import participants from '@stores/participants/Participants'
 import {observe, reaction} from 'mobx'
-import {MediaType} from 'lib-jitsi-meet'
+import {MediaType, JitsiTrack} from 'lib-jitsi-meet'
+import sharedContents from '@stores/sharedContents/SharedContents'
 
 reaction(() => participants.local.get().tracks.screen,
   (screen) => {
@@ -24,16 +25,15 @@ reaction(() => participants.local.get().tracks.screen,
 )
 
 
-observe(participants.local.get().tracks, (change) => {
-  console.log('observe called')
-  if (change.type === 'update'){
-    const newTracks = change.newValue as LocalTracks
-    const oldTracks = change.newValue as LocalTracks
-    if (oldTracks.screen){
-      connection.conference?.removeTrack(oldTracks.screen)
-    }
-    if (newTracks.screen){
-      connection.conference?.addTrack(newTracks.screen)
-    }
+reaction(() => Array.from(participants.remote.values()).map(remote => remote.tracks.screen),
+  (screens) => {
+    const ss:JitsiTrack[] = []
+    screens.forEach((s)=>{
+      if (s) {
+        ss.push(s)
+      }
+      sharedContents.mainTracks = ss
+    })
+    console.log('MainScreen = ', ss)
   }
-})
+)

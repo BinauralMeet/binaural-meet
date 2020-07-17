@@ -3,6 +3,7 @@ import {ParticipantContents as IParticipantContents, SharedContent as ISharedCon
 import {default as participantsStore} from '@stores/participants/Participants'
 import {diffMap} from '@stores/utils'
 import {EventEmitter} from 'events'
+import {JitsiTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
 import {computed, observable} from 'mobx'
 import {SharedContent} from './SharedContent'
@@ -28,6 +29,9 @@ export const SharedContentsEvents = {
 }
 export class SharedContents extends EventEmitter {
   private localId = ''
+
+  //  track for FrontScreen
+  @observable.shallow mainTracks: JitsiTrack[] = []
   //  All shared objects in Z order. Observed by component.
   @observable.shallow all: SharedContent[] = []
   //  contents by owner

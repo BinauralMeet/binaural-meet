@@ -3,6 +3,7 @@ import {makeStyles} from '@material-ui/core/styles'
 import participantsStore from '@stores/participants/Participants'
 import React from 'react'
 import {Footer} from './footer/footer'
+import {MainScreen} from './map/MainScreen'
 import {Map} from './map/map'
 
 const useStyles = makeStyles({
@@ -22,6 +23,7 @@ export const App: React.FC<{}> = () => {
   return (
     <ParticipantsProvider value={participantsStore}>
     <div className={classes.map}>
+      <MainScreen />
       <Map />
       <Footer />
     </div>
