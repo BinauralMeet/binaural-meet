@@ -25,8 +25,8 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
 export class TracksStore<T extends JitsiTrack> implements Tracks<T>{
   @observable.ref audio:T|undefined = undefined
   @observable.ref avatar:T|undefined = undefined
-  @observable.ref screen:T|undefined = undefined
+  @observable.ref screen:T[][] = []
   @computed get audioStream() { return this.audio?.getOriginalStream() }
   @computed get avatarStream() { return this.avatar?.getOriginalStream() }
-  @computed get screenStream() { return this.screen?.getOriginalStream() }
+  @computed get screenStream() { return this.screen.map(tracks => tracks[0].getOriginalStream()) }
 }

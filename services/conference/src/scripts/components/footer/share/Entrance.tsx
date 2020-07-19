@@ -3,7 +3,7 @@ import HttpIcon from '@material-ui/icons/Http'
 import ImageIcon from '@material-ui/icons/Image'
 import ScreenShareIcon from '@material-ui/icons/ScreenShare'
 import SubjectIcon from '@material-ui/icons/Subject'
-import {shareScreenStream} from '@models/share/shareScreenStream'
+import {shareMainScreenStream} from '@models/share/shareScreenStream'
 import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'
 import React from 'react'
 import {DialogPageProps} from './DialogPage'
@@ -42,7 +42,7 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
         icon={<ScreenShareIcon />}
         text="Screen"
         onClick={() => {
-          startCapture().then(shareScreenStream)
+          startCapture().then(shareMainScreenStream)
           setStep('none')
         }}
       />

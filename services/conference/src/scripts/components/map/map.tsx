@@ -10,12 +10,12 @@ import {BackgroundLayer} from './BackgroundLayer'
 
 export const Map: React.FC<BaseProps> = (props) => {
   const store = useContentsStore()
-  const track = useObserver(() => store.mainTrack)
+  const stream = useObserver(() => store.mainStream)
 
   return (
     <Base {...props}>
-      {<BackgroundLayer isTransparnet={track !== undefined} />}
-      {track ? <div /> : <ShareLayer />}
+      {<BackgroundLayer isTransparnet={stream !== undefined} />}
+      {stream ? <div /> : <ShareLayer />}
       <ParticipantsLayer />
     </Base>
   )

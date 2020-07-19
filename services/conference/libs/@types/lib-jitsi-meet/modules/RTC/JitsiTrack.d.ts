@@ -61,6 +61,8 @@ declare class JitsiTrack extends EventEmitter {
   detach: (container: HTMLElement) => void
   dispose: () => Promise<void>
   isScreenSharing: () => boolean
+  isMainScreen: () => boolean
+  isContentScreen: () => boolean
   getId: () => string | null
   isActive: () => boolean
   setAudioLevel: (audioLevel: number, tpc: TraceablePeerConnection) => void

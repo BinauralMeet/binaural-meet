@@ -48,22 +48,22 @@ const setStream = (
 export const MainScreen: React.FC = () => {
   const classes = useStyles()
   const store = useContentsStore()
-  const track = useObserver(() => (store.mainTrack))
+  const stream = useObserver(() => (store.mainStream))
   const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(
     () => {
       if (videoRef !== null && videoRef.current !== null) {
-        setStream(videoRef.current, track ? track.getOriginalStream() : null,
+        setStream(videoRef.current, stream ? stream : null,
                   classes.videoLargerWidth, classes.videoLargerHeight)
       }
     },
-    [track],
+    [stream],
   )
 
   return (
     <div className={classes.container} >
-      <video ref={videoRef} style= {{visibility : track ? 'visible' : 'hidden'} } />
+      <video ref={videoRef} style= {{visibility : stream ? 'visible' : 'hidden'} } />
     </div>
   )
 }

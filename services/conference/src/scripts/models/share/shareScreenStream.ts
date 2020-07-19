@@ -1,14 +1,15 @@
-import {default as participants} from '@stores/participants/Participants'
+import {default as sharedContents} from '@stores/sharedContents/SharedContents'
 import {JitsiLocalTrack} from 'lib-jitsi-meet'
 
-export function shareScreenStream(tracks: JitsiLocalTrack[]) {
-  // TODO add stream to store
-  console.log('start sharing screen')
-  participants.local.get().tracks.screen = tracks[0]
+export function shareMainScreenStream(tracks: JitsiLocalTrack[]) {
+  console.log('start sharing screen of ', tracks)
 
-  // TODO register callback to stop share event
-  tracks[0].getTrack().onended = () => {
-    console.log('stop sharing screen')
-    participants.local.get().tracks.screen = undefined
+  sharedContents.localMainTracks = new Set(tracks)
+
+  if (tracks.length){
+    tracks[0].getTrack().onended = () => {
+      console.log('stop sharing screen of ', tracks[0])
+      sharedContents.localMainTracks = new Set()
+    }
   }
 }

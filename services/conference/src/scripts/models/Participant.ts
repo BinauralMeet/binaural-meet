@@ -35,10 +35,8 @@ export interface Information {
 export interface Tracks<T extends JitsiTrack> {
   audio: T | undefined
   avatar: T | undefined
-  screen: T | undefined
   audioStream: MediaStream | undefined
   avatarStream: MediaStream | undefined
-  screenStream: MediaStream | undefined
 }
 export interface Physics {
   onStage: boolean

@@ -660,26 +660,44 @@ class Connection extends EventEmitter {
       return
     }
 
-    const remote = ParticiantsStore.remote.get(track.getParticipantId())
-    if (remote) {
-      if (track.isAudioTrack()) {
-        remote.tracks.audio = track
-      } else if (track.isVideoTrack() && track.isScreenSharing()) {
-        remote.tracks.screen = track
-      } else {
-        remote.tracks.avatar = track
+    const pid = track.getParticipantId()
+    if (track.isMainScreen()) {
+      const tracks:Set<JitsiTrack> = new Set(sharedContents.remoteMainTracks.get(pid))
+      tracks.add(track)
+      sharedContents.remoteMainTracks.set(pid, tracks)
+    }else if (track.isContentScreen()) {
+      //  todo
+    }else {
+      const remote = ParticiantsStore.remote.get(track.getParticipantId())
+      if (remote) {
+        if (track.isAudioTrack()) {
+          remote.tracks.audio = track
+        } else {
+          remote.tracks.avatar = track
+        }
       }
     }
   }
   private onRemoteTrackRemoved(track: JitsiLocalTrack) {
-    const remote = ParticiantsStore.remote.get(track.getParticipantId())
-    if (remote) {
-      if (track.isAudioTrack()) {
-        remote.tracks.audio = undefined
-      } else if (track.isVideoTrack() && track.isScreenSharing()) {
-        remote.tracks.screen = undefined
-      } else {
-        remote.tracks.avatar = undefined
+    const pid = track.getParticipantId()
+    if (track.isMainScreen()) {
+      const tracks:Set<JitsiTrack> = new Set(sharedContents.remoteMainTracks.get(pid))
+      tracks.delete(track)
+      if (tracks.size) {
+        sharedContents.remoteMainTracks.set(pid, tracks)
+      }else {
+        sharedContents.remoteMainTracks.delete(pid)
+      }
+    }else if (track.isContentScreen()) {
+      //  TODO
+    }else {
+      const remote = ParticiantsStore.remote.get(track.getParticipantId())
+      if (remote) {
+        if (track.isAudioTrack()) {
+          remote.tracks.audio = undefined
+        } else {
+          remote.tracks.avatar = undefined
+        }
       }
     }
   }
@@ -689,25 +707,29 @@ class Connection extends EventEmitter {
       return
     }
     const local = ParticiantsStore.local.get()
-    if (track.isAudioTrack()) {
+    if (track.isMainScreen()) {
+      sharedContents.localMainTracks.add(track)
+    }else if (track.isContentScreen()) {
+      // TODO add contents
+      // sharedContents.localContentTracks.set(track.videoType(), track)
+    }else if (track.isAudioTrack()) {
       local.tracks.audio = track
-    } else if (track.isVideoTrack() && track.isScreenSharing()) {
-      local.tracks.screen = track
     } else {
       local.tracks.avatar = track
     }
   }
   private onLocalTrackRemoved(track: JitsiLocalTrack) {
     const local = ParticiantsStore.local.get()
-    if (track.isAudioTrack()) {
+    if (track.isMainScreen()) {
+      sharedContents.localMainTracks.delete(track)
+    }else if (track.isContentScreen()) {
+      //  TODO: delete to contents from tracks
+    }else if (track.isAudioTrack()) {
       local.tracks.audio = undefined
-    } else if (track.isVideoTrack() && track.isScreenSharing()) {
-      local.tracks.screen = undefined
     } else {
       local.tracks.avatar = undefined
     }
   }
-
 }
 
 const connection = new Connection('PartyConnection')
