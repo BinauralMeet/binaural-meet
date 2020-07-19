@@ -3,7 +3,7 @@ import participants from '@stores/participants/Participants'
 import sharedContents from '@stores/sharedContents/SharedContents'
 import {diffSet} from '@stores/utils'
 import {JitsiLocalTrack} from 'lib-jitsi-meet'
-import {reaction} from 'mobx'
+import {configure, reaction} from 'mobx'
 
 reaction(() => sharedContents.remoteMainTracks, (remoteMainTracks) => {
   if (sharedContents.localMainTracks.size) {
@@ -15,7 +15,6 @@ reaction(() => sharedContents.remoteMainTracks, (remoteMainTracks) => {
   }
 })
 
-let prevTracks:Set<JitsiLocalTrack> = new Set()
 reaction(() => sharedContents.localMainTracks, (tracks) => {
 /*  const added = diffSet(tracks, prevTracks)
   const removed = diffSet(prevTracks, tracks)
@@ -24,8 +23,10 @@ reaction(() => sharedContents.localMainTracks, (tracks) => {
   removed.forEach((track) => { connection.conference?.removeTrack(track) })
   added.forEach((track) => { connection.conference?.addTrack(track) })
   */
-  prevTracks.forEach((track) => { connection.conference?.removeTrack(track) })
-  tracks.forEach((track) => { connection.conference?.addTrack(track) })
+  const oldVideoTracks = connection.conference?.getLocalTracks('video')
+  oldVideoTracks?.forEach(t => t.isMainScreen() &&  connection.conference?.removeTrack(t))
+  const oldAudioTracks = connection.conference?.getLocalTracks('audio')
+  oldAudioTracks?.forEach(t => t.isMainScreen() &&  connection.conference?.removeTrack(t))
 
-  prevTracks = tracks
+  tracks.forEach((track) => { connection.conference?.addTrack(track) })
 })
