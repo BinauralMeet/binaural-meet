@@ -4,7 +4,7 @@ import {default as participantsStore} from '@stores/participants/Participants'
 import {diffMap} from '@stores/utils'
 import {EventEmitter} from 'events'
 import _ from 'lodash'
-import {computed, observable} from 'mobx'
+import {action, computed, observable} from 'mobx'
 import {SharedContent} from './SharedContent'
 
 function contentComp(a:ISharedContent, b:ISharedContent) {
@@ -69,6 +69,7 @@ export class SharedContents extends EventEmitter {
   //  map from contentId to participantId
   owner: Map <string, string> = new Map<string, string>()
 
+  @action.bound
   private updateAll() {
     this.contents.length = 0
     this.participants.forEach((participant) => {
@@ -79,6 +80,7 @@ export class SharedContents extends EventEmitter {
   }
 
   //  add
+  @action.bound
   addLocalContent(content:SharedContent) {
     this.localParticipant.contents.set(content.id, content)
     this.owner.set(content.id, participantsStore.localId)
@@ -86,6 +88,7 @@ export class SharedContents extends EventEmitter {
   }
 
   //  replace contents of one participant. A content can be new one (add) or exsiting one (update).
+  @action.bound
   replaceRemoteContents(pid: string, contents:SharedContent[]) { //  entries = [pid, content][]
     if (pid === participantsStore.localId) {  //  this is for remote participant
       console.log('Error replaceContents called for local participant')
@@ -136,6 +139,7 @@ export class SharedContents extends EventEmitter {
   }
 
   //  Update contents. For update requset.
+  @action.bound
   updateContents(contents: SharedContent[]) {
     contents.forEach((content) => {
       const contentOwner = this.owner.get(content.id)
@@ -154,6 +158,7 @@ export class SharedContents extends EventEmitter {
   }
 
   //  Remove contents when the content is owned by local participant
+  @action.bound
   removeContents(pid: string, cids: string[]) {
     const participant = this.participants.get(pid)
     if (participant) {
@@ -175,6 +180,7 @@ export class SharedContents extends EventEmitter {
   }
 
   //  If I'm the next, obtain the contents
+  @action.bound
   onParticipantLeft(pidLeave:string) {
     console.log('onParticipantLeft called with pid = ', pidLeave)
     const participantLeave = this.participants.get(pidLeave)
@@ -205,6 +211,7 @@ export class SharedContents extends EventEmitter {
     }
   }
 
+  @action.bound
   private removeParticipant(pid:string) {
     const participant = this.participants.get(pid)
     if (participant) {
