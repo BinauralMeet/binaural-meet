@@ -1,34 +1,36 @@
-import _ from 'lodash'
-import {reaction} from 'mobx'
+/**
+  Synchronze changes in one store to another symmetric store
 
-const OBSERVED_PROPERTIES = Symbol('observedProperties')
-const GET_BUNDLED_UPDATE = Symbol('getBundledUpdate')
-const APPLY_UPDATE = Symbol('applyUpdate')
+  The mobx store should have the following form:
+  class Store {
+    @observable prop1 = {...}
+    @observable prop2 = ...
+    ...
+  }
+  If any shallow property (e.g. prop1, prop2) have changes inside, the whole property would be copied
+*/
 
-interface SyncedStore<T> {
-  [OBSERVED_PROPERTIES]: (keyof T)[]
-  [GET_BUNDLED_UPDATE]: () => Partial<T>
-  [APPLY_UPDATE]: (change: Partial<T>) => void
+import {toJS} from 'mobx'
+import {deepObserve} from 'mobx-utils'
+
+export function observeShallowUpdate<Store>(store: Store, onChange: (property: keyof Store) => void) {
+  deepObserve(store, (change, path) => {
+    if (change.type !== 'update') {
+      throw new Error(`Unrecognized change type: ${change.type}`)
+    }
+    onChange(path.split('/')[0] as keyof Store)
+  })
 }
 
-export function makeSyncedStore<T>(store: T, properties: (keyof T)[]): T & SyncedStore<T> {
-  let update: Partial<T> = {}
-
-  reaction(
-    () => _.pick(store, properties),
-    partial => Object.assign(GET_BUNDLED_UPDATE, partial),  // TODO: sync data
-  )
-
-  const getBundledUpdate = () => {
-    const res = Object.assign({}, update)
-    update = {}
-
-    return res
-  }
-
-  return Object.assign({}, store, {
-    [OBSERVED_PROPERTIES]: properties,
-    [GET_BUNDLED_UPDATE]: update,
-    [APPLY_UPDATE]: () => {},
+export function serialize<Store>(store: Store, propertyNames: (keyof Store)[]): Partial<Store> {
+  const res: Partial<Store> = {}
+  propertyNames.forEach((name) => {
+    res[name] = toJS(store[name])
   })
+
+  return res
+}
+
+export function deserialize<Store>(store: Store, change: Partial<Store>) {
+  Object.assign(store, change)
 }

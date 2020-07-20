@@ -20,10 +20,6 @@ class BaseSharedContent<T extends IBaseSharedContent> extends MapObject implemen
     this.id = id
     this.type = type
   }
-
-  protected getObservedProperties(): (keyof T)[] {
-    return ['pose', 'size']
-  }
 }
 
 export type SharedContent = ImgSharedContent | IframeSharedContent | TextSharedContent | VideoSharedContent
@@ -33,20 +29,12 @@ export class ImgSharedContent extends BaseSharedContent<IImgSharedContent> imple
   constructor(id: string) {
     super(id, 'img')
   }
-
-  protected getObservedProperties(): (keyof IImgSharedContent)[] {
-    return super.getObservedProperties().splice(0, 0, 'url')
-  }
 }
 
 export class IframeSharedContent extends BaseSharedContent<IIframeSharedContent> implements IIframeSharedContent {
   @observable url = ''
   constructor(id: string) {
     super(id, 'iframe')
-  }
-
-  protected getObservedProperties(): (keyof IIframeSharedContent)[] {
-    return super.getObservedProperties().splice(0, 0, 'url')
   }
 }
 
@@ -55,19 +43,11 @@ export class TextSharedContent extends BaseSharedContent<ITextSharedContent> imp
   constructor(id: string) {
     super(id, 'text')
   }
-
-  protected getObservedProperties(): (keyof ITextSharedContent)[] {
-    return super.getObservedProperties().splice(0, 0, 'text')
-  }
 }
 
 export class VideoSharedContent extends BaseSharedContent<IVideoSharedContent> implements IVideoSharedContent {
   @observable stream = undefined
   constructor(id: string) {
     super(id, 'video')
-  }
-
-  protected getObservedProperties(): (keyof IVideoSharedContent)[] {
-    return super.getObservedProperties().splice(0, 0, 'stream')
   }
 }

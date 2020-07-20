@@ -5,6 +5,7 @@ import {Pose2DMap} from '@models/MapObject'
 import {SharedContent as ISharedContent} from '@models/sharedContent/SharedContent'
 import {rotateVector2DByDegree} from '@models/utils'
 import _ from 'lodash'
+import {action} from 'mobx'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useLayoutEffect, useRef, useState} from 'react'
 import {Dimensions, useDimensions} from 'react-dimensions-hook'
@@ -110,7 +111,7 @@ export const RndContent: React.FC<RndContentProps> = (props) => {
 
   //  drag for title area
   const [preciseOrientation, setPreciseOrientation] = useState(pose.orientation)
-  function dragHandler(delta:[number, number], buttons:number, event:any) {
+  const dragHandler = action((delta:[number, number], buttons:number, event:any) => {
     const MOUSE_RIGHT = 2
     const ROTATION_IN_DEGREE = 360
     const ROTATION_STEP = 15
@@ -131,7 +132,7 @@ export const RndContent: React.FC<RndContentProps> = (props) => {
     }else {
       pose.position = addV(pose.position, rotateG2C(delta))
     }
-  }
+  })
   const gesture = useGesture({
     onDrag: ({down, delta, event, xy, buttons}) => {
       // console.log('onDragTitle:', delta)
@@ -143,7 +144,7 @@ export const RndContent: React.FC<RndContentProps> = (props) => {
     },
     onDragEnd: () => afterUpdate?.call(null),
   })
-  function onResize(evt:MouseEvent | TouchEvent, dir: any, elem:HTMLDivElement, delta:any, pos:any) {
+  const onResize = action((evt:MouseEvent | TouchEvent, dir: any, elem:HTMLDivElement, delta:any, pos:any) => {
     evt.stopPropagation(); evt.preventDefault()
     const cd:[number, number] = [delta.width, delta.height]
     // console.log('resize dir:', dir, ' delta:', delta, ' d:', d, ' pos:', pos)
@@ -167,7 +168,7 @@ export const RndContent: React.FC<RndContentProps> = (props) => {
       pose.position = addV(resizeBasePos, deltaPos)
     }
     content.size = addV(resizeBase, cd)
-  }
+  })
 
   const classes = useStyles({props, pose, size, dimensions, showTitle})
   //  console.log('render: dimensions.clientHeight:', dimensions.clientHeight)
