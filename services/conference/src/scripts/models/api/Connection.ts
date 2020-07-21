@@ -22,9 +22,10 @@ import {ConnectionStates, ConnectionStatesType} from './Constants'
 import ApiLogger, {ILoggerHandler} from './Logger'
 
 //  Log level and module log options
-const JITSILOGLEVEL = 'warn'                    // debug log warn error
-const TRACKLOG = false
-TPC.setTPCLOG(TRACKLOG)
+const JITSILOGLEVEL = 'warn'  // log level for lib-jitsi-meet {debug|log|warn|error}
+const TRACKLOG = true         // show add, remove... of tracks
+TPC.setTPCLogger(TRACKLOG ? console.log : (a:any) => {})
+const trackLog = TRACKLOG ? console.log : (a:any) => {}
 
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
@@ -396,7 +397,7 @@ class Connection extends EventEmitter {
     conference.on(
       JitsiMeetJS.events.conference.TRACK_ADDED,
       (track: JitsiTrack) => {
-        TRACKLOG && console.log(`TRACK_ADDED: ${track} type:${track.getType()} ${track.getUsageLabel()} tid:${track.getId()} msid:${track.getOriginalStream().id}`)
+        trackLog(`TRACK_ADDED: ${track} type:${track.getType()} ${track.getUsageLabel()} tid:${track.getId()} msid:${track.getOriginalStream().id}`)
 
         if (track.isLocal()) {
           this.emit(
@@ -432,7 +433,7 @@ class Connection extends EventEmitter {
     conference.on(
       JitsiMeetJS.events.conference.TRACK_REMOVED,
       (track: JitsiTrack) => {
-        TRACKLOG && console.log(`TRACK_REMOVED: ${track} type:${track.getType()} ${track.getUsageLabel()} tid:${track.getId()} msid:${track.getOriginalStream().id}`)
+        trackLog(`TRACK_REMOVED: ${track} type:${track.getType()} ${track.getUsageLabel()} tid:${track.getId()} msid:${track.getOriginalStream().id}`)
 
         if (track.isLocal()) {
           this.emit(
@@ -471,7 +472,7 @@ class Connection extends EventEmitter {
         const remoteTrack = track as JitsiRemoteTrack
         const target = ParticiantsStore.find(remoteTrack.getParticipantId())
         if (remoteTrack.isVideoTrack()) {
-          TRACKLOG && console.log(`TRACK_MUTE_CHANGED ${remoteTrack}`)
+          trackLog(`TRACK_MUTE_CHANGED ${remoteTrack}`)
           target.plugins.streamControl.muteVideo = remoteTrack.isMuted()
         }
       },

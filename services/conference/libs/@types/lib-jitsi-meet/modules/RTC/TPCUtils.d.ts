@@ -1,2 +1,1 @@
-export declare let TPCLOG : boolean
-export declare function setTPCLOG(f:boolean):void
+export declare function setTPCLogger(a:any):void
