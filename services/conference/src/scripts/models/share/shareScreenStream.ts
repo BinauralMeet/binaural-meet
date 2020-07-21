@@ -6,7 +6,7 @@ export function shareMainScreenStream(tracks: JitsiLocalTrack[]) {
 
   sharedContents.localMainTracks = new Set(tracks)
 
-  if (tracks.length){
+  if (tracks.length) {
     tracks[0].getTrack().onended = () => {
       console.log('stop sharing screen of ', tracks[0])
       sharedContents.localMainTracks = new Set()
