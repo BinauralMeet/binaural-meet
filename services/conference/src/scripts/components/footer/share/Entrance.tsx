@@ -63,6 +63,7 @@ async function startCapture(displayMediaOptions: any = {}) {
     throw err
 
   }
+  for (const track of captureTracks) { track.makeThisMainScreen() }
   console.log('got desktop track', captureTracks)
 
   return captureTracks as JitsiLocalTrack[]

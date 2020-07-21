@@ -687,12 +687,13 @@ class Connection extends EventEmitter {
 
     const pid = track.getParticipantId()
     if (track.isMainScreen()) {
+      //  console.log(`${track} videoType:${(track as any).videoType} added`)
       const tracks:Set<JitsiTrack> = new Set(sharedContents.remoteMainTracks.get(pid))
       tracks.add(track)
       sharedContents.remoteMainTracks.set(pid, tracks)
-    }else if (track.isContentScreen()) {
+    }else if (track.getContentId()) {
       //  todo
-    }else {
+    }else { //  remote mic and camera
       const remote = ParticiantsStore.remote.get(track.getParticipantId())
       if (remote) {
         if (track.isAudioTrack()) {
@@ -713,9 +714,9 @@ class Connection extends EventEmitter {
       }else {
         sharedContents.remoteMainTracks.delete(pid)
       }
-    }else if (track.isContentScreen()) {
+    }else if (track.getContentId()) {
       //  TODO
-    }else {
+    }else { //  mic and camera
       const remote = ParticiantsStore.remote.get(track.getParticipantId())
       if (remote) {
         if (track.isAudioTrack()) {
@@ -734,25 +735,29 @@ class Connection extends EventEmitter {
     const local = ParticiantsStore.local.get()
     if (track.isMainScreen()) {
       sharedContents.localMainTracks.add(track)
-    }else if (track.isContentScreen()) {
+    }else if (track.getContentId()) {
       // TODO add contents
       // sharedContents.localContentTracks.set(track.getUsageLabel(), track)
-    }else if (track.isAudioTrack()) {
-      local.tracks.audio = track
-    } else {
-      local.tracks.avatar = track
+    }else { //  mic and camera
+      if (track.isAudioTrack()) {
+        local.tracks.audio = track
+      } else {
+        local.tracks.avatar = track
+      }
     }
   }
   private onLocalTrackRemoved(track: JitsiLocalTrack) {
     const local = ParticiantsStore.local.get()
     if (track.isMainScreen()) {
       sharedContents.localMainTracks.delete(track)
-    }else if (track.isContentScreen()) {
+    }else if (track.getContentId()) {
       //  TODO: delete to contents from tracks
-    }else if (track.isAudioTrack()) {
-      local.tracks.audio = undefined
-    } else {
-      local.tracks.avatar = undefined
+    }else { //  mic and camera
+      if (track.isAudioTrack()) {
+        local.tracks.audio = undefined
+      } else {
+        local.tracks.avatar = undefined
+      }
     }
   }
 }
