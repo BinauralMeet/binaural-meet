@@ -15,7 +15,7 @@ reaction(() => sharedContents.remoteMainTracks, (remoteMainTracks) => {
   }
 })
 
-reaction(() => sharedContents.localMainTracks, (tracks) => {
+reaction(() => sharedContents.localMainTracks, (newTracks) => {
 /*  const added = diffSet(tracks, prevTracks)
   const removed = diffSet(prevTracks, tracks)
   if (added.size) { console.log('localMainTrack added', added) }
@@ -23,10 +23,13 @@ reaction(() => sharedContents.localMainTracks, (tracks) => {
   removed.forEach((track) => { connection.conference?.removeTrack(track) })
   added.forEach((track) => { connection.conference?.addTrack(track) })
   */
-  const oldVideoTracks = connection.conference?.getLocalTracks('video')
-  oldVideoTracks?.forEach(t => t.isMainScreen() &&  connection.conference?.removeTrack(t))
-  const oldAudioTracks = connection.conference?.getLocalTracks('audio')
-  oldAudioTracks?.forEach(t => t.isMainScreen() &&  connection.conference?.removeTrack(t))
+  const oldTracks = connection.conference?.getLocalTracks().filter(t => t.isMainScreen())
+  const added = diffSet(new Set(newTracks), new Set(oldTracks))
+  const removed = diffSet(new Set(oldTracks), new Set(newTracks))
 
-  tracks.forEach((track) => { connection.conference?.addTrack(track) })
+  for (const t of removed) {
+    connection.conference?.removeTrack(t)
+    console.log(`${t} removed`)
+  }
+  connection.addTracks(Array.from(added.values()))
 })

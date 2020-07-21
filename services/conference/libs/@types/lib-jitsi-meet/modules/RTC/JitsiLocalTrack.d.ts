@@ -4,6 +4,11 @@ import JitsiTrack, { TrackInfo } from "./JitsiTrack"
 declare class JitsiLocalTrack extends JitsiTrack {
   constructor(trackInfo: TrackInfo);
 
+  rtcId:number
+  sourceId:number
+  sourceType:string
+  deviceId:string
+
   isEnded: ()=> boolean
   setEffect: (effect: Object) => Promise<any>
   mute: ()=> Promise<any>

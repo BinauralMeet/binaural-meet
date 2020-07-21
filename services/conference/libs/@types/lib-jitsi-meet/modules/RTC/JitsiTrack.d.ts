@@ -21,6 +21,11 @@ export declare namespace VideoType {
 
 export type TVideoType = typeof VideoType.CAMERA | typeof VideoType.DESKTOP
 
+export declare namespace JitsiTrackEvents {
+  export const TRACK_MUTE_CHANGED = 'track.trackMuteChanged';
+  export const TRACK_VIDEOTYPE_CHANGED = 'track.videoTypeChanged';
+}
+
 interface TrackInfo {
   deviceId: string;
   facingMode: string;

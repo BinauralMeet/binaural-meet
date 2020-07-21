@@ -46,8 +46,16 @@ export class SharedContents extends EventEmitter {
       }
     }
     if (tracks.size) {
-      const stream = new MediaStream
-      tracks.forEach((track) => { stream.addTrack(track.getTrack()) })
+      let stream:MediaStream|undefined = undefined
+      for (const track of tracks) {
+        if (!stream) {
+          stream = track.getOriginalStream()
+        } else if (track.getOriginalStream() !== stream) {
+          stream = new MediaStream
+          for (const t of tracks) { stream.addTrack(t.getTrack()) }
+          break
+        }
+      }
 
       return stream
     }
