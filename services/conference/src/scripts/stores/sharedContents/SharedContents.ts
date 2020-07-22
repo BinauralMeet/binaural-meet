@@ -89,22 +89,22 @@ export class SharedContents extends EventEmitter {
 
   //  replace contents of one participant. A content can be new one (add) or exsiting one (update).
   @action.bound
-  replaceRemoteContents(pid: string, contents:SharedContent[]) { //  entries = [pid, content][]
-    if (pid === participantsStore.localId) {  //  this is for remote participant
+  replaceRemoteContents(participantId: string, contents: ISharedContent[]) { //  entries = [pid, content][]
+    if (participantId === participantsStore.localId) {  //  this is for remote participant
       console.log('Error replaceContents called for local participant')
 
       return
     }
     //  prepare participantContents
-    let participant = this.participants.get(pid)
+    let participant = this.participants.get(participantId)
     if (!participant) {
-      participant = new ParticipantContents(pid)
-      this.participants.set(pid, participant)
+      participant = new ParticipantContents(participantId)
+      this.participants.set(participantId, participant)
       this.emit(SharedContentsEvents.REMOTE_JOIN,  participant)
     }
 
     const newContents = new Map(contents.map(c => [c.id, c]))
-    console.log('replaceContents for participant=', pid, ' n=', newContents.size,
+    console.log('replaceContents for participant=', participantId, ' n=', newContents.size,
                 ' cids:', JSON.stringify(Array.from(newContents.keys())))
     const removed = diffMap(participant.contents, newContents)
 
@@ -133,7 +133,7 @@ export class SharedContents extends EventEmitter {
     removed.forEach((c) => {
       this.owner.delete(c.id)
     })
-    newContents.forEach((c) => { this.owner.set(c.id, pid) })
+    newContents.forEach((c) => { this.owner.set(c.id, participantId) })
     participant.contents = newContents
     this.updateAll()
   }

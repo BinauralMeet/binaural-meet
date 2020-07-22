@@ -6,7 +6,7 @@ import {
   VideoSharedContent as IVideoSharedContent,
 } from '@models/sharedContent'
 import {MapObject} from '@stores/MapObject'
-import {observable} from 'mobx'
+import {computed, observable, toJS} from 'mobx'
 
 class BaseSharedContent<T extends IBaseSharedContent> extends MapObject implements Omit<IBaseSharedContent, 'type'> {
   readonly id: string
@@ -19,6 +19,10 @@ class BaseSharedContent<T extends IBaseSharedContent> extends MapObject implemen
     super()
     this.id = id
     this.type = type
+  }
+
+  @computed get plain() {
+    return toJS(this)
   }
 }
 
