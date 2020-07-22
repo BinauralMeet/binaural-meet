@@ -24,7 +24,7 @@ import ApiLogger, {ILoggerHandler} from './Logger'
 //  Log level and module log options
 const JITSILOGLEVEL = 'warn'  // log level for lib-jitsi-meet {debug|log|warn|error}
 const TRACKLOG = true         // show add, remove... of tracks
-TPC.setTPCLogger(TRACKLOG ? console.log : (a:any) => {})
+//  if (TPC.setTPCLogger) { TPC.setTPCLogger(TRACKLOG ? console.log : (a:any) => {}) }
 const trackLog = TRACKLOG ? console.log : (a:any) => {}
 
 // config.js
@@ -467,12 +467,11 @@ class Connection extends EventEmitter {
     conference.on(
       JitsiMeetJS.events.conference.TRACK_MUTE_CHANGED,
       (track: JitsiTrack) => {
-        this._loggerHandler?.debug(`Mute changed on a ${track.isLocal() ? 'Local' : 'Remote'}Track.`, logField)
+        trackLog(`TRACK_MUTE_CHANGED on ${track}.`)
         if (track.isLocal()) { return }
         const remoteTrack = track as JitsiRemoteTrack
         const target = ParticiantsStore.find(remoteTrack.getParticipantId())
-        if (remoteTrack.isVideoTrack()) {
-          trackLog(`TRACK_MUTE_CHANGED ${remoteTrack}`)
+        if (remoteTrack.isVideoTrack() && !remoteTrack.isScreenSharing()) {
           target.plugins.streamControl.muteVideo = remoteTrack.isMuted()
         }
       },
@@ -686,12 +685,12 @@ class Connection extends EventEmitter {
     }
 
     const pid = track.getParticipantId()
-    if (track.isMainScreen()) {
+    if (track.isMainScreen && track.isMainScreen()) {
       //  console.log(`${track} videoType:${(track as any).videoType} added`)
       const tracks:Set<JitsiTrack> = new Set(sharedContents.remoteMainTracks.get(pid))
       tracks.add(track)
       sharedContents.remoteMainTracks.set(pid, tracks)
-    }else if (track.getContentId()) {
+    }else if (track.getContentId && track.getContentId()) {
       //  todo
     }else { //  remote mic and camera
       const remote = ParticiantsStore.remote.get(track.getParticipantId())
@@ -700,13 +699,17 @@ class Connection extends EventEmitter {
           remote.tracks.audio = track
         } else {
           remote.tracks.avatar = track
+          track.getTrack().onended = () => {
+            trackLog('avatar track ${track} ended.')
+            remote.tracks.avatar = undefined
+          }
         }
       }
     }
   }
   private onRemoteTrackRemoved(track: JitsiLocalTrack) {
     const pid = track.getParticipantId()
-    if (track.isMainScreen()) {
+    if (track.isMainScreen && track.isMainScreen()) {
       const tracks:Set<JitsiTrack> = new Set(sharedContents.remoteMainTracks.get(pid))
       tracks.delete(track)
       if (tracks.size) {
@@ -714,7 +717,7 @@ class Connection extends EventEmitter {
       }else {
         sharedContents.remoteMainTracks.delete(pid)
       }
-    }else if (track.getContentId()) {
+    }else if (track.getContentId && track.getContentId()) {
       //  TODO
     }else { //  mic and camera
       const remote = ParticiantsStore.remote.get(track.getParticipantId())
@@ -733,9 +736,9 @@ class Connection extends EventEmitter {
       return
     }
     const local = ParticiantsStore.local.get()
-    if (track.isMainScreen()) {
+    if (track.isMainScreen && track.isMainScreen()) {
       sharedContents.localMainTracks.add(track)
-    }else if (track.getContentId()) {
+    }else if (track.getContentId && track.getContentId()) {
       // TODO add contents
       // sharedContents.localContentTracks.set(track.getUsageLabel(), track)
     }else { //  mic and camera
@@ -748,9 +751,9 @@ class Connection extends EventEmitter {
   }
   private onLocalTrackRemoved(track: JitsiLocalTrack) {
     const local = ParticiantsStore.local.get()
-    if (track.isMainScreen()) {
+    if (track.isMainScreen && track.isMainScreen()) {
       sharedContents.localMainTracks.delete(track)
-    }else if (track.getContentId()) {
+    }else if (track.getContentId && track.getContentId()) {
       //  TODO: delete to contents from tracks
     }else { //  mic and camera
       if (track.isAudioTrack()) {
