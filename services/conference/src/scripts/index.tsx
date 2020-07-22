@@ -34,3 +34,17 @@ function connectConference() {
     () => connection.joinConference(conferenceName),
   )
 }
+
+import config from '@models/api/automerge/config'
+import * as AutoMerge from 'automerge'
+import AutoMergeClient from 'automerge-client'
+
+const initData = {
+  sharedContents: AutoMerge.save(AutoMerge.init()),
+}
+
+const socket = new WebSocket(config.url)
+const client = new AutoMergeClient({
+  socket,
+  savedData: JSON.stringify(initData),
+})
