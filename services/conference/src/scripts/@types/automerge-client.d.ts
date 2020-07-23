@@ -9,7 +9,15 @@ declare module 'automerge-client' {
      onChange?: (docId: string, doc: AutoMerge.Doc<any>) => void,
    }
 
-   export default class Client {
+   interface ErrorEvent extends CustomEvent {
+     message: string
+   }
+
+   interface SubscribedEvent extends CustomEvent {
+    id: string
+   }
+
+   export default class Client extends EventTarget {
      constructor(props: AutoMergeClientProps)
      change(id: string, changer: AutoMerge.ChangeFn<any>): void
      subscribe(id: string): void
