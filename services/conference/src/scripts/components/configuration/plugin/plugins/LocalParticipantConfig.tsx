@@ -1,6 +1,8 @@
+import {useStore} from '@hooks/ParticipantsStore'
 import React from 'react'
 import {PluginBase} from '../PluginBase'
 import {registerPlugin} from '../registery'
+
 
 export const LOCAL_PARTICIPANT_CONFIG = 'local_participant_type'
 
@@ -9,8 +11,11 @@ interface Props {
 }
 
 const LocalParticipantConfig: React.FC<Props> = (props: Props) => {
+  const participants = useStore()
+  const local = participants.local.get()
+
   return <div>
-    {'LocalParticipantConfig,LocalParticipantConfig,LocalParticipantConfig,LocalParticipantConfig,LocalParticipantConfig'}
+    Name: <input type="text" name="name" value={local.information.name} /><br />
   </div>
 }
 
