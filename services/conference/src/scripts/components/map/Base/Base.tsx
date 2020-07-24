@@ -17,9 +17,11 @@ interface StyleProps {
 
 const useStyles = makeStyles({
   root: {
-    position: 'relative',
+    position: 'absolute',
     width: '100%',
     height: '100%',
+    top: 0,
+    left: 0,
     userDrag: 'none',
     userSelect: 'none',
   },
@@ -31,9 +33,7 @@ const useStyles = makeStyles({
   },
 })
 
-interface BaseProps extends BP {
-  children?: React.ReactElement | React.ReactElement[]
-}
+type BaseProps = React.PropsWithChildren<BP>
 
 const options = {
   minScale: 0.8,
@@ -55,6 +55,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
   const [startDrag, setStartDrag] = useState(false)
 
+  const MOUSE_RIGHT = 2
   const bind = useGesture(
     {
       onDragStart: ({event}) => {
@@ -62,7 +63,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       },
       onDrag: ({down, delta, event, xy, buttons}) => {
         if (startDrag && down) {
-          if (buttons === 2) {  // right mouse drag - rotate map
+          if (buttons === MOUSE_RIGHT) {  // right mouse drag - rotate map
             const center = transformPoint2D(matrix, localParticipantPosition)
             const target = subV(xy, getDivAnchor(container))
             const radius1 = subV(target, center)
@@ -165,10 +166,10 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
   return (
     <div className={[classes.root, props.className].join(' ')} ref={outer} {...bind()}>
-      <TransformProvider value={transfromValue}>
-        <div id="map-transform" className={classes.transform} ref={container}>
+    <TransformProvider value={transfromValue}>
+    <div id="map-transform" className={classes.transform} ref={container}>
           {props.children}
-        </div>
+    </div>
       </TransformProvider>
     </div>
   )

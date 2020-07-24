@@ -7,15 +7,14 @@ import {makeStyles} from '@material-ui/core/styles'
 import MoreIcon from '@material-ui/icons/ExpandMore'
 import MicIcon from '@material-ui/icons/Mic'
 import MicOffIcon from '@material-ui/icons/MicOff'
-import ScreenShareIcon from '@material-ui/icons/ScreenShare'
 import VideoIcon from '@material-ui/icons/Videocam'
 import VideoOffIcon from '@material-ui/icons/VideocamOff'
 import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
 import SpeakerOnIcon from '@material-ui/icons/VolumeUp'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
-import {StereoAudioSwitch} from './StereoAudioSwitch'
 import {ShareButton} from './share/ShareButton'
+import {StereoAudioSwitch} from './StereoAudioSwitch'
 
 const useStyles = makeStyles((theme) => {
   return ({

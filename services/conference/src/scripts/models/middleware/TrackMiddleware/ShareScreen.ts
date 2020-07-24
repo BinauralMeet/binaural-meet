@@ -1,39 +1,35 @@
 import {connection} from '@models/api'
-import {Tracks} from '@models/Participant'
 import participants from '@stores/participants/Participants'
-import {observe, reaction} from 'mobx'
-import {MediaType, JitsiLocalTrack} from 'lib-jitsi-meet'
+import sharedContents from '@stores/sharedContents/SharedContents'
+import {diffSet} from '@stores/utils'
+import {JitsiLocalTrack} from 'lib-jitsi-meet'
+import {configure, reaction} from 'mobx'
 
-reaction(() => participants.local.get().tracks.screen,
-  (screen) => {
-    if (screen){
-      //  const tracks = connection.conference?.getLocalTracks(MediaType.VIDEO)
-      //  if (tracks && tracks[0]) connection.conference?.removeTrack(tracks[0])
-      connection.conference?.addTrack(screen)
-      console.log('Screen track added')
-    }else{
-      const tracks = connection.conference?.getLocalTracks(MediaType.VIDEO)
-      tracks?.forEach((track) => {
-        if (track.isScreenSharing()){
-          connection.conference?.removeTrack(tracks[0])
-          console.log('Screen track removed')
-        }
-      })
+reaction(() => sharedContents.remoteMainTracks, (remoteMainTracks) => {
+  if (sharedContents.localMainTracks.size) {
+    const remotePids = Array.from(remoteMainTracks.keys())
+    if (remotePids.length && remotePids[remotePids.length - 1] !== participants.localId) {
+      //  remote pid is larger and I have to stop screen shareing
+      sharedContents.localMainTracks.forEach((track) => { track.getTrack().stop() })
     }
   }
-)
+})
 
+reaction(() => sharedContents.localMainTracks, (newTracks) => {
+/*  const added = diffSet(tracks, prevTracks)
+  const removed = diffSet(prevTracks, tracks)
+  if (added.size) { console.log('localMainTrack added', added) }
+  if (removed.size) { console.log('localMainTrack removed', removed) }
+  removed.forEach((track) => { connection.conference?.removeTrack(track) })
+  added.forEach((track) => { connection.conference?.addTrack(track) })
+  */
+  const oldTracks = connection.conference?.getLocalTracks().filter(t => t.isMainScreen())
+  const added = diffSet(new Set(newTracks), new Set(oldTracks))
+  const removed = diffSet(new Set(oldTracks), new Set(newTracks))
 
-observe(participants.local.get().tracks, (change) => {
-  console.log('observe called')
-  if (change.type === 'update'){
-    const newTracks = change.newValue as Tracks<JitsiLocalTrack>
-    const oldTracks = change.newValue as Tracks<JitsiLocalTrack>
-    if (oldTracks.screen){
-      connection.conference?.removeTrack(oldTracks.screen)
-    }
-    if (newTracks.screen){
-      connection.conference?.addTrack(newTracks.screen)
-    }
+  for (const t of removed) {
+    connection.conference?.removeTrack(t)
+    console.log(`${t} removed`)
   }
+  connection.addTracks(Array.from(added.values()))
 })

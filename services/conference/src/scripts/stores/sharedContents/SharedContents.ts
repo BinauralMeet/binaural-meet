@@ -3,6 +3,7 @@ import {ParticipantContents as IParticipantContents, SharedContent as ISharedCon
 import {default as participantsStore} from '@stores/participants/Participants'
 import {diffMap} from '@stores/utils'
 import {EventEmitter} from 'events'
+import {JitsiLocalTrack, JitsiTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
 import {computed, observable} from 'mobx'
 import {SharedContent} from './SharedContent'
@@ -28,7 +29,44 @@ export const SharedContentsEvents = {
 }
 export class SharedContents extends EventEmitter {
   private localId = ''
-  //  All shared objects in Z order. Observed by component.
+
+  //  Tracks for the MainScreen
+  @observable.ref localMainTracks: Set<JitsiLocalTrack> = new Set()
+  @observable.shallow remoteMainTracks: Map<string, Set<JitsiTrack>> = new Map()
+  @computed get mainStream(): MediaStream|undefined {
+    let tracks:Set<JitsiTrack> = new Set()
+    if (this.localMainTracks.size) {
+      tracks = this.localMainTracks
+    } else {
+      const keys = Array.from(this.remoteMainTracks.keys())
+      if (keys.length) {
+        keys.sort()
+        const tracks_ = this.remoteMainTracks.get(keys[keys.length - 1])
+        if (tracks_) { tracks =  tracks_ }
+      }
+    }
+    if (tracks.size) {
+      let stream:MediaStream|undefined = undefined
+      for (const track of tracks) {
+        if (!stream) {
+          stream = track.getOriginalStream()
+        } else if (track.getOriginalStream() !== stream) {
+          stream = new MediaStream
+          for (const t of tracks) { stream.addTrack(t.getTrack()) }
+          break
+        }
+      }
+
+      return stream
+    }
+
+    return undefined
+  }
+
+  @observable.shallow localContentTracks: Map<string, Set<JitsiLocalTrack>> = new Map()
+  @observable.shallow remoteContentTracks: Map<string, Set<JitsiTrack>> = new Map()
+
+  //  All shared contents in Z order. Observed by component.
   @observable.shallow all: SharedContent[] = []
   //  contents by owner
   participants: Map<string, ParticipantContents> = new Map<string, ParticipantContents>()

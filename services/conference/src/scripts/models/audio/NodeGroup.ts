@@ -145,4 +145,10 @@ export class NodeGroup {
       this.audioElement.srcObject = stream
     }
   }
+
+  setMute(muted:boolean) {
+    if (this.audioElement) {
+      this.audioElement.muted = muted
+    }
+  }
 }

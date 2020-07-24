@@ -1,5 +1,4 @@
 import {connection} from '@models/api'
-import {config} from '@models/api/test.config'
 import {manager as audioManager} from '@models/audio'
 import participants from '@stores/participants/Participants'
 import JitsiMeetJS, {JitsiLocalTrack, JitsiTrackOptions, JitsiValues} from 'lib-jitsi-meet'
@@ -28,6 +27,8 @@ reaction(
   },
 )
 
+// config.js
+declare const config:any                  //  from ../../config.js included from index.html
 reaction(
   () => participants.local.get().devicePreference.videoInputDevice,
   (did) => {

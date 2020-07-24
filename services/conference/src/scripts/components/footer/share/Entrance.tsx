@@ -1,10 +1,14 @@
+import {useStore as useContentsStore} from '@hooks/SharedContentsStore'
 import List from '@material-ui/core/List'
 import HttpIcon from '@material-ui/icons/Http'
 import ImageIcon from '@material-ui/icons/Image'
 import ScreenShareIcon from '@material-ui/icons/ScreenShare'
+import StopScreenShareIcon from '@material-ui/icons/StopScreenShare'
 import SubjectIcon from '@material-ui/icons/Subject'
-import {shareScreenStream} from '@models/share/shareScreenStream'
+import {shareMainScreenStream} from '@models/share/shareScreenStream'
 import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'
+import {useObserver} from 'mobx-react-lite'
+import {trackDerivedFunction} from 'mobx/lib/internal'
 import React from 'react'
 import {DialogPageProps} from './DialogPage'
 import {ShareDialogItem} from './SharedDialogItem'
@@ -16,6 +20,9 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
   const {
     setStep,
   } = props
+  const store = useContentsStore()
+  const sharing = useObserver(() => (
+    {main: store.localMainTracks.size, contents: store.localContentTracks.size}))
 
   return (
     <List>
@@ -39,10 +46,17 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
       />
       <ShareDialogItem
         key="shareScreen"
-        icon={<ScreenShareIcon />}
-        text="Screen"
+        icon={sharing.main ? <StopScreenShareIcon /> : <ScreenShareIcon />}
+        text={sharing.main ? 'Stop Screen' : 'Screen'}
         onClick={() => {
-          startCapture().then(shareScreenStream)
+          if (sharing.main)  {
+            for (const track of store.localMainTracks) {
+              track.stopStream()
+            }
+            store.localMainTracks = new Set()
+          } else {
+            startCapture().then(shareMainScreenStream)
+          }
           setStep('none')
         }}
       />
@@ -63,6 +77,7 @@ async function startCapture(displayMediaOptions: any = {}) {
     throw err
 
   }
+  for (const track of captureTracks) { track.makeThisMainScreen() }
   console.log('got desktop track', captureTracks)
 
   return captureTracks as JitsiLocalTrack[]

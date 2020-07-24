@@ -1,28 +1,33 @@
+// import a global variant $ for lib-jitsi-meet
+import {Pose2DMap} from '@models/MapObject'
+import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {ConnectionInfo, default as ConnectionInfoStore} from '@stores/ConnectionInfo'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {default as ParticiantsStore} from '@stores/participants/Participants'
-import {default as sharedContents, SharedContents} from '@stores/sharedContents/SharedContents'
+import {SharedContent as SharedContentStore} from '@stores/sharedContents/SharedContent'
+import {default as sharedContents} from '@stores/sharedContents/SharedContents'
+import {dummyConnectionStore} from '@test-utils/DummyParticipants'
 import {EventEmitter} from 'events'
+import jquery from 'jquery'
 import JitsiMeetJS, {JitsiValues} from 'lib-jitsi-meet'
-import JitsiTrack from 'lib-jitsi-meet/modules/RTC/JitsiTrack'
+import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
+import JitsiLocalTrack from 'lib-jitsi-meet/modules/RTC/JitsiLocalTrack'
+import JitsiRemoteTrack from 'lib-jitsi-meet/modules/RTC/JitsiRemoteTrack'
+import JitsiTrack, {JitsiTrackEvents} from 'lib-jitsi-meet/modules/RTC/JitsiTrack'
+import * as TPC from 'lib-jitsi-meet/modules/RTC/TPCUtils'
+import {autorun} from 'mobx'
+import {throttle} from 'throttle-debounce'
 import {Store} from '../../stores/utils'
 import {ConnectionStates, ConnectionStatesType} from './Constants'
 import ApiLogger, {ILoggerHandler} from './Logger'
 
-// import a global variant $ for lib-jitsi-meet
-import {Pose2DMap} from '@models/MapObject'
-import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {SharedContent as SharedContentStore} from '@stores/sharedContents/SharedContent'
-import {dummyConnectionStore} from '@test-utils/DummyParticipants'
-import jquery from 'jquery'
-import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
-import JitsiLocalTrack from 'lib-jitsi-meet/modules/RTC/JitsiLocalTrack'
-import JitsiRemoteTrack from 'lib-jitsi-meet/modules/RTC/JitsiRemoteTrack'
-import {autorun} from 'mobx'
-import {throttle} from 'throttle-debounce'
+//  Log level and module log options
+const JITSILOGLEVEL = 'warn'  // log level for lib-jitsi-meet {debug|log|warn|error}
+const TRACKLOG = true         // show add, remove... of tracks
+//  if (TPC.setTPCLogger) { TPC.setTPCLogger(TRACKLOG ? console.log : (a:any) => {}) }
+const trackLog = TRACKLOG ? console.log : (a:any) => {}
 
-// load config.js or config.test.ts
-// import {config} from './test.config'   //  from ./test.config.ts
+// config.js
 declare const config:any                  //  from ../../config.js included from index.html
 
 declare var global: any
@@ -68,6 +73,8 @@ const ConferenceEvents = {
   LOCAL_PARTICIPANT_JOINED: 'local_participant_joined',
   REMOTE_TRACK_ADDED: 'remote_track_added',
   LOCAL_TRACK_ADDED: 'local_track_added',
+  REMOTE_TRACK_REMOVED: 'remote_track_removed',
+  LOCAL_TRACK_REMOVED: 'local_track_removed',
   PARTICIPANT_LEFT: 'participant_left',
 }
 
@@ -228,8 +235,16 @@ class Connection extends EventEmitter {
       this.onLocalTrackAdded.bind(this),
     )
     this.on(
+      ConferenceEvents.LOCAL_TRACK_REMOVED,
+      this.onLocalTrackRemoved.bind(this),
+    )
+    this.on(
       ConferenceEvents.REMOTE_TRACK_ADDED,
       this.onRemoteTrackAdded.bind(this),
+    )
+    this.on(
+      ConferenceEvents.REMOTE_TRACK_REMOVED,
+      this.onRemoteTrackRemoved.bind(this),
     )
   }
 
@@ -238,8 +253,7 @@ class Connection extends EventEmitter {
     return new Promise<string>(
       (resolve, reject) => {
         JitsiMeetJS.init(initOptions)
-        // JitsiMeetJS.setLogLevel('info')
-        JitsiMeetJS.setLogLevel('warn')
+        JitsiMeetJS.setLogLevel(JITSILOGLEVEL)
 
         this._jitsiConnection = new JitsiMeetJS.JitsiConnection(
           null as unknown as string, undefined as unknown as string, config)
@@ -298,6 +312,37 @@ class Connection extends EventEmitter {
   }
 
   /**
+   * reduce bit rate
+   * peerconnection as TraceablePeerConnection
+   * peerconnection.peerconnection as RTCPeerConnection */
+  reduceBitrate() {
+    if (config.rtc && this._jitsiConference && this._jitsiConference.jvbJingleSession) {
+      const jingleSession = this._jitsiConference.jvbJingleSession
+      if (!jingleSession.bitRateAlreadyReduced && jingleSession.peerconnection.peerconnection) {
+        jingleSession.bitRateAlreadyReduced = true
+        const pc = jingleSession.peerconnection.peerconnection
+        // console.log('RTCPeerConnect:', pc)
+        pc.getSenders().forEach((sender) => {
+          // console.log(sender)
+          if (sender && sender.track) {
+            const params = sender.getParameters()
+            // console.log('params:', params)
+            params.encodings.forEach((encording) => {
+              const ONE_KILO = 1024
+              if (sender.track!.kind === 'video' && config.rtc.maxBitrateForVideo) {
+                encording.maxBitrate = config.rtc.maxBitrateForVideo * ONE_KILO
+              }else if (sender.track!.kind === 'audio') {
+                encording.maxBitrate = config.rtc.maxBitrateForAudio * ONE_KILO
+              }
+            })
+            sender.setParameters(params)
+          }
+        })
+      }
+    }
+  }
+
+  /**
    * Bind lib-jitsi-meet events to party events.
    * @param conference Conference instance of JitsiMeet
    */
@@ -352,7 +397,7 @@ class Connection extends EventEmitter {
     conference.on(
       JitsiMeetJS.events.conference.TRACK_ADDED,
       (track: JitsiTrack) => {
-        this._loggerHandler?.debug(`Added a ${track.isLocal() ? 'Local' : 'Remote'}Track.`, logField)
+        trackLog(`TRACK_ADDED: ${track} type:${track.getType()} ${track.getUsageLabel()} tid:${track.getId()} msid:${track.getOriginalStream().id}`)
 
         if (track.isLocal()) {
           this.emit(
@@ -361,44 +406,55 @@ class Connection extends EventEmitter {
           )
         } else {
           if ((track as JitsiRemoteTrack).isP2P) {
-            this._loggerHandler?.log(`P2P Remote participant ID: ${(<JitsiRemoteTrack>track).getParticipantId()}`, 'TRACK_ADDED')
+            //  this._loggerHandler?.log(
+            //    `P2P Remote PID: ${(<JitsiRemoteTrack>track).getParticipantId()}`, 'TRACK_ADDED')
             this.emit(
               ConferenceEvents.REMOTE_TRACK_ADDED,
               track as JitsiRemoteTrack,
             )
           }else {
-            this._loggerHandler?.log(`JVB Remote participant ID: ${(<JitsiRemoteTrack>track).getParticipantId()}`, 'TRACK_ADDED')
+            //  this._loggerHandler?.log(
+            //    `JVB Remote PID: ${(<JitsiRemoteTrack>track).getParticipantId()}`, 'TRACK_ADDED')
             this.emit(
               ConferenceEvents.REMOTE_TRACK_ADDED,
               track as JitsiRemoteTrack,
             )
-            //  reduce bit rate
-            //  peerconnection as TraceablePeerConnection
-            //  peerconnection.peerconnection as RTCPeerConnection
-            if (config.rtc && this._jitsiConference && this._jitsiConference.jvbJingleSession) {
-              const jingleSession = this._jitsiConference.jvbJingleSession
-              if (!jingleSession.bitRateAlreadyReduced && jingleSession.peerconnection.peerconnection) {
-                jingleSession.bitRateAlreadyReduced = true
-                const pc = jingleSession.peerconnection.peerconnection
-                // console.log('RTCPeerConnect:', pc)
-                pc.getSenders().forEach((sender) => {
-                  // console.log(sender)
-                  if (sender && sender.track) {
-                    const params = sender.getParameters()
-                    // console.log('params:', params)
-                    params.encodings.forEach((encording) => {
-                      const ONE_KILO = 1024
-                      if (sender.track!.kind === 'video' && config.rtc.maxBitrateForVideo) {
-                        encording.maxBitrate = config.rtc.maxBitrateForVideo * ONE_KILO
-                      }else if (sender.track!.kind === 'audio') {
-                        encording.maxBitrate = config.rtc.maxBitrateForAudio * ONE_KILO
-                      }
-                    })
-                    sender.setParameters(params)
-                  }
-                })
-              }
-            }
+            this.reduceBitrate()
+          }
+        }
+      },
+    )
+
+    /**
+     * Event: JitsiMeetJS.events.conference.TRACK_REMOVED
+     * @emits ConferenceEvents.LOCAL_TRACK_REMOVED
+     * @emits ConferenceEvents.REMOTE_TRACK_REMOVED
+     */
+    conference.on(
+      JitsiMeetJS.events.conference.TRACK_REMOVED,
+      (track: JitsiTrack) => {
+        trackLog(`TRACK_REMOVED: ${track} type:${track.getType()} ${track.getUsageLabel()} tid:${track.getId()} msid:${track.getOriginalStream().id}`)
+
+        if (track.isLocal()) {
+          this.emit(
+            ConferenceEvents.LOCAL_TRACK_REMOVED,
+            track as JitsiLocalTrack,
+          )
+        } else {
+          if ((track as JitsiRemoteTrack).isP2P) {
+            //  this._loggerHandler?.log(
+            //    `P2P Remote participant ID: ${(<JitsiRemoteTrack>track).getParticipantId()}`, 'TRACK_REMOVED')
+            this.emit(
+              ConferenceEvents.REMOTE_TRACK_REMOVED,
+              track as JitsiRemoteTrack,
+            )
+          }else {
+            //  this._loggerHandler?.log(
+            //    `JVB Remote  participant ID: ${(<JitsiRemoteTrack>track).getParticipantId()}`, 'TRACK_REMOVED')
+            this.emit(
+              ConferenceEvents.REMOTE_TRACK_REMOVED,
+              track as JitsiRemoteTrack,
+            )
           }
         }
       },
@@ -411,13 +467,12 @@ class Connection extends EventEmitter {
     conference.on(
       JitsiMeetJS.events.conference.TRACK_MUTE_CHANGED,
       (track: JitsiTrack) => {
-        this._loggerHandler?.debug(`Mute changed on a ${track.isLocal() ? 'Local' : 'Remote'}Track.`, logField)
+        trackLog(`TRACK_MUTE_CHANGED on ${track}.`)
         if (track.isLocal()) { return }
-        const rt = track as JitsiRemoteTrack
-        const target = ParticiantsStore.find(rt.getParticipantId())
-        if (rt.isVideoTrack()) {
-          console.log(rt)
-          target.plugins.streamControl.muteVideo = rt.isMuted()
+        const remoteTrack = track as JitsiRemoteTrack
+        const target = ParticiantsStore.find(remoteTrack.getParticipantId())
+        if (remoteTrack.isVideoTrack() && !remoteTrack.isScreenSharing()) {
+          target.plugins.streamControl.muteVideo = remoteTrack.isMuted()
         }
       },
     )
@@ -563,10 +618,24 @@ class Connection extends EventEmitter {
   public addTracks(tracks: JitsiLocalTrack[]) {
     if (this._jitsiConference) {
       for (const track of tracks) {
-        this._jitsiConference.addTrack(track)
+        if (track !== tracks[tracks.length - 1]) {
+          this._jitsiConference.addTrack(track)
+        }else {
+          this._jitsiConference.addTrack(track).then(() => {
+            //  this._loggerHandler?.log('JitsiLocalTracks have been added.', 'Party')
+            const locals = connection.conference?.getLocalTracks()
+            if (locals) {
+              if (TRACKLOG) {
+                console.groupCollapsed(`addTracks([${tracks.length}]) called for ${tracks.map(t => t.rtcId)}`)
+                for (const t of locals) {
+                  console.log(`${t} rtcid:${t.rtcId} msid:${t.getOriginalStream().id}`)
+                }
+                console.groupEnd()
+              }
+            }
+          })
+        }
       }
-
-      this._loggerHandler?.log('JitsiLocalTracks have been added.', 'Party')
     }
   }
 
@@ -582,6 +651,7 @@ class Connection extends EventEmitter {
       ParticiantsStore.local.set(local)
 
       this.bindStore(local)
+
 
       JitsiMeetJS.createLocalTracks({devices: ['audio', 'video'], constraints: config.rtc.videoConstraints}).then(
         (tracks: JitsiTrack[]) => {
@@ -614,16 +684,49 @@ class Connection extends EventEmitter {
       return
     }
 
-    const remote = ParticiantsStore.remote.get(track.getParticipantId())
-    // const warppedT = toTracks(track.getTrack.bind(track))
-
-    if (remote) {
-      if (track.isAudioTrack()) {
-        remote.tracks.audio = track
-      } else if (track.isVideoTrack() && track.isScreenSharing()) {
-        remote.tracks.screen = track
-      } else {
-        remote.tracks.avatar = track
+    const pid = track.getParticipantId()
+    if (track.isMainScreen && track.isMainScreen()) {
+      //  console.log(`${track} videoType:${(track as any).videoType} added`)
+      const tracks:Set<JitsiTrack> = new Set(sharedContents.remoteMainTracks.get(pid))
+      tracks.add(track)
+      sharedContents.remoteMainTracks.set(pid, tracks)
+    }else if (track.getContentId && track.getContentId()) {
+      //  todo
+    }else { //  remote mic and camera
+      const remote = ParticiantsStore.remote.get(track.getParticipantId())
+      if (remote) {
+        if (track.isAudioTrack()) {
+          remote.tracks.audio = track
+        } else {
+          remote.tracks.avatar = track
+          track.getTrack().onended = () => {
+            trackLog('avatar track ${track} ended.')
+            remote.tracks.avatar = undefined
+          }
+        }
+      }
+    }
+  }
+  private onRemoteTrackRemoved(track: JitsiLocalTrack) {
+    const pid = track.getParticipantId()
+    if (track.isMainScreen && track.isMainScreen()) {
+      const tracks:Set<JitsiTrack> = new Set(sharedContents.remoteMainTracks.get(pid))
+      tracks.delete(track)
+      if (tracks.size) {
+        sharedContents.remoteMainTracks.set(pid, tracks)
+      }else {
+        sharedContents.remoteMainTracks.delete(pid)
+      }
+    }else if (track.getContentId && track.getContentId()) {
+      //  TODO
+    }else { //  mic and camera
+      const remote = ParticiantsStore.remote.get(track.getParticipantId())
+      if (remote) {
+        if (track.isAudioTrack()) {
+          remote.tracks.audio = undefined
+        } else {
+          remote.tracks.avatar = undefined
+        }
       }
     }
   }
@@ -633,21 +736,33 @@ class Connection extends EventEmitter {
       return
     }
     const local = ParticiantsStore.local.get()
-    // const warppedT = toTracks(track.getTrack.bind(track))
-
-    if (track.isAudioTrack()) {
-      local.tracks.audio = track
-    } else if (track.isVideoTrack() && track.isScreenSharing()) {
-      local.tracks.screen = track
-    } else {
-      local.tracks.avatar = track
+    if (track.isMainScreen && track.isMainScreen()) {
+      sharedContents.localMainTracks.add(track)
+    }else if (track.getContentId && track.getContentId()) {
+      // TODO add contents
+      // sharedContents.localContentTracks.set(track.getUsageLabel(), track)
+    }else { //  mic and camera
+      if (track.isAudioTrack()) {
+        local.tracks.audio = track
+      } else {
+        local.tracks.avatar = track
+      }
     }
   }
-}
-
-
-const toTracks = (f: () => MediaStreamTrack): MediaStreamTrack[] => {
-  return [f().clone()]
+  private onLocalTrackRemoved(track: JitsiLocalTrack) {
+    const local = ParticiantsStore.local.get()
+    if (track.isMainScreen && track.isMainScreen()) {
+      sharedContents.localMainTracks.delete(track)
+    }else if (track.getContentId && track.getContentId()) {
+      //  TODO: delete to contents from tracks
+    }else { //  mic and camera
+      if (track.isAudioTrack()) {
+        local.tracks.audio = undefined
+      } else {
+        local.tracks.avatar = undefined
+      }
+    }
+  }
 }
 
 const connection = new Connection('PartyConnection')

@@ -15,12 +15,14 @@ export class ConnectedManager {
   constructor() {
     autorun(this.onPopulationChange)
 
+    /*  mute is refelectd by useStereoAudio/switchPlayMode
     reaction(
       () => store.local.get().plugins.streamControl.muteSpeaker,
       (muteSpeaker) => {
         this.manager.audioOutputMuted = muteSpeaker
       },
     )
+    */
 
     reaction(
       () => store.local.get().devicePreference.audioOutputDevice,
@@ -30,9 +32,9 @@ export class ConnectedManager {
     )
 
     reaction(
-      () => store.local.get().useStereoAudio,
-      (useStereoAudio) => {
-        this.manager.switchPlayMode(useStereoAudio ? 'Context' : 'Element')
+      () => [store.local.get().useStereoAudio, store.local.get().plugins.streamControl.muteSpeaker],
+      ([useStereoAudio, muted]) => {
+        this.manager.switchPlayMode(useStereoAudio ? 'Context' : 'Element', muted)
       },
     )
   }

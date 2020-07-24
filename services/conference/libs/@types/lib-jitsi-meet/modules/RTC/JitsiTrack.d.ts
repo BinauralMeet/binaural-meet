@@ -21,6 +21,11 @@ export declare namespace VideoType {
 
 export type TVideoType = typeof VideoType.CAMERA | typeof VideoType.DESKTOP
 
+export declare namespace JitsiTrackEvents {
+  export const TRACK_MUTE_CHANGED = 'track.trackMuteChanged';
+  export const TRACK_VIDEOTYPE_CHANGED = 'track.videoTypeChanged';
+}
+
 interface TrackInfo {
   deviceId: string;
   facingMode: string;
@@ -61,6 +66,10 @@ declare class JitsiTrack extends EventEmitter {
   detach: (container: HTMLElement) => void
   dispose: () => Promise<void>
   isScreenSharing: () => boolean
+  isMainScreen: () => boolean
+  makeThisMainScreen: () => void
+  getContentId: () => string
+  setContentId: (contentId:string) => void
   getId: () => string | null
   isActive: () => boolean
   setAudioLevel: (audioLevel: number, tpc: TraceablePeerConnection) => void
