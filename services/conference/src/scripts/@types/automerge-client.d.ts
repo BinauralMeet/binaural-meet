@@ -5,7 +5,7 @@ declare module 'automerge-client' {
    interface AutoMergeClientProps {
      socket?: WebSocket,
      save?: (data: string) => void,
-     savedData?: string,
+     savedData?: string | {[key: string]: AutoMerge.Doc<any>},
      onChange?: (docId: string, doc: AutoMerge.Doc<any>) => void,
    }
 
@@ -39,7 +39,8 @@ declare module 'automerge-client' {
 
      constructor(props: AutoMergeClientProps)
      change(id: string, changer: AutoMerge.ChangeFn<any>): void
-     subscribe(id: string): void
+     subscribe(ids: string[]): void
+     unsubscribe(ids: string[]): void
 
      addEventListener<K extends keyof ClientEventKeyMap>(type: K, listener: (this: Client, event: ClientEventKeyMap[K]) => any, options?: boolean | AddEventListenerOptions): void
      addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void
