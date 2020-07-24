@@ -33,9 +33,7 @@ const useStyles = makeStyles({
   },
 })
 
-interface BaseProps extends BP {
-  children?: React.ReactElement | React.ReactElement[]
-}
+type BaseProps = React.PropsWithChildren<BP>
 
 const options = {
   minScale: 0.8,
