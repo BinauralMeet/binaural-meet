@@ -1,5 +1,5 @@
 import {Done} from '@material-ui/icons'
-import config from '@models/api/automerge/config'
+import config from '@models/automerge/config'
 import * as AutoMerge from 'automerge'
 import AutoMergeClient from 'automerge-client'
 import {random} from 'faker'

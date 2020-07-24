@@ -35,7 +35,7 @@ function connectConference() {
   )
 }
 
-import config from '@models/api/automerge/config'
+import config from '@models/automerge/config'
 import * as AutoMerge from 'automerge'
 import AutoMergeClient from 'automerge-client'
 
