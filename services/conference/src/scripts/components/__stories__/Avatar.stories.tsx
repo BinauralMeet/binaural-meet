@@ -1,7 +1,7 @@
 import {ImageAvatar, StreamAvatar} from '@components/avatar'
 import {Information} from '@models/Participant'
+import JitsiMeetJS from 'lib-jitsi-meet'
 import React, {useEffect, useState} from 'react'
-
 
 export default {
   title: 'Avatar',
@@ -27,9 +27,10 @@ function captureVideo() {
 
   useEffect(
     () => {
-      navigator.mediaDevices.getUserMedia({
-        video: true,
-      }).then(setStream)
+      JitsiMeetJS.createLocalTracks({devices:['video']})
+      .then((tracks) => {
+        setStream(tracks[0].getOriginalStream())
+      })
     },
     [],
   )

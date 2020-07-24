@@ -1,6 +1,8 @@
 import {makeStyles} from '@material-ui/core/styles'
+import {JitsiTrack} from 'lib-jitsi-meet'
 import React, {useCallback, useEffect, useRef} from 'react'
 
+const CENTER = 0.5
 const useStyles = makeStyles({
   root: (props: StreamAvatarProps) => ({
     display: 'flex',
@@ -9,7 +11,7 @@ const useStyles = makeStyles({
     width: props.size,
     height: props.size,
 //    borderRadius: (props.size || 0) / 2,
-    clipPath: 'circle(' + (props.size || 0) / 2 + 'px  at center)',
+    clipPath: `circle(${(props.size || 0) * CENTER}px  at center)`,
     overflow: 'hidden',
   }),
   videoLargerWidth: {
@@ -56,7 +58,8 @@ export const StreamAvatar: React.FC<StreamAvatarProps> = (props: StreamAvatarPro
   useEffect(
     () => {
       if (videoRef !== null && videoRef.current !== null) {
-        setStream(videoRef.current, props.stream, classes.videoLargerWidth, classes.videoLargerHeight)
+        setStream(videoRef.current, props.stream,
+                  classes.videoLargerWidth, classes.videoLargerHeight)
       }
     },
     [props.stream],
@@ -65,7 +68,8 @@ export const StreamAvatar: React.FC<StreamAvatarProps> = (props: StreamAvatarPro
   useEffect(
     () => {
       if (videoRef !== null && videoRef.current !== null) {
-        setStream(videoRef.current, props.stream, classes.videoLargerWidth, classes.videoLargerHeight)
+        setStream(videoRef.current, props.stream,
+                  classes.videoLargerWidth, classes.videoLargerHeight)
       }
     },
     [videoRef],

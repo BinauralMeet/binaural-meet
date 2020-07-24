@@ -76,6 +76,7 @@
     "git": "^0.1.5",
     "jitsi-meet-logger": "github:jitsi/jitsi-meet-logger#5ec92357570dc8f0b7ffc1528820721c84c6af8b",
     "jquery": "^3.5.1",
+    "material-ui-dropzone": "^3.3.0",
     "mobx": "^5.15.4",
     "mobx-react-lite": "^2.0.6",
     "react": "^16.13.1",

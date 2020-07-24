@@ -86,6 +86,12 @@ export class StereoManager {
   }
 
   set audioOutputMuted(muted: boolean) {
+    console.log('audioOutputMuted', muted)
+    if (muted) {
+      this.audioElement.pause()
+    }else {
+      this.audioElement.play()
+    }
     this.audioDestination.stream.getTracks().forEach((track) => { track.enabled = !muted })
   }
   get audioOutputMuted():boolean {

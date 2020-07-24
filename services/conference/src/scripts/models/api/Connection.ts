@@ -12,7 +12,6 @@ import ApiLogger, {ILoggerHandler} from './Logger'
 // import a global variant $ for lib-jitsi-meet
 import {Pose2DMap} from '@models/MapObject'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {Participant} from '@stores/participants/Participant'
 import {SharedContent as SharedContentStore} from '@stores/sharedContents/SharedContent'
 import {dummyConnectionStore} from '@test-utils/DummyParticipants'
 import jquery from 'jquery'
@@ -157,7 +156,7 @@ class Connection extends EventEmitter {
     }
   }
 
-  private bindStore(local: Participant) {
+  private bindStore(local: LocalParticipant) {
     const localParticipantId = local.id
     // const localParticipant = this.participants.get(localParticipantId)
 
@@ -616,15 +615,15 @@ class Connection extends EventEmitter {
     }
 
     const remote = ParticiantsStore.remote.get(track.getParticipantId())
-    const warppedT = toTracks(track.getTrack.bind(track))
+    // const warppedT = toTracks(track.getTrack.bind(track))
 
     if (remote) {
       if (track.isAudioTrack()) {
-        remote.stream.audioStream = new MediaStream(warppedT)
+        remote.tracks.audio = track
       } else if (track.isVideoTrack() && track.isScreenSharing()) {
-        remote.stream.screenStream = new MediaStream(warppedT)
+        remote.tracks.screen = track
       } else {
-        remote.stream.avatarStream = new MediaStream(warppedT)
+        remote.tracks.avatar = track
       }
     }
   }
@@ -634,14 +633,14 @@ class Connection extends EventEmitter {
       return
     }
     const local = ParticiantsStore.local.get()
-    const warppedT = toTracks(track.getTrack.bind(track))
+    // const warppedT = toTracks(track.getTrack.bind(track))
 
     if (track.isAudioTrack()) {
-      local.stream.audioStream = new MediaStream(warppedT)
+      local.tracks.audio = track
     } else if (track.isVideoTrack() && track.isScreenSharing()) {
-      local.stream.screenStream = new MediaStream(warppedT)
+      local.tracks.screen = track
     } else {
-      local.stream.avatarStream = new MediaStream(warppedT)
+      local.tracks.avatar = track
     }
   }
 }

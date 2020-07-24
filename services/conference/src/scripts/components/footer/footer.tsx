@@ -15,6 +15,7 @@ import SpeakerOnIcon from '@material-ui/icons/VolumeUp'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {StereoAudioSwitch} from './StereoAudioSwitch'
+import {ShareButton} from './share/ShareButton'
 
 const useStyles = makeStyles((theme) => {
   return ({
@@ -159,10 +160,7 @@ export const Footer: React.FC<BaseProps> = (props) => {
         {videoMenuItems}
       </Menu>
 
-      <Fab className={classes.margin} size = "small" color={false ? 'secondary' : 'primary'}
-        aria-label="share">
-        <ScreenShareIcon />
-      </Fab>
+      <ShareButton className={classes.margin} />
 
    </div>
   )

@@ -1,12 +1,12 @@
-import {Participant as IParticipant} from '@models/participant'
+import {ParticipantBase as IParticipantBase} from '@models/participant'
 import {Store} from '@stores/utils'
 
-export type ParentStore = Store<IParticipant>
+export type ParentStoreBase = Store<IParticipantBase>
 
 export class ParticipantStorePlugin {
-  parent: ParentStore
+  parent: ParentStoreBase
 
-  constructor(parent: Store<IParticipant>) {
+  constructor(parent: Store<IParticipantBase>) {
     this.parent = parent
   }
 }

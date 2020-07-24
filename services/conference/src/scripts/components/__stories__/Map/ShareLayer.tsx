@@ -18,6 +18,7 @@ function addFakeSharedContents(store: SharedContentsStore) {
       orientation: 0,
     },
     size: [100, 100],
+    zorder : 0,
   })
   store.addLocalContent(sc)
 }
