@@ -10,6 +10,7 @@ export const ComposedAvatar: React.FC<ComposedAvatarProps> = (props: ComposedAva
     stream,
     ...remainProps
   } = props
+  console.log(`info.avatarSrc = ${information.avatarSrc}`)
 
   if (stream === undefined) {
     return <ImageAvatar information={information} {...remainProps} />
