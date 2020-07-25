@@ -1,16 +1,23 @@
 import React from 'react'
-import {PluginBase} from '../PluginBase'
+import {BaseConfigurationProps, PluginBase} from '../PluginBase'
 import {registerPlugin} from '../registery'
 
 export const LOCAL_PARTICIPANT_CONFIG = 'local_participant_type'
 
-interface Props {
+interface Props extends BaseConfigurationProps {
   id: string
 }
 
 const LocalParticipantConfig: React.FC<Props> = (props: Props) => {
+  const {
+    closeDialog,
+  } = props
+
   return <div>
     {'LocalParticipantConfig,LocalParticipantConfig,LocalParticipantConfig,LocalParticipantConfig,LocalParticipantConfig'}
+    <div>
+      <button onClick={closeDialog}>close dialog</button>
+    </div>
   </div>
 }
 
