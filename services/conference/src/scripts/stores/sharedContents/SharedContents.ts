@@ -26,6 +26,13 @@ export class SharedContents extends AutomergedStore<typeof DOC_KEY, RawDocuments
     })
   }
 
+  addContent(content: SharedContent) {
+    this.change((doc) => {
+      doc.contents[content.id] = content
+      doc.renderOrder.push(content.id)
+    })
+  }
+
   getRenderOrder(id: string) {
     return this.content.renderOrder.findIndex(val => val === id)
   }
