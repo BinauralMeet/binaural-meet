@@ -1,4 +1,3 @@
-import {PastedContent} from '@components/map/ShareLayer/PastedContent'
 import {SharedContents} from '@components/map/ShareLayer/ShareLayer'
 import {StoreProvider as ContentsProvider} from '@hooks/SharedContentsStore'
 import offlineClient from '@models/automerge/clients/offlineClient'
@@ -49,7 +48,6 @@ const ShareLayerStory: React.FC<{}> = () => {
   return (
     <ContentsProvider value={store}>
       <SharedContents />
-      <PastedContent content={pc} />
     </ContentsProvider>
   )
 }
