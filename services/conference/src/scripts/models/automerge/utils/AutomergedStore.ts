@@ -12,8 +12,8 @@ export abstract class AutomergedStore<K extends keyof T, T extends RawDocuments>
     this.client = client
     this.docId = docId
 
-    this.client.initDoc(docId, this.defaultValue())
-    this.content = client.getDoc(docId)
+    this.client.initDoc(docId, this.defaultValue(), newDoc => this.content = newDoc)
+    this.content = this.client.getDoc(docId)
   }
 
   @action.bound

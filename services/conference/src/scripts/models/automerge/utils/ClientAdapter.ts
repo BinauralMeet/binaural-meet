@@ -10,16 +10,18 @@ export class ClientAdapter<T extends RawDocuments> {
     this.client = new AutomergeClient({
       socket,
       savedData: {},
+      onChange: this.onChange,  // remote change
     })
   }
 
-  initDoc<K extends keyof T>(id: K, defaultValue: T[K]) {
+  initDoc<K extends keyof T>(id: K, defaultValue: T[K], onChange: (newDoc: AutoMerge.Doc<T[K]>) => void) {
     console.assert(typeof id === 'string')
     const idStr = id as string
     console.assert(this.client.docs[idStr] === undefined, `Doc - ${idStr} already exists`)
 
     this.client.docs[idStr] = AutoMerge.from(defaultValue)
     this.client.subscribe([idStr])
+    this.docChangedLoopUp[id] = onChange
   }
 
   getDoc<K extends keyof T>(id: K) {
@@ -32,8 +34,10 @@ export class ClientAdapter<T extends RawDocuments> {
   change<K extends keyof T>(id: K, changer: AutoMerge.ChangeFn<T[K]>) {
     console.assert(typeof id === 'string')
     console.assert(this.client.docs[id as string] !== undefined)
+    const idStr = id as string
 
-    this.client.change(id as string, changer)
+    this.client.change(idStr, changer)
+    this.onChange(idStr, this.client.docs[idStr]) // local change
   }
 
   // all docs specified in T have beend inited throught initDoc
@@ -49,6 +53,13 @@ export class ClientAdapter<T extends RawDocuments> {
     this._fullInitialized = true
 
     return true
+  }
+
+  private docChangedLoopUp: {
+    [K in keyof T]?: (newDoc: AutoMerge.Doc<T[K]>) => void
+  } = {}
+  private onChange = <K extends keyof T>(docId: K, newDoc: AutoMerge.Doc<T[K]>) => {
+    this.docChangedLoopUp[docId]?.call(null, newDoc)
   }
 }
 
