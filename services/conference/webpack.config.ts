@@ -87,6 +87,7 @@ const config: webpack.Configuration = {
   resolve: {
     alias: {
       '@libs/lib-jitsi-meet': path.resolve(__dirname, 'dist', 'lib-jitsi-meet.min'),
+      automerge: path.resolve(__dirname, 'node_modules', 'automerge'),
     },
     extensions: ['.tsx', '.ts', '.js'],
     plugins: [

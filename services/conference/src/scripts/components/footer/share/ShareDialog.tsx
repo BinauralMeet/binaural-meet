@@ -1,7 +1,8 @@
 import Dialog from '@material-ui/core/Dialog'
 import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
-import React, {useState} from 'react'
+import sharedContentsStore from '@stores/sharedContents/SharedContents'
+import Ract, {seState} from 'react'
 import {Entrance} from './Entrance'
 import {ImageInput} from './ImageInput'
 import {Step, stepTitle} from './Step'
@@ -46,6 +47,21 @@ function getPage(step: Step, setStep: (step: Step) => void): JSX.Element | undef
           setStep={setStep}
           onFinishInput={(value) => {
             // TODO modify store
+            sharedContentsStore.addContent({
+              id: Math.random().toString(),
+              perceptibility: {
+                visibility: true,
+                coreContentVisibility: true,
+                audibility: true,
+              },
+              type : 'text',
+              url: value,
+              pose: {
+                position: [100, 100],
+                orientation: 0,
+              },
+              size: [100, 100],
+            })
             console.debug(`share text: ${value}`)
           }}
           textLabel = "Text"

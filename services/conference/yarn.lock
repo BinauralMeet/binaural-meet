@@ -3002,13 +3002,6 @@ automation-events@^2.0.8:
     "@babel/runtime" "^7.9.6"
     tslib "^2.0.0"
 
-"automerge-client@https://gitpkg.now.sh/JitsiPartyTeam/automerge-client-server/packages/automerge-client":
-  version "0.0.6"
-  resolved "https://gitpkg.now.sh/JitsiPartyTeam/automerge-client-server/packages/automerge-client#5cafbfbdac3c0ed0657aa80904dcfb665d489a21"
-  dependencies:
-    automerge "^0.8.0"
-    esm "^3.0.82"
-
 automerge@^0.14.1:
   version "0.14.1"
   resolved "https://registry.yarnpkg.com/automerge/-/automerge-0.14.1.tgz#ba127917bd660bb68fd6a438d8d5f5ab49f5a60b"
@@ -3018,16 +3011,6 @@ automerge@^0.14.1:
     transit-immutable-js "^0.7.0"
     transit-js "^0.8.861"
     uuid "^3.4.0"
-
-automerge@^0.8.0:
-  version "0.8.0"
-  resolved "https://registry.yarnpkg.com/automerge/-/automerge-0.8.0.tgz#dd5b8073d2b56801a4354bb0955d67bbceece9f6"
-  integrity sha512-TB+b+N/VATzQH3hQrzAmTvfyyo04SNUer9ml4M1PRSQ4Bq0OYgclqi3hdYlNG4d/rSWKq897nbkg7gbni7CV2w==
-  dependencies:
-    immutable "^3.8.2"
-    transit-immutable-js "^0.7.0"
-    transit-js "^0.8.861"
-    uuid "3.1.0"
 
 autoprefixer@^9.7.2:
   version "9.7.6"
@@ -5318,11 +5301,6 @@ eslint-scope@^4.0.3:
   dependencies:
     esrecurse "^4.1.0"
     estraverse "^4.1.1"
-
-esm@^3.0.82:
-  version "3.2.25"
-  resolved "https://registry.yarnpkg.com/esm/-/esm-3.2.25.tgz#342c18c29d56157688ba5ce31f8431fbb795cc10"
-  integrity sha512-U1suiZ2oDVWv4zPO56S0NcR5QriEahGtdN2OR6FiOG4WJvcjBVFB0qI4+eKoWFH483PKGuLuu6V8Z4T5g63UVA==
 
 esprima-fb@^15001.1.0-dev-harmony-fb:
   version "15001.1.0-dev-harmony-fb"
@@ -12168,11 +12146,6 @@ utils-merge@1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/utils-merge/-/utils-merge-1.0.1.tgz#9f95710f50a267947b2ccc124741c1028427e713"
   integrity sha1-n5VxD1CiZ5R7LMwSR0HBAoQn5xM=
-
-uuid@3.1.0:
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/uuid/-/uuid-3.1.0.tgz#3dd3d3e790abc24d7b0d3a034ffababe28ebbc04"
-  integrity sha512-DIWtzUkw04M4k3bf1IcpS2tngXEL26YUD2M0tMDUpnUrz2hgzUBlD55a4FjdLGPvfHxS6uluGWvaVEqgBcVa+g==
 
 uuid@^3.0.1, uuid@^3.1.0, uuid@^3.3.2, uuid@^3.4.0:
   version "3.4.0"
