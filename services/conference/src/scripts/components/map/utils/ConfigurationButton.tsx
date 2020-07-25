@@ -35,7 +35,7 @@ export const ConfigurationButton: React.FC<ConfigurationButtonProps> = (props) =
       anchorReference={'anchorEl'}
       anchorEl={anchorEl}
     >
-        <ConfigurationPlugin />
+        <ConfigurationPlugin closeDialog={() => setShowConfig(false)} />
     </Popover>
   )
 
