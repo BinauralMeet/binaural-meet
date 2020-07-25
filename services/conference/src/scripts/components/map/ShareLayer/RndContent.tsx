@@ -18,12 +18,13 @@ function mulV<S extends number, T extends number[]>(s: S, v2: T): T {
 
 export interface RndContentProps{
   content: ISharedContent
+  contentChanger: (changer: (content: ISharedContent) => void) => void
   hideAll?: boolean
   autoHideTitle?: boolean
   onShare?: (evt: React.MouseEvent<HTMLDivElement>) => void
   onClose?: (evt: React.MouseEvent<HTMLDivElement>) => void
   onPaste?: (evt: ClipboardEvent) => void
-  onUpdate?: (newContent: ISharedContent) => void
+  onUpdate?: () => void
 }
 interface StyleProps{
   props: RndContentProps,
@@ -65,15 +66,16 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   const rnd = useRef<Rnd>(null)                         //  ref to rnd to update position and size
   const {ref, dimensions} = useDimensions()             //  title dimensions measured
   const [showTitle, setShowTitle] = useState(!props.autoHideTitle)
-  const [content, setContent] = useState(props.content) //  the content
 
   //  effects
   useEffect(  //  Always update pose, size, content
     () => {
-      if (content !== props.content) {
+      if (props.content.pose !== pose) {
         setPose(props.content.pose)
+      }
+
+      if (props.content.size !== size) {
         setSize(props.content.size)
-        setContent(props.content)
       }
     },
   )
@@ -113,11 +115,11 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       bChange = true
     }
     if (bChange) {
-      const newContent = Object.assign({}, props.content)
-      newContent.size = size
-      newContent.pose = pose
-      // console.log('onUpdate', newContent)
-      props.onUpdate?.call(null, newContent)
+      props.contentChanger((content) => {
+        content.size = size
+        content.pose = pose
+      })
+      props.onUpdate?.call(null)
     }
   }
   //  drag for title area

@@ -1,5 +1,6 @@
 import {StoreProvider as ContentsProvider, useStore} from '@hooks/SharedContentsStore'
 import {makeStyles} from '@material-ui/core/styles'
+import {SharedContent as ISharedContent} from '@models/SharedContent'
 import sharedContentsStore from '@stores/sharedContents/SharedContents'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
@@ -18,7 +19,8 @@ export const SharedContents: React.FC<{}> = () => {
   const store = useStore()
   const classes = useStyles()
   const contents = useObserver(() =>
-    store.all.map(val => <SharedContent key={val.id} content={val} />))
+    store.content.renderOrder.map(
+      id => <SharedContent key={id} content={store.content.contents[id] as ISharedContent} />))
 
   return(
     <div className={classes.slContainer} >
