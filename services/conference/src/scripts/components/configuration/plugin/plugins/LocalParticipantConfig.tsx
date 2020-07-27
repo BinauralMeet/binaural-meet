@@ -45,7 +45,6 @@ const LocalParticipantConfig: React.FC<Props> = (props: Props) => {
       local.information.name = 'Anonymous'
       local.information.email = undefined
       local.information.avatarSrc = undefined
-      local.information = Object.assign({}, local.information)    //  Call observer
 
       return
     }
@@ -61,8 +60,8 @@ const LocalParticipantConfig: React.FC<Props> = (props: Props) => {
       if (local.information.name) { storage.setItem('name', local.information.name) }
       if (local.information.email) { storage.setItem('email', local.information.email) }
       if (local.information.avatarSrc) { storage.setItem('avatarSrc', local.information.avatarSrc) }
-      local.information = Object.assign({}, local.information)    //  Call observer
     }
+
     if (file) {
       const formData = new FormData()
       formData.append('access_token', 'e9889a51fca19f2712ec046016b7ec0808953103e32cd327b91f11bfddaa8533')

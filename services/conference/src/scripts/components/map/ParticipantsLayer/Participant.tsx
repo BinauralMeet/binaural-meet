@@ -1,7 +1,9 @@
 import {Avatar, AvatarProps} from '@components/avatar'
 import {LOCAL_PARTICIPANT_CONFIG} from '@components/configuration/plugin/plugins/LocalParticipantConfig'
+import {REMOTE_PARTICIPANT_CONFIG} from '@components/configuration/plugin/plugins/RemoteParticipantConfig'
 import {useStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
+import {Tooltip} from '@material-ui/core'
 import {makeStyles} from '@material-ui/core/styles'
 import {useObserver} from 'mobx-react-lite'
 import React, {forwardRef, useState} from 'react'
@@ -51,23 +53,26 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
   const transform = useTransform()
 
   return (
-    <MapObjectContainer pose={participantProps} ref={ref} disableRotation={true}
-      configurationPluginName={LOCAL_PARTICIPANT_CONFIG}
-      buttonSpacing={{
-        top: -pointerAvatarRatio * props.size / 2,
-        right: -pointerAvatarRatio * props.size / 2,
-      }}
-      counterRotateButtons={true}
-    >
-        <div className="participantWrapper">
-          <div className={classes.pointerRotate}>
-            <Pointer className={classes.pointer} />
+      <MapObjectContainer pose={participantProps} ref={ref} disableRotation={true}
+        configurationPluginName={participants.isLocal(props.participantId) ?
+          LOCAL_PARTICIPANT_CONFIG : REMOTE_PARTICIPANT_CONFIG}
+        buttonSpacing={{
+          top: -pointerAvatarRatio * props.size / 2,
+          right: -pointerAvatarRatio * props.size / 2,
+        }}
+        counterRotateButtons={true}
+      >
+          <div className="participantWrapper">
+            <div className={classes.pointerRotate}>
+              <Pointer className={classes.pointer} />
+            </div>
+            <Tooltip title={participant.information.name}>
+            <div className={[classes.avatar, transform.counterRotationClass, 'draggableHandle'].join(' ')}>
+              <Avatar {...props} />
+            </div>
+            </Tooltip>
           </div>
-          <div className={[classes.avatar, transform.counterRotationClass, 'draggableHandle'].join(' ')}>
-            <Avatar {...props} />
-          </div>
-        </div>
-    </MapObjectContainer >
+      </MapObjectContainer >
   )
 }
 

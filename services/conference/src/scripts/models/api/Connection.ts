@@ -1,5 +1,6 @@
 // import a global variant $ for lib-jitsi-meet
 import {Pose2DMap} from '@models/MapObject'
+import {Information} from '@models/Participant'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {ConnectionInfo, default as ConnectionInfoStore} from '@stores/ConnectionInfo'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
@@ -15,7 +16,7 @@ import JitsiLocalTrack from 'lib-jitsi-meet/modules/RTC/JitsiLocalTrack'
 import JitsiRemoteTrack from 'lib-jitsi-meet/modules/RTC/JitsiRemoteTrack'
 import JitsiTrack, {JitsiTrackEvents} from 'lib-jitsi-meet/modules/RTC/JitsiTrack'
 import * as TPC from 'lib-jitsi-meet/modules/RTC/TPCUtils'
-import {autorun} from 'mobx'
+import {autorun, reaction} from 'mobx'
 import {throttle} from 'throttle-debounce'
 import {Store} from '../../stores/utils'
 import {ConnectionStates, ConnectionStatesType} from './Constants'
@@ -24,7 +25,9 @@ import ApiLogger, {ILoggerHandler} from './Logger'
 //  Log level and module log options
 const JITSILOGLEVEL = 'warn'  // log level for lib-jitsi-meet {debug|log|warn|error}
 const TRACKLOG = true         // show add, remove... of tracks
-//  if (TPC.setTPCLogger) { TPC.setTPCLogger(TRACKLOG ? console.log : (a:any) => {}) }
+if (TPC.setTPCLogger !== undefined) {
+  //  TPC.setTPCLogger(TRACKLOG ? console.log : (a:any) => {})
+}
 const trackLog = TRACKLOG ? console.log : (a:any) => {}
 
 // config.js
@@ -83,6 +86,7 @@ const ParticipantProperties = {
   PPROP_CONTENTS: 'contents',
   PPROP_CONTENTS_UPDATE: 'contents_update',
   PPROP_CONTENTS_REMOVE: 'contents_remove',
+  PPROP_INFO: 'info',
 }
 
 class Connection extends EventEmitter {
@@ -162,6 +166,12 @@ class Connection extends EventEmitter {
       this._jitsiConference.sendCommand(name, values)
     }
   }
+
+  private sendLocalParticipantInformationDisposer = reaction(() => ParticiantsStore.local.get().information, (info) => {
+    this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_INFO, JSON.stringify(info))
+    console.log(`LocalParticipantInfo ${info} sent.`)
+  })
+
 
   private bindStore(local: LocalParticipant) {
     const localParticipantId = local.id
@@ -490,6 +500,11 @@ class Connection extends EventEmitter {
 
           target.pose.orientation = pose.orientation
           target.pose.position = pose.position
+        }else if (name === ParticipantProperties.PPROP_INFO) {
+          const id = participant.getId()
+          const target = ParticiantsStore.find(id)
+          const info: Information = JSON.parse(value)
+          Object.assign(target.information, info)
         }else if (name === ParticipantProperties.PPROP_CONTENTS) {
           const local = ParticiantsStore.local.get()
           if (participant.getId() !== local.id) {
