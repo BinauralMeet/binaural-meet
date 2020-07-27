@@ -45,6 +45,8 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
     position: participant.pose.position,
     orientation: participant.pose.orientation,
   }))
+  const name = useObserver(() => participant.information.name)
+
   const classes = useStyles({
     ...participantProps,
     size: props.size,
@@ -66,10 +68,10 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
             <div className={classes.pointerRotate}>
               <Pointer className={classes.pointer} />
             </div>
-            <Tooltip title={participant.information.name}>
-            <div className={[classes.avatar, transform.counterRotationClass, 'draggableHandle'].join(' ')}>
-              <Avatar {...props} />
-            </div>
+            <Tooltip title={name}>
+              <div className={[classes.avatar, transform.counterRotationClass, 'draggableHandle'].join(' ')}>
+                <Avatar {...props} />
+              </div>
             </Tooltip>
           </div>
       </MapObjectContainer >

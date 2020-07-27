@@ -1,6 +1,6 @@
 import {useStore} from '@hooks/ParticipantsStore'
-import {DoneTwoTone} from '@material-ui/icons'
-import {Information} from '@models/Participant'
+import {uploadToGyazo} from '@models/api/Gyazo'
+import {defaultInformation} from '@models/Participant'
 import React, {useRef, useState} from 'react'
 import {BaseConfigurationProps, PluginBase} from '../PluginBase'
 import {registerPlugin} from '../registery'
@@ -39,45 +39,23 @@ const LocalParticipantConfig: React.FC<Props> = (props: Props) => {
     closeDialog()
     if (submitType === 'cancel') { return }
     if (submitType === 'clear') {
-      localStorage.removeItem('name')
-      localStorage.removeItem('email')
-      localStorage.removeItem('avatarSrc')
-      local.information.name = 'Anonymous'
-      local.information.email = undefined
-      local.information.avatarSrc = undefined
+      localStorage.removeItem('localParticipantInformation')
+      Object.assign(local.information, defaultInformation)
 
       return
     }
     local.information.name = name.value
     local.information.email = email.value
 
-    function saveToStorage() {
-      let storage = sessionStorage
-      if (submitType === 'local') {
-        storage = localStorage
-      }
-      console.log(storage === localStorage ? 'Save to localStorage' : 'Save to sessionStorage')
-      if (local.information.name) { storage.setItem('name', local.information.name) }
-      if (local.information.email) { storage.setItem('email', local.information.email) }
-      if (local.information.avatarSrc) { storage.setItem('avatarSrc', local.information.avatarSrc) }
-    }
 
     if (file) {
-      const formData = new FormData()
-      formData.append('access_token', 'e9889a51fca19f2712ec046016b7ec0808953103e32cd327b91f11bfddaa8533')
-      formData.append('imagedata', file)
-      const promise = fetch('https://upload.gyazo.com/api/upload', {method: 'POST', body: formData})
-      .then(response => response.json())
-      .then((responseJson) => {
-        // console.log("URL = " + responseJson.url)
-        //  To do, add URL and ask user position to place the image
-        local.information.avatarSrc = responseJson.url
+      uploadToGyazo(file).then(({url, size}) => {
+        local.information.avatarSrc = url
         console.log(`info.avatar = ${local.information.avatarSrc}`)
-      }).then(() => {
-        saveToStorage()
+        local.saveInformationToStorage(submitType === 'local')
       })
     }else {
-      saveToStorage()
+      local.saveInformationToStorage(submitType === 'local')
     }
   }
 

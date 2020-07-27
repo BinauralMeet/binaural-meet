@@ -1,7 +1,9 @@
+import {uploadToGyazo} from '@models/api/Gyazo'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {default as participants} from '@stores/participants/Participants'
 import {SharedContent} from '@stores/sharedContents/SharedContent'
 import {default as sharedContents} from '@stores/sharedContents/SharedContents'
+import {image} from 'faker'
 import _ from 'lodash'
 import React, {useEffect, useState} from 'react'
 import {RndContent} from './RndContent'
@@ -20,31 +22,16 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
       if (evt.clipboardData.types.includes('Files')) {   //  If file is pasted (an image is also a file)
         const imageFile = evt.clipboardData.items[0].getAsFile()
         if (imageFile) {
-          //  upload image file to Gayzo
-          const formData = new FormData()
-          formData.append('access_token', 'e9889a51fca19f2712ec046016b7ec0808953103e32cd327b91f11bfddaa8533')
-          formData.append('imagedata', imageFile)
-          fetch('https://upload.gyazo.com/api/upload', {method: 'POST', body: formData})
-          .then(response => response.json())
-          .then((responseJson) => {
-            // console.log("URL = " + responseJson.url)
-            //  To do, add URL and ask user position to place the image
-            const img = new Image()
-            img.src = responseJson.url
-            img.onload = () => {
-              content.size = [img.width, img.height]
-              // console.log("mousePos:" + (global as any).mousePositionOnMap)
-              const CENTER = 0.5
-              for (let i = 0; i < content.pose.position.length; i += 1) {
-                content.pose.position[i] = (global as any).mousePositionOnMap[i] - CENTER * content.size[i]
-              }
-              content.url = responseJson.url
-              content.type = 'img'
-              setContent(Object.assign({}, content))
+          uploadToGyazo(imageFile).then(({url, size}) => {
+            // console.log("mousePos:" + (global as any).mousePositionOnMap)
+            content.url = url
+            content.type = 'img'
+            content.size = size
+            const CENTER = 0.5
+            for (let i = 0; i < content.pose.position.length; i += 1) {
+              content.pose.position[i] = (global as any).mousePositionOnMap[i] - CENTER * content.size[i]
             }
-          })
-          .catch((error) => {
-            console.error(error)
+            setContent(Object.assign({}, content))
           })
         }
       }else if (evt.clipboardData.types.includes('text/plain')) {
