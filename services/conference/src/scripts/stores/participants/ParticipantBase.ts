@@ -22,7 +22,7 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
     console.log(storage === localStorage ? 'Save to localStorage' : 'Save to sessionStorage')
     storage.setItem('localParticipantInformation', JSON.stringify(this.information))
   }
-  loadInformationToStorage() {
+  loadInformationFromStorage() {
     let storage = localStorage
     if (sessionStorage.getItem('localParticipantInformation')) {
       storage = sessionStorage
@@ -30,7 +30,7 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
     console.log(storage === localStorage ? 'Load from localStorage' : 'Load from sessionStorage')
     const infoInStr = storage.getItem('localParticipantInformation')
     if (infoInStr) {
-      this.information = JSON.parse(infoInStr)
+      Object.assign(this.information, JSON.parse(infoInStr))
     }
   }
 }
