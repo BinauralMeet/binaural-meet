@@ -34,9 +34,9 @@ export interface Information {
 }
 export const defaultInformation:Information = {
   name: 'Anonymous',
-  email: undefined,
-  md5Email: undefined,
-  avatarSrc: undefined,
+  email: '',
+  md5Email: '',
+  avatarSrc: '',
 }
 
 export interface Tracks<T extends JitsiTrack> {

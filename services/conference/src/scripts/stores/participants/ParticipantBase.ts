@@ -22,6 +22,17 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
     console.log(storage === localStorage ? 'Save to localStorage' : 'Save to sessionStorage')
     storage.setItem('localParticipantInformation', JSON.stringify(this.information))
   }
+  loadInformationToStorage() {
+    let storage = localStorage
+    if (sessionStorage.getItem('localParticipantInformation')) {
+      storage = sessionStorage
+    }
+    console.log(storage === localStorage ? 'Load from localStorage' : 'Load from sessionStorage')
+    const infoInStr = storage.getItem('localParticipantInformation')
+    if (infoInStr) {
+      this.information = JSON.parse(infoInStr)
+    }
+  }
 }
 
 export class TracksStore<T extends JitsiTrack> implements Tracks<T>{

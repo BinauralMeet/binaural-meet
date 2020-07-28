@@ -11,11 +11,5 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
   @observable useStereoAudio = true
   constructor(id: string) {
     super(id)
-    const avatarSrc = localStorage.getItem('avatarSrc')
-    this.information.avatarSrc = avatarSrc ? avatarSrc : undefined
-    const name = localStorage.getItem('name')
-    this.information.name = name ? name : 'Anonymous'
-    const email = localStorage.getItem('email')
-    this.information.email = email ? email : undefined
   }
 }

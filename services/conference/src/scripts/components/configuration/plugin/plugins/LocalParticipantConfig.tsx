@@ -19,7 +19,7 @@ function useInput<T>(initialValue:T) {
     (set as any)(e.target.value)
   }
 
-  return {value, onChange: handler}
+  return {value, set, args: {value, onChange: handler}}
 }
 
 const LocalParticipantConfig: React.FC<Props> = (props: Props) => {
@@ -31,7 +31,6 @@ const LocalParticipantConfig: React.FC<Props> = (props: Props) => {
   const local = participants.local.get()
   const name = useInput(local.information.name)
   const email = useInput(local.information.email)
-  const avatarSrc = useRef<HTMLInputElement>(null)
   const [file, setFile] = useState<File|null>()
 
   function submitHandler(ev: React.FormEvent) {
@@ -40,13 +39,18 @@ const LocalParticipantConfig: React.FC<Props> = (props: Props) => {
     if (submitType === 'cancel') { return }
     if (submitType === 'clear') {
       localStorage.removeItem('localParticipantInformation')
-      Object.assign(local.information, defaultInformation)
+      sessionStorage.removeItem('localParticipantInformation')
+      name.set(defaultInformation.name)
+      email.set(defaultInformation.email)
+      setFile(null)
+      local.information.name = defaultInformation.name
+      local.information.email = defaultInformation.email
+      local.information.avatarSrc = defaultInformation.avatarSrc
 
       return
     }
     local.information.name = name.value
     local.information.email = email.value
-
 
     if (file) {
       uploadToGyazo(file).then(({url, size}) => {
@@ -60,9 +64,9 @@ const LocalParticipantConfig: React.FC<Props> = (props: Props) => {
   }
 
   return <form onSubmit = {submitHandler}>
-    Name: <input type="text" {...name} /> <br />
-    Email: <input type="text" {...email} /> <br />
-    Avatar: <input type="file" ref={avatarSrc} onChange={(ev) => {
+    Name: <input type="text" {...name.args} /> <br />
+    Email: <input type="text" {...email.args} /> <br />
+    Avatar: <input type="file" onChange={(ev) => {
       setFile(ev.target.files?.item(0))
     }} /> <br />
     <input type="submit" onClick={() => setSubmitType('session')} value="Save" /> &nbsp;
