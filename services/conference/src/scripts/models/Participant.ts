@@ -32,6 +32,13 @@ export interface Information {
   md5Email?: string
   avatarSrc?: string
 }
+export const defaultInformation:Information = {
+  name: 'Anonymous',
+  email: '',
+  md5Email: '',
+  avatarSrc: '',
+}
+
 export interface Tracks<T extends JitsiTrack> {
   audio: T | undefined
   avatar: T | undefined

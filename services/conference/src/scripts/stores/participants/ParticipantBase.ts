@@ -1,4 +1,4 @@
-import {Information, ParticipantBase as IParticipantBase, RemoteParticipant as IRemoteParticipant, Tracks} from '@models/Participant'
+import {defaultInformation, Information, ParticipantBase as IParticipantBase, Tracks} from '@models/Participant'
 import {MapObject} from '@stores/MapObject'
 import {JitsiTrack} from 'lib-jitsi-meet'
 import {computed, observable} from 'mobx'
@@ -6,12 +6,7 @@ import {shallowObservable, Store} from '../utils'
 import {Plugins} from './plugins'
 export class ParticipantBase extends MapObject implements Store<IParticipantBase> {
   readonly id: string
-  information = shallowObservable<Information>({
-    name: 'Name',
-    email: undefined,
-    md5Email: undefined,
-    avatarSrc: undefined,
-  })
+  information = shallowObservable<Information>(Object.assign({}, defaultInformation))
   plugins: Plugins
   tracks = shallowObservable<TracksStore<JitsiTrack>>(new TracksStore<JitsiTrack>())
 
@@ -19,6 +14,24 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
     super()
     this.id = id
     this .plugins = new Plugins(this)
+  }
+
+  saveInformationToStorage(isLocalStorage:boolean) {
+    let storage = sessionStorage
+    if (isLocalStorage) { storage = localStorage }
+    console.log(storage === localStorage ? 'Save to localStorage' : 'Save to sessionStorage')
+    storage.setItem('localParticipantInformation', JSON.stringify(this.information))
+  }
+  loadInformationToStorage() {
+    let storage = localStorage
+    if (sessionStorage.getItem('localParticipantInformation')) {
+      storage = sessionStorage
+    }
+    console.log(storage === localStorage ? 'Load from localStorage' : 'Load from sessionStorage')
+    const infoInStr = storage.getItem('localParticipantInformation')
+    if (infoInStr) {
+      this.information = JSON.parse(infoInStr)
+    }
   }
 }
 
