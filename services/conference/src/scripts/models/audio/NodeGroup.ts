@@ -43,11 +43,9 @@ export class NodeGroup {
     switch (playMode) {
       case 'Context': {
         this.sourceNode?.connect(this.gainNode)
-
         if (this.audioElement !== undefined) {
-          this.audioElement.muted = true
+          this.audioElement.pause()
         }
-
         break
       }
       case 'Element': {
