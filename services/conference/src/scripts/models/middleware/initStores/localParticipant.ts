@@ -4,7 +4,7 @@ import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {reaction} from 'mobx'
 
 function applyUrlParameters(local: LocalParticipant) {
-  local.loadInformationToStorage()
+  local.loadInformationFromStorage()
   local.useStereoAudio = urlParameters.audio === 'mono' ? false : true
   console.log('audio parameter', urlParameters.audio)
 }
