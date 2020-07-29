@@ -22,8 +22,3 @@ export type ConfigurableParams = Pick<PannerNode, ConfigurableProp>
 
 export type ConfigurableProp = 'coneInnerAngle' | 'coneOuterAngle' | 'coneOuterGain' | 'distanceModel' |
                          'maxDistance' | 'distanceModel' | 'panningModel' | 'refDistance' | 'rolloffFactor'
-
-export interface ConfigurablePair<T extends keyof ConfigurableParams>{
-  key: T,
-  value: ConfigurableParams[T],
-}

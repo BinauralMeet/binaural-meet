@@ -3,10 +3,6 @@ import {autorun, IObjectDidChange, reaction} from 'mobx'
 import {ConnectedGroup} from './ConnectedGroup'
 import {StereoManager} from './StereoManager'
 
-import {stereoParametersStore} from '@stores/AudioParameters'
-import {assert} from 'console'
-import {deepObserve} from 'mobx-utils'
-
 export class ConnectedManager {
   private readonly manager = new StereoManager()
 
@@ -32,17 +28,6 @@ export class ConnectedManager {
         this.manager.switchPlayMode(useStereoAudio ? 'Context' : 'Element', muted)
       },
     )
-
-    deepObserve(stereoParametersStore, (change) => {
-      const typedChange = change as IObjectDidChange
-      assert(typedChange.type === 'update')
-      for (const key in this.manager.nodes) {
-        const node = this.manager.nodes[key].pannerNode
-        Object.assign(node, {
-          [typedChange.name]: (typedChange as any).newValue,
-        })
-      }
-    })
   }
 
   private onPopulationChange = () => {
