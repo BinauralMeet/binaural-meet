@@ -20,7 +20,7 @@ export class NodeGroup {
   private audioElement: HTMLAudioElement | undefined = undefined
 
   private readonly gainNode: GainNode
-  private readonly pannerNode: PannerNode
+  public readonly pannerNode: PannerNode
 
   private readonly context: AudioContext
   private playMode: PlayMode

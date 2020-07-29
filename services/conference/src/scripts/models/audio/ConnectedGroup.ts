@@ -6,7 +6,7 @@ import {autorun, IObservableValue, IReactionDisposer} from 'mobx'
 import {NodeGroup} from './NodeGroup'
 
 export class ConnectedGroup {
-  private readonly disposers: IReactionDisposer[] = []
+  private readonly disposers: (IReactionDisposer | IDisposer)[] = []
 
   constructor(local: IObservableValue<LocalParticipant>, remote: RemoteParticipant, group: NodeGroup) {
     this.disposers.push(autorun(
