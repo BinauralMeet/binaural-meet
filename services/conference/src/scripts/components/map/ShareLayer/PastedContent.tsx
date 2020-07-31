@@ -5,7 +5,8 @@ import {SharedContent} from '@stores/sharedContents/SharedContent'
 import {default as sharedContents} from '@stores/sharedContents/SharedContents'
 import {image} from 'faker'
 import _ from 'lodash'
-import React, {useEffect, useState} from 'react'
+import {useObserver} from 'mobx-react-lite'
+import React, {useEffect} from 'react'
 import {RndContent} from './RndContent'
 
 export interface PastedContentProps{
@@ -13,47 +14,46 @@ export interface PastedContentProps{
 }
 
 export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentProps) => {
-  const defContent: ISharedContent = props.content ? props.content : new SharedContent()
-  const [content, setContent] = useState(defContent)
 
   function onPaste(evt: ClipboardEvent) {
-    // console.log("onPaste called")
+    console.log('onPaste called')
     if (evt.clipboardData) {
+      const pasted = new SharedContent
       if (evt.clipboardData.types.includes('Files')) {   //  If file is pasted (an image is also a file)
         const imageFile = evt.clipboardData.items[0].getAsFile()
         if (imageFile) {
           uploadToGyazo(imageFile).then(({url, size}) => {
             // console.log("mousePos:" + (global as any).mousePositionOnMap)
-            content.url = url
-            content.type = 'img'
-            content.size = size
+            pasted.url = url
+            pasted.type = 'img'
+            pasted.size = size
             const CENTER = 0.5
-            for (let i = 0; i < content.pose.position.length; i += 1) {
-              content.pose.position[i] = (global as any).mousePositionOnMap[i] - CENTER * content.size[i]
+            for (let i = 0; i < pasted.pose.position.length; i += 1) {
+              pasted.pose.position[i] = (global as any).mousePositionOnMap[i] - CENTER * pasted.size[i]
             }
-            setContent(Object.assign({}, content))
+            sharedContents.setPasted(pasted)
           })
         }
       }else if (evt.clipboardData.types.includes('text/plain')) {
         evt.clipboardData.items[0].getAsString((str:string) => {
-          content.url = str
-          if (content.url.indexOf('http://') === 0 || content.url.indexOf('https://') === 0) {
-            content.type = 'iframe'
-            content.pose.position = (global as any).mousePositionOnMap
+          pasted.url = str
+          if (pasted.url.indexOf('http://') === 0 || pasted.url.indexOf('https://') === 0) {
+            pasted.type = 'iframe'
+            pasted.pose.position = (global as any).mousePositionOnMap
             const IFRAME_WIDTH = 600
             const IFRAME_HEIGHT = 800
-            content.size[0] = IFRAME_WIDTH
-            content.size[1] = IFRAME_HEIGHT
+            pasted.size[0] = IFRAME_WIDTH
+            pasted.size[1] = IFRAME_HEIGHT
           }else {
-            content.type = 'text'
-            content.pose.position = (global as any).mousePositionOnMap
+            pasted.type = 'text'
+            pasted.pose.position = (global as any).mousePositionOnMap
             const slen = Math.sqrt(str.length)
             const STRING_SCALE_W = 20
             const STRING_SCALE_H = 10
-            content.size[0] = slen * STRING_SCALE_W
-            content.size[1] = slen * STRING_SCALE_H
+            pasted.size[0] = slen * STRING_SCALE_W
+            pasted.size[1] = slen * STRING_SCALE_H
           }
-          setContent(Object.assign({}, content))
+          sharedContents.setPasted(pasted)
         })
       }
     }
@@ -70,23 +70,24 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
     },
     [],
   )
+  const pastedContent = useObserver(() => sharedContents.pasted)
 
   return (
-    <RndContent content={content} hideAll={content.type === ''}
+    <RndContent content={pastedContent} hideAll={pastedContent.type === ''}
       onShare = {(evt: React.MouseEvent<HTMLDivElement>) => {
         // console.log("onClick b:", evt.button, " bs:" ,evt.buttons, " d:", evt.detail, " p:", evt.eventPhase)
         //  Add the pasted content to sharedContents and clear the pastedContent.
         const TIME_RESOLUTION_IN_MS = 100
-        content.zorder = Math.floor(Date.now() / TIME_RESOLUTION_IN_MS)
-        sharedContents.addLocalContent(_.cloneDeep(content))
-        setContent(new SharedContent)
+        pastedContent.zorder = Math.floor(Date.now() / TIME_RESOLUTION_IN_MS)
+        sharedContents.addLocalContent(_.cloneDeep(pastedContent))
+        sharedContents.setPasted(new SharedContent)
       }}
       onClose = {(evt: React.MouseEvent<HTMLDivElement>) => {
-        setContent(new SharedContent)
+        sharedContents.setPasted(new SharedContent)
         evt.stopPropagation()
       }}
       onUpdate = {(nc: ISharedContent) => {
-        setContent(nc)
+        sharedContents.setPasted(nc)
       }}
     />
   )
