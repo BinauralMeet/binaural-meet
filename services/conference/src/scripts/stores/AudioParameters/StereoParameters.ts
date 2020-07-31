@@ -1,9 +1,8 @@
 import {PARTICIPANT_SIZE} from '@models/Participant'
-import {pick} from 'lodash'
 import {action, computed, observable} from 'mobx'
 
 const PERCENT = 100
-const REFDISTANCE_MAX = 8 * PARTICIPANT_SIZE  // max of no attenuation range
+const REFDISTANCE_MAX = 12 * PARTICIPANT_SIZE  // max of no attenuation range
 const DEFAULT_HEARABLE_RANGE = 40
 
 // Doc of panner node parameters: https://developer.mozilla.org/en-US/docs/Web/API/PannerNode
@@ -15,7 +14,8 @@ export class StereoParameters implements ConfigurableParams {
   @observable maxDistance = 10000
   @observable panningModel: PanningModelType = 'HRTF'
   @observable refDistance = REFDISTANCE_MAX * DEFAULT_HEARABLE_RANGE / PERCENT
-  @observable rolloffFactor = 8
+//  @observable rolloffFactor = 8
+  @observable rolloffFactor = 12
 
   //  0 to 100, 0 has strongest attenuation
   @computed
