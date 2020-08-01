@@ -1,10 +1,11 @@
+import {MAP_CENTER} from '@components/map/Base'
 import {MapObject as IMapObject, Perceptibility, Pose2DMap} from '@models/MapObject'
 import {IObservableObject} from 'mobx'
 import {shallowObservable, Store} from '../utils'
 
 export const defaultValue: IMapObject = {
   pose: {
-    position: [0, 0],
+    position: [MAP_CENTER[0], MAP_CENTER[1]],
     orientation: 0,
   },
   perceptibility: {

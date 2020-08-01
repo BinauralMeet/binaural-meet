@@ -7,8 +7,14 @@ import {
 } from '@models/utils'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef, useState} from 'react'
-import {subV, useGesture} from 'react-use-gesture'
+import {useDimensions} from 'react-dimensions-hook'
+import {addV, subV, useGesture} from 'react-use-gesture'
 import {createValue, Provider as TransformProvider} from '../utils/useTransform'
+
+
+export const MAP_SIZE = 5000
+const HALF = 0.5
+export const MAP_CENTER:[number, number] = [MAP_SIZE * HALF, MAP_SIZE * HALF]
 
 interface StyleProps {
   matrix: DOMMatrixReadOnly,
@@ -24,11 +30,12 @@ const useStyles = makeStyles({
     left: 0,
     userDrag: 'none',
     userSelect: 'none',
+    overflow: 'scroll',
   },
   transform: {
     position: 'absolute',
-    left: '50%',
-    top: '50%',
+    top: 0,
+    left: 0,
     transform: (props: StyleProps) => props.matrix.toString(),
   },
 })
@@ -41,10 +48,9 @@ const options = {
 }
 
 export const Base: React.FC<BaseProps> = (props: BaseProps) => {
-  const outer = useRef<HTMLDivElement>(null)
   const container = useRef<HTMLDivElement>(null)
   const participants = useStore()
-  //  todo how to access participant ?
+
   const localParticipantPosition = useObserver(() => participants.local.get().pose.position)
 
   const [mouse, setMouse] = useState<[number, number]>([0, 0])  // mouse position relative to outer container
@@ -65,7 +71,8 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         if (startDrag && down) {
           if (buttons === MOUSE_RIGHT) {  // right mouse drag - rotate map
             const center = transformPoint2D(matrix, localParticipantPosition)
-            const target = subV(xy, getDivAnchor(container))
+            const target = addV(subV(xy, getDivAnchor(container)), subV(MAP_CENTER, centerOfOuter()))
+            // console.log(`center:${center}  target:${target} divA:${getDivAnchor(container)}`)
             const radius1 = subV(target, center)
             const radius2 = subV(radius1, delta)
 
@@ -132,12 +139,30 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       onWheelEnd: () => setCommitedMatrix(matrix),
       onMove: ({xy}) => {
         setMouse(subV(xy, getDivAnchor(container)))
-        const xyOnMap  = transformPoint2D(matrix.inverse(), subV(xy, getDivAnchor(container)));
+        const xyOnMap  = transformPoint2D(matrix.inverse(), addV(subV(xy, getDivAnchor(container)), MAP_CENTER));
         (global as any).mousePositionOnMap = xyOnMap
       },
     },
   )
-
+  const outerDim = useDimensions()
+  function centerOfOuter():[number, number] {
+    return [outerDim.dimensions.clientWidth /2, outerDim.dimensions.clientHeight /2]
+  }
+  let outer:HTMLElement|null = null
+  function outerRef(e:HTMLElement|null) {
+    outerDim.ref(e)
+    outer = e
+  }
+  //  scroll to center
+  useEffect(
+    () => {
+      if (outer) {
+        console.log('useEffect[outer] called')
+        outer.scrollTo((MAP_SIZE - outer?.clientWidth) /2, (MAP_SIZE - outer?.clientHeight) /2)
+      }
+    },
+    [outer],
+  )
   // prevent show context menu with right mouse click
   useEffect(
     () => {
@@ -148,9 +173,9 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
         return false
       }
-      outer.current?.addEventListener('contextmenu', cb)
+      outer?.addEventListener('contextmenu', cb)
 
-      return () => outer.current?.removeEventListener('contextmenu', cb)
+      return () => outer?.removeEventListener('contextmenu', cb)
     },
     [outer],
   )
@@ -165,7 +190,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   const transfromValue = createValue(commitedMatrix, getDivAnchor(container))
 
   return (
-    <div className={[classes.root, props.className].join(' ')} ref={outer} {...bind()}>
+    <div className={[classes.root, props.className].join(' ')} ref={outerRef} {...bind()}>
     <TransformProvider value={transfromValue}>
     <div id="map-transform" className={classes.transform} ref={container}>
           {props.children}
@@ -192,6 +217,7 @@ function limitScale(currentScale: number, scale: number): number {
 
 function getDivAnchor(e: React.RefObject<HTMLDivElement>): [number, number] {
   const div = e.current
+
   if (div === null) {
     return [0, 0]
   }
