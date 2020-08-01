@@ -10,6 +10,8 @@ import React, {useEffect, useRef, useState} from 'react'
 import {subV, useGesture} from 'react-use-gesture'
 import {createValue, Provider as TransformProvider} from '../utils/useTransform'
 
+export const MAP_SIZE = 5000
+
 interface StyleProps {
   matrix: DOMMatrixReadOnly,
   mouse: [number, number],
@@ -24,6 +26,7 @@ const useStyles = makeStyles({
     left: 0,
     userDrag: 'none',
     userSelect: 'none',
+    overflow: 'scroll',
   },
   transform: {
     position: 'absolute',
@@ -138,6 +141,16 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
     },
   )
 
+  // scroll range
+  useEffect(
+    () => {
+      const orgMat = new DOMMatrix(matrix.toString())
+      setMatrix(matrix.translate(MAP_SIZE /2, MAP_SIZE /2))
+      setMatrix(matrix.translate(-MAP_SIZE /2, -MAP_SIZE /2))
+      setMatrix(orgMat)
+    },
+    [outer],
+  )
   // prevent show context menu with right mouse click
   useEffect(
     () => {
