@@ -15,6 +15,7 @@ import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {ShareButton} from './share/ShareButton'
 import {StereoAudioSwitch} from './StereoAudioSwitch'
+import {StereoConfig} from './StereoConfig'
 
 const useStyles = makeStyles((theme) => {
   return ({
@@ -45,6 +46,8 @@ const useStyles = makeStyles((theme) => {
 export const Footer: React.FC<BaseProps> = (props) => {
   const classes = useStyles()
   const participants = useParticipantsStore()
+
+  const [stereoSwEl, setStereoSwEl] = React.useState<Element|null>(null)
 
   const [micMenuEl, setMicMenuEl] = React.useState<Element|null>(null)
   const closeMicMenu = (did:string) => {
@@ -106,6 +109,12 @@ export const Footer: React.FC<BaseProps> = (props) => {
   return (
     <div className={classes.box}>
       <StereoAudioSwitch className={classes.margin} />
+      <Fab className={classes.small} size="small"
+        onClick = { (ev) => { setStereoSwEl(ev.currentTarget) }}
+      >
+        <MoreIcon />
+      </Fab>
+      <StereoConfig anchorEl = {stereoSwEl} onClose = { () => { setStereoSwEl(null) } } />
 
       <Fab className={classes.margin} size = "small" color={mute.muteS ? 'primary' : 'secondary' }
         aria-label="speaker" onClick = {
@@ -161,7 +170,7 @@ export const Footer: React.FC<BaseProps> = (props) => {
 
       <ShareButton className={classes.margin} />
 
-   </div>
+   </div >
   )
 }
 Footer.displayName = 'Footer'
