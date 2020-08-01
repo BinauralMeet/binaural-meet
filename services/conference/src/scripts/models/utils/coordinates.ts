@@ -75,11 +75,11 @@ export function multiply(matrix: (DOMMatrix | DOMMatrixReadOnly)[]) {
 }
 
 export function extractScaleX(matrix: DOMMatrix | DOMMatrixReadOnly) {
-  return Math.sign(matrix.a) * Math.sqrt(Math.pow(matrix.a, 2) + Math.pow(matrix.c, 2))
+  return Math.abs(Math.sign(matrix.a) * Math.sqrt(Math.pow(matrix.a, 2) + Math.pow(matrix.c, 2)))
 }
 
 export function extractScaleY(matrix: DOMMatrix | DOMMatrixReadOnly) {
-  return Math.sign(matrix.d) * Math.sqrt(Math.pow(matrix.b, 2) + Math.pow(matrix.d, 2))
+  return Math.abs(Math.sign(matrix.d) * Math.sqrt(Math.pow(matrix.b, 2) + Math.pow(matrix.d, 2)))
 }
 
 export function extractScale(matrix: DOMMatrix | DOMMatrixReadOnly): [number, number] {
