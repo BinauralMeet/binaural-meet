@@ -1,3 +1,4 @@
+import sharedContents from '@stores/sharedContents/SharedContents'
 import {DropzoneArea} from 'material-ui-dropzone'
 import React, {useState} from 'react'
 import {DialogPageProps} from './DialogPage'
@@ -28,6 +29,9 @@ export const ImageInput: React.FC<ImageInputProps> = (props) => {
       onFinishInput={(files) => {
         console.debug(`Share image files: ${files}`)
         // TODO modify store
+        if (files[0]){
+          sharedContents.setPastedImage(files[0])
+        }
       }}
       value={files}
       inputField={field} />

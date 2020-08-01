@@ -1,9 +1,7 @@
 import {uploadToGyazo} from '@models/api/Gyazo'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {default as participants} from '@stores/participants/Participants'
 import {SharedContent} from '@stores/sharedContents/SharedContent'
 import {default as sharedContents} from '@stores/sharedContents/SharedContents'
-import {image} from 'faker'
 import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect} from 'react'
@@ -22,9 +20,7 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
       if (evt.clipboardData.types.includes('Files')) {   //  If file is pasted (an image is also a file)
         const imageFile = evt.clipboardData.items[0].getAsFile()
         if (imageFile) {
-          uploadToGyazo(imageFile).then(({url, size}) => {
-            sharedContents.setPastedImage(url, size)
-          })
+          sharedContents.setPastedImage(imageFile)
         }
       }else if (evt.clipboardData.types.includes('text/plain')) {
         evt.clipboardData.items[0].getAsString((str:string) => {
