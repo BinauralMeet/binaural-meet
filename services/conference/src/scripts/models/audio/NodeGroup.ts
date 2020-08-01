@@ -1,11 +1,11 @@
-import {Pose3DAudio} from '@models/Participant'
+import {Pose3DAudio, PARTICIPANT_SIZE} from '@models/Participant'
 import {isChrome} from '@models/utils'
 
 // NOTE Set default value will change nothing. Because value will be overwrite by store in ConnectedGroup
 const DEFAULT_PANNER_NODE_CONFIG: Partial<PannerNode> & {refDistance: number} = {
   panningModel: 'HRTF',
   distanceModel: 'inverse',
-  refDistance: 10,
+  refDistance: PARTICIPANT_SIZE,
   maxDistance: 10000,
   rolloffFactor: 1,
   coneInnerAngle: 45,

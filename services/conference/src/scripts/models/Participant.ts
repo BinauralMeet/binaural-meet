@@ -1,6 +1,7 @@
 import {JitsiLocalTrack, JitsiTrack} from 'lib-jitsi-meet'
 import {MapObject} from './MapObject'
 
+export const PARTICIPANT_SIZE = 50
 export interface ParticipantBase extends MapObject{
   id: string
   information: Information

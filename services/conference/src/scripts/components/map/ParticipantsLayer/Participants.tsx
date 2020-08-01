@@ -1,4 +1,5 @@
 import {useStore} from '@hooks/ParticipantsStore'
+import {PARTICIPANT_SIZE} from '@models/Participant'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {MemoedLocalParticipant as LocalParticipant} from './LocalParticipant'
@@ -10,8 +11,8 @@ export const ParticipantsLayer: React.FC<{}> = () => {
     store.find(id).perceptibility.visibility
   )))
   const localId = useObserver(() => store.localId)
-  const remoteElements = ids.map(id => <Participant key={id} participantId={id} size={50} />)
-  const localElement = (<LocalParticipant key={localId} participantId={localId} size={50} />)
+  const remoteElements = ids.map(id => <Participant key={id} participantId={id} size={PARTICIPANT_SIZE} />)
+  const localElement = (<LocalParticipant key={localId} participantId={localId} size={PARTICIPANT_SIZE} />)
 
   return(
     <div>

@@ -1,16 +1,31 @@
-import {pick} from 'lodash'
-import {action, observable} from 'mobx'
+import {PARTICIPANT_SIZE} from '@models/Participant'
+import {action, computed, observable} from 'mobx'
+
+const PERCENT = 100
+const REFDISTANCE_MAX = 12 * PARTICIPANT_SIZE  // max of no attenuation range
+const DEFAULT_HEARABLE_RANGE = 40
 
 // Doc of panner node parameters: https://developer.mozilla.org/en-US/docs/Web/API/PannerNode
 export class StereoParameters implements ConfigurableParams {
-  @observable coneInnerAngle = 45
-  @observable coneOuterAngle = 360
-  @observable coneOuterGain = 0
+  @observable coneInnerAngle = 0
+  @observable coneOuterAngle = 180
+  @observable coneOuterGain = 1
   @observable distanceModel: DistanceModelType = 'inverse'
   @observable maxDistance = 10000
   @observable panningModel: PanningModelType = 'HRTF'
-  @observable refDistance = 10
-  @observable rolloffFactor = 1
+  @observable refDistance = REFDISTANCE_MAX * DEFAULT_HEARABLE_RANGE / PERCENT
+//  @observable rolloffFactor = 8
+  @observable rolloffFactor = 12
+
+  //  0 to 100, 0 has strongest attenuation
+  @computed
+  get hearableRange() {
+    return this.refDistance * PERCENT / REFDISTANCE_MAX
+  }
+  @action
+  setHearableRange(range:number) {
+    this.refDistance = range / PERCENT * REFDISTANCE_MAX
+  }
 
   @action
   updateParameters(params: Partial<ConfigurableParams>) {

@@ -1,4 +1,4 @@
-import {ConfigurationDialog, resolveConfigurationPlugin} from '@components/configuration'
+import {resolveConfigurationPlugin} from '@components/configuration'
 import IconButton from '@material-ui/core/IconButton'
 import Popover from '@material-ui/core/Popover'
 import Tooltip from '@material-ui/core/Tooltip'
@@ -27,7 +27,6 @@ export const ConfigurationButton: React.FC<ConfigurationButtonProps> = (props) =
 
 
   const [showConfig, setShowConfig] = useState<boolean>(false)
-  const [dialogPosition, setDialogPosition] = useState<[number, number]>([0, 0])
   const ConfigurationPlugin = resolveConfigurationPlugin(plugin)
   const configuration = (
     <Popover
