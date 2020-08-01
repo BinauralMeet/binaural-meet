@@ -23,15 +23,7 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
         const imageFile = evt.clipboardData.items[0].getAsFile()
         if (imageFile) {
           uploadToGyazo(imageFile).then(({url, size}) => {
-            // console.log("mousePos:" + (global as any).mousePositionOnMap)
-            pasted.url = url
-            pasted.type = 'img'
-            pasted.size = size
-            const CENTER = 0.5
-            for (let i = 0; i < pasted.pose.position.length; i += 1) {
-              pasted.pose.position[i] = (global as any).mousePositionOnMap[i] - CENTER * pasted.size[i]
-            }
-            sharedContents.setPasted(pasted)
+            sharedContents.setPastedImage(url, size)
           })
         }
       }else if (evt.clipboardData.types.includes('text/plain')) {
