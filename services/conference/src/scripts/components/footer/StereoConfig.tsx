@@ -4,6 +4,7 @@ import Slider from '@material-ui/core/Slider'
 import {makeStyles} from '@material-ui/core/styles'
 import RolloffNearIcon from '@material-ui/icons/SignalWifi1Bar'
 import RolloffFarIcon from '@material-ui/icons/SignalWifi3Bar'
+import {assert} from '@models/utils'
 import {stereoParametersStore} from '@stores/AudioParameters'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
@@ -27,10 +28,11 @@ export interface StereoConfigProp{
 
 export const StereoConfig: React.FunctionComponent<StereoConfigProp> = (props: StereoConfigProp) => {
   const classes = useStyles()
-  const hearableRange = useObserver(() => stereoParametersStore.hearableRange)
+  const hearableRange = useObserver(() => Math.round(stereoParametersStore.hearableRange))
   //  1 / ( 1 + rolloff/refDist * (Max(dist/refDist, 1) - 1) )
   const handleChange = (event: React.ChangeEvent<{}>, value: number | number[]) => {
-    stereoParametersStore.setHearableRange(value as number)
+    assert(typeof value === 'number')
+    stereoParametersStore.setHearableRange(value)
     console.log(`slider: ${value}`)
   }
 
