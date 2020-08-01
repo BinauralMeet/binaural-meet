@@ -5,6 +5,9 @@ import {JitsiTrack} from 'lib-jitsi-meet'
 import {autorun, IObservableValue, IReactionDisposer} from 'mobx'
 import {NodeGroup} from './NodeGroup'
 
+import {stereoParametersStore} from '@stores/AudioParameters'
+import {ConfigurableProp} from '@stores/AudioParameters/StereoParameters'
+
 export class ConnectedGroup {
   private readonly disposers: IReactionDisposer[] = []
 
@@ -22,6 +25,14 @@ export class ConnectedGroup {
         const track: JitsiTrack | undefined = remote.tracks.audio
         group.updateStream(track?.getOriginalStream())
       },
+    ))
+
+    const observedPannerKeys: ConfigurableProp[] =
+      ['coneInnerAngle', 'coneOuterAngle', 'coneOuterGain', 'distanceModel', 'maxDistance', 'distanceModel', 'panningModel', 'refDistance', 'rolloffFactor']
+    this.disposers.push(autorun(
+      () => observedPannerKeys.forEach((key) => {
+        (group.pannerNode[key] as any) = stereoParametersStore[key]
+      }),
     ))
   }
 
