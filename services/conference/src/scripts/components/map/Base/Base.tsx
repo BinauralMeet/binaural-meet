@@ -2,12 +2,11 @@ import {BaseProps as BP} from '@components/utils'
 import {useStore} from '@hooks/ParticipantsStore'
 import {makeStyles} from '@material-ui/core/styles'
 import {
-  assert, crossProduct, extractRotation, extractScaleX, multiply,
+  crossProduct, extractRotation, extractScaleX, multiply,
   radian2Degree, rotate90ClockWise, rotateVector2D, transformPoint2D, vectorLength,
 } from '@models/utils'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef, useState} from 'react'
-import {useDimensions} from 'react-dimensions-hook'
 import {addV, subV, useGesture} from 'react-use-gesture'
 import {createValue, Provider as TransformProvider} from '../utils/useTransform'
 
@@ -49,30 +48,33 @@ const options = {
 
 export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   const container = useRef<HTMLDivElement>(null)
-  const participants = useStore()
+  const outer = useRef<HTMLDivElement>(null)
+  function offset():[number, number] {
+    if (outer.current) {
+      return [outer.current.scrollLeft, outer.current.scrollTop]
+    }
 
-  const localParticipantPosition = useObserver(() => participants.local.get().pose.position)
+    return [0, 0]
+  }
+  const participants = useStore()
 
   const [mouse, setMouse] = useState<[number, number]>([0, 0])  // mouse position relative to outer container
   const [matrix, setMatrix] = useState<DOMMatrixReadOnly>(new DOMMatrixReadOnly())
-
   // changed only when event end, like drag end
   const [commitedMatrix, setCommitedMatrix] = useState<DOMMatrixReadOnly>(new DOMMatrixReadOnly())
-
   const [startDrag, setStartDrag] = useState(false)
+
+  const localParticipantPosition = useObserver(() => participants.local.get().pose.position)
 
   const MOUSE_RIGHT = 2
   const bind = useGesture(
     {
-      onDragStart: ({event}) => {
-        setStartDrag(true)
-      },
+      onDragStart: ({event}) => { setStartDrag(true) },
       onDrag: ({down, delta, event, xy, buttons}) => {
-        if (startDrag && down) {
+        if (startDrag && down && outer.current) {
           if (buttons === MOUSE_RIGHT) {  // right mouse drag - rotate map
             const center = transformPoint2D(matrix, localParticipantPosition)
-            const target = addV(subV(xy, getDivAnchor(container)), subV(MAP_CENTER, centerOfOuter()))
-            // console.log(`center:${center}  target:${target} divA:${getDivAnchor(container)}`)
+            const target:[number, number] = addV(xy, offset())
             const radius1 = subV(target, center)
             const radius2 = subV(radius1, delta)
 
@@ -111,7 +113,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
         const [md, ma] = memo
 
-        const center = subV(origin as [number, number], getDivAnchor(container))
+        const center = addV(origin as [number, number], offset())
 
         let scale = d / md
         scale = limitScale(Math.abs(extractScaleX(matrix)), scale)
@@ -138,27 +140,19 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       },
       onWheelEnd: () => setCommitedMatrix(matrix),
       onMove: ({xy}) => {
-        setMouse(subV(xy, getDivAnchor(container)))
-        const xyOnMap  = transformPoint2D(matrix.inverse(), addV(subV(xy, getDivAnchor(container)), MAP_CENTER));
+        setMouse(addV(xy, offset()))
+        const xyOnMap  = transformPoint2D(matrix.inverse(), mouse);
         (global as any).mousePositionOnMap = xyOnMap
       },
     },
   )
-  const outerDim = useDimensions()
-  function centerOfOuter():[number, number] {
-    return [outerDim.dimensions.clientWidth /2, outerDim.dimensions.clientHeight /2]
-  }
-  let outer:HTMLElement|null = null
-  function outerRef(e:HTMLElement|null) {
-    outerDim.ref(e)
-    outer = e
-  }
   //  scroll to center
   useEffect(
     () => {
-      if (outer) {
+      if (outer.current) {
+        const elem = outer.current
         console.log('useEffect[outer] called')
-        outer.scrollTo((MAP_SIZE - outer?.clientWidth) /2, (MAP_SIZE - outer?.clientHeight) /2)
+        elem.scrollTo((MAP_SIZE - elem.clientWidth) /2, (MAP_SIZE - elem.clientHeight) /2)
       }
     },
     [outer],
@@ -166,18 +160,20 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   // prevent show context menu with right mouse click
   useEffect(
     () => {
-      assert(outer !== null)
+      const cb = (e: Event) => { e.preventDefault() }
+      outer.current?.addEventListener('contextmenu', cb)
 
-      const cb = (e: Event) => {
-        e.preventDefault()
-
-        return false
-      }
-      outer?.addEventListener('contextmenu', cb)
-
-      return () => outer?.removeEventListener('contextmenu', cb)
+      return () => outer.current?.removeEventListener('contextmenu', cb)
     },
-    [outer],
+    [outer])
+  // prevent to scroll by wheel
+  useEffect(
+    () => {
+      window.document.body.addEventListener('wheel',
+                                            (event) => { event.preventDefault() },
+                                            {passive: false})
+    },
+    [],
   )
 
   const relativeMouse = matrix.inverse().transformPoint(new DOMPoint(...mouse))
@@ -187,10 +183,10 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   }
   const classes = useStyles(styleProps)
 
-  const transfromValue = createValue(commitedMatrix, getDivAnchor(container))
+  const transfromValue = createValue(commitedMatrix, [0, 0])
 
   return (
-    <div className={[classes.root, props.className].join(' ')} ref={outerRef} {...bind()}>
+    <div className={[classes.root, props.className].join(' ')} ref={outer} {...bind()}>
     <TransformProvider value={transfromValue}>
     <div id="map-transform" className={classes.transform} ref={container}>
           {props.children}
@@ -215,12 +211,3 @@ function limitScale(currentScale: number, scale: number): number {
   return scale
 }
 
-function getDivAnchor(e: React.RefObject<HTMLDivElement>): [number, number] {
-  const div = e.current
-
-  if (div === null) {
-    return [0, 0]
-  }
-
-  return [div.offsetLeft, div.offsetTop]
-}

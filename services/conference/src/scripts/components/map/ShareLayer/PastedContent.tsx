@@ -1,9 +1,7 @@
 import {uploadToGyazo} from '@models/api/Gyazo'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {default as participants} from '@stores/participants/Participants'
 import {SharedContent} from '@stores/sharedContents/SharedContent'
 import {default as sharedContents} from '@stores/sharedContents/SharedContents'
-import {image} from 'faker'
 import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect} from 'react'
@@ -58,6 +56,7 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
           onPaste(event)
           event.preventDefault()
         },
+        {passive:false},
       )
     },
     [],

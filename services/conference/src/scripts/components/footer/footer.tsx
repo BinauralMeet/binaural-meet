@@ -26,18 +26,16 @@ const useStyles = makeStyles((theme) => {
       '&:hover': {
         opacity: 1.0,
       },
+      pointerEvents: 'none',
     },
     margin: {
       margin: theme.spacing(1),
+      pointerEvents: 'auto',
     },
     small: {
       transform: 'scale(0.5)',
       margin: '1.2em 0 0 -2.1em',
-    },
-    itemSelected: {
-      color: 'primary',
-    },
-    item:{
+      pointerEvents: 'auto',
     },
   })
 })
