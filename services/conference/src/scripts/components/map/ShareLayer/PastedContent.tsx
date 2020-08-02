@@ -54,6 +54,7 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
           onPaste(event)
           event.preventDefault()
         },
+        {passive:false},
       )
     },
     [],
