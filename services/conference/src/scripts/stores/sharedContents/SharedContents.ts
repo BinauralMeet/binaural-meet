@@ -1,11 +1,11 @@
-import {TheatersOutlined} from '@material-ui/icons'
+import {uploadToGyazo} from '@models/api/Gyazo'
 import {ParticipantContents as IParticipantContents, SharedContent as ISharedContent} from '@models/SharedContent'
 import {default as participantsStore} from '@stores/participants/Participants'
-import {diffMap} from '@stores/utils'
+import {diffMap, shallowObservable} from '@stores/utils'
 import {EventEmitter} from 'events'
 import {JitsiLocalTrack, JitsiTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
-import {computed, observable} from 'mobx'
+import {action, computed, observable} from 'mobx'
 import {SharedContent} from './SharedContent'
 
 function contentComp(a:ISharedContent, b:ISharedContent) {
@@ -71,6 +71,34 @@ export class SharedContents extends EventEmitter {
   //  contents by owner
   participants: Map<string, ParticipantContents> = new Map<string, ParticipantContents>()
   leavingParticipants: Map<string, ParticipantContents> = new Map<string, ParticipantContents>()
+
+  //  pasted content
+  @observable.ref pasted = new SharedContent()
+  @action setPasted(c:SharedContent) {
+    this.pasted = Object.assign({}, c)
+  }
+  @action setPastedImage(imageFile: File) {
+    if (imageFile) {
+      uploadToGyazo(imageFile).then(({url, size}) => {
+        // console.log("mousePos:" + (global as any).mousePositionOnMap)
+        const pasted = new SharedContent()
+        pasted.type = 'img'
+        pasted.url = url
+        const max = size[0] > size[1] ? size[0] : size [1]
+        if (max > 500) {
+          const scale = 500 / max
+          size[0] *= scale
+          size[1] *= scale
+        }
+        pasted.size = size
+        const CENTER = 0.5
+        for (let i = 0; i < pasted.pose.position.length; i += 1) {
+          pasted.pose.position[i] = (global as any).mousePositionOnMap[i] - CENTER * pasted.size[i]
+        }
+        this.setPasted(pasted)
+      })
+    }
+  }
 
   @computed get localParticipant(): ParticipantContents {
     if (!this.localId) { this.localId = participantsStore.localId }
