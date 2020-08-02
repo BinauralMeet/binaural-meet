@@ -9,6 +9,7 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
   information = shallowObservable<Information>(Object.assign({}, defaultInformation))
   plugins: Plugins
   tracks = shallowObservable<TracksStore<JitsiTrack>>(new TracksStore<JitsiTrack>())
+  @observable.ref mousePosition: [number, number] | undefined = undefined
 
   constructor(id: string) {
     super()
