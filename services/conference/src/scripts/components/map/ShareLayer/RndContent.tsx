@@ -254,6 +254,7 @@ const useStyles = makeStyles({
   content: (props: StyleProps) => ({
     width: props.size[0],
     height: props.size[1],
+    userDrag: 'none',
   }),
   titlePosition: (props:StyleProps) => (
     props.showTitle ?
