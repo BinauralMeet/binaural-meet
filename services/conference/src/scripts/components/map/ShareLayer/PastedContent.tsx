@@ -20,9 +20,7 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
       if (evt.clipboardData.types.includes('Files')) {   //  If file is pasted (an image is also a file)
         const imageFile = evt.clipboardData.items[0].getAsFile()
         if (imageFile) {
-          uploadToGyazo(imageFile).then(({url, size}) => {
-            sharedContents.setPastedImage(url, size)
-          })
+          sharedContents.setPastedImage(imageFile)
         }
       }else if (evt.clipboardData.types.includes('text/plain')) {
         evt.clipboardData.items[0].getAsString((str:string) => {
