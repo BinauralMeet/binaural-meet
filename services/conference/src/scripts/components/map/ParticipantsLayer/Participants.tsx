@@ -18,6 +18,11 @@ export const ParticipantsLayer: React.FC<{}> = () => {
     <div>
       {remoteElements}
       {localElement}
+      <div style={{width:18, height:30, left:2500, top:2500, position:'absolute'}}>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 100">
+          <polygon points="32,100 53,92 36,57 60,56 0,0 0,81 16,65 32,100" stroke="black" fill="#f88" strokeWidth="6" />
+        </svg>
+      </div>
     </div>
   )
 }
