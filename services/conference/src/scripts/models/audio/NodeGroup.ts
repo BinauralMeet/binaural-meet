@@ -1,4 +1,4 @@
-import {Pose3DAudio, PARTICIPANT_SIZE} from '@models/Participant'
+import {PARTICIPANT_SIZE, Pose3DAudio} from '@models/Participant'
 import {isChrome} from '@models/utils'
 
 // NOTE Set default value will change nothing. Because value will be overwrite by store in ConnectedGroup
@@ -64,6 +64,8 @@ export class NodeGroup {
         console.error(`Unknown output: ${playMode}`)
         break
     }
+
+    this.updateAudibility(this.audibility)
   }
 
   updateStream(stream: MediaStream | undefined) {
@@ -84,12 +86,19 @@ export class NodeGroup {
     }
   }
 
+  private audibility = true
   updateAudibility(audibility: boolean) {
     if (audibility) {
       this.gainNode.connect(this.pannerNode)
     } else {
       this.gainNode.disconnect()
     }
+
+    if (this.audioElement) {
+      this.audioElement.muted = !audibility
+    }
+
+    this.audibility = audibility
   }
 
   disconnect() {
@@ -142,12 +151,6 @@ export class NodeGroup {
       }
 
       this.audioElement.srcObject = stream
-    }
-  }
-
-  setMute(muted:boolean) {
-    if (this.audioElement) {
-      this.audioElement.muted = muted
     }
   }
 }
