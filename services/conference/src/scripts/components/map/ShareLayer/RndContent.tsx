@@ -70,19 +70,8 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   const [resizeBasePos, setResizeBasePos] = useState(pose.position)    //  position when resize start
   const rnd = useRef<Rnd>(null)                         //  ref to rnd to update position and size
   const {ref, dimensions} = useDimensions()             //  title dimensions measured
-  const [showTitle, setShowTitle] = useState(true)
-//  const [content, setContent] = useState(props.content) //  the content
+  const [showTitle, setShowTitle] = useState(!props.autoHideTitle || props.content.pinned)
 
-  //  effects
-/*  useEffect(  //  Always update pose, size, content
-    () => {
-      if (content !== props.content) {
-        setPose(props.content.pose)
-        setSize(props.content.size)
-        setContent(props.content)
-      }
-    },
-  )*/
   useLayoutEffect(  //  reflect pose etc. to rnd size
     () => {
       if (rnd.current) { rnd.current.resizable.orientation = pose.orientation + transform.rotation }
@@ -210,7 +199,6 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
         evt.preventDefault()
       }
     }>
-      <div>
       <Rnd className={classes.rndCls} ref={rnd} orientation = {pose.orientation}
         onResizeStart = { (evt)  => {
           evt.stopPropagation(); evt.preventDefault()
@@ -239,7 +227,6 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
           <div className={classes.content} ><Content content={props.content} /></div>
         </div>
       </Rnd>
-      </div>
     </div >
   )
 }
