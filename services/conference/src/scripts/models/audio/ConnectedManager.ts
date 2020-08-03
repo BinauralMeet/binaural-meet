@@ -22,10 +22,10 @@ export class ConnectedManager {
       },
     )
 
-    reaction(
-      () => [store.local.get().useStereoAudio, store.local.get().plugins.streamControl.muteSpeaker],
-      ([useStereoAudio, muted]) => {
-        this.manager.switchPlayMode(useStereoAudio ? 'Context' : 'Element', muted)
+    autorun(
+      () => {
+        this.manager.switchPlayMode(store.local.get().useStereoAudio ? 'Context' : 'Element',
+                                    store.local.get().plugins.streamControl.muteSpeaker)
       },
     )
   }
