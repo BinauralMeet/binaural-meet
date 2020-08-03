@@ -1,6 +1,7 @@
 import {defaultInformation, Information, ParticipantBase as IParticipantBase, Tracks} from '@models/Participant'
 import {MapObject} from '@stores/MapObject'
 import {JitsiTrack} from 'lib-jitsi-meet'
+import { delay } from 'lodash'
 import {action, computed, observable} from 'mobx'
 import {shallowObservable, Store} from '../utils'
 import {Plugins} from './plugins'
@@ -34,6 +35,11 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
     if (infoInStr) {
       Object.assign(this.information, JSON.parse(infoInStr))
     }
+  }
+  @action.bound
+  setInformation(info: Information) {
+    Object.assign(this.information, info)
+    console.log('setInformation called')
   }
 }
 
