@@ -167,11 +167,12 @@ class Connection extends EventEmitter {
     }
   }
 
-  private sendLocalParticipantInformationDisposer = reaction(() => ParticiantsStore.local.get().information, (info) => {
-    this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_INFO, JSON.stringify(info))
-    console.log(`LocalParticipantInfo ${info} sent.`)
-  })
-
+  private sendLocalParticipantInformationDisposer = autorun(
+    () => {
+      const info = {...ParticiantsStore.local.get().information}
+      this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_INFO, JSON.stringify(info))
+      console.log('LocalParticipantInfo sent.', info)
+    })
 
   private bindStore(local: LocalParticipant) {
     const localParticipantId = local.id

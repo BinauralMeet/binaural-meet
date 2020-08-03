@@ -109,6 +109,7 @@ const config: webpack.Configuration = {
     new CopyPlugin({
       patterns: [
         {from: './src/config.js', to: path.resolve(__dirname, 'dist')},
+        {from: './src/entrance.html', to: path.resolve(__dirname, 'dist')},
       ],
       options: {
         concurrency: 100,

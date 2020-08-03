@@ -43,22 +43,24 @@ const LocalParticipantConfig: React.FC<Props> = (props: Props) => {
       name.set(defaultInformation.name)
       email.set(defaultInformation.email)
       setFile(null)
-      local.information.name = defaultInformation.name
-      local.information.email = defaultInformation.email
-      local.information.avatarSrc = defaultInformation.avatarSrc
+      local.setInformation(defaultInformation)
 
       return
     }
-    local.information.name = name.value
-    local.information.email = email.value
+    const info = Object.assign({}, defaultInformation)
+    info.name = name.value
+    info.email = email.value
+    info.avatarSrc = local.information.avatarSrc
 
     if (file) {
       uploadToGyazo(file).then(({url, size}) => {
-        local.information.avatarSrc = url
+        info.avatarSrc = url
+        local.setInformation(info)
         console.log(`info.avatar = ${local.information.avatarSrc}`)
         local.saveInformationToStorage(submitType === 'local')
       })
     }else {
+      local.setInformation(info)
       local.saveInformationToStorage(submitType === 'local')
     }
   }
