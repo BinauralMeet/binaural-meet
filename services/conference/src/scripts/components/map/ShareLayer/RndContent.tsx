@@ -1,17 +1,14 @@
 import pinIcon from '@iconify/icons-mdi/pin'
 import pinOffIcon from '@iconify/icons-mdi/pin-off'
-import {Icon, InlineIcon} from '@iconify/react'
+import {Icon} from '@iconify/react'
 import {makeStyles} from '@material-ui/core/styles'
 import {CreateCSSProperties} from '@material-ui/core/styles/withStyles'
 import CloseRoundedIcon from '@material-ui/icons/CloseRounded'
 import {Pose2DMap} from '@models/MapObject'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {rotateVector2DByDegree} from '@models/utils'
-import {SharedContent} from '@stores/sharedContents/SharedContent'
-import sharedContents from '@stores/sharedContents/SharedContents'
 import _ from 'lodash'
-import {useObserver} from 'mobx-react-lite'
-import React, {useEffect, useLayoutEffect, useRef, useState} from 'react'
+import React, {ReactEventHandler, useEffect, useLayoutEffect, useRef, useState} from 'react'
 import {Dimensions, useDimensions} from 'react-dimensions-hook'
 import {Rnd} from 'react-rnd'
 import {addV, subV, useGesture} from 'react-use-gesture'
@@ -150,9 +147,12 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       setPose(Object.assign({}, pose))
     }
   }
+
+  const isFixed = props.autoHideTitle && !props.content.pinned
   const gesture = useGesture({
     onDrag: ({down, delta, event, xy, buttons}) => {
       // console.log('onDragTitle:', delta)
+      if (isFixed) { return }
       if (down) {
         event?.stopPropagation()
         //  event?.preventDefault()
@@ -188,9 +188,24 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     }
     setSize(addV(resizeBase, cd))
   }
-
   const classes = useStyles({props, pose, size, dimensions, showTitle, pinned:props.content.pinned})
   //  console.log('render: dimensions.clientHeight:', dimensions.clientHeight)
+  const theContent =
+    <div className={classes.rndContainer} {...gesture()}>
+      <div className={classes.titlePosition} {...gesture() /* title can be placed out of Rnd */}>
+        <div ref={ref} className={classes.titleContainer}
+            onMouseEnter = {() => { if (props.autoHideTitle) { setShowTitle(true) } }}
+            onMouseLeave = {() => { if (props.autoHideTitle && !props.content.pinned) { setShowTitle(false) } }}>
+          <div className={classes.pin} onClick={onClickPin}>
+            &nbsp;<Icon icon={props.content.pinned ? pinOffIcon : pinIcon} />&nbsp;
+          </div>
+          <div className={classes.note} onClick={onClickShare}>Share</div>
+          <div className={classes.close} onClick={onClickClose}><CloseRoundedIcon /></div>
+        </div>
+      </div>
+      <div className={classes.content} ><Content content={props.content} /></div>
+    </div>
+  const titleHeight = showTitle ? dimensions.clientHeight : 0
 
   return (
     <div className={classes.container} onContextMenu={
@@ -199,34 +214,29 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
         evt.preventDefault()
       }
     }>
-      <Rnd className={classes.rndCls} ref={rnd} orientation = {pose.orientation}
-        onResizeStart = { (evt)  => {
-          evt.stopPropagation(); evt.preventDefault()
-          setResizeBase(size)
-          setResizeBasePos(pose.position)
-        } }
-        onResize = {onResize}
-        onResizeStop = { (e, dir, elem, delta, pos) => {
-          onResize(e, dir, elem, delta, pos)
-          updateHandler()
-        } }
-      >
-        <div className={classes.rndContainer} {...gesture()}>
-          <div className={classes.titlePosition} {...gesture() /* title can be placed out of Rnd */}>
-            <div ref={ref} className={classes.titleContainer}
-              onMouseEnter = {() => { if (props.autoHideTitle) { setShowTitle(true) } }}
-              onMouseLeave = {() => { if (props.autoHideTitle && !props.content.pinned) { setShowTitle(false) } }}
-              >
-              <div className={classes.pin} onClick={onClickPin}>
-                &nbsp;<Icon icon={props.content.pinned ? pinIcon : pinOffIcon} />&nbsp;
-              </div>
-              <div className={classes.note} onClick={onClickShare}>Share</div>
-              <div className={classes.close} onClick={onClickClose}><CloseRoundedIcon /></div>
-            </div>
-          </div>
-          <div className={classes.content} ><Content content={props.content} /></div>
-        </div>
-      </Rnd>
+      {isFixed ?
+        <div className={classes.rndCls} style={{
+          transform:`translate(${pose.position[0]}px, ${pose.position[1] - titleHeight}px)`,
+          width:size[0], height:size[1] + titleHeight, display: 'inline-block', top: 0, left: 0,
+          boxSizing: 'border-box', flexShrink: 0,
+        }}>
+          {theContent}
+        </div> :
+        <Rnd className={classes.rndCls} ref={rnd}
+          onResizeStart = { (evt)  => {
+            evt.stopPropagation(); evt.preventDefault()
+            setResizeBase(size)
+            setResizeBasePos(pose.position)
+          } }
+          onResize = {onResize}
+          onResizeStop = { (e, dir, elem, delta, pos) => {
+            onResize(e, dir, elem, delta, pos)
+            updateHandler()
+          } }
+        >
+          {theContent}
+        </Rnd>
+      }
     </div >
   )
 }
