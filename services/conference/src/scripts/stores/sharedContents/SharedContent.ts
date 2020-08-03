@@ -8,7 +8,7 @@ const defaultValue: ISharedContent = Object.assign({}, mapObjectDefaultValue, {
   size: [0, 0] as [number, number],
   id: '',
   zorder: 0,
-  pinned: false,
+  pinned: true,
 })
 
 // NOTE currently SharedContent does not use observable, to change view in component, object assign is required
@@ -20,7 +20,7 @@ export class SharedContent implements ISharedContent {
   type!: string
   url!: string
   size!: [number, number]
-  pinned = false
+  pinned = true
 
   constructor() {
     Object.assign(this, defaultValue)

@@ -67,7 +67,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   const [resizeBasePos, setResizeBasePos] = useState(pose.position)    //  position when resize start
   const rnd = useRef<Rnd>(null)                         //  ref to rnd to update position and size
   const {ref, dimensions} = useDimensions()             //  title dimensions measured
-  const [showTitle, setShowTitle] = useState(!props.autoHideTitle || props.content.pinned)
+  const [showTitle, setShowTitle] = useState(!props.autoHideTitle || !props.content.pinned)
 
   useLayoutEffect(  //  reflect pose etc. to rnd size
     () => {
@@ -148,7 +148,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     }
   }
 
-  const isFixed = props.autoHideTitle && !props.content.pinned
+  const isFixed = props.autoHideTitle && props.content.pinned
   const gesture = useGesture({
     onDrag: ({down, delta, event, xy, buttons}) => {
       // console.log('onDragTitle:', delta)
@@ -195,9 +195,9 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       <div className={classes.titlePosition} {...gesture() /* title can be placed out of Rnd */}>
         <div ref={ref} className={classes.titleContainer}
             onMouseEnter = {() => { if (props.autoHideTitle) { setShowTitle(true) } }}
-            onMouseLeave = {() => { if (props.autoHideTitle && !props.content.pinned) { setShowTitle(false) } }}>
+            onMouseLeave = {() => { if (props.autoHideTitle && props.content.pinned) { setShowTitle(false) } }}>
           <div className={classes.pin} onClick={onClickPin}>
-            &nbsp;<Icon icon={props.content.pinned ? pinOffIcon : pinIcon} />&nbsp;
+            &nbsp;<Icon icon={props.content.pinned ? pinIcon : pinOffIcon} />&nbsp;
           </div>
           <div className={classes.note} onClick={onClickShare}>Share</div>
           <div className={classes.close} onClick={onClickClose}><CloseRoundedIcon /></div>
