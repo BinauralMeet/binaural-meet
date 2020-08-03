@@ -14,9 +14,6 @@ export class StereoManager {
 
   constructor() {
     this.audioElement.srcObject = this.audioDestination.stream
-
-    //  TODO: this must be match to store/LocalParticipant's useStereo
-    this.switchPlayMode('Context', false)
   }
 
   addSpeaker(id: string) {
