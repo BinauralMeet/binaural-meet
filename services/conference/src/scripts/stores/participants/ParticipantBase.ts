@@ -1,7 +1,7 @@
 import {defaultInformation, Information, ParticipantBase as IParticipantBase, Tracks} from '@models/Participant'
 import {MapObject} from '@stores/MapObject'
 import {JitsiTrack} from 'lib-jitsi-meet'
-import { delay } from 'lodash'
+import {delay} from 'lodash'
 import {action, computed, observable} from 'mobx'
 import {shallowObservable, Store} from '../utils'
 import {Plugins} from './plugins'
@@ -20,7 +20,7 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
   saveInformationToStorage(isLocalStorage:boolean) {
     let storage = sessionStorage
     if (isLocalStorage) { storage = localStorage }
-    console.log(storage === localStorage ? 'Save to localStorage' : 'Save to sessionStorage')
+    //  console.log(storage === localStorage ? 'Save to localStorage' : 'Save to sessionStorage')
     storage.setItem('localParticipantInformation', JSON.stringify(this.information))
   }
 
@@ -39,7 +39,7 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
   @action.bound
   setInformation(info: Information) {
     Object.assign(this.information, info)
-    console.log('setInformation called')
+    //  console.log('setInformation called')
   }
 }
 

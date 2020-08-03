@@ -171,7 +171,7 @@ class Connection extends EventEmitter {
     () => {
       const info = {...ParticiantsStore.local.get().information}
       this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_INFO, JSON.stringify(info))
-      console.log('LocalParticipantInfo sent.', info)
+      //  console.log('LocalParticipantInfo sent.', info)
     })
 
   private bindStore(local: LocalParticipant) {
@@ -783,8 +783,9 @@ class Connection extends EventEmitter {
 
 const connection = new Connection('PartyConnection')
 connection.Store = ConnectionInfoStore
-const dummyConnection = new Connection('DummyConnection')
-dummyConnection.Store = dummyConnectionStore
+// const dummyConnection = new Connection('DummyConnection')
+// dummyConnection.Store = dummyConnectionStore
 
-export {Connection, connection, dummyConnection}
+export {Connection, connection}
+//  , dummyConnection}
 
