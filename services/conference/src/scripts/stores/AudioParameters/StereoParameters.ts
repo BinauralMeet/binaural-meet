@@ -1,3 +1,4 @@
+import {ConfigurableParams} from '@models/audio/StereoParameters'
 import {PARTICIPANT_SIZE} from '@models/Participant'
 import {action, computed, observable} from 'mobx'
 
@@ -33,7 +34,4 @@ export class StereoParameters implements ConfigurableParams {
   }
 }
 
-export type ConfigurableParams = Pick<PannerNode, ConfigurableProp>
 
-export type ConfigurableProp = 'coneInnerAngle' | 'coneOuterAngle' | 'coneOuterGain' | 'distanceModel' |
-                         'maxDistance' | 'distanceModel' | 'panningModel' | 'refDistance' | 'rolloffFactor'
