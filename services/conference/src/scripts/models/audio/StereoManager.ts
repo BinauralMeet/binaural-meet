@@ -90,7 +90,7 @@ export class StereoManager {
   set audioOutputMuted(muted: boolean) {
     console.log('audioOutputMuted', muted)
     for (const id in this.nodes) {
-      this.nodes[id].setMute(muted)
+      this.nodes[id].updateAudibility(!muted)
     }
     this.audioDestination.stream.getTracks().forEach((track) => { track.enabled = !muted })
   }

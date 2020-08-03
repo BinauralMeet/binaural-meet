@@ -65,6 +65,8 @@ export class NodeGroup {
         console.error(`Unknown output: ${playMode}`)
         break
     }
+
+    this.updateAudibility(this.audibility)
   }
 
   updateStream(stream: MediaStream | undefined) {
@@ -104,12 +106,19 @@ export class NodeGroup {
     })
   }
 
+  private audibility = true
   updateAudibility(audibility: boolean) {
     if (audibility) {
       this.gainNode.connect(this.pannerNode)
     } else {
       this.gainNode.disconnect()
     }
+
+    if (this.audioElement) {
+      this.audioElement.muted = !audibility
+    }
+
+    this.audibility = audibility
   }
 
   disconnect() {
@@ -158,12 +167,6 @@ export class NodeGroup {
       }
 
       this.audioElement.srcObject = stream
-    }
-  }
-
-  setMute(muted:boolean) {
-    if (this.audioElement) {
-      this.audioElement.muted = muted
     }
   }
 }
