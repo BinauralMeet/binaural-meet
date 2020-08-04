@@ -6,6 +6,7 @@ export interface SharedContent extends MapObject {
   type: string  //  object type ('img', etc)
   url: string   //  url or text to share
   size: [number, number]
+  pinned: boolean
 }
 
 export interface ParticipantContents{
