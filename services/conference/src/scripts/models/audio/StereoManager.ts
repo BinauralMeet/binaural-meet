@@ -30,7 +30,7 @@ export class StereoManager {
   }
 
   switchPlayMode(playMode: PlayMode, muted: boolean) {
-    if (playMode === this.playMode) {
+    if (playMode === this.playMode && muted === this.audioOutputMuted) {
       return
     }
     this.playMode = playMode
@@ -70,6 +70,7 @@ export class StereoManager {
         console.error(`Unsupported play mode: ${playMode}`)
         break
     }
+
     this.audioOutputMuted = muted
   }
 
