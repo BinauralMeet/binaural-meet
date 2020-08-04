@@ -29,7 +29,7 @@ const useStyles = makeStyles({
     left: 0,
     userDrag: 'none',
     userSelect: 'none',
-    overflow: 'scroll',
+    overflow: 'hidden',
   },
   transform: {
     position: 'absolute',
