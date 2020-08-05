@@ -1,5 +1,6 @@
-import {Pose3DAudio, PARTICIPANT_SIZE} from '@models/Participant'
+import {PARTICIPANT_SIZE, Pose3DAudio} from '@models/Participant'
 import {isChrome} from '@models/utils'
+import {ConfigurableParams, ConfigurableProp} from './StereoParameters'
 
 // NOTE Set default value will change nothing. Because value will be overwrite by store in ConnectedGroup
 const DEFAULT_PANNER_NODE_CONFIG: Partial<PannerNode> & {refDistance: number} = {
@@ -12,7 +13,7 @@ const DEFAULT_PANNER_NODE_CONFIG: Partial<PannerNode> & {refDistance: number} = 
   coneOuterAngle: 360,
   coneOuterGain: 0,
 }
-const BROADCAST_DISTANCE = 1000
+export const BROADCAST_DISTANCE = 1000
 
 export type PlayMode = 'Context' | 'Element'
 
@@ -21,7 +22,7 @@ export class NodeGroup {
   private audioElement: HTMLAudioElement | undefined = undefined
 
   private readonly gainNode: GainNode
-  public readonly pannerNode: PannerNode
+  private readonly pannerNode: PannerNode
 
   private readonly context: AudioContext
   private playMode: PlayMode
@@ -64,6 +65,8 @@ export class NodeGroup {
         console.error(`Unknown output: ${playMode}`)
         break
     }
+
+    this.updateAudibility(this.audibility)
   }
 
   updateStream(stream: MediaStream | undefined) {
@@ -76,20 +79,46 @@ export class NodeGroup {
     this.pannerNode.setOrientation(...pose.orientation)
   }
 
+  private _defaultPannerRefDistance = PARTICIPANT_SIZE
+  private set defaultPannerRefDistance(val: number) {
+    this._defaultPannerRefDistance = val
+    if (this.pannerNode.refDistance !== BROADCAST_DISTANCE) { // not in broadcast mode
+      this.pannerNode.refDistance = this._defaultPannerRefDistance
+    }
+  }
   updateBroadcast(broadcast: boolean) {
     if (!broadcast) {
-      this.pannerNode.refDistance = DEFAULT_PANNER_NODE_CONFIG.refDistance
+      this.pannerNode.refDistance = this._defaultPannerRefDistance
     } else {
       this.pannerNode.refDistance = BROADCAST_DISTANCE
     }
   }
 
+  updatePannerConfig(config: ConfigurableParams) {
+    const observedPannerKeys: ConfigurableProp[] =
+      ['coneInnerAngle', 'coneOuterAngle', 'coneOuterGain', 'distanceModel', 'maxDistance', 'distanceModel', 'panningModel', 'refDistance', 'rolloffFactor']
+    observedPannerKeys.forEach((key) => {
+      if (key === 'refDistance') {
+        this.defaultPannerRefDistance = config['refDistance']
+      } else {
+        (this.pannerNode[key] as any) = config[key]
+      }
+    })
+  }
+
+  private audibility = true
   updateAudibility(audibility: boolean) {
     if (audibility) {
       this.gainNode.connect(this.pannerNode)
     } else {
       this.gainNode.disconnect()
     }
+
+    if (this.audioElement) {
+      this.audioElement.muted = !audibility
+    }
+
+    this.audibility = audibility
   }
 
   disconnect() {
@@ -116,10 +145,6 @@ export class NodeGroup {
   private createPannerNode(context: AudioContext) {
     const panner = context.createPanner()
 
-    for (const [key, value] of Object.entries(DEFAULT_PANNER_NODE_CONFIG)) {
-      (panner as any)[key] = value
-    }
-
     return panner
   }
 
@@ -142,12 +167,6 @@ export class NodeGroup {
       }
 
       this.audioElement.srcObject = stream
-    }
-  }
-
-  setMute(muted:boolean) {
-    if (this.audioElement) {
-      this.audioElement.muted = muted
     }
   }
 }

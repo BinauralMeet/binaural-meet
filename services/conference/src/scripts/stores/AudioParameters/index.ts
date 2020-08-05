@@ -1,3 +1,2 @@
-import {StereoParameters} from './StereoParameters'
-
-export const stereoParametersStore = new StereoParameters()
+import stereoParameters from './StereoParameters'
+export const stereoParametersStore = stereoParameters

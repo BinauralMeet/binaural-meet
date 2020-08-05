@@ -5,22 +5,16 @@ export const PARTICIPANT_SIZE = 50
 export interface ParticipantBase extends MapObject{
   id: string
   information: Information
-  physics?: Physics
+  physics: Physics
   tracks: Tracks<JitsiTrack>
   mousePosition: [number, number] | undefined
 }
 
-export interface RemoteParticipant extends ParticipantBase{
-  id: string
-  information: Information
-  physics?: Physics
+export interface RemoteParticipant extends ParticipantBase {
 }
 
-export interface LocalParticipant extends ParticipantBase{
-  id: string
-  information: Information
+export interface LocalParticipant extends ParticipantBase {
   tracks: Tracks<JitsiLocalTrack>
-  physics?: Physics
 }
 
 export interface Pose3DAudio {  // right hand cartesian coordinate system
@@ -49,4 +43,7 @@ export interface Tracks<T extends JitsiTrack> {
 }
 export interface Physics {
   onStage: boolean
+}
+export const defaultPhysics: Physics = {
+  onStage: false,
 }

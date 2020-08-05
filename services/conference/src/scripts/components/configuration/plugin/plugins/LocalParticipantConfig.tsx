@@ -1,9 +1,11 @@
 import {useStore} from '@hooks/ParticipantsStore'
+import Container from '@material-ui/core/Container'
 import {uploadToGyazo} from '@models/api/Gyazo'
 import {defaultInformation} from '@models/Participant'
-import React, {useRef, useState} from 'react'
+import React, {useState} from 'react'
 import {BaseConfigurationProps, PluginBase} from '../PluginBase'
 import {registerPlugin} from '../registery'
+import {AudioControl} from './localParticipantConfig/AudioControl'
 
 export const LOCAL_PARTICIPANT_CONFIG = 'local_participant_type'
 
@@ -43,27 +45,29 @@ const LocalParticipantConfig: React.FC<Props> = (props: Props) => {
       name.set(defaultInformation.name)
       email.set(defaultInformation.email)
       setFile(null)
-      local.information.name = defaultInformation.name
-      local.information.email = defaultInformation.email
-      local.information.avatarSrc = defaultInformation.avatarSrc
+      local.setInformation(defaultInformation)
 
       return
     }
-    local.information.name = name.value
-    local.information.email = email.value
+    const info = Object.assign({}, defaultInformation)
+    info.name = name.value
+    info.email = email.value
+    info.avatarSrc = local.information.avatarSrc
 
     if (file) {
       uploadToGyazo(file).then(({url, size}) => {
-        local.information.avatarSrc = url
+        info.avatarSrc = url
+        local.setInformation(info)
         console.log(`info.avatar = ${local.information.avatarSrc}`)
         local.saveInformationToStorage(submitType === 'local')
       })
     }else {
+      local.setInformation(info)
       local.saveInformationToStorage(submitType === 'local')
     }
   }
 
-  return <form onSubmit = {submitHandler}>
+  const form = <form key="information" onSubmit = {submitHandler}>
     Name: <input type="text" {...name.args} /> <br />
     Email: <input type="text" {...email.args} /> <br />
     Avatar: <input type="file" onChange={(ev) => {
@@ -74,6 +78,11 @@ const LocalParticipantConfig: React.FC<Props> = (props: Props) => {
     <input type="submit" onClick={() => setSubmitType('clear')} value="Clear" />&nbsp;
     <input type="submit" onClick={() => setSubmitType('cancel')} value="Cancel" />
   </form>
+
+  return <>
+    <Container>{form}</Container>
+    <AudioControl key="audiocontrol" />,
+  </>
 }
 
 

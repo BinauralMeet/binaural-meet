@@ -1,22 +1,21 @@
 // import a global variant $ for lib-jitsi-meet
 import {Pose2DMap} from '@models/MapObject'
-import {Information} from '@models/Participant'
+import {Information, Physics} from '@models/Participant'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {ConnectionInfo, default as ConnectionInfoStore} from '@stores/ConnectionInfo'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {default as ParticiantsStore} from '@stores/participants/Participants'
 import {SharedContent as SharedContentStore} from '@stores/sharedContents/SharedContent'
 import {default as sharedContents} from '@stores/sharedContents/SharedContents'
-import {dummyConnectionStore} from '@test-utils/DummyParticipants'
 import {EventEmitter} from 'events'
 import jquery from 'jquery'
 import JitsiMeetJS, {JitsiValues} from 'lib-jitsi-meet'
 import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
 import JitsiLocalTrack from 'lib-jitsi-meet/modules/RTC/JitsiLocalTrack'
 import JitsiRemoteTrack from 'lib-jitsi-meet/modules/RTC/JitsiRemoteTrack'
-import JitsiTrack, {JitsiTrackEvents} from 'lib-jitsi-meet/modules/RTC/JitsiTrack'
+import JitsiTrack from 'lib-jitsi-meet/modules/RTC/JitsiTrack'
 import * as TPC from 'lib-jitsi-meet/modules/RTC/TPCUtils'
-import {autorun, reaction} from 'mobx'
+import {autorun} from 'mobx'
 import {throttle} from 'throttle-debounce'
 import {Store} from '../../stores/utils'
 import {ConnectionStates, ConnectionStatesType} from './Constants'
@@ -87,6 +86,7 @@ const ParticipantProperties = {
   PPROP_CONTENTS_UPDATE: 'contents_update',
   PPROP_CONTENTS_REMOVE: 'contents_remove',
   PPROP_INFO: 'info',
+  PPROP_PHYSICS: 'physics',
 }
 
 class Connection extends EventEmitter {
@@ -167,11 +167,21 @@ class Connection extends EventEmitter {
     }
   }
 
-  private sendLocalParticipantInformationDisposer = reaction(() => ParticiantsStore.local.get().information, (info) => {
-    this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_INFO, JSON.stringify(info))
-    console.log(`LocalParticipantInfo ${info} sent.`)
-  })
+  private sendLocalParticipantInformationDisposer = autorun(
+    () => {
+      const info = {...ParticiantsStore.local.get().information}
+      this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_INFO, JSON.stringify(info))
+      //  console.log('LocalParticipantInfo sent.', info)
+    },
+  )
 
+  private sendLocalParticipantPhysicsDisposer = autorun(
+    () => {
+      const physics = {...ParticiantsStore.local.get().physics}
+      this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_PHYSICS, JSON.stringify(physics))
+      //  console.log('LocalParticipantPhysics sent.', physics)
+    },
+  )
 
   private bindStore(local: LocalParticipant) {
     const localParticipantId = local.id
@@ -493,6 +503,7 @@ class Connection extends EventEmitter {
         this._loggerHandler?.debug('Participant property has changed.', 'Jitsi')
 
         // Change store
+        const local = ParticiantsStore.local.get()
         if (name === ParticipantProperties.PPROP_POSE) {
           const pose: Pose2DMap = JSON.parse(value)
           const id = participant.getId()
@@ -502,11 +513,19 @@ class Connection extends EventEmitter {
           target.pose.position = pose.position
         }else if (name === ParticipantProperties.PPROP_INFO) {
           const id = participant.getId()
-          const target = ParticiantsStore.find(id)
-          const info: Information = JSON.parse(value)
-          Object.assign(target.information, info)
+          if (id !== local.id) {
+            const target = ParticiantsStore.find(id)
+            const info: Information = JSON.parse(value)
+            Object.assign(target.information, info)
+          }
+        }else if (name === ParticipantProperties.PPROP_PHYSICS) {
+          const id = participant.getId()
+          if (id !== local.id) {
+            const target = ParticiantsStore.find(id)
+            const physics: Physics = JSON.parse(value)
+            Object.assign(target.physics, physics)
+          }
         }else if (name === ParticipantProperties.PPROP_CONTENTS) {
-          const local = ParticiantsStore.local.get()
           if (participant.getId() !== local.id) {
             console.log('Jitsi: content of ', participant.getId(), ' is updated to ', value)
             const contentsAsArray = JSON.parse(value)
@@ -782,8 +801,9 @@ class Connection extends EventEmitter {
 
 const connection = new Connection('PartyConnection')
 connection.Store = ConnectionInfoStore
-const dummyConnection = new Connection('DummyConnection')
-dummyConnection.Store = dummyConnectionStore
+// const dummyConnection = new Connection('DummyConnection')
+// dummyConnection.Store = dummyConnectionStore
 
-export {Connection, connection, dummyConnection}
+export {Connection, connection}
+//  , dummyConnection}
 

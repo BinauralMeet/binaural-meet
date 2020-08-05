@@ -8,7 +8,7 @@ import {ParticipantBase, TracksStore} from './ParticipantBase'
 export class LocalParticipant extends ParticipantBase implements Store<ILocalParticipant> {
   devicePreference = new DevicePreference()
   tracks = shallowObservable<TracksStore<JitsiLocalTrack>>(new TracksStore())
-  @observable useStereoAudio = true
+  @observable useStereoAudio = false  //  will be override by url switch
   constructor(id: string) {
     super(id)
   }

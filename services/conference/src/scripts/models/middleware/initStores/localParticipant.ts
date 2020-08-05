@@ -5,7 +5,8 @@ import {reaction} from 'mobx'
 
 function applyUrlParameters(local: LocalParticipant) {
   local.loadInformationFromStorage()
-  local.useStereoAudio = urlParameters.audio === 'mono' ? false : true
+  if (urlParameters.userName) { local.information.name = urlParameters.userName }
+  local.useStereoAudio = urlParameters.audio === 'stereo' ? true : false
   console.log('audio parameter', urlParameters.audio)
 }
 
