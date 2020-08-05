@@ -184,22 +184,12 @@ class Connection extends EventEmitter {
   )
 
   private bindStore(local: LocalParticipant) {
-    const localParticipantId = local.id
-    // const localParticipant = this.participants.get(localParticipantId)
-
-    // this._jitsiConference?.setLocalParticipantProperty('pose', {children: local.pose})
-    // localParticipant?.jitsiInstance?.setProperty(
-    //   'pose',
-    //   local.pose,
-    // )
-    this._loggerHandler?.debug('Initialize local pose.', 'bindStore')
-
     const UPDATE_INTERVAL = 200
     const throttledUpdateFunc = throttle(UPDATE_INTERVAL, (newPose: Pose2DMap) => {
       this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_POSE, JSON.stringify(newPose))
     })
 
-    const disposer = autorun(   // FIXME disposer not used
+    const disposer = autorun(
       () => {
         const newPose = {
           position: local.pose.position,
@@ -208,14 +198,6 @@ class Connection extends EventEmitter {
         throttledUpdateFunc(newPose)
       },
     )
-    // const disposer = local.observe(
-    //   throttle(200, (change) => {
-    //     this._loggerHandler?.debug('Update local pose.', 'bindStore')
-    //     console.log(change.oldValue, '->', change.newValue)
-    //     this.participants
-    //       .get(localParticipantId)?.jitsiInstance?.setProperty('pose', change.newValue.pose)
-    //   }),
-    // )
   }
   private registerEventHandlers() {
 
