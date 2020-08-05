@@ -13,7 +13,7 @@ const DEFAULT_PANNER_NODE_CONFIG: Partial<PannerNode> & {refDistance: number} = 
   coneOuterAngle: 360,
   coneOuterGain: 0,
 }
-const BROADCAST_DISTANCE = 1000
+export const BROADCAST_DISTANCE = 1000
 
 export type PlayMode = 'Context' | 'Element'
 

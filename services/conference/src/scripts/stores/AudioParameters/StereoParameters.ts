@@ -1,6 +1,8 @@
+import {BROADCAST_DISTANCE} from '@models/audio/NodeGroup'
 import {ConfigurableParams} from '@models/audio/StereoParameters'
 import {PARTICIPANT_SIZE} from '@models/Participant'
-import {action, computed, observable} from 'mobx'
+import participants from '@stores/participants/Participants'
+import {action, autorun, computed, observable} from 'mobx'
 
 const PERCENT = 100
 const REFDISTANCE_MAX = 12 * PARTICIPANT_SIZE  // max of no attenuation range
@@ -17,15 +19,26 @@ export class StereoParameters implements ConfigurableParams {
   @observable refDistance = REFDISTANCE_MAX * DEFAULT_HEARABLE_RANGE / PERCENT
 //  @observable rolloffFactor = 8
   @observable rolloffFactor = 12
+  refDistanceNormal:number = this.refDistance
 
   //  0 to 100, 0 has strongest attenuation
   @computed
   get hearableRange() {
     return this.refDistance * PERCENT / REFDISTANCE_MAX
   }
+
   @action
   setHearableRange(range:number) {
-    this.refDistance = range / PERCENT * REFDISTANCE_MAX
+    this.refDistanceNormal = range / PERCENT * REFDISTANCE_MAX
+    const onStage = participants.local.get().physics.onStage
+    this.setBroadcast(onStage)
+  }
+
+  // make all participants hearable
+  @action
+  setBroadcast(bcast:boolean) {
+    this.refDistance = bcast ? BROADCAST_DISTANCE - 1 : this.refDistanceNormal
+    //  console.log(`setBroadcast is called bcast=${bcast}  distance=${this.refDistanceNormal}`)
   }
 
   @action
@@ -34,4 +47,10 @@ export class StereoParameters implements ConfigurableParams {
   }
 }
 
+const stereoParameters = new StereoParameters()
+export default stereoParameters
 
+autorun(() => {
+  const bcast = participants.local.get().physics.onStage
+  stereoParameters.setBroadcast(bcast)
+})
