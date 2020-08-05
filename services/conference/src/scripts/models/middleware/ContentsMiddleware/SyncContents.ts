@@ -1,55 +1,92 @@
 import {connection} from '@models/api'
 import {default as ParticipantsStore} from '@stores/participants/Participants'
-import {default as sharedContents, ParticipantContents, SharedContentsEvents} from '@stores/sharedContents/SharedContents'
+import {SharedContent} from '@stores/sharedContents/SharedContent'
+import {contentDebug, contentLog, default as sharedContents, ParticipantContents, SharedContentsEvents} from '@stores/sharedContents/SharedContents'
 import _ from 'lodash'
 import {IReactionDisposer, reaction} from 'mobx'
+
+export const CONTENT_SYNC_DELAY = 300
 
 //  send contentes owned by local when updated.
 reaction(() => Array.from(sharedContents.localParticipant.myContents.values()),
          (contents) => {
            connection.sendSharedContents(contents)
-           console.log('send contents: ', JSON.stringify(contents))
          },
+         {delay: CONTENT_SYNC_DELAY},
 )
 
-//  send request from local when updated.
+function removeDobuleRequest(requests:Set<string>|Map<string, SharedContent>) {
+  const deletes = []
+  const requestKeys = Array.from(requests.keys())
+  for (const req of requestKeys) {
+    for (const participant of sharedContents.participants) {
+      if (participant[0] === sharedContents.localParticipant.participantId) { continue }
+      //  If remote has request to the same content, refrain to send request.
+      if (participant[1].removeRequest.has(req) || participant[1].updateRequest.has(req)) {
+        deletes.push(req)
+      }
+    }
+  }
+  for (const del of deletes) {
+    requests.delete(del)
+  }
+
+  return deletes
+}
+
+//  send update request from local to remotes.
 reaction(() => Array.from(sharedContents.localParticipant.updateRequest.values()),
          (updates) => {
-           connection.sendSharedContentsUpdateRequest(updates)
-           console.log('send contents update request: ', JSON.stringify(updates))
+           // Check if already requested by other participants
+           removeDobuleRequest(sharedContents.localParticipant.updateRequest)
+           const reqs = Array.from(sharedContents.localParticipant.updateRequest.values())
+           connection.sendSharedContentsUpdateRequest(reqs)
          },
+         {delay: CONTENT_SYNC_DELAY},
 )
-//  send request from local when updated.
+//  send remove request from local to remotes.
 reaction(() => Array.from(sharedContents.localParticipant.removeRequest.values()),
          (removes) => {
+           // Check if already requested by other participants
+           removeDobuleRequest(sharedContents.localParticipant.removeRequest)
+           const reqs = Array.from(sharedContents.localParticipant.updateRequest.values())
            connection.sendSharedContentsRemoveRequest(removes)
-           console.log('send contents remove request: ', JSON.stringify(removes))
          },
+         {delay: CONTENT_SYNC_DELAY},
 )
 
-//  When user edit contents owned by remote participants, set update request.
+
+//  -----------------------------------------------------------------------
+//  Create update/remove request when use edit/remove remote content
 const disposers:Map<string, IReactionDisposer> = new Map<string, IReactionDisposer>()
 sharedContents.on(SharedContentsEvents.REMOTE_JOIN, (participant: ParticipantContents) => {
   if (participant.participantId === ParticipantsStore.localId) {
-    console.log('SharedContentsEvents.REMOTE_JOIN emitted for local pid = ', participant.participantId)
+    contentLog('SharedContentsEvents.REMOTE_JOIN emitted for local pid = ', participant.participantId)
+
+    return // for local data, do nothing.
   }
-  console.log('Start to observe myContents pid = ', participant.participantId)
+
+  contentDebug('Start to observe myContents of pid:', participant.participantId)
   const dispo = reaction(() => Array.from(participant.myContents.values()), () => {
-    console.log('participant.myContents changed for pid = ', participant.participantId)
-    const remoteContents = connection.getSharedContents(participant.participantId)
-    remoteContents.forEach((rc) => {
-      const my = participant.myContents.get(rc.id)
-      if (my) {
-        if (! _.isEqual(my, rc)) {
-          console.log('Add update request for ', my.id)
-          sharedContents.localParticipant.updateRequest.set(my.id, my)
+    contentDebug('remote contents changed for pid = ', participant.participantId)
+    // Get contents before modification from jitsi
+    const contentsBefore = connection.getSharedContents(participant.participantId)
+    // Compare new remote contents in store (after) and old remote contents in store (before).
+    contentsBefore.forEach((before) => {
+      const after = participant.myContents.get(before.id)
+      if (after) {
+        before.perceptibility = after.perceptibility //  not a target of comparison.
+        if (! _.isEqual(after, before)) {
+          contentDebug('Add update request for ', after.id)
+          sharedContents.localParticipant.updateRequest.set(after.id, after)
         }
       }else {
-        console.log('Add remove request for ', rc.id)
-        sharedContents.localParticipant.removeRequest.add(rc.id)
+        contentDebug('Add remove request for ', before.id)
+        sharedContents.localParticipant.removeRequest.add(before.id)
       }
     })
-  })
+  },
+                         {delay: CONTENT_SYNC_DELAY})
   disposers.set(participant.participantId, dispo)
 })
 

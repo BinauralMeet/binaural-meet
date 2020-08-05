@@ -1,34 +1,33 @@
 // import a global variant $ for lib-jitsi-meet
-import {Pose2DMap} from '@models/MapObject'
+import {defaultPerceptibility, Pose2DMap} from '@models/MapObject'
 import {Information} from '@models/Participant'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {ConnectionInfo, default as ConnectionInfoStore} from '@stores/ConnectionInfo'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {default as ParticiantsStore} from '@stores/participants/Participants'
-import {SharedContent as SharedContentStore} from '@stores/sharedContents/SharedContent'
 import {default as sharedContents} from '@stores/sharedContents/SharedContents'
-import {dummyConnectionStore} from '@test-utils/DummyParticipants'
+import {contentDebug, contentLog} from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
 import jquery from 'jquery'
 import JitsiMeetJS, {JitsiValues} from 'lib-jitsi-meet'
 import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
 import JitsiLocalTrack from 'lib-jitsi-meet/modules/RTC/JitsiLocalTrack'
 import JitsiRemoteTrack from 'lib-jitsi-meet/modules/RTC/JitsiRemoteTrack'
-import JitsiTrack, {JitsiTrackEvents} from 'lib-jitsi-meet/modules/RTC/JitsiTrack'
+import JitsiTrack from 'lib-jitsi-meet/modules/RTC/JitsiTrack'
 import * as TPC from 'lib-jitsi-meet/modules/RTC/TPCUtils'
-import {autorun, reaction} from 'mobx'
+import {autorun} from 'mobx'
 import {throttle} from 'throttle-debounce'
 import {Store} from '../../stores/utils'
 import {ConnectionStates, ConnectionStatesType} from './Constants'
 import ApiLogger, {ILoggerHandler} from './Logger'
 
 //  Log level and module log options
-const JITSILOGLEVEL = 'warn'  // log level for lib-jitsi-meet {debug|log|warn|error}
-const TRACKLOG = true         // show add, remove... of tracks
+export const JITSILOGLEVEL = 'warn'  // log level for lib-jitsi-meet {debug|log|warn|error}
+export const TRACKLOG = false        // show add, remove... of tracks
 if (TPC.setTPCLogger !== undefined) {
   //  TPC.setTPCLogger(TRACKLOG ? console.log : (a:any) => {})
 }
-const trackLog = TRACKLOG ? console.log : (a:any) => {}
+export const trackLog = TRACKLOG ? console.log : (a:any) => {}
 
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
@@ -140,13 +139,38 @@ class Connection extends EventEmitter {
     throw new Error('No connection has been established.')
   }
 
+  private removePerceptibility(cs: ISharedContent[]):any {
+    const rv = []
+    for (const c of cs) {
+      const cc:any = Object.assign({}, c)
+      delete cc.perceptibility
+      rv.push(cc)
+    }
+
+    return rv
+  }
+  private addPerceptibility(cs: any[], perceptibility = defaultPerceptibility):ISharedContent[] {
+    const rv = []
+    for (const c of cs) {
+      const cc:any = Object.assign({}, c)
+      cc.perceptibility = Object.assign({}, defaultPerceptibility)
+      rv.push(cc)
+    }
+
+    return rv
+  }
   public sendSharedContents(cs: ISharedContent[]) {
-    this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_CONTENTS, JSON.stringify(cs))
+    const ccs = this.removePerceptibility(cs)
+    contentLog('send contents: ', ccs)
+    this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_CONTENTS, JSON.stringify(ccs))
   }
   public sendSharedContentsUpdateRequest(cs: ISharedContent[]) {
-    this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_CONTENTS_UPDATE, JSON.stringify(cs))
+    const ccs = this.removePerceptibility(cs)
+    contentLog('send contents update request: ', ccs)
+    this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_CONTENTS_UPDATE, JSON.stringify(ccs))
   }
   public sendSharedContentsRemoveRequest(ids: string[]) {
+    contentLog('send contents remove request: ', ids)
     this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_CONTENTS_REMOVE, JSON.stringify(ids))
   }
   public getSharedContents(pid: string): ISharedContent[] {
@@ -154,8 +178,9 @@ class Connection extends EventEmitter {
     if (participant) {
       const str = participant.getProperty(ParticipantProperties.PPROP_CONTENTS)
       if (str && str.length > 0) {
+        const cs = this.addPerceptibility(JSON.parse(str))
 
-        return JSON.parse(str)
+        return cs
       }
     }
 
@@ -509,22 +534,23 @@ class Connection extends EventEmitter {
         }else if (name === ParticipantProperties.PPROP_CONTENTS) {
           const local = ParticiantsStore.local.get()
           if (participant.getId() !== local.id) {
-            console.log('Jitsi: content of ', participant.getId(), ' is updated to ', value)
-            const contentsAsArray = JSON.parse(value)
-            console.log(contentsAsArray)
+            contentLog(`Jitsi: content of ${participant.getId()} is updated.`)
+            const contentsAsArray = this.addPerceptibility(JSON.parse(value))
+            contentDebug(' updated to ', contentsAsArray)
             sharedContents.replaceRemoteContents(participant.getId(), contentsAsArray)
           }
         }else if (name === ParticipantProperties.PPROP_CONTENTS_UPDATE) {
           const local = ParticiantsStore.local.get()
+          contentLog(`Jitsi: update request of ${participant.getId()} is updated.`)
           if (participant.getId() !== local.id) {
-            console.log('Jitsi: update request of ', participant.getId(), ' is updated to:', value)
-            const update = JSON.parse(value) as SharedContentStore[]
+            const update = this.addPerceptibility(JSON.parse(value))
+            contentDebug(' update by ', update)
             sharedContents.updateContents(update)
           }
         }else if (name === ParticipantProperties.PPROP_CONTENTS_REMOVE) {
           const local = ParticiantsStore.local.get()
           if (participant.getId() !== local.id) {
-            console.log('Jitsi: remove request of ', participant.getId(), ' is updated to:', value)
+            contentLog(`Jitsi: remove request of ${participant.getId()} is updated.`)
             const removes = JSON.parse(value) as string[]
             sharedContents.removeContents(local.id, removes)
           }
