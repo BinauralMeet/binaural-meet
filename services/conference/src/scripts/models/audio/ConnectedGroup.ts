@@ -28,6 +28,10 @@ export class ConnectedGroup {
     this.disposers.push(autorun(
       () => group.updatePannerConfig(stereoParametersStore),
     ))
+
+    this.disposers.push(autorun(
+      () => group.updateBroadcast(remote.physics.onStage),
+    ))
   }
 
   dispose() {

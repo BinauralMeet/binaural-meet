@@ -1,20 +1,23 @@
-import {defaultInformation, Information, ParticipantBase as IParticipantBase, Tracks} from '@models/Participant'
+import {
+  defaultInformation, defaultPhysics,
+  Information, ParticipantBase as IParticipantBase, Physics, Tracks,
+} from '@models/Participant'
 import {MapObject} from '@stores/MapObject'
 import {JitsiTrack} from 'lib-jitsi-meet'
-import {delay} from 'lodash'
 import {action, computed, observable} from 'mobx'
 import {shallowObservable, Store} from '../utils'
 import {Plugins} from './plugins'
 export class ParticipantBase extends MapObject implements Store<IParticipantBase> {
   readonly id: string
-  information = shallowObservable<Information>(Object.assign({}, defaultInformation))
+  information = shallowObservable<Information>(defaultInformation)
   plugins: Plugins
   tracks = shallowObservable<TracksStore<JitsiTrack>>(new TracksStore<JitsiTrack>())
+  physics = shallowObservable<Physics>(defaultPhysics)
 
   constructor(id: string) {
     super()
     this.id = id
-    this .plugins = new Plugins(this)
+    this.plugins = new Plugins(this)
   }
 
   saveInformationToStorage(isLocalStorage:boolean) {
@@ -40,6 +43,10 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
   setInformation(info: Information) {
     Object.assign(this.information, info)
     //  console.log('setInformation called')
+  }
+  @action.bound
+  setPhysics(physics: Partial<Physics>) {
+    Object.assign(this.physics, physics)
   }
 }
 

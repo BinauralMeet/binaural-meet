@@ -1,9 +1,11 @@
 import {useStore} from '@hooks/ParticipantsStore'
+import Container from '@material-ui/core/Container'
 import {uploadToGyazo} from '@models/api/Gyazo'
 import {defaultInformation} from '@models/Participant'
-import React, {useRef, useState} from 'react'
+import React, {useState} from 'react'
 import {BaseConfigurationProps, PluginBase} from '../PluginBase'
 import {registerPlugin} from '../registery'
+import {AudioControl} from './localParticipantConfig/AudioControl'
 
 export const LOCAL_PARTICIPANT_CONFIG = 'local_participant_type'
 
@@ -65,7 +67,7 @@ const LocalParticipantConfig: React.FC<Props> = (props: Props) => {
     }
   }
 
-  return <form onSubmit = {submitHandler}>
+  const form = <form key="information" onSubmit = {submitHandler}>
     Name: <input type="text" {...name.args} /> <br />
     Email: <input type="text" {...email.args} /> <br />
     Avatar: <input type="file" onChange={(ev) => {
@@ -76,6 +78,11 @@ const LocalParticipantConfig: React.FC<Props> = (props: Props) => {
     <input type="submit" onClick={() => setSubmitType('clear')} value="Clear" />&nbsp;
     <input type="submit" onClick={() => setSubmitType('cancel')} value="Cancel" />
   </form>
+
+  return <>
+    <Container>{form}</Container>
+    <AudioControl key="audiocontrol" />,
+  </>
 }
 
 
