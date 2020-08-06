@@ -164,8 +164,6 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   useEffect(
     () => {
       const orgMat = new DOMMatrix(matrix.toString())
-      setMatrix(matrix.translate(MAP_SIZE /2, MAP_SIZE /2))
-      setMatrix(matrix.translate(-MAP_SIZE /2, -MAP_SIZE /2))
       setMatrix(orgMat)
     },
     [outer],
