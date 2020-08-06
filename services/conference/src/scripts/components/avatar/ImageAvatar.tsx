@@ -15,7 +15,7 @@ export const ImageAvatar: React.FC<ImageAvatarProps> = (props: ImageAvatarProps)
   console.log(`avatar = ${props.information.avatarSrc}`)
 
   return (
-    <ReactAvatar style={{userSelect: 'none'}}
+    <ReactAvatar style={{userSelect: 'none', userDrag: 'none'}}
       name={props.information.name}
       email={props.information.email}
       md5Email={props.information.md5Email}
