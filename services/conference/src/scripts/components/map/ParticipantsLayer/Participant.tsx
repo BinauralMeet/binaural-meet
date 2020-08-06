@@ -65,16 +65,16 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
         }}
         counterRotateButtons={true}
       >
-        <Tooltip title={name}>
           <div className="participantWrapper" style={{filter: `drop-shadow(3px 3px 3px ${color})`}}>
             <div className={classes.pointerRotate}>
               <Pointer className={classes.pointer} />
             </div>
+            <Tooltip title={name}>
               <div className={[classes.avatar, transform.counterRotationClass, 'draggableHandle'].join(' ')}>
                 <Avatar {...props} />
               </div>
+            </Tooltip>
           </div>
-        </Tooltip>
       </MapObjectContainer >
   )
 }
