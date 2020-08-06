@@ -5,14 +5,23 @@ import {
 import {MapObject} from '@stores/MapObject'
 import {JitsiTrack} from 'lib-jitsi-meet'
 import {action, computed, observable} from 'mobx'
-import {shallowObservable, Store} from '../utils'
+import {getRandomColor, getRandomColorRGB, shallowObservable, Store} from '../utils'
 import {Plugins} from './plugins'
+
 export class ParticipantBase extends MapObject implements Store<IParticipantBase> {
   readonly id: string
   information = shallowObservable<Information>(defaultInformation)
   plugins: Plugins
   tracks = shallowObservable<TracksStore<JitsiTrack>>(new TracksStore<JitsiTrack>())
   physics = shallowObservable<Physics>(defaultPhysics)
+  @observable.ref mousePosition: [number, number] | undefined = undefined
+
+  getColor() {
+    return getRandomColor(this.information.name)
+  }
+  getColorRGB() {
+    return getRandomColorRGB(this.information.name)
+  }
 
   constructor(id: string) {
     super()

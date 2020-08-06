@@ -25,11 +25,11 @@ export const App: React.FC<{}> = () => {
   return (
     <ParticipantsProvider value={participantsStore}>
     <ContentsProvider value={sharedContentsStore}>
-    <div className={classes.map}>
-      <MainScreen />
-      <Map />
-      <Footer />
-    </div>
+      <div className={classes.map}>
+        <MainScreen />
+        <Map />
+        <Footer />
+      </div>
     </ContentsProvider>
     </ParticipantsProvider>
   )

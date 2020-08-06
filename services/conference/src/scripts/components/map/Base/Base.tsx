@@ -143,6 +143,9 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         setMouse(addV(xy, offset()))
         const xyOnMap  = transformPoint2D(matrix.inverse(), mouse);
         (global as any).mousePositionOnMap = xyOnMap
+        if (participants.local.get().mousePosition) {
+          participants.local.get().mousePosition = Object.assign({}, xyOnMap)
+        }
       },
     },
   )
@@ -154,6 +157,14 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         console.log('useEffect[outer] called')
         elem.scrollTo((MAP_SIZE - elem.clientWidth) /2, (MAP_SIZE - elem.clientHeight) /2)
       }
+    },
+    [outer],
+  )
+  // scroll range
+  useEffect(
+    () => {
+      const orgMat = new DOMMatrix(matrix.toString())
+      setMatrix(orgMat)
     },
     [outer],
   )

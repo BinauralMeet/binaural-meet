@@ -9,7 +9,7 @@ import {SharedContents as SharedContentsStore} from '@stores/sharedContents/Shar
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 
-function addFakeSharedContents(store: SharedContentsStore) {
+export function addFakeSharedContents(store: SharedContentsStore) {
   const sc: SharedContentStore = new SharedContentStore()
   Object.assign(sc, {
     type : 'img',

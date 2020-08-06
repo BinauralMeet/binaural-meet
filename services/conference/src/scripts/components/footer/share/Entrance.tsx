@@ -1,4 +1,7 @@
+import {useStore as useParticipantsStore} from '@hooks/ParticipantsStore'
 import {useStore as useContentsStore} from '@hooks/SharedContentsStore'
+import cursorDefaultOutline from '@iconify/icons-mdi/cursor-default-outline'
+import {Icon} from '@iconify/react'
 import List from '@material-ui/core/List'
 import HttpIcon from '@material-ui/icons/Http'
 import ImageIcon from '@material-ui/icons/Image'
@@ -21,8 +24,10 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
     setStep,
   } = props
   const store = useContentsStore()
+  const participants = useParticipantsStore()
   const sharing = useObserver(() => (
     {main: store.localMainTracks.size, contents: store.localContentTracks.size}))
+  const mousePosition = useObserver(() => participants.local.get().mousePosition)
 
   return (
     <List>
@@ -43,6 +48,15 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
         icon={<ImageIcon />}
         text="Image"
         onClick={() => setStep('image')}
+      />
+      <ShareDialogItem
+        key="shareMouse"
+        icon={<Icon icon={cursorDefaultOutline} />}
+        text={mousePosition ?  'Stop sharing mouse cursor' : 'Mouse cursor'}
+        onClick={() => {
+          participants.local.get().mousePosition =  mousePosition ? undefined
+            : (global as any).mousePositionOnMap as [number, number]
+        }}
       />
       <ShareDialogItem
         key="shareScreen"

@@ -82,6 +82,7 @@ const ConferenceEvents = {
 
 const ParticipantProperties = {
   PPROP_POSE: 'pose',
+  PPROP_MOUSE_POSITION: 'mouse',
   PPROP_CONTENTS: 'contents',
   PPROP_CONTENTS_UPDATE: 'contents_update',
   PPROP_CONTENTS_REMOVE: 'contents_remove',
@@ -210,38 +211,30 @@ class Connection extends EventEmitter {
   )
 
   private bindStore(local: LocalParticipant) {
-    const localParticipantId = local.id
-    // const localParticipant = this.participants.get(localParticipantId)
-
-    // this._jitsiConference?.setLocalParticipantProperty('pose', {children: local.pose})
-    // localParticipant?.jitsiInstance?.setProperty(
-    //   'pose',
-    //   local.pose,
-    // )
-    this._loggerHandler?.debug('Initialize local pose.', 'bindStore')
-
     const UPDATE_INTERVAL = 200
-    const throttledUpdateFunc = throttle(UPDATE_INTERVAL, (newPose: Pose2DMap) => {
+
+    const throttledUpdatePose = throttle(UPDATE_INTERVAL, (newPose: Pose2DMap) => {
       this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_POSE, JSON.stringify(newPose))
     })
-
-    const disposer = autorun(   // FIXME disposer not used
+    const disposer = autorun(
       () => {
         const newPose = {
           position: local.pose.position,
           orientation: local.pose.orientation,
         }
-        throttledUpdateFunc(newPose)
+        throttledUpdatePose(newPose)
       },
     )
-    // const disposer = local.observe(
-    //   throttle(200, (change) => {
-    //     this._loggerHandler?.debug('Update local pose.', 'bindStore')
-    //     console.log(change.oldValue, '->', change.newValue)
-    //     this.participants
-    //       .get(localParticipantId)?.jitsiInstance?.setProperty('pose', change.newValue.pose)
-    //   }),
-    // )
+
+    const throttledUpdateMousePosition = throttle(UPDATE_INTERVAL, (mousePos: [number, number]|undefined) => {
+      const str = mousePos ? JSON.stringify(mousePos) : ''
+      this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_MOUSE_POSITION, str)
+    })
+    const disposerMouse = autorun(
+      () => {
+        throttledUpdateMousePosition(local.mousePosition)
+      },
+    )
   }
   private registerEventHandlers() {
 
@@ -295,7 +288,7 @@ class Connection extends EventEmitter {
   }
 
 
-  private initJitsiConnection(): Promise<string> {
+  private initJitsiConnection(): Promise < string > {
     return new Promise<string>(
       (resolve, reject) => {
         JitsiMeetJS.init(initOptions)
@@ -337,7 +330,6 @@ class Connection extends EventEmitter {
             )
           },
         )
-
         this._jitsiConnection.connect()
         this.emit(
           ConnectionEvents.CONNECTION_CONNECTING,
@@ -347,8 +339,8 @@ class Connection extends EventEmitter {
     )
   }
 
-  public disconnect(): Promise<any> {
-    if (this._jitsiConnection) {
+  public disconnect(): Promise < any > {
+    if (this ._jitsiConnection) {
       this._loggerHandler?.log('Disconnection order has been sent.', 'Party')
 
       return this._jitsiConnection?.disconnect()
@@ -537,6 +529,13 @@ class Connection extends EventEmitter {
 
           target.pose.orientation = pose.orientation
           target.pose.position = pose.position
+        }else if (name === ParticipantProperties.PPROP_MOUSE_POSITION) {
+          const target = ParticiantsStore.find(participant.getId())
+          if (value.length > 0) {
+            target.mousePosition = JSON.parse(value)
+          }else {
+            target.mousePosition = undefined
+          }
         }else if (name === ParticipantProperties.PPROP_INFO) {
           const id = participant.getId()
           if (id !== local.id) {
@@ -601,19 +600,6 @@ class Connection extends EventEmitter {
           },
         )
       }
-
-      // if (this.participants.size > 0) {
-
-      //   const local = this.participants.get(this.localId)
-      //   if (local) {
-      //     local.isLocal = true
-      //   }
-      // } else {
-      //   this.participants.set(
-      //     this.localId,
-      //     {jitsiInstance: jitsiLocal, isLocal: true},
-      //   )
-      // }
     }
   }
 
@@ -634,7 +620,7 @@ class Connection extends EventEmitter {
     }
   }
 
-  public createJitisLocalTracksFromStream(stream: MediaStream): Promise<JitsiLocalTrack[]> {
+  public createJitisLocalTracksFromStream(stream: MediaStream): Promise < JitsiLocalTrack[] > {
     const videoTrack: MediaStreamTrack = stream.getVideoTracks()[0]
     const audioTrack: MediaStreamTrack = stream.getAudioTracks()[0]
     const videoStream: MediaStream = new MediaStream([videoTrack])

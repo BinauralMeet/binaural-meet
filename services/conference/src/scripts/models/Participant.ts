@@ -7,6 +7,7 @@ export interface ParticipantBase extends MapObject{
   information: Information
   physics: Physics
   tracks: Tracks<JitsiTrack>
+  mousePosition: [number, number] | undefined
 }
 
 export interface RemoteParticipant extends ParticipantBase {
