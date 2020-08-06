@@ -85,6 +85,29 @@ export class SharedContents extends EventEmitter {
   @action setPasted(c:SharedContent) {
     this.pasted = Object.assign({}, c)
   }
+  @action setPastedIframe(url: string) {
+    const pasted = new SharedContent()
+    pasted.type = 'iframe'
+    pasted.url = url
+    pasted.pose.position = (global as any).mousePositionOnMap
+    const IFRAME_WIDTH = 600
+    const IFRAME_HEIGHT = 800
+    pasted.size[0] = IFRAME_WIDTH
+    pasted.size[1] = IFRAME_HEIGHT
+    this.setPasted(pasted)
+  }
+  @action setPastedText(text: string) {
+    const pasted = new SharedContent()
+    pasted.type = 'text'
+    pasted.url = text
+    pasted.pose.position = (global as any).mousePositionOnMap
+    const slen = Math.sqrt(text.length)
+    const STRING_SCALE_W = 20
+    const STRING_SCALE_H = 15
+    pasted.size[0] = slen * STRING_SCALE_W
+    pasted.size[1] = slen * STRING_SCALE_H
+    this.setPasted(pasted)
+  }
   @action setPastedImage(imageFile: File) {
     if (imageFile) {
       uploadToGyazo(imageFile).then(({url, size}) => {
@@ -93,12 +116,9 @@ export class SharedContents extends EventEmitter {
         pasted.type = 'img'
         pasted.url = url
         const max = size[0] > size[1] ? size[0] : size [1]
-        if (max > 500) {
-          const scale = 500 / max
-          size[0] *= scale
-          size[1] *= scale
-        }
-        pasted.size = size
+        const scale = max > 500 ? 500 / max : 1
+        pasted.size[0] = size[0] * scale
+        pasted.size[1] = size[1] * scale
         const CENTER = 0.5
         for (let i = 0; i < pasted.pose.position.length; i += 1) {
           pasted.pose.position[i] = (global as any).mousePositionOnMap[i] - CENTER * pasted.size[i]

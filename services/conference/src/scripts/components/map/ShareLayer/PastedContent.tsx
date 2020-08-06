@@ -13,10 +13,10 @@ export interface PastedContentProps{
 
 export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentProps) => {
 
+/*  //  Pasted handler. It prevents paste to dialog.
   function onPaste(evt: ClipboardEvent) {
     console.log('onPaste called')
     if (evt.clipboardData) {
-      const pasted = new SharedContent
       if (evt.clipboardData.types.includes('Files')) {   //  If file is pasted (an image is also a file)
         const imageFile = evt.clipboardData.items[0].getAsFile()
         if (imageFile) {
@@ -24,24 +24,11 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
         }
       }else if (evt.clipboardData.types.includes('text/plain')) {
         evt.clipboardData.items[0].getAsString((str:string) => {
-          pasted.url = str
-          if (pasted.url.indexOf('http://') === 0 || pasted.url.indexOf('https://') === 0) {
-            pasted.type = 'iframe'
-            pasted.pose.position = (global as any).mousePositionOnMap
-            const IFRAME_WIDTH = 600
-            const IFRAME_HEIGHT = 800
-            pasted.size[0] = IFRAME_WIDTH
-            pasted.size[1] = IFRAME_HEIGHT
+          if (str.indexOf('http://') === 0 || str.indexOf('https://') === 0) {
+            sharedContents.setPastedIframe(str)
           }else {
-            pasted.type = 'text'
-            pasted.pose.position = (global as any).mousePositionOnMap
-            const slen = Math.sqrt(str.length)
-            const STRING_SCALE_W = 20
-            const STRING_SCALE_H = 10
-            pasted.size[0] = slen * STRING_SCALE_W
-            pasted.size[1] = slen * STRING_SCALE_H
+            sharedContents.setPastedText(str)
           }
-          sharedContents.setPasted(pasted)
         })
       }
     }
@@ -59,6 +46,7 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
     },
     [],
   )
+  */
   const pastedContent = useObserver(() => sharedContents.pasted)
 
   return (
