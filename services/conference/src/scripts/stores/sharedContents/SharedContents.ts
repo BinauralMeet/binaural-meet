@@ -190,6 +190,11 @@ export class SharedContents extends EventEmitter {
       }
     })
 
+    //  Remove update requests for newContents
+    for (const [key, nc] of newContents) {
+      this.localParticipant.updateRequest.delete(key)
+    }
+
     //  update contents
     removed.forEach((c) => {
       this.owner.delete(c.id)

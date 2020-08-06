@@ -77,8 +77,14 @@ sharedContents.on(SharedContentsEvents.REMOTE_JOIN, (participant: ParticipantCon
       if (after) {
         before.perceptibility = after.perceptibility //  not a target of comparison.
         if (! _.isEqual(after, before)) {
-          contentDebug('Add update request for ', after.id)
-          sharedContents.localParticipant.updateRequest.set(after.id, after)
+          if (sharedContents.localParticipant.updateRequest.has(after.id)) {
+            contentLog(`Update request for ${after.id} is already in queue. Refrain to send next one.`)
+            participant.myContents.set(after.id, before)                    //  back to before modification
+            sharedContents.localParticipant.updateRequest.delete(after.id)  //  delete previous request
+          } else {
+            contentLog('Add update request for ', after.id)
+            sharedContents.localParticipant.updateRequest.set(after.id, after)
+          }
         }
       }else {
         contentDebug('Add remove request for ', before.id)
