@@ -5,7 +5,7 @@ import {
 import {MapObject} from '@stores/MapObject'
 import {JitsiTrack} from 'lib-jitsi-meet'
 import {action, computed, observable} from 'mobx'
-import {getRandomColor, shallowObservable, Store} from '../utils'
+import {getRandomColor, getRandomColorRGB, shallowObservable, Store} from '../utils'
 import {Plugins} from './plugins'
 
 export class ParticipantBase extends MapObject implements Store<IParticipantBase> {
@@ -18,6 +18,9 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
 
   getColor() {
     return getRandomColor(this.information.name)
+  }
+  getColorRGB() {
+    return getRandomColorRGB(this.information.name)
   }
 
   constructor(id: string) {
