@@ -143,6 +143,9 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         setMouse(addV(xy, offset()))
         const xyOnMap  = transformPoint2D(matrix.inverse(), mouse);
         (global as any).mousePositionOnMap = xyOnMap
+        if (participants.local.get().mousePosition) {
+          participants.local.get().mousePosition = Object.assign({}, xyOnMap)
+        }
       },
     },
   )

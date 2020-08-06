@@ -27,3 +27,18 @@ export function diffSet<K>(a:Set<K>, b:Set<K>) {
 
   return diff
 }
+
+export function getRandomColor(v:string):[string, string] {
+  let sum = 0
+  for (let i = 0; i !== v.length; i += 1) {
+    sum = v.charCodeAt(i) + sum * 13
+  }
+  const num = sum % 0x1000
+  const color = `#${`000${num.toString(16)}`.slice(-3)}`
+  const r = Math.floor(num / 0x100) % 0x10
+  const g = Math.floor(num / 0x10) % 0x10
+  const b = Math.floor(num) % 0x10
+  const textColor = r + g + b * 0.2 > 20 ? '#000' : '#FFF'
+
+  return [color, textColor]
+}

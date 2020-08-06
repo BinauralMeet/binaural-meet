@@ -1,5 +1,6 @@
 import {ImageAvatar, StreamAvatar} from '@components/avatar'
 import {Information} from '@models/Participant'
+import {getRandomColor} from '@stores/utils'
 import JitsiMeetJS from 'lib-jitsi-meet'
 import React, {useEffect, useState} from 'react'
 
@@ -12,14 +13,18 @@ const informationName: Information = {
   name: 'Hello World',
 }
 export const name = () => {
-  return <ImageAvatar information={informationName} />
+  const [color, fColor] = getRandomColor(informationName.name)
+
+  return <ImageAvatar information={informationName} color={color} textColor={fColor} />
 }
 
 const informationEmal: Information = Object.assign({}, informationName, {
   md5Email: 'a50236395ddbb8acc4a3533f43da66b5',
 })
 export const gavatar = () => {
-  return <ImageAvatar information={informationEmal} />
+  const [color, fColor] = getRandomColor(informationName.name)
+
+  return <ImageAvatar information={informationEmal} color={color} textColor={fColor} />
 }
 
 function captureVideo() {

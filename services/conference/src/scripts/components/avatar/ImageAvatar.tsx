@@ -6,6 +6,8 @@ import {Information} from '@models/Participant'
 export interface ImageAvatarProps {
   information: Information
   size?: number
+  color: string
+  textColor: string
 }
 
 export const ImageAvatar: React.FC<ImageAvatarProps> = (props: ImageAvatarProps) => {
@@ -20,6 +22,8 @@ export const ImageAvatar: React.FC<ImageAvatarProps> = (props: ImageAvatarProps)
       round={true}
       size={size}
       src={props.information.avatarSrc}
+      color={props.color}
+      fgColor={props.textColor}
     />
   )
 }

@@ -11,6 +11,7 @@ export interface ConnectedAvatarProps {
 
 const ConnectedAvatar: React.FC<ConnectedAvatarProps> = (props) => {
   const participant = usePsStore().find(props.participantId)
+  const [color, textColor] = participant.getColor()
 
   const {
     information,
@@ -25,7 +26,8 @@ const ConnectedAvatar: React.FC<ConnectedAvatarProps> = (props) => {
     }
   })
 
-  return <ComposedAvatar information={information} stream={showVideo ? stream : undefined} size={props.size} />
+  return <ComposedAvatar information={information} stream={showVideo ? stream : undefined}
+     color={color} textColor={textColor} size={props.size} />
 }
 
 export const MemoedAvatar = memoComponent(ConnectedAvatar, ['participantId', 'size'])
