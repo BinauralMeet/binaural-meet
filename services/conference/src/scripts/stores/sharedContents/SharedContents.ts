@@ -8,6 +8,11 @@ import _ from 'lodash'
 import {action, computed, observable} from 'mobx'
 import {SharedContent} from './SharedContent'
 
+export const CONTENTLOG = true      // show manipulations and sharing of content
+export const contentLog = CONTENTLOG ? console.log : (a:any) => {}
+export const contentDebug = CONTENTLOG ? console.debug : (a:any) => {}
+
+
 function contentComp(a:ISharedContent, b:ISharedContent) {
   return a.zorder - b.zorder
 }
@@ -30,6 +35,7 @@ export const SharedContentsEvents = {
 export class SharedContents extends EventEmitter {
   private localId = ''
 
+  // -----------------------------------------------------------------
   //  Tracks for the MainScreen
   @observable.ref localMainTracks: Set<JitsiLocalTrack> = new Set()
   @observable.shallow remoteMainTracks: Map<string, Set<JitsiTrack>> = new Map()
@@ -66,6 +72,8 @@ export class SharedContents extends EventEmitter {
   @observable.shallow localContentTracks: Map<string, Set<JitsiLocalTrack>> = new Map()
   @observable.shallow remoteContentTracks: Map<string, Set<JitsiTrack>> = new Map()
 
+  // -----------------------------------------------------------------
+  //  Contents management
   //  All shared contents in Z order. Observed by component.
   @observable.shallow all: SharedContent[] = []
   //  contents by owner
@@ -106,7 +114,7 @@ export class SharedContents extends EventEmitter {
     if (!p) {
       const n = new ParticipantContents(this.localId)
       this.participants.set(this.localId, n)
-      console.log('Create ParticipantContents for local participant ', this.localId)
+      contentLog('Create ParticipantContents for local participant ', this.localId)
 
       return n
     }
@@ -115,7 +123,7 @@ export class SharedContents extends EventEmitter {
       this.participants.delete(this.localId)
       this.participants.set(p.participantId, p)
       this.localId = p.participantId
-      console.log('Set new local id ', p.participantId)
+      contentLog('Set new local id ', p.participantId)
     }
 
     return p
@@ -136,7 +144,7 @@ export class SharedContents extends EventEmitter {
   //  add
   addLocalContent(c:SharedContent) {
     if (!participantsStore.localId) {
-      console.log('addLocalContant() failed. Invalid Participant ID.')
+      console.error('addLocalContant() failed. Invalid Participant ID.')
 
       return
     }
@@ -149,7 +157,7 @@ export class SharedContents extends EventEmitter {
   //  replace contents of one participant. A content can be new one (add) or exsiting one (update).
   replaceRemoteContents(pid: string, cs:SharedContent[]) { //  entries = [pid, content][]
     if (pid === participantsStore.localId) {  //  this is for remote participant
-      console.log('Error replaceContents called for local participant')
+      console.error('Error replaceContents called for local participant')
 
       return
     }
@@ -162,24 +170,19 @@ export class SharedContents extends EventEmitter {
     }
 
     const newContents = new Map(cs.map(c => [c.id, c]))
-    console.log('replaceContents for participant=', pid, ' n=', newContents.size,
-                ' cids:', JSON.stringify(Array.from(newContents.keys())))
+    contentLog(`replaceContents for participant=${pid} n=${newContents.size} cids:`,
+               JSON.stringify(Array.from(newContents.keys())))
     const removed = diffMap(participant.myContents, newContents)
 
-    //  Check remove request and remove it.
-    removed.forEach(c => this.localParticipant.removeRequest.delete(c.id))
-
-    //  Check update request and remove request
-    newContents.forEach((c) => {
-      const updateReq = this.localParticipant?.updateRequest.get(c.id)
-      if (updateReq && _.isEqual(c, updateReq)) {
-        this.localParticipant?.updateRequest.delete(c.id)
-      }
+    //  Check remove request and update request to remove them.
+    removed.forEach((c) => {
+      this.localParticipant.removeRequest.delete(c.id)
+      this.localParticipant.updateRequest.delete(c.id)
     })
 
     //  Check if removal of leaving partitipant is possible or not.
     this.leavingParticipants.forEach((leaving, pid) => {
-      console.log('Leave check pid=', pid, ' cids:', JSON.stringify(Array.from(leaving.myContents.keys())))
+      contentLog('Leave check pid=', pid, ' cids:', JSON.stringify(Array.from(leaving.myContents.keys())))
       const diff = diffMap(newContents, leaving.myContents)
       if (diff.size !== newContents.size) {
         this.leavingParticipants.delete(pid)
@@ -202,12 +205,13 @@ export class SharedContents extends EventEmitter {
       const pid = this.owner.get(c.id)
       if (pid) {
         const participant = this.participants.get(pid)
-        console.log('myContents=', JSON.stringify(participant?.myContents))
-        console.log('updateContents for participant=', pid, ' ', JSON.stringify(c))
+        contentLog(`updateContents for participant:${pid}`)
+        contentDebug(` update ${c.id} by ${c}`)
+        contentDebug(' myContents=', JSON.stringify(participant?.myContents))
 
         participant?.myContents.set(c.id, c)
       }else {
-        console.log('unpdateContents called for ', c.id, ' with invalid owner pid=', pid)
+        console.error('unpdateContents called for ', c.id, ' with invalid owner pid=', pid)
       }
     })
     this.updateAll()
@@ -226,17 +230,17 @@ export class SharedContents extends EventEmitter {
         const newRemoveRequest = new Set<string>(this.localParticipant.removeRequest)
         cids.forEach(cid => newRemoveRequest.add(cid))
         this.localParticipant.removeRequest = newRemoveRequest
-        console.log('removeContents update remove request', newRemoveRequest)
+        contentLog('removeContents update remove request', newRemoveRequest)
       }
-      console.log('removeContents cids=', cids, ' all=', this.all.length, this.all)
+      contentLog('removeContents cids=', cids, ' all=', this.all.length, this.all)
     }else {
-      console.log('removeContents failed to find pid=', pid)
+      console.error('removeContents failed to find pid=', pid)
     }
   }
 
   //  If I'm the next, obtain the contents
   onParticipantLeft(pidLeave:string) {
-    console.log('onParticipantLeft called with pid = ', pidLeave)
+    contentLog('onParticipantLeft called with pid = ', pidLeave)
     const participantLeave = this.participants.get(pidLeave)
     if (participantLeave) {
       const allPids = Array.from(participantsStore.remote.keys())
@@ -244,22 +248,22 @@ export class SharedContents extends EventEmitter {
       allPids.sort()
       const idx = allPids.findIndex(cur => cur > pidLeave)
       const next = allPids[idx >= 0 ? idx : 0]
-      console.log('next = ', next)
+      contentLog('next = ', next)
       if (next === this.localId) {
-        console.log('Next is me')
+        contentLog('Next is me')
         const myContents = new Map<string, SharedContent>(this.localParticipant.myContents)
         participantLeave.myContents.forEach((c, cid) => {
           myContents.set(cid, c)
           this.owner.set(cid, this.localId)
-          console.log('set owner for cid=', cid, ' pid=', this.localId)
+          contentLog('set owner for cid=', cid, ' pid=', this.localId)
         })
         this.removeParticipant(pidLeave)
-        console.log('remove:', pidLeave, ' current:', JSON.stringify(allPids))
-        console.log('local contents sz:', myContents.size, ' json:', JSON.stringify(Array.from(myContents.keys())))
+        contentLog('remove:', pidLeave, ' current:', JSON.stringify(allPids))
+        contentLog('local contents sz:', myContents.size, ' json:', JSON.stringify(Array.from(myContents.keys())))
         this.localParticipant.myContents = myContents
         this.updateAll()
       }else {
-        console.log('Next is remote')
+        contentLog('Next is remote')
         this.leavingParticipants.set(pidLeave, participantLeave)
       }
     }
@@ -274,6 +278,7 @@ export class SharedContents extends EventEmitter {
     }
   }
 
+  // create a new unique content id
   private getUniqueId(pid: string) {
     if (!this.participants.has(pid)) {
       this.participants.set(pid, new ParticipantContents(pid))
@@ -288,7 +293,7 @@ export class SharedContents extends EventEmitter {
         }
       }
     }
-    console.log('Error in getUniqueId()')
+    console.error('Error in getUniqueId()')
 
     return ''
   }
