@@ -25,7 +25,6 @@ export interface RndContentProps{
   autoHideTitle?: boolean
   onShare?: (evt: React.MouseEvent<HTMLDivElement>) => void
   onClose?: (evt: React.MouseEvent<HTMLDivElement>) => void
-//  onPaste?: (evt: ClipboardEvent) => void
   onUpdate?: (newContent: ISharedContent) => void
 }
 interface StyleProps{
@@ -69,6 +68,11 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   const {ref, dimensions} = useDimensions()             //  title dimensions measured
   const [showTitle, setShowTitle] = useState(!props.autoHideTitle || !props.content.pinned)
 
+  if (props.content.type && size[0] === 0 || !props.content.type && size[0] !== 0) {
+    setSize(props.content.size)
+    setPose(props.content.pose)
+  }
+
   useLayoutEffect(  //  reflect pose etc. to rnd size
     () => {
       if (rnd.current) { rnd.current.resizable.orientation = pose.orientation + transform.rotation }
@@ -80,27 +84,12 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     [pose, size, showTitle, dimensions],
   )
 
-  /*  //  This prevent paste in dialog
-  useEffect(  //  add paste event listener only once
-    () => {
-      window.document.body.addEventListener(
-        'paste',
-        (event) => {
-          onPaste(event)
-          event.preventDefault()
-        },
-      )
-    },
-    [],
-  )
-*/
   //  handlers
   function onClickShare(evt: React.MouseEvent<HTMLDivElement>) { props.onShare?.call(null, evt) }
   function onClickClose(evt: React.MouseEvent<HTMLDivElement>) { props.onClose?.call(null, evt) }
   function onClickPin(evt: React.MouseEvent<HTMLDivElement>) {
     updateHandler(!props.content.pinned)
   }
-  // function onPaste(evt: ClipboardEvent) { props.onPaste?.call(null, evt) }
   function  updateHandler(pinned?:boolean) {
     let bChange = false
     if (! _.isEqual(pose, props.content.pose)) {

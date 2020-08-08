@@ -26,16 +26,18 @@ export class SharedContent implements ISharedContent {
   constructor() {
     Object.assign(this, defaultValue)
     this.size = [0, 0]
-    // this.pose = {position:[defaultValue.pose.position[0], defaultValue.pose.position[1]] as [number, number],
-    //  orientation: 0}
+    this.pose = {position:[defaultValue.pose.position[0], defaultValue.pose.position[1]] as [number, number],
+      orientation: 0}
     this.perceptibility = Object.assign({}, defaultPerceptibility)
   }
 }
+
 export function createContentOfIframe(url: string) {
   const pasted = new SharedContent()
   pasted.type = 'iframe'
   pasted.url = url
-  pasted.pose.position = _.cloneDeep((global as any).mousePositionOnMap)
+  pasted.pose.position[0] = (global as any).mousePositionOnMap[0]
+  pasted.pose.position[1] = (global as any).mousePositionOnMap[1]
   const IFRAME_WIDTH = 600
   const IFRAME_HEIGHT = 800
   pasted.size[0] = IFRAME_WIDTH
@@ -47,7 +49,8 @@ export function createContentOfText(text: string) {
   const pasted = new SharedContent()
   pasted.type = 'text'
   pasted.url = text
-  pasted.pose.position = _.cloneDeep((global as any).mousePositionOnMap)
+  pasted.pose.position[0] = (global as any).mousePositionOnMap[0]
+  pasted.pose.position[1] = (global as any).mousePositionOnMap[1]
   const slen = Math.sqrt(text.length)
   const STRING_SCALE_W = 20
   const STRING_SCALE_H = 15
