@@ -1,4 +1,3 @@
-import {uploadToGyazo} from '@models/api/Gyazo'
 import {ParticipantContents as IParticipantContents, SharedContent as ISharedContent} from '@models/SharedContent'
 import {default as participantsStore} from '@stores/participants/Participants'
 import {diffMap, shallowObservable} from '@stores/utils'
@@ -34,6 +33,8 @@ export const SharedContentsEvents = {
 }
 export class SharedContents extends EventEmitter {
   private localId = ''
+
+  @observable pasteEnabled = true
 
   // -----------------------------------------------------------------
   //  Tracks for the MainScreen
@@ -83,49 +84,18 @@ export class SharedContents extends EventEmitter {
   //  pasted content
   @observable.ref pasted = new SharedContent()
   @action setPasted(c:SharedContent) {
-    this.pasted = Object.assign({}, c)
+    console.log('setPasted:', c)
+    this.pasted = c
   }
-  @action setPastedIframe(url: string) {
-    const pasted = new SharedContent()
-    pasted.type = 'iframe'
-    pasted.url = url
-    pasted.pose.position = (global as any).mousePositionOnMap
-    const IFRAME_WIDTH = 600
-    const IFRAME_HEIGHT = 800
-    pasted.size[0] = IFRAME_WIDTH
-    pasted.size[1] = IFRAME_HEIGHT
-    this.setPasted(pasted)
+  @action sharePasted() {
+    this.shareContent(this.pasted)
+    this.pasted = new SharedContent
   }
-  @action setPastedText(text: string) {
-    const pasted = new SharedContent()
-    pasted.type = 'text'
-    pasted.url = text
-    pasted.pose.position = (global as any).mousePositionOnMap
-    const slen = Math.sqrt(text.length)
-    const STRING_SCALE_W = 20
-    const STRING_SCALE_H = 15
-    pasted.size[0] = slen * STRING_SCALE_W
-    pasted.size[1] = slen * STRING_SCALE_H
-    this.setPasted(pasted)
-  }
-  @action setPastedImage(imageFile: File) {
-    if (imageFile) {
-      uploadToGyazo(imageFile).then(({url, size}) => {
-        // console.log("mousePos:" + (global as any).mousePositionOnMap)
-        const pasted = new SharedContent()
-        pasted.type = 'img'
-        pasted.url = url
-        const max = size[0] > size[1] ? size[0] : size [1]
-        const scale = max > 500 ? 500 / max : 1
-        pasted.size[0] = size[0] * scale
-        pasted.size[1] = size[1] * scale
-        const CENTER = 0.5
-        for (let i = 0; i < pasted.pose.position.length; i += 1) {
-          pasted.pose.position[i] = (global as any).mousePositionOnMap[i] - CENTER * pasted.size[i]
-        }
-        this.setPasted(pasted)
-      })
-    }
+  //  share content
+  @action shareContent(content:SharedContent) {
+    const TIME_RESOLUTION_IN_MS = 100
+    content.zorder = Math.floor(Date.now() / TIME_RESOLUTION_IN_MS)
+    sharedContents.addLocalContent(content)
   }
 
   @computed get localParticipant(): ParticipantContents {
