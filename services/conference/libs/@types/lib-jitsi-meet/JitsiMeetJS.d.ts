@@ -73,11 +73,22 @@ export interface JitsiTrackOptions {
   facingMode?: 'user' | 'environment'
 }
 
+interface JitisTrackError{
+  name: string
+  message: string
+  stack: string
+  gum: {
+    error:any
+    constraints:JitsiTrackOptions,
+    devices: any[]
+  }
+}
+
 export function init(options?: IJitsiMeetJSOptions): void;
 export function setLogLevel(level: any): void;
 export function createLocalTracks(options?: JitsiTrackOptions, firePermissionPromptIsShownEvent?: boolean): Promise<Array<JitsiLocalTrack>>;
 
-export { JitsiConnection, JitsiConference, JitsiTrack, TrackInfo, JitsiLocalTrack, VideoType, MediaType, JitsiValues};
+export { JitsiConnection, JitsiConference, JitsiTrack, TrackInfo, JitsiLocalTrack, VideoType, MediaType, JitsiValues, JitisTrackError};
 
 
 
