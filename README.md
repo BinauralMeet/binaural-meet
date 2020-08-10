@@ -4,7 +4,7 @@ Details are [here](https://scrapbox.io/jitsi-party/)
 
 ## Demo
 
-https://jitsipartyteam.github.io/jitsi-party/
+https://jitsipartyteam.github.io/jitsi-party/entrance.html
 
 ## For Developer
 - [Development Guide](./docs/DevelopmentGuide.md)
