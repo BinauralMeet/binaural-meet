@@ -1,14 +1,11 @@
-import {StoreProvider as ContentsProvider, useStore} from '@hooks/SharedContentsStore'
-import {makeStyles} from '@material-ui/core/styles'
+import {useStore} from '@hooks/SharedContentsStore'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {SharedContent as SharedContentStore} from '@stores/sharedContents/SharedContent'
-import {SharedContents as SharedContentsStore} from '@stores/sharedContents/SharedContents'
-import {useObserver} from 'mobx-react-lite'
-import React, {useEffect, useState} from 'react'
+import React from 'react'
 import {RndContent} from './RndContent'
 
 export interface SharedContentProps{
-  content: SharedContentStore,
+  content: ISharedContent,
 }
 
 export const SharedContent: React.FC<SharedContentProps> = (props:SharedContentProps) => {
@@ -28,7 +25,7 @@ export const SharedContent: React.FC<SharedContentProps> = (props:SharedContentP
       }
       onUpdate={
         (newContent: ISharedContent) => {
-          const old:ISharedContent = props.content
+          const old = props.content
           let identical = false
           if (old.zorder === newContent.zorder) {
             old.zorder += 1
@@ -36,7 +33,7 @@ export const SharedContent: React.FC<SharedContentProps> = (props:SharedContentP
               identical = true
             }
           }
-          //console.log('RndContent onUpdate from ', old, ' to ', newContent, ` ==? ${identical} `)
+          //  console.log('RndContent onUpdate from ', old, ' to ', newContent, ` ==? ${identical} `)
           store.updateContents([newContent])
         }
       }

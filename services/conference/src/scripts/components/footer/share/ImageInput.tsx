@@ -1,3 +1,4 @@
+import {createContentOfImage} from '@stores/sharedContents/SharedContent'
 import sharedContents from '@stores/sharedContents/SharedContents'
 import {DropzoneArea} from 'material-ui-dropzone'
 import React, {useState} from 'react'
@@ -17,7 +18,6 @@ export const ImageInput: React.FC<ImageInputProps> = (props) => {
   const field = (
     <DropzoneArea
       acceptedFiles={['image/*']}
-      filesLimit={1}
       dropzoneText="Drag and drop an image here or click"
       onChange={setFiles}
     />
@@ -29,9 +29,12 @@ export const ImageInput: React.FC<ImageInputProps> = (props) => {
       onFinishInput={(files) => {
         console.debug(`Share image files: ${files}`)
         // TODO modify store
-        if (files[0]){
-          sharedContents.setPastedImage(files[0])
-        }
+        files.forEach((file, i) => {
+          const IMAGE_OFFSET_X = 30
+          const IMAGE_OFFSET_Y = -20
+          createContentOfImage(file, [IMAGE_OFFSET_X * i, IMAGE_OFFSET_Y * i]).
+            then(imageContent => sharedContents.shareContent(imageContent))
+        })
       }}
       value={files}
       inputField={field} />

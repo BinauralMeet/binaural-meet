@@ -1,7 +1,7 @@
 import Dialog from '@material-ui/core/Dialog'
 import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
-import {SharedContent} from '@stores/sharedContents/SharedContent'
+import {createContentOfIframe, createContentOfText} from '@stores/sharedContents/SharedContent'
 import sharedContents from '@stores/sharedContents/SharedContents'
 import React, {useState} from 'react'
 import {Entrance} from './Entrance'
@@ -29,6 +29,8 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
       setStep(step)
     }
   }
+  console.log(`step=${step}, pasteEnabled=${sharedContents.pasteEnabled}`)
+  sharedContents.pasteEnabled = step === 'none' || step === 'entrance'
 
   const title = stepTitle[step]
   const page: JSX.Element | undefined = getPage(step, wrappedSetStep)
@@ -47,7 +49,7 @@ function getPage(step: Step, setStep: (step: Step) => void): JSX.Element | undef
       return <TextInput
           setStep={setStep}
           onFinishInput={(value) => {
-            sharedContents.setPastedText(value)
+            sharedContents.shareContent(createContentOfText(value))
             console.debug(`share text: ${value}`)
           }}
           textLabel = "Text"
@@ -56,7 +58,7 @@ function getPage(step: Step, setStep: (step: Step) => void): JSX.Element | undef
       return <TextInput
           setStep={setStep}
           onFinishInput={(value) => {
-            sharedContents.setPastedIframe(value)
+            sharedContents.shareContent(createContentOfIframe(value))
             console.debug(`share iframe: ${value}`)
           }}
           textLabel = "URL"
