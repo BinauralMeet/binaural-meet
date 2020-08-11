@@ -9,7 +9,7 @@ import {default as sharedContents} from '@stores/sharedContents/SharedContents'
 import {contentDebug, contentLog} from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
 import jquery from 'jquery'
-import JitsiMeetJS, {JitsiValues} from 'lib-jitsi-meet'
+import JitsiMeetJS, {JitisTrackError, JitsiValues} from 'lib-jitsi-meet'
 import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
 import JitsiLocalTrack from 'lib-jitsi-meet/modules/RTC/JitsiLocalTrack'
 import JitsiRemoteTrack from 'lib-jitsi-meet/modules/RTC/JitsiRemoteTrack'
@@ -539,9 +539,9 @@ class Connection extends EventEmitter {
         }else if (name === ParticipantProperties.PPROP_INFO) {
           const id = participant.getId()
           if (id !== local.id) {
-          const target = ParticiantsStore.find(id)
-          const info: Information = JSON.parse(value)
-          Object.assign(target.information, info)
+            const target = ParticiantsStore.find(id)
+            const info: Information = JSON.parse(value)
+            Object.assign(target.information, info)
           }
         }else if (name === ParticipantProperties.PPROP_PHYSICS) {
           const id = participant.getId()
@@ -716,7 +716,30 @@ class Connection extends EventEmitter {
           ParticiantsStore.local.get().devicePreference.audioOutputDevice
            = JitsiMeetJS.mediaDevices.getAudioOutputDevice()
         },
-      ). catch(() => { console.log('Device enumeration error') })
+      ). catch((reason:JitisTrackError) => {
+        console.warn(`${reason.name}:${reason.message}. Retry getUserMedia() without constraint`)
+        if (reason.name !== 'gum.permission_denied') {
+          JitsiMeetJS.createLocalTracks({devices: ['audio', 'video']}).then(
+            (tracks: JitsiTrack[]) => {
+              tracks.forEach((track) => {
+                const did_ = track.getTrack().getSettings().deviceId
+                const did:string = did_ ? did_ : ''
+                if (track.getType() === 'audio') {
+                  ParticiantsStore.local.get().devicePreference.audioInputDevice = did
+                }else if (track.getType() === 'video') {
+                  // console.log('Video track created:', JSON.stringify(track))
+                  ParticiantsStore.local.get().devicePreference.videoInputDevice = did
+                }
+              })
+              this.addTracks(tracks as JitsiLocalTrack[])
+              ParticiantsStore.local.get().devicePreference.audioOutputDevice
+              = JitsiMeetJS.mediaDevices.getAudioOutputDevice()
+            },
+          ). catch((reason:JitisTrackError) => {
+            console.warn(`getUserMedia() failed again: ${reason.name}:${reason.message}`)
+          })
+        }
+      })
     }
   }
 

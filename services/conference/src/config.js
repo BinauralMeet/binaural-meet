@@ -5,12 +5,12 @@ const rtcConfig = {
     video:{
       facingMode:'user',
       width:{
-        max:1280,
+        max:1920,
         min:160,
         ideal:320,
       },
       height:{
-        max:720,
+        max:1080,
         min:120,
         ideal:240,
       },
