@@ -3,6 +3,7 @@ import {
   Information, ParticipantBase as IParticipantBase, Physics, Tracks,
 } from '@models/Participant'
 import {MapObject} from '@stores/MapObject'
+import {setupMaster} from 'cluster'
 import {JitsiTrack} from 'lib-jitsi-meet'
 import {action, computed, observable} from 'mobx'
 import {getRandomColor, getRandomColorRGB, shallowObservable, Store} from '../utils'
@@ -62,8 +63,12 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
 export class TracksStore<T extends JitsiTrack> implements Tracks<T>{
   @observable.ref audio:T|undefined = undefined
   @observable.ref avatar:T|undefined = undefined
-  @observable.ref screen:T[][] = []
+  @observable avatarOk = this.avatar ? !this.avatar.getTrack().muted : true
   @computed get audioStream() { return this.audio?.getOriginalStream() }
-  @computed get avatarStream() { return this.avatar?.getOriginalStream() }
-  @computed get screenStream() { return this.screen.map(tracks => tracks[0].getOriginalStream()) }
+  @computed get avatarStream() { return this.avatarOk ? this.avatar?.getOriginalStream() : undefined }
+  @action onMuteChanged(track: JitsiTrack, mute: boolean) {
+    if (track === this.avatar) {
+      this.avatarOk = !mute
+    }
+  }
 }

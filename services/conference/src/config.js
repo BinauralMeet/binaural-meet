@@ -55,4 +55,21 @@ const config_alpha = {
   rtc:rtcConfig
 }
 
-const config = config_alpha
+const config_local = {
+  hosts: {
+    domain: 'meet.jitsi',
+    muc: 'muc.meet.jitsi',
+    focus: 'focus.meet.jitsi',
+  },
+//  openBridgeChannel: 'datachannel', // One of true, 'datachannel', or 'websocket'
+  bosh: 'https://172.30.80.1:8443/http-bind', // FIXME: use xep-0156 for that
+  clientNode: 'http://jitsi.org/jitsimeet',
+  focusUserJid: 'focus@auth.meet.jitsi',
+  channelLastN: -1,
+  p2p: {
+    enabled: false,
+  },
+  rtc:rtcConfig
+}
+
+const config = config_local

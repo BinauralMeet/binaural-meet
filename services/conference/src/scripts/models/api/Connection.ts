@@ -757,6 +757,8 @@ class Connection extends EventEmitter {
     const pid = track.getParticipantId()
     if (track.isMainScreen && track.isMainScreen()) {
       //  console.log(`${track} videoType:${(track as any).videoType} added`)
+      track.getTrack().onmute = () => { sharedContents.mutedRemoteTracks.add(track) }
+      track.getTrack().onunmute = () => { sharedContents.mutedRemoteTracks.delete(track) }
       const tracks:Set<JitsiTrack> = new Set(sharedContents.remoteMainTracks.get(pid))
       tracks.add(track)
       sharedContents.remoteMainTracks.set(pid, tracks)
@@ -773,6 +775,8 @@ class Connection extends EventEmitter {
             trackLog('avatar track ${track} ended.')
             remote.tracks.avatar = undefined
           }
+          track.getTrack().onmute = () => { remote.tracks.onMuteChanged(track, true) }
+          track.getTrack().onunmute = () => { remote.tracks.onMuteChanged(track, false) }
         }
       }
     }
