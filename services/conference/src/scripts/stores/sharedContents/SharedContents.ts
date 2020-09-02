@@ -40,6 +40,7 @@ export class SharedContents extends EventEmitter {
   //  Tracks for the MainScreen
   @observable.ref localMainTracks: Set<JitsiLocalTrack> = new Set()
   @observable.shallow remoteMainTracks: Map<string, Set<JitsiTrack>> = new Map()
+  @observable.shallow mutedRemoteTracks: Set<JitsiTrack> = new Set()
   @computed get mainStream(): MediaStream|undefined {
     let tracks:Set<JitsiTrack> = new Set()
     if (this.localMainTracks.size) {
@@ -55,6 +56,7 @@ export class SharedContents extends EventEmitter {
     if (tracks.size) {
       let stream:MediaStream|undefined = undefined
       for (const track of tracks) {
+        if (this.mutedRemoteTracks.has(track)) { continue }
         if (!stream) {
           stream = track.getOriginalStream()
         } else if (track.getOriginalStream() !== stream) {
