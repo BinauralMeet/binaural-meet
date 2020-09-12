@@ -39,6 +39,23 @@ const config_haselab_net = {
   rtc:rtcConfig
 }
 
+const config_party_haselab = {
+  hosts: {
+    domain: 'meet.jitsi',
+    muc: 'muc.meet.jitsi',
+    focus: 'focus.meet.jitsi',
+  },
+//  openBridgeChannel: 'datachannel', // One of true, 'datachannel', or 'websocket'
+  bosh: 'https://party.haselab.net/http-bind', // FIXME: use xep-0156 for that
+  clientNode: 'http://jitsi.org/jitsimeet',
+  focusUserJid: 'focus@auth.meet.jitsi',
+  channelLastN: -1,
+  p2p: {
+    enabled: false,
+  },
+  rtc:rtcConfig
+}
+
 const config_alpha = {
   hosts: {
     domain: 'alpha.jitsi.net',
@@ -62,7 +79,7 @@ const config_local = {
     focus: 'focus.meet.jitsi',
   },
 //  openBridgeChannel: 'datachannel', // One of true, 'datachannel', or 'websocket'
-  bosh: 'https://172.30.80.1:8443/http-bind', // FIXME: use xep-0156 for that
+  bosh: 'https://localhost:8443/http-bind', // FIXME: use xep-0156 for that
   clientNode: 'http://jitsi.org/jitsimeet',
   focusUserJid: 'focus@auth.meet.jitsi',
   channelLastN: -1,
@@ -72,4 +89,4 @@ const config_local = {
   rtc:rtcConfig
 }
 
-const config = config_local
+const config = config_alpha
