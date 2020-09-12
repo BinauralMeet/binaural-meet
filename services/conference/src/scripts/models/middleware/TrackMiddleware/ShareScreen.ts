@@ -31,5 +31,10 @@ reaction(() => sharedContents.localMainTracks, (newTracks) => {
     connection.conference?.removeTrack(t)
     console.log(`${t} removed`)
   }
+  if (connection.conference) {
+    for (const t of added) {
+      t.conference = connection.conference
+    }
+  }
   connection.addTracks(Array.from(added.values()))
 })

@@ -1,9 +1,10 @@
 import JitsiTrack, { TrackInfo } from "./JitsiTrack"
+import { JitsiConference } from "../../JitsiConference"
 
 
 declare class JitsiLocalTrack extends JitsiTrack {
   constructor(trackInfo: TrackInfo);
-
+  conference:JitsiConference
   rtcId:number
   sourceId:number
   sourceType:string
