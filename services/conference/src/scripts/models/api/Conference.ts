@@ -1,6 +1,7 @@
 import {defaultPerceptibility, Pose2DMap} from '@models/MapObject'
 import {Information, Physics} from '@models/Participant'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
+import {participantsStore} from '@stores/participants'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {default as ParticiantsStore} from '@stores/participants/Participants'
 import {contentDebug, contentLog, default as sharedContents} from '@stores/sharedContents/SharedContents'
@@ -382,6 +383,12 @@ export class Conference extends EventEmitter {
         }
       },
     )
+
+    conference.on(JitsiMeetJS.events.conference.TRACK_AUDIO_LEVEL_CHANGED, (id:string, level:number) => {
+      if (!(id === this.localId && participantsStore.local.get().plugins.streamControl.muteSpeaker)) {
+        participantsStore.find(id).tracks.audioLevel = level
+      }
+    })
   }
 
   //  Register event handeler for Conference (not JitsiConference, routed by above) events.

@@ -62,6 +62,7 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
 
 export class TracksStore<T extends JitsiTrack> implements Tracks<T>{
   @observable.ref audio:T|undefined = undefined
+  @observable audioLevel = 0
   @observable.ref avatar:T|undefined = undefined
   @observable avatarOk = this.avatar ? !this.avatar.getTrack().muted : true
   @computed get audioStream() { return this.audio?.getOriginalStream() }
@@ -70,5 +71,8 @@ export class TracksStore<T extends JitsiTrack> implements Tracks<T>{
     if (track === this.avatar) {
       this.avatarOk = !mute
     }
+  }
+  @action setAudioLevel(newLevel: number) {
+    this.audioLevel = newLevel
   }
 }
