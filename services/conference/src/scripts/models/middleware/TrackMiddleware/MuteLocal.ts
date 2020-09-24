@@ -13,7 +13,7 @@ reaction(() => participants.local.get().plugins.streamControl.muteAudio,
 )
 reaction(() => participants.local.get().plugins.streamControl.muteVideo,
          (muteVideo) => {
-           const track = connection.conference?.getLocalVideoTrack()
+           const track = connection.conference.getLocalVideoTrack()
            if (track) {
              if (muteVideo) {
                track.mute().then(() => {
