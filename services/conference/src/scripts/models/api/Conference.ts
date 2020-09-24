@@ -38,6 +38,7 @@ const ParticipantProperties = {
   PPROP_PHYSICS: 'physics',
 }
 
+//  Utility
 function removePerceptibility(cs: ISharedContent[]):any {
   const rv = []
   for (const c of cs) {
@@ -64,18 +65,16 @@ export class Conference extends EventEmitter {
   private _jitsiConference?: JitsiMeetJS.JitsiConference
   private _isForTest?: boolean
   public localId = ''
-//  public participants = new Map<string, { jitsiInstance: JitsiParticipant, isLocal: boolean}>()
-//  public get jitsiConference(): JitsiMeetJS.JitsiConference | undefined {
-//    return this._jitsiConference
-//  }
 
   public init(jc: JitsiMeetJS.JitsiConference, isForTest: boolean) {
+    this.registerEventHandlers()
     this._jitsiConference = jc
     this._isForTest = isForTest
     this.registerJistiConferenceEvents(this._jitsiConference)
     this._jitsiConference.join('')
   }
 
+  //  Commmands for shared contents
   public sendSharedContents(cs: ISharedContent[]) {
     const ccs = removePerceptibility(cs)
     contentLog('send contents: ', ccs)
@@ -103,12 +102,16 @@ export class Conference extends EventEmitter {
 
     return []
   }
+
+  //  generic send command
   public sendCommand(name: string, values: JitsiValues) {
-    if (this._jitsiConference) {
-      this._jitsiConference.sendCommand(name, values)
-    }
+    this._jitsiConference?.sendCommand(name, values)
+  }
+  public removeCommand(name: string) {
+    this._jitsiConference?.removeCommand(name)
   }
 
+  //  Send local participant's property
   private sendLocalParticipantInformationDisposer = autorun(
     () => {
       const info = {...ParticiantsStore.local.get().information}
@@ -116,7 +119,6 @@ export class Conference extends EventEmitter {
       //  console.log('LocalParticipantInfo sent.', info)
     },
   )
-
   private sendLocalParticipantPhysicsDisposer = autorun(
     () => {
       const physics = {...ParticiantsStore.local.get().physics}
@@ -124,7 +126,7 @@ export class Conference extends EventEmitter {
       //  console.log('LocalParticipantPhysics sent.', physics)
     },
   )
-
+  //  send participant's pose
   private bindStore(local: LocalParticipant) {
     const UPDATE_INTERVAL = 200
 
@@ -140,7 +142,7 @@ export class Conference extends EventEmitter {
         throttledUpdatePose(newPose)
       },
     )
-
+    //  send mouse position
     const throttledUpdateMousePosition = throttle(UPDATE_INTERVAL, (mousePos: [number, number]|undefined) => {
       const str = mousePos ? JSON.stringify(mousePos) : ''
       this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_MOUSE_POSITION, str)
@@ -151,42 +153,40 @@ export class Conference extends EventEmitter {
       },
     )
   }
-  private registerEventHandlers() {
-    // Conference events
-    this.on(
-      ConferenceEvents.CONFERENCE_JOINED,
-      this.onConferenceJoined.bind(this),
-    )
-    this.on(
-      ConferenceEvents.LOCAL_PARTICIPANT_JOINED,
-      this.onLocalParticipantJoined.bind(this),
-    )
-    this.on(
-      ConferenceEvents.REMOTE_PARTICIPANT_JOINED,
-      this.onRemoteParticipantJoined.bind(this),
-    )
-    this.on(
-      ConferenceEvents.PARTICIPANT_LEFT,
-      this.onParticipantLeft.bind(this),
-    )
-    this.on(
-      ConferenceEvents.LOCAL_TRACK_ADDED,
-      this.onLocalTrackAdded.bind(this),
-    )
-    this.on(
-      ConferenceEvents.LOCAL_TRACK_REMOVED,
-      this.onLocalTrackRemoved.bind(this),
-    )
-    this.on(
-      ConferenceEvents.REMOTE_TRACK_ADDED,
-      this.onRemoteTrackAdded.bind(this),
-    )
-    this.on(
-      ConferenceEvents.REMOTE_TRACK_REMOVED,
-      this.onRemoteTrackRemoved.bind(this),
-    )
+
+
+  /**
+   * reduce bit rate
+   * peerconnection as TraceablePeerConnection
+   * peerconnection.peerconnection as RTCPeerConnection */
+  private reduceBitrate() {
+    if (config.rtc && this._jitsiConference && this._jitsiConference.jvbJingleSession) {
+      const jingleSession = this._jitsiConference.jvbJingleSession
+      if (!jingleSession.bitRateAlreadyReduced && jingleSession.peerconnection.peerconnection) {
+        jingleSession.bitRateAlreadyReduced = true
+        const pc = jingleSession.peerconnection.peerconnection
+        // console.log('RTCPeerConnect:', pc)
+        pc.getSenders().forEach((sender) => {
+          // console.log(sender)
+          if (sender && sender.track) {
+            const params = sender.getParameters()
+            // console.log('params:', params)
+            params.encodings.forEach((encording) => {
+              const ONE_KILO = 1024
+              if (sender.track!.kind === 'video' && config.rtc.maxBitrateForVideo) {
+                encording.maxBitrate = config.rtc.maxBitrateForVideo * ONE_KILO
+              }else if (sender.track!.kind === 'audio') {
+                encording.maxBitrate = config.rtc.maxBitrateForAudio * ONE_KILO
+              }
+            })
+            sender.setParameters(params)
+          }
+        })
+      }
+    }
   }
 
+  //  event handlers
   /**
    * Bind lib-jitsi-meet events to party events.
    * @param conference Conference instance of JitsiMeet
@@ -383,35 +383,42 @@ export class Conference extends EventEmitter {
       },
     )
   }
-  /**
-   * reduce bit rate
-   * peerconnection as TraceablePeerConnection
-   * peerconnection.peerconnection as RTCPeerConnection */
-  reduceBitrate() {
-    if (config.rtc && this._jitsiConference && this._jitsiConference.jvbJingleSession) {
-      const jingleSession = this._jitsiConference.jvbJingleSession
-      if (!jingleSession.bitRateAlreadyReduced && jingleSession.peerconnection.peerconnection) {
-        jingleSession.bitRateAlreadyReduced = true
-        const pc = jingleSession.peerconnection.peerconnection
-        // console.log('RTCPeerConnect:', pc)
-        pc.getSenders().forEach((sender) => {
-          // console.log(sender)
-          if (sender && sender.track) {
-            const params = sender.getParameters()
-            // console.log('params:', params)
-            params.encodings.forEach((encording) => {
-              const ONE_KILO = 1024
-              if (sender.track!.kind === 'video' && config.rtc.maxBitrateForVideo) {
-                encording.maxBitrate = config.rtc.maxBitrateForVideo * ONE_KILO
-              }else if (sender.track!.kind === 'audio') {
-                encording.maxBitrate = config.rtc.maxBitrateForAudio * ONE_KILO
-              }
-            })
-            sender.setParameters(params)
-          }
-        })
-      }
-    }
+
+  //  Register event handeler for Conference (not JitsiConference, routed by above) events.
+  private registerEventHandlers() {
+    // Conference events
+    this.on(
+      ConferenceEvents.CONFERENCE_JOINED,
+      this.onConferenceJoined.bind(this),
+    )
+    this.on(
+      ConferenceEvents.LOCAL_PARTICIPANT_JOINED,
+      this.onLocalParticipantJoined.bind(this),
+    )
+    this.on(
+      ConferenceEvents.REMOTE_PARTICIPANT_JOINED,
+      this.onRemoteParticipantJoined.bind(this),
+    )
+    this.on(
+      ConferenceEvents.PARTICIPANT_LEFT,
+      this.onParticipantLeft.bind(this),
+    )
+    this.on(
+      ConferenceEvents.LOCAL_TRACK_ADDED,
+      this.onLocalTrackAdded.bind(this),
+    )
+    this.on(
+      ConferenceEvents.LOCAL_TRACK_REMOVED,
+      this.onLocalTrackRemoved.bind(this),
+    )
+    this.on(
+      ConferenceEvents.REMOTE_TRACK_ADDED,
+      this.onRemoteTrackAdded.bind(this),
+    )
+    this.on(
+      ConferenceEvents.REMOTE_TRACK_REMOVED,
+      this.onRemoteTrackRemoved.bind(this),
+    )
   }
 
   private onConferenceJoined() {
@@ -470,24 +477,6 @@ export class Conference extends EventEmitter {
       })
     }
   }
-/*  private setLocalParticipant() {
-    if (this._jitsiConference) {
-      this.localId = this._jitsiConference?.myUserId()
-
-      const local = this.participants.get(this.localId)
-      if (local) {
-        local.isLocal = true
-      } else {
-        this.participants.set(
-          this.localId,
-          {
-
-            isLocal: true,
-          },
-        )
-      }
-    }
-  }*/
 
   private onRemoteParticipantJoined(id: string, participant: {jitsiInstance: JitsiParticipant, isLocal: false}) {
     if (this._isForTest) {
