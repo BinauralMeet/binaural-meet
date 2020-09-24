@@ -1,17 +1,17 @@
-import {ConnectionStates, Logger, Connection} from '@models/api'
-import {dummyConnectionStore as store, StoreProvider, useStore} from '@test-utils/DummyParticipants'
-import {useObserver} from 'mobx-react-lite'
-import React, {useEffect, useRef, useState} from 'react'
+import { Button, ButtonGroup, CircularProgress, Table, TableBody, TableContainer, TableRow } from '@material-ui/core'
 import Card from '@material-ui/core/Card'
 import CardContent from "@material-ui/core/CardContent";
 import CardHeader from '@material-ui/core/CardHeader'
 import Grid from "@material-ui/core/Grid";
-import { Button, ButtonGroup, TableRow, TableContainer, Table, TableBody, CircularProgress } from '@material-ui/core'
-import { init as initWorker, worker, resetWorker } from '@test-utils/worker'
-import { FastForward } from '@material-ui/icons'
-import { DummyAudio } from '@test-utils/tone'
-import TextField from "@material-ui/core/TextField"
 import {createStyles, makeStyles, Theme} from '@material-ui/core/styles'
+import TextField from "@material-ui/core/TextField"
+import { FastForward } from '@material-ui/icons'
+import {Connection, ConnectionStates, Logger} from '@models/api'
+import {dummyConnectionStore as store, StoreProvider, useStore} from '@test-utils/DummyParticipants'
+import { DummyAudio } from '@test-utils/tone'
+import { init as initWorker, resetWorker, worker } from '@test-utils/worker'
+import {useObserver} from 'mobx-react-lite'
+import React, {useEffect, useRef, useState} from 'react'
 
 
 export default {
@@ -173,7 +173,7 @@ const DummyParticipantVisualizer: React.FC<{}> = () => {
       dummies.map(
         (p: IDummyParticipant, index: number) => {
           if (!p.participantState) {
-            const connection = new Connection(`Participant${p.participantId}Connection`, true)
+            const connection = new Connection(true)
 
             connection.init().then(
               () => {
@@ -243,7 +243,7 @@ const Video: React.FC<IVideoProps> = (props: IVideoProps) => {
     props.connection.createJitisLocalTracksFromStream(stream)
       .then((tracks) => {
         props.connection.joinConference(props.conferenceName)
-        props.connection.addTracks(tracks)
+        props.connection.conference.addTracks(tracks)
       })
   }
   const videoEl = (

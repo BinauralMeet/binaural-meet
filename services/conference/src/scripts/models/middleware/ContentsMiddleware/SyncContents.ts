@@ -10,7 +10,7 @@ export const CONTENT_SYNC_DELAY = 300
 //  send contentes owned by local when updated.
 reaction(() => Array.from(sharedContents.localParticipant.myContents.values()),
          (contents) => {
-           connection.sendSharedContents(contents)
+           connection.conference.sendSharedContents(contents)
          },
          {delay: CONTENT_SYNC_DELAY},
 )
@@ -40,7 +40,7 @@ reaction(() => Array.from(sharedContents.localParticipant.updateRequest.values()
            // Check if already requested by other participants
            removeDobuleRequest(sharedContents.localParticipant.updateRequest)
            const reqs = Array.from(sharedContents.localParticipant.updateRequest.values())
-           connection.sendSharedContentsUpdateRequest(reqs)
+           connection.conference.sendSharedContentsUpdateRequest(reqs)
          },
          {delay: CONTENT_SYNC_DELAY},
 )
@@ -50,7 +50,7 @@ reaction(() => Array.from(sharedContents.localParticipant.removeRequest.values()
            // Check if already requested by other participants
            removeDobuleRequest(sharedContents.localParticipant.removeRequest)
            const reqs = Array.from(sharedContents.localParticipant.updateRequest.values())
-           connection.sendSharedContentsRemoveRequest(removes)
+           connection.conference.sendSharedContentsRemoveRequest(removes)
          },
          {delay: CONTENT_SYNC_DELAY},
 )
@@ -70,7 +70,7 @@ sharedContents.on(SharedContentsEvents.REMOTE_JOIN, (participant: ParticipantCon
   const dispo = reaction(() => Array.from(participant.myContents.values()), () => {
     contentDebug('remote contents changed for pid = ', participant.participantId)
     // Get contents before modification from jitsi
-    const contentsBefore = connection.getSharedContents(participant.participantId)
+    const contentsBefore = connection.conference.getSharedContents(participant.participantId)
     // Compare new remote contents in store (after) and old remote contents in store (before).
     contentsBefore.forEach((before) => {
       const after = participant.myContents.get(before.id)

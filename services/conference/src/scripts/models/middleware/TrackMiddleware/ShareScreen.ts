@@ -23,18 +23,13 @@ reaction(() => sharedContents.localMainTracks, (newTracks) => {
   removed.forEach((track) => { connection.conference?.removeTrack(track) })
   added.forEach((track) => { connection.conference?.addTrack(track) })
   */
-  const oldTracks = connection.conference?.getLocalTracks().filter(t => t.isMainScreen())
+  const oldTracks = connection.conference.getLocalTracks().filter(t => t.isMainScreen())
   const added = diffSet(new Set(newTracks), new Set(oldTracks))
   const removed = diffSet(new Set(oldTracks), new Set(newTracks))
 
   for (const t of removed) {
-    connection.conference?.removeTrack(t)
+    connection.conference.removeTrack(t)
     console.log(`${t} removed`)
   }
-  if (connection.conference) {
-    for (const t of added) {
-      t.conference = connection.conference
-    }
-  }
-  connection.addTracks(Array.from(added.values()))
+  connection.conference.addTracks(Array.from(added.values()))
 })

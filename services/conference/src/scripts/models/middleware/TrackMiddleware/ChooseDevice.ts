@@ -5,9 +5,9 @@ import JitsiMeetJS, {JitsiLocalTrack, JitsiTrackOptions, JitsiValues} from 'lib-
 import {reaction} from 'mobx'
 
 function replaceTrack(newTrack:JitsiLocalTrack) {
-  const oldTracks = connection.conference?.getLocalTracks(newTrack.getType())
+  const oldTracks = connection.conference.getLocalTracks(newTrack.getType())
   if (oldTracks !== undefined) {
-    connection.conference?.replaceTrack(oldTracks[0], newTrack)
+    connection.conference.replaceTrack(oldTracks[0], newTrack)
   }
   const did_ = newTrack.getTrack().getSettings().deviceId
   const did:string = did_ ? did_ : ''
