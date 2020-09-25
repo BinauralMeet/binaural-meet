@@ -9,6 +9,9 @@ reaction(() => participants.local.get().plugins.streamControl.muteAudio,
            const track = participants.local.get().tracks.audio as JitsiLocalTrack
           //  const track = connection.conference?.getLocalAudioTrack()
            if (track) { muteAudio ? track.mute() : track.unmute() }
+           if (muteAudio) {
+             participants.local.get().tracks.audioLevel = 0
+           }
          },
 )
 reaction(() => participants.local.get().plugins.streamControl.muteVideo,

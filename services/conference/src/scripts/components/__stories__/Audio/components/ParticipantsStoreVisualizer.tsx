@@ -5,6 +5,7 @@ import React from 'react'
 
 import {makeStyles} from '@material-ui/core/styles'
 import {Audiotrack, Hearing} from '@material-ui/icons'
+import {ParticipantBase} from '@stores/participants/ParticipantBase'
 
 const useStylesPs = makeStyles({
   root: {
@@ -51,7 +52,7 @@ interface ParticipantProps {
   type: 'remote' | 'local'
 }
 const ParticipantVisualizer: React.FC<ParticipantProps> = (props) => {
-  const participant = usePsStore().find(props.id)
+  const participant = usePsStore().find(props.id) as ParticipantBase
   console.log('render ', participant.id)
 
   const classes = useObserver(() => useStylesP(participant.pose.position))

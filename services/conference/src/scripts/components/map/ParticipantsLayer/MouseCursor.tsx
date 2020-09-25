@@ -1,5 +1,6 @@
 import {useStore} from '@hooks/ParticipantsStore'
 import {Tooltip} from '@material-ui/core'
+import { ParticipantBase } from '@stores/participants/ParticipantBase'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 
@@ -10,7 +11,7 @@ interface MouseCursorProps{
 
 export const MouseCursor: React.FC<MouseCursorProps> = (props:MouseCursorProps) => {
   const participants = useStore()
-  const participant = participants.find(props.participantId)
+  const participant = participants.find(props.participantId) as ParticipantBase
   const position = useObserver(() => participant.mousePosition)
   const name = useObserver(() => participant.information.name)
   const [color, textColor] = participant.getColor()

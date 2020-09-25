@@ -1,4 +1,6 @@
+import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import store from '@stores/participants/Participants'
+import {assert} from 'console'
 import {autorun, IObjectDidChange, reaction} from 'mobx'
 import {ConnectedGroup} from './ConnectedGroup'
 import {StereoManager} from './StereoManager'
@@ -46,9 +48,8 @@ export class ConnectedManager {
   private add = (id: string) => {
     const group = this.manager.addSpeaker(id)
 
-    const remote = store.find(id)
+    const remote = store.find(id) as ParticipantBase
     const local = store.local
-
     this.connectedGroups[id] = new ConnectedGroup(local, remote, group)
   }
 }

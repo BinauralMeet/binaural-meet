@@ -1,5 +1,6 @@
 import {useStore as usePsStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
+import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {ComposedAvatar} from './ComposedAvatar'
@@ -10,7 +11,8 @@ export interface ConnectedAvatarProps {
 }
 
 const ConnectedAvatar: React.FC<ConnectedAvatarProps> = (props) => {
-  const participant = usePsStore().find(props.participantId)
+  const participantsStore = usePsStore()
+  const participant = participantsStore.find(props.participantId) as ParticipantBase
   const [color, textColor] = participant.getColor()
 
   const {

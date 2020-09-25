@@ -5,34 +5,35 @@ import {useStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
 import {Tooltip} from '@material-ui/core'
 import {makeStyles} from '@material-ui/core/styles'
+import {NoEncryption} from '@material-ui/icons'
 import {useObserver} from 'mobx-react-lite'
-import React, {forwardRef, useState} from 'react'
+import React, {forwardRef} from 'react'
 import {MapObjectContainer} from '../utils/MapObjectContainer'
 import {useValue as useTransform} from '../utils/useTransform'
-import Pointer from './Pointer.svg'
-
-const pointerAvatarRatio = 2
-
 interface StyleProps {
   position: [number, number],
   orientation: number,
   size: number,
 }
 
+const SVG_RATIO = 6
+const HALF = 0.5
+
 const useStyles = makeStyles({
   avatar: (props: StyleProps) => ({
     position: 'absolute',
-    left: `-${props.size / 2}px`,
-    top: `-${props.size / 2}px`,
+    left: `-${props.size * HALF}px`,
+    top: `-${props.size * HALF}px`,
   }),
   pointerRotate: (props: StyleProps) => ({
     transform: `rotate(${props.orientation}deg)`,
   }),
   pointer: (props: StyleProps) => ({
     position: 'absolute',
-    width: `${pointerAvatarRatio * props.size / 2}`,
-    left: `-${pointerAvatarRatio * props.size / 2}px`,
-    top: `-${pointerAvatarRatio * props.size / 2}px`,
+    width: `${SVG_RATIO * props.size}`,
+    left: `-${SVG_RATIO * props.size * HALF}px`,
+    top: `-${SVG_RATIO * props.size * HALF}px`,
+    pointerEvents: 'none',
   }),
 })
 
@@ -42,10 +43,12 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
   const participants = useStore()
   const participant = participants.find(props.participantId)
   const participantProps = useObserver(() => ({
-    position: participant.pose.position,
-    orientation: participant.pose.orientation,
+    position: participant!.pose.position,
+    orientation: participant!.pose.orientation,
   }))
-  const name = useObserver(() => participant.information.name)
+  const name = useObserver(() => participant!.information.name)
+  const audioLevel = useObserver(() => participant!.tracks.audioLevel)
+  // console.log(`audioLevel ${audioLevel}`)
 
   const classes = useStyles({
     ...participantProps,
@@ -53,29 +56,44 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
   })
 
   const transform = useTransform()
-  const [color, fcolor] = participant.getColor()
+  const [color, fcolor] = participant ? participant.getColor() : 'white'
+  const outerRadius = props.size / 2 + 2
+  const isLocal = participants.isLocal(props.participantId)
+  const AUDIOLEVELSCALE = props.size * SVG_RATIO * HALF
+  const svgCenter = SVG_RATIO * props.size * HALF
 
   return (
-      <MapObjectContainer pose={participantProps} ref={ref} disableRotation={true}
-        configurationPluginName={participants.isLocal(props.participantId) ?
-          LOCAL_PARTICIPANT_CONFIG : REMOTE_PARTICIPANT_CONFIG}
-        buttonSpacing={{
-          top: -pointerAvatarRatio * props.size / 2,
-          right: -pointerAvatarRatio * props.size / 2,
-        }}
-        counterRotateButtons={true}
-      >
-          <div className="participantWrapper" style={{filter: `drop-shadow(3px 3px 3px ${color})`}}>
-            <div className={classes.pointerRotate}>
-              <Pointer className={classes.pointer} />
-            </div>
-            <Tooltip title={name}>
-              <div className={[classes.avatar, transform.counterRotationClass, 'draggableHandle'].join(' ')}>
-                <Avatar {...props} />
-              </div>
-            </Tooltip>
-          </div>
-      </MapObjectContainer >
+    <MapObjectContainer pose={participantProps} ref={ref} disableRotation={true}
+      configurationPluginName={isLocal ? LOCAL_PARTICIPANT_CONFIG : REMOTE_PARTICIPANT_CONFIG}
+      buttonSpacing={{
+        top: - props.size * HALF - 20,
+        right: - props.size * HALF - 20,
+      }}
+      counterRotateButtons={true}
+    >
+      <div className={classes.pointerRotate}>
+        <svg className={classes.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO} xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="grad">
+              <stop offset="40%" stopColor="yellow" stopOpacity="40%" />
+              <stop offset="100%" stopColor="yellow" stopOpacity="0%" />
+            </radialGradient>
+          </defs>
+          <ellipse ry={outerRadius + audioLevel * AUDIOLEVELSCALE} rx={outerRadius + audioLevel * AUDIOLEVELSCALE}
+            cy={svgCenter} cx={svgCenter} fill="url(#grad)" />
+          <ellipse ry={outerRadius} rx={outerRadius} cy={svgCenter} cx={svgCenter} fill={ color }
+            style={{pointerEvents: 'fill'}} />
+          <rect style={{pointerEvents: 'fill'}}
+            transform={`translate(${svgCenter} ${svgCenter}) rotate(-135) `}
+            height={outerRadius} width={outerRadius} fill={ color } />
+        </svg>
+      </div>
+      <Tooltip title={name}>
+        <div className={[classes.avatar, transform.counterRotationClass, 'draggableHandle'].join(' ')}>
+            <Avatar {...props} />
+        </div>
+      </Tooltip>
+    </MapObjectContainer >
   )
 }
 

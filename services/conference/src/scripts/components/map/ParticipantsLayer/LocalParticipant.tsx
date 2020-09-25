@@ -14,21 +14,9 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   const participants = useStore()
   const participant = participants.find(props.participantId)
   const participantProps = useObserver(() => ({
-    position: participant.pose.position,
-    orientation: participant.pose.orientation,
+    position: participant!.pose.position,
+    orientation: participant!.pose.orientation,
   }))
-
-  const useStyles = makeStyles({
-    local: () => ({
-      '& .participantWrapper': {
-        '& circle, & path': {
-          stroke: '#e5da00',
-        },
-      },
-    }),
-  })
-
-  const classes = useStyles()
 
   const transform = useTransform()
 
@@ -36,14 +24,14 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     e.stopPropagation()
     e.preventDefault()
     const delta: [number, number] = [data.deltaX, data.deltaY]
-    participant.pose.position = addV(
+    participant!.pose.position = addV(
       subV(transform.global2Local(delta), transform.global2Local([0, 0])), participantProps.position)
   }
 
   return (
     <DraggableCore handle=".draggableHandle, path" onDrag={dragEventHandler}>
-      <div className={classes.local}>
-        <Participant {...props} />
+      <div>
+      <Participant {...props} />
       </div>
     </DraggableCore>
   )

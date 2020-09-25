@@ -9,14 +9,14 @@ import {MemoedParticipant as Participant} from './Participant'
 export const ParticipantsLayer: React.FC<{}> = () => {
   const store = useStore()
   const ids = useObserver(() => Array.from(store.remote.keys()).filter(id => (
-    store.find(id).perceptibility.visibility
+    store.find(id)!.perceptibility.visibility
   )))
   const localId = useObserver(() => store.localId)
   const remoteElements = ids.map(id => <Participant key={id} participantId={id} size={PARTICIPANT_SIZE} />)
   const localElement = (<LocalParticipant key={localId} participantId={localId} size={PARTICIPANT_SIZE} />)
 
   const mouseIds = useObserver(() => Array.from(store.remote.keys()).filter(id => (
-    store.find(id).mousePosition
+    store.find(id)!.mousePosition
   )))
   const localMousePosition = useObserver(() => store.local.get().mousePosition)
   if (localMousePosition) {

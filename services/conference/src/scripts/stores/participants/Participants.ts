@@ -31,14 +31,13 @@ export class Participants {
     this.local.set(new LocalParticipant(participantId))
   }
 
-  find(participantId: string): ParticipantBase {
+  find(participantId: string): ParticipantBase | undefined {
     if (participantId === this.localId) {
 
       return this.local.get()
     }
 
     const res = this.remote.get(participantId)
-    assert(res !== undefined)
 
     return res
   }

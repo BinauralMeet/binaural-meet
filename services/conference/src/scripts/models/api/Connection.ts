@@ -1,16 +1,9 @@
 // import a global variant $ for lib-jitsi-meet
-import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {ConnectionInfo, default as ConnectionInfoStore} from '@stores/ConnectionInfo'
-import {LocalParticipant} from '@stores/participants/LocalParticipant'
-import {default as ParticiantsStore} from '@stores/participants/Participants'
-import {contentLog, default as sharedContents} from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
 import jquery from 'jquery'
-import JitsiMeetJS, {JitisTrackError, JitsiValues} from 'lib-jitsi-meet'
-import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
+import JitsiMeetJS from 'lib-jitsi-meet'
 import JitsiLocalTrack from 'lib-jitsi-meet/modules/RTC/JitsiLocalTrack'
-import JitsiRemoteTrack from 'lib-jitsi-meet/modules/RTC/JitsiRemoteTrack'
-import JitsiTrack from 'lib-jitsi-meet/modules/RTC/JitsiTrack'
 import * as TPC from 'lib-jitsi-meet/modules/RTC/TPCUtils'
 import {Store} from '../../stores/utils'
 import {Conference} from './Conference'
@@ -42,7 +35,7 @@ const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
   enableWindowOnErrorHandler: false,
   enableAnalyticsLogging: false,
   disableThiredPartyRequests: false,
-  disableAudioLevels: true,
+  disableAudioLevels: false,
 
   // The ID of the jidesha extension for Chrome.
   desktopSharingChromeExtId: 'mbocklcggfhnbahlnepmldehdhpjfcjp',
@@ -92,7 +85,7 @@ class Connection extends EventEmitter {
 
   public joinConference(conferenceName: string) {
     if (this._jitsiConnection) {
-      const jitsiConference = this._jitsiConnection.initJitsiConference(name, config)
+      const jitsiConference = this._jitsiConnection.initJitsiConference(conferenceName, config)
       this.conference.init(jitsiConference, this._isForTest)
 
       return
@@ -235,8 +228,5 @@ class Connection extends EventEmitter {
 
 const connection = new Connection()
 connection.Store = ConnectionInfoStore
-// const dummyConnection = new Connection('DummyConnection')
-// dummyConnection.Store = dummyConnectionStore
 
 export {Connection, connection}
-//  , dummyConnection}

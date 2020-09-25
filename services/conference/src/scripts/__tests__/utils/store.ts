@@ -25,10 +25,10 @@ export const addFakeParticipants = action((store: Participants, option: FakePart
     store.join(participantId)
     const p = store.find(participantId)
 
-    p.information.name = faker.name.findName()
-    p.information.avatarSrc = faker.internet.avatar()
+    p!.information.name = faker.name.findName()
+    p!.information.avatarSrc = faker.internet.avatar()
 
-    p.pose.position = [0, 0].map(() => faker.random.number({
+    p!.pose.position = [0, 0].map(() => faker.random.number({
       min: op.positionMin,
       max: op.positionMax,
       precision: 1,

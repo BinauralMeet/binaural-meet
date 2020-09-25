@@ -317,7 +317,7 @@ export class Conference extends EventEmitter {
         if (track.isLocal()) { return }
         const remoteTrack = track as JitsiRemoteTrack
         const target = ParticiantsStore.find(remoteTrack.getParticipantId())
-        if (remoteTrack.isVideoTrack() && !remoteTrack.isScreenSharing()) {
+        if (target && remoteTrack.isVideoTrack() && !remoteTrack.isScreenSharing()) {
           target.plugins.streamControl.muteVideo = remoteTrack.isMuted()
         }
       },
@@ -334,29 +334,36 @@ export class Conference extends EventEmitter {
           const pose: Pose2DMap = JSON.parse(value)
           const id = participant.getId()
           const target = ParticiantsStore.find(id)
-
-          target.pose.orientation = pose.orientation
-          target.pose.position = pose.position
+          if (target) {
+            target.pose.orientation = pose.orientation
+            target.pose.position = pose.position
+          }
         }else if (name === ParticipantProperties.PPROP_MOUSE_POSITION) {
           const target = ParticiantsStore.find(participant.getId())
-          if (value.length > 0) {
-            target.mousePosition = JSON.parse(value)
-          }else {
-            target.mousePosition = undefined
+          if (target) {
+            if (value.length > 0) {
+              target.mousePosition = JSON.parse(value)
+            }else {
+              target.mousePosition = undefined
+            }
           }
         }else if (name === ParticipantProperties.PPROP_INFO) {
           const id = participant.getId()
           if (id !== local.id) {
             const target = ParticiantsStore.find(id)
             const info: Information = JSON.parse(value)
-            Object.assign(target.information, info)
+            if (target) {
+              Object.assign(target.information, info)
+            }
           }
         }else if (name === ParticipantProperties.PPROP_PHYSICS) {
           const id = participant.getId()
           if (id !== local.id) {
             const target = ParticiantsStore.find(id)
             const physics: Physics = JSON.parse(value)
-            Object.assign(target.physics, physics)
+            if (target) {
+              Object.assign(target.physics, physics)
+            }
           }
         }else if (name === ParticipantProperties.PPROP_CONTENTS) {
           if (participant.getId() !== local.id) {
@@ -385,8 +392,15 @@ export class Conference extends EventEmitter {
     )
 
     conference.on(JitsiMeetJS.events.conference.TRACK_AUDIO_LEVEL_CHANGED, (id:string, level:number) => {
-      if (!(id === this.localId && participantsStore.local.get().plugins.streamControl.muteSpeaker)) {
-        participantsStore.find(id).tracks.audioLevel = level
+      console.debug(`Audio level of ${id} changed to ${level}.`)
+      let participant = participantsStore.find(id)
+      if (!participant) {
+        participant = participantsStore.local.get()
+      }
+      if (! (participant === participantsStore.local.get() && participant.plugins.streamControl.muteAudio)) {
+        participant?.tracks.setAudioLevel(level)
+      }else {
+        participant?.tracks.setAudioLevel(0)
       }
     })
   }
@@ -432,8 +446,6 @@ export class Conference extends EventEmitter {
     connLog('Party: Joined conference room.')
   }
   private onLocalParticipantJoined() {
-    // this.setLocalParticipant()
-
     if (!this._isForTest) {
       const local = new LocalParticipant(this.localId)
 
