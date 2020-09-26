@@ -9811,7 +9811,7 @@ react-addons-create-fragment@^15.6.2:
 
 "react-avatar@https://github.com/JitsiPartyTeam/react-avatar-module.git":
   version "3.9.7"
-  resolved "https://github.com/JitsiPartyTeam/react-avatar-module.git#7df909b35bfd4bbebef946e7a4007b068c5c997e"
+  resolved "https://github.com/JitsiPartyTeam/react-avatar-module.git#4ea6216d11a72493c3e3f38e20150fbd292f4fb6"
   dependencies:
     core-js "^3.6.1"
     is-retina "^1.0.3"
