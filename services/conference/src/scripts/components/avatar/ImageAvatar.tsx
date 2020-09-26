@@ -1,7 +1,6 @@
+import {Information} from '@models/Participant'
 import React from 'react'
 import ReactAvatar from 'react-avatar'
-
-import {Information} from '@models/Participant'
 
 export interface ImageAvatarProps {
   information: Information
@@ -9,6 +8,7 @@ export interface ImageAvatarProps {
   color: string
   textColor: string
 }
+
 
 export const ImageAvatar: React.FC<ImageAvatarProps> = (props: ImageAvatarProps) => {
   const size = props.size !== undefined ? `${props.size}px` : undefined

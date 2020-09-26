@@ -5,7 +5,6 @@ import {useStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
 import {Tooltip} from '@material-ui/core'
 import {makeStyles} from '@material-ui/core/styles'
-import {NoEncryption} from '@material-ui/icons'
 import {useObserver} from 'mobx-react-lite'
 import React, {forwardRef} from 'react'
 import {MapObjectContainer} from '../utils/MapObjectContainer'
@@ -56,7 +55,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
   })
 
   const transform = useTransform()
-  const [color, fcolor] = participant ? participant.getColor() : 'white'
+  const [color, textColor, revColor] = participant ? participant.getColor() : ['white', 'black']
   const outerRadius = props.size / 2 + 2
   const isLocal = participants.isLocal(props.participantId)
   const AUDIOLEVELSCALE = props.size * SVG_RATIO * HALF
@@ -64,7 +63,9 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
 
   return (
     <MapObjectContainer pose={participantProps} ref={ref} disableRotation={true}
-      configurationPluginName={isLocal ? LOCAL_PARTICIPANT_CONFIG : REMOTE_PARTICIPANT_CONFIG}
+      //  configurationPluginName={isLocal ? LOCAL_PARTICIPANT_CONFIG : REMOTE_PARTICIPANT_CONFIG}
+      //  currently we have no configulatoin for remote paritcipants
+      configurationPluginName={isLocal ? LOCAL_PARTICIPANT_CONFIG : undefined}
       buttonSpacing={{
         top: - props.size * HALF - 20,
         right: - props.size * HALF - 20,
@@ -75,17 +76,23 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
         <svg className={classes.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO} xmlns="http://www.w3.org/2000/svg">
           <defs>
             <radialGradient id="grad">
-              <stop offset="40%" stopColor="yellow" stopOpacity="40%" />
-              <stop offset="100%" stopColor="yellow" stopOpacity="0%" />
+              <stop offset="40%" stopColor={color} stopOpacity="40%" />
+              <stop offset="100%" stopColor={color} stopOpacity="0%" />
             </radialGradient>
           </defs>
-          <ellipse ry={outerRadius + audioLevel * AUDIOLEVELSCALE} rx={outerRadius + audioLevel * AUDIOLEVELSCALE}
+          <circle r={outerRadius + audioLevel * AUDIOLEVELSCALE}
             cy={svgCenter} cx={svgCenter} fill="url(#grad)" />
-          <ellipse ry={outerRadius} rx={outerRadius} cy={svgCenter} cx={svgCenter} fill={ color }
+          <circle r={outerRadius} cy={svgCenter} cx={svgCenter} fill={ color }
             style={{pointerEvents: 'fill'}} />
-          <rect style={{pointerEvents: 'fill'}}
-            transform={`translate(${svgCenter} ${svgCenter}) rotate(-135) `}
-            height={outerRadius} width={outerRadius} fill={ color } />
+          <g transform={`translate(${svgCenter} ${svgCenter}) rotate(-135) `}>
+            <rect style={{pointerEvents: 'fill'}}
+              height={outerRadius} width={outerRadius} fill={ color } />
+            {isLocal ?
+              <path  d={`M 0 ${outerRadius} h ${outerRadius} v ${-outerRadius}` +
+                `a ${outerRadius} ${outerRadius} 0 1 0 ${-outerRadius} ${outerRadius}`}
+                 fill="none" stroke={textColor} />
+              : undefined}
+          </g>
         </svg>
       </div>
       <Tooltip title={name}>

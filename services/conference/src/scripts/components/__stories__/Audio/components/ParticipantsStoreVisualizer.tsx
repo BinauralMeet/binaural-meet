@@ -39,11 +39,12 @@ export const ParticipantsVisualizer: React.FC<{}> = () => {
   )
 }
 
+const HALF = 0.5
 const useStylesP = makeStyles({
   root: (props: [number, number]) => ({
     position: 'absolute',
-    left: `${props[0] * 0.5}vh`,
-    top: `${props[1] * 0.5}vh`,
+    left: `${props[0] * HALF}vh`,
+    top: `${props[1] * HALF}vh`,
   }),
 })
 
