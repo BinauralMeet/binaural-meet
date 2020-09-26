@@ -10,6 +10,7 @@ interface ConfigurationButtonProps {
   plugin: string
   show: boolean
   className?: string
+  color: string
 }
 
 export const ConfigurationButton: React.FC<ConfigurationButtonProps> = (props) => {
@@ -42,8 +43,8 @@ export const ConfigurationButton: React.FC<ConfigurationButtonProps> = (props) =
     <div className={className}>
       <Zoom in={show}>
         <Tooltip title="Configure" aria-label="configure">
-          <IconButton color="secondary" onClick={handleClick} size={'small'}>
-            <MoreVertIcon />
+          <IconButton onClick={handleClick} size={'small'}>
+            <MoreVertIcon htmlColor={props.color} />
           </IconButton>
         </Tooltip>
       </Zoom>

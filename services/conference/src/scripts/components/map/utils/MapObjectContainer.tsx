@@ -11,6 +11,7 @@ interface MapObjectContainerProps extends Partial<MapObject> {
   configurationPluginName?: string
   buttonSpacing?: ButtonSpacing
   counterRotateButtons?: boolean
+  color: string
 }
 
 const defaultProps: Partial<MapObjectContainerProps> = {
@@ -66,6 +67,7 @@ HTMLDivElement, React.PropsWithChildren<MapObjectContainerProps>> = (props, ref)
     plugin: configurationPluginName,
     className: className.fab,
     show: showButton,
+    color: props.color,
   }) : undefined
 
   const counterRotationClass = useTransform().counterRotationClass

@@ -1,6 +1,6 @@
 import {useStore} from '@hooks/ParticipantsStore'
 import {Tooltip} from '@material-ui/core'
-import { ParticipantBase } from '@stores/participants/ParticipantBase'
+import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 

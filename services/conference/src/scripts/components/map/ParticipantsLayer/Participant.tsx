@@ -56,18 +56,21 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
 
   const transform = useTransform()
   const [color, textColor, revColor] = participant ? participant.getColor() : ['white', 'black']
+  // tslint:disable-next-line: no-magic-numbers
   const outerRadius = props.size / 2 + 2
   const isLocal = participants.isLocal(props.participantId)
   const AUDIOLEVELSCALE = props.size * SVG_RATIO * HALF
   const svgCenter = SVG_RATIO * props.size * HALF
 
   return (
-    <MapObjectContainer pose={participantProps} ref={ref} disableRotation={true}
+    <MapObjectContainer pose={participantProps} ref={ref} disableRotation={true} color={color}
       //  configurationPluginName={isLocal ? LOCAL_PARTICIPANT_CONFIG : REMOTE_PARTICIPANT_CONFIG}
       //  currently we have no configulatoin for remote paritcipants
       configurationPluginName={isLocal ? LOCAL_PARTICIPANT_CONFIG : undefined}
       buttonSpacing={{
+        // tslint:disable-next-line: no-magic-numbers
         top: - props.size * HALF - 20,
+        // tslint:disable-next-line: no-magic-numbers
         right: - props.size * HALF - 20,
       }}
       counterRotateButtons={true}

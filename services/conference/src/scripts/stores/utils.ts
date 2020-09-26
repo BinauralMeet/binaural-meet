@@ -44,7 +44,7 @@ export function getRandomColorRGB(v:string):[number, number, number] {
 export function getRandomColor(v:string):[string, string, string] {
   const [r2, g2, b2] = getRandomColorRGB(v)
   const [r, g, b] = [r2 / 17, g2 / 17, b2 / 17]
-  const textColor = r + g + b * 0.2 > 20 ? '#000' : '#FFF'
+  const textColor = r + g + b * 0.2 > 20 ? '#008' : '#FF8'
   const color = `#${r.toString(16)}${g.toString(16)}${b.toString(16)}`
   const reverseColor = `#${(15 - r).toString(16)}${(15 - g).toString(16)}${(15 - b).toString(16)}`
 
