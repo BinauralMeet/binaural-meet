@@ -144,15 +144,16 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     onDrag: ({down, delta, event, xy, buttons}) => {
       // console.log('onDragTitle:', delta)
       if (isFixed) { return }
+      event?.stopPropagation()
       if (down) {
-        event?.stopPropagation()
         //  event?.preventDefault()
         dragHandler(delta, buttons, event)
       }else {
         updateHandler()
       }
     },
-  })
+  },
+  )
   function onResize(evt:MouseEvent | TouchEvent, dir: any, elem:HTMLDivElement, delta:any, pos:any) {
     evt.stopPropagation(); evt.preventDefault()
     const cd:[number, number] = [delta.width, delta.height]

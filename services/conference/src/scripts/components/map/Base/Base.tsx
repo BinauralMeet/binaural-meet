@@ -10,7 +10,6 @@ import React, {useEffect, useRef, useState} from 'react'
 import {addV, subV, useGesture} from 'react-use-gesture'
 import {createValue, Provider as TransformProvider} from '../utils/useTransform'
 
-
 export const MAP_SIZE = 5000
 const HALF = 0.5
 export const MAP_CENTER:[number, number] = [MAP_SIZE * HALF, MAP_SIZE * HALF]
@@ -20,6 +19,7 @@ interface StyleProps {
   mouse: [number, number],
 }
 
+const showScrollbar = false
 const useStyles = makeStyles({
   root: {
     position: 'absolute',
@@ -29,7 +29,7 @@ const useStyles = makeStyles({
     left: 0,
     userDrag: 'none',
     userSelect: 'none',
-    overflow: 'hidden',
+    overflow: showScrollbar ? 'scroll' : 'hidden',
   },
   transform: {
     position: 'absolute',
@@ -66,13 +66,14 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
   const localParticipantPosition = useObserver(() => participants.local.get().pose.position)
 
+  //  Mouse and touch operations ----------------------------------------------
   const MOUSE_RIGHT = 2
   const bind = useGesture(
     {
       onDragStart: ({event}) => { setStartDrag(true) },
       onDrag: ({down, delta, event, xy, buttons}) => {
         if (startDrag && down && outer.current) {
-          if (buttons === MOUSE_RIGHT) {  // right mouse drag - rotate map
+          if (!props.isTPV && buttons === MOUSE_RIGHT) {  // right mouse drag - rotate map
             const center = transformPoint2D(matrix, localParticipantPosition)
             const target:[number, number] = addV(xy, offset())
             const radius1 = subV(target, center)
@@ -115,10 +116,15 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
         const center = addV(origin as [number, number], offset())
 
-        let scale = d / md
-        scale = limitScale(Math.abs(extractScaleX(matrix)), scale)
+        const MIN_D = 10
+        let scale = d > MIN_D ? d / md : d < -MIN_D ? md / d : (1 + (d - md) / MIN_D)
+        //  console.log(`Pinch: da:${[d, a]} origin:${origin}  memo:${memo}  scale:${scale}`)
 
-        const changeMatrix = (new DOMMatrix()).scaleSelf(scale, scale, 1).rotateSelf(0, 0, a - ma)
+        scale = limitScale(extractScaleX(matrix), scale)
+
+        const changeMatrix = props.isTPV ?
+          (new DOMMatrix()).scaleSelf(scale, scale, 1) :
+          (new DOMMatrix()).scaleSelf(scale, scale, 1).rotateSelf(0, 0, a - ma)
 
         const tm = (new DOMMatrix()).translate(
           ...subV([0, 0] as [number, number], center))
@@ -126,15 +132,18 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
         const newMatrix = multiply([itm, changeMatrix, tm, matrix])
         setMatrix(newMatrix)
-
-        participants.local.get().pose.orientation = -radian2Degree(extractRotation(newMatrix))
+        if (!props.isTPV) {
+          participants.local.get().pose.orientation = -radian2Degree(extractRotation(newMatrix))
+        }
 
         return [d, a]
       },
       onPinchEnd: () => setCommitedMatrix(matrix),
       onWheel: ({movement}) => {
+        // tslint:disable-next-line: no-magic-numbers
         let scale = Math.pow(1.2, movement[1] / 1000)
         scale = limitScale(extractScaleX(matrix), scale)
+        //  console.log(`Wheel: ${movement}  scale=${scale}`)
         const newMatrix = matrix.scale(scale, scale, 1, ...transformPoint2D(matrix.inverse(), mouse))
         setMatrix(newMatrix)
       },
@@ -148,40 +157,56 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         }
       },
     },
+    {
+      eventOptions:{passive:false}, //  This prevents default zoom by browser when pinch.
+    },
   )
-  //  scroll to center
+
+  //  Event handlers ----------------------------------------------
+  //  Move to center when root div is created.
   useEffect(
     () => {
       if (outer.current) {
         const elem = outer.current
         console.log('useEffect[outer] called')
-        elem.scrollTo((MAP_SIZE - elem.clientWidth) /2, (MAP_SIZE - elem.clientHeight) /2)
+        elem.scrollTo((MAP_SIZE - elem.clientWidth) * HALF, (MAP_SIZE - elem.clientHeight) *  HALF)
       }
     },
     [outer],
   )
   // scroll range
-  useEffect(
+/*  useEffect(
     () => {
       const orgMat = new DOMMatrix(matrix.toString())
       setMatrix(orgMat)
     },
     [outer],
   )
-  // prevent show context menu with right mouse click
+*/
+
+  //  prevent default behavior of browser on map
   useEffect(
     () => {
       const cb = (e: Event) => { e.preventDefault() }
+      //  Not to show context menu with right mouse click
       outer.current?.addEventListener('contextmenu', cb)
+      //  Not to zoom by pinch
+      outer.current?.addEventListener('touchstart', cb)
 
-      return () => outer.current?.removeEventListener('contextmenu', cb)
+      return () => {
+        outer.current?.removeEventListener('contextmenu', cb)
+        outer.current?.removeEventListener('touchstart', cb)
+      }
     },
     [outer])
-  // prevent to scroll by wheel
+  // Prevent scroll by wheel
   useEffect(
     () => {
       window.document.body.addEventListener('wheel',
-                                            (event) => { event.preventDefault() },
+                                            (event) => {
+                                              //  console.log('body.wheel called and prevented.')
+                                              event.preventDefault()
+                                            },
                                             {passive: false})
     },
     [],
@@ -193,15 +218,14 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
     mouse: [relativeMouse.x, relativeMouse.y],
   }
   const classes = useStyles(styleProps)
-
   const transfromValue = createValue(commitedMatrix, [0, 0])
 
   return (
     <div className={[classes.root, props.className].join(' ')} ref={outer} {...bind()}>
-    <TransformProvider value={transfromValue}>
-    <div id="map-transform" className={classes.transform} ref={container}>
-          {props.children}
-    </div>
+      <TransformProvider value={transfromValue}>
+        <div id="map-transform" className={classes.transform} ref={container}>
+            {props.children}
+        </div>
       </TransformProvider>
     </div>
   )

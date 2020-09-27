@@ -447,6 +447,8 @@ export class Conference extends EventEmitter {
   }
   private onLocalParticipantJoined() {
     if (!this._isForTest) {
+      connLog('Party: Local Participant Joined.')
+      this.localId = this._jitsiConference!.myUserId()
       const local = new LocalParticipant(this.localId)
 
       ParticiantsStore.local.set(local)

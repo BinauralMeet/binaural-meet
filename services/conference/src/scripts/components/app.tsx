@@ -27,7 +27,7 @@ export const App: React.FC<{}> = () => {
     <ContentsProvider value={sharedContentsStore}>
       <div className={classes.map}>
         <MainScreen />
-        <Map />
+        <Map isTPV={true} />
         <Footer />
       </div>
     </ContentsProvider>

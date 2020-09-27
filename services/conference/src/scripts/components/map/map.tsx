@@ -16,7 +16,7 @@ export const Map: React.FC<BaseProps> = (props) => {
     <Base {...props}>
       {<BackgroundLayer isTransparnet={stream !== undefined} />}
       {stream ? undefined : <ShareLayer />}
-      <ParticipantsLayer />
+      <ParticipantsLayer isTPV = {props.isTPV} />
     </Base>
   )
 }
