@@ -90,3 +90,4 @@ const config_local = {
 }
 
 const config = config_alpha
+config.thirdPersonView = true
