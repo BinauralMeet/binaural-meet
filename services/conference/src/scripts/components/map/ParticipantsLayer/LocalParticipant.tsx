@@ -12,7 +12,7 @@ function mulV<T extends number[]>(s: number, vec: T): T {
   return vec.map((v, i) => s * v) as T
 }
 
-type LocalParticipantProps = ParticipantProps & {isTPV?:boolean}
+type LocalParticipantProps = ParticipantProps
 
 const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   const participants = useStore()
@@ -21,6 +21,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     position: participant!.pose.position,
     orientation: participant!.pose.orientation,
   }))
+  const thirdPersonView = useObserver(() => participants.local.get().thirdPersonView)
 
   const transform = useTransform()
 
@@ -29,7 +30,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   const dragEventHandler: DraggableEventHandler = (e: DraggableEvent, data: DraggableData) => {
     e.stopPropagation()
     e.preventDefault()
-    if (props.isTPV) {
+    if (thirdPersonView) {
       const delta: [number, number] = [data.deltaX, data.deltaY]
       const localDelta = subV(transform.global2Local(delta), transform.global2Local([0, 0]))
       participant!.pose.position = addV(participantProps.position, localDelta)

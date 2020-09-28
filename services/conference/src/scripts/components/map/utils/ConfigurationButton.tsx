@@ -34,6 +34,10 @@ export const ConfigurationButton: React.FC<ConfigurationButtonProps> = (props) =
       open={showConfig} onClose={() => setShowConfig(false)}
       anchorReference={'anchorEl'}
       anchorEl={anchorEl}
+      anchorOrigin={{
+        vertical: 'top',
+        horizontal: 'right',
+      }}
     >
         <ConfigurationPlugin closeDialog={() => setShowConfig(false)} />
     </Popover>

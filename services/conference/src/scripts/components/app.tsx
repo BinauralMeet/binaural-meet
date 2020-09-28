@@ -3,10 +3,12 @@ import {StoreProvider as ContentsProvider} from '@hooks/SharedContentsStore'
 import {makeStyles} from '@material-ui/core/styles'
 import participantsStore from '@stores/participants/Participants'
 import sharedContentsStore from '@stores/sharedContents/SharedContents'
-import React from 'react'
+import {useObserver} from 'mobx-react-lite'
+import React, {useState} from 'react'
 import {Footer} from './footer/footer'
 import {MainScreen} from './map/MainScreen'
 import {Map} from './map/map'
+
 
 const useStyles = makeStyles({
   map: {
@@ -27,7 +29,7 @@ export const App: React.FC<{}> = () => {
     <ContentsProvider value={sharedContentsStore}>
       <div className={classes.map}>
         <MainScreen />
-        <Map isTPV={true} />
+        <Map />
         <Footer />
       </div>
     </ContentsProvider>

@@ -5,6 +5,7 @@ import {
   crossProduct, extractRotation, extractScaleX, multiply,
   radian2Degree, rotate90ClockWise, rotateVector2D, transformPoint2D, vectorLength,
 } from '@models/utils'
+import {reaction} from 'mobx'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef, useState} from 'react'
 import {addV, subV, useGesture} from 'react-use-gesture'
@@ -57,6 +58,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
     return [0, 0]
   }
   const participants = useStore()
+  const thirdPersonView = useObserver(() => participants.local.get().thirdPersonView)
 
   const [mouse, setMouse] = useState<[number, number]>([0, 0])  // mouse position relative to outer container
   const [matrix, setMatrix] = useState<DOMMatrixReadOnly>(new DOMMatrixReadOnly())
@@ -66,6 +68,20 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
   const localParticipantPosition = useObserver(() => participants.local.get().pose.position)
 
+  //  utility
+  function rotateMap(degree:number, center:[number, number]) {
+    const changeMatrix = (new DOMMatrix()).rotateSelf(0, 0, degree)
+
+    const tm = (new DOMMatrix()).translate(
+      ...subV([0, 0] as [number, number], center))
+    const itm = (new DOMMatrix()).translateSelf(...center)
+
+    const newMatrix = multiply([itm, changeMatrix, tm, matrix])
+    setMatrix(newMatrix)
+
+    return newMatrix
+  }
+
   //  Mouse and touch operations ----------------------------------------------
   const MOUSE_RIGHT = 2
   const bind = useGesture(
@@ -73,7 +89,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       onDragStart: ({event}) => { setStartDrag(true) },
       onDrag: ({down, delta, event, xy, buttons}) => {
         if (startDrag && down && outer.current) {
-          if (!props.isTPV && buttons === MOUSE_RIGHT) {  // right mouse drag - rotate map
+          if (!thirdPersonView && buttons === MOUSE_RIGHT) {  // right mouse drag - rotate map
             const center = transformPoint2D(matrix, localParticipantPosition)
             const target:[number, number] = addV(xy, offset())
             const radius1 = subV(target, center)
@@ -86,14 +102,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
               return  // no need to update matrix
             }
 
-            const changeMatrix = (new DOMMatrix()).rotateSelf(0, 0, radian2Degree(angle))
-
-            const tm = (new DOMMatrix()).translate(
-              ...subV([0, 0] as [number, number], center))
-            const itm = (new DOMMatrix()).translateSelf(...center)
-
-            const newMatrix = multiply([itm, changeMatrix, tm, matrix])
-            setMatrix(newMatrix)
+            const newMatrix = rotateMap(radian2Degree(angle), center)
 
             participants.local.get().pose.orientation = -radian2Degree(extractRotation(newMatrix))
           } else {  // left mouse drag or touch screen drag - translate map
@@ -122,7 +131,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
         scale = limitScale(extractScaleX(matrix), scale)
 
-        const changeMatrix = props.isTPV ?
+        const changeMatrix = thirdPersonView ?
           (new DOMMatrix()).scaleSelf(scale, scale, 1) :
           (new DOMMatrix()).scaleSelf(scale, scale, 1).rotateSelf(0, 0, a - ma)
 
@@ -132,7 +141,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
         const newMatrix = multiply([itm, changeMatrix, tm, matrix])
         setMatrix(newMatrix)
-        if (!props.isTPV) {
+        if (!thirdPersonView) {
           participants.local.get().pose.orientation = -radian2Degree(extractRotation(newMatrix))
         }
 
@@ -174,6 +183,12 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
     },
     [outer],
   )
+  if (!showScrollbar) {
+    const elem = outer.current
+    if (elem) {
+      elem.scrollTo((MAP_SIZE - elem.clientWidth) * HALF, (MAP_SIZE - elem.clientHeight) *  HALF)
+    }
+  }
   // scroll range
 /*  useEffect(
     () => {
@@ -208,9 +223,25 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
                                               event.preventDefault()
                                             },
                                             {passive: false})
+      reaction(() => participants.local.get().thirdPersonView,
+               (tpv) => {
+                 const center = transformPoint2D(matrix, participants.local.get().pose.position)
+                 if (tpv) {
+                   const mapRot = radian2Degree(extractRotation(matrix))
+                   const newMatrix = rotateMap(-mapRot, center)
+                   setCommitedMatrix(newMatrix)
+                 }else {
+                   const avatarRot = participants.local.get().pose.orientation
+                   const mapRot = radian2Degree(extractRotation(matrix))
+                   const newMatrix = rotateMap(-(avatarRot + mapRot), center)
+                   setCommitedMatrix(newMatrix)
+                 }
+               },
+      )
     },
     [],
   )
+
 
   const relativeMouse = matrix.inverse().transformPoint(new DOMPoint(...mouse))
   const styleProps: StyleProps = {
