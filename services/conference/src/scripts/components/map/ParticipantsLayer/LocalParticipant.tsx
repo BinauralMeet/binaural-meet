@@ -47,7 +47,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     } else {
       const delta: [number, number] = [data.deltaX, data.deltaY]
       participant!.pose.position = addV(
-      subV(transform.global2Local(delta), transform.global2Local([0, 0])), participantProps.position)
+        subV(transform.global2Local(delta), transform.global2Local([0, 0])), participantProps.position)
     }
   }
 

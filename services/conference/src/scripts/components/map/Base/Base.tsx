@@ -5,7 +5,6 @@ import {
   crossProduct, extractRotation, extractScaleX, multiply,
   radian2Degree, rotate90ClockWise, rotateVector2D, transformPoint2D, vectorLength,
 } from '@models/utils'
-import {reaction} from 'mobx'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef, useState} from 'react'
 import {addV, subV, useGesture} from 'react-use-gesture'
@@ -17,11 +16,17 @@ export const MAP_CENTER:[number, number] = [MAP_SIZE * HALF, MAP_SIZE * HALF]
 
 interface StyleProps {
   matrix: DOMMatrixReadOnly,
-  mouse: [number, number],
+  clientWidth: number,
+  clientHeight: number,
 }
 
-const showScrollbar = false
 const useStyles = makeStyles({
+  transform: (props: StyleProps) => ({
+    position: 'absolute',
+    top:  -(MAP_SIZE - props.clientHeight) * HALF,  //  Without scroll, offset is needed.
+    left: -(MAP_SIZE - props.clientWidth) * HALF,   //  Without scroll, offset is needed.
+    transform: props.matrix.toString(),
+  }),
   root: {
     position: 'absolute',
     width: '100%',
@@ -30,13 +35,7 @@ const useStyles = makeStyles({
     left: 0,
     userDrag: 'none',
     userSelect: 'none',
-    overflow: showScrollbar ? 'scroll' : 'hidden',
-  },
-  transform: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    transform: (props: StyleProps) => props.matrix.toString(),
+    overflow: 'hidden',
   },
 })
 
@@ -47,36 +46,49 @@ const options = {
   maxScale: 5,
 }
 
+let prebThirdPersonView = false
 export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   const container = useRef<HTMLDivElement>(null)
   const outer = useRef<HTMLDivElement>(null)
   function offset():[number, number] {
     if (outer.current) {
-      return [outer.current.scrollLeft, outer.current.scrollTop]
+      return [(MAP_SIZE - outer.current.clientWidth) * HALF, (MAP_SIZE - outer.current.clientHeight) * HALF]
+      //      return [outer.current.scrollLeft, outer.current.scrollTop]  //  when use scroll
     }
 
     return [0, 0]
   }
   const participants = useStore()
   const thirdPersonView = useObserver(() => participants.local.get().thirdPersonView)
-
   const [mouse, setMouse] = useState<[number, number]>([0, 0])  // mouse position relative to outer container
   const [matrix, setMatrix] = useState<DOMMatrixReadOnly>(new DOMMatrixReadOnly())
   // changed only when event end, like drag end
   const [commitedMatrix, setCommitedMatrix] = useState<DOMMatrixReadOnly>(new DOMMatrixReadOnly())
   const [startDrag, setStartDrag] = useState(false)
 
-  const localParticipantPosition = useObserver(() => participants.local.get().pose.position)
+  const center = transformPoint2D(matrix, participants.local.get().pose.position)
+  if (thirdPersonView !== prebThirdPersonView) {
+    prebThirdPersonView = thirdPersonView
+    if (thirdPersonView) {
+      const mapRot = radian2Degree(extractRotation(matrix))
+      if (mapRot) {
+        const newMatrix = rotateMap(-mapRot, center)
+        setCommitedMatrix(newMatrix)
+      }
+    }else {
+      const avatarRot = participants.local.get().pose.orientation
+      const mapRot = radian2Degree(extractRotation(matrix))
+      if (avatarRot + mapRot) {
+        const newMatrix = rotateMap(-(avatarRot + mapRot), center)
+        setCommitedMatrix(newMatrix)
+      }
+    }
+  }
 
   //  utility
   function rotateMap(degree:number, center:[number, number]) {
     const changeMatrix = (new DOMMatrix()).rotateSelf(0, 0, degree)
-
-    const tm = (new DOMMatrix()).translate(
-      ...subV([0, 0] as [number, number], center))
-    const itm = (new DOMMatrix()).translateSelf(...center)
-
-    const newMatrix = multiply([itm, changeMatrix, tm, matrix])
+    const newMatrix = transfromAt(center, changeMatrix, matrix)
     setMatrix(newMatrix)
 
     return newMatrix
@@ -90,7 +102,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       onDrag: ({down, delta, event, xy, buttons}) => {
         if (startDrag && down && outer.current) {
           if (!thirdPersonView && buttons === MOUSE_RIGHT) {  // right mouse drag - rotate map
-            const center = transformPoint2D(matrix, localParticipantPosition)
+            const center = transformPoint2D(matrix, participants.local.get().pose.position)
             const target:[number, number] = addV(xy, offset())
             const radius1 = subV(target, center)
             const radius2 = subV(radius1, delta)
@@ -103,7 +115,6 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
             }
 
             const newMatrix = rotateMap(radian2Degree(angle), center)
-
             participants.local.get().pose.orientation = -radian2Degree(extractRotation(newMatrix))
           } else {  // left mouse drag or touch screen drag - translate map
             const diff = rotateVector2D(matrix.inverse(), delta)
@@ -135,12 +146,9 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
           (new DOMMatrix()).scaleSelf(scale, scale, 1) :
           (new DOMMatrix()).scaleSelf(scale, scale, 1).rotateSelf(0, 0, a - ma)
 
-        const tm = (new DOMMatrix()).translate(
-          ...subV([0, 0] as [number, number], center))
-        const itm = (new DOMMatrix()).translateSelf(...center)
-
-        const newMatrix = multiply([itm, changeMatrix, tm, matrix])
+        const newMatrix = transfromAt(center, changeMatrix, matrix)
         setMatrix(newMatrix)
+
         if (!thirdPersonView) {
           participants.local.get().pose.orientation = -radian2Degree(extractRotation(newMatrix))
         }
@@ -171,34 +179,6 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
     },
   )
 
-  //  Event handlers ----------------------------------------------
-  //  Move to center when root div is created.
-  useEffect(
-    () => {
-      if (outer.current) {
-        const elem = outer.current
-        console.log('useEffect[outer] called')
-        elem.scrollTo((MAP_SIZE - elem.clientWidth) * HALF, (MAP_SIZE - elem.clientHeight) *  HALF)
-      }
-    },
-    [outer],
-  )
-  if (!showScrollbar) {
-    const elem = outer.current
-    if (elem) {
-      elem.scrollTo((MAP_SIZE - elem.clientWidth) * HALF, (MAP_SIZE - elem.clientHeight) *  HALF)
-    }
-  }
-  // scroll range
-/*  useEffect(
-    () => {
-      const orgMat = new DOMMatrix(matrix.toString())
-      setMatrix(orgMat)
-    },
-    [outer],
-  )
-*/
-
   //  prevent default behavior of browser on map
   useEffect(
     () => {
@@ -223,30 +203,44 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
                                               event.preventDefault()
                                             },
                                             {passive: false})
-      reaction(() => participants.local.get().thirdPersonView,
-               (tpv) => {
-                 const center = transformPoint2D(matrix, participants.local.get().pose.position)
-                 if (tpv) {
-                   const mapRot = radian2Degree(extractRotation(matrix))
-                   const newMatrix = rotateMap(-mapRot, center)
-                   setCommitedMatrix(newMatrix)
-                 }else {
-                   const avatarRot = participants.local.get().pose.orientation
-                   const mapRot = radian2Degree(extractRotation(matrix))
-                   const newMatrix = rotateMap(-(avatarRot + mapRot), center)
-                   setCommitedMatrix(newMatrix)
-                 }
-               },
-      )
     },
     [],
   )
 
+  //  Event handlers when use scroll ----------------------------------------------
+  //  Move to center when root div is created.
+  /*
+  useEffect(
+    () => {
+      if (outer.current) {
+        const elem = outer.current
+        console.log('useEffect[outer] called')
+        elem.scrollTo((MAP_SIZE - elem.clientWidth) * HALF, (MAP_SIZE - elem.clientHeight) *  HALF)
+      }
+    },
+    [outer],
+  )
+  if (!showScrollbar) {
+    const elem = outer.current
+    if (elem) {
+      elem.scrollTo((MAP_SIZE - elem.clientWidth) * HALF, (MAP_SIZE - elem.clientHeight) *  HALF)
+    }
+  }
+  */
+  // scroll range
+  /*  useEffect(
+    () => {
+      const orgMat = new DOMMatrix(matrix.toString())
+      setMatrix(orgMat)
+    },
+    [outer],
+  )
+  */
 
-  const relativeMouse = matrix.inverse().transformPoint(new DOMPoint(...mouse))
   const styleProps: StyleProps = {
     matrix,
-    mouse: [relativeMouse.x, relativeMouse.y],
+    clientHeight: outer.current ? outer.current.clientHeight : 0,
+    clientWidth: outer.current ? outer.current.clientWidth : 0,
   }
   const classes = useStyles(styleProps)
   const transfromValue = createValue(commitedMatrix, [0, 0])
@@ -263,6 +257,16 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 }
 Base.displayName = 'MapBase'
 
+
+//  utility
+function transfromAt(center:[number, number], tranform: DOMMatrixReadOnly, baseMatrix:DOMMatrixReadOnly) {
+  const tm = (new DOMMatrix()).translate(
+    ...subV([0, 0] as [number, number], center))
+  const itm = (new DOMMatrix()).translateSelf(...center)
+  const newMatrix = multiply([itm, tranform, tm, baseMatrix])
+
+  return newMatrix
+}
 function limitScale(currentScale: number, scale: number): number {
   const targetScale = currentScale * scale
 
@@ -276,4 +280,3 @@ function limitScale(currentScale: number, scale: number): number {
 
   return scale
 }
-
