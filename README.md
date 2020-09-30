@@ -1,10 +1,10 @@
-# binaural-meets
+# binaural-meet
 Real-time video web application with binaural sound localization.
-Details are [here](https://scrapbox.io/binaural-meets/)
+Details are [here](https://scrapbox.io/binaural-meet/)
 
 ## Demo
 
-https://binauralmeets.github.io/binaural-meets/entrance.html
+https://binauralmeet.github.io/binaural-meet/entrance.html
 
 ## For Developer
 - [Development Guide](./docs/DevelopmentGuide.md)
