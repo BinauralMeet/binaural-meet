@@ -16,17 +16,9 @@ export const MAP_CENTER:[number, number] = [MAP_SIZE * HALF, MAP_SIZE * HALF]
 
 interface StyleProps {
   matrix: DOMMatrixReadOnly,
-  clientWidth: number,
-  clientHeight: number,
 }
 
 const useStyles = makeStyles({
-  transform: (props: StyleProps) => ({
-    position: 'absolute',
-    top:  -(MAP_SIZE - props.clientHeight) * HALF,  //  Without scroll, offset is needed.
-    left: -(MAP_SIZE - props.clientWidth) * HALF,   //  Without scroll, offset is needed.
-    transform: props.matrix.toString(),
-  }),
   root: {
     position: 'absolute',
     width: '100%',
@@ -37,6 +29,19 @@ const useStyles = makeStyles({
     userSelect: 'none',
     overflow: 'hidden',
   },
+  center:{
+    position: 'absolute',
+    margin: 'auto',
+    left:0, right:0, top:0, bottom:0,
+    width:0, height:0,
+  },
+  transform: (props: StyleProps) => ({
+    position: 'absolute',
+    width:0, height:0,
+    top:  -MAP_SIZE * HALF,  //  Without scroll, offset is needed.
+    left: -MAP_SIZE * HALF,   //  Without scroll, offset is needed.
+    transform: props.matrix.toString(),
+  }),
 })
 
 type BaseProps = React.PropsWithChildren<BP>
@@ -239,19 +244,19 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
   const styleProps: StyleProps = {
     matrix,
-    clientHeight: outer.current ? outer.current.clientHeight : 0,
-    clientWidth: outer.current ? outer.current.clientWidth : 0,
   }
   const classes = useStyles(styleProps)
   const transfromValue = createValue(commitedMatrix, [0, 0])
 
   return (
     <div className={[classes.root, props.className].join(' ')} ref={outer} {...bind()}>
-      <TransformProvider value={transfromValue}>
-        <div id="map-transform" className={classes.transform} ref={container}>
-            {props.children}
-        </div>
-      </TransformProvider>
+      <div className={classes.center}>
+        <TransformProvider value={transfromValue}>
+          <div id="map-transform" className={classes.transform} ref={container}>
+              {props.children}
+          </div>
+        </TransformProvider>
+      </div>
     </div>
   )
 }
