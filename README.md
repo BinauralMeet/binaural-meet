@@ -1,10 +1,10 @@
-# jitsi-party
-Real-time video web application with 3D sound.
-Details are [here](https://scrapbox.io/jitsi-party/)
+# binaural-meets
+Real-time video web application with binaural sound localization.
+Details are [here](https://scrapbox.io/binaural-meets/)
 
 ## Demo
 
-https://jitsipartyteam.github.io/jitsi-party/entrance.html
+https://binauralmeets.github.io/binaural-meets/entrance.html
 
 ## For Developer
 - [Development Guide](./docs/DevelopmentGuide.md)
