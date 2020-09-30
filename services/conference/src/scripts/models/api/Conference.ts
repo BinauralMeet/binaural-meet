@@ -341,7 +341,7 @@ export class Conference extends EventEmitter {
         }else if (name === ParticipantProperties.PPROP_MOUSE_POSITION) {
           const target = ParticiantsStore.find(participant.getId())
           if (target) {
-            if (value.length > 0) {
+            if (value && value.length > 0) {
               target.mousePosition = JSON.parse(value)
             }else {
               target.mousePosition = undefined
