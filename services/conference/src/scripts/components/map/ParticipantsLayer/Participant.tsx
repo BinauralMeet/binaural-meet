@@ -78,18 +78,18 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
       <div className={classes.pointerRotate}>
         <svg className={classes.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO} xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <radialGradient id="grad">
+            <radialGradient id={`gr${props.participantId}`}>
               <stop offset="40%" stopColor={color} stopOpacity="40%" />
               <stop offset="100%" stopColor={color} stopOpacity="0%" />
             </radialGradient>
           </defs>
           <circle r={outerRadius + audioLevel * AUDIOLEVELSCALE}
-            cy={svgCenter} cx={svgCenter} fill="url(#grad)" />
-          <circle r={outerRadius} cy={svgCenter} cx={svgCenter} fill={ color }
+            cy={svgCenter} cx={svgCenter} fill={`url(#gr${props.participantId})`} />
+          <circle r={outerRadius} cy={svgCenter} cx={svgCenter} fill={color}
             style={{pointerEvents: 'fill'}} />
           <g transform={`translate(${svgCenter} ${svgCenter}) rotate(-135) `}>
             <rect style={{pointerEvents: 'fill'}}
-              height={outerRadius} width={outerRadius} fill={ color } />
+              height={outerRadius} width={outerRadius} fill={color} />
             {isLocal ?
               <path  d={`M 0 ${outerRadius} h ${outerRadius} v ${-outerRadius}` +
                 `a ${outerRadius} ${outerRadius} 0 1 0 ${-outerRadius} ${outerRadius}`}

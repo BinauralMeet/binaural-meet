@@ -1,9 +1,11 @@
+import {useStore as useMapStore} from '@hooks/MapStore'
 import {createContentOfImage} from '@stores/sharedContents/SharedContent'
 import sharedContents from '@stores/sharedContents/SharedContents'
 import {DropzoneArea} from 'material-ui-dropzone'
 import React, {useState} from 'react'
 import {DialogPageProps} from './DialogPage'
 import {Input} from './Input'
+
 
 interface ImageInputProps extends DialogPageProps{
 }
@@ -23,6 +25,8 @@ export const ImageInput: React.FC<ImageInputProps> = (props) => {
     />
   )
 
+  const map = useMapStore()
+
   return (
     <Input
       setStep={setStep}
@@ -32,7 +36,7 @@ export const ImageInput: React.FC<ImageInputProps> = (props) => {
         files.forEach((file, i) => {
           const IMAGE_OFFSET_X = 30
           const IMAGE_OFFSET_Y = -20
-          createContentOfImage(file, [IMAGE_OFFSET_X * i, IMAGE_OFFSET_Y * i]).
+          createContentOfImage(file, map, [IMAGE_OFFSET_X * i, IMAGE_OFFSET_Y * i]).
             then(imageContent => sharedContents.shareContent(imageContent))
         })
       }}

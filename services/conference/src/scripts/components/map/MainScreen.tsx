@@ -4,9 +4,9 @@ import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 
 const useStyles = makeStyles({
-  container: {
+  videoContainer: {
     height: '90%',
-    backgroundColor: 'gray',
+    backgroundColor: 'none',
   },
   videoLargerWidth: {
     marginLeft: 'auto',
@@ -62,7 +62,7 @@ export const MainScreen: React.FC = () => {
   )
 
   return (
-    <div className={classes.container} >
+    <div className={classes.videoContainer} >
       <video ref={videoRef} style= {{visibility : stream ? 'visible' : 'hidden'} } />
     </div>
   )

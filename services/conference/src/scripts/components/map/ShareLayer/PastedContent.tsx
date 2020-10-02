@@ -1,4 +1,4 @@
-import {uploadToGyazo} from '@models/api/Gyazo'
+import {useStore as useMapStore} from '@hooks/MapStore'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {createContentOfIframe, createContentOfImage, createContentOfText, SharedContent} from '@stores/sharedContents/SharedContent'
 import {default as sharedContents} from '@stores/sharedContents/SharedContents'
@@ -13,7 +13,7 @@ export interface PastedContentProps{
 
 const SHARE_DIRECT = true
 export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentProps) => {
-
+  const map = useMapStore()
   //  Pasted handler. It prevents paste to dialog.
   function onPaste(evt: ClipboardEvent) {
     console.log(`onPaste called enabled:${sharedContents.pasteEnabled}`)
@@ -22,7 +22,7 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
       if (evt.clipboardData.types.includes('Files')) {   //  If file is pasted (an image is also a file)
         const imageFile = evt.clipboardData.items[0].getAsFile()
         if (imageFile) {
-          createContentOfImage(imageFile).then((content) => {
+          createContentOfImage(imageFile, map).then((content) => {
             if (SHARE_DIRECT) {
               sharedContents.shareContent(content)
             } else {
@@ -34,9 +34,9 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
         evt.clipboardData.items[0].getAsString((str:string) => {
           let content = undefined
           if (str.indexOf('http://') === 0 || str.indexOf('https://') === 0) {
-            content = createContentOfIframe(str)
+            content = createContentOfIframe(str, map)
           } else {
-            content = createContentOfText(str)
+            content = createContentOfText(str, map)
           }
           if (SHARE_DIRECT) {
             sharedContents.shareContent(content)

@@ -1,3 +1,4 @@
+import {useStore as useMapStore} from '@hooks/MapStore'
 import Dialog from '@material-ui/core/Dialog'
 import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
@@ -20,6 +21,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
     onClose,
   } = props
 
+  const map = useMapStore()
   const [step, setStep] = useState<Step>('entrance')
 
   const wrappedSetStep = (step: Step) => {
@@ -29,6 +31,35 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
       setStep(step)
     }
   }
+  function getPage(step: Step, setStep: (step: Step) => void): JSX.Element | undefined {
+    switch (step) {
+      case 'entrance':
+        return <Entrance setStep={setStep} />
+      case 'text':
+        return <TextInput
+            setStep={setStep}
+            onFinishInput={(value) => {
+              sharedContents.shareContent(createContentOfText(value, map))
+              console.debug(`share text: ${value}`)
+            }}
+            textLabel = "Text"
+          />
+      case 'iframe':
+        return <TextInput
+            setStep={setStep}
+            onFinishInput={(value) => {
+              sharedContents.shareContent(createContentOfIframe(value, map))
+              console.debug(`share iframe: ${value}`)
+            }}
+            textLabel = "URL"
+          />
+      case 'image':
+        return <ImageInput setStep={setStep} />
+      default:
+        throw new Error(`Unknown step: ${step}`)
+    }
+  }
+
   console.log(`step=${step}, pasteEnabled=${sharedContents.pasteEnabled}`)
   sharedContents.pasteEnabled = step === 'none' || step === 'entrance'
 
@@ -41,32 +72,4 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
   </Dialog>
 }
 
-function getPage(step: Step, setStep: (step: Step) => void): JSX.Element | undefined {
-  switch (step) {
-    case 'entrance':
-      return <Entrance setStep={setStep} />
-    case 'text':
-      return <TextInput
-          setStep={setStep}
-          onFinishInput={(value) => {
-            sharedContents.shareContent(createContentOfText(value))
-            console.debug(`share text: ${value}`)
-          }}
-          textLabel = "Text"
-        />
-    case 'iframe':
-      return <TextInput
-          setStep={setStep}
-          onFinishInput={(value) => {
-            sharedContents.shareContent(createContentOfIframe(value))
-            console.debug(`share iframe: ${value}`)
-          }}
-          textLabel = "URL"
-        />
-    case 'image':
-      return <ImageInput setStep={setStep} />
-    default:
-      throw new Error(`Unknown step: ${step}`)
-  }
-}
 ShareDialog.displayName = 'ShareDialog'

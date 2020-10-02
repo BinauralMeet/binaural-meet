@@ -2,6 +2,7 @@ import {uploadToGyazo} from '@models/api/Gyazo'
 import {defaultPerceptibility, Perceptibility,  Pose2DMap} from '@models/MapObject'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {defaultValue as mapObjectDefaultValue} from '@stores/MapObject'
+import {MapData} from '@stores/MapObject/MapData'
 import _ from 'lodash'
 
 const defaultValue: ISharedContent = Object.assign({}, mapObjectDefaultValue, {
@@ -32,12 +33,12 @@ export class SharedContent implements ISharedContent {
   }
 }
 
-export function createContentOfIframe(url: string) {
+export function createContentOfIframe(url: string, map: MapData) {
   const pasted = new SharedContent()
   pasted.type = 'iframe'
   pasted.url = url
-  pasted.pose.position[0] = (global as any).mousePositionOnMap[0]
-  pasted.pose.position[1] = (global as any).mousePositionOnMap[1]
+  pasted.pose.position[0] = map.mouseOnMap[0]
+  pasted.pose.position[1] = map.mouseOnMap[1]
   const IFRAME_WIDTH = 600
   const IFRAME_HEIGHT = 800
   pasted.size[0] = IFRAME_WIDTH
@@ -45,12 +46,12 @@ export function createContentOfIframe(url: string) {
 
   return pasted
 }
-export function createContentOfText(text: string) {
+export function createContentOfText(text: string, map: MapData) {
   const pasted = new SharedContent()
   pasted.type = 'text'
   pasted.url = text
-  pasted.pose.position[0] = (global as any).mousePositionOnMap[0]
-  pasted.pose.position[1] = (global as any).mousePositionOnMap[1]
+  pasted.pose.position[0] = map.mouseOnMap[0]
+  pasted.pose.position[1] = map.mouseOnMap[1]
   const slen = Math.sqrt(text.length)
   const STRING_SCALE_W = 20
   const STRING_SCALE_H = 15
@@ -59,7 +60,8 @@ export function createContentOfText(text: string) {
 
   return pasted
 }
-export function createContentOfImage(imageFile: File, offset?:[number, number]): Promise<SharedContent> {
+export function createContentOfImage(imageFile: File, map: MapData, offset?:[number, number]): Promise<SharedContent> {
+  const IMAGESIZE_LIMIT = 500
   const promise = new Promise<SharedContent>((resolutionFunc, rejectionFunc) => {
     uploadToGyazo(imageFile).then(({url, size}) => {
       // console.log("mousePos:" + (global as any).mousePositionOnMap)
@@ -67,15 +69,15 @@ export function createContentOfImage(imageFile: File, offset?:[number, number]):
       pasted.type = 'img'
       pasted.url = url
       const max = size[0] > size[1] ? size[0] : size [1]
-      const scale = max > 500 ? 500 / max : 1
+      const scale = max > IMAGESIZE_LIMIT ? IMAGESIZE_LIMIT / max : 1
       pasted.size[0] = size[0] * scale
       pasted.size[1] = size[1] * scale
       const CENTER = 0.5
       for (let i = 0; i < pasted.pose.position.length; i += 1) {
         if (offset) {
-          pasted.pose.position[i] = (global as any).mousePositionOnMap[i] + offset[i]
+          pasted.pose.position[i] = map.mouseOnMap[i] + offset[i]
         }else {
-          pasted.pose.position[i] = (global as any).mousePositionOnMap[i] - CENTER * pasted.size[i]
+          pasted.pose.position[i] = map.mouseOnMap[i] - CENTER * pasted.size[i]
         }
       }
       resolutionFunc(pasted)

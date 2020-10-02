@@ -7,6 +7,7 @@ export interface ImageAvatarProps {
   size?: number
   color: string
   textColor: string
+  style?: any
 }
 
 export const ImageAvatar: React.FC<ImageAvatarProps> = (props: ImageAvatarProps) => {
@@ -14,7 +15,7 @@ export const ImageAvatar: React.FC<ImageAvatarProps> = (props: ImageAvatarProps)
   console.log(`avatar = ${props.information.avatarSrc}`)
 
   return (
-    <ReactAvatar
+    <ReactAvatar style={props.style}
       name={props.information.name}
       email={props.information.email}
       md5Email={props.information.md5Email}

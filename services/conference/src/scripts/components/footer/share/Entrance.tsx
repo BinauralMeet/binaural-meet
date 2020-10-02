@@ -1,3 +1,4 @@
+import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore as useParticipantsStore} from '@hooks/ParticipantsStore'
 import {useStore as useContentsStore} from '@hooks/SharedContentsStore'
 import cursorDefaultOutline from '@iconify/icons-mdi/cursor-default-outline'
@@ -24,6 +25,7 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
   } = props
   const store = useContentsStore()
   const participants = useParticipantsStore()
+  const map = useMapStore()
   const sharing = useObserver(() => (
     {main: store.localMainTracks.size, contents: store.localContentTracks.size}))
   const mousePosition = useObserver(() => participants.local.get().mousePosition)
@@ -53,8 +55,8 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
         icon={<Icon icon={cursorDefaultOutline} />}
         text={mousePosition ?  'Stop sharing mouse cursor' : 'Mouse cursor'}
         onClick={() => {
-          participants.local.get().mousePosition =  mousePosition ? undefined
-            : (global as any).mousePositionOnMap as [number, number]
+          participants.local.get().mousePosition =  mousePosition ? undefined :
+           Object.assign({}, map.mouseOnMap) as [number, number]
         }}
       />
       <ShareDialogItem
