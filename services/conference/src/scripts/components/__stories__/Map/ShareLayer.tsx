@@ -25,6 +25,7 @@ export function addFakeSharedContents(store: SharedContentsStore) {
 
 const pc: ISharedContent = {
   id: 'new',
+  name: 'pc',
   type : 'img',
   url: 'https://i.gyazo.com/d05570612dbbe84c65dd684ef665606e.png', // 'Pasted text',
   pose: {

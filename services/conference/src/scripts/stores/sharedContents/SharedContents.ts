@@ -1,11 +1,11 @@
 import {ParticipantContents as IParticipantContents, SharedContent as ISharedContent} from '@models/SharedContent'
 import {default as participantsStore} from '@stores/participants/Participants'
-import {diffMap, shallowObservable} from '@stores/utils'
+import {diffMap} from '@stores/utils'
 import {EventEmitter} from 'events'
 import {JitsiLocalTrack, JitsiTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
 import {action, computed, observable} from 'mobx'
-import {SharedContent} from './SharedContent'
+import {SharedContent as SharedContentStore} from './SharedContent'
 
 export const CONTENTLOG = true      // show manipulations and sharing of content
 export const contentLog = CONTENTLOG ? console.log : (a:any) => {}
@@ -22,8 +22,8 @@ export class ParticipantContents implements IParticipantContents {
   }
   contentIdCounter = 0
   participantId = ''
-  @observable.shallow myContents = new Map<string, SharedContent>()
-  @observable.shallow updateRequest = new Map<string, SharedContent>()
+  @observable.shallow myContents = new Map<string, ISharedContent>()
+  @observable.shallow updateRequest = new Map<string, ISharedContent>()
   @observable.shallow removeRequest = new Set<string>()
 }
 
@@ -78,23 +78,23 @@ export class SharedContents extends EventEmitter {
   // -----------------------------------------------------------------
   //  Contents management
   //  All shared contents in Z order. Observed by component.
-  @observable.shallow all: SharedContent[] = []
+  @observable.shallow all: ISharedContent[] = []
   //  contents by owner
   participants: Map<string, ParticipantContents> = new Map<string, ParticipantContents>()
   leavingParticipants: Map<string, ParticipantContents> = new Map<string, ParticipantContents>()
 
   //  pasted content
-  @observable.ref pasted = new SharedContent()
-  @action setPasted(c:SharedContent) {
+  @observable.ref pasted:ISharedContent = new SharedContentStore()
+  @action setPasted(c:ISharedContent) {
     console.log('setPasted:', c)
     this.pasted = c
   }
   @action sharePasted() {
     this.shareContent(this.pasted)
-    this.pasted = new SharedContent
+    this.pasted = new SharedContentStore
   }
   //  share content
-  @action shareContent(content:SharedContent) {
+  @action shareContent(content:ISharedContent) {
     const TIME_RESOLUTION_IN_MS = 100
     content.zorder = Math.floor(Date.now() / TIME_RESOLUTION_IN_MS)
     sharedContents.addLocalContent(content)
@@ -134,7 +134,7 @@ export class SharedContents extends EventEmitter {
   }
 
   //  add
-  addLocalContent(c:SharedContent) {
+  addLocalContent(c:ISharedContent) {
     if (!participantsStore.localId) {
       console.error('addLocalContant() failed. Invalid Participant ID.')
 
@@ -143,11 +143,12 @@ export class SharedContents extends EventEmitter {
     if (!c.id) { c.id = this.getUniqueId(participantsStore.localId) }
     this.localParticipant.myContents.set(c.id, c)
     this.owner.set(c.id, participantsStore.localId)
+    //  console.log('addLocalConent', c)
     this.updateAll()
   }
 
   //  replace contents of one participant. A content can be new one (add) or exsiting one (update).
-  replaceRemoteContents(pid: string, cs:SharedContent[]) { //  entries = [pid, content][]
+  replaceRemoteContents(pid: string, cs:ISharedContent[]) { //  entries = [pid, content][]
     if (pid === participantsStore.localId) {  //  this is for remote participant
       console.error('Error replaceContents called for local participant')
 
@@ -197,7 +198,7 @@ export class SharedContents extends EventEmitter {
   }
 
   //  Update contents. For update requset.
-  updateContents(cs: SharedContent[]) {
+  updateContents(cs: ISharedContent[]) {
     cs.forEach((c) => {
       const pid = this.owner.get(c.id)
       if (pid) {
@@ -219,7 +220,7 @@ export class SharedContents extends EventEmitter {
     const participant = this.participants.get(pid)
     if (participant) {
       // remove them from myContents
-      const my = new Map<string, SharedContent>(participant.myContents)
+      const my = new Map<string, ISharedContent>(participant.myContents)
       cids.forEach(cid => my.delete(cid))
       participant.myContents = my
       this.updateAll()
@@ -248,7 +249,7 @@ export class SharedContents extends EventEmitter {
       contentLog('next = ', next)
       if (next === this.localId) {
         contentLog('Next is me')
-        const myContents = new Map<string, SharedContent>(this.localParticipant.myContents)
+        const myContents = new Map<string, ISharedContent>(this.localParticipant.myContents)
         participantLeave.myContents.forEach((c, cid) => {
           myContents.set(cid, c)
           this.owner.set(cid, this.localId)

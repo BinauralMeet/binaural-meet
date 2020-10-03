@@ -1,6 +1,6 @@
 import {connection} from '@models/api'
+import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {default as ParticipantsStore} from '@stores/participants/Participants'
-import {SharedContent} from '@stores/sharedContents/SharedContent'
 import {contentDebug, contentLog, default as sharedContents, ParticipantContents, SharedContentsEvents} from '@stores/sharedContents/SharedContents'
 import _ from 'lodash'
 import {IReactionDisposer, reaction} from 'mobx'
@@ -15,7 +15,7 @@ reaction(() => Array.from(sharedContents.localParticipant.myContents.values()),
          {delay: CONTENT_SYNC_DELAY},
 )
 
-function removeDobuleRequest(requests:Set<string>|Map<string, SharedContent>) {
+function removeDobuleRequest(requests:Set<string>|Map<string, ISharedContent>) {
   const deletes = []
   const requestKeys = Array.from(requests.keys())
   for (const req of requestKeys) {

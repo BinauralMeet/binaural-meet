@@ -12,7 +12,7 @@ export interface ImageAvatarProps {
 
 export const ImageAvatar: React.FC<ImageAvatarProps> = (props: ImageAvatarProps) => {
   const size = props.size !== undefined ? `${props.size}px` : undefined
-  console.log(`avatar = ${props.information.avatarSrc}`)
+  //  console.log(`avatar = ${props.information.avatarSrc}`)
 
   return (
     <ReactAvatar style={props.style}

@@ -6,6 +6,7 @@ import {MapData} from '@stores/MapObject/MapData'
 import _ from 'lodash'
 
 const defaultValue: ISharedContent = Object.assign({}, mapObjectDefaultValue, {
+  name: '',
   type: '',
   url: '',
   size: [0, 0] as [number, number],
@@ -14,22 +15,17 @@ const defaultValue: ISharedContent = Object.assign({}, mapObjectDefaultValue, {
   pinned: false,
 })
 export class SharedContent implements ISharedContent {
+  name!: string
   type!: string
   url!: string
   id!: string
-  zorder!:number
+  zorder!: number
   pinned!: boolean
-
   pose!: Pose2DMap
-  perceptibility!: Perceptibility
   size!: [number, number]
-
+  perceptibility!: Perceptibility
   constructor() {
-    Object.assign(this, defaultValue)
-    this.size = [0, 0]
-    this.pose = {position:[defaultValue.pose.position[0], defaultValue.pose.position[1]] as [number, number],
-      orientation: 0}
-    this.perceptibility = Object.assign({}, defaultPerceptibility)
+    Object.assign(this, _.cloneDeep(defaultValue))
   }
 }
 

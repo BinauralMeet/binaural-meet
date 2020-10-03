@@ -8,7 +8,7 @@ import {Pose2DMap} from '@models/MapObject'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {rotateVector2DByDegree} from '@models/utils'
 import _ from 'lodash'
-import React, {ReactEventHandler, useEffect, useLayoutEffect, useRef, useState} from 'react'
+import React, {useLayoutEffect, useRef, useState} from 'react'
 import {Dimensions, useDimensions} from 'react-dimensions-hook'
 import {Rnd} from 'react-rnd'
 import {addV, subV, useGesture} from 'react-use-gesture'
@@ -69,6 +69,8 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   const [showTitle, setShowTitle] = useState(!props.autoHideTitle || !props.content.pinned)
 
   if (props.content.type && size[0] === 0 || !props.content.type && size[0] !== 0) {
+    console.log('props:', props)
+    console.log('setSize and Pose', size, pose)
     setSize(props.content.size)
     setPose(props.content.pose)
   }
@@ -108,7 +110,6 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       if (pinned !== undefined) {
         newContent.pinned = pinned
       }
-      // console.log('onUpdate', newContent)
       props.onUpdate?.call(null, newContent)
     }
   }
@@ -198,6 +199,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       <div className={classes.content} ><Content content={props.content} /></div>
     </div>
   const titleHeight = showTitle ? dimensions.clientHeight : 0
+  //  console.log('Rnd rendered.')
 
   return (
     <div className={classes.container} onContextMenu={

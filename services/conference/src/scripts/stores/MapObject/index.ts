@@ -1,5 +1,6 @@
 import {MAP_CENTER} from '@components/map/Base'
 import {MapObject as IMapObject, Perceptibility, Pose2DMap} from '@models/MapObject'
+import _ from 'lodash'
 import {IObservableObject} from 'mobx'
 import {shallowObservable, Store} from '../utils'
 
@@ -21,13 +22,13 @@ export class MapObject implements Store<IMapObject> {
   perceptibility: Perceptibility & IObservableObject
 
   constructor() {
-    this.pose = shallowObservable(defaultValue.pose)
+    this.pose = shallowObservable(_.cloneDeep(defaultValue.pose))
     this.perceptibility = shallowObservable(defaultValue.perceptibility)
   }
 
   static fromPlain(obj: IMapObject) {
     const store = new MapObject()
-    store.pose = shallowObservable(obj.pose)
+    store.pose = shallowObservable(_.cloneDeep(obj.pose))
     store.perceptibility = shallowObservable(obj.perceptibility)
   }
 }

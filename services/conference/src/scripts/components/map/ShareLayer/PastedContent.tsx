@@ -16,7 +16,7 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
   const map = useMapStore()
   //  Pasted handler. It prevents paste to dialog.
   function onPaste(evt: ClipboardEvent) {
-    console.log(`onPaste called enabled:${sharedContents.pasteEnabled}`)
+    //  console.log(`onPaste called enabled:${sharedContents.pasteEnabled}`)
     if (sharedContents.pasteEnabled && evt.clipboardData) {
       evt.preventDefault()
       if (evt.clipboardData.types.includes('Files')) {   //  If file is pasted (an image is also a file)
@@ -70,6 +70,7 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
     [],
   )
   const pastedContent = useObserver(() => sharedContents.pasted)
+  //  console.log('Pasted contents rendered.')
 
   return (
     <RndContent content={pastedContent} hideAll={pastedContent.type === ''}

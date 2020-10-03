@@ -15,15 +15,15 @@ export function usePaste(target: HTMLElement | React.RefObject<HTMLElement>) {
       }
 
       const onPaste = (evt: ClipboardEvent) => {
-        console.log('onPaste called')
-        console.dir(evt)
-        console.dir(evt.clipboardData)
+        //  console.log('onPaste called')
+        //  console.dir(evt)
+        //  console.dir(evt.clipboardData)
         if (evt.clipboardData) {
-          console.dir(evt.clipboardData.items)
-          console.log(`text:${evt.clipboardData.getData('text')}`)
-          console.log(`url:${evt.clipboardData.getData('url')}`)
+          //  console.dir(evt.clipboardData.items)
+          //  console.log(`text:${evt.clipboardData.getData('text')}`)
+          //  console.log(`url:${evt.clipboardData.getData('url')}`)
           const imageFile = evt.clipboardData.items[0].getAsFile()
-          console.dir(imageFile)
+          //  console.dir(imageFile)
           if (imageFile) {
             const formData = new FormData()
 

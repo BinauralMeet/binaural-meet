@@ -1,4 +1,6 @@
+import {MapObject as IMapObject} from '@models/MapObject'
 import {action, observable} from 'mobx'
+import {subV} from 'react-use-gesture'
 
 export class MapData {
   @observable matrix: DOMMatrixReadOnly = new DOMMatrixReadOnly()
@@ -19,7 +21,16 @@ export class MapData {
     this.left = l
   }
   @action setMouseOnMap(m:[number, number]) {
-    this.mouseOnMap = m
+    this.mouseOnMap[0] = m[0]
+    this.mouseOnMap[1] = m[1]
+  }
+  @action focusOn(obj: IMapObject) {
+    const im = this.matrix.inverse()
+    const diff = subV(obj.pose.position, [im.e, im.f])
+    const trn = new DOMMatrix().translate(-diff[0], -diff[1])
+    const newMat = trn.preMultiplySelf(this.matrix)
+    this.setMatrix(newMat)
+    this.setCommittedMatrix(newMat)
   }
 }
 

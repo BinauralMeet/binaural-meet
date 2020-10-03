@@ -1,6 +1,5 @@
 import {useStore} from '@hooks/SharedContentsStore'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {SharedContent as SharedContentStore} from '@stores/sharedContents/SharedContent'
 import React from 'react'
 import {RndContent} from './RndContent'
 
@@ -33,7 +32,7 @@ export const SharedContent: React.FC<SharedContentProps> = (props:SharedContentP
               identical = true
             }
           }
-          //  console.log('RndContent onUpdate from ', old, ' to ', newContent, ` ==? ${identical} `)
+          console.log('RndContent onUpdate from ', old, ' to ', newContent, ` ==? ${identical} `)
           store.updateContents([newContent])
         }
       }
