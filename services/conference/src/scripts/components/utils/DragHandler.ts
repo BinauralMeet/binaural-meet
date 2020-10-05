@@ -66,7 +66,6 @@ export class DragHandler<ET extends Element>{  //  pointer drag
       onPointerDown : (e: React.PointerEvent<ET>) => {
         e.stopPropagation()
         this.memo.state = {dragging:false, buttons:e.buttons, xy:[e.clientX, e.clientY], event:e}
-        //  console.log(`onPointerDown xy:${e.clientX},${e.clientY} buttons:${e.buttons}`)
         if ((e.buttons & 1) && this.target.current &&
           (!this.handle || checkClass(e.target as Element, this.target.current, this.handle))) {
           (e.target as Element).setPointerCapture(e.pointerId)
@@ -76,12 +75,12 @@ export class DragHandler<ET extends Element>{  //  pointer drag
           }
           this.memo.state.dragging = true
         }
-        console.log(`onPointerDown: ${this.memo.state.dragging}`)
+        //  console.log(`onPointerDown: ${this.memo.state.dragging}`)
       },
       onPointerOut: (e: React.PointerEvent<ET>) => {
         e.stopPropagation()
         this.memo.state = {dragging:false, buttons:e.buttons, xy:[e.clientX, e.clientY], event:e}
-        console.log(`onPointerOut: ${this.memo.state.dragging}`)
+        //  console.log(`onPointerOut: ${this.memo.state.dragging}`)
       },
       onPointerUp: (e: React.PointerEvent<ET>) => {
         bindObject.onPointerOut(e)

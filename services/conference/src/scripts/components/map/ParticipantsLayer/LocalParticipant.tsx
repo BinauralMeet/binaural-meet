@@ -46,7 +46,6 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
       const SMOOTHRATIO = 0.8
       if (!memo.smoothedDelta) { memo.smoothedDelta = [delta[0], delta[1]] }
       memo.smoothedDelta = addV(mulV(1 - SMOOTHRATIO, localDelta), mulV(SMOOTHRATIO, memo.smoothedDelta))
-      //  console.log(`onDrag delta=${delta}  sd${memo.smoothedDelta}`)
       const dir = Math.atan2(memo.smoothedDelta[0], -memo.smoothedDelta[1]) * HALF_DEGREE / Math.PI
       let diff = dir - participant!.pose.orientation
       if (diff < -HALF_DEGREE) { diff += WHOLE_DEGREE }
@@ -77,7 +76,6 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     }
     const SCROOL_SPEED = 0.2
     const mapMove = mulV(SCROOL_SPEED, map.rotateFromWindow(diff) as [number, number])
-    //  console.log('mapMove', mapMove)
     if (Math.abs(mapMove[0]) + Math.abs(mapMove[1]) > EPSILON) {
       const newMat = map.matrix.translate(-mapMove[0], -mapMove[1])
       const trans = map.rotateFromWindow([newMat.e, newMat.f])
@@ -101,15 +99,12 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     if (state.dragging) {
       onDrag(state)
     }
-
     const rv = scrollMap()
-
-    console.log(`onTimer: drag:${state.dragging} again:${rv}`)
+    //  console.log(`onTimer: drag:${state.dragging} again:${rv}`)
 
     return rv
   }
   const onDrag = (state:DragState<HTMLDivElement>) => {
-    //  console.log('onDrag:', memo, state)
     moveParticipant(state)
     scrollMap()
   }

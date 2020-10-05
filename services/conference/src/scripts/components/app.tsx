@@ -12,7 +12,6 @@ import {MainScreen} from './map/MainScreen'
 import {Map} from './map/map'
 import {styleCommon, styleForSplit} from './utils/styles'
 
-
 export const App: React.FC<{}> = () => {
   const clsSplit = styleForSplit()
   const classes = styleCommon()

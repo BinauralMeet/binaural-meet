@@ -1,20 +1,20 @@
-import React, {useState} from 'react'
+import React, {useRef} from 'react'
 
 class MemoryById<T>{
   private static statics:any [] = []
-  private static map = new Map<Object, number>()
+  private static nextId = 0
   private id: number
 
   constructor() {
-    const [temp] = useState(new Object())
-    let id = MemoryById.map.get(temp)
-    if (!id) {
-      id = MemoryById.map.size + 1
-      MemoryById.map.set(temp, id)
-      MemoryById.statics[id] = new Object()
-      console.log(`create new id = ${id}`)
+    const ref = useRef<number>(-1)
+    if (ref.current === -1) {
+      ref.current = MemoryById.nextId
+      MemoryById.nextId += 1
+      MemoryById.statics[ref.current] = new Object()
+      console.log(`memoObject() create a new id ${ref.current}`)
     }
-    this.id = id
+    //  console.log(`MemoryById id ${ref.current}`)
+    this.id = ref.current
   }
   get value() {
     return MemoryById.statics[this.id] as T
