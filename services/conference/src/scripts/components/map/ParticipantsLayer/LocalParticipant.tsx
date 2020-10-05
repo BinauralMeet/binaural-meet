@@ -1,10 +1,9 @@
 import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
-import React from 'react'
+import React, {useRef} from 'react'
 import {addV, subV} from 'react-use-gesture'
 import {DragHandler, DragState} from '../../utils/DragHandler'
-import {memoObject} from '../../utils/memoObject'
 import {MAP_SIZE} from '../Base/Base'
 import {useValue as useTransform} from '../utils/useTransform'
 import {Participant, ParticipantProps} from './Participant'
@@ -28,7 +27,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   const participant = participants.find(props.participantId)
   const map = useMapStore()
   const transform = useTransform()
-  const memo = memoObject<LocalParticipantStatic>()
+  const memo = useRef<LocalParticipantStatic>(new Object() as LocalParticipantStatic).current
 
   const moveParticipant = (state: DragState<HTMLDivElement>) => {
     //  move local participant

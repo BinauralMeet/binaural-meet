@@ -1,5 +1,4 @@
 import React, {useRef} from 'react'
-import {memoObject} from './memoObject'
 
 function checkClass<ET extends Element>(el: Element, stop:ET, clsToFind: string):Element | null {
   let cur = el
@@ -46,7 +45,7 @@ export class DragHandler<ET extends Element>{  //  pointer drag
     this.onTimer = onTimer
     this.handle = handle
     this.target = useRef<ET>(null)
-    this.memo = memoObject<DragMemo<ET>>()
+    this.memo = useRef<DragMemo<ET>>(new Object() as DragMemo<ET>).current
   }
   timerFunc = () => {
     if (!this.memo.state.dragging && !this.memo.timerAgain) {
