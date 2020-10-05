@@ -91,7 +91,6 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     }
   }
   //  pointer drag
-  const TIMER_INTERVAL = 50
   const drag = new DragHandler<HTMLDivElement>(onDrag, 'draggableHandle', onTimer)
 
   return (
