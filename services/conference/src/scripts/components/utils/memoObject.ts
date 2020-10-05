@@ -12,7 +12,7 @@ class MemoryById<T>{
       id = MemoryById.map.size + 1
       MemoryById.map.set(temp, id)
       MemoryById.statics[id] = new Object()
-      //  console.log(`create new id = ${id}`)
+      console.log(`create new id = ${id}`)
     }
     this.id = id
   }

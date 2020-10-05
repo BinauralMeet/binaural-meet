@@ -3,11 +3,14 @@ import {useStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
 import React from 'react'
 import {addV, subV} from 'react-use-gesture'
+import {DragHandler, DragState} from '../../utils/DragHandler'
+import {memoObject} from '../../utils/memoObject'
 import {MAP_SIZE} from '../Base/Base'
-import {DragHandler, DragState} from '../utils/DragHandler'
-import {memoObject} from '../utils/memoObject'
 import {useValue as useTransform} from '../utils/useTransform'
 import {Participant, ParticipantProps} from './Participant'
+
+const SPEED_LIMIT = 50
+
 
 function mulV<T extends number[]>(s: number, vec: T): T {
   return vec.map((v, i) => s * v) as T
@@ -15,8 +18,10 @@ function mulV<T extends number[]>(s: number, vec: T): T {
 
 type LocalParticipantProps = ParticipantProps
 interface LocalParticipantStatic{
-  lastXy: [number, number]
+  //  buttons: number
+  //  xy: [number, number]
   smoothedDelta: [number, number]
+  //  timer: NodeJS.Timeout | undefined
 }
 const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   const participants = useStore()
@@ -25,12 +30,10 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   const transform = useTransform()
   const memo = memoObject<LocalParticipantStatic>()
 
-  const onDrag = (state:DragState<HTMLDivElement>) => {
-    memo.lastXy = [state.xy[0], state.xy[1]]
+  const moveParticipant = (state: DragState<HTMLDivElement>) => {
     //  move local participant
     let delta = subV(state.xy, map.toWindow(participant!.pose.position))
     const norm = Math.sqrt(delta[0] * delta[0] + delta[1] * delta[1])
-    const SPEED_LIMIT = 50
     if (norm > SPEED_LIMIT) {
       delta = mulV(SPEED_LIMIT / norm, delta)
     }
@@ -53,10 +56,8 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     } else {
       participant!.pose.position = addV(transform.rotateG2L(delta), participant!.pose.position)
     }
-    scrollMap()
   }
   const scrollMap = () => {
-    //  scroll map
     const posOnScreen = map.toWindow(participant!.pose.position)
     const target = [posOnScreen[0], posOnScreen[1]]
     const RATIO = 0.2
@@ -68,30 +69,53 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     if (target[0] > right) { target[0] = right }
     if (target[1] < top) { target[1] = top }
     if (target[1] > bottom) { target[1] = bottom }
-    const mapMove = map.rotateFromWindow(subV(posOnScreen, target) as [number, number])
-    if (mapMove[0] || mapMove[1]) {
+    let diff = subV(posOnScreen, target) as [number, number]
+    const norm = Math.sqrt(diff[0] * diff[0] + diff[1] * diff[1])
+    const EPSILON = 1e-5
+    if (norm > SPEED_LIMIT) {
+      diff = mulV(SPEED_LIMIT / norm, diff) as [number, number]
+    }
+    const SCROOL_SPEED = 0.2
+    const mapMove = mulV(SCROOL_SPEED, map.rotateFromWindow(diff) as [number, number])
+    //  console.log('mapMove', mapMove)
+    if (Math.abs(mapMove[0]) + Math.abs(mapMove[1]) > EPSILON) {
       const newMat = map.matrix.translate(-mapMove[0], -mapMove[1])
       const trans = map.rotateFromWindow([newMat.e, newMat.f])
       const HALF = 0.5
-      if (trans[0] < -MAP_SIZE * HALF) { trans[0] = -MAP_SIZE * HALF }
-      if (trans[0] > MAP_SIZE * HALF) { trans[0] = MAP_SIZE * HALF }
-      if (trans[1] < -MAP_SIZE * HALF) { trans[1] = -MAP_SIZE * HALF }
-      if (trans[1] > MAP_SIZE * HALF) { trans[1] = MAP_SIZE * HALF }
+      let changed = false
+      if (trans[0] < -MAP_SIZE * HALF) { trans[0] = -MAP_SIZE * HALF; changed = true }
+      if (trans[0] > MAP_SIZE * HALF) { trans[0] = MAP_SIZE * HALF; changed = true }
+      if (trans[1] < -MAP_SIZE * HALF) { trans[1] = -MAP_SIZE * HALF; changed = true }
+      if (trans[1] > MAP_SIZE * HALF) { trans[1] = MAP_SIZE * HALF; changed = true }
       const transMap = map.rotateToWindow(trans);
       [newMat.e, newMat.f] = transMap
       map.setMatrix(newMat)
       map.setCommittedMatrix(newMat)
+
+      return !changed
     }
+
+    return false
   }
-  const onTimer = () => {
-    //  console.log('onTimer:', memo)
-    const xy = memo.lastXy
-    if (xy) {
-      onDrag({xy, event:undefined})
+  const onTimer = (state:DragState<HTMLDivElement>) => {
+    if (state.dragging) {
+      onDrag(state)
     }
+
+    const rv = scrollMap()
+
+    console.log(`onTimer: drag:${state.dragging} again:${rv}`)
+
+    return rv
+  }
+  const onDrag = (state:DragState<HTMLDivElement>) => {
+    //  console.log('onDrag:', memo, state)
+    moveParticipant(state)
+    scrollMap()
   }
   //  pointer drag
-  const drag = new DragHandler<HTMLDivElement>(onDrag, 'draggableHandle', onTimer)
+  const TIMER_INTERVAL = 33
+  const drag = new DragHandler<HTMLDivElement>(onDrag, 'draggableHandle', onTimer, TIMER_INTERVAL)
 
   return (
     <div ref={drag.target} {...drag.bind()} >

@@ -1,4 +1,5 @@
-import React, {Dispatch, SetStateAction, useRef, useState} from 'react'
+import React, {useRef} from 'react'
+import {memoObject} from './memoObject'
 
 function checkClass<ET extends Element>(el: Element, stop:ET, clsToFind: string):Element | null {
   let cur = el
@@ -19,74 +20,89 @@ function checkClass<ET extends Element>(el: Element, stop:ET, clsToFind: string)
 }
 
 export interface DragState<ET extends Element>{
+  buttons: number
   xy: [number, number]
+  dragging: boolean
   event:React.PointerEvent<ET>|undefined
+}
+interface DragMemo<ET extends Element>{
+  timerAgain:boolean
+  timerId: number
+  state: DragState<ET>
 }
 
 export class DragHandler<ET extends Element>{  //  pointer drag
   onDrag: (state:DragState<ET>) => void
-  onTimer?: () => void
+  onTimer?: (state:DragState<ET>) => boolean
   interval?: number
   handle?: string  //  class name of dragging handle
-  xy: [number, number]
-  setXy: Dispatch<SetStateAction<[number, number]>>
-  dragging: number
-  setDragging: Dispatch<SetStateAction<number>>
   target: React.RefObject<ET>
+  memo: DragMemo<ET>
 
-  constructor(onDrag:(state:DragState<ET>) => void, handle?: string, onTimer?:() => void, interval?: number) {
+  constructor(onDrag:(state:DragState<ET>) => void, handle?: string,
+              onTimer?:(state:DragState<ET>) => boolean, interval?: number) {
     this.interval = interval
     this.onDrag = onDrag
     this.onTimer = onTimer
-    this.handle = handle;
-    [this.xy, this.setXy] = useState([0, 0]);
-    [this.dragging, this.setDragging] = useState<number>(0)
+    this.handle = handle
     this.target = useRef<ET>(null)
+    this.memo = memoObject<DragMemo<ET>>()
   }
   timerFunc = () => {
-    if (this.onTimer) { this.onTimer() }
+    if (!this.memo.state.dragging && !this.memo.timerAgain) {
+      clearInterval(this.memo.timerId)
+      this.memo.timerId = 0
+    }else if (this.onTimer) {
+      this.memo.timerAgain = this.onTimer(this.memo.state)
+    }
   }
 
   bind() {
 
-    return {
+    const bindObject = {
       onMouseDown: (e: React.MouseEvent<ET>) => {
         e.stopPropagation()
       },
       onPointerDown : (e: React.PointerEvent<ET>) => {
         e.stopPropagation()
+        this.memo.state = {dragging:false, buttons:e.buttons, xy:[e.clientX, e.clientY], event:e}
         //  console.log(`onPointerDown xy:${e.clientX},${e.clientY} buttons:${e.buttons}`)
         if ((e.buttons & 1) && this.target.current &&
           (!this.handle || checkClass(e.target as Element, this.target.current, this.handle))) {
           (e.target as Element).setPointerCapture(e.pointerId)
 
-          const intervalId = setInterval(this.timerFunc, this.interval)
-          this.setDragging(intervalId)
-          this.setXy([e.clientX, e.clientY])
+          if (!this.memo.timerId) {
+            this.memo.timerId = setInterval(this.timerFunc, this.interval)
+          }
+          this.memo.state.dragging = true
         }
+        console.log(`onPointerDown: ${this.memo.state.dragging}`)
+      },
+      onPointerOut: (e: React.PointerEvent<ET>) => {
+        e.stopPropagation()
+        this.memo.state = {dragging:false, buttons:e.buttons, xy:[e.clientX, e.clientY], event:e}
+        console.log(`onPointerOut: ${this.memo.state.dragging}`)
       },
       onPointerUp: (e: React.PointerEvent<ET>) => {
-        e.stopPropagation()
-        if (this.dragging) {
-          clearInterval(this.dragging)
-          this.setDragging(0)
-        }
+        bindObject.onPointerOut(e)
       },
       onPointerMove: (e: React.PointerEvent<ET>) => {
         e.stopPropagation()
+        this.memo.state = {dragging:this.memo.state?.dragging ? true :false,
+          buttons:e.buttons, xy:[e.clientX, e.clientY], event:e}
         //  console.log(`onPointerMove xy:${e.clientX},${e.clientY} buttons:${e.buttons} drag:${this.dragging ? 1 : 0}`)
-        this.setXy([e.clientX, e.clientY])
 
-        if (this.dragging) {
+        if (this.memo.state.dragging) {
           if ((e.buttons & 1)) {
-            this.onDrag({xy:this.xy, event:e})
+            this.onDrag(this.memo.state)
           }else {
-            clearInterval(this.dragging)
-            this.setDragging(0)
+            this.memo.state.dragging = false
           }
         }
       },
     }
+
+    return bindObject
   }
 }
 
