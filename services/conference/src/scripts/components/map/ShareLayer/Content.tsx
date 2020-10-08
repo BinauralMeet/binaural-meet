@@ -1,6 +1,5 @@
 import {makeStyles} from '@material-ui/core/styles'
-import {SharedContent as ISharedContent} from '@models/SharedContent'
-import React from 'react'
+import React, {useMemo} from 'react'
 
 const useStyles = makeStyles({
   img: {
@@ -18,17 +17,28 @@ const useStyles = makeStyles({
   },
 })
 
-export const Content: React.FC<any> = (props) => {
-  const content = props.content as ISharedContent
+interface ContentProps{
+  type: string
+  url: string
+}
+
+export const Content: React.FC<ContentProps> = (props:ContentProps) => {
   const classes = useStyles()
-  if (content.type === 'img') {
-    return <img className={classes.img} src={content.url} />
-  } if (content.type === 'iframe') {
-    return <iframe className={classes.iframe} src={content.url} />
-  } if (content.type === 'text') {
-    return <div className={classes.text} >{content.url}</div>
-  }
+  //  console.log(`rerender content for ${props.url}`)
 
-  return <div className={classes.text} >Unknow type:{content.type} for {content.url}</div>
+  return useMemo(() => {
+    let rv
+    if (props.type === 'img') {
+      rv = <img className={classes.img} src={props.url} />
+    }else if (props.type === 'iframe' || props.type === 'youtube') {
+      rv = <iframe className={classes.iframe} src={props.url} />
+    }else if (props.type === 'text') {
+      rv =  <div className={classes.text} >{props.url}</div>
+    }else {
+      rv = <div className={classes.text} >Unknow type:{props.type} for {props.url}</div>
+    }
+    //  console.log(`useMemo rerender for ${props.url}`)
 
+    return rv
+  },             [props.url, props.type])
 }

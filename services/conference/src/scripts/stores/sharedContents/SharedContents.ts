@@ -125,11 +125,12 @@ export class SharedContents extends EventEmitter {
   owner: Map <string, string> = new Map<string, string>()
 
   private updateAll() {
-    this.all.length = 0
+    const newAll:ISharedContent[] = []
     this.participants.forEach((participant) => {
-      this.all.push(... participant.myContents.values())
+      newAll.push(... participant.myContents.values())
     })
-    this.all.slice().sort(contentComp)
+    newAll.slice().sort(contentComp)
+    this.all = newAll
     //  console.log('update all len=', this.all.length, ' all=', JSON.stringify(this.all))
   }
 

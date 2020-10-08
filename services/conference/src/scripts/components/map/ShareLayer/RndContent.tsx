@@ -196,7 +196,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
           <div className={classes.close} onClick={onClickClose}><CloseRoundedIcon /></div>
         </div>
       </div>
-      <div className={classes.content} ><Content content={props.content} /></div>
+      <div className={classes.content} ><Content type={props.content.type} url={props.content.url} /></div>
     </div>
   const titleHeight = showTitle ? dimensions.clientHeight : 0
   //  console.log('Rnd rendered.')

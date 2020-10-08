@@ -29,16 +29,39 @@ export class SharedContent implements ISharedContent {
   }
 }
 
-export function createContentOfIframe(url: string, map: MapData) {
+export function createContentOfIframe(urlStr: string, map: MapData) {
   const pasted = new SharedContent()
-  pasted.type = 'iframe'
-  pasted.url = url
-  pasted.pose.position[0] = map.mouseOnMap[0]
-  pasted.pose.position[1] = map.mouseOnMap[1]
-  const IFRAME_WIDTH = 600
-  const IFRAME_HEIGHT = 800
-  pasted.size[0] = IFRAME_WIDTH
-  pasted.size[1] = IFRAME_HEIGHT
+  const url = new URL(urlStr)
+  if (url.hostname === 'youtu.be' || url.hostname === 'youtube.com' || url.hostname === 'www.youtube.com') {
+    let ytId = ''
+    if (url.hostname === 'youtu.be') {
+      ytId = url.pathname.slice(1)
+    }else {
+      // tslint:disable-next-line: no-magic-numbers
+      const ytVStart = url.search.slice(url.search.search(/\?v=/) + 3)
+      const end = ytVStart.search(/\&/)
+      ytId = (end === -1) ? ytVStart : ytVStart.slice(0, end)
+      console.log(`ytVStart = ${ytVStart} end=${end}`)
+    }
+    console.log(`youtube Id = ${ytId}`)
+    pasted.url = `https://www.youtube.com/embed/${ytId}`
+    pasted.type = 'youtube'
+    pasted.pose.position[0] = map.mouseOnMap[0]
+    pasted.pose.position[1] = map.mouseOnMap[1]
+    const YT_WIDTH = 640
+    const YT_HEIGHT = 380
+    pasted.size[0] = YT_WIDTH
+    pasted.size[1] = YT_HEIGHT
+  }else {  //  generic iframe
+    pasted.type = 'iframe'
+    pasted.url = urlStr
+    pasted.pose.position[0] = map.mouseOnMap[0]
+    pasted.pose.position[1] = map.mouseOnMap[1]
+    const IFRAME_WIDTH = 600
+    const IFRAME_HEIGHT = 800
+    pasted.size[0] = IFRAME_WIDTH
+    pasted.size[1] = IFRAME_HEIGHT
+  }
 
   return pasted
 }
