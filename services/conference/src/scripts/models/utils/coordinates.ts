@@ -104,3 +104,11 @@ export function vectorLength(vec: [number, number]): number {
 export function rotate90ClockWise(vec: [number, number]): [number, number] {
   return [vec[1], -vec[0]]
 }
+
+export function transfromAt(center:[number, number], tranform: DOMMatrixReadOnly, baseMatrix:DOMMatrixReadOnly) {
+  const tm = (new DOMMatrix()).translate(-center[0], -center[1])
+  const itm = (new DOMMatrix()).translateSelf(...center)
+  const newMatrix = multiply([itm, tranform, tm, baseMatrix])
+
+  return newMatrix
+}

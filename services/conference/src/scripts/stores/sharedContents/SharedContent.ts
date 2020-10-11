@@ -33,18 +33,19 @@ export function createContentOfIframe(urlStr: string, map: MapData) {
   const pasted = new SharedContent()
   const url = new URL(urlStr)
   if (url.hostname === 'youtu.be' || url.hostname === 'youtube.com' || url.hostname === 'www.youtube.com') {
-    let ytId = ''
+    const paramStrs = url.search.slice(1).split('&')
+    const params = new Map<string, string>(paramStrs.map(str => str.split('=') as [string, string]))
     if (url.hostname === 'youtu.be') {
-      ytId = url.pathname.slice(1)
-    }else {
-      // tslint:disable-next-line: no-magic-numbers
-      const ytVStart = url.search.slice(url.search.search(/\?v=/) + 3)
-      const end = ytVStart.search(/\&/)
-      ytId = (end === -1) ? ytVStart : ytVStart.slice(0, end)
-      console.log(`ytVStart = ${ytVStart} end=${end}`)
+      params.set('v', url.pathname.slice(1))
     }
-    console.log(`youtube Id = ${ytId}`)
-    pasted.url = `https://www.youtube.com/embed/${ytId}`
+    pasted.url = ''
+    for (const param of params) {
+      if (pasted.url === '') {
+        pasted.url = `${param[0]}=${param[1]}`
+      }else {
+        pasted.url = `${pasted.url}&${param[0]}=${param[1]}`
+      }
+    }
     pasted.type = 'youtube'
     pasted.pose.position[0] = map.mouseOnMap[0]
     pasted.pose.position[1] = map.mouseOnMap[1]
@@ -62,6 +63,7 @@ export function createContentOfIframe(urlStr: string, map: MapData) {
     pasted.size[0] = IFRAME_WIDTH
     pasted.size[1] = IFRAME_HEIGHT
   }
+  console.log(`${pasted.type} created url=${pasted.url}`)
 
   return pasted
 }
