@@ -122,12 +122,12 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     if (target[1] > bottom) { target[1] = bottom }
     let diff = subV(posOnScreen, target) as [number, number]
     const norm = Math.sqrt(diff[0] * diff[0] + diff[1] * diff[1])
-    const EPSILON = 1e-5
     if (norm > MAP_SPEED_LIMIT) {
       diff = mulV(MAP_SPEED_LIMIT / norm, diff) as [number, number]
     }
     const SCROOL_SPEED = 0.2
     const mapMove = mulV(SCROOL_SPEED, map.rotateFromWindow(diff) as [number, number])
+    const EPSILON = 0.2
     if (Math.abs(mapMove[0]) + Math.abs(mapMove[1]) > EPSILON) {
       const newMat = map.matrix.translate(-mapMove[0], -mapMove[1])
       const trans = map.rotateFromWindow([newMat.e, newMat.f])

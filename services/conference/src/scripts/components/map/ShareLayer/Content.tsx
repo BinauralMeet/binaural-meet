@@ -1,11 +1,17 @@
-import content from '*.svg'
 import {makeStyles} from '@material-ui/core/styles'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {param} from 'jquery'
-import {split} from 'lodash'
+import {useStore} from 'hooks/SharedContentsStore'
 import React, {useEffect, useMemo, useRef} from 'react'
-import {Abs} from 'tone'
 import YouTubePlayer from 'yt-player'
+
+const CONTENTLOG = true
+export const contentLog = CONTENTLOG ? console.log : (a:any) => {}
+
+function getCurrentTimestamp() {
+  const mil = 0.001
+
+  return Date.now() * mil
+}
 
 const useStyles = makeStyles({
   img: {
@@ -27,6 +33,7 @@ interface ContentProps{
 }
 class ContentState{
   ytPlayer?:YouTubePlayer
+  ytProhibitUntil = ''
 }
 export function paramArray2map(paramArray: string[]):Map<string, string|undefined> {
   return new Map<string, string|undefined>(
@@ -47,35 +54,120 @@ export function paramMap2Str(params:Map<string, string|undefined>) {
 
   return str
 }
+function ytSeekAndPlay(start:number, state: ContentState) {
+  const player = state.ytPlayer
+  if (!player) {
+    contentLog('ytSeek no player')
+
+    return
+  }
+
+  const now = getCurrentTimestamp()
+  const seekTo = (now - start) * player.getPlaybackRate()
+  const TOLERANCE = 0.1
+  const TIMETOSEEK = 1
+  const KILO = 1000
+  if (player.getState() !== 'playing' || Math.abs(player.getCurrentTime() - seekTo) > TOLERANCE) {
+    state.ytProhibitUntil = 'playing'
+    player.pause()
+    player.seek(seekTo + TIMETOSEEK * player.getPlaybackRate())
+    setTimeout(() => { player.play() }, TIMETOSEEK * KILO)
+    contentLog(`YT state:${player.getState()}  cur:${player.getCurrentTime()}  toSeek:${seekTo}`)
+  }
+}
+function ytSeekAndPause(time:number, state: ContentState) {
+  const player = state.ytPlayer
+  if (!player) {
+    contentLog('ytSeek no player')
+
+    return
+  }
+
+  if (player.getState() !== 'paused') {
+    state.ytProhibitUntil = 'paused'
+    player.pause()
+  }
+  if (player.getCurrentTime() !== time) {
+    player.seek(time)
+  }
+}
+
+/* Memo about youtube state
+ *  played=time time=start time stamp  in ms
+ *  paused=time time=current time in the clip.
+*/
 
 export const Content: React.FC<ContentProps> = (props:ContentProps) => {
   const classes = useStyles()
   const state = useRef<ContentState>(new ContentState())
+  const contents = useStore()
+
   if (props.content.type === 'youtube' && state.current.ytPlayer) {
     const params = paramStr2map(props.content.url)
-    if (params.has('start')) {
-
-    }else {
-
+    if (params.has('playing')) {
+      ytSeekAndPlay(Number(params.get('playing')), state.current)
+    }else if (params.has('paused')) {
+      ytSeekAndPause(Number(params.get('paused')), state.current)
     }
   }
 
+  function ytUpdateState(newState: string, time:number, params:Map<string, string|undefined>) {
+    params.delete('playing')
+    params.delete('paused')
+    params.set(newState, String(time))
+    const newContent = Object.assign({}, props.content)
+    newContent.url = paramMap2Str(params)
+    contents.updateContents([newContent])
+    contentLog(`YT sent state ${newState}`)
+  }
 
   useEffect(
     () => {
       if (props.content.type === 'youtube' && props.content.id) {
         if (!state.current.ytPlayer) {
           const id = `#YT${props.content.id}`
-          console.log(id)
-          state.current.ytPlayer = new YouTubePlayer(id, {autoplay:true})
-          state.current.ytPlayer.on('error', (err) => console.log('YT error ', err))
-          state.current.ytPlayer.on('unstarted', () => console.log('YT unstarted'))
-          state.current.ytPlayer.on('ended', () => console.log('YT ended'))
-          state.current.ytPlayer.on('playing', () => console.log('YT playing'))
-          state.current.ytPlayer.on('paused', () => console.log('YT paused'))
-          state.current.ytPlayer.on('buffering', () => console.log('YT buffering'))
-          state.current.ytPlayer.on('cued', () => console.log('YT cued'))
-          console.log('YTPlayer created')
+          const player = new YouTubePlayer(id, {autoplay:true})
+          state.current.ytPlayer = player
+          contentLog('YTPlayer for ${id} created')
+
+          player.on('error', err => contentLog('YT on error ', err))
+          player.on('unstarted', () => contentLog('YT on unstarted'))
+          player.on('ended', () => contentLog('YT on ended'))
+          player.on('buffering', () => contentLog('YT on buffering'))
+          player.on('cued', () => contentLog('YT on cued'))
+          player.on('paused', () => {
+            if (state.current.ytProhibitUntil) {
+              if (state.current.ytProhibitUntil === 'paused') {
+                state.current.ytProhibitUntil = ''
+              }
+
+              return
+            }
+            contentLog(`YT on paused at ${player.getCurrentTime()}`)
+            const params = paramStr2map(props.content.url)
+            if (!params.has('paused')) {
+              ytUpdateState('paused', player.getCurrentTime(), params)
+            }
+          })
+          player.on('playing', () => {
+            if (state.current.ytProhibitUntil) {
+              if (state.current.ytProhibitUntil === 'playing') {
+                state.current.ytProhibitUntil = ''
+              }
+
+              return
+            }
+            contentLog('YT on playing')
+            // tslint:disable-next-line: no-magic-numbers
+            const params = paramStr2map(props.content.url)
+            if (!params.has('playing')) { //  start time is not specified yet.
+              const now = getCurrentTimestamp()
+              const elasp = player.getCurrentTime() / player.getPlaybackRate()
+              const start = now - elasp
+              contentLog('playing=', start)
+              ytUpdateState('playing', start, params)
+            }
+          })
         }
         const player = state.current.ytPlayer
         const params = paramStr2map(props.content.url)
@@ -89,23 +181,6 @@ export const Content: React.FC<ContentProps> = (props:ContentProps) => {
             player.load(params.get('v') as string)
           }
         }
-        /*
-        player.on('playing', () => {
-          const elasp = player.getCurrentTime()
-          const real = elasp / player.getPlaybackRate()
-          // tslint:disable-next-line: no-magic-numbers
-          const start = Date.now() - real * 1000
-          const params = paramStr2map(props.content.url)
-          if (params.has('start')){
-            const diff = Number(params.get('start')) - start
-            if (Abs(diff > ))
-          }
-        }
-        player.on('cued', () => {
-          const now = Date()
-          player.play()
-        })
-*/
       }else {
         if (state.current.ytPlayer) {
           state.current.ytPlayer.destroy()
@@ -113,35 +188,25 @@ export const Content: React.FC<ContentProps> = (props:ContentProps) => {
         state.current.ytPlayer = undefined
       }
 
-    },    [props.content.type, props.content.id],
+    },
+    [props.content.type, props.content.id],
   )
 
-//  return useMemo(() => {
-  let rv
-  if (props.content.type === 'img') {
-    rv = <img className={classes.img} src={props.content.url} />
-  }else if (props.content.type === 'iframe') {
-    rv = <iframe className={classes.iframe} />
-  }else if (props.content.type === 'youtube') {
-    const params = new Map<string, string>(
-        props.content.url.split('&').map(str => str.split('=') as [string, string]))
-    let url
-    if (params.has('list')) {
-      url = `https://www.youtube.com/embed?listType=playlist&list=${params.get('list')}`
-    }else if (params.has('v')) {
-      url = `https://www.youtube.com/embed/${params.get('v')}`
+  return useMemo(() => {
+    let rv
+    if (props.content.type === 'img') {
+      rv = <img className={classes.img} src={props.content.url} />
+    }else if (props.content.type === 'iframe') {
+      rv = <iframe className={classes.iframe} />
+    }else if (props.content.type === 'youtube') {
+      rv = <div id={`YT${props.content.id}`} className={classes.iframe} />
+    }else if (props.content.type === 'text') {
+      rv =  <div className={classes.text} >{props.content.url}</div>
     }else {
-      console.error('URL to youtube does not have v= or list=')
+      rv = <div className={classes.text} >Unknow type:{props.content.type} for {props.content.url}</div>
     }
-    console.log(`div id = YT${props.content.id}`)
-    rv = <div id={`YT${props.content.id}`} className={classes.iframe} />
-  }else if (props.content.type === 'text') {
-    rv =  <div className={classes.text} >{props.content.url}</div>
-  }else {
-    rv = <div className={classes.text} >Unknow type:{props.content.type} for {props.content.url}</div>
-  }
-    //  console.log(`useMemo rerender for ${props.url}`)
+    //  contentLog(`useMemo rerender for ${props.url}`)
 
-  return rv
-//  },             [props.content.url, props.content.type, props.content.id])
+    return rv
+  },             [props.content.url, props.content.type, props.content.id])
 }
