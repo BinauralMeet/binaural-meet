@@ -28,21 +28,18 @@ export interface ContentProps{
 export const Content: React.FC<ContentProps> = (props:ContentProps) => {
   const classes = useStyles()
 
-  return useMemo(() => {
-    let rv
-    if (props.content.type === 'img') {
-      rv = <img className={classes.img} src={props.content.url} />
-    }else if (props.content.type === 'iframe') {
-      rv = <iframe className={classes.iframe} />
-    }else if (props.content.type === 'youtube') {
-      rv = <YouTube content = {props.content} />
-    }else if (props.content.type === 'text') {
-      rv =  <div className={classes.text} >{props.content.url}</div>
-    }else {
-      rv = <div className={classes.text} >Unknow type:{props.content.type} for {props.content.url}</div>
-    }
-    //  contentLog(`useMemo rerender for ${props.url}`)
+  let rv
+  if (props.content.type === 'img') {
+    rv = <img className={classes.img} src={props.content.url} />
+  }else if (props.content.type === 'iframe') {
+    rv = <iframe className={classes.iframe} src={props.content.url} />
+  }else if (props.content.type === 'youtube') {
+    rv = <YouTube content = {props.content} />
+  }else if (props.content.type === 'text') {
+    rv =  <div className={classes.text} >{props.content.url}</div>
+  }else {
+    rv = <div className={classes.text} >Unknow type:{props.content.type} for {props.content.url}</div>
+  }
 
-    return rv
-  },             [props.content.url, props.content.type, props.content.id])
+  return rv
 }

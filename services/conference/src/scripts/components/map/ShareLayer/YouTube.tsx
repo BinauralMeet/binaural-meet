@@ -3,7 +3,7 @@ import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {assert, shallowEqualsForMap} from '@models/utils'
 import {SharedContents} from '@stores/sharedContents/SharedContents'
 import {useStore} from 'hooks/SharedContentsStore'
-import React, {useEffect, useMemo, useRef} from 'react'
+import React, {useEffect, useRef} from 'react'
 import YouTubePlayer from 'yt-player'
 import {contentLog, ContentProps} from './Content'
 
@@ -26,6 +26,8 @@ class YTState{
   lastCurrentTimePaused = 0
   playTimeout:NodeJS.Timeout|null = null
   params: Map<string, string|undefined> = new Map()
+  content?: ISharedContent
+  contents?: SharedContents
 }
 export function paramArray2map(paramArray: string[]):Map<string, string|undefined> {
   return new Map<string, string|undefined>(
@@ -83,19 +85,18 @@ function ytSeekAndPause(time:number, state: YTState) {
   state.lastCurrentTimePaused = state.player.getCurrentTime()
 }
 
-function ytUpdateState(newState: string, time:number,
-                       state: YTState, content:ISharedContent, contents: SharedContents) {
+function ytUpdateState(newState: string, time:number, state: YTState) {
   const params = new Map<string, string|undefined>(state.params)
   params.delete('playing')
   params.delete('paused')
   params.set(newState, String(time))
-  const newContent = Object.assign({}, content)
+  const newContent = Object.assign({}, state.content)
   newContent.url = paramMap2Str(params)
-  contents.updateContents([newContent])
+  state.contents?.updateContents([newContent])
   contentLog(`YT sent state ${newState}`)
 }
 
-function ytPauseInterval(state: YTState, content:ISharedContent, contents: SharedContents) {
+function ytPauseInterval(state: YTState) {
   if (state.params.has('paused')) {
     const params = state.params
     const currentTime = Number(state.player?.getCurrentTime())
@@ -104,9 +105,9 @@ function ytPauseInterval(state: YTState, content:ISharedContent, contents: Share
     if (Math.abs(currentTime - state.lastCurrentTimePaused) > TOLERANCE) {
       state.lastCurrentTimePaused = currentTime
       params.set('paused', String(currentTime))
-      const newContent = Object.assign({}, content)
+      const newContent = Object.assign({}, state.content)
       newContent.url = paramMap2Str(params)
-      contents.updateContents([newContent])
+      state.contents?.updateContents([newContent])
       contentLog(`YT sent current time of paused state time:${currentTime}`)
     }
   }else {
@@ -129,7 +130,8 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
 
   const classes = useStyles()
   const state = useRef<YTState>(new YTState())
-  const contents = useStore()
+  state.current.contents = useStore()
+  state.current.content = props.content
 
   //  Check params and reflect them
   const newParams = paramStr2map(props.content.url)
@@ -165,7 +167,7 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
             if (!state.current.pauseIntervalTimer) {
               const INTERVAL = 333
               state.current.pauseIntervalTimer
-                = setInterval(ytPauseInterval, INTERVAL, state.current, props.content, contents)
+                = setInterval(ytPauseInterval, INTERVAL, state.current)
             }
 
             if (state.current.prohibitUntil) {
@@ -177,7 +179,7 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
             }
             contentLog(`YT on paused at ${player.getCurrentTime()}`)
             if (!state.current.params.has('paused')) {
-              ytUpdateState('paused', player.getCurrentTime(), state.current, props.content, contents)
+              ytUpdateState('paused', player.getCurrentTime(), state.current)
             }
           })
           player.on('playing', () => {
@@ -202,7 +204,7 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
               const elasp = player.getCurrentTime() / player.getPlaybackRate()
               const start = now - elasp
               contentLog('playing=', start)
-              ytUpdateState('playing', start, state.current, props.content, contents)
+              ytUpdateState('playing', start, state.current)
             }
           })
         }
@@ -226,7 +228,7 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
       }
 
     },
-    [props.content.type, props.content.id],
+    [props.content.id],
   )
 
   return <div id={`YT${props.content.id}`} className={classes.iframe} />
