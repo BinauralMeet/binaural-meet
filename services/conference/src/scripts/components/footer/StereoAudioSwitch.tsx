@@ -19,7 +19,9 @@ export const StereoAudioSwitch: React.FC = () => {
         {'Stereo headset'} <strong>{'without echo canceller'}</strong><br />{'/ Monaural speaker with echo canceller'}
       </React.Fragment>
     }>
+    <span>
     <FabMain onClick={switchStereo}>{stereo ? <HeadsetIcon /> : <SpeakerIcon />}</FabMain>
+    </span>
   </Tooltip>
 }
 StereoAudioSwitch.displayName = 'StereoAudioSwtich'
