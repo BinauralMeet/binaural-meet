@@ -36,6 +36,11 @@ interface StyleProps{
   pinned: boolean,
 }
 
+class RndContentState{
+  lastSize: [number, number] = [0, 0]
+  lastPose: Pose2DMap = {orientation:0, position:[0, 0]}
+}
+
 //  -----------------------------------------------------------------------------------
 //  The RnDContent component
 export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => {
@@ -67,12 +72,15 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   const rnd = useRef<Rnd>(null)                         //  ref to rnd to update position and size
   const {ref, dimensions} = useDimensions()             //  title dimensions measured
   const [showTitle, setShowTitle] = useState(!props.autoHideTitle || !props.content.pinned)
+  const state = useRef<RndContentState>(new RndContentState())
 
-  if (props.content.type && size[0] === 0 || !props.content.type && size[0] !== 0) {
-    console.log('props:', props)
-    console.log('setSize and Pose', size, pose)
+  if (!_.isEqual(props.content.size, state.current.lastSize)) {
+    Object.assign(state.current.lastSize, props.content.size)
     setSize(props.content.size)
+  }
+  if (!_.isEqual(props.content.pose, state.current.lastPose)) {
     setPose(props.content.pose)
+    state.current.lastPose = _.cloneDeep(props.content.pose)
   }
 
   useLayoutEffect(  //  reflect pose etc. to rnd size

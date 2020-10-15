@@ -12668,6 +12668,6 @@ yn@3.1.1:
 
 "yt-player@https://github.com/BinauralMeet/yt-player.git":
   version "3.4.3"
-  resolved "https://github.com/BinauralMeet/yt-player.git#17a3ba56717d57c7e2ecb73fb3cbacae690e7b11"
+  resolved "https://github.com/BinauralMeet/yt-player.git#44f50c6bb3e46dc71d4f1aaf7aacc9e45844ad44"
   dependencies:
     load-script2 "^2.0.1"
