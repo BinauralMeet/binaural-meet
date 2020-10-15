@@ -194,7 +194,8 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         offsetLeft += cur.offsetLeft
         cur = cur.offsetParent as HTMLElement
       }
-      store.setOffset([-(offsetLeft + outer.current.clientWidth * HALF), -(outer.current.clientHeight * HALF)])
+      store.setScreenSize([outer.current.clientWidth, outer.current.clientHeight])
+      store.setLeft(offsetLeft)
     }
     // store.setOffset([outer.current.scrollLeft, outer.current.scrollTop])  //  when use scroll
   },        [outer.current, outer.current?.clientWidth, outer.current?.clientHeight])
