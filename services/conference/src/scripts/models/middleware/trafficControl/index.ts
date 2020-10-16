@@ -12,10 +12,7 @@ autorun(() => {
   if (state === 'connected') {
     priorityCalculator.enable()
     intervalHandle = window.setInterval(
-      () => {
-        const res = priorityCalculator.update()
-        console.log(res)
-      },
+      memoedUpdater,
       recalculateInterval,
     )
   } else if (state === 'disconnected') {
@@ -25,3 +22,16 @@ autorun(() => {
     }
   }
 })
+
+const memoedUpdater = (() => {
+  let memo: any = undefined
+
+  return () => {
+    const res = priorityCalculator.update()
+    if (res !== memo) {
+      // TODO send res to Jitsi bridge
+      console.log('new priority:', res)
+      memo = res
+    }
+  }
+})()
