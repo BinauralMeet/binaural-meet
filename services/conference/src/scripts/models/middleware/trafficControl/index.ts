@@ -30,7 +30,7 @@ const memoedUpdater = (() => {
     const res = priorityCalculator.update()
     if (res !== memo) {
       // TODO send res to Jitsi bridge
-      console.log('new priority:', res)
+      // console.log('new priority:', res)
       memo = res
     }
   }
