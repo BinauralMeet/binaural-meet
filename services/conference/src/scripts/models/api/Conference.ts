@@ -451,6 +451,10 @@ export class Conference extends EventEmitter {
       this.localId = this._jitsiConference!.myUserId()
       const local = new LocalParticipant(this.localId)
 
+      const oldLocal = ParticiantsStore.local.get()
+      if (oldLocal) {
+        local.pose = oldLocal.pose
+      }
       ParticiantsStore.local.set(local)
 
       this.bindStore(local)

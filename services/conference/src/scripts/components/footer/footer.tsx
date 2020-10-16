@@ -1,6 +1,5 @@
 import {BaseProps} from '@components/utils'
 import {useStore as useParticipantsStore} from '@hooks/ParticipantsStore'
-import Fab from '@material-ui/core/Fab'
 import Menu from '@material-ui/core/Menu'
 import MenuItem from '@material-ui/core/MenuItem'
 import {makeStyles} from '@material-ui/core/styles'
@@ -13,6 +12,7 @@ import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
 import SpeakerOnIcon from '@material-ui/icons/VolumeUp'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
+import {FabMain, FabSub} from './FabNoFocus'
 import {ShareButton} from './share/ShareButton'
 import {StereoAudioSwitch} from './StereoAudioSwitch'
 import {StereoConfig} from './StereoConfig'
@@ -28,18 +28,11 @@ const useStyles = makeStyles((theme) => {
       },
       pointerEvents: 'none',
     },
-    margin: {
-      margin: theme.spacing(1),
-      pointerEvents: 'auto',
-    },
-    small: {
-      transform: 'scale(0.5)',
-      margin: '1.2em 0 0 -2.1em',
-      pointerEvents: 'auto',
-    },
   })
 })
 
+
+// onDrag: (state:DragState<ET>) => void
 
 export const Footer: React.FC<BaseProps> = (props) => {
   const classes = useStyles()
@@ -106,67 +99,64 @@ export const Footer: React.FC<BaseProps> = (props) => {
 
   return (
     <div className={classes.box}>
-      <StereoAudioSwitch className={classes.margin} />
-      <Fab className={classes.small} size="small"
-        onClick = { (ev) => { setStereoSwEl(ev.currentTarget) }}
-      >
+      <StereoAudioSwitch />
+      <FabSub onClick = { (ev) => { setStereoSwEl(ev.currentTarget) }}>
         <MoreIcon />
-      </Fab>
+      </FabSub>
       <StereoConfig anchorEl = {stereoSwEl} onClose = { () => { setStereoSwEl(null) } } />
 
-      <Fab className={classes.margin} size = "small" color={mute.muteS ? 'primary' : 'secondary' }
+      <FabMain color={mute.muteS ? 'primary' : 'secondary' }
         aria-label="speaker" onClick = {
            () => { participants.local.get().plugins.streamControl.muteSpeaker = !mute.muteS }
         }>
         {mute.muteS ? <SpeakerOffIcon /> : <SpeakerOnIcon /> }
-      </Fab>
-      <Fab className={classes.small} size="small" onClick = { (ev) => {
+      </FabMain>
+      <FabSub onClick = { (ev) => {
         updateDevices(ev)
         setSpeakerMenuEl(ev.currentTarget)
       }}>
         <MoreIcon />
-      </Fab>
+      </FabSub>
       <Menu anchorEl={speakerMenuEl} keepMounted={true}
         open={Boolean(speakerMenuEl)} onClose={() => { closeSpeakerMenu('') }}>
         {speakerMenuItems}
       </Menu>
 
-      <Fab className={classes.margin} size = "small" color={mute.muteA ? 'primary' : 'secondary' }
-        aria-label="mic" onClick = { () => { participants.local.get().plugins.streamControl.muteAudio = !mute.muteA }}>
+      <FabMain color={mute.muteA ? 'primary' : 'secondary' } aria-label="mic"
+        onClick = { () => { participants.local.get().plugins.streamControl.muteAudio = !mute.muteA }}>
         {mute.muteA ? <MicOffIcon /> : <MicIcon /> }
-      </Fab>
-      <Fab className={classes.small} size="small" onClick = { (ev) => {
+      </FabMain>
+      <FabSub onClick = { (ev) => {
         updateDevices(ev)
         setMicMenuEl(ev.currentTarget)
       }}>
         <MoreIcon />
-      </Fab>
+      </FabSub>
       <Menu anchorEl={micMenuEl} keepMounted={true}
         open={Boolean(micMenuEl)} onClose={() => { closeMicMenu('') }}>
         {micMenuItems}
       </Menu>
 
-      <Fab className={classes.margin} size = "small" color={mute.muteV ? 'primary' : 'secondary'}
+      <FabMain color={mute.muteV ? 'primary' : 'secondary'}
           aria-label="camera" onClick = { () => {
             participants.local.get().plugins.streamControl.muteVideo = !mute.muteV
             console.log('muteV:', mute.muteV)
           }
       }>
         {mute.muteV ? <VideoOffIcon /> : <VideoIcon /> }
-      </Fab>
-      <Fab className={classes.small} size="small"
-        aria-label="cameraSelect" onClick = { (ev) => {
-          updateDevices(ev)
-          setVideoMenuEl(ev.currentTarget)
-        }}>
+      </FabMain>
+      <FabSub aria-label="cameraSelect" onClick = { (ev) => {
+        updateDevices(ev)
+        setVideoMenuEl(ev.currentTarget)
+      }}>
         <MoreIcon />
-      </Fab>
+      </FabSub>
       <Menu anchorEl={videoMenuEl} keepMounted={true}
         open={Boolean(videoMenuEl)} onClose={() => { closeVideoMenu('') }}>
         {videoMenuItems}
       </Menu>
 
-      <ShareButton className={classes.margin} />
+      <ShareButton />
 
    </div >
   )

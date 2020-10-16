@@ -12,11 +12,9 @@ import {MainScreen} from './map/MainScreen'
 import {Map} from './map/map'
 import {styleCommon, styleForSplit} from './utils/styles'
 
-
 export const App: React.FC<{}> = () => {
   const clsSplit = styleForSplit()
   const classes = styleCommon()
-  const defaultLeftBarWidth = 100
 
   return (
     <ParticipantsProvider value={participantsStore}>
@@ -24,7 +22,7 @@ export const App: React.FC<{}> = () => {
     <MapProvider value={mapStore}>
       <div className={classes.back}>
         <SplitPane className={classes.fill} split="vertical" resizerClassName={clsSplit.resizerVertical}
-          minSize={0} defaultSize={defaultLeftBarWidth}>
+          minSize={0} defaultSize="7em">
           <LeftBar />
           <div >
             <MainScreen />

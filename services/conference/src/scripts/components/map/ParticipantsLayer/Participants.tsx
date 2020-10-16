@@ -13,22 +13,22 @@ export const ParticipantsLayer: React.FC<{}> = (props) => {
   )))
   const localId = useObserver(() => store.localId)
   const remoteElements = ids.map(id => <Participant key={id} participantId={id} size={PARTICIPANT_SIZE} />)
-  const localElement = (<LocalParticipant key={localId} participantId={localId} size={PARTICIPANT_SIZE} />)
+  const localElement = (<LocalParticipant key={'local'} participantId={localId} size={PARTICIPANT_SIZE} />)
 
   const mouseIds = useObserver(() => Array.from(store.remote.keys()).filter(id => (
     store.find(id)!.mousePosition
   )))
+  const remoteMouseCursors = mouseIds.map(id => <MouseCursor key={id} participantId={id} />)
+
   const localMousePosition = useObserver(() => store.local.get().mousePosition)
-  if (localMousePosition) {
-    mouseIds.push(store.localId)
-  }
-  const mouseCursors = mouseIds.map(id => <MouseCursor key={id} participantId={id} />)
+  const localMouseCursor = localMousePosition ? <MouseCursor key={'local'} participantId={localId} /> : undefined
 
   return(
     <div>
       {remoteElements}
       {localElement}
-      {mouseCursors}
+      {remoteMouseCursors}
+      {localMouseCursor}
     </div>
   )
 }
