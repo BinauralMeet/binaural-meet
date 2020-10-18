@@ -4,7 +4,7 @@ import {StoreProvider as ContentsProvider} from '@hooks/SharedContentsStore'
 import mapStore from '@stores/MapObject/MapData'
 import participantsStore from '@stores/participants/Participants'
 import sharedContentsStore from '@stores/sharedContents/SharedContents'
-import React from 'react'
+import React, {Fragment} from 'react'
 import SplitPane from 'react-split-pane'
 import {Footer} from './footer/footer'
 import {LeftBar} from './leftBar/LeftBar'
@@ -24,11 +24,11 @@ export const App: React.FC<{}> = () => {
         <SplitPane className={classes.fill} split="vertical" resizerClassName={clsSplit.resizerVertical}
           minSize={0} defaultSize="7em">
           <LeftBar />
-          <div >
+          <Fragment>
             <MainScreen />
             <Map />
             <Footer />
-          </div>
+          </Fragment>
         </SplitPane>
       </div>
     </MapProvider>

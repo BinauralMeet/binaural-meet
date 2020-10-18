@@ -1,6 +1,11 @@
 import {makeStyles} from '@material-ui/core/styles'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import React from 'react'
+import {useStore} from 'hooks/SharedContentsStore'
+import React, {useMemo} from 'react'
+import {YouTube} from './YouTube'
+
+const CONTENTLOG = true
+export const contentLog = CONTENTLOG ? console.log : (a:any) => {}
 
 const useStyles = makeStyles({
   img: {
@@ -17,18 +22,24 @@ const useStyles = makeStyles({
     overflow: 'hidden',
   },
 })
-
-export const Content: React.FC<any> = (props) => {
-  const content = props.content as ISharedContent
+export interface ContentProps{
+  content:ISharedContent
+}
+export const Content: React.FC<ContentProps> = (props:ContentProps) => {
   const classes = useStyles()
-  if (content.type === 'img') {
-    return <img className={classes.img} src={content.url} />
-  } if (content.type === 'iframe') {
-    return <iframe className={classes.iframe} src={content.url} />
-  } if (content.type === 'text') {
-    return <div className={classes.text} >{content.url}</div>
+
+  let rv
+  if (props.content.type === 'img') {
+    rv = <img className={classes.img} src={props.content.url} />
+  }else if (props.content.type === 'iframe') {
+    rv = <iframe className={classes.iframe} src={props.content.url} />
+  }else if (props.content.type === 'youtube') {
+    rv = <YouTube content = {props.content} />
+  }else if (props.content.type === 'text') {
+    rv =  <div className={classes.text} >{props.content.url}</div>
+  }else {
+    rv = <div className={classes.text} >Unknow type:{props.content.type} for {props.content.url}</div>
   }
 
-  return <div className={classes.text} >Unknow type:{content.type} for {content.url}</div>
-
+  return rv
 }

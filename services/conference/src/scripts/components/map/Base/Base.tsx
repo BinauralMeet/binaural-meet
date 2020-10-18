@@ -4,7 +4,7 @@ import {useStore} from '@hooks/ParticipantsStore'
 import {makeStyles} from '@material-ui/core/styles'
 import {
   crossProduct, extractRotation, extractScaleX, multiply,
-  radian2Degree, rotate90ClockWise, rotateVector2D, transformPoint2D, vectorLength,
+  radian2Degree, rotate90ClockWise, rotateVector2D, transformPoint2D, transfromAt, vectorLength,
 } from '@models/utils'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef, useState} from 'react'
@@ -280,14 +280,6 @@ Base.displayName = 'MapBase'
 
 
 //  utility
-function transfromAt(center:[number, number], tranform: DOMMatrixReadOnly, baseMatrix:DOMMatrixReadOnly) {
-  const tm = (new DOMMatrix()).translate(
-    ...subV([0, 0] as [number, number], center))
-  const itm = (new DOMMatrix()).translateSelf(...center)
-  const newMatrix = multiply([itm, tranform, tm, baseMatrix])
-
-  return newMatrix
-}
 function limitScale(currentScale: number, scale: number): number {
   const targetScale = currentScale * scale
 

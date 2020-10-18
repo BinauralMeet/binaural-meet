@@ -1,7 +1,10 @@
 import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
-import {rotateVector2DByDegree} from '@models/utils'
+import {
+  crossProduct, extractRotation, extractScaleX, multiply, radian2Degree,
+  rotate90ClockWise, rotateVector2D, rotateVector2DByDegree, transformPoint2D, transfromAt,
+  vectorLength } from '@models/utils'
 import React, {useEffect, useRef} from 'react'
 import {addV, subV} from 'react-use-gesture'
 import {DragHandler, DragState} from '../../utils/DragHandler'
@@ -22,17 +25,15 @@ function mulV<T extends number[]>(s: number, vec: T): T {
 
 type LocalParticipantProps = ParticipantProps
 interface LocalParticipantStatic{
-  //  buttons: number
-  //  xy: [number, number]
   smoothedDelta: [number, number]
-  //  timer: NodeJS.Timeout | undefined
+  scrollAgain: boolean
 }
 const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   const participants = useStore()
   const participant = participants.find(props.participantId)
   const map = useMapStore()
   const transform = useTransform()
-  const memo = useRef<LocalParticipantStatic>(new Object() as LocalParticipantStatic).current
+  const staticMemo = useRef<LocalParticipantStatic>(new Object() as LocalParticipantStatic).current
 
   const moveParticipant = (state: DragState<HTMLDivElement>) => {
     //  move local participant
@@ -46,9 +47,9 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
       const localDelta = transform.rotateG2L(delta)
       participant!.pose.position = addV(participant!.pose.position, localDelta)
       const SMOOTHRATIO = 0.8
-      if (!memo.smoothedDelta) { memo.smoothedDelta = [delta[0], delta[1]] }
-      memo.smoothedDelta = addV(mulV(1 - SMOOTHRATIO, localDelta), mulV(SMOOTHRATIO, memo.smoothedDelta))
-      const dir = Math.atan2(memo.smoothedDelta[0], -memo.smoothedDelta[1]) * HALF_DEGREE / Math.PI
+      if (!staticMemo.smoothedDelta) { staticMemo.smoothedDelta = [delta[0], delta[1]] }
+      staticMemo.smoothedDelta = addV(mulV(1 - SMOOTHRATIO, localDelta), mulV(SMOOTHRATIO, staticMemo.smoothedDelta))
+      const dir = Math.atan2(staticMemo.smoothedDelta[0], -staticMemo.smoothedDelta[1]) * HALF_DEGREE / Math.PI
       let diff = dir - participant!.pose.orientation
       if (diff < -HALF_DEGREE) { diff += WHOLE_DEGREE }
       if (diff > HALF_DEGREE) { diff -= WHOLE_DEGREE }
@@ -58,26 +59,75 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
       participant!.pose.position = addV(transform.rotateG2L(delta), participant!.pose.position)
     }
   }
+  const moveParticipantByKey = (keys:Set<string>) => {
+    let deltaF = 0
+    let deltaA = 0
+    const VEL = 10
+    const ANGVEL = 5
+    let relatedKeyPressed = false
+    if (keys.has('ArrowUp') || keys.has('KeyW')) {
+      deltaF = VEL
+      relatedKeyPressed = true
+    }
+    if (keys.has('ArrowDown') || keys.has('KeyZ')) {
+      deltaF = -VEL * HALF
+      relatedKeyPressed = true
+    }
+    if (keys.has('ArrowLeft') || keys.has('KeyA') || keys.has('KeyQ')) {
+      deltaA = -ANGVEL
+      relatedKeyPressed = true
+    }
+    if (keys.has('ArrowRight') || keys.has('KeyS') || keys.has('KeyE')) {
+      deltaA = ANGVEL
+      relatedKeyPressed = true
+    }
+    if (keys.has('ShiftLeft') || keys.has('ShiftRight')) {
+      deltaA *= 2
+      deltaF *= 2
+    }
+    let newA = participant!.pose.orientation + deltaA
+    if (newA > HALF_DEGREE) { newA -= WHOLE_DEGREE }
+    if (newA < -HALF_DEGREE) { newA += WHOLE_DEGREE }
+    participant!.pose.orientation = newA
+    if (!participants.local.get().thirdPersonView) {
+      const center = transformPoint2D(map.matrix, participants.local.get().pose.position)
+      const changeMatrix = (new DOMMatrix()).rotateSelf(0, 0, -deltaA)
+      const newMatrix = transfromAt(center, changeMatrix, map.matrix)
+      map.setMatrix(newMatrix)
+      map.setCommittedMatrix(newMatrix)
+    }
+    const delta = rotateVector2DByDegree(participant!.pose.orientation, [0, -deltaF])
+    //  console.log(participant!.pose.position, delta)
+    const newPos = addV(participant!.pose.position, delta)
+    if (newPos[0] < -MAP_SIZE * HALF) { newPos[0] = -MAP_SIZE * HALF }
+    if (newPos[0] > MAP_SIZE * HALF) { newPos[0] = MAP_SIZE * HALF }
+    if (newPos[1] < -MAP_SIZE * HALF) { newPos[1] = -MAP_SIZE * HALF }
+    if (newPos[1] > MAP_SIZE * HALF) { newPos[1] = MAP_SIZE * HALF }
+    participant!.pose.position = newPos
+
+    return relatedKeyPressed
+  }
+
   const scrollMap = () => {
     const posOnScreen = map.toWindow(participant!.pose.position)
     const target = [posOnScreen[0], posOnScreen[1]]
     const RATIO = 0.2
     const left = map.left + map.screenSize[0] * RATIO
     const right = map.left +  map.screenSize[0] * (1 - RATIO)
-    const top = map.screenSize[1] * RATIO
     const bottom = map.screenSize[1] * (1 - RATIO)
+    const top = participants.local.get().thirdPersonView ? map.screenSize[1] * RATIO : bottom
     if (target[0] < left) { target[0] = left }
     if (target[0] > right) { target[0] = right }
     if (target[1] < top) { target[1] = top }
     if (target[1] > bottom) { target[1] = bottom }
     let diff = subV(posOnScreen, target) as [number, number]
     const norm = Math.sqrt(diff[0] * diff[0] + diff[1] * diff[1])
-    const EPSILON = 1e-5
     if (norm > MAP_SPEED_LIMIT) {
       diff = mulV(MAP_SPEED_LIMIT / norm, diff) as [number, number]
     }
     const SCROOL_SPEED = 0.2
     const mapMove = mulV(SCROOL_SPEED, map.rotateFromWindow(diff) as [number, number])
+    const EPSILON = 0.2
     if (Math.abs(mapMove[0]) + Math.abs(mapMove[1]) > EPSILON) {
       const newMat = map.matrix.translate(-mapMove[0], -mapMove[1])
       const trans = map.rotateFromWindow([newMat.e, newMat.f])
@@ -91,6 +141,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
       [newMat.e, newMat.f] = transMap
       map.setMatrix(newMat)
       map.setCommittedMatrix(newMat)
+      staticMemo.scrollAgain = !changed
 
       return !changed
     }
@@ -112,40 +163,13 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   }
   const onKeyTimer = (keys:Set<string>) => {
     //   console.log('onKeyTimer()', keys)
-    let deltaF = 0
-    let deltaA = 0
-    const VEL = 10
-    const ANGVEL = 5
-    if (keys.has('ArrowUp') || keys.has('KeyW')) {
-      deltaF = VEL
-    }
-    if (keys.has('ArrowDown') || keys.has('KeyZ')) {
-      deltaF = -VEL * HALF
-    }
-    if (keys.has('ArrowLeft') || keys.has('KeyA') || keys.has('KeyQ')) {
-      deltaA = -ANGVEL
-    }
-    if (keys.has('ArrowRight') || keys.has('KeyS') || keys.has('KeyE')) {
-      deltaA = ANGVEL
-    }
-    if (keys.has('ShiftLeft') || keys.has('ShiftRight')) {
-      deltaA *= 2
-      deltaF *= 2
-    }
-    let newA = participant!.pose.orientation + deltaA
-    if (newA > HALF_DEGREE) { newA -= WHOLE_DEGREE }
-    if (newA < -HALF_DEGREE) { newA += WHOLE_DEGREE }
-    participant!.pose.orientation = newA
-    const delta = rotateVector2DByDegree(participant!.pose.orientation, [0, -deltaF])
-    //  console.log(participant!.pose.position, delta)
-    const newPos = addV(participant!.pose.position, delta)
-    if (newPos[0] < -MAP_SIZE * HALF) { newPos[0] = -MAP_SIZE * HALF }
-    if (newPos[0] > MAP_SIZE * HALF) { newPos[0] = MAP_SIZE * HALF }
-    if (newPos[1] < -MAP_SIZE * HALF) { newPos[1] = -MAP_SIZE * HALF }
-    if (newPos[1] > MAP_SIZE * HALF) { newPos[1] = MAP_SIZE * HALF }
-    participant!.pose.position = newPos
+    const participantMoved = moveParticipantByKey(keys)
 
-    return scrollMap()
+    if (staticMemo.scrollAgain || participantMoved) {
+      return scrollMap()
+    }
+
+    return false
   }
 
   //  pointer drag

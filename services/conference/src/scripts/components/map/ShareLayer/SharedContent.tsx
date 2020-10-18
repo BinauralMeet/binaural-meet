@@ -24,15 +24,15 @@ export const SharedContent: React.FC<SharedContentProps> = (props:SharedContentP
       }
       onUpdate={
         (newContent: ISharedContent) => {
-          const old = props.content
+          /*const old = props.content
           let identical = false
           if (old.zorder === newContent.zorder) {
             old.zorder += 1
             if (old.zorder === newContent.zorder) {
               identical = true
             }
-          }
-          console.log('RndContent onUpdate from ', old, ' to ', newContent, ` ==? ${identical} `)
+          }*/
+          //  console.log('RndContent onUpdate from ', old, ' to ', newContent, ` ==? ${identical} `)
           store.updateContents([newContent])
         }
       }

@@ -95,7 +95,8 @@
     "sass": "^1.26.11",
     "sass-loader": "^10.0.2",
     "tern": "^0.24.3",
-    "throttle-debounce": "^2.1.0"
+    "throttle-debounce": "^2.1.0",
+    "yt-player": "https://github.com/BinauralMeet/yt-player.git"
   },
   "jest": {
     "transform": {

@@ -6,18 +6,14 @@ import React, {useEffect, useRef} from 'react'
 const useStyles = makeStyles({
   videoContainer: {
     height: '90%',
+    width: '100%',
     backgroundColor: 'none',
   },
-  videoLargerWidth: {
+  video:{
     marginLeft: 'auto',
     marginRight: 'auto',
     display: 'block',
     height: '100%',
-  },
-  videoLargerHeight: {
-    marginLeft: 'auto',
-    marginRight: 'auto',
-    display: 'block',
     width: '100%',
   },
 })
@@ -25,24 +21,9 @@ const useStyles = makeStyles({
 const setStream = (
   video: HTMLVideoElement,
   stream: MediaStream | null,
-  videoLargerWidthClass:string,
-  videoLargerHeightClass:string,
   ) => {
   video.srcObject = stream
   video.autoplay = true
-  video.onloadedmetadata = () => {
-    const settings = {
-      width: video.width,
-      height: video.height,
-    }
-
-    if (settings.width !== undefined && settings.height !== undefined) {
-      video.className = settings.width >= settings.height ? videoLargerWidthClass : videoLargerHeightClass
-    } else {
-      console.error('video stream width || height is undefined')
-      video.className = videoLargerWidthClass
-    }
-  }
 }
 
 export const MainScreen: React.FC = () => {
@@ -53,9 +34,8 @@ export const MainScreen: React.FC = () => {
 
   useEffect(
     () => {
-      if (videoRef !== null && videoRef.current !== null) {
-        setStream(videoRef.current, stream ? stream : null,
-                  classes.videoLargerWidth, classes.videoLargerHeight)
+      if (videoRef && videoRef.current) {
+        setStream(videoRef.current, stream ? stream : null)
       }
     },
     [stream],
@@ -63,7 +43,7 @@ export const MainScreen: React.FC = () => {
 
   return (
     <div className={classes.videoContainer} >
-      <video ref={videoRef} style= {{visibility : stream ? 'visible' : 'hidden'} } />
+      <video ref={videoRef} className={classes.video} style={{visibility : stream ? 'visible' : 'hidden'} } />
     </div>
   )
 }
