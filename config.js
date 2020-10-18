@@ -16,7 +16,6 @@ const rtcConfig = {
       },
       frameRate: {
         ideal: 20,
-        max: 40,
       },
     },
   },
@@ -69,6 +68,7 @@ const config_alpha = {
     useStunTurn: true, // use XEP-0215 to fetch STUN and TURN servers for the P2P connection
   },
   bosh: 'https://alpha.jitsi.net/http-bind', // FIXME: use xep-0156 for that
+  openBridgeChannel: 'websocket', // One of true, 'datachannel', or 'websocket'
   rtc:rtcConfig
 }
 
@@ -78,7 +78,7 @@ const config_local = {
     muc: 'muc.meet.jitsi',
     focus: 'focus.meet.jitsi',
   },
-//  openBridgeChannel: 'datachannel', // One of true, 'datachannel', or 'websocket'
+  //  openBridgeChannel: 'datachannel', // One of true, 'datachannel', or 'websocket'
   bosh: 'https://localhost:8443/http-bind', // FIXME: use xep-0156 for that
   clientNode: 'http://jitsi.org/jitsimeet',
   focusUserJid: 'focus@auth.meet.jitsi',
