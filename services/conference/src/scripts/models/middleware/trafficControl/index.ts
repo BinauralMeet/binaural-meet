@@ -1,3 +1,4 @@
+import {connection} from '@models/api'
 import {PriorityCalculator} from '@models/trafficControl/PriorityCalculator'
 import {connectionInfo} from '@stores/index'
 import {autorun} from 'mobx'
@@ -28,9 +29,17 @@ const memoedUpdater = (() => {
 
   return () => {
     const res = priorityCalculator.update()
+    /*  Test for JVB
+    if (res.video.length > 1) {
+      res.video.pop()
+    }
+    if (res.audio.length > 1) {
+      res.audio.pop()
+    } //  */
     if (res !== memo) {
-      // TODO send res to Jitsi bridge
-      // console.log('new priority:', res)
+      // Send res to Jitsi bridge
+      connection.conference.setPerceptibles([res.video, res.audio])
+      //  console.log('setPerceptibles:', res)
       memo = res
     }
   }

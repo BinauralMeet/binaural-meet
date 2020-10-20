@@ -75,7 +75,7 @@ export class Conference extends EventEmitter {
     this._jitsiConference.join('')
   }
 
-  //  Commmands for shared contents
+  //  Commmands for shared contents --------------------------------------------
   public sendSharedContents(cs: ISharedContent[]) {
     const ccs = removePerceptibility(cs)
     contentLog('send contents: ', ccs)
@@ -104,6 +104,7 @@ export class Conference extends EventEmitter {
     return []
   }
 
+  //  Jitsi API Calls ----------------------------------------
   //  generic send command
   public sendCommand(name: string, values: JitsiValues) {
     this._jitsiConference?.sendCommand(name, values)
@@ -111,6 +112,17 @@ export class Conference extends EventEmitter {
   public removeCommand(name: string) {
     this._jitsiConference?.removeCommand(name)
   }
+
+  //
+  public setSenderVideoConstraint(height: number) {
+    this._jitsiConference?.setSenderVideoConstraint(height)
+  }
+
+  //  send Perceptibles API added by hasevr
+  public setPerceptibles(perceptibles:[string[], string[]]) {
+    this._jitsiConference?.setPerceptibles(perceptibles)
+  }
+
 
   //  Send local participant's property
   private sendLocalParticipantInformationDisposer = autorun(
