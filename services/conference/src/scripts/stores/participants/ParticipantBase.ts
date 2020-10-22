@@ -60,7 +60,7 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
   }
 }
 
-export class TracksStore<T extends JitsiTrack> implements Tracks<T>{
+export class TracksStore<T extends JitsiTrack> implements Tracks{
   @observable.ref audio:T|undefined = undefined
   @observable audioLevel = 0
   @observable.ref avatar:T|undefined = undefined

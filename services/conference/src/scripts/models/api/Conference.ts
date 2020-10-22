@@ -73,6 +73,12 @@ export class Conference extends EventEmitter {
     this._isForTest = isForTest
     this.registerJistiConferenceEvents(this._jitsiConference)
     this._jitsiConference.join('')
+    this._jitsiConference.setSenderVideoConstraint(1080)
+    //  To access from debug console, add object d to the window.
+    ; (window as any).d = {
+      conference: this,
+      jc:this._jitsiConference,
+  }
   }
 
   //  Commmands for shared contents --------------------------------------------
@@ -120,7 +126,9 @@ export class Conference extends EventEmitter {
 
   //  send Perceptibles API added by hasevr
   public setPerceptibles(perceptibles:[string[], string[]]) {
-    this._jitsiConference?.setPerceptibles(perceptibles)
+    if (this._jitsiConference?.setPerceptibles) {
+      this._jitsiConference.setPerceptibles(perceptibles)
+    }
   }
 
 
@@ -624,7 +632,10 @@ export class Conference extends EventEmitter {
     return this._jitsiConference ? this._jitsiConference.getLocalVideoTrack() : null
   }
   public replaceTrack(oldTrack: JitsiLocalTrack, newTrack: JitsiLocalTrack) {
-    this._jitsiConference?.replaceTrack(oldTrack, newTrack)
+    if (this._jitsiConference) {
+      newTrack.conference = this._jitsiConference
+      this._jitsiConference.replaceTrack(oldTrack, newTrack)
+    }
   }
   public removeTrack(track: JitsiLocalTrack) {
     this._jitsiConference?.removeTrack(track)

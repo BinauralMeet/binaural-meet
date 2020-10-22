@@ -6,7 +6,7 @@ export interface ParticipantBase extends MapObject{
   id: string
   information: Information
   physics: Physics
-  tracks: Tracks<JitsiTrack>
+  tracks: Tracks
   mousePosition: [number, number] | undefined
 }
 
@@ -14,7 +14,6 @@ export interface RemoteParticipant extends ParticipantBase {
 }
 
 export interface LocalParticipant extends ParticipantBase {
-  tracks: Tracks<JitsiLocalTrack>
 }
 
 export interface Pose3DAudio {  // right hand cartesian coordinate system
@@ -35,9 +34,9 @@ export const defaultInformation:Information = {
   avatarSrc: '',
 }
 
-export interface Tracks<T extends JitsiTrack> {
-  audio: T | undefined
-  avatar: T | undefined
+export interface Tracks {
+  audio: JitsiTrack | undefined
+  avatar: JitsiTrack | undefined
   audioStream: MediaStream | undefined
   avatarStream: MediaStream | undefined
 }
