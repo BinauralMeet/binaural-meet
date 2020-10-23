@@ -78,7 +78,7 @@ export class Conference extends EventEmitter {
     ; (window as any).d = {
       conference: this,
       jc:this._jitsiConference,
-  }
+    }
   }
 
   //  Commmands for shared contents --------------------------------------------
@@ -327,6 +327,21 @@ export class Conference extends EventEmitter {
     )
 
     /**
+     * Event: JitsiMeetJS.events.conference.TRACK_VIDEOTYPE_CHANGED
+     */
+    conference.on(
+      JitsiMeetJS.events.conference.REMOTE_TRACK_VIDEOTYPE_CHANGING,
+      (track: JitsiRemoteTrack, newType: string) => {
+        this.onRemoteTrackRemoved(track)
+      })
+    conference.on(
+      JitsiMeetJS.events.conference.REMOTE_TRACK_VIDEOTYPE_CHANGED,
+      (track: JitsiRemoteTrack, oldType: string) => {
+        this.onRemoteTrackAdded(track)
+      })
+
+
+    /**
      * Event: JitsiMeetJS.events.conference.TRACK_MUTE_CHANGED
      * @emits ConferenceEvents.TRACK_MUTE_CHANGED
      */
@@ -542,6 +557,8 @@ export class Conference extends EventEmitter {
       return
     }
 
+    console.log(`onRemoteTrackAdded ${track} videoType:'${track.videoType ? track.videoType : undefined}'.`)
+
     const pid = track.getParticipantId()
     if (track.isMainScreen && track.isMainScreen()) {
       //  console.log(`${track} videoType:${(track as any).videoType} added`)
@@ -569,7 +586,7 @@ export class Conference extends EventEmitter {
       }
     }
   }
-  private onRemoteTrackRemoved(track: JitsiLocalTrack) {
+  private onRemoteTrackRemoved(track: JitsiRemoteTrack) {
     const pid = track.getParticipantId()
     if (track.isMainScreen && track.isMainScreen()) {
       const tracks:Set<JitsiTrack> = new Set(sharedContents.remoteMainTracks.get(pid))

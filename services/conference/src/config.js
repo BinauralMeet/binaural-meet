@@ -89,5 +89,5 @@ const config_local = {
   rtc:rtcConfig
 }
 
-const config = config_local
+const config = config_alpha
 config.thirdPersonView = true
