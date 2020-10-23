@@ -650,7 +650,6 @@ export class Conference extends EventEmitter {
   }
   public replaceTrack(oldTrack: JitsiLocalTrack, newTrack: JitsiLocalTrack) {
     if (this._jitsiConference) {
-      newTrack.conference = this._jitsiConference
       this._jitsiConference.replaceTrack(oldTrack, newTrack)
     }
   }
@@ -660,7 +659,6 @@ export class Conference extends EventEmitter {
   public addTracks(tracks: JitsiLocalTrack[]) {
     if (this._jitsiConference) {
       for (const track of tracks) {
-        track.conference = this._jitsiConference
         if (track !== tracks[tracks.length - 1]) {
           this._jitsiConference.addTrack(track)
         }else {
