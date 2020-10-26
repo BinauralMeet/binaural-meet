@@ -1,10 +1,11 @@
 import {useStore as useContentsStore} from '@hooks/SharedContentsStore'
 import {makeStyles} from '@material-ui/core'
 import TraceablePeerConnection from 'lib-jitsi-meet/modules/RTC/TraceablePeerConnection'
-import _, {cloneDeep} from 'lodash'
+import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef, useState} from 'react'
 import {Property} from 'react/node_modules/csstype'
+import {ProgressPlugin} from 'webpack'
 
 const useStyles = makeStyles({
   videoContainer: {
@@ -32,7 +33,7 @@ export interface MainScreenProps{
   showAllTracks?:boolean
 }
 
-export const MainScreen: React.FC<MainScreenProps> = () => {
+export const MainScreen: React.FC<MainScreenProps> = (props) => {
   const classes = useStyles()
   const store = useContentsStore()
   const stream = useObserver(() => (store.mainStream))
@@ -45,7 +46,7 @@ export const MainScreen: React.FC<MainScreenProps> = () => {
     },
     [stream],
   )
-  //  for DEBUG_VIDEO ------------------------------------------------
+  //  for showAllTracks (or DEBUG_VIDEO) ---------------------------------------
   interface DebugVideo{
     stream: MediaStream
     label: string
@@ -55,86 +56,94 @@ export const MainScreen: React.FC<MainScreenProps> = () => {
   const member = useRef<any>({})
   member.current.debugVideos = debugVideos
   const refs = useRef<React.RefObject<HTMLVideoElement>[]>([])
-  //  console.log('MainScreen: ', debugVideos)
 
-  while (refs.current.length < (debugVideos ? debugVideos.length : 0)) {
-    refs.current.push(React.createRef<HTMLVideoElement>())
-  }
-  refs.current.forEach((ref, idx) => {
-    if (ref.current && debugVideos && idx < debugVideos.length) {
-      setStream(ref.current, debugVideos[idx].stream)
-      //  console.log(`setStream for ${idx} ${ref.current}`)
+  if (props.showAllTracks) {
+    while (refs.current.length < (debugVideos ? debugVideos.length : 0)) {
+      refs.current.push(React.createRef<HTMLVideoElement>())
     }
-  })
-
+    refs.current.forEach((ref, idx) => {
+      if (ref.current && debugVideos && idx < debugVideos.length) {
+        setStream(ref.current, debugVideos[idx].stream)
+        //  console.log(`setStream for ${idx} ${ref.current}`)
+      }
+    })
+  }
   useEffect(
     () => {
-      setInterval(() => {
-        const tpc = (window as any).d?.tpc as TraceablePeerConnection
-        if (!tpc || !tpc.peerconnection) { return }
+      if (props.showAllTracks) {
+        const INTERVAL = 1000
+        member.current.interval = setInterval(() => {
+          const tpc = (window as any).d?.tpc as TraceablePeerConnection
+          if (!tpc || !tpc.peerconnection) { return }
 
-        const newVideos:DebugVideo[] = []
-        const localStreams = new Set((tpc.peerconnection as any).getLocalStreams() as MediaStream[])
-        const remoteStreams = new Set((tpc.peerconnection as any).getRemoteStreams() as MediaStream[])
-        tpc.localTracks.forEach((track, id) => {
-          const stream = track.getOriginalStream()
-          const ok = localStreams.delete(stream)
-          newVideos.push({
-            stream,
-            // tslint:disable-next-line: prefer-template
-            label: `Local ssrc:${tpc.getLocalSSRC(track)}\ntype:${track.getType()}\n`
-             + `videoType:${track.videoType}\nmsid:${stream?.id}`
-             + (ok ? 'OK' : ' NOT in pc'),
-            color:'blue',
-          })
-        })
-
-        for (const stream of localStreams.values()) {
-          newVideos.push({
-            stream,
-            // tslint:disable-next-line: prefer-template
-            label: `Local X msid:${stream?.id}`,
-            color:'red',
-          })
-        }
-
-        tpc.remoteTrackMaps.forEach((remoteTrackMap) => {
-          remoteTrackMap.forEach((track, id) => {
+          const newVideos:DebugVideo[] = []
+          const localStreams = new Set((tpc.peerconnection as any).getLocalStreams() as MediaStream[])
+          const remoteStreams = new Set((tpc.peerconnection as any).getRemoteStreams() as MediaStream[])
+          tpc.localTracks.forEach((track, id) => {
             const stream = track.getOriginalStream()
-            const ok = remoteStreams.delete(stream)
+            const ok = localStreams.delete(stream)
             newVideos.push({
               stream,
               // tslint:disable-next-line: prefer-template
-              label: `Remote ssrc:${track.getSSRC()}\ntype:${track.getType()}\n`
+              label: `Local ssrc:${tpc.getLocalSSRC(track)}\ntype:${track.getType()}\n`
               + `videoType:${track.videoType}\nmsid:${stream?.id}`
               + (ok ? 'OK' : ' NOT in pc'),
-              color:'red',
+              color:'blue',
             })
           })
-        })
 
-        for (const stream of remoteStreams.values()) {
-          newVideos.push({
-            stream,
-            // tslint:disable-next-line: prefer-template
-            label: `Remote X msid:${stream?.id}`,
-            color:'blue',
+          for (const stream of localStreams.values()) {
+            newVideos.push({
+              stream,
+              // tslint:disable-next-line: prefer-template
+              label: `Local X msid:${stream?.id}`,
+              color:'red',
+            })
+          }
+
+          tpc.remoteTrackMaps.forEach((remoteTrackMap) => {
+            remoteTrackMap.forEach((track, id) => {
+              const stream = track.getOriginalStream()
+              const ok = remoteStreams.delete(stream)
+              newVideos.push({
+                stream,
+                // tslint:disable-next-line: prefer-template
+                label: `Remote ssrc:${track.getSSRC()}\ntype:${track.getType()}\n`
+                + `videoType:${track.videoType}\nmsid:${stream?.id}`
+                + (ok ? 'OK' : ' NOT in pc'),
+                color:'red',
+              })
+            })
           })
-        }
 
-        const elementFlags = refs.current.map(e => e ? true : false)
-        if (!_.isEqual(member.current.elementFlags, elementFlags)
-          || !_.isEqual(member.current.debugVideos, newVideos)) {
-          // console.log(member.current.debugVideos, newVideos)
-          setDebugVideos(newVideos)
-          member.current.elementFlags = _.cloneDeep(elementFlags)
+          for (const stream of remoteStreams.values()) {
+            newVideos.push({
+              stream,
+              // tslint:disable-next-line: prefer-template
+              label: `Remote X msid:${stream?.id}`,
+              color:'blue',
+            })
+          }
+
+          const elementFlags = refs.current.map(e => e ? true : false)
+          if (!_.isEqual(member.current.elementFlags, elementFlags)
+            || !_.isEqual(member.current.debugVideos, newVideos)) {
+            // console.log(member.current.debugVideos, newVideos)
+            setDebugVideos(newVideos)
+            member.current.elementFlags = _.cloneDeep(elementFlags)
+          }
+        },                                    INTERVAL)
+      }else {
+        if (member.current?.interval) {
+          clearInterval(member.current.interval)
+          member.current.interval = undefined
         }
-      },          1000)
+      }
     },
     [],
   )
 
-  const videos = debugVideos ? debugVideos.map((debugVideo, idx) =>
+  const videos = (props.showAllTracks && debugVideos) ? debugVideos.map((debugVideo, idx) =>
     <div key={idx} style={{display:'inline-block', position:'relative', verticalAlign:'top'}}>
       <video style={{width:300}} ref={refs.current[idx]} />
       <div style={{position:'absolute', left:0, top:0,
