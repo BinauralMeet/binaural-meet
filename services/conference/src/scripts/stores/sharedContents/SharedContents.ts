@@ -7,7 +7,7 @@ import _ from 'lodash'
 import {action, computed, observable} from 'mobx'
 import {SharedContent as SharedContentStore} from './SharedContent'
 
-export const CONTENTLOG = true      // show manipulations and sharing of content
+export const CONTENTLOG = false      // show manipulations and sharing of content
 export const contentLog = CONTENTLOG ? console.log : (a:any) => {}
 export const contentDebug = CONTENTLOG ? console.debug : (a:any) => {}
 

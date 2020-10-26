@@ -61,7 +61,7 @@ const config_alpha = {
     muc: 'conference.alpha.jitsi.net',
     focus: 'focus.alpha.jitsi.net',
   },
-  openBridgeChannel: true, // One of true, 'datachannel'==='true', or 'websocket'
+  openBridgeChannel: 'websocket', // One of true, 'datachannel'==='true', or 'websocket'
   p2p: {
     enabled: false,
     preferH264: true,

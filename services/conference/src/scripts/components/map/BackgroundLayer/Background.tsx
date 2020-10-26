@@ -6,7 +6,7 @@ const HALF = 0.5
 
 const useStyles = makeStyles({
   img: (props:BackgroundProps) => {
-    if (props.isTransparnet) {
+    if (props.transparent) {
       return  {
         position: 'absolute',
         top: - MAP_SIZE * HALF,
@@ -29,7 +29,7 @@ const useStyles = makeStyles({
     }
   },
   logo: (props:BackgroundProps) => {
-    if (props.isTransparnet) {
+    if (props.transparent) {
       return {
         display:'none',
       }
@@ -50,7 +50,7 @@ const useStyles = makeStyles({
 })
 
 export interface BackgroundProps{
-  isTransparnet: boolean
+  transparent?: boolean
 }
 
 export const Background: React.FC<BackgroundProps> = (props) => {

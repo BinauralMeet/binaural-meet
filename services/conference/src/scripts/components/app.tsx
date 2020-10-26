@@ -4,6 +4,7 @@ import {StoreProvider as ContentsProvider} from '@hooks/SharedContentsStore'
 import mapStore from '@stores/MapObject/MapData'
 import participantsStore from '@stores/participants/Participants'
 import sharedContentsStore from '@stores/sharedContents/SharedContents'
+import {useObserver} from 'mobx-react-lite'
 import React, {Fragment} from 'react'
 import SplitPane from 'react-split-pane'
 import {Footer} from './footer/footer'
@@ -15,6 +16,8 @@ import {styleCommon, styleForSplit} from './utils/styles'
 export const App: React.FC<{}> = () => {
   const clsSplit = styleForSplit()
   const classes = styleCommon()
+  const stream = useObserver(() => sharedContentsStore.mainStream)
+  const DEBUG_VIDEO = false //  To see all local and remote tracks or not.
 
   return (
     <ParticipantsProvider value={participantsStore}>
@@ -25,8 +28,8 @@ export const App: React.FC<{}> = () => {
           minSize={0} defaultSize="7em">
           <LeftBar />
           <Fragment>
-            <MainScreen />
-            <Map />
+            <MainScreen showAllTracks = {DEBUG_VIDEO} />
+            <Map transparent={stream !== undefined || DEBUG_VIDEO} />
             <Footer />
           </Fragment>
         </SplitPane>

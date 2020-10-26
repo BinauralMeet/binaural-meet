@@ -110,6 +110,30 @@ export class Conference extends EventEmitter {
     return []
   }
 
+  //  Commmands for local tracks --------------------------------------------
+  private localMicTrack?: JitsiLocalTrack
+  private localCameraTrack?: JitsiLocalTrack
+  public setLocalMicTrack(track: JitsiLocalTrack) {
+    if (this.localMicTrack) {
+      this._jitsiConference?.removeTrack(this.localMicTrack)
+    }
+    this.localMicTrack = track
+    this._jitsiConference?.addTrack(this.localMicTrack)
+  }
+  public setLocalCameraTrack(track: JitsiLocalTrack) {
+    if (this.localCameraTrack) {
+      this._jitsiConference?.removeTrack(this.localCameraTrack)
+    }
+    this.localCameraTrack = track
+    this._jitsiConference?.addTrack(this.localCameraTrack)
+  }
+  public getLocalMicTrack() {
+    return this.localMicTrack
+  }
+  public getLocalCameraTrack() {
+    return this.localCameraTrack
+  }
+
   //  Jitsi API Calls ----------------------------------------
   //  generic send command
   public sendCommand(name: string, values: JitsiValues) {
@@ -494,20 +518,20 @@ export class Conference extends EventEmitter {
 
       this.bindStore(local)
 
-
+      //  create mic and camera tracks
       JitsiMeetJS.createLocalTracks({devices: ['audio', 'video'], constraints: config.rtc.videoConstraints}).then(
-        (tracks: JitsiTrack[]) => {
+        (tracks) => {
           tracks.forEach((track) => {
-            const did_ = track.getTrack().getSettings().deviceId
-            const did:string = did_ ? did_ : ''
+            const did = track.getTrack().getSettings().deviceId || ''
             if (track.getType() === 'audio') {
+              this.setLocalMicTrack(track)
               ParticiantsStore.local.get().devicePreference.audioInputDevice = did
             }else if (track.getType() === 'video') {
               // console.log('Video track created:', JSON.stringify(track))
+              this.setLocalCameraTrack(track)
               ParticiantsStore.local.get().devicePreference.videoInputDevice = did
             }
           })
-          this.addTracks(tracks as JitsiLocalTrack[])
           ParticiantsStore.local.get().devicePreference.audioOutputDevice
            = JitsiMeetJS.mediaDevices.getAudioOutputDevice()
         },
@@ -515,18 +539,18 @@ export class Conference extends EventEmitter {
         console.warn(`${reason.name}:${reason.message}. Retry getUserMedia() without constraint`)
         if (reason.name !== 'gum.permission_denied') {
           JitsiMeetJS.createLocalTracks({devices: ['audio', 'video']}).then(
-            (tracks: JitsiTrack[]) => {
+            (tracks) => {
               tracks.forEach((track) => {
-                const did_ = track.getTrack().getSettings().deviceId
-                const did:string = did_ ? did_ : ''
+                const did = track.getTrack().getSettings().deviceId || ''
                 if (track.getType() === 'audio') {
                   ParticiantsStore.local.get().devicePreference.audioInputDevice = did
+                  this.setLocalMicTrack(track)
                 }else if (track.getType() === 'video') {
                   // console.log('Video track created:', JSON.stringify(track))
                   ParticiantsStore.local.get().devicePreference.videoInputDevice = did
+                  this.setLocalCameraTrack(track)
                 }
               })
-              this.addTracks(tracks as JitsiLocalTrack[])
               ParticiantsStore.local.get().devicePreference.audioOutputDevice
               = JitsiMeetJS.mediaDevices.getAudioOutputDevice()
             },
@@ -557,7 +581,7 @@ export class Conference extends EventEmitter {
       return
     }
 
-    console.log(`onRemoteTrackAdded ${track} videoType:'${track.videoType ? track.videoType : undefined}'.`)
+    //  console.log(`onRemoteTrackAdded ${track} videoType:'${track.videoType ? track.videoType : undefined}'.`)
 
     const pid = track.getParticipantId()
     if (track.isMainScreen && track.isMainScreen()) {
@@ -655,6 +679,9 @@ export class Conference extends EventEmitter {
   }
   public removeTrack(track: JitsiLocalTrack) {
     this._jitsiConference?.removeTrack(track)
+  }
+  public addTrack(track: JitsiLocalTrack) {
+    this._jitsiConference?.addTrack(track)
   }
   public addTracks(tracks: JitsiLocalTrack[]) {
     if (this._jitsiConference) {
