@@ -118,6 +118,7 @@ export class Conference extends EventEmitter {
       this._jitsiConference?.removeTrack(this.localMicTrack)
     }
     this.localMicTrack = track
+    this.localMicTrack.videoType = 'mic'
     this._jitsiConference?.addTrack(this.localMicTrack)
   }
   public setLocalCameraTrack(track: JitsiLocalTrack) {
@@ -125,6 +126,7 @@ export class Conference extends EventEmitter {
       this._jitsiConference?.removeTrack(this.localCameraTrack)
     }
     this.localCameraTrack = track
+    this.localCameraTrack.videoType = 'camera'
     this._jitsiConference?.addTrack(this.localCameraTrack)
   }
   public getLocalMicTrack() {
