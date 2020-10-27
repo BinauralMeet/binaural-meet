@@ -43,7 +43,7 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
     if (sessionStorage.getItem('localParticipantInformation')) {
       storage = sessionStorage
     }
-    console.log(storage === localStorage ? 'Load from localStorage' : 'Load from sessionStorage')
+    console.debug(storage === localStorage ? 'Load from localStorage' : 'Load from sessionStorage')
     const infoInStr = storage.getItem('localParticipantInformation')
     if (infoInStr) {
       Object.assign(this.information, JSON.parse(infoInStr))

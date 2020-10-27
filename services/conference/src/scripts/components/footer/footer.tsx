@@ -140,7 +140,7 @@ export const Footer: React.FC<BaseProps> = (props) => {
       <FabMain color={mute.muteV ? 'primary' : 'secondary'}
           aria-label="camera" onClick = { () => {
             participants.local.get().plugins.streamControl.muteVideo = !mute.muteV
-            console.log('muteV:', mute.muteV)
+            console.debug('muteV:', mute.muteV)
           }
       }>
         {mute.muteV ? <VideoOffIcon /> : <VideoIcon /> }
