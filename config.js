@@ -89,5 +89,5 @@ const config_local = {
   rtc:rtcConfig
 }
 
-const config = config_alpha
+const config = config_party_haselab
 config.thirdPersonView = true
