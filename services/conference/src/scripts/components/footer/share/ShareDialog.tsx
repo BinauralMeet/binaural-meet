@@ -60,7 +60,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
     }
   }
 
-  console.log(`step=${step}, pasteEnabled=${sharedContents.pasteEnabled}`)
+  console.debug(`step=${step}, pasteEnabled=${sharedContents.pasteEnabled}`)
   sharedContents.pasteEnabled = step === 'none' || step === 'entrance'
 
   const title = stepTitle[step]

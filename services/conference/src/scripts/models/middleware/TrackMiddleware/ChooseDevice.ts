@@ -22,7 +22,7 @@ reaction(
   () => participants.local.get().devicePreference.audioInputDevice,
   (did) => {
     JitsiMeetJS.createLocalTracks({devices:['audio'], micDeviceId: did}).then(
-      (tracks: JitsiLocalTrack[]) => { replaceTrack(tracks[0]) },
+      (tracks: JitsiLocalTrack[]) => { connection.conference.setLocalMicTrack(tracks[0]) },
     )
   },
 )
@@ -35,7 +35,7 @@ reaction(
     JitsiMeetJS.createLocalTracks({devices:['video'],
       constraints: config.rtc.videoConstraints, cameraDeviceId: did}).then(
       (tracks: JitsiLocalTrack[]) => {
-        replaceTrack(tracks[0])
+        connection.conference.setLocalCameraTrack(tracks[0])
       },
     )
   },
