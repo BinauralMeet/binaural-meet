@@ -29,7 +29,7 @@ const ConferenceEvents = {
   PARTICIPANT_LEFT: 'participant_left',
 }
 
-const ParticipantProperties = {
+export const ParticipantProperties = {
   PPROP_POSE: 'pose',
   PPROP_MOUSE_POSITION: 'mouse',
   PPROP_CONTENTS: 'contents',
@@ -37,6 +37,7 @@ const ParticipantProperties = {
   PPROP_CONTENTS_REMOVE: 'contents_remove',
   PPROP_INFO: 'info',
   PPROP_PHYSICS: 'physics',
+  PPROP_TRACK_LIMITS: 'trackLimits',
 }
 
 //  Utility
@@ -143,6 +144,12 @@ export class Conference extends EventEmitter {
   }
   public removeCommand(name: string) {
     this._jitsiConference?.removeCommand(name)
+  }
+  public setLocalParticipantProperty(name: string, value:Object) {
+    this._jitsiConference?.setLocalParticipantProperty(name, value)
+  }
+  public getLocalParticipantProperty(name: string): any {
+    return this._jitsiConference?.getLocalParticipantProperty(name)
   }
 
   //
@@ -386,6 +393,7 @@ export class Conference extends EventEmitter {
 
     conference.on(
       JitsiMeetJS.events.conference.PARTICIPANT_PROPERTY_CHANGED,
+      // tslint:disable-next-line: cyclomatic-complexity
       (participant: JitsiParticipant, name: string, oldValue: string, value: string) => {
         connDebug('Participant property has changed.')
 
@@ -447,6 +455,14 @@ export class Conference extends EventEmitter {
             contentLog(`Jitsi: remove request of ${participant.getId()} is updated.`)
             const removes = JSON.parse(value) as string[]
             sharedContents.removeContents(local.id, removes)
+          }
+        }else if (name === ParticipantProperties.PPROP_TRACK_LIMITS) {
+          const local = ParticiantsStore.local.get()
+          if (participant.getId() !== local.id) {
+            const limits = JSON.parse(value) as string[]
+            //  console.log(`PPROP_TRACK_LIMITS of ${limits} received.`)
+            local.remoteVideoLimit = limits[0]
+            local.remoteAudioLimit = limits[1]
           }
         }
       },

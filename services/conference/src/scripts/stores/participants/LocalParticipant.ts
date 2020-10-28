@@ -11,6 +11,8 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
   devicePreference = new DevicePreference()
   @observable useStereoAudio = false  //  will be override by url switch
   @observable thirdPersonView = config.thirdPersonView as boolean
+  @observable remoteVideoLimit = config.remoteVideoLimit || -1 as number
+  @observable remoteAudioLimit = config.remoteAudioLimit || -1 as number
   @action setThirdPersonView(tpv: boolean) { this.thirdPersonView = tpv }
   constructor(id: string) {
     super(id)

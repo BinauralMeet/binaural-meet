@@ -1,6 +1,8 @@
 import {connection} from '@models/api'
 import {PriorityCalculator} from '@models/trafficControl/PriorityCalculator'
 import {connectionInfo} from '@stores/index'
+import participants from '@stores/participants/Participants'
+import _ from 'lodash'
 import {autorun} from 'mobx'
 
 const priorityCalculator = new PriorityCalculator()
@@ -29,13 +31,13 @@ const memoedUpdater = (() => {
 
   return () => {
     const res = priorityCalculator.update()
-    /*  Test for JVB
-    if (res.video.length > 1) {
-      res.video.pop()
+    const local = participants.local.get()
+    if (local.remoteVideoLimit >= 0 && res.video.length > local.remoteVideoLimit) {
+      res.video.splice(local.remoteVideoLimit)
     }
-    if (res.audio.length > 1) {
-      res.audio.pop()
-    } //  */
+    if (local.remoteAudioLimit >= 0 && res.audio.length > local.remoteAudioLimit) {
+      res.audio.splice(local.remoteAudioLimit)
+    }
     if (res !== memo) {
       // Send res to Jitsi bridge
       connection.conference.setPerceptibles([res.video, res.audio])
