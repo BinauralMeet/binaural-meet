@@ -1,6 +1,7 @@
 import {linearReconciliator} from '@models/utils/linearReconciliator'
-import {participantsStore as store} from '@stores/participants'
+import {participantsStore, participantsStore as store} from '@stores/participants'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
+import _ from 'lodash'
 import {autorun, IReactionDisposer} from 'mobx'
 import {Priority, Props} from './priorityTypes'
 
@@ -21,8 +22,9 @@ export class PriorityCalculator {
   } = {}
 
   // batch update
-  private updateAll = true  // true when local participant is changed
+  private updateAll = true    // true when local participant is changed
   private readonly updateSet = new Set<string>() // store changed remote participant
+  limitUpdated = false // true when local participant.remoteVideoLimit orremoteAudioLimit changes
 
   // priority cache
   private readonly priorityMap: PriorityMap = {}
@@ -106,6 +108,7 @@ export class PriorityCalculator {
 
     this.updateAll = false
     this.updateSet.clear()
+    this.limitUpdated = false
 
     return priority
   }
@@ -121,11 +124,20 @@ export class PriorityCalculator {
       }
     })
 
-    const prioritizedIds = Object.keys(this.remotes).sort((a, b) => this.priorityMap[a] - this.priorityMap[b])
+    const prioritizedIdsForVideo = Object.keys(this.remotes).sort((a, b) => this.priorityMap[a] - this.priorityMap[b])
+    const prioritizedIdsForAudio = _.cloneDeep(prioritizedIdsForVideo)
+
+    const local = participantsStore.local.get()
+    if (local.remoteVideoLimit >= 0 && prioritizedIdsForVideo.length > local.remoteVideoLimit) {
+      prioritizedIdsForVideo.splice(local.remoteVideoLimit)
+    }
+    if (local.remoteAudioLimit >= 0 && prioritizedIdsForAudio.length > local.remoteAudioLimit) {
+      prioritizedIdsForAudio.splice(local.remoteAudioLimit)
+    }
 
     const res: Priority = {
-      video: prioritizedIds,
-      audio: prioritizedIds,
+      video: prioritizedIdsForVideo,
+      audio: prioritizedIdsForAudio,
     }
     this.lastPriority = res
 
@@ -141,7 +153,7 @@ export class PriorityCalculator {
   }
 
   private get haveUpdates(): boolean {
-    return this.updateAll || this.updateSet.size !== 0
+    return this.updateAll || this.updateSet.size !== 0 || this.limitUpdated
   }
 }
 

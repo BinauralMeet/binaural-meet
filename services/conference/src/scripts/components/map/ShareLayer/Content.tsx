@@ -32,7 +32,14 @@ export const Content: React.FC<ContentProps> = (props:ContentProps) => {
   if (props.content.type === 'img') {
     rv = <img className={classes.img} src={props.content.url} />
   }else if (props.content.type === 'iframe') {
-    rv = <iframe className={classes.iframe} src={props.content.url} />
+    rv = <iframe className={classes.iframe} src={props.content.url}
+      /*
+      onWheel = {(ev) => {
+        console.log('onWheel', ev)
+        ev.preventDefault()
+        ev.stopPropagation()
+      }}  */
+    />
   }else if (props.content.type === 'youtube') {
     rv = <YouTube content = {props.content} />
   }else if (props.content.type === 'text') {
