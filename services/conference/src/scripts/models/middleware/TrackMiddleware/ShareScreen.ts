@@ -2,8 +2,7 @@ import {connection} from '@models/api'
 import participants from '@stores/participants/Participants'
 import sharedContents from '@stores/sharedContents/SharedContents'
 import {diffSet} from '@stores/utils'
-import {JitsiLocalTrack} from 'lib-jitsi-meet'
-import {configure, reaction} from 'mobx'
+import {reaction} from 'mobx'
 
 reaction(() => sharedContents.remoteMainTracks, (remoteMainTracks) => {
   if (sharedContents.localMainTracks.size) {

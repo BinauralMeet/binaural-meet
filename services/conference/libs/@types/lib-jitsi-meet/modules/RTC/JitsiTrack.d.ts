@@ -49,7 +49,7 @@ declare class JitsiTrack extends EventEmitter {
     trackMediaType: TMediaType,
     videoType: string,
   );
-
+  videoType?: string
   getType: () => 'video' | 'audio'
   isAudioTrack: () => boolean
   isWebRTCTrackMuted: () => boolean
@@ -75,8 +75,6 @@ declare class JitsiTrack extends EventEmitter {
   setAudioLevel: (audioLevel: number, tpc: TraceablePeerConnection) => void
   getMSID: () => string | null
   setAudioOutput: (audioOutputDeviceId: string) => Promise<void>
-
-
 }
 
 

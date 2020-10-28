@@ -138,6 +138,8 @@ export namespace JitsiConferenceEvents {
   const TRACK_AUDIO_LEVEL_CHANGED: string;
   const TRACK_MUTE_CHANGED: string;
   const TRACK_REMOVED: string;
+  const REMOTE_TRACK_VIDEOTYPE_CHANGING: string;
+  const REMOTE_TRACK_VIDEOTYPE_CHANGED: string;
   const TRANSCRIPTION_STATUS_CHANGED: string;
   const USER_JOINED: string;
   const USER_LEFT: string;

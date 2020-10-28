@@ -7,7 +7,7 @@ function applyUrlParameters(local: LocalParticipant) {
   local.loadInformationFromStorage()
   if (urlParameters.userName) { local.information.name = urlParameters.userName }
   local.useStereoAudio = urlParameters.audio === 'stereo' ? true : false
-  console.log('audio parameter', urlParameters.audio)
+  console.debug('audio parameter', urlParameters.audio)
 }
 
 reaction(

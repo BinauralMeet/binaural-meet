@@ -7,7 +7,6 @@ import {reaction} from 'mobx'
 reaction(() => participants.local.get().plugins.streamControl.muteAudio,
          (muteAudio) => {
            const track = participants.local.get().tracks.audio as JitsiLocalTrack
-          //  const track = connection.conference?.getLocalAudioTrack()
            if (track) { muteAudio ? track.mute() : track.unmute() }
            if (muteAudio) {
              participants.local.get().tracks.audioLevel = 0
@@ -16,16 +15,14 @@ reaction(() => participants.local.get().plugins.streamControl.muteAudio,
 )
 reaction(() => participants.local.get().plugins.streamControl.muteVideo,
          (muteVideo) => {
-           const track = connection.conference.getLocalVideoTrack()
+           const track = connection.conference.getLocalCameraTrack()
            if (track) {
              if (muteVideo) {
-               track.mute().then(() => {
-                 participants.local.get().tracks.avatar = undefined
-               })
+               connection.conference.removeTrack(track)
+               participants.local.get().tracks.avatar = undefined
              }else {
-               track.unmute().then(() => {
-                 participants.local.get().tracks.avatar = track
-               })
+               connection.conference.addTrack(track)
+               participants.local.get().tracks.avatar = track
              }
            }
          },
