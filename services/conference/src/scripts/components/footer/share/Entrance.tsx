@@ -6,10 +6,12 @@ import {Icon} from '@iconify/react'
 import List from '@material-ui/core/List'
 import HttpIcon from '@material-ui/icons/Http'
 import ImageIcon from '@material-ui/icons/Image'
+import OpenInBrowserIcon from '@material-ui/icons/OpenInBrowser'
 import ScreenShareIcon from '@material-ui/icons/ScreenShare'
 import StopScreenShareIcon from '@material-ui/icons/StopScreenShare'
 import SubjectIcon from '@material-ui/icons/Subject'
-import {shareMainScreenStream} from '@models/share/shareScreenStream'
+import {assert} from '@models/utils'
+import {createContentOfVideo} from '@stores/sharedContents/SharedContent'
 import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
@@ -23,11 +25,11 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
   const {
     setStep,
   } = props
-  const store = useContentsStore()
+  const sharedContents = useContentsStore()
   const participants = useParticipantsStore()
   const map = useMapStore()
   const sharing = useObserver(() => (
-    {main: store.localMainTracks.size, contents: store.localContentTracks.size}))
+    {main: sharedContents.tracks.localMains.size, contents: sharedContents.tracks.localContents.size}))
   const mousePosition = useObserver(() => participants.local.get().mousePosition)
 
   return (
@@ -60,17 +62,29 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
         }}
       />
       <ShareDialogItem
+        key="shareScreenContent"
+        icon={<OpenInBrowserIcon />}
+        text={'Screen as a content'}
+        onClick={() => {
+          startCapture().then((tracks) => {
+            const content = createContentOfVideo(tracks, map)
+            sharedContents.shareContent(content)
+            assert(content.id)
+            tracks.forEach(track => track.videoType = content.id)
+            sharedContents.tracks.addLocalContents(tracks)
+          })
+          setStep('none')
+        }}
+      />
+      <ShareDialogItem
         key="shareScreen"
         icon={sharing.main ? <StopScreenShareIcon /> : <ScreenShareIcon />}
         text={sharing.main ? 'Stop Screen' : 'Screen'}
         onClick={() => {
-          if (sharing.main)  {
-            for (const track of store.localMainTracks) {
-              track.stopStream()
-            }
-            store.localMainTracks = new Set()
+          if (sharing.main) {
+            sharedContents.tracks.clearLocalMains()
           } else {
-            startCapture().then(shareMainScreenStream)
+            startCapture().then(tracks => sharedContents.tracks.addLocalMains(tracks))
           }
           setStep('none')
         }}

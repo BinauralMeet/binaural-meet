@@ -16,7 +16,7 @@ export const ShareButton: React.FC = () => {
   const [openDialog, setOpenDialog] = useState<boolean>(false)
   const classes = useStyles()
   const store = useContentsStore()
-  const sharing = useObserver(() => store.localMainTracks.size + store.localContentTracks.size)
+  const sharing = useObserver(() => store.tracks.localMains.size + store.tracks.localContents.size)
 
   return (
     <div className={classes.root}>

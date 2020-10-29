@@ -2,10 +2,10 @@ import {ParticipantContents as IParticipantContents, SharedContent as ISharedCon
 import {default as participantsStore} from '@stores/participants/Participants'
 import {diffMap} from '@stores/utils'
 import {EventEmitter} from 'events'
-import {JitsiLocalTrack, JitsiTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
 import {action, computed, observable} from 'mobx'
 import {SharedContent as SharedContentStore} from './SharedContent'
+import {SharedContentTracks} from './SharedContentTracks'
 
 export const CONTENTLOG = false      // show manipulations and sharing of content
 export const contentLog = CONTENTLOG ? console.log : (a:any) => {}
@@ -33,55 +33,17 @@ export const SharedContentsEvents = {
 }
 export class SharedContents extends EventEmitter {
   private localId = ''
+  tracks = new SharedContentTracks()
 
   @observable pasteEnabled = true
-
-  // -----------------------------------------------------------------
-  //  Tracks for the MainScreen
-  @observable.ref localMainTracks: Set<JitsiLocalTrack> = new Set()
-  @observable.shallow remoteMainTracks: Map<string, Set<JitsiTrack>> = new Map()
-  @observable.shallow mutedRemoteTracks: Set<JitsiTrack> = new Set()
-  @computed get mainStream(): MediaStream|undefined {
-    let tracks:Set<JitsiTrack> = new Set()
-    if (this.localMainTracks.size) {
-      tracks = this.localMainTracks
-    } else {
-      const keys = Array.from(this.remoteMainTracks.keys())
-      if (keys.length) {
-        keys.sort()
-        const tracks_ = this.remoteMainTracks.get(keys[keys.length - 1])
-        if (tracks_) { tracks =  tracks_ }
-      }
-    }
-    if (tracks.size) {
-      let stream:MediaStream|undefined = undefined
-      for (const track of tracks) {
-        if (this.mutedRemoteTracks.has(track)) { continue }
-        if (!stream) {
-          stream = track.getOriginalStream()
-        } else if (track.getOriginalStream() !== stream) {
-          stream = new MediaStream
-          for (const t of tracks) { stream.addTrack(t.getTrack()) }
-          break
-        }
-      }
-
-      return stream
-    }
-
-    return undefined
-  }
-
-  @observable.shallow localContentTracks: Map<string, Set<JitsiLocalTrack>> = new Map()
-  @observable.shallow remoteContentTracks: Map<string, Set<JitsiTrack>> = new Map()
 
   // -----------------------------------------------------------------
   //  Contents management
   //  All shared contents in Z order. Observed by component.
   @observable.shallow all: ISharedContent[] = []
   //  contents by owner
-  participants: Map<string, ParticipantContents> = new Map<string, ParticipantContents>()
-  leavingParticipants: Map<string, ParticipantContents> = new Map<string, ParticipantContents>()
+  participants: Map < string, ParticipantContents > = new Map<string, ParticipantContents>()
+  leavingParticipants: Map < string, ParticipantContents > = new Map<string, ParticipantContents>()
 
   //  pasted content
   @observable.ref pasted:ISharedContent = new SharedContentStore()
@@ -97,7 +59,7 @@ export class SharedContents extends EventEmitter {
   @action shareContent(content:ISharedContent) {
     const TIME_RESOLUTION_IN_MS = 100
     content.zorder = Math.floor(Date.now() / TIME_RESOLUTION_IN_MS)
-    sharedContents.addLocalContent(content)
+    this.addLocalContent(content)
   }
 
   @computed get localParticipant(): ParticipantContents {
@@ -122,7 +84,7 @@ export class SharedContents extends EventEmitter {
   }
 
   //  map from contentId to participantId
-  owner: Map <string, string> = new Map<string, string>()
+  owner: Map < string, string > = new Map<string, string>()
 
   private updateAll() {
     const newAll:ISharedContent[] = []
@@ -297,5 +259,4 @@ export class SharedContents extends EventEmitter {
     return ''
   }
 }
-const sharedContents = new SharedContents()
-export default sharedContents
+export default new SharedContents()

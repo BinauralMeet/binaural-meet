@@ -3,7 +3,9 @@ import {Perceptibility,  Pose2DMap} from '@models/MapObject'
 import {ContentType, SharedContent as ISharedContent} from '@models/SharedContent'
 import {defaultValue as mapObjectDefaultValue} from '@stores/MapObject'
 import {MapData} from '@stores/MapObject/MapData'
+import {JitsiLocalTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
+import sharedContents from './SharedContents'
 
 const defaultValue: ISharedContent = Object.assign({}, mapObjectDefaultValue, {
   name: '',
@@ -106,4 +108,17 @@ export function createContentOfImage(imageFile: File, map: MapData, offset?:[num
   })
 
   return promise
+}
+
+export function createContentOfVideo(tracks: JitsiLocalTrack[], map: MapData) {
+  const pasted = new SharedContent()
+  pasted.type = 'screen'
+  pasted.url = ''
+  pasted.pose.position[0] = map.mouseOnMap[0]
+  pasted.pose.position[1] = map.mouseOnMap[1]
+  const track = tracks.find(track => track.getType() === 'video')
+  pasted.size[0] = (track?.getTrack().getSettings().width || 640) / 2 as number
+  pasted.size[1] = (track?.getTrack().getSettings().height || 360) / 2 as number
+
+  return pasted
 }

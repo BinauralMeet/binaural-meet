@@ -36,7 +36,7 @@ export interface MainScreenProps{
 export const MainScreen: React.FC<MainScreenProps> = (props) => {
   const classes = useStyles()
   const store = useContentsStore()
-  const stream = useObserver(() => (store.mainStream))
+  const stream = useObserver(() => (store.tracks.mainStream))
   const videoRef = useRef<HTMLVideoElement>(null)
   useEffect(
     () => {

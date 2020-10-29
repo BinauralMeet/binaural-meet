@@ -68,7 +68,7 @@ declare class JitsiTrack extends EventEmitter {
   isScreenSharing: () => boolean
   isMainScreen: () => boolean
   makeThisMainScreen: () => void
-  getContentId: () => string
+  getContentId: () => string|undefined
   setContentId: (contentId:string) => void
   getId: () => string | null
   isActive: () => boolean
