@@ -29,7 +29,7 @@ reaction(() => {
 
   return [local.remoteVideoLimit, local.remoteAudioLimit]
 },       (limits) => {
-  priorityCalculator.limitUpdated = true
+  priorityCalculator.setLimits(limits)
 },
 )
 const memoedUpdater = (() => {

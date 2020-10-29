@@ -22,9 +22,10 @@ export class PriorityCalculator {
   } = {}
 
   // batch update
-  private updateAll = true    // true when local participant is changed
+  private updateAll = true      // true when local participant is changed
   private readonly updateSet = new Set<string>() // store changed remote participant
-  limitUpdated = false // true when local participant.remoteVideoLimit orremoteAudioLimit changes
+  private limits = [-1, -1]     // limits on maximum numbers of remote video and audio tracks.
+  private limitUpdated = false  // true when local participant.remoteVideoLimit orremoteAudioLimit changes
 
   // priority cache
   private readonly priorityMap: PriorityMap = {}
@@ -38,6 +39,12 @@ export class PriorityCalculator {
 
   constructor() {
     this.local = selector(store.local.get())
+  }
+
+  setLimits(limits:number[]):void {
+    this.limits[0] = limits[0]
+    this.limits[1] = limits[1]
+    this.limitUpdated = true
   }
 
   get enabled(): boolean {
@@ -124,20 +131,17 @@ export class PriorityCalculator {
       }
     })
 
-    const prioritizedIdsForVideo = Object.keys(this.remotes).sort((a, b) => this.priorityMap[a] - this.priorityMap[b])
-    const prioritizedIdsForAudio = _.cloneDeep(prioritizedIdsForVideo)
-
-    const local = participantsStore.local.get()
-    if (local.remoteVideoLimit >= 0 && prioritizedIdsForVideo.length > local.remoteVideoLimit) {
-      prioritizedIdsForVideo.splice(local.remoteVideoLimit)
-    }
-    if (local.remoteAudioLimit >= 0 && prioritizedIdsForAudio.length > local.remoteAudioLimit) {
-      prioritizedIdsForAudio.splice(local.remoteAudioLimit)
-    }
+    const prioritizedIdList = Object.keys(this.remotes).sort((a, b) => this.priorityMap[a] - this.priorityMap[b])
+    const prioritizedIdLists = [prioritizedIdList, _.cloneDeep(prioritizedIdList)]
+    prioritizedIdLists.forEach((list, idx) => {
+      if (this.limits[idx] >= 0 && list.length > this.limits[idx]) {
+        list.splice(this.limits[idx])
+      }
+    })
 
     const res: Priority = {
-      video: prioritizedIdsForVideo,
-      audio: prioritizedIdsForAudio,
+      video: prioritizedIdLists[0],
+      audio: prioritizedIdLists[1],
     }
     this.lastPriority = res
 

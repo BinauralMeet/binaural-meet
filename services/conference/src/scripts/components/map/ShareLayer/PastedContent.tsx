@@ -11,7 +11,6 @@ export interface PastedContentProps{
   content?:ISharedContent
 }
 
-const SHARE_DIRECT = true
 export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentProps) => {
   const map = useMapStore()
   //  Pasted handler. It prevents paste to dialog.
@@ -30,11 +29,16 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
       setContent(evt.dataTransfer)
     }
   }
+
+
+  //  set pasted or dragged content to pasted content (not shared) or create shared content directly
+  const SHARE_DIRECT = true
   function setContent(dataTransfer: DataTransfer) {
     if (dataTransfer?.types.includes('Files')) {   //  If file is pasted (an image is also a file)
       const imageFile = dataTransfer.items[0].getAsFile()
       if (imageFile) {
         createContentOfImage(imageFile, map).then((content) => {
+          content.name = imageFile.name
           if (SHARE_DIRECT) {
             sharedContents.shareContent(content)
           } else {
@@ -50,11 +54,18 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
           if (url.host === location.host && url.pathname === location.pathname) {
             //  Openning of self url makes infinite loop. So, create text instead.
             content = createContentOfText(str, map)
+            content.name = '! recursive reference'
           }else {
             content = createContentOfIframe(str, map)
+            if (content.type === 'youtube') {
+              content.name = `${url.search.substring(1)}`
+            }else {
+              content.name = `${url.host}${url.pathname}${url.search}`
+            }
           }
         } else {
           content = createContentOfText(str, map)
+          content.name = str.substring(0, 20)
         }
         if (SHARE_DIRECT) {
           sharedContents.shareContent(content)
@@ -63,7 +74,7 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
         }
       })
     }else {
-      console.log('Drag type=', dataTransfer?.types)
+      console.error('Unhandled content types=', dataTransfer?.types)
     }
   }
 

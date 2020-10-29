@@ -1,13 +1,13 @@
 import {uploadToGyazo} from '@models/api/Gyazo'
-import {defaultPerceptibility, Perceptibility,  Pose2DMap} from '@models/MapObject'
-import {SharedContent as ISharedContent} from '@models/SharedContent'
+import {Perceptibility,  Pose2DMap} from '@models/MapObject'
+import {ContentType, SharedContent as ISharedContent} from '@models/SharedContent'
 import {defaultValue as mapObjectDefaultValue} from '@stores/MapObject'
 import {MapData} from '@stores/MapObject/MapData'
 import _ from 'lodash'
 
 const defaultValue: ISharedContent = Object.assign({}, mapObjectDefaultValue, {
   name: '',
-  type: '',
+  type: '' as ContentType,
   url: '',
   size: [0, 0] as [number, number],
   id: '',
@@ -16,7 +16,7 @@ const defaultValue: ISharedContent = Object.assign({}, mapObjectDefaultValue, {
 })
 export class SharedContent implements ISharedContent {
   name!: string
-  type!: string
+  type!: ContentType
   url!: string
   id!: string
   zorder!: number
