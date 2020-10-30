@@ -17,7 +17,7 @@ export const defaultValue: ISharedContent = Object.assign({}, mapObjectDefaultVa
   zorder: 0,
   pinned: false,
 })
-export class SharedContent implements ISharedContent {
+class SharedContent implements ISharedContent {
   name!: string
   type!: ContentType
   url!: string
@@ -32,6 +32,9 @@ export class SharedContent implements ISharedContent {
   }
 }
 
+export function createContent() {
+  return new SharedContent()
+}
 export function createContentOfIframe(urlStr: string, map: MapData) {
   const pasted = new SharedContent()
   const url = new URL(urlStr)

@@ -1,5 +1,5 @@
 import {useStore as useMapStore} from '@hooks/MapStore'
-import {createContentOfImage} from '@stores/sharedContents/SharedContent'
+import {createContentOfImage} from '@stores/sharedContents/SharedContentCreator'
 import sharedContents from '@stores/sharedContents/SharedContents'
 import {DropzoneArea} from 'material-ui-dropzone'
 import React, {useState} from 'react'

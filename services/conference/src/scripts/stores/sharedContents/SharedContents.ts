@@ -4,7 +4,7 @@ import {diffMap} from '@stores/utils'
 import {EventEmitter} from 'events'
 import _ from 'lodash'
 import {action, computed, observable} from 'mobx'
-import {disposeContent, SharedContent as SharedContentStore} from './SharedContent'
+import {createContent, disposeContent} from './SharedContentCreator'
 import {SharedContentTracks} from './SharedContentTracks'
 
 export const CONTENTLOG = false      // show manipulations and sharing of content
@@ -46,14 +46,14 @@ export class SharedContents extends EventEmitter {
   leavingParticipants: Map < string, ParticipantContents > = new Map<string, ParticipantContents>()
 
   //  pasted content
-  @observable.ref pasted:ISharedContent = new SharedContentStore()
+  @observable.ref pasted:ISharedContent = createContent()
   @action setPasted(c:ISharedContent) {
     console.log('setPasted:', c)
     this.pasted = c
   }
   @action sharePasted() {
     this.shareContent(this.pasted)
-    this.pasted = new SharedContentStore
+    this.pasted = createContent()
   }
   //  share content
   @action shareContent(content:ISharedContent) {

@@ -1,6 +1,6 @@
 import {useStore as useMapStore} from '@hooks/MapStore'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {createContentOfIframe, createContentOfImage, createContentOfText, SharedContent} from '@stores/sharedContents/SharedContent'
+import {createContent, createContentOfIframe, createContentOfImage, createContentOfText} from '@stores/sharedContents/SharedContentCreator'
 import {default as sharedContents} from '@stores/sharedContents/SharedContents'
 import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
@@ -85,7 +85,7 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
     pastedContent.zorder = Math.floor(Date.now() / TIME_RESOLUTION_IN_MS)
     pastedContent.pinned = true
     sharedContents.addLocalContent(_.cloneDeep(pastedContent))
-    sharedContents.setPasted(new SharedContent)
+    sharedContents.setPasted(createContent())
   }
 
   useEffect(
@@ -126,7 +126,7 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
     <RndContent content={pastedContent} hideAll={pastedContent.type === ''}
       onShare = {(evt: React.MouseEvent<HTMLDivElement>) => { onShare() }}
       onClose = {(evt: React.MouseEvent<HTMLDivElement>) => {
-        sharedContents.setPasted(new SharedContent)
+        sharedContents.setPasted(createContent())
         evt.stopPropagation()
       }}
       onUpdate = {(nc: ISharedContent) => {
