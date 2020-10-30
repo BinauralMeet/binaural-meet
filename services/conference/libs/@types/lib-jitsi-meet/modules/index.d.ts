@@ -2,7 +2,7 @@
 // Project: [~THE PROJECT NAME~]
 // Definitions by: [~YOUR NAME~] <[~A URL FOR YOU~]>
 
-import { JitsiTrack } from "./RTC/JitsiTrack";
+import JitsiTrack from "./RTC/JitsiTrack";
 
 declare class Transcriber {
   constructor();

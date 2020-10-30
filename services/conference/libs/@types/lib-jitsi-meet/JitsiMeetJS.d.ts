@@ -4,11 +4,11 @@
 
 export as namespace JitsiMeetJS;
 
-import JitsiTrack, { TrackInfo, VideoType, MediaType } from "./modules/RTC/JitsiTrack"
+import JitsiTrack, { TrackInfo, VideoType, MediaType, TMediaType} from "./modules/RTC/JitsiTrack"
 import JitsiLocalTrack from './modules/RTC/JitsiLocalTrack'
+import JitsiRemoteTrack from './modules/RTC/JitsiRemoteTrack'
 import { JitsiConnection } from './JitsiConnection';
 import { JitsiConference, JitsiValues } from "./JitsiConference";
-import JitsiParticipant from "./JitsiParticipant";
 
 export const version: string;
 export const events: JitsiMeetEvents;
@@ -87,8 +87,7 @@ interface JitisTrackError{
 export function init(options?: IJitsiMeetJSOptions): void;
 export function setLogLevel(level: any): void;
 export function createLocalTracks(options?: JitsiTrackOptions, firePermissionPromptIsShownEvent?: boolean): Promise<Array<JitsiLocalTrack>>;
-
-export { JitsiConnection, JitsiConference, JitsiTrack, TrackInfo, JitsiLocalTrack, VideoType, MediaType, JitsiValues, JitisTrackError};
+export { JitsiConnection, JitsiConference, JitsiTrack, TrackInfo, JitsiLocalTrack, JitsiRemoteTrack, VideoType, MediaType, TMediaType, JitsiValues, JitisTrackError};
 
 
 

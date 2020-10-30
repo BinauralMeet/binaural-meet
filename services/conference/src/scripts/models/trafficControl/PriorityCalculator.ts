@@ -1,6 +1,7 @@
 import {linearReconciliator} from '@models/utils/linearReconciliator'
-import {participantsStore as store} from '@stores/participants'
+import {participantsStore, participantsStore as store} from '@stores/participants'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
+import _ from 'lodash'
 import {autorun, IReactionDisposer} from 'mobx'
 import {Priority, Props} from './priorityTypes'
 
@@ -21,8 +22,10 @@ export class PriorityCalculator {
   } = {}
 
   // batch update
-  private updateAll = true  // true when local participant is changed
+  private updateAll = true      // true when local participant is changed
   private readonly updateSet = new Set<string>() // store changed remote participant
+  private limits = [-1, -1]     // limits on maximum numbers of remote video and audio tracks.
+  private limitUpdated = false  // true when local participant.remoteVideoLimit orremoteAudioLimit changes
 
   // priority cache
   private readonly priorityMap: PriorityMap = {}
@@ -36,6 +39,12 @@ export class PriorityCalculator {
 
   constructor() {
     this.local = selector(store.local.get())
+  }
+
+  setLimits(limits:number[]):void {
+    this.limits[0] = limits[0]
+    this.limits[1] = limits[1]
+    this.limitUpdated = true
   }
 
   get enabled(): boolean {
@@ -106,6 +115,7 @@ export class PriorityCalculator {
 
     this.updateAll = false
     this.updateSet.clear()
+    this.limitUpdated = false
 
     return priority
   }
@@ -121,11 +131,17 @@ export class PriorityCalculator {
       }
     })
 
-    const prioritizedIds = Object.keys(this.remotes).sort((a, b) => this.priorityMap[a] - this.priorityMap[b])
+    const prioritizedIdList = Object.keys(this.remotes).sort((a, b) => this.priorityMap[a] - this.priorityMap[b])
+    const prioritizedIdLists = [prioritizedIdList, _.cloneDeep(prioritizedIdList)]
+    prioritizedIdLists.forEach((list, idx) => {
+      if (this.limits[idx] >= 0 && list.length > this.limits[idx]) {
+        list.splice(this.limits[idx])
+      }
+    })
 
     const res: Priority = {
-      video: prioritizedIds,
-      audio: prioritizedIds,
+      video: prioritizedIdLists[0],
+      audio: prioritizedIdLists[1],
     }
     this.lastPriority = res
 
@@ -141,7 +157,7 @@ export class PriorityCalculator {
   }
 
   private get haveUpdates(): boolean {
-    return this.updateAll || this.updateSet.size !== 0
+    return this.updateAll || this.updateSet.size !== 0 || this.limitUpdated
   }
 }
 

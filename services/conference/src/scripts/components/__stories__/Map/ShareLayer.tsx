@@ -3,13 +3,13 @@ import {SharedContent} from '@components/map/ShareLayer/SharedContent'
 import {StoreProvider as ContentsProvider} from '@hooks/SharedContentsStore'
 import {makeStyles} from '@material-ui/core/styles'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {SharedContent as SharedContentStore} from '@stores/sharedContents/SharedContent'
+import {createContent} from '@stores/sharedContents/SharedContentCreator'
 import {SharedContents as SharedContentsStore} from '@stores/sharedContents/SharedContents'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 
 export function addFakeSharedContents(store: SharedContentsStore) {
-  const sc: SharedContentStore = new SharedContentStore()
+  const sc = createContent()
   Object.assign(sc, {
     type : 'img',
     url: 'https://i.gyazo.com/d05570612dbbe84c65dd684ef665606e.png',

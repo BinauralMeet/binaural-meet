@@ -16,7 +16,7 @@ import {styleCommon, styleForSplit} from './utils/styles'
 export const App: React.FC<{}> = () => {
   const clsSplit = styleForSplit()
   const classes = styleCommon()
-  const stream = useObserver(() => sharedContentsStore.mainStream)
+  const stream = useObserver(() => sharedContentsStore.tracks.mainStream)
   const DEBUG_VIDEO = false //  To see all local and remote tracks or not.
 
   return (

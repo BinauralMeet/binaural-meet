@@ -1,22 +1,25 @@
 import {uploadToGyazo} from '@models/api/Gyazo'
-import {defaultPerceptibility, Perceptibility,  Pose2DMap} from '@models/MapObject'
-import {SharedContent as ISharedContent} from '@models/SharedContent'
+import {Perceptibility,  Pose2DMap} from '@models/MapObject'
+import {ContentType, SharedContent as ISharedContent} from '@models/SharedContent'
 import {defaultValue as mapObjectDefaultValue} from '@stores/MapObject'
 import {MapData} from '@stores/MapObject/MapData'
+import {JitsiLocalTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
+import participants from '../participants/Participants'
+import sharedContents from './SharedContents'
 
-const defaultValue: ISharedContent = Object.assign({}, mapObjectDefaultValue, {
+export const defaultValue: ISharedContent = Object.assign({}, mapObjectDefaultValue, {
   name: '',
-  type: '',
+  type: '' as ContentType,
   url: '',
   size: [0, 0] as [number, number],
   id: '',
   zorder: 0,
   pinned: false,
 })
-export class SharedContent implements ISharedContent {
+class SharedContent implements ISharedContent {
   name!: string
-  type!: string
+  type!: ContentType
   url!: string
   id!: string
   zorder!: number
@@ -29,6 +32,9 @@ export class SharedContent implements ISharedContent {
   }
 }
 
+export function createContent() {
+  return new SharedContent()
+}
 export function createContentOfIframe(urlStr: string, map: MapData) {
   const pasted = new SharedContent()
   const url = new URL(urlStr)
@@ -106,4 +112,28 @@ export function createContentOfImage(imageFile: File, map: MapData, offset?:[num
   })
 
   return promise
+}
+
+export function createContentOfVideo(tracks: JitsiLocalTrack[], map: MapData) {
+  const pasted = new SharedContent()
+  pasted.type = 'screen'
+  pasted.url = ''
+  pasted.pose.position[0] = map.mouseOnMap[0]
+  pasted.pose.position[1] = map.mouseOnMap[1]
+  const track = tracks.find(track => track.getType() === 'video')
+  pasted.size[0] = (track?.getTrack().getSettings().width || 640) / 2 as number
+  pasted.size[1] = (track?.getTrack().getSettings().height || 360) / 2 as number
+
+  return pasted
+}
+
+export function disposeContent(c: ISharedContent) {
+  if (c.type === 'screen') {
+    const pid = sharedContents.owner.get(c.id)
+    if (pid === participants.localId) {
+      sharedContents.tracks.clearLocalContent(c.id)
+    }else {
+      sharedContents.tracks.clearRemoteContent(c.id)
+    }
+  }
 }

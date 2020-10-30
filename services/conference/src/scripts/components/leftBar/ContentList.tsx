@@ -2,12 +2,13 @@ import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore as useParticipantsStore} from '@hooks/ParticipantsStore'
 import {useStore as useContentsStore} from '@hooks/SharedContentsStore'
 import {Tooltip} from '@material-ui/core'
-import {SharedContent as ISharedContent} from '@models//SharedContent'
+import {ContentType, SharedContent as ISharedContent} from '@models/SharedContent'
 import {MapData} from '@stores/MapObject/MapData'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {subV} from 'react-use-gesture'
+import {contentTypeIcons} from '../map/ShareLayer/Content'
 import {styleForList} from '../utils/styles'
 
 const height = 20
@@ -19,11 +20,12 @@ export const ContentLine: React.FC<{participant: ParticipantBase, content: IShar
   const contentName = useObserver(() => props.content.name)
   const contentType = useObserver(() => props.content.type)
   const classes = styleForList({height, fontSize})
+  const typeIcon = contentTypeIcons[contentType]
 
   return <Tooltip title={name} placement="right">
     <div className={classes.line} style={{backgroundColor:colors[0], color:colors[1]}}
       onClick={event => props.map.focusOn(props.content)}>
-        {contentName}:{contentType}
+        {typeIcon}{contentName}
     </div>
   </Tooltip>
 }

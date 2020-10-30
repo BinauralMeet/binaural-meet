@@ -5,7 +5,8 @@ import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef, useState} from 'react'
 import {Property} from 'react/node_modules/csstype'
-import {ProgressPlugin} from 'webpack'
+
+declare const d:any                  //  from index.html
 
 const useStyles = makeStyles({
   videoContainer: {
@@ -36,7 +37,7 @@ export interface MainScreenProps{
 export const MainScreen: React.FC<MainScreenProps> = (props) => {
   const classes = useStyles()
   const store = useContentsStore()
-  const stream = useObserver(() => (store.mainStream))
+  const stream = useObserver(() => (store.tracks.mainStream))
   const videoRef = useRef<HTMLVideoElement>(null)
   useEffect(
     () => {
@@ -73,7 +74,7 @@ export const MainScreen: React.FC<MainScreenProps> = (props) => {
       if (props.showAllTracks) {
         const INTERVAL = 1000
         member.current.interval = setInterval(() => {
-          const tpc = (window as any).d?.tpc as TraceablePeerConnection
+          const tpc = d.tpc as TraceablePeerConnection
           if (!tpc || !tpc.peerconnection) { return }
 
           const newVideos:DebugVideo[] = []
