@@ -5,9 +5,10 @@ import {defaultValue as mapObjectDefaultValue} from '@stores/MapObject'
 import {MapData} from '@stores/MapObject/MapData'
 import {JitsiLocalTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
+import participants from '../participants/Participants'
 import sharedContents from './SharedContents'
 
-const defaultValue: ISharedContent = Object.assign({}, mapObjectDefaultValue, {
+export const defaultValue: ISharedContent = Object.assign({}, mapObjectDefaultValue, {
   name: '',
   type: '' as ContentType,
   url: '',
@@ -121,4 +122,15 @@ export function createContentOfVideo(tracks: JitsiLocalTrack[], map: MapData) {
   pasted.size[1] = (track?.getTrack().getSettings().height || 360) / 2 as number
 
   return pasted
+}
+
+export function disposeContent(c: ISharedContent) {
+  if (c.type === 'screen') {
+    const pid = sharedContents.owner.get(c.id)
+    if (pid === participants.localId) {
+      sharedContents.tracks.clearLocalContent(c.id)
+    }else {
+      sharedContents.tracks.clearRemoteContent(c.id)
+    }
+  }
 }

@@ -4,7 +4,7 @@ import {diffMap} from '@stores/utils'
 import {EventEmitter} from 'events'
 import _ from 'lodash'
 import {action, computed, observable} from 'mobx'
-import {SharedContent as SharedContentStore} from './SharedContent'
+import {disposeContent, SharedContent as SharedContentStore} from './SharedContent'
 import {SharedContentTracks} from './SharedContentTracks'
 
 export const CONTENTLOG = false      // show manipulations and sharing of content
@@ -33,7 +33,7 @@ export const SharedContentsEvents = {
 }
 export class SharedContents extends EventEmitter {
   private localId = ''
-  tracks = new SharedContentTracks()
+  tracks = new SharedContentTracks(this)
 
   @observable pasteEnabled = true
 
@@ -182,10 +182,17 @@ export class SharedContents extends EventEmitter {
   removeContents(pid: string, cids: string[]) {
     const participant = this.participants.get(pid)
     if (participant) {
+      const mine = new Map<string, ISharedContent>(participant.myContents)
+
+      // dispose content
+      cids.forEach((cid) => {
+        const content = mine.get(cid)
+        if (content) { disposeContent(content) }
+      })
+
       // remove them from myContents
-      const my = new Map<string, ISharedContent>(participant.myContents)
-      cids.forEach(cid => my.delete(cid))
-      participant.myContents = my
+      cids.forEach(cid => mine.delete(cid))
+      participant.myContents = mine
       this.updateAll()
       if (pid !== this.localId) {
         const newRemoveRequest = new Set<string>(this.localParticipant.removeRequest)

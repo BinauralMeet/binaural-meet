@@ -26,17 +26,11 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
       const ms = new MediaStream()
       locals.get(props.content.id)?.forEach((track) => ms.addTrack(track.getTrack()))
       remotes.get(props.content.id)?.forEach((track) => ms.addTrack(track.getTrack()))
-      ms.getTracks().forEach((track) => {
-        track.onended = (ev) => {
-          const pid = sharedContents.owner.get(props.content.id)
-          if (pid) {
-            sharedContents.removeContents(pid, [props.content.id])
-          }else {
-            console.error('track.onended can not remove content because pid is not found.')
-          }
-        }
-      })
-      if (! _.isEqual(ref.current.srcObject, ms)) {
+
+      const old = ref.current.srcObject instanceof MediaStream && ref.current.srcObject.getTracks()
+      const cur = ms.getTracks()
+      if (! _.isEqual(old, cur)) {
+        console.log('prev-next:', old, cur)
         ref.current.srcObject = ms
         ref.current.autoplay = true
       }

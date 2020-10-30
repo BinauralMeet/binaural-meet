@@ -4,6 +4,7 @@ import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {participantsStore} from '@stores/participants'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {default as ParticiantsStore} from '@stores/participants/Participants'
+import {defaultValue as defaultSharedContent, SharedContent} from '@stores/sharedContents/SharedContent'
 import sharedContents, {contentDebug, contentLog} from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
 import JitsiMeetJS, {JitisTrackError, JitsiLocalTrack, JitsiRemoteTrack, JitsiTrack, JitsiValues, TMediaType} from 'lib-jitsi-meet'
@@ -59,7 +60,6 @@ function addPerceptibility(cs: any[], perceptibility = defaultPerceptibility):IS
 
   return rv
 }
-
 
 export class Conference extends EventEmitter {
   private _jitsiConference?: JitsiMeetJS.JitsiConference
@@ -673,29 +673,29 @@ export class Conference extends EventEmitter {
   public removeTrack(track: JitsiLocalTrack) {
     this._jitsiConference?.removeTrack(track)
   }
+  public removeTracks(tracks: JitsiLocalTrack[]) {
+    tracks.forEach(track =>  this._jitsiConference?.removeTrack(track))
+  }
   public addTrack(track: JitsiLocalTrack) {
     this._jitsiConference?.addTrack(track)
   }
   public addTracks(tracks: JitsiLocalTrack[]) {
-    if (this._jitsiConference) {
-      for (const track of tracks) {
-        if (track !== tracks[tracks.length - 1]) {
-          this._jitsiConference.addTrack(track)
-        }else {
-          this._jitsiConference.addTrack(track).then(() => {
-            //  this._loggerHandler?.log('JitsiLocalTracks have been added.', 'Party')
+    for (const track of tracks) {
+      if (track !== tracks[tracks.length - 1]) {
+        this._jitsiConference?.addTrack(track)
+      }else {
+        this._jitsiConference?.addTrack(track).then(() => {
+          if (TRACKLOG) {
             const locals = this._jitsiConference?.getLocalTracks()
             if (locals) {
-              if (TRACKLOG) {
-                console.groupCollapsed(`addTracks([${tracks.length}]) called for ${tracks.map(t => t.rtcId)}`)
-                for (const t of locals) {
-                  console.log(`${t} rtcid:${t.rtcId} msid:${t.getOriginalStream().id}`)
-                }
-                console.groupEnd()
+              console.groupCollapsed(`addTracks([${tracks.length}]) called for ${tracks.map(t => t.rtcId)}`)
+              for (const t of locals) {
+                console.log(`${t} rtcid:${t.rtcId} msid:${t.getOriginalStream().id}`)
               }
+              console.groupEnd()
             }
-          })
-        }
+          }
+        })
       }
     }
   }

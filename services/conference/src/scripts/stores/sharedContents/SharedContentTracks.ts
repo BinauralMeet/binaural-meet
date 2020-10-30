@@ -1,11 +1,16 @@
 import {connection} from '@models/api'
-import participants from '@stores/participants/Participants'
 import {assert} from '@models/utils'
+import participants from '@stores/participants/Participants'
+import {SharedContents} from '@stores/sharedContents/SharedContents'
 import {JitsiLocalTrack, JitsiRemoteTrack, JitsiTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
 import {action, computed, observable} from 'mobx'
 
 export class SharedContentTracks {
+  private sharedContents:SharedContents
+  constructor(sharedContents: SharedContents) {
+    this.sharedContents = sharedContents
+  }
   // -----------------------------------------------------------------
   //  Tracks for the MainScreen
   @observable.shallow localMains: Set<JitsiLocalTrack> = new Set()
@@ -102,29 +107,22 @@ export class SharedContentTracks {
   // -----------------------------------------------------------------
   //  Tracks for contents   contentId - tracks
   @observable localContents: Map<string, Set<JitsiLocalTrack>> = new Map()
-  @action addLocalContent(track: JitsiLocalTrack) {
-    if (!track.videoType) {
-      console.error('addLocalContentTrack no videoType', track)
-
-      return
-    }
-    let trackSet = this.localContents.get(track.videoType)
-    if (!trackSet) {
-      trackSet = new Set()
-      this.localContents.set(track.videoType, trackSet)
-    }
-    trackSet.add(track)
-  }
   @action addLocalContents(tracks: JitsiLocalTrack[]) {
     assert(tracks.length)
     if (tracks[0].videoType) {
-      let trackSet = this.localContents.get(tracks[0].videoType)
-      if (!trackSet) {
-        trackSet = new Set()
-        this.localContents.set(tracks[0].videoType, trackSet)
-      }
+      const cid = tracks[0].videoType
+      const trackSet = new Set(this.localContents.get(cid))
       tracks.forEach(track => trackSet!.add(track))
+      this.localContents.set(cid, trackSet)
       connection.conference.addTracks(Array.from(tracks))
+      const pid = this.sharedContents.owner.get(cid)
+      tracks[0].getTrack().onended = (ev) => {
+        if (pid) {
+          this.sharedContents.removeContents(pid, [cid])
+        }else {
+          console.error('track.onended can not remove content because pid is not found.')
+        }
+      }
     }else {
       console.error('addLocals with no videoType', tracks)
     }
@@ -137,6 +135,17 @@ export class SharedContentTracks {
     }
     const trackSet = this.localContents.get(track.videoType)
     trackSet?.delete(track)
+  }
+  @action clearLocalContent(cid: string) {
+    const tracks = this.localContents.get(cid)
+    tracks?.forEach((track) => {
+      track.getTrack().onended = null
+      track.stopStream()
+    })
+    if (tracks) {
+      connection.conference.removeTracks(Array.from(tracks))
+    }
+    this.localContents.delete(cid)
   }
   @observable remoteContents: Map<string, Set<JitsiRemoteTrack>> = new Map()
   @action addRemoteContent(track: JitsiRemoteTrack) {
@@ -159,5 +168,8 @@ export class SharedContentTracks {
     }
     const trackSet = this.remoteContents.get(track.videoType)
     trackSet?.delete(track)
+  }
+  @action clearRemoteContent(cid: string) {
+    this.remoteContents.delete(cid)
   }
 }
