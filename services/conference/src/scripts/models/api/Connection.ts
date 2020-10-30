@@ -229,4 +229,5 @@ class Connection extends EventEmitter {
 const connection = new Connection()
 connection.Store = ConnectionInfoStore
 
+
 export {Connection, connection}

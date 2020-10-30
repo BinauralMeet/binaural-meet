@@ -59,7 +59,6 @@ function addPerceptibility(cs: any[], perceptibility = defaultPerceptibility):IS
 
   return rv
 }
-
 export class Conference extends EventEmitter {
   private _jitsiConference?: JitsiMeetJS.JitsiConference
   private _isForTest?: boolean
@@ -73,10 +72,8 @@ export class Conference extends EventEmitter {
     this._jitsiConference.join('')
     this._jitsiConference.setSenderVideoConstraint(1080)
     //  To access from debug console, add object d to the window.
-    ; (window as any).d = {
-      conference: this,
-      jc:this._jitsiConference,
-    }
+    d.conference = this
+    d.jc = this._jitsiConference
   }
 
   //  Commmands for shared contents --------------------------------------------
