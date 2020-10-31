@@ -2,13 +2,15 @@ import {BaseProps as BP} from '@components/utils'
 import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore} from '@hooks/ParticipantsStore'
 import {makeStyles} from '@material-ui/core/styles'
+import {PARTICIPANT_SIZE} from '@models/Participant'
 import {
-  crossProduct, extractRotation, extractScaleX, multiply,
+  crossProduct, extractRotation, extractScaleX,
   radian2Degree, rotate90ClockWise, rotateVector2D, transformPoint2D, transfromAt, vectorLength,
 } from '@models/utils'
+import {addV2, mulV2, normV, subV2} from '@models/utils/coordinates'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef, useState} from 'react'
-import {addV, subV, useGesture} from 'react-use-gesture'
+import {useGesture} from 'react-use-gesture'
 import {createValue, Provider as TransformProvider} from '../utils/useTransform'
 
 export const MAP_SIZE = 5000
@@ -50,38 +52,42 @@ const options = {
   maxScale: 5,
 }
 
-let prebThirdPersonView = false
+class BaseMember{
+  prebThirdPersonView = false
+  mouseDown = false
+  dragging = false
+}
+
 export const Base: React.FC<BaseProps> = (props: BaseProps) => {
-  const store = useMapStore()
-  const matrix = useObserver(() => store.matrix)
+  const mapStore = useMapStore()
+  const matrix = useObserver(() => mapStore.matrix)
   // changed only when event end, like drag end
-  const committedMatrix = useObserver(() => store.committedMatrix)
+  const committedMatrix = useObserver(() => mapStore.committedMatrix)
 
   const container = useRef<HTMLDivElement>(null)
   const outer = useRef<HTMLDivElement>(null)
   function offset():[number, number] {
-    return store.offset
+    return mapStore.offset
   }
   const participants = useStore()
   const thirdPersonView = useObserver(() => participants.local.get().thirdPersonView)
-  const [mouse, setMouse] = useState <[number, number]>([0, 0])  // mouse position relative to outer container
-  const [startDrag, setStartDrag] = useState(false)
+  const mem = useRef<BaseMember>(new BaseMember)
 
   const center = transformPoint2D(matrix, participants.local.get().pose.position)
-  if (thirdPersonView !== prebThirdPersonView) {
-    prebThirdPersonView = thirdPersonView
+  if (thirdPersonView !== mem.current.prebThirdPersonView) {
+    mem.current.prebThirdPersonView = thirdPersonView
     if (thirdPersonView) {
       const mapRot = radian2Degree(extractRotation(matrix))
       if (mapRot) {
         const newMatrix = rotateMap(-mapRot, center)
-        store.setCommittedMatrix(newMatrix)
+        mapStore.setCommittedMatrix(newMatrix)
       }
     }else {
       const avatarRot = participants.local.get().pose.orientation
       const mapRot = radian2Degree(extractRotation(matrix))
       if (avatarRot + mapRot) {
         const newMatrix = rotateMap(-(avatarRot + mapRot), center)
-        store.setCommittedMatrix(newMatrix)
+        mapStore.setCommittedMatrix(newMatrix)
       }
     }
   }
@@ -90,23 +96,46 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   function rotateMap(degree:number, center:[number, number]) {
     const changeMatrix = (new DOMMatrix()).rotateSelf(0, 0, degree)
     const newMatrix = transfromAt(center, changeMatrix, matrix)
-    store.setMatrix(newMatrix)
+    mapStore.setMatrix(newMatrix)
 
     return newMatrix
   }
 
   //  Mouse and touch operations ----------------------------------------------
+  const MOUSE_LEFT = 1
   const MOUSE_RIGHT = 2
   const bind = useGesture(
     {
-      onDragStart: ({event}) => { setStartDrag(true) },
-      onDrag: ({down, delta, event, xy, buttons}) => {
-        if (startDrag && down && outer.current) {
+      onDragStart: ({buttons}) => {
+        mem.current.dragging = true
+        mem.current.mouseDown = true
+        //  console.log('Base StartDrag:')
+        if (buttons === MOUSE_LEFT) { //  move participant to mouse position
+          setTimeout(() => {
+            function moveParticipant() {
+              if (mem.current.mouseDown) {
+                const local = participants.local.get()
+                const diff = subV2(mapStore.mouseOnMap, local.pose.position)
+                if (normV(diff) > PARTICIPANT_SIZE / 2) {
+                  const dir = mulV2(10 / normV(diff), diff)
+                  local.pose.position = addV2(local.pose.position, dir)
+                }
+                const TIMER_INTERVAL = 33
+                setTimeout(moveParticipant, TIMER_INTERVAL)
+              }
+            }
+            moveParticipant()
+          },         300)
+        }
+      },
+      onDrag: ({down, delta, xy, buttons}) => {
+        if (delta[0] || delta[1]) { mem.current.mouseDown = false }
+        if (mem.current.dragging && down && outer.current) {
           if (!thirdPersonView && buttons === MOUSE_RIGHT) {  // right mouse drag - rotate map
             const center = transformPoint2D(matrix, participants.local.get().pose.position)
-            const target:[number, number] = addV(xy, offset())
-            const radius1 = subV(target, center)
-            const radius2 = subV(radius1, delta)
+            const target:[number, number] = addV2(xy, offset())
+            const radius1 = subV2(target, center)
+            const radius2 = subV2(radius1, delta)
 
             const cosAngle = crossProduct(radius1, radius2) / (vectorLength(radius1) * vectorLength(radius2))
             const flag = crossProduct(rotate90ClockWise(radius1), delta) > 0 ? -1 : 1
@@ -120,13 +149,16 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
           } else {  // left mouse drag or touch screen drag - translate map
             const diff = rotateVector2D(matrix.inverse(), delta)
             const newMatrix = matrix.translate(...diff)
-            store.setMatrix(newMatrix)
+            mapStore.setMatrix(newMatrix)
+            //  console.log('Base onDrag:', delta)
           }
         }
       },
       onDragEnd: () => {
-        store.setCommittedMatrix(matrix)
-        setStartDrag(false)
+        mapStore.setCommittedMatrix(matrix)
+        mem.current.dragging = false
+        mem.current.mouseDown = false
+        //  console.log('Base onDragEnd:')
       },
       onPinch: ({da: [d, a], origin, event, memo}) => {
         if (memo === undefined) {
@@ -135,7 +167,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
         const [md, ma] = memo
 
-        const center = addV(origin as [number, number], offset())
+        const center = addV2(origin as [number, number], offset())
 
         const MIN_D = 10
         let scale = d > MIN_D ? d / md : d <  -MIN_D ? md / d : (1 + (d - md) / MIN_D)
@@ -148,7 +180,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
           (new DOMMatrix()).scaleSelf(scale, scale, 1).rotateSelf(0, 0, a - ma)
 
         const newMatrix = transfromAt(center, changeMatrix, matrix)
-        store.setMatrix(newMatrix)
+        mapStore.setMatrix(newMatrix)
 
         if (!thirdPersonView) {
           participants.local.get().pose.orientation = -radian2Degree(extractRotation(newMatrix))
@@ -156,24 +188,21 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
         return [d, a]
       },
-      onPinchEnd: () => store.setCommittedMatrix(matrix),
+      onPinchEnd: () => mapStore.setCommittedMatrix(matrix),
       onWheel: ({movement}) => {
         // tslint:disable-next-line: no-magic-numbers
         let scale = Math.pow(1.2, movement[1] / 1000)
         scale = limitScale(extractScaleX(matrix), scale)
         //  console.log(`Wheel: ${movement}  scale=${scale}`)
-        const newMatrix = matrix.scale(scale, scale, 1, ...transformPoint2D(matrix.inverse(), mouse))
-        store.setMatrix(newMatrix)
+        const newMatrix = matrix.scale(scale, scale, 1, ...transformPoint2D(matrix.inverse(), mapStore.mouse))
+        mapStore.setMatrix(newMatrix)
       },
-      onWheelEnd: () => store.setCommittedMatrix(matrix),
+      onWheelEnd: () => mapStore.setCommittedMatrix(matrix),
       onMove: ({xy}) => {
-        const mouse = addV(xy, offset())
-        setMouse(mouse)
-        const xyOnMap = transformPoint2D(matrix.inverse(), mouse)
-        store.setMouseOnMap(xyOnMap)
+        mapStore.setMouse(xy)
         //  console.log('xyOnMap:', xyOnMap)
         if (participants.local.get().mousePosition) {
-          participants.local.get().mousePosition = Object.assign({}, xyOnMap)
+          participants.local.get().mousePosition = Object.assign({}, mapStore.mouseOnMap)
         }
       },
     },
@@ -194,10 +223,10 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         offsetLeft += cur.offsetLeft
         cur = cur.offsetParent as HTMLElement
       }
-      store.setScreenSize([outer.current.clientWidth, outer.current.clientHeight])
-      store.setLeft(offsetLeft)
+      mapStore.setScreenSize([outer.current.clientWidth, outer.current.clientHeight])
+      mapStore.setLeft(offsetLeft)
     }
-    // store.setOffset([outer.current.scrollLeft, outer.current.scrollTop])  //  when use scroll
+    // mapStore.setOffset([outer.current.scrollLeft, outer.current.scrollTop])  //  when use scroll
   },        [outer.current, outer.current?.clientWidth, outer.current?.clientHeight])
 
   //  prevent default behavior of browser on map
@@ -262,7 +291,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
     matrix,
   }
   const classes = useStyles(styleProps)
-  const transfromValue = createValue(store.committedMatrix, [0, 0])
+  const transfromValue = createValue(mapStore.committedMatrix, [0, 0])
 
   return (
     <div className={[classes.root, props.className].join(' ')} ref={outer} {...bind()} >

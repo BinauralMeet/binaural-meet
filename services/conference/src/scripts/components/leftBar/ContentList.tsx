@@ -2,12 +2,12 @@ import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore as useParticipantsStore} from '@hooks/ParticipantsStore'
 import {useStore as useContentsStore} from '@hooks/SharedContentsStore'
 import {Tooltip} from '@material-ui/core'
-import {ContentType, SharedContent as ISharedContent} from '@models/SharedContent'
+import {SharedContent as ISharedContent} from '@models/SharedContent'
+import {strcmp} from '@models/utils'
 import {MapData} from '@stores/MapObject/MapData'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
-import {subV} from 'react-use-gesture'
 import {contentTypeIcons} from '../map/ShareLayer/Content'
 import {styleForList} from '../utils/styles'
 
@@ -37,10 +37,19 @@ export const ContentList: React.FC = () => {
   const map = useMapStore()
   const all = useObserver(() => {
     const sorted = Array.from(contents.all)
+    sorted.sort((a, b) => {
+      let rv = strcmp(a.type, b.type)
+      if (rv === 0) {
+        rv = strcmp(a.name, b.name)
+      }
 
+      return rv
+    })
+
+    /* sort by distance
     const dists = new Map<string, number>()
     for (const c of sorted) {
-      const v = subV(c.pose.position, participants.local.get().pose.position)
+      const v = subV2(c.pose.position, participants.local.get().pose.position)
       const d = v[0] * v[0] + v[1] * v[1]
       dists.set(c.id, d)
     }
@@ -50,6 +59,7 @@ export const ContentList: React.FC = () => {
 
       return da - db
     })
+    */
 
     return sorted
   })
