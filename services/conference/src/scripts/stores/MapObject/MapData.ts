@@ -38,6 +38,11 @@ export class MapData {
     this.mouseOnMap[0] = m[0]
     this.mouseOnMap[1] = m[1]
   }
+  @action setMouse(m:[number, number]) {
+    const mouse = addV(m, this.offset)
+    const xyOnMap = transformPoint2D(this.matrix.inverse(), mouse)
+    this.setMouseOnMap(xyOnMap)
+  }
   @action focusOn(obj: IMapObject) {
     const im = this.matrix.inverse()
     const diff = subV(obj.pose.position, [im.e, im.f])

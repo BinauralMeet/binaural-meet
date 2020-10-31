@@ -7,8 +7,8 @@ import SubjectIcon from '@material-ui/icons/Subject'
 import YouTubeIcon from '@material-ui/icons/YouTube'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import React, {useRef} from 'react'
-import {YouTube} from './YouTube'
 import {ScreenContent} from './ScreenContent'
+import {YouTube} from './YouTube'
 
 export const contentTypeIcons = {
   img: <PhotoIcon />,
@@ -50,6 +50,7 @@ const useStyles = makeStyles({
 })
 export interface ContentProps{
   content:ISharedContent
+  onUpdate?: (newContent: ISharedContent) => void
 }
 export const Content: React.FC<ContentProps> = (props:ContentProps) => {
   const classes = useStyles()
@@ -68,11 +69,11 @@ export const Content: React.FC<ContentProps> = (props:ContentProps) => {
       // hasevr  width of iframe is too wide but I could not find way to change. Below not work.
       // width={props.content.size[0] - 4} height={props.content.size[1] - 2}
   }else if (props.content.type === 'youtube') {
-    rv = <YouTube content = {props.content} />
+    rv = <YouTube {...props} />
   }else if (props.content.type === 'text') {
     rv =  <div className={classes.text} >{props.content.url}</div>
   }else if (props.content.type === 'screen') {
-    rv = <ScreenContent content = {props.content} />
+    rv = <ScreenContent {...props} />
   }else {
     rv = <div className={classes.text} >Unknow type:{props.content.type} for {props.content.url}</div>
   }

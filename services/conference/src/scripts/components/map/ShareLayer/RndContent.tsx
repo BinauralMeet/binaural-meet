@@ -1,3 +1,4 @@
+import content from '*.svg'
 import pinIcon from '@iconify/icons-mdi/pin'
 import pinOffIcon from '@iconify/icons-mdi/pin-off'
 import {Icon} from '@iconify/react'
@@ -187,7 +188,13 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       pose.position = addV(resizeBasePos, deltaPos)
       setPose(Object.assign({}, pose))
     }
-    setSize(addV(resizeBase, cd))
+    const newSize = addV(resizeBase, cd)
+    if (props.content.originalSize[0]) {
+      const ratio = props.content.originalSize[0] / props.content.originalSize[1]
+      if (newSize[0] > ratio * newSize[1]) { newSize[0] = ratio * newSize[1] }
+      if (newSize[0] < ratio * newSize[1]) { newSize[1] = newSize[0] / ratio }
+    }
+    setSize(newSize)
   }
   const classes = useStyles({props, pose, size, dimensions, showTitle, pinned:props.content.pinned})
   //  console.log('render: dimensions.clientHeight:', dimensions.clientHeight)
@@ -204,7 +211,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
           <div className={classes.close} onClick={onClickClose}><CloseRoundedIcon /></div>
         </div>
       </div>
-      <div className={classes.content} ><Content content={props.content} /></div>
+      <div className={classes.content} ><Content content={props.content} onUpdate={props.onUpdate} /></div>
     </div>
   const titleHeight = showTitle ? dimensions.clientHeight : 0
   //  console.log('Rnd rendered.')

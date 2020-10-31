@@ -66,7 +66,11 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
   const title = stepTitle[step]
   const page: JSX.Element | undefined = getPage(step, wrappedSetStep)
 
-  return  <Dialog open={open} onClose={onClose} onExited={() => setStep('entrance')} maxWidth="sm" fullWidth={true}>
+  return  <Dialog open={open} onClose={onClose} onExited={() => setStep('entrance')} maxWidth="sm" fullWidth={true}
+      onMouseMove = {(ev) => {
+        map.setMouse([ev.clientX, ev.clientY])
+      }}
+    >
     <DialogTitle id="simple-dialog-title">{title}</DialogTitle>
     <DialogContent>{page}</DialogContent>
   </Dialog>

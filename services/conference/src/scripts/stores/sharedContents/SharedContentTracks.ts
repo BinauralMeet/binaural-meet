@@ -1,4 +1,5 @@
 import {connection} from '@models/api'
+import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {assert} from '@models/utils'
 import participants from '@stores/participants/Participants'
 import {SharedContents} from '@stores/sharedContents/SharedContents'
@@ -115,13 +116,8 @@ export class SharedContentTracks {
       tracks.forEach(track => trackSet!.add(track))
       this.localContents.set(cid, trackSet)
       connection.conference.addTracks(Array.from(tracks))
-      const pid = this.sharedContents.owner.get(cid)
       tracks[0].getTrack().onended = (ev) => {
-        if (pid) {
-          this.sharedContents.removeContents(pid, [cid])
-        }else {
-          console.error('track.onended can not remove content because pid is not found.')
-        }
+        this.sharedContents.removeContents(participants.localId, [cid])
       }
     }else {
       console.error('addLocals with no videoType', tracks)
