@@ -15,6 +15,7 @@ export class MapData {
     return [-(this.screenSize[0] * HALF), -(this.screenSize[1] * HALF)]
   }
   @observable left = 0
+  @observable mouse: [number, number] = [0, 0]
   @observable mouseOnMap: [number, number] = [0, 0]
   @action setMatrix(m: DOMMatrixReadOnly) {
     this.matrix = m
@@ -31,13 +32,9 @@ export class MapData {
   @action setLeft(l:number) {
     this.left = l
   }
-  @action setMouseOnMap(m:[number, number]) {
-    this.mouseOnMap = [m[0], m[1]]
-  }
   @action setMouse(m:[number, number]) {
-    const mouse = addV2(m, this.offset)
-    const xyOnMap = transformPoint2D(this.matrix.inverse(), mouse)
-    this.setMouseOnMap(xyOnMap)
+    this.mouse = addV2(m, this.offset)
+    this.mouseOnMap = transformPoint2D(this.matrix.inverse(), this.mouse)
   }
   @action focusOn(obj: IMapObject) {
     const im = this.matrix.inverse()

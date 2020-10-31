@@ -3,7 +3,7 @@ import {useStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
 import {PARTICIPANT_SIZE} from '@models/Participant'
 import {rotateVector2DByDegree, transformPoint2D, transfromAt} from '@models/utils'
-import {addV2, normV, subV2} from '@models/utils/coordinates'
+import {addV2, assert, normV, subV2} from '@models/utils'
 import mapData from '@stores/MapObject/MapData'
 import {reaction} from 'mobx'
 import React, {useEffect, useRef} from 'react'
@@ -30,7 +30,8 @@ interface LocalParticipantStatic{
 }
 const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   const participants = useStore()
-  const participant = participants.find(props.participantId)
+  const participant = participants.local.get()
+  assert(props.participantId === participant.id)
   const map = useMapStore()
   const transform = useTransform()
   const staticMemo = useRef<LocalParticipantStatic>(new Object() as LocalParticipantStatic).current
@@ -125,7 +126,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     if (norm > MAP_SPEED_LIMIT) {
       diff = mulV(MAP_SPEED_LIMIT / norm, diff) as [number, number]
     }
-    const SCROOL_SPEED = 0.2
+    const SCROOL_SPEED = 0.1
     const mapMove = mulV(SCROOL_SPEED, map.rotateFromWindow(diff) as [number, number])
     const EPSILON = 0.2
     if (Math.abs(mapMove[0]) + Math.abs(mapMove[1]) > EPSILON) {
@@ -183,7 +184,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   useEffect(() => {
     const cleanup = reaction(() => mapData.mouseOnMap, (mouseOnMap) => {
       //  look at mouse
-      if (!drag.memo?.state?.dragging && participant) {
+      if (participant.thirdPersonView && !drag.memo?.state?.dragging) {
         const dir = subV2(mouseOnMap, participant.pose.position)
         const norm = normV(dir)
         if (norm > PARTICIPANT_SIZE / 2) {
