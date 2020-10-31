@@ -118,7 +118,6 @@ export function createContentOfImage(imageFile: File, map: MapData, offset?:[num
 
 export function createContentOfVideo(tracks: JitsiLocalTrack[], map: MapData) {
   const pasted = new SharedContent()
-  pasted.id = sharedContents.getUniqueId()
   pasted.type = 'screen'
   pasted.url = ''
   pasted.pose.position[0] = map.mouseOnMap[0]

@@ -16,7 +16,7 @@ const useStyles = makeStyles({
 })
 
 interface ScreenContentMember{
-  locals: Map<string, Set<JitsiLocalTrack>>
+  locals: JitsiLocalTrack[]
   remotes: JitsiRemoteTrack[]
   content: SharedContent
 }
@@ -27,20 +27,17 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
   const ref = useRef<HTMLVideoElement>(null)
   const member = useRef<ScreenContentMember>({} as ScreenContentMember)
   member.current = {
-    locals: sharedContents.tracks.localContents,
-    remotes: useObserver<JitsiRemoteTrack[]>(() => {
-      const tracks: JitsiRemoteTrack[] = []
-      sharedContents.tracks.remoteContents.get(props.content.id)?.forEach(track => tracks.push(track))
-
-      return tracks
-    }),
+    locals: useObserver<JitsiLocalTrack[]>(() =>
+      Array.from(sharedContents.tracks.localContents.get(props.content.id) || [])),
+    remotes: useObserver<JitsiRemoteTrack[]>(() =>
+      Array.from(sharedContents.tracks.remoteContents.get(props.content.id) || [])),
     content: props.content,
   }
 
   function setTrack() {
     if (ref.current) {
       const ms = new MediaStream()
-      member.current.locals.get(member.current.content.id)?.forEach(track => ms.addTrack(track.getTrack()))
+      member.current.locals.forEach(track => ms.addTrack(track.getTrack()))
       member.current.remotes.forEach(track => ms.addTrack(track.getTrack()))
 
       const old = ref.current.srcObject instanceof MediaStream && ref.current.srcObject.getTracks()
