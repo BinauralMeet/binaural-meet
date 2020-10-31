@@ -103,7 +103,7 @@ export class SharedContents extends EventEmitter {
 
       return
     }
-    if (!c.id) { c.id = this.getUniqueId(participantsStore.localId) }
+    if (!c.id) { c.id = this.getUniqueId() }
     this.localParticipant.myContents.set(c.id, c)
     this.owner.set(c.id, participantsStore.localId)
     //  console.log('addLocalConent', c)
@@ -247,7 +247,8 @@ export class SharedContents extends EventEmitter {
   }
 
   // create a new unique content id
-  private getUniqueId(pid: string) {
+  getUniqueId() {
+    const pid = participantsStore.localId
     if (!this.participants.has(pid)) {
       this.participants.set(pid, new ParticipantContents(pid))
     }

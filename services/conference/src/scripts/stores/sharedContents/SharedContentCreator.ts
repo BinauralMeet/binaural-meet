@@ -13,6 +13,7 @@ export const defaultValue: ISharedContent = Object.assign({}, mapObjectDefaultVa
   type: '' as ContentType,
   url: '',
   size: [0, 0] as [number, number],
+  originalSize: [0, 0] as [number, number],
   id: '',
   zorder: 0,
   pinned: false,
@@ -26,6 +27,7 @@ class SharedContent implements ISharedContent {
   pinned!: boolean
   pose!: Pose2DMap
   size!: [number, number]
+  originalSize!:[number, number]
   perceptibility!: Perceptibility
   constructor() {
     Object.assign(this, _.cloneDeep(defaultValue))
@@ -97,8 +99,8 @@ export function createContentOfImage(imageFile: File, map: MapData, offset?:[num
       pasted.url = url
       const max = size[0] > size[1] ? size[0] : size [1]
       const scale = max > IMAGESIZE_LIMIT ? IMAGESIZE_LIMIT / max : 1
-      pasted.size[0] = size[0] * scale
-      pasted.size[1] = size[1] * scale
+      pasted.size = [size[0] * scale, size[1] * scale]
+      pasted.originalSize = [size[0], size[1]]
       const CENTER = 0.5
       for (let i = 0; i < pasted.pose.position.length; i += 1) {
         if (offset) {
@@ -116,13 +118,19 @@ export function createContentOfImage(imageFile: File, map: MapData, offset?:[num
 
 export function createContentOfVideo(tracks: JitsiLocalTrack[], map: MapData) {
   const pasted = new SharedContent()
+  pasted.id = sharedContents.getUniqueId()
   pasted.type = 'screen'
   pasted.url = ''
   pasted.pose.position[0] = map.mouseOnMap[0]
   pasted.pose.position[1] = map.mouseOnMap[1]
   const track = tracks.find(track => track.getType() === 'video')
-  pasted.size[0] = (track?.getTrack().getSettings().width || 640) / 2 as number
-  pasted.size[1] = (track?.getTrack().getSettings().height || 360) / 2 as number
+  const settings = track?.getTrack().getSettings()
+  if (settings) {
+    pasted.originalSize = [settings.width || 0, settings.height || 0]
+  }else {
+    pasted.originalSize = [0, 0]
+  }
+  pasted.size = [(pasted.originalSize[0] || 640) / 2, (pasted.originalSize[1] || 360) / 2]
 
   return pasted
 }

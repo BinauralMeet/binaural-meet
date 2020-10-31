@@ -33,6 +33,7 @@ const pc: ISharedContent = {
     orientation: 0,
   },
   size: [100, 100],
+  originalSize: [100, 100],
   pinned: true,
   zorder: 1,
   perceptibility: {
