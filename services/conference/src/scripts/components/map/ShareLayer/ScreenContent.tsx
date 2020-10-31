@@ -1,5 +1,6 @@
 import {makeStyles} from '@material-ui/core/styles'
-import {assert} from '@models/utils'
+import {SharedContent} from '@models/SharedContent'
+import {assert, mulV2} from '@models/utils'
 import sharedContents from '@stores/sharedContents/SharedContents'
 import {JitsiLocalTrack, JitsiRemoteTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
@@ -16,7 +17,8 @@ const useStyles = makeStyles({
 
 interface ScreenContentMember{
   locals: Map<string, Set<JitsiLocalTrack>>
-  remotes: Map<string, Set<JitsiRemoteTrack>>
+  remotes: JitsiRemoteTrack[]
+  content: SharedContent
 }
 
 export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
@@ -25,15 +27,21 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
   const ref = useRef<HTMLVideoElement>(null)
   const member = useRef<ScreenContentMember>({} as ScreenContentMember)
   member.current = {
-    locals: useObserver<Map<string, Set<JitsiLocalTrack>>>(() => sharedContents.tracks.localContents),
-    remotes: useObserver<Map<string, Set<JitsiRemoteTrack>>>(() => sharedContents.tracks.remoteContents),
+    locals: sharedContents.tracks.localContents,
+    remotes: useObserver<JitsiRemoteTrack[]>(() => {
+      const tracks: JitsiRemoteTrack[] = []
+      sharedContents.tracks.remoteContents.get(props.content.id)?.forEach(track => tracks.push(track))
+
+      return tracks
+    }),
+    content: props.content,
   }
 
   function setTrack() {
     if (ref.current) {
       const ms = new MediaStream()
-      member.current.locals.get(props.content.id)?.forEach(track => ms.addTrack(track.getTrack()))
-      member.current.remotes.get(props.content.id)?.forEach(track => ms.addTrack(track.getTrack()))
+      member.current.locals.get(member.current.content.id)?.forEach(track => ms.addTrack(track.getTrack()))
+      member.current.remotes.forEach(track => ms.addTrack(track.getTrack()))
 
       const old = ref.current.srcObject instanceof MediaStream && ref.current.srcObject.getTracks()
       const cur = ms.getTracks()
@@ -43,25 +51,33 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
           ref.current.srcObject = ms
           ref.current.autoplay = true
         }
-        const video = cur.find(track => track.kind === 'video')
+      }
+    }
+  }
+  setTrack()
+
+  function checkVideoSize() {
+    if (ref.current) {
+      const tracks = ref.current.srcObject instanceof MediaStream && ref.current.srcObject.getTracks()
+      if (tracks && tracks.length) {
+        const video = tracks.find(track => track.kind === 'video')
         const settings = video?.getSettings()
         const newSize = [settings?.width || 0, settings?.height || 0] as [number, number]
-        if (newSize[0] && props.content.originalSize.toString() !== newSize.toString()) {
-          props.content.originalSize = newSize
-          const ratio = newSize[0] / newSize[1]
-          if (props.content.size[0] > ratio * props.content.size[1]) {
-            props.content.size[0] = ratio * props.content.size[1]
-          }else if (props.content.size[0] < ratio * props.content.size[1]) {
-            props.content.size[1] = props.content.size[0] / ratio
-          }
-          const newContent = Object.assign({}, props.content)
+        if (newSize[0] && member.current.content.originalSize.toString() !== newSize.toString()) {
+          const scale = member.current.content.size[0] / member.current.content.originalSize[0]
+          member.current.content.originalSize = newSize
+          member.current.content.size = mulV2(scale, newSize)
+          const newContent = Object.assign({}, member.current.content)
           props.onUpdate?.call(null, newContent)
         }
       }
     }
   }
   useEffect(() => {
-    setTimeout(setTrack, 100) //  Notify exact video size may take time.
+    setTrack()
+    const interval = setInterval(checkVideoSize, 333)   //  Notify of exact video size may take time.
+
+    return () => clearInterval(interval)
   },
             [ref.current],
   )
