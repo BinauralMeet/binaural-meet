@@ -69,10 +69,10 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
         onClick={() => {
           startCapture().then((tracks) => {
             const content = createContentOfVideo(tracks, map)
+            sharedContents.shareContent(content)
             assert(content.id)
             tracks.forEach(track => track.videoType = content.id)
             sharedContents.tracks.addLocalContents(tracks)
-            sharedContents.shareContent(content)
           })
           setStep('none')
         }}
