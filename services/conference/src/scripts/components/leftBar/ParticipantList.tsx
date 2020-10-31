@@ -1,12 +1,12 @@
 import {ImageAvatar} from '@components/avatar/ImageAvatar'
 import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore as useParticipantsStore} from '@hooks/ParticipantsStore'
+import {normV, strcmp, subV2} from '@models/utils'
 import {MapData} from '@stores/MapObject/MapData'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
-import {subV} from 'react-use-gesture'
 import {styleForList} from '../utils/styles'
 
 const height = 20
@@ -31,9 +31,20 @@ export const ParticipantList: React.FC = () => {
   const classes = styleForList({height, fontSize})
   const localId = useObserver(() => store.localId)
   const ids = useObserver(() => Array.from(store.remote.keys()))
+  ids.sort((a, b) => {
+    const pa = store.remote.get(a)
+    const pb = store.remote.get(b)
+    let rv = strcmp(pa!.information.name, pb!.information.name)
+    if (rv === 0) {
+      rv = strcmp(pa!.information.email || '', pb!.information.email || '')
+    }
+
+    return rv
+  })
+  /** sort by distance
   const dists = new Map<string, number>()
   for (const p of store.remote) {
-    const v = subV(p[1].pose.position, store.local.get().pose.position)
+    const v = subV2(p[1].pose.position, store.local.get().pose.position)
     const d = v[0] * v[0] + v[1] * v[1]
     dists.set(p[0], d)
   }
@@ -44,7 +55,7 @@ export const ParticipantList: React.FC = () => {
 
     return da - db
   })
-
+*/
   const remoteElements = ids.map(id =>
     <ParticipantLine key={id} participant={store.remote.get(id) as RemoteParticipant} map={map} />)
   const localElement = (<ParticipantLine key={localId} participant={store.local.get()} map={map} />)

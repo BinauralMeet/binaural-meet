@@ -1,12 +1,12 @@
 import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
-import {
-  crossProduct, extractRotation, extractScaleX, multiply, radian2Degree,
-  rotate90ClockWise, rotateVector2D, rotateVector2DByDegree, transformPoint2D, transfromAt,
-  vectorLength } from '@models/utils'
+import {PARTICIPANT_SIZE} from '@models/Participant'
+import {rotateVector2DByDegree, transformPoint2D, transfromAt} from '@models/utils'
+import {addV2, normV, subV2} from '@models/utils/coordinates'
+import mapData from '@stores/MapObject/MapData'
+import {reaction} from 'mobx'
 import React, {useEffect, useRef} from 'react'
-import {addV, subV} from 'react-use-gesture'
 import {DragHandler, DragState} from '../../utils/DragHandler'
 import {KeyHandlerPlain} from '../../utils/KeyHandler'
 import {MAP_SIZE} from '../Base/Base'
@@ -37,7 +37,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
 
   const moveParticipant = (state: DragState<HTMLDivElement>) => {
     //  move local participant
-    let delta = subV(state.xy, map.toWindow(participant!.pose.position))
+    let delta = subV2(state.xy, map.toWindow(participant!.pose.position))
     const norm = Math.sqrt(delta[0] * delta[0] + delta[1] * delta[1])
     if (norm > AVATAR_SPEED_LIMIT) {
       delta = mulV(AVATAR_SPEED_LIMIT / norm, delta)
@@ -45,10 +45,10 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
 
     if (participants.local.get().thirdPersonView) {
       const localDelta = transform.rotateG2L(delta)
-      participant!.pose.position = addV(participant!.pose.position, localDelta)
+      participant!.pose.position = addV2(participant!.pose.position, localDelta)
       const SMOOTHRATIO = 0.8
       if (!staticMemo.smoothedDelta) { staticMemo.smoothedDelta = [delta[0], delta[1]] }
-      staticMemo.smoothedDelta = addV(mulV(1 - SMOOTHRATIO, localDelta), mulV(SMOOTHRATIO, staticMemo.smoothedDelta))
+      staticMemo.smoothedDelta = addV2(mulV(1 - SMOOTHRATIO, localDelta), mulV(SMOOTHRATIO, staticMemo.smoothedDelta))
       const dir = Math.atan2(staticMemo.smoothedDelta[0], -staticMemo.smoothedDelta[1]) * HALF_DEGREE / Math.PI
       let diff = dir - participant!.pose.orientation
       if (diff < -HALF_DEGREE) { diff += WHOLE_DEGREE }
@@ -56,7 +56,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
       const ROTATION_SPEED = 0.2
       participant!.pose.orientation += diff * ROTATION_SPEED
     } else {
-      participant!.pose.position = addV(transform.rotateG2L(delta), participant!.pose.position)
+      participant!.pose.position = addV2(transform.rotateG2L(delta), participant!.pose.position)
     }
   }
   const moveParticipantByKey = (keys:Set<string>) => {
@@ -98,7 +98,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     }
     const delta = rotateVector2DByDegree(participant!.pose.orientation, [0, -deltaF])
     //  console.log(participant!.pose.position, delta)
-    const newPos = addV(participant!.pose.position, delta)
+    const newPos = addV2(participant!.pose.position, delta)
     if (newPos[0] < -MAP_SIZE * HALF) { newPos[0] = -MAP_SIZE * HALF }
     if (newPos[0] > MAP_SIZE * HALF) { newPos[0] = MAP_SIZE * HALF }
     if (newPos[1] < -MAP_SIZE * HALF) { newPos[1] = -MAP_SIZE * HALF }
@@ -120,7 +120,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     if (target[0] > right) { target[0] = right }
     if (target[1] < top) { target[1] = top }
     if (target[1] > bottom) { target[1] = bottom }
-    let diff = subV(posOnScreen, target) as [number, number]
+    let diff = subV2(posOnScreen, target) as [number, number]
     const norm = Math.sqrt(diff[0] * diff[0] + diff[1] * diff[1])
     if (norm > MAP_SPEED_LIMIT) {
       diff = mulV(MAP_SPEED_LIMIT / norm, diff) as [number, number]
@@ -180,6 +180,21 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   useEffect(() => {
     drag.target.current?.focus({preventScroll:true})
   })
+  useEffect(() => {
+    const cleanup = reaction(() => mapData.mouseOnMap, (mouseOnMap) => {
+      //  look at mouse
+      if (!drag.memo?.state?.dragging && participant) {
+        const dir = subV2(mouseOnMap, participant.pose.position)
+        const norm = normV(dir)
+        if (norm > PARTICIPANT_SIZE / 2) {
+          participant.pose.orientation = Math.atan2(dir[0], -dir[1]) * HALF_DEGREE / Math.PI
+        }
+      }
+    })
+
+    return cleanup
+  },
+            [])
 
   return (
     <div ref={drag.target} {...drag.bind()}>
@@ -188,5 +203,8 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   )
 }
 
+
 export const MemoedLocalParticipant = memoComponent(LocalParticipant, ['participantId', 'size'])
 MemoedLocalParticipant.displayName = 'MemorizedLocalParticipant'
+
+

@@ -1,6 +1,22 @@
 import {Pose2DMap} from '@models/MapObject'
 import {Pose3DAudio} from '@models/Participant'
 
+export function addV2(a:number[], b:number[]): [number, number] {
+  return [a[0] + b[0], a[1] + b[1]]
+}
+export function subV2(a:number[], b:number[]): [number, number] {
+  return [a[0] - b[0], a[1] - b[1]]
+}
+export function mulV2(a:number, v:number[]): [number, number] {
+  return [a * v[0], a * v[1]]
+}
+export function normV(v:number[]): number {
+  let sum = 0
+  v.forEach(e => sum += e * e)
+
+  return Math.sqrt(sum)
+}
+
 export function degree2Radian(degree: number): number {
   return degree * Math.PI / 180
 }

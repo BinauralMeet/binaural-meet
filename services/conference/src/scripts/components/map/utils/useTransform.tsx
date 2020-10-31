@@ -1,7 +1,7 @@
 import {makeStyles} from '@material-ui/core/styles'
 import {extractRotation, rotateVector2D, transformPoint2D} from '@models/utils'
+import {addV2, subV2} from '@models/utils/coordinates'
 import {createContext, useContext, useMemo} from 'react'
-import {addV, subV} from 'react-use-gesture'
 
 interface StyleProps {
   matrix: DOMMatrix | DOMMatrixReadOnly
@@ -37,8 +37,8 @@ export const createValue = (matrix: DOMMatrix | DOMMatrixReadOnly, clientPositio
   const res = useMemo(
     () => ({
       counterRotationClass,
-      local2Global: (position: [number, number]) => addV(clientPosition, transformPoint2D(matrix, position)),
-      global2Local: (position: [number, number]) => transformPoint2D(matrix.inverse(), subV(position, clientPosition)),
+      local2Global: (position: [number, number]) => addV2(clientPosition, transformPoint2D(matrix, position)),
+      global2Local: (position: [number, number]) => transformPoint2D(matrix.inverse(), subV2(position, clientPosition)),
       rotateL2G: (vector: [number, number]) => rotateVector2D(matrix, vector),
       rotateG2L: (vector: [number, number]) => rotateVector2D(matrix.inverse(), vector),
       rotation,

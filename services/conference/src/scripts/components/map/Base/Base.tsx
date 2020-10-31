@@ -3,12 +3,13 @@ import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore} from '@hooks/ParticipantsStore'
 import {makeStyles} from '@material-ui/core/styles'
 import {
-  crossProduct, extractRotation, extractScaleX, multiply,
+  crossProduct, extractRotation, extractScaleX,
   radian2Degree, rotate90ClockWise, rotateVector2D, transformPoint2D, transfromAt, vectorLength,
 } from '@models/utils'
+import {addV2, subV2} from '@models/utils/coordinates'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef, useState} from 'react'
-import {addV, subV, useGesture} from 'react-use-gesture'
+import {useGesture} from 'react-use-gesture'
 import {createValue, Provider as TransformProvider} from '../utils/useTransform'
 
 export const MAP_SIZE = 5000
@@ -104,9 +105,9 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         if (startDrag && down && outer.current) {
           if (!thirdPersonView && buttons === MOUSE_RIGHT) {  // right mouse drag - rotate map
             const center = transformPoint2D(matrix, participants.local.get().pose.position)
-            const target:[number, number] = addV(xy, offset())
-            const radius1 = subV(target, center)
-            const radius2 = subV(radius1, delta)
+            const target:[number, number] = addV2(xy, offset())
+            const radius1 = subV2(target, center)
+            const radius2 = subV2(radius1, delta)
 
             const cosAngle = crossProduct(radius1, radius2) / (vectorLength(radius1) * vectorLength(radius2))
             const flag = crossProduct(rotate90ClockWise(radius1), delta) > 0 ? -1 : 1
@@ -135,7 +136,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
         const [md, ma] = memo
 
-        const center = addV(origin as [number, number], offset())
+        const center = addV2(origin as [number, number], offset())
 
         const MIN_D = 10
         let scale = d > MIN_D ? d / md : d <  -MIN_D ? md / d : (1 + (d - md) / MIN_D)
@@ -167,7 +168,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       },
       onWheelEnd: () => store.setCommittedMatrix(matrix),
       onMove: ({xy}) => {
-        const mouse = addV(xy, offset())
+        const mouse = addV2(xy, offset())
         setMouse(mouse)
         const xyOnMap = transformPoint2D(matrix.inverse(), mouse)
         store.setMouseOnMap(xyOnMap)

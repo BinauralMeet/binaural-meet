@@ -12,7 +12,8 @@ import _ from 'lodash'
 import React, {useLayoutEffect, useRef, useState} from 'react'
 import {Dimensions, useDimensions} from 'react-dimensions-hook'
 import {Rnd} from 'react-rnd'
-import {addV, subV, useGesture} from 'react-use-gesture'
+import {addV2, subV2} from '@models/utils/coordinates'
+import {useGesture} from 'react-use-gesture'
 import {useValue as useTransform} from '../utils/useTransform'
 import {Content} from './Content'
 
@@ -136,15 +137,15 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       }else {
         newOri = preciseOrientation - preciseOrientation % ROTATION_STEP
       }
-      //    mat.translateSelf(...addV(props.pose.position, mulV(0.5, size)))
+      //    mat.translateSelf(...addV2(props.pose.position, mulV(0.5, size)))
       const CENTER_IN_RATIO = 0.5
-      const center = addV(pose.position, mulV(CENTER_IN_RATIO, size))
-      pose.position = addV(pose.position,
-                           subV(rotateVector2DByDegree(pose.orientation - newOri, center), center))
+      const center = addV2(pose.position, mulV(CENTER_IN_RATIO, size))
+      pose.position = addV2(pose.position,
+                           subV2(rotateVector2DByDegree(pose.orientation - newOri, center), center))
       pose.orientation = newOri
       setPose(Object.assign({}, pose))
     }else {
-      pose.position = addV(pose.position, rotateG2C(delta))
+      pose.position = addV2(pose.position, rotateG2C(delta))
       setPose(Object.assign({}, pose))
     }
   }
@@ -185,10 +186,10 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       posChange = posChange || cd[1] !== 0
     }
     if (posChange) {
-      pose.position = addV(resizeBasePos, deltaPos)
+      pose.position = addV2(resizeBasePos, deltaPos)
       setPose(Object.assign({}, pose))
     }
-    const newSize = addV(resizeBase, cd)
+    const newSize = addV2(resizeBase, cd)
     if (props.content.originalSize[0]) {
       const ratio = props.content.originalSize[0] / props.content.originalSize[1]
       if (newSize[0] > ratio * newSize[1]) { newSize[0] = ratio * newSize[1] }
@@ -254,9 +255,9 @@ const useStyles = makeStyles({
   container: (props: StyleProps) => {
     const mat = new DOMMatrix()
     const size = [props.size[0], props.size[1]]
-//    mat.translateSelf(...addV(props.pose.position, mulV(0.5, size)))
+//    mat.translateSelf(...addV2(props.pose.position, mulV(0.5, size)))
     mat.rotateSelf(0, 0, props.pose.orientation)
-//    mat.translateSelf(...subV([0, 0], addV(props.pose.position, mulV(0.5, size))))
+//    mat.translateSelf(...subV2([0, 0], addV2(props.pose.position, mulV(0.5, size))))
 
     return ({
       display: props.props.hideAll ? 'none' : 'block',

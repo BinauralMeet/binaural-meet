@@ -4,6 +4,13 @@ export function assert(input: any): asserts input {
   }
 }
 
+export function strcmp(a:string, b:string) {
+  if (a < b) { return -1 }
+  if (a > b) { return 1 }
+
+  return 0
+}
+
 export const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor)
 
 export function shallowEqualsForMap<T1, T2>(map1:Map<T1, T2>, map2:Map<T1, T2>) {
