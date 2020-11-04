@@ -24,7 +24,7 @@ function mulV<T extends number[]>(s: number, vec: T): T {
 }
 
 type LocalParticipantProps = ParticipantProps
-interface LocalParticipantStatic{
+interface LocalParticipantMember{
   smoothedDelta: [number, number]
   scrollAgain: boolean
 }
@@ -34,7 +34,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   assert(props.participantId === participant.id)
   const map = useMapStore()
   const transform = useTransform()
-  const staticMemo = useRef<LocalParticipantStatic>(new Object() as LocalParticipantStatic).current
+  const member = useRef<LocalParticipantMember>(new Object() as LocalParticipantMember).current
 
   const moveParticipant = (state: DragState<HTMLDivElement>) => {
     //  move local participant
@@ -48,9 +48,9 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
       const localDelta = transform.rotateG2L(delta)
       participant!.pose.position = addV2(participant!.pose.position, localDelta)
       const SMOOTHRATIO = 0.8
-      if (!staticMemo.smoothedDelta) { staticMemo.smoothedDelta = [delta[0], delta[1]] }
-      staticMemo.smoothedDelta = addV2(mulV(1 - SMOOTHRATIO, localDelta), mulV(SMOOTHRATIO, staticMemo.smoothedDelta))
-      const dir = Math.atan2(staticMemo.smoothedDelta[0], -staticMemo.smoothedDelta[1]) * HALF_DEGREE / Math.PI
+      if (!member.smoothedDelta) { member.smoothedDelta = [delta[0], delta[1]] }
+      member.smoothedDelta = addV2(mulV(1 - SMOOTHRATIO, localDelta), mulV(SMOOTHRATIO, member.smoothedDelta))
+      const dir = Math.atan2(member.smoothedDelta[0], -member.smoothedDelta[1]) * HALF_DEGREE / Math.PI
       let diff = dir - participant!.pose.orientation
       if (diff < -HALF_DEGREE) { diff += WHOLE_DEGREE }
       if (diff > HALF_DEGREE) { diff -= WHOLE_DEGREE }
@@ -142,7 +142,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
       [newMat.e, newMat.f] = transMap
       map.setMatrix(newMat)
       map.setCommittedMatrix(newMat)
-      staticMemo.scrollAgain = !changed
+      member.scrollAgain = !changed
 
       return !changed
     }
@@ -166,7 +166,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     //   console.log('onKeyTimer()', keys)
     const participantMoved = moveParticipantByKey(keys)
 
-    if (staticMemo.scrollAgain || participantMoved) {
+    if (member.scrollAgain || participantMoved) {
       return scrollMap()
     }
 
@@ -181,11 +181,13 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   useEffect(() => {
     drag.target.current?.focus({preventScroll:true})
   })
+
+  //  Rotate participant to look at the pointer
   useEffect(() => {
-    const cleanup = reaction(() => mapData.mouseOnMap, (mouseOnMap) => {
+    const cleanup = reaction(() => mapData.mouse, (mouse) => {
       //  look at mouse
       if (participant.thirdPersonView && !drag.memo?.state?.dragging) {
-        const dir = subV2(mouseOnMap, participant.pose.position)
+        const dir = subV2(mapData.mouseOnMap, participant.pose.position)
         const norm = normV(dir)
         if (norm > PARTICIPANT_SIZE / 2) {
           participant.pose.orientation = Math.atan2(dir[0], -dir[1]) * HALF_DEGREE / Math.PI
