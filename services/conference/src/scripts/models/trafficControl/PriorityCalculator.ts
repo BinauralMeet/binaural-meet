@@ -87,13 +87,31 @@ export class PriorityCalculator {
       this.updateAll = true
     })
 
-    // track remote change
+    // track remote changes
     let oldRemoteParticipants: string[] = []
     const remoteChangeDisposer = autorun(() => {
       const newRemoteParticipants = Array.from(participants.remote.keys())
       linearReconciliator(oldRemoteParticipants, newRemoteParticipants, onRemoveParticipant, onAddParticipant)
       oldRemoteParticipants = newRemoteParticipants
+      console.log('prioirty remote chagned:', newRemoteParticipants)
     })
+/*
+    let oldRemoteMains: string[] = []
+    const remoteMainsChangeDisposer = autorun(() => {
+      const newRemoteMains = Array.from(contents.tracks.remoteMains.keys())
+      Array.from(contents.tracks.remoteMains.keys())
+      linearReconciliator(oldRemoteMains, newRemoteMains, onRemoveMain, onAddMain)
+      oldRemoteMains = newRemoteMains
+    })
+    let oldRemoteContents: string[] = []
+    const remoteContentsChangeDisposer = autorun(() => {
+      const newRemoteContents = Array.from(contents.tracks.remoteContents.keys())
+      Array.from(contents.tracks.remoteContents.keys())
+      linearReconciliator(oldRemoteContents, newRemoteContents, onRemoveContent, onAddContent)
+      oldRemoteContents = newRemoteContents
+    })
+*/
+
     const remoteDiposers = new Map<string, IReactionDisposer>()
     const onRemoveParticipant = (id: string) => {
       const disposer = remoteDiposers.get(id)
@@ -114,6 +132,7 @@ export class PriorityCalculator {
       if (remote === undefined) {
         throw new Error(`Cannot find remote participant with id: ${id}`)
       }
+      console.log(`prioirty ${id} chagned v=${(remote.tracks.avatar as JitsiRemoteTrack)?.getSSRC()} a=${(remote.tracks.audio as JitsiRemoteTrack)?.getSSRC()}`)
 
       this.remoteParticipants[id] = extractPropsFromRemote(remote)
       this.updateSet.add(id)
@@ -147,7 +166,8 @@ export class PriorityCalculator {
   }
 
   private calcPriority(): Priority {
-    const recalculateList = Object.keys(this.remoteParticipants).filter(key => this.updateAll ? true : this.updateSet.has(key))
+    const recalculateList = Object.keys(this.remoteParticipants).
+      filter(key => this.updateAll ? true : this.updateSet.has(key))
     recalculateList.forEach((id) => {
       const props = this.remoteParticipants[id]
       if (props[0]) { this.videoPriorityMap.set(props[0].ssrc, this.getPriorityValue(this.local, props[0])) }
