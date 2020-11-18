@@ -1,24 +1,47 @@
 import {linearReconciliator} from '@models/utils/linearReconciliator'
-import {participantsStore, participantsStore as store} from '@stores/participants'
-import {ParticipantBase} from '@stores/participants/ParticipantBase'
+import {participantsStore as participants} from '@stores/participants'
+import {LocalParticipant} from '@stores/participants/LocalParticipant'
+import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
+import contents from '@stores/sharedContents/SharedContents'
+import {JitsiRemoteTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
 import {autorun, IReactionDisposer} from 'mobx'
 import {Priority, Props} from './priorityTypes'
 
-function selector(participant: ParticipantBase): Props {
+function extractPropsFromRemote(participant: RemoteParticipant): (Props|undefined)[] {
+  return [
+    participant.tracks.avatar ?
+      {
+        ssrc: (participant.tracks.avatar as JitsiRemoteTrack).getSSRC(),
+        onStage : false,
+        pose: {
+          ...participant.pose,
+        },
+      } : undefined,
+    participant.tracks.audio ?
+      {
+        ssrc: (participant.tracks.audio as JitsiRemoteTrack).getSSRC(),
+        onStage : participant.physics.onStage,
+        pose: {
+          ...participant.pose,
+        },
+      } : undefined,
+  ]
+}
+function extractPropsFromLocal(participant: LocalParticipant): Props {
   return {
-    id: participant.id,
+    ssrc: 0,
     pose: {
       ...participant.pose,
     },
+    onStage: false,
   }
 }
-
 export class PriorityCalculator {
   // props cache
   private local: Props
-  private remotes: {
-    [key: string]: Props,
+  private remoteParticipants: {
+    [key: string]: (Props|undefined)[],
   } = {}
 
   // batch update
@@ -28,7 +51,8 @@ export class PriorityCalculator {
   private limitUpdated = false  // true when local participant.remoteVideoLimit orremoteAudioLimit changes
 
   // priority cache
-  private readonly priorityMap: PriorityMap = {}
+  private readonly videoPriorityMap = new Map<number, number>()
+  private readonly audioPriorityMap = new Map<number, number>()
   private lastPriority: Priority = {
     video: [],
     audio: [],
@@ -38,7 +62,7 @@ export class PriorityCalculator {
   private _enabled = false
 
   constructor() {
-    this.local = selector(store.local.get())
+    this.local = extractPropsFromLocal(participants.local.get())
   }
 
   setLimits(limits:number[]):void {
@@ -57,39 +81,41 @@ export class PriorityCalculator {
 
     // track local change
     const localChangeDisposer = autorun(() => {
-      const local = store.local.get()
-      this.local = selector(local)
+      const local = participants.local.get()
+      this.local = extractPropsFromLocal(local)
 
       this.updateAll = true
     })
 
     // track remote change
-    let oldRemotes: string[] = []
+    let oldRemoteParticipants: string[] = []
     const remoteChangeDisposer = autorun(() => {
-      const newRemotes = Array.from(store.remote.keys())
-      linearReconciliator(oldRemotes, newRemotes, onRemove, onAdd)
-      oldRemotes = newRemotes
+      const newRemoteParticipants = Array.from(participants.remote.keys())
+      linearReconciliator(oldRemoteParticipants, newRemoteParticipants, onRemoveParticipant, onAddParticipant)
+      oldRemoteParticipants = newRemoteParticipants
     })
     const remoteDiposers = new Map<string, IReactionDisposer>()
-    const onRemove = (id: string) => {
+    const onRemoveParticipant = (id: string) => {
       const disposer = remoteDiposers.get(id)
       if (disposer === undefined) {
         throw new Error(`Cannot find disposer for remote participant with id: ${id}`)
       }
       disposer()
-
-      delete this.remotes[id]
+      const removed = this.remoteParticipants[id]
+      if (removed[0]) { this.videoPriorityMap.delete(removed[0].ssrc) }
+      if (removed[1]) { this.videoPriorityMap.delete(removed[1].ssrc) }
+      delete this.remoteParticipants[id]
       remoteDiposers.delete(id)
 
       this.updateSet.add(id)
     }
-    const onAdd = (id: string) => remoteDiposers.set(id, autorun(() => {
-      const remote = store.find(id)
+    const onAddParticipant = (id: string) => remoteDiposers.set(id, autorun(() => {
+      const remote = participants.find(id)
       if (remote === undefined) {
         throw new Error(`Cannot find remote participant with id: ${id}`)
       }
 
-      this.remotes[id] = selector(remote)
+      this.remoteParticipants[id] = extractPropsFromRemote(remote)
       this.updateSet.add(id)
     }))
 
@@ -111,7 +137,7 @@ export class PriorityCalculator {
       return this.lastPriority
     }
 
-    const priority = this.getPriority()
+    const priority = this.calcPriority()
 
     this.updateAll = false
     this.updateSet.clear()
@@ -120,28 +146,29 @@ export class PriorityCalculator {
     return priority
   }
 
-  private getPriority(): Priority {
-    const recalculateList = Object.keys(this.remotes).filter(key => this.updateAll ? true : this.updateSet.has(key))
-
+  private calcPriority(): Priority {
+    const recalculateList = Object.keys(this.remoteParticipants).filter(key => this.updateAll ? true : this.updateSet.has(key))
     recalculateList.forEach((id) => {
-      if (this.remotes[id] === undefined) {
-        delete this.priorityMap[id]
-      } else {
-        this.priorityMap[id] = this.getPriorityValue(this.local, this.remotes[id])
-      }
+      const props = this.remoteParticipants[id]
+      if (props[0]) { this.videoPriorityMap.set(props[0].ssrc, this.getPriorityValue(this.local, props[0])) }
+      if (props[1]) { this.audioPriorityMap.set(props[1].ssrc, this.getPriorityValue(this.local, props[1])) }
     })
+    const prioritizedSsrcLists = [
+      Array.from(this.videoPriorityMap.keys()).sort(
+        (a, b) => this.videoPriorityMap.get(a)! - this.videoPriorityMap.get(b)!),
+      Array.from(this.audioPriorityMap.keys()).sort(
+        (a, b) => this.audioPriorityMap.get(a)! - this.audioPriorityMap.get(b)!),
+    ]
 
-    const prioritizedIdList = Object.keys(this.remotes).sort((a, b) => this.priorityMap[a] - this.priorityMap[b])
-    const prioritizedIdLists = [prioritizedIdList, _.cloneDeep(prioritizedIdList)]
-    prioritizedIdLists.forEach((list, idx) => {
+    prioritizedSsrcLists.forEach((list, idx) => {
       if (this.limits[idx] >= 0 && list.length > this.limits[idx]) {
         list.splice(this.limits[idx])
       }
     })
 
     const res: Priority = {
-      video: prioritizedIdLists[0],
-      audio: prioritizedIdLists[1],
+      video: prioritizedSsrcLists[0],
+      audio: prioritizedSsrcLists[1],
     }
     this.lastPriority = res
 
@@ -162,7 +189,3 @@ export class PriorityCalculator {
 }
 
 type Callback = (priority: Priority) => void
-
-interface PriorityMap {
-  [key: string]: number
-}

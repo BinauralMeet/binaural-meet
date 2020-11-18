@@ -43,7 +43,8 @@ export class SharedContentTracks {
     }
     this.localMains = new Set()
   }
-  @observable remoteMains: Map<string, Set<JitsiRemoteTrack>> = new Map()  //  participantId
+  //  Map of participantId->track for main screen from remotes
+  @observable remoteMains: Map<string, Set<JitsiRemoteTrack>> = new Map()
   @observable.shallow mutedRemoteMains: Set<JitsiRemoteTrack> = new Set()
   @computed get mainStream(): MediaStream|undefined {
     let tracks:Set<JitsiTrack> = new Set()
@@ -143,6 +144,7 @@ export class SharedContentTracks {
     }
     this.localContents.delete(cid)
   }
+  //  Map of participantId->track for content tracks from remotes
   @observable remoteContents: Map<string, Set<JitsiRemoteTrack>> = new Map()
   @action addRemoteContent(track: JitsiRemoteTrack) {
     if (!track.videoType) {

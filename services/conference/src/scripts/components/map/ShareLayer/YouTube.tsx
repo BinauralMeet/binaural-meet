@@ -90,6 +90,7 @@ function ytUpdateState(newState: string, time:number, state: YTState) {
   params.delete('playing')
   params.delete('paused')
   params.set(newState, String(time))
+  params.set('rate', String(state.player?.getPlaybackRate()))
   const newContent = Object.assign({}, state.content)
   newContent.url = paramMap2Str(params)
   state.contents?.updateContents([newContent])
@@ -139,6 +140,7 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
     state.current.params = newParams
     const params = state.current.params
     if (state.current.player) {
+      state.current.player.setPlaybackRate(Number(params.get('rate')))
       if (params.has('playing')) {
         ytSeekAndPlay(Number(params.get('playing')), Number(params.get('index')), state.current)
       }else if (params.has('paused')) {
@@ -206,6 +208,12 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
               contentLog('playing=', start)
               ytUpdateState('playing', start, state.current)
             }
+          })
+          player.on('playbackRateChange', () => {
+            const now = getCurrentTimestamp()
+            const elasp = player.getCurrentTime() / player.getPlaybackRate()
+            const start = now - elasp
+            ytUpdateState(player.getState(), start, state.current)
           })
         }
 

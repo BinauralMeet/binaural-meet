@@ -6,8 +6,13 @@ import {reaction} from 'mobx'
 function applyUrlParameters(local: LocalParticipant) {
   local.loadInformationFromStorage()
   if (urlParameters.userName) { local.information.name = urlParameters.userName }
-  local.useStereoAudio = urlParameters.audio === 'stereo' ? true : false
-  console.debug('audio parameter', urlParameters.audio)
+  local.useStereoAudio = urlParameters.monaural !== null ? true : false
+  console.debug('URL audio', urlParameters.audio)
+  local.plugins.streamControl.muteAudio =
+    (urlParameters.muteMic === 'no' || urlParameters.muteMic === 'false') ? false : true
+  console.debug('URL muteMic', urlParameters.muteMic)
+  local.plugins.streamControl.muteVideo = urlParameters.muteCamera ? true : false
+  console.debug('URL muteCamera', urlParameters.muteCamera)
 }
 
 reaction(

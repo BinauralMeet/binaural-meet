@@ -1,11 +1,12 @@
 import {Pose2DMap} from '@models/MapObject'
 
 export interface Props {
-  id: string,
+  ssrc: number,
   pose: Pose2DMap,
+  onStage: boolean,
 }
 
-type Id = string
+type Id = number
 
 export interface Priority {
   video: Id[],

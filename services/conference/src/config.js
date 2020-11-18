@@ -89,5 +89,21 @@ const config_local = {
   rtc:rtcConfig
 }
 
-const config = config_alpha
+const config_hasemeet = {
+  hosts: {
+	domain: 'hasemeet.haselab.net',
+	muc: 'conference.hasemeet.haselab.net'
+  },
+  openBridgeChannel: true, // One of true, 'datachannel'==='true', or 'websocket'
+  bosh: '//hasemeet.haselab.net/http-bind',
+  clientNode: 'http://jitsi.org/jitsimeet',
+  channelLastN: -1,
+  p2p: {
+    enabled: false,
+  },
+  rtc:rtcConfig
+}
+
+
+const config = config_local
 config.thirdPersonView = true
