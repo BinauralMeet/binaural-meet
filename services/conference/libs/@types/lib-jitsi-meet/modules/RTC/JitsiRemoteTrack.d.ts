@@ -22,6 +22,7 @@ declare class JitsiRemoteTrack extends JitsiTrack {
     getParticipantId: () => string
     isLocal: () => false
     getSSRC: () => number
+    getSSRCs: () => number[]
     toString: () => string
 }
 export default JitsiRemoteTrack

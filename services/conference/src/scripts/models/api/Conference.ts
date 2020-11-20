@@ -60,7 +60,7 @@ function addPerceptibility(cs: any[], perceptibility = defaultPerceptibility):IS
   return rv
 }
 export class Conference extends EventEmitter {
-  private _jitsiConference?: JitsiMeetJS.JitsiConference
+  public _jitsiConference?: JitsiMeetJS.JitsiConference
   private _isForTest?: boolean
   public localId = ''
 

@@ -86,6 +86,15 @@ export class SharedContents extends EventEmitter {
   //  map from contentId to participantId
   owner: Map < string, string > = new Map<string, string>()
 
+  public find(contentId: string) {
+    const pid = this.owner.get(contentId)
+    if (pid) {
+      return this.participants.get(pid)?.myContents.get(contentId)
+    }
+
+    return undefined
+  }
+
   private updateAll() {
     const newAll:ISharedContent[] = []
     this.participants.forEach((participant) => {

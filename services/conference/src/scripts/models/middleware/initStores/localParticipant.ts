@@ -1,6 +1,8 @@
+import {connection} from '@models/api'
 import {urlParameters} from '@models/url'
 import {participantsStore} from '@stores/participants'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
+import {connect} from 'http2'
 import {reaction} from 'mobx'
 
 function applyUrlParameters(local: LocalParticipant) {
@@ -13,6 +15,8 @@ function applyUrlParameters(local: LocalParticipant) {
   console.debug('URL muteMic', urlParameters.muteMic)
   local.plugins.streamControl.muteVideo = urlParameters.muteCamera ? true : false
   console.debug('URL muteCamera', urlParameters.muteCamera)
+  connection.conference._jitsiConference?.setStartMutedPolicy(
+    {audio:local.plugins.streamControl.muteAudio, video: local.plugins.streamControl.muteVideo})
 }
 
 reaction(

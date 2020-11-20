@@ -4,6 +4,9 @@ export function linearReconciliator(
   old: string[], current: string[],
   onRemove: PopulationChangeAction, onAdd: PopulationChangeAction) {
 
+  old.sort((a, b) => a < b ? -1 : a > b ? 1 : 0)
+  current.sort((a, b) => a < b ? -1 : a > b ? 1 : 0)
+
   let pOld = 0
   let pCurrent = 0
 

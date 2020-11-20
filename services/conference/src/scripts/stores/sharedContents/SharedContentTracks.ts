@@ -46,6 +46,7 @@ export class SharedContentTracks {
   //  Map of participantId->track for main screen from remotes
   @observable remoteMains: Map<string, Set<JitsiRemoteTrack>> = new Map()
   @observable.shallow mutedRemoteMains: Set<JitsiRemoteTrack> = new Set()
+
   @computed get mainStream(): MediaStream|undefined {
     let tracks:Set<JitsiTrack> = new Set()
     if (this.localMains.size) {
@@ -104,6 +105,9 @@ export class SharedContentTracks {
       return
     }
     this.remoteMains.get(track.getParticipantId())?.delete(track)
+    if (this.remoteMains.get(track.getParticipantId())?.size === 0) {
+      this.remoteMains.delete(track.getParticipantId())
+    }
   }
 
   // -----------------------------------------------------------------
@@ -166,8 +170,29 @@ export class SharedContentTracks {
     }
     const trackSet = this.remoteContents.get(track.videoType)
     trackSet?.delete(track)
+    if (trackSet?.size === 0) {
+      this.remoteContents.delete(track.videoType)
+    }
   }
   @action clearRemoteContent(cid: string) {
     this.remoteContents.delete(cid)
+  }
+
+  //  utility
+  remoteMainTrack(): (JitsiRemoteTrack|undefined)[] | undefined {
+    if (this.localMains.size == 0) {
+      const keys = Array.from(this.remoteMains.keys())
+      if (keys.length) {
+        keys.sort()
+        const trackSet = this.remoteMains.get(keys[keys.length - 1])
+        if (trackSet) {
+          const tracks = Array.from(trackSet)
+
+          return [tracks.find(track => track.isVideoTrack()), tracks.find(track => track.isAudioTrack())]
+        }
+      }
+    }
+
+    return undefined
   }
 }

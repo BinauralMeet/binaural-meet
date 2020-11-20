@@ -24,6 +24,7 @@ export type TVideoType = typeof VideoType.CAMERA | typeof VideoType.DESKTOP
 export declare namespace JitsiTrackEvents {
   export const TRACK_MUTE_CHANGED = 'track.trackMuteChanged';
   export const TRACK_VIDEOTYPE_CHANGED = 'track.videoTypeChanged';
+  export const LOCAL_TRACK_STOPPED = 'track.stopped'; //  The media track was removed to the conference.
 }
 
 interface TrackInfo {

@@ -2,6 +2,7 @@ import {connection} from '@models/api'
 import {PriorityCalculator} from '@models/trafficControl/PriorityCalculator'
 import {connectionInfo} from '@stores/index'
 import {participantsStore} from '@stores/participants'
+import _ from 'lodash'
 import {autorun, reaction} from 'mobx'
 
 const priorityCalculator = new PriorityCalculator()
@@ -37,11 +38,11 @@ const memoedUpdater = (() => {
 
   return () => {
     const res = priorityCalculator.update()
-    if (res !== memo) {
+    if (!_.isEqual(res, memo)) {
       // Send res to Jitsi bridge
       connection.conference.setPerceptibles([res.video, res.audio])
-      //  console.log('setPerceptibles:', res)
-      memo = res
+      console.log('setPerceptibles:', res)
+      memo = _.cloneDeep(res)
     }
   }
 })()
