@@ -50,3 +50,7 @@ export function getRandomColor(v:string):[string, string, string] {
 
   return [color, textColor, reverseColor]
 }
+
+export function rgba(rgb:number[], alpha: number) {
+  return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})`
+}

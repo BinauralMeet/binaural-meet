@@ -17,6 +17,9 @@ export const defaultValue: ISharedContent = Object.assign({}, mapObjectDefaultVa
   id: '',
   zorder: 0,
   pinned: false,
+  isEditable() {
+    return this.type === 'text' || this.type === 'iframe'
+  },
 })
 class SharedContent implements ISharedContent {
   name!: string
@@ -29,8 +32,10 @@ class SharedContent implements ISharedContent {
   size!: [number, number]
   originalSize!:[number, number]
   perceptibility!: Perceptibility
+  isEditable: () => boolean
   constructor() {
     Object.assign(this, _.cloneDeep(defaultValue))
+    this.isEditable = defaultValue.isEditable
   }
 }
 
@@ -78,7 +83,12 @@ export function createContentOfIframe(urlStr: string, map: MapData) {
 export function createContentOfText(text: string, map: MapData) {
   const pasted = new SharedContent()
   pasted.type = 'text'
-  pasted.url = text
+  const textPhrase = {
+    text,
+    pid: participants.localId,
+    name: participants.local.get().information.name,
+  }
+  pasted.url = JSON.stringify([textPhrase])
   pasted.pose.position[0] = map.mouseOnMap[0]
   pasted.pose.position[1] = map.mouseOnMap[1]
   const slen = Math.sqrt(text.length)

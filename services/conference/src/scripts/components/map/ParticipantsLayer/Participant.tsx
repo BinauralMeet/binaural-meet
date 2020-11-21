@@ -1,6 +1,5 @@
 import {Avatar, AvatarProps} from '@components/avatar'
 import {LOCAL_PARTICIPANT_CONFIG} from '@components/configuration/plugin/plugins/LocalParticipantConfig'
-import {REMOTE_PARTICIPANT_CONFIG} from '@components/configuration/plugin/plugins/RemoteParticipantConfig'
 import {useStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
 import {Tooltip} from '@material-ui/core'

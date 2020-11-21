@@ -4,15 +4,17 @@ import pinOffIcon from '@iconify/icons-mdi/pin-off'
 import {Icon} from '@iconify/react'
 import {makeStyles} from '@material-ui/core/styles'
 import {CreateCSSProperties} from '@material-ui/core/styles/withStyles'
+import DoneIcon from '@material-ui/icons/CheckCircle'
 import CloseRoundedIcon from '@material-ui/icons/CloseRounded'
+import EditIcon from '@material-ui/icons/Edit'
 import {Pose2DMap} from '@models/MapObject'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {rotateVector2DByDegree} from '@models/utils'
+import {addV2, subV2} from '@models/utils/coordinates'
 import _ from 'lodash'
 import React, {useLayoutEffect, useRef, useState} from 'react'
 import {Dimensions, useDimensions} from 'react-dimensions-hook'
 import {Rnd} from 'react-rnd'
-import {addV2, subV2} from '@models/utils/coordinates'
 import {useGesture} from 'react-use-gesture'
 import {useValue as useTransform} from '../utils/useTransform'
 import {Content} from './Content'
@@ -74,6 +76,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   const rnd = useRef<Rnd>(null)                         //  ref to rnd to update position and size
   const {ref, dimensions} = useDimensions()             //  title dimensions measured
   const [showTitle, setShowTitle] = useState(!props.autoHideTitle || !props.content.pinned)
+  const [editing, setEditing] = useState(false)
   const state = useRef<RndContentState>(new RndContentState())
 
   if (!_.isEqual(props.content.size, state.current.lastSize)) {
@@ -99,6 +102,9 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   //  handlers
   function onClickShare(evt: React.MouseEvent<HTMLDivElement>) { props.onShare?.call(null, evt) }
   function onClickClose(evt: React.MouseEvent<HTMLDivElement>) { props.onClose?.call(null, evt) }
+  function onClickEdit(evt: React.MouseEvent<HTMLDivElement>) {
+    setEditing(!editing)
+  }
   function onClickPin(evt: React.MouseEvent<HTMLDivElement>) {
     updateHandler(!props.content.pinned)
   }
@@ -141,7 +147,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       const CENTER_IN_RATIO = 0.5
       const center = addV2(pose.position, mulV(CENTER_IN_RATIO, size))
       pose.position = addV2(pose.position,
-                           subV2(rotateVector2DByDegree(pose.orientation - newOri, center), center))
+                            subV2(rotateVector2DByDegree(pose.orientation - newOri, center), center))
       pose.orientation = newOri
       setPose(Object.assign({}, pose))
     }else {
@@ -206,13 +212,21 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
             onMouseEnter = {() => { if (props.autoHideTitle) { setShowTitle(true) } }}
             onMouseLeave = {() => { if (props.autoHideTitle && props.content.pinned) { setShowTitle(false) } }}>
           <div className={classes.pin} onClick={onClickPin}>
-            &nbsp;<Icon icon={props.content.pinned ? pinIcon : pinOffIcon} />&nbsp;
+            &nbsp;<Icon icon={props.content.pinned ? pinIcon : pinOffIcon} height={dimensions.clientHeight} />&nbsp;
+          </div>
+          <div className={classes.edit} onClick={onClickEdit}>
+            &nbsp; {
+              editing ? <DoneIcon style={{fontSize:dimensions.clientHeight}} />
+                : <EditIcon style={{fontSize:dimensions.clientHeight}} />}
+            &nbsp;
           </div>
           <div className={classes.note} onClick={onClickShare}>Share</div>
           <div className={classes.close} onClick={onClickClose}><CloseRoundedIcon /></div>
         </div>
       </div>
-      <div className={classes.content} ><Content content={props.content} onUpdate={props.onUpdate} /></div>
+      <div className={classes.content} >
+        <Content content={props.content} onUpdate={props.onUpdate} editing= {editing} setEditing={setEditing}  />
+      </div>
     </div>
   const titleHeight = showTitle ? dimensions.clientHeight : 0
   //  console.log('Rnd rendered.')
@@ -321,8 +335,20 @@ const useStyles = makeStyles({
   pin: (props:StyleProps) => (
     props.showTitle ? {
       display: props.props.onShare ? 'none' : 'block',
+      height: props.dimensions.clientHeight,
       whiteSpace: 'pre',
       borderRadius: '0.5em 0 0 0',
+      cursor: 'default',
+      '&:hover': {
+        backgroundColor: 'firebrick',
+      },
+    } : {display:'none'}
+  ),
+  edit: (props:StyleProps) => (
+    props.showTitle ? {
+      display: (props.props.onShare || !props.props.content.isEditable()) ? 'none' : 'block',
+      height: props.dimensions.clientHeight,
+      whiteSpace: 'pre',
       cursor: 'default',
       '&:hover': {
         backgroundColor: 'firebrick',

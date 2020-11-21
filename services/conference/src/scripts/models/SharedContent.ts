@@ -11,6 +11,13 @@ export interface SharedContent extends MapObject {
   size: [number, number]          //  current size of the content
   originalSize: [number, number]  //  original size of the content or [0, 0]
   pinned: boolean                 //  pinned (not resizable or resizable)
+  isEditable(): boolean           //  editable or not
+}
+
+export interface TextPhrase {
+  text: string,
+  name: string,
+  pid: string,
 }
 
 export interface ParticipantContents{
