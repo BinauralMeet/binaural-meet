@@ -4,6 +4,7 @@ import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {participantsStore} from '@stores/participants'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {default as ParticiantsStore} from '@stores/participants/Participants'
+import {defaultValue as defaultContent} from '@stores/sharedContents/SharedContentCreator'
 import sharedContents, {contentDebug, contentLog} from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
 import JitsiMeetJS, {JitisTrackError, JitsiLocalTrack, JitsiRemoteTrack, JitsiTrack, JitsiValues, TMediaType} from 'lib-jitsi-meet'
@@ -59,6 +60,15 @@ function addPerceptibility(cs: any[], perceptibility = defaultPerceptibility):IS
 
   return rv
 }
+
+function addContent(cs: any[]):ISharedContent[] {
+  for (const c of cs) {
+    c.isEditable = defaultContent.isEditable
+  }
+
+  return cs
+}
+
 export class Conference extends EventEmitter {
   public _jitsiConference?: JitsiMeetJS.JitsiConference
   private _isForTest?: boolean
@@ -431,7 +441,7 @@ export class Conference extends EventEmitter {
         }else if (name === ParticipantProperties.PPROP_CONTENTS) {
           if (participant.getId() !== local.id) {
             contentLog(`Jitsi: content of ${participant.getId()} is updated.`)
-            const contentsAsArray = addPerceptibility(JSON.parse(value))
+            const contentsAsArray = addContent(addPerceptibility(JSON.parse(value)))
             contentDebug(' updated to ', contentsAsArray)
             sharedContents.replaceRemoteContents(participant.getId(), contentsAsArray)
           }
@@ -439,7 +449,7 @@ export class Conference extends EventEmitter {
           const local = ParticiantsStore.local.get()
           contentLog(`Jitsi: update request of ${participant.getId()} is updated.`)
           if (participant.getId() !== local.id) {
-            const update = addPerceptibility(JSON.parse(value))
+            const update = addContent(addPerceptibility(JSON.parse(value)))
             contentDebug(' update by ', update)
             sharedContents.updateContents(update)
           }
