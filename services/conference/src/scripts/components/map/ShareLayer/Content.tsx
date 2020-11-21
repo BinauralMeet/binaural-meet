@@ -1,23 +1,31 @@
 
+import GoogleDriveIcon from '@iconify/icons-mdi/google-drive'
+import {Icon} from '@iconify/react'
 import {makeStyles} from '@material-ui/core/styles'
 import HttpIcon from '@material-ui/icons/Http'
 import PhotoIcon from '@material-ui/icons/Photo'
 import ScreenShareIcon from '@material-ui/icons/ScreenShare'
 import SubjectIcon from '@material-ui/icons/Subject'
 import YouTubeIcon from '@material-ui/icons/YouTube'
-import {SharedContent as ISharedContent} from '@models/SharedContent'
-import React, {useRef} from 'react'
+import {ContentType, SharedContent as ISharedContent} from '@models/SharedContent'
+import React from 'react'
+import {GDrive} from './GDrive'
 import {ScreenContent} from './ScreenContent'
 import {Text} from './Text'
 import {YouTube} from './YouTube'
 
-export const contentTypeIcons = {
-  img: <PhotoIcon />,
-  text:<SubjectIcon />,
-  iframe: <HttpIcon />,
-  youtube: <YouTubeIcon />,
-  screen: <ScreenShareIcon />,
-  '': undefined,
+export function contentTypeIcons(type: ContentType, size = 12) {
+  const icons = {
+    img: <PhotoIcon style={{fontSize:size}} />,
+    text:<SubjectIcon style={{fontSize:size}} />,
+    iframe: <HttpIcon style={{fontSize:size}} />,
+    youtube: <YouTubeIcon style={{fontSize:size}} />,
+    screen: <ScreenShareIcon style={{fontSize:size}} />,
+    gdrive: <span style={{width:size, height:size}}><Icon icon={GoogleDriveIcon} height={size} /></span>,
+    '': undefined,
+  }
+
+  return icons[type]
 }
 
 const CONTENTLOG = true
@@ -69,6 +77,8 @@ export const Content: React.FC<ContentProps> = (props:ContentProps) => {
       // width={props.content.size[0] - 4} height={props.content.size[1] - 2}
   }else if (props.content.type === 'youtube') {
     rv = <YouTube {...props} />
+  }else if (props.content.type === 'gdrive') {
+    rv = <GDrive {...props} />
   }else if (props.content.type === 'text') {
     rv = <Text {...props} />
   }else if (props.content.type === 'screen') {

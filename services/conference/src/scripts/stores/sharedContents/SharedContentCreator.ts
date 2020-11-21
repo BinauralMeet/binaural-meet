@@ -18,7 +18,7 @@ export const defaultValue: ISharedContent = Object.assign({}, mapObjectDefaultVa
   zorder: 0,
   pinned: false,
   isEditable() {
-    return this.type === 'text' || this.type === 'iframe'
+    return this.type === 'text' || this.type === 'iframe' || this.type === 'gdrive'
   },
 })
 class SharedContent implements ISharedContent {
@@ -66,6 +66,17 @@ export function createContentOfIframe(urlStr: string, map: MapData) {
     const YT_HEIGHT = 380
     pasted.size[0] = YT_WIDTH
     pasted.size[1] = YT_HEIGHT
+  }else if (url.hostname === 'drive.google.com' || url.hostname === 'docs.google.com') {  //  google drive
+    pasted.type = 'gdrive'
+    const fileIdStart = url.pathname.slice(url.pathname.indexOf('/d/') + 3)
+    const fileId = fileIdStart.slice(0, fileIdStart.indexOf('/'))
+    pasted.url = fileId
+    pasted.pose.position[0] = map.mouseOnMap[0]
+    pasted.pose.position[1] = map.mouseOnMap[1]
+    const IFRAME_WIDTH = 600
+    const IFRAME_HEIGHT = 800
+    pasted.size[0] = IFRAME_WIDTH
+    pasted.size[1] = IFRAME_HEIGHT
   }else {  //  generic iframe
     pasted.type = 'iframe'
     pasted.url = urlStr

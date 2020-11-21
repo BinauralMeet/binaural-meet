@@ -212,7 +212,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
             onMouseEnter = {() => { if (props.autoHideTitle) { setShowTitle(true) } }}
             onMouseLeave = {() => { if (props.autoHideTitle && props.content.pinned) { setShowTitle(false) } }}>
           <div className={classes.pin} onClick={onClickPin}>
-            {contentTypeIcons[props.content.type]}
+            {contentTypeIcons(props.content.type, dimensions.clientHeight)}
             <Icon icon={props.content.pinned ? pinIcon : pinOffIcon} height={dimensions.clientHeight} />
           </div>
           <div className={classes.edit} onClick={onClickEdit}>

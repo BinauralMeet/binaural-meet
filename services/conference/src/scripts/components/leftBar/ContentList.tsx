@@ -20,11 +20,11 @@ export const ContentLine: React.FC<{participant: ParticipantBase, content: IShar
   const contentName = useObserver(() => props.content.name)
   const contentType = useObserver(() => props.content.type)
   const classes = styleForList({height, fontSize})
-  const typeIcon = contentTypeIcons[contentType]
+  const typeIcon = contentTypeIcons(contentType, fontSize)
 
   return <Tooltip title={name} placement="right">
     <div className={classes.line} style={{backgroundColor:colors[0], color:colors[1]}}
-      onClick={event => props.map.focusOn(props.content)}>
+      onClick={() => props.map.focusOn(props.content)}>
         {typeIcon}{contentName}
     </div>
   </Tooltip>
