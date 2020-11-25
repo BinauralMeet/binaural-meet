@@ -87,7 +87,7 @@ export function createContentOfIframe(urlStr: string, map: MapData) {
     pasted.size[0] = IFRAME_WIDTH
     pasted.size[1] = IFRAME_HEIGHT
   }
-  console.log(`${pasted.type} created url=${pasted.url}`)
+  console.log(`${pasted.type} created url = ${pasted.url}`)
 
   return pasted
 }
