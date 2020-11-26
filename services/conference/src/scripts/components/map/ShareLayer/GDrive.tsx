@@ -77,12 +77,17 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
       gapi.client.load('drive', 'v3', () => {
         gapi.client.drive.files.get({
           fileId,
-          fields:'mimeType',
+          fields:'mimeType,name',
         })
         .then((result:any) => {
           const body = JSON.parse(result.body)
           //  console.log('GAPI Result:', body.mimeType)
           setMimeType(body.mimeType)
+          if (body.name && props.content.name !== body.name && props.onUpdate) {
+            props.content.name = body.name
+            const newContent = Object.assign({}, props.content)
+            props.onUpdate(newContent)
+          }
         })
       })
     }
