@@ -649,9 +649,12 @@ export class Conference extends EventEmitter {
     const local = ParticiantsStore.local.get()
     if (!track.isScreenSharing()) { //  mic and camera
       if (track.isAudioTrack()) {
+        if (local.plugins.streamControl.muteAudio) { track.mute() }
+        else { track.unmute() }
         local.tracks.audio = track
       } else {
         local.tracks.avatar = track
+        if (local.plugins.streamControl.muteVideo) { this.removeTrack(track) }
       }
     }
   }

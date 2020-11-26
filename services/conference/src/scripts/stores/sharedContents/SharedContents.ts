@@ -7,7 +7,7 @@ import {action, computed, observable} from 'mobx'
 import {createContent, disposeContent} from './SharedContentCreator'
 import {SharedContentTracks} from './SharedContentTracks'
 
-export const CONTENTLOG = false      // show manipulations and sharing of content
+export const CONTENTLOG = true      // show manipulations and sharing of content
 export const contentLog = CONTENTLOG ? console.log : (a:any) => {}
 export const contentDebug = CONTENTLOG ? console.debug : (a:any) => {}
 

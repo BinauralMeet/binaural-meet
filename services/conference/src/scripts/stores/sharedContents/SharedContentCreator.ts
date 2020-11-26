@@ -70,7 +70,7 @@ export function createContentOfIframe(urlStr: string, map: MapData) {
     pasted.type = 'gdrive'
     const fileIdStart = url.pathname.slice(url.pathname.indexOf('/d/') + 3)
     const fileId = fileIdStart.slice(0, fileIdStart.indexOf('/'))
-    pasted.url = fileId
+    pasted.url = `id=${fileId}`
     pasted.pose.position[0] = map.mouseOnMap[0]
     pasted.pose.position[1] = map.mouseOnMap[1]
     const IFRAME_WIDTH = 600
