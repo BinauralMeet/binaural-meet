@@ -28,7 +28,7 @@ export function contentTypeIcons(type: ContentType, size = 12) {
   return icons[type]
 }
 
-const CONTENTLOG = true
+const CONTENTLOG = false
 export const contentLog = CONTENTLOG ? console.log : (a:any) => {}
 
 const useStyles = makeStyles({

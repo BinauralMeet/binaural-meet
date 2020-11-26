@@ -1,8 +1,9 @@
+import {useStore} from '@hooks/SharedContentsStore'
 import {makeStyles} from '@material-ui/core/styles'
 import {assert} from '@models/utils'
-import {defaultValue} from '@stores/sharedContents/SharedContentCreator'
 import _ from 'lodash'
 import React, {useEffect, useRef, useState} from 'react'
+import {debounce, throttle} from 'throttle-debounce'
 import {ContentProps} from './Content'
 
 declare const gapi:any     //  google api from index.html
@@ -46,7 +47,7 @@ interface Member{
 function isPreviewScroll(mimeType: string) {
   return true //  mimeType === ''
 }
-function onUpdateParam(member: Member) {
+function updateUrl(member: Member) {
   let url = ''
   member.params.forEach((val, key) => {
     url = `${url}${url ? '&' : ''}${key}=${val}`
@@ -54,7 +55,6 @@ function onUpdateParam(member: Member) {
 
   if (url !== member.props.content.url && member.props.onUpdate) {
     const newContent = Object.assign({}, member.props.content)
-    newContent.isEditable = defaultValue.isEditable
     newContent.url = url
     member.props.onUpdate(newContent)
   }
@@ -66,11 +66,12 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
   const fileId = params.get('id')
   const [mimeType, setMimeType] = useState('')
   const divScroll = useRef<HTMLDivElement>(null)
+  const contents = useStore()
   const member = useRef<Member>({props, params})
   member.current.props = props
   member.current.params = params
   if (!mimeType) {
-    const API_KEY = 'AIzaSyDDvlkJQNwsEWGB5owuz977QShoaBoVbzc'
+    const API_KEY = 'AIzaSyCE4B2cKycH0fVmBznwfr1ynnNf2qNEU9M'
     if (gapi) {
       gapi.client.setApiKey(API_KEY)
       gapi.client.load('drive', 'v3', () => {
@@ -91,23 +92,29 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
 
   useEffect(() => {
     const top = Number(member.current.params.get('top'))
-    if (divScroll.current && top && top !== divScroll.current.scrollTop) {
+    if (divScroll.current && !isNaN(top) && top !== divScroll.current.scrollTop) {
       const onscroll = divScroll.current.onscroll
       divScroll.current.onscroll = () => {}
       divScroll.current.scrollTop = top
       divScroll.current.onscroll = onscroll
-      console.log(`scrool to top=${top}`)
+      //  console.log(`scrool to top=${top}`)
     }
   })
   useEffect(() => {
     if (divScroll.current) {
+      const INTERVAL = contents.localParticipant.myContents.has(props.content.id) ? 300 : 1000
+      const sendScroll = throttle(INTERVAL, true, () => {
+        setTimeout(() => {
+          const top = Number(member.current.params.get('top'))
+          if (divScroll.current && divScroll.current.scrollTop !== top) {
+            //  console.log(`onscrool top=${divScroll.current.scrollTop}`)
+            member.current.params.set('top', divScroll.current.scrollTop.toString())
+            updateUrl(member.current)
+          }
+        },         INTERVAL)
+      })
       divScroll.current.onscroll = () => {
-        const top = Number(member.current.params.get('top'))
-        if (divScroll.current && divScroll.current.scrollTop !== top) {
-          console.log(`onscrool top=${divScroll.current.scrollTop}`)
-          member.current.params.set('top', divScroll.current.scrollTop.toString())
-          onUpdateParam(member.current)
-        }
+        sendScroll()
       }
     }
   },        [divScroll.current])

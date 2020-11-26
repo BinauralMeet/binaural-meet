@@ -1,5 +1,6 @@
 import {uploadToGyazo} from '@models/api/Gyazo'
 import {Perceptibility,  Pose2DMap} from '@models/MapObject'
+import {defaultPerceptibility} from '@models/MapObject'
 import {ContentType, SharedContent as ISharedContent} from '@models/SharedContent'
 import {defaultValue as mapObjectDefaultValue} from '@stores/MapObject'
 import {MapData} from '@stores/MapObject/MapData'
@@ -8,7 +9,7 @@ import _ from 'lodash'
 import participants from '../participants/Participants'
 import sharedContents from './SharedContents'
 
-export const defaultValue: ISharedContent = Object.assign({}, mapObjectDefaultValue, {
+export const defaultContent: ISharedContent = Object.assign({}, mapObjectDefaultValue, {
   name: '',
   type: '' as ContentType,
   url: '',
@@ -21,6 +22,19 @@ export const defaultValue: ISharedContent = Object.assign({}, mapObjectDefaultVa
     return this.type === 'text' || this.type === 'iframe' || this.type === 'gdrive'
   },
 })
+
+///  Add perceptibility and function to object obtained by JSON.parse()
+export function jsonToContents(json: string, perceptibility = defaultPerceptibility) {
+  const cs = JSON.parse(json)
+  for (const c of cs) {
+    c.perceptibility = Object.assign({}, defaultPerceptibility)
+    c.isEditable = defaultContent.isEditable
+  }
+
+  return cs as ISharedContent[]
+}
+
+
 class SharedContent implements ISharedContent {
   name!: string
   type!: ContentType
@@ -34,14 +48,15 @@ class SharedContent implements ISharedContent {
   perceptibility!: Perceptibility
   isEditable: () => boolean
   constructor() {
-    Object.assign(this, _.cloneDeep(defaultValue))
-    this.isEditable = defaultValue.isEditable
+    Object.assign(this, _.cloneDeep(defaultContent))
+    this.isEditable = defaultContent.isEditable
   }
 }
 
 export function createContent() {
   return new SharedContent()
 }
+
 export function createContentOfIframe(urlStr: string, map: MapData) {
   const pasted = new SharedContent()
   const url = new URL(urlStr)

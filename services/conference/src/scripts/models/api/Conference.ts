@@ -4,7 +4,7 @@ import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {participantsStore} from '@stores/participants'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {default as ParticiantsStore} from '@stores/participants/Participants'
-import {defaultValue as defaultContent} from '@stores/sharedContents/SharedContentCreator'
+import {defaultContent, jsonToContents} from '@stores/sharedContents/SharedContentCreator'
 import sharedContents, {contentDebug, contentLog} from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
 import JitsiMeetJS, {JitisTrackError, JitsiLocalTrack, JitsiRemoteTrack, JitsiTrack, JitsiValues, TMediaType} from 'lib-jitsi-meet'
@@ -50,24 +50,6 @@ function removePerceptibility(cs: ISharedContent[]):any {
 
   return rv
 }
-function addPerceptibility(cs: any[], perceptibility = defaultPerceptibility):ISharedContent[] {
-  const rv = []
-  for (const c of cs) {
-    const cc:any = Object.assign({}, c)
-    cc.perceptibility = Object.assign({}, defaultPerceptibility)
-    rv.push(cc)
-  }
-
-  return rv
-}
-
-function addContent(cs: any[]):ISharedContent[] {
-  for (const c of cs) {
-    c.isEditable = defaultContent.isEditable
-  }
-
-  return cs
-}
 
 export class Conference extends EventEmitter {
   public _jitsiConference?: JitsiMeetJS.JitsiConference
@@ -106,7 +88,7 @@ export class Conference extends EventEmitter {
     if (participant) {
       const str = participant.getProperty(ParticipantProperties.PPROP_CONTENTS)
       if (str && str.length > 0) {
-        const cs = addPerceptibility(JSON.parse(str))
+        const cs = jsonToContents(str)
 
         return cs
       }
@@ -441,7 +423,7 @@ export class Conference extends EventEmitter {
         }else if (name === ParticipantProperties.PPROP_CONTENTS) {
           if (participant.getId() !== local.id) {
             contentLog(`Jitsi: content of ${participant.getId()} is updated.`)
-            const contentsAsArray = addContent(addPerceptibility(JSON.parse(value)))
+            const contentsAsArray = jsonToContents(value)
             contentDebug(' updated to ', contentsAsArray)
             sharedContents.replaceRemoteContents(participant.getId(), contentsAsArray)
           }
@@ -449,7 +431,7 @@ export class Conference extends EventEmitter {
           const local = ParticiantsStore.local.get()
           contentLog(`Jitsi: update request of ${participant.getId()} is updated.`)
           if (participant.getId() !== local.id) {
-            const update = addContent(addPerceptibility(JSON.parse(value)))
+            const update = jsonToContents(value)
             contentDebug(' update by ', update)
             sharedContents.updateContents(update)
           }
