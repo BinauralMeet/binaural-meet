@@ -176,7 +176,9 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   //  pointer drag
   const TIMER_INTERVAL = 33
   const drag = new DragHandler<HTMLDivElement>(onDrag, 'draggableHandle', onTimer, TIMER_INTERVAL)
-  const key = new KeyHandlerPlain(onKeyTimer)
+  const keycodesUse = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+    'KeyW', 'KeyZ', 'KeyA', 'KeyS', 'KeyQ', 'KeyE'])
+  const key = new KeyHandlerPlain(onKeyTimer, 33, keycodesUse, keycodesUse)
 
   useEffect(() => {
     drag.target.current?.focus({preventScroll:true})

@@ -37,8 +37,12 @@ export class KeyHandlerPlain{
   onTimer: KeyHandlerPlain_OnTimer
   interval = 33
   state: KeyHandlerPlainState
-  constructor(onTimer: KeyHandlerPlain_OnTimer, interval?:number) {
+  preventList ?: Set<string>
+  stopList ?: Set<string>
+  constructor(onTimer: KeyHandlerPlain_OnTimer, interval?:number, preventList?:Set<string>, stopList?:Set<string>) {
     this.state = useRef<KeyHandlerPlainState>(new KeyHandlerPlainState()).current
+    this.preventList = stopList
+    this.stopList = stopList
     //  console.log('useRef:', this.state)
 
     this.onTimer = onTimer
@@ -69,7 +73,8 @@ export class KeyHandlerPlain{
   }
 
   onKeyDown = (e: KeyboardEvent) => {
-    e.stopPropagation()
+    if (!this.preventList || this.preventList?.has(e.code)) { e.preventDefault() }
+    if (!this.stopList || this.stopList?.has(e.code)) { e.stopPropagation() }
     this.state.event = e
     this.state.keys.add(e.code)
     //  console.log('onKeyDown', this.state.keys, e.target, e.target === document.body)
@@ -78,7 +83,8 @@ export class KeyHandlerPlain{
     }
   }
   onKeyUp = (e: KeyboardEvent) => {
-    e.stopPropagation()
+    if (!this.preventList || this.preventList?.has(e.code)) { e.preventDefault() }
+    if (!this.stopList || this.stopList?.has(e.code)) { e.stopPropagation() }
     this.state.event = e
     this.state.keys.delete(e.code)
     //  console.log('onKeyUp', this.state.keys, e.target)

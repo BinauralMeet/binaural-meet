@@ -3,7 +3,7 @@ import {makeStyles} from '@material-ui/core/styles'
 import {assert} from '@models/utils'
 import _ from 'lodash'
 import React, {useEffect, useRef, useState} from 'react'
-import {debounce, throttle} from 'throttle-debounce'
+import {throttle} from 'throttle-debounce'
 import {ContentProps} from './Content'
 
 declare const gapi:any     //  google api from index.html
@@ -24,12 +24,13 @@ const useStyles = makeStyles({
   iframeVScrool: (props: ContentProps) => ({
     width:props.content.size[0] + 13 + 10,
     height: props.content.size[0] * 100,
+    pointerEvents: 'none',
   }),
   divScroll:(props:ContentProps) => ({
     width:props.content.size[0] + 100,
     height: '100%',
     position:'relative',
-    left:-13,
+    left:-15,
     overflow:'scroll',
   }),
   divClip:{
@@ -45,7 +46,13 @@ interface Member{
 }
 
 function isPreviewScroll(mimeType: string) {
-  return true //  mimeType === ''
+  return !(
+    mimeType === 'application/vnd.google-apps.presentation'
+    || mimeType === 'application/vnd.google-apps.spreadsheet'
+    || mimeType.slice(0, 5) === 'image'
+    || mimeType.slice(0, 5) === 'video'
+    || mimeType.slice(0, 5) === 'audio'
+  )
 }
 function updateUrl(member: Member) {
   let url = ''
@@ -81,7 +88,7 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
         })
         .then((result:any) => {
           const body = JSON.parse(result.body)
-          //  console.log('GAPI Result:', body.mimeType)
+          //  console.log(`GAPI mimeType:${body.mimeType}  name:${body.name}`)
           setMimeType(body.mimeType)
           if (body.name && props.content.name !== body.name && props.onUpdate) {
             props.content.name = body.name
@@ -95,6 +102,7 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
   const classes = useStyles(props)
   const url = `https://drive.google.com/file/d/${fileId}/preview`
 
+  //  scroll to given 'top' param
   useEffect(() => {
     const top = Number(member.current.params.get('top'))
     if (divScroll.current && !isNaN(top) && top !== divScroll.current.scrollTop) {
@@ -105,6 +113,8 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
       //  console.log(`scrool to top=${top}`)
     }
   })
+
+  //  Set onscroll handler setting 'top' param
   useEffect(() => {
     if (divScroll.current) {
       const INTERVAL = contents.localParticipant.myContents.has(props.content.id) ? 300 : 1000
@@ -130,7 +140,24 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
     onDoubleClick = {() => { if (!props.editing) { props.setEditing(true) } }}
     onPointerLeave = {() => { if (props.editing) { props.setEditing(false) } }}
   >
-    <div className={props.editing || !vscroll ? classes.divClip : classes.divScroll} ref={divScroll}>
+    <div className={(props.editing || !vscroll) ? classes.divClip : classes.divScroll} ref={divScroll}
+      onWheel = {ev => ev.ctrlKey || ev.stopPropagation() }
+      onKeyDownCapture ={ (ev) => {
+        console.log(`keydownCapture ${ev.key}`)
+      }}
+      onKeyPress = {
+        (ev) => {
+          console.log(`keypress ${ev.key}`)
+        }
+      }
+      onKeyDown = {
+        (ev) => {
+          console.log(`key = ${ev.key}`)
+          if (ev.key == '37' || ev.key == '38') {
+            ev.stopPropagation()
+          }
+        }}
+      >
       <iframe src={url}
         className={props.editing ? classes.iframeEdit : vscroll ? classes.iframeVScrool : classes.iframe}
       />

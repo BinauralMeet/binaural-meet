@@ -7,7 +7,7 @@ import {MapData} from '@stores/MapObject/MapData'
 import {JitsiLocalTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
 import participants from '../participants/Participants'
-import sharedContents from './SharedContents'
+import sharedContents, {contentLog} from './SharedContents'
 
 export const defaultContent: ISharedContent = Object.assign({}, mapObjectDefaultValue, {
   name: '',
@@ -102,7 +102,7 @@ export function createContentOfIframe(urlStr: string, map: MapData) {
     pasted.size[0] = IFRAME_WIDTH
     pasted.size[1] = IFRAME_HEIGHT
   }
-  console.log(`${pasted.type} created url = ${pasted.url}`)
+  contentLog(`${pasted.type} created url = ${pasted.url}`)
 
   return pasted
 }

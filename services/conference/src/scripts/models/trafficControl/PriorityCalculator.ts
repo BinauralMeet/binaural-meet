@@ -1,14 +1,17 @@
 import {SharedContent} from '@models/SharedContent'
-import {linearReconciliator} from '@models/utils/linearReconciliator'
 import {participantsStore as participants} from '@stores/participants'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import contents from '@stores/sharedContents/SharedContents'
 import {diffMap} from '@stores/utils'
-import {JitsiRemoteTrack, JitsiTrack, JitsiTrackEvents} from 'lib-jitsi-meet'
+import {JitsiRemoteTrack, JitsiTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
 import {autorun, IReactionDisposer} from 'mobx'
 import {Priority, RemoteTrackInfo, TrackInfo} from './priorityTypes'
+
+export const PRIORITYLOG = false
+export const priorityLog = PRIORITYLOG ? console.log : (a:any) => {}
+export const priorityDebug = PRIORITYLOG ? console.debug : (a:any) => {}
 
 function extractParticipantTrackInfo(participant: RemoteParticipant, track:JitsiTrack): RemoteTrackInfo {
   return {
@@ -105,7 +108,7 @@ export class PriorityCalculator {
       removed.forEach(onRemoveParticipant)
       added.forEach(onAddParticipant)
       oldRemoteParticipants = newRemoteParticipants
-      //  console.log('prioirty remote chagned:', newRemoteParticipants)
+      //  priorityLog('prioirty remote chagned:', newRemoteParticipants)
     })
 
     let oldRemoteContents = new Map<string, Set<JitsiRemoteTrack>>()
@@ -128,7 +131,7 @@ export class PriorityCalculator {
       this.priorityMaps.forEach(priorityMap => priorityMap.delete(rp.id))
       remoteDiposers.delete(rp.id)
       this.updateSet.add(rp.id)
-      console.log('onRemoveParticipant:', rp, this.priorityMaps[0])
+      priorityLog('onRemoveParticipant:', rp, this.priorityMaps[0])
     }
     const onRemoveContent = (tracks: Set<JitsiRemoteTrack>, id:string) => {
       const disposer = remoteDiposers.get(id)
@@ -139,22 +142,22 @@ export class PriorityCalculator {
       this.priorityMaps.forEach(priorityMap => priorityMap.delete(id))
       remoteDiposers.delete(id)
       this.updateSet.add(id)
-      console.log('onRemoveContent:', id, this.priorityMaps[0])
+      priorityLog('onRemoveContent:', id, this.priorityMaps[0])
     }
 
     const onAddParticipant = (rp: RemoteParticipant) => remoteDiposers.set(rp.id, autorun(() => {
       // tslint:disable-next-line: max-line-length
-      //  console.log(`prioirty ${id} chagned v=${(rp.tracks.avatar as JitsiRemoteTrack)?.getSSRC()} a=${(rp.tracks.audio as JitsiRemoteTrack)?.getSSRC()}`)
+      //  priorityLog(`prioirty ${id} chagned v=${(rp.tracks.avatar as JitsiRemoteTrack)?.getSSRC()} a=${(rp.tracks.audio as JitsiRemoteTrack)?.getSSRC()}`)
 
       this.updateSet.add(rp.id)
-      console.log('onAddParticipant:', rp, this.priorityMaps[0])
+      priorityLog('onAddParticipant:', rp, this.priorityMaps[0])
     }))
     const onAddContent = (tracks: Set<JitsiRemoteTrack>, id:string) => {
       remoteDiposers.set(id, autorun(() => {
         // tslint:disable-next-line: max-line-length
-        //  console.log(`prioirty ${id} chagned v=${(rp.tracks.avatar as JitsiRemoteTrack)?.getSSRC()} a=${(rp.tracks.audio as JitsiRemoteTrack)?.getSSRC()}`)
+        //  priorityLog(`prioirty ${id} chagned v=${(rp.tracks.avatar as JitsiRemoteTrack)?.getSSRC()} a=${(rp.tracks.audio as JitsiRemoteTrack)?.getSSRC()}`)
         this.updateSet.add(id)
-        console.log('onAddContent:', id, this.priorityMaps[0])
+        priorityLog('onAddContent:', id, this.priorityMaps[0])
       }))
     }
 

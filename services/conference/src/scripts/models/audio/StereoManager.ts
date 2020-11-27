@@ -42,7 +42,7 @@ export class StereoManager {
         const interval = setInterval(
           () => {
             if (this.audioContext.state !== 'suspended') {
-              console.log('AudioContext successfully resumed')
+              //  console.log('AudioContext successfully resumed')
               clearInterval(interval)
             }
 

@@ -89,6 +89,7 @@
     "react-dimensions-hook": "https://github.com/hasevr/react-dimensions-hook.git",
     "react-dom": "^16.13.1",
     "react-draggable": "^4.4.3",
+    "react-resize-observer": "^1.1.1",
     "react-rnd": "https://github.com/hasevr/react-rnd.git",
     "react-split-pane": "^0.1.92",
     "react-use-gesture": "^7.0.15",

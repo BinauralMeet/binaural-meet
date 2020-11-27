@@ -36,8 +36,18 @@ export const ContentList: React.FC = () => {
   const contents = useContentsStore()
   const map = useMapStore()
   const all = useObserver(() => {
-    const sorted = Array.from(contents.all)
-    sorted.sort((a, b) => {
+    const array = Array.from(contents.all)
+    const filtered = array.filter((c) => {
+      const owner = contents.owner.get(c?.id)
+      if (owner) {
+        if (participants.find(owner)) {
+          return true
+        }
+      }
+
+      return false
+    })
+    const sorted = array.sort((a, b) => {
       let rv = strcmp(a.type, b.type)
       if (rv === 0) {
         rv = strcmp(a.name, b.name)
