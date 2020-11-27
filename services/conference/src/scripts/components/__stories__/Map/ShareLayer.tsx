@@ -3,7 +3,7 @@ import {SharedContent} from '@components/map/ShareLayer/SharedContent'
 import {StoreProvider as ContentsProvider} from '@hooks/SharedContentsStore'
 import {makeStyles} from '@material-ui/core/styles'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {createContent, defaultValue} from '@stores/sharedContents/SharedContentCreator'
+import {createContent, defaultContent} from '@stores/sharedContents/SharedContentCreator'
 import {SharedContents as SharedContentsStore} from '@stores/sharedContents/SharedContents'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
@@ -36,7 +36,7 @@ const pc: ISharedContent = {
   originalSize: [100, 100],
   pinned: true,
   zorder: 1,
-  isEditable:defaultValue.isEditable,
+  isEditable:defaultContent.isEditable,
   perceptibility: {
     audibility: true,
     coreContentVisibility: true,

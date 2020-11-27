@@ -105,5 +105,5 @@ const config_hasemeet = {
 }
 
 
-const config = config_local
+const config = config_alpha
 config.thirdPersonView = true

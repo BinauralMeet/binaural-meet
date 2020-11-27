@@ -1,11 +1,11 @@
 import {makeStyles} from '@material-ui/core/styles'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {assert, shallowEqualsForMap} from '@models/utils'
-import {SharedContents} from '@stores/sharedContents/SharedContents'
+import {contentLog, SharedContents} from '@stores/sharedContents/SharedContents'
 import {useStore} from 'hooks/SharedContentsStore'
 import React, {useEffect, useRef} from 'react'
 import YouTubePlayer from 'yt-player'
-import {contentLog, ContentProps} from './Content'
+import {ContentProps} from './Content'
 
 function getCurrentTimestamp() {
   const MIL = 0.001

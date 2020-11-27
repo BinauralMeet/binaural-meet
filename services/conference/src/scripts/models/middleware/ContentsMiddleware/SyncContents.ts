@@ -75,7 +75,7 @@ sharedContents.on(SharedContentsEvents.REMOTE_JOIN, (participant: ParticipantCon
     contentsBefore.forEach((before) => {
       const after = participant.myContents.get(before.id)
       if (after) {
-        before.perceptibility = after.perceptibility //  not a target of comparison.
+        before.perceptibility = after.perceptibility  //  not a target of comparison.
         if (! _.isEqual(after, before)) {
           if (sharedContents.localParticipant.updateRequest.has(after.id)) {
             contentLog(`Update request for ${after.id} is already in queue. Refrain to send next one.`)

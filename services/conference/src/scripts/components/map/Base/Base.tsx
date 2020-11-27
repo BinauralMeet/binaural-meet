@@ -8,14 +8,32 @@ import {
   radian2Degree, rotate90ClockWise, rotateVector2D, transformPoint2D, transfromAt, vectorLength,
 } from '@models/utils'
 import {addV2, mulV2, normV, subV2} from '@models/utils/coordinates'
+import {MapData} from '@stores/MapObject/MapData'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef, useState} from 'react'
+import ResizeObserver from 'react-resize-observer'
 import {useGesture} from 'react-use-gesture'
 import {createValue, Provider as TransformProvider} from '../utils/useTransform'
 
 export const MAP_SIZE = 5000
 const HALF = 0.5
 export const MAP_CENTER:[number, number] = [0, 0]
+
+
+//  utility
+function limitScale(currentScale: number, scale: number): number {
+  const targetScale = currentScale * scale
+
+  if (targetScale > options.maxScale) {
+    return options.maxScale / currentScale
+  }
+
+  if (targetScale < options.minScale) {
+    return options.minScale / currentScale
+  }
+
+  return scale
+}
 
 interface StyleProps {
   matrix: DOMMatrixReadOnly,
@@ -210,28 +228,11 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       eventOptions:{passive:false}, //  This prevents default zoom by browser when pinch.
     },
   )
-  function onMouseMove(e: React.MouseEvent) {
-    console.log(`onMouseMove: oxy:${e.nativeEvent.offsetX},${e.nativeEvent.offsetY}`)
-  }
 
-  //  update offset
-  useEffect(() => {
-    if (outer.current) {
-      let cur = outer.current as HTMLElement
-      let offsetLeft = 0
-      while (cur) {
-        offsetLeft += cur.offsetLeft
-        cur = cur.offsetParent as HTMLElement
-      }
-      mapStore.setScreenSize([outer.current.clientWidth, outer.current.clientHeight])
-      mapStore.setLeft(offsetLeft)
-    }
-    // mapStore.setOffset([outer.current.scrollLeft, outer.current.scrollTop])  //  when use scroll
-  },        [outer.current, outer.current?.clientWidth, outer.current?.clientHeight])
-
-  //  prevent default behavior of browser on map
+  //  prevent default behavior of browser on map, setClientRect of the outer.
   useEffect(
     () => {
+      onResizeOuter()
       const cb = (e: Event) => { e.preventDefault() }
       //  Not to show context menu with right mouse click
       outer.current?.addEventListener('contextmenu', cb)
@@ -244,19 +245,41 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       }
     },
     [outer])
-  // Prevent scroll by wheel
+
+  // Prevent browser's zoom
   useEffect(
     () => {
-      window.document.body.addEventListener('wheel',
-                                            (event) => {
-                                              //  console.log('body.wheel called and prevented.')
-                                              event.preventDefault()
-                                            },
-                                            {passive: false})
+      function handler(event:WheelEvent) {
+        if (event.ctrlKey) {
+          event.preventDefault()
+          //  console.log('CTRL + mouse wheel = zoom prevented.', event)
+        }
+      }
+      window.document.body.addEventListener('wheel', handler, {passive: false})
+
+      return () => removeEventListener('wheel', handler)
     },
     [],
   )
+  /*  //  This has no effect for iframe and other cases can be handled by onMove. So this is useless
+  //  preview mouse move on outer
+  useEffect(
+    () => {
+      function handler(ev:MouseEvent) {
+        mapStore.setMouse([ev.clientX, ev.clientY])
+      }
+      if (outer.current) {
+        outer.current.addEventListener('mousemove', handler, {capture:true})
+      }
 
+      return () => {
+        if (outer.current) {
+          outer.current.removeEventListener('mousemove', handler)
+        }
+      }
+    },
+    [outer])
+  */
   //  Event handlers when use scroll ----------------------------------------------
   //  Move to center when root div is created.
   /*
@@ -286,6 +309,21 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
     [outer],
   )
   */
+  //  update offset
+  function onResizeOuter() {
+    if (outer.current) {
+      let cur = outer.current as HTMLElement
+      let offsetLeft = 0
+      while (cur) {
+        offsetLeft += cur.offsetLeft
+        cur = cur.offsetParent as HTMLElement
+      }
+      //  console.log(`sc:[${outer.current.clientWidth}, ${outer.current.clientHeight}] left:${offsetLeft}`)
+      mapStore.setScreenSize([outer.current.clientWidth, outer.current.clientHeight])
+      mapStore.setLeft(offsetLeft)
+      // mapStore.setOffset([outer.current.scrollLeft, outer.current.scrollTop])  //  when use scroll
+    }
+  }
 
   const styleProps: StyleProps = {
     matrix,
@@ -294,7 +332,8 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   const transfromValue = createValue(mapStore.committedMatrix, [0, 0])
 
   return (
-    <div className={[classes.root, props.className].join(' ')} ref={outer} {...bind()} >
+    <div className={[classes.root, props.className].join(' ')} ref={outer} {...bind()}>
+      <ResizeObserver onResize = { onResizeOuter } />
       <div className={classes.center}>
         <TransformProvider value={transfromValue}>
           <div id="map-transform" className={classes.transform} ref={container}>
@@ -307,18 +346,3 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 }
 Base.displayName = 'MapBase'
 
-
-//  utility
-function limitScale(currentScale: number, scale: number): number {
-  const targetScale = currentScale * scale
-
-  if (targetScale > options.maxScale) {
-    return options.maxScale / currentScale
-  }
-
-  if (targetScale < options.minScale) {
-    return options.minScale / currentScale
-  }
-
-  return scale
-}

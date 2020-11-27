@@ -1,14 +1,15 @@
 import {uploadToGyazo} from '@models/api/Gyazo'
 import {Perceptibility,  Pose2DMap} from '@models/MapObject'
+import {defaultPerceptibility} from '@models/MapObject'
 import {ContentType, SharedContent as ISharedContent} from '@models/SharedContent'
 import {defaultValue as mapObjectDefaultValue} from '@stores/MapObject'
 import {MapData} from '@stores/MapObject/MapData'
 import {JitsiLocalTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
 import participants from '../participants/Participants'
-import sharedContents from './SharedContents'
+import sharedContents, {contentLog} from './SharedContents'
 
-export const defaultValue: ISharedContent = Object.assign({}, mapObjectDefaultValue, {
+export const defaultContent: ISharedContent = Object.assign({}, mapObjectDefaultValue, {
   name: '',
   type: '' as ContentType,
   url: '',
@@ -18,9 +19,22 @@ export const defaultValue: ISharedContent = Object.assign({}, mapObjectDefaultVa
   zorder: 0,
   pinned: false,
   isEditable() {
-    return this.type === 'text' || this.type === 'iframe'
+    return this.type === 'text' || this.type === 'iframe' || this.type === 'gdrive'
   },
 })
+
+///  Add perceptibility and function to object obtained by JSON.parse()
+export function jsonToContents(json: string, perceptibility = defaultPerceptibility) {
+  const cs = JSON.parse(json)
+  for (const c of cs) {
+    c.perceptibility = Object.assign({}, defaultPerceptibility)
+    c.isEditable = defaultContent.isEditable
+  }
+
+  return cs as ISharedContent[]
+}
+
+
 class SharedContent implements ISharedContent {
   name!: string
   type!: ContentType
@@ -34,14 +48,15 @@ class SharedContent implements ISharedContent {
   perceptibility!: Perceptibility
   isEditable: () => boolean
   constructor() {
-    Object.assign(this, _.cloneDeep(defaultValue))
-    this.isEditable = defaultValue.isEditable
+    Object.assign(this, _.cloneDeep(defaultContent))
+    this.isEditable = defaultContent.isEditable
   }
 }
 
 export function createContent() {
   return new SharedContent()
 }
+
 export function createContentOfIframe(urlStr: string, map: MapData) {
   const pasted = new SharedContent()
   const url = new URL(urlStr)
@@ -66,6 +81,17 @@ export function createContentOfIframe(urlStr: string, map: MapData) {
     const YT_HEIGHT = 380
     pasted.size[0] = YT_WIDTH
     pasted.size[1] = YT_HEIGHT
+  }else if (url.hostname === 'drive.google.com' || url.hostname === 'docs.google.com') {  //  google drive
+    pasted.type = 'gdrive'
+    const fileIdStart = url.pathname.slice(url.pathname.indexOf('/d/') + 3)
+    const fileId = fileIdStart.slice(0, fileIdStart.indexOf('/'))
+    pasted.url = `id=${fileId}`
+    pasted.pose.position[0] = map.mouseOnMap[0]
+    pasted.pose.position[1] = map.mouseOnMap[1]
+    const IFRAME_WIDTH = 600
+    const IFRAME_HEIGHT = 800
+    pasted.size[0] = IFRAME_WIDTH
+    pasted.size[1] = IFRAME_HEIGHT
   }else {  //  generic iframe
     pasted.type = 'iframe'
     pasted.url = urlStr
@@ -76,7 +102,7 @@ export function createContentOfIframe(urlStr: string, map: MapData) {
     pasted.size[0] = IFRAME_WIDTH
     pasted.size[1] = IFRAME_HEIGHT
   }
-  console.log(`${pasted.type} created url=${pasted.url}`)
+  contentLog(`${pasted.type} created url = ${pasted.url}`)
 
   return pasted
 }

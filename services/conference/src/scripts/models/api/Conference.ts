@@ -4,6 +4,7 @@ import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {participantsStore} from '@stores/participants'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {default as ParticiantsStore} from '@stores/participants/Participants'
+import {defaultContent, jsonToContents} from '@stores/sharedContents/SharedContentCreator'
 import sharedContents, {contentDebug, contentLog} from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
 import JitsiMeetJS, {JitisTrackError, JitsiLocalTrack, JitsiRemoteTrack, JitsiTrack, JitsiValues, TMediaType} from 'lib-jitsi-meet'
@@ -49,16 +50,7 @@ function removePerceptibility(cs: ISharedContent[]):any {
 
   return rv
 }
-function addPerceptibility(cs: any[], perceptibility = defaultPerceptibility):ISharedContent[] {
-  const rv = []
-  for (const c of cs) {
-    const cc:any = Object.assign({}, c)
-    cc.perceptibility = Object.assign({}, defaultPerceptibility)
-    rv.push(cc)
-  }
 
-  return rv
-}
 export class Conference extends EventEmitter {
   public _jitsiConference?: JitsiMeetJS.JitsiConference
   private _isForTest?: boolean
@@ -96,7 +88,7 @@ export class Conference extends EventEmitter {
     if (participant) {
       const str = participant.getProperty(ParticipantProperties.PPROP_CONTENTS)
       if (str && str.length > 0) {
-        const cs = addPerceptibility(JSON.parse(str))
+        const cs = jsonToContents(str)
 
         return cs
       }
@@ -431,7 +423,7 @@ export class Conference extends EventEmitter {
         }else if (name === ParticipantProperties.PPROP_CONTENTS) {
           if (participant.getId() !== local.id) {
             contentLog(`Jitsi: content of ${participant.getId()} is updated.`)
-            const contentsAsArray = addPerceptibility(JSON.parse(value))
+            const contentsAsArray = jsonToContents(value)
             contentDebug(' updated to ', contentsAsArray)
             sharedContents.replaceRemoteContents(participant.getId(), contentsAsArray)
           }
@@ -439,7 +431,7 @@ export class Conference extends EventEmitter {
           const local = ParticiantsStore.local.get()
           contentLog(`Jitsi: update request of ${participant.getId()} is updated.`)
           if (participant.getId() !== local.id) {
-            const update = addPerceptibility(JSON.parse(value))
+            const update = jsonToContents(value)
             contentDebug(' update by ', update)
             sharedContents.updateContents(update)
           }
@@ -639,9 +631,12 @@ export class Conference extends EventEmitter {
     const local = ParticiantsStore.local.get()
     if (!track.isScreenSharing()) { //  mic and camera
       if (track.isAudioTrack()) {
+        if (local.plugins.streamControl.muteAudio) { track.mute() }
+        else { track.unmute() }
         local.tracks.audio = track
       } else {
         local.tracks.avatar = track
+        if (local.plugins.streamControl.muteVideo) { this.removeTrack(track) }
       }
     }
   }

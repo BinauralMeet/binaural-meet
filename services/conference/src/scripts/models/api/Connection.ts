@@ -27,8 +27,6 @@ declare var global: any
 global.$ = jquery
 global.jQuery = jquery
 
-console.log(`JitsiMeetJS Version: ${JitsiMeetJS.version}`)
-
 const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
   useIPv6: false,
   disableSimulcast: false,

@@ -17,7 +17,7 @@ import {Dimensions, useDimensions} from 'react-dimensions-hook'
 import {Rnd} from 'react-rnd'
 import {useGesture} from 'react-use-gesture'
 import {useValue as useTransform} from '../utils/useTransform'
-import {Content} from './Content'
+import {Content, contentTypeIcons} from './Content'
 
 function mulV<S extends number, T extends number[]>(s: S, v2: T): T {
   return v2.map(v => s * v) as T
@@ -212,7 +212,8 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
             onMouseEnter = {() => { if (props.autoHideTitle) { setShowTitle(true) } }}
             onMouseLeave = {() => { if (props.autoHideTitle && props.content.pinned) { setShowTitle(false) } }}>
           <div className={classes.pin} onClick={onClickPin}>
-            &nbsp;<Icon icon={props.content.pinned ? pinIcon : pinOffIcon} height={dimensions.clientHeight} />&nbsp;
+            {contentTypeIcons(props.content.type, dimensions.clientHeight)}
+            <Icon icon={props.content.pinned ? pinIcon : pinOffIcon} height={dimensions.clientHeight} />
           </div>
           <div className={classes.edit} onClick={onClickEdit}>
             &nbsp; {
@@ -231,6 +232,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   const titleHeight = showTitle ? dimensions.clientHeight : 0
   //  console.log('Rnd rendered.')
 
+
   return (
     <div className={classes.container} onContextMenu={
       (evt) => {
@@ -238,29 +240,21 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
         evt.preventDefault()
       }
     }>
-      {isFixed ?
-        <div className={classes.rndCls} style={{
-          transform:`translate(${pose.position[0]}px, ${pose.position[1] - titleHeight}px)`,
-          width:size[0], height:size[1] + titleHeight, display: 'inline-block', top: 0, left: 0,
-          boxSizing: 'border-box', flexShrink: 0,
-        }}>
-          {theContent}
-        </div> :
-        <Rnd className={classes.rndCls} ref={rnd}
-          onResizeStart = { (evt)  => {
-            evt.stopPropagation(); evt.preventDefault()
-            setResizeBase(size)
-            setResizeBasePos(pose.position)
-          } }
-          onResize = {onResize}
-          onResizeStop = { (e, dir, elem, delta, pos) => {
-            onResize(e, dir, elem, delta, pos)
-            updateHandler()
-          } }
-        >
-          {theContent}
-        </Rnd>
-      }
+      <Rnd className={classes.rndCls} enableResizing={isFixed ? resizeDisable : resizeEnable}
+        disableDragging = {isFixed} ref={rnd}
+        onResizeStart = { (evt)  => {
+          evt.stopPropagation(); evt.preventDefault()
+          setResizeBase(size)
+          setResizeBasePos(pose.position)
+        } }
+        onResize = {onResize}
+        onResizeStop = { (e, dir, elem, delta, pos) => {
+          onResize(e, dir, elem, delta, pos)
+          updateHandler()
+        } }
+      >
+        {theContent}
+      </Rnd>
     </div >
   )
 }
@@ -269,16 +263,13 @@ const useStyles = makeStyles({
   container: (props: StyleProps) => {
     const mat = new DOMMatrix()
     const size = [props.size[0], props.size[1]]
-//    mat.translateSelf(...addV2(props.pose.position, mulV(0.5, size)))
     mat.rotateSelf(0, 0, props.pose.orientation)
-//    mat.translateSelf(...subV2([0, 0], addV2(props.pose.position, mulV(0.5, size))))
 
     return ({
       display: props.props.hideAll ? 'none' : 'block',
       width:0,
       height:0,
       transform: mat.toString(),
-      // transform: `rotate(${props.pose.orientation})`,
     })
   },
   rndCls: (props: StyleProps) => ({
@@ -355,6 +346,10 @@ const useStyles = makeStyles({
       },
     } : {display:'none'}
   ),
+  type: (props: StyleProps) => ({
+    display: props.showTitle ? 'block' : 'none',
+    height: props.dimensions.clientHeight,
+  }),
   close: (props: StyleProps) => ({
     visibility: props.showTitle ? 'visible' : 'hidden',
     position:'absolute',
@@ -369,3 +364,24 @@ const useStyles = makeStyles({
     },
   }),
 })
+
+const resizeEnable = {
+  bottom: true,
+  bottomLeft: true,
+  bottomRight: true,
+  left: true,
+  right: true,
+  top: true,
+  topLeft: true,
+  topRight:true,
+}
+const resizeDisable = {
+  bottom: false,
+  bottomLeft: false,
+  bottomRight: false,
+  left: false,
+  right: false,
+  top: false,
+  topLeft: false,
+  topRight:false,
+}

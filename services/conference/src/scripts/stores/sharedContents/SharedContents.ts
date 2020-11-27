@@ -63,7 +63,20 @@ export class SharedContents extends EventEmitter {
   }
 
   @computed get localParticipant(): ParticipantContents {
-    if (!this.localId) { this.localId = participantsStore.localId }
+    if (this.localId !== participantsStore.localId) {
+      Array.from(this.owner.keys()).forEach((key) => {
+        if (this.owner.get(key) === this.localId) {
+          this.owner.set(key, participantsStore.localId)
+        }
+      })
+      const local = this.participants.get(this.localId)
+      if (local) {
+        this.participants.delete(this.localId)
+        this.participants.set(participantsStore.localId, local)
+      }
+      this.localId = participantsStore.localId
+      contentLog(`Set new local id ${this.localId}`)
+    }
     const p = this.participants.get(this.localId)
     if (!p) {
       const n = new ParticipantContents(this.localId)
@@ -71,13 +84,6 @@ export class SharedContents extends EventEmitter {
       contentLog('Create ParticipantContents for local participant ', this.localId)
 
       return n
-    }
-    if (this.localId !== participantsStore.localId) {  //  update local id
-      p.participantId = participantsStore.localId
-      this.participants.delete(this.localId)
-      this.participants.set(p.participantId, p)
-      this.localId = p.participantId
-      contentLog('Set new local id ', p.participantId)
     }
 
     return p

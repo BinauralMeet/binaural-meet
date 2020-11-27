@@ -20,11 +20,11 @@ export const ContentLine: React.FC<{participant: ParticipantBase, content: IShar
   const contentName = useObserver(() => props.content.name)
   const contentType = useObserver(() => props.content.type)
   const classes = styleForList({height, fontSize})
-  const typeIcon = contentTypeIcons[contentType]
+  const typeIcon = contentTypeIcons(contentType, fontSize)
 
   return <Tooltip title={name} placement="right">
     <div className={classes.line} style={{backgroundColor:colors[0], color:colors[1]}}
-      onClick={event => props.map.focusOn(props.content)}>
+      onClick={() => props.map.focusOn(props.content)}>
         {typeIcon}{contentName}
     </div>
   </Tooltip>
@@ -36,8 +36,18 @@ export const ContentList: React.FC = () => {
   const contents = useContentsStore()
   const map = useMapStore()
   const all = useObserver(() => {
-    const sorted = Array.from(contents.all)
-    sorted.sort((a, b) => {
+    const array = Array.from(contents.all)
+    const filtered = array.filter((c) => {
+      const owner = contents.owner.get(c?.id)
+      if (owner) {
+        if (participants.find(owner)) {
+          return true
+        }
+      }
+
+      return false
+    })
+    const sorted = array.sort((a, b) => {
       let rv = strcmp(a.type, b.type)
       if (rv === 0) {
         rv = strcmp(a.name, b.name)
