@@ -59,7 +59,7 @@ export class MapData {
   rotateToWindow(pos:[number, number]) {
     return rotateVector2D(this.matrix, pos)
   }
-
+  readonly keyInputUsers = new Set<string>()
 }
 
 export default new MapData()

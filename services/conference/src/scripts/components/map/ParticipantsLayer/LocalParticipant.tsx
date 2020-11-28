@@ -2,8 +2,7 @@ import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
 import {PARTICIPANT_SIZE} from '@models/Participant'
-import {rotateVector2DByDegree, transformPoint2D, transfromAt} from '@models/utils'
-import {addV2, assert, normV, subV2} from '@models/utils'
+import {addV2, assert, mulV2, normV, rotateVector2DByDegree, subV2, transformPoint2D, transfromAt} from '@models/utils'
 import mapData from '@stores/MapObject/MapData'
 import {reaction} from 'mobx'
 import React, {useEffect, useRef} from 'react'
@@ -19,9 +18,6 @@ const HALF_DEGREE = 180
 const WHOLE_DEGREE = 360
 const HALF = 0.5
 
-function mulV<T extends number[]>(s: number, vec: T): T {
-  return vec.map((v, i) => s * v) as T
-}
 
 type LocalParticipantProps = ParticipantProps
 interface LocalParticipantMember{
@@ -41,7 +37,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     let delta = subV2(state.xy, map.toWindow(participant!.pose.position))
     const norm = Math.sqrt(delta[0] * delta[0] + delta[1] * delta[1])
     if (norm > AVATAR_SPEED_LIMIT) {
-      delta = mulV(AVATAR_SPEED_LIMIT / norm, delta)
+      delta = mulV2(AVATAR_SPEED_LIMIT / norm, delta)
     }
 
     if (participants.local.get().thirdPersonView) {
@@ -49,7 +45,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
       participant!.pose.position = addV2(participant!.pose.position, localDelta)
       const SMOOTHRATIO = 0.8
       if (!member.smoothedDelta) { member.smoothedDelta = [delta[0], delta[1]] }
-      member.smoothedDelta = addV2(mulV(1 - SMOOTHRATIO, localDelta), mulV(SMOOTHRATIO, member.smoothedDelta))
+      member.smoothedDelta = addV2(mulV2(1 - SMOOTHRATIO, localDelta), mulV2(SMOOTHRATIO, member.smoothedDelta))
       const dir = Math.atan2(member.smoothedDelta[0], -member.smoothedDelta[1]) * HALF_DEGREE / Math.PI
       let diff = dir - participant!.pose.orientation
       if (diff < -HALF_DEGREE) { diff += WHOLE_DEGREE }
@@ -124,10 +120,10 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     let diff = subV2(posOnScreen, target) as [number, number]
     const norm = Math.sqrt(diff[0] * diff[0] + diff[1] * diff[1])
     if (norm > MAP_SPEED_LIMIT) {
-      diff = mulV(MAP_SPEED_LIMIT / norm, diff) as [number, number]
+      diff = mulV2(MAP_SPEED_LIMIT / norm, diff) as [number, number]
     }
     const SCROOL_SPEED = 0.1
-    const mapMove = mulV(SCROOL_SPEED, map.rotateFromWindow(diff) as [number, number])
+    const mapMove = mulV2(SCROOL_SPEED, map.rotateFromWindow(diff) as [number, number])
     const EPSILON = 0.2
     if (Math.abs(mapMove[0]) + Math.abs(mapMove[1]) > EPSILON) {
       const newMat = map.matrix.translate(-mapMove[0], -mapMove[1])
@@ -172,17 +168,17 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
 
     return false
   }
+  const keycodesUse = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+    'KeyW', 'KeyZ', 'KeyA', 'KeyS', 'KeyQ', 'KeyE'])
+  const unused = new KeyHandlerPlain(onKeyTimer, 33, keycodesUse, keycodesUse, () => (map.keyInputUsers.size === 0))
 
   //  pointer drag
   const TIMER_INTERVAL = 33
   const drag = new DragHandler<HTMLDivElement>(onDrag, 'draggableHandle', onTimer, TIMER_INTERVAL)
-  const keycodesUse = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
-    'KeyW', 'KeyZ', 'KeyA', 'KeyS', 'KeyQ', 'KeyE'])
-  const key = new KeyHandlerPlain(onKeyTimer, 33, keycodesUse, keycodesUse)
-
   useEffect(() => {
     drag.target.current?.focus({preventScroll:true})
   })
+
 
   //  Rotate participant to look at the pointer
   useEffect(() => {
@@ -211,5 +207,3 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
 
 export const MemoedLocalParticipant = memoComponent(LocalParticipant, ['participantId', 'size'])
 MemoedLocalParticipant.displayName = 'MemorizedLocalParticipant'
-
-

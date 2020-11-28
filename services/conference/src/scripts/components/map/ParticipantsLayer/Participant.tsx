@@ -14,7 +14,7 @@ interface StyleProps {
   size: number,
 }
 
-const SVG_RATIO = 6
+const SVG_RATIO = 18
 const HALF = 0.5
 
 const useStyles = makeStyles({
@@ -78,11 +78,13 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
         <svg className={classes.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO} xmlns="http://www.w3.org/2000/svg">
           <defs>
             <radialGradient id={`gr${props.participantId}`}>
-              <stop offset="40%" stopColor={color} stopOpacity="40%" />
-              <stop offset="100%" stopColor={color} stopOpacity="0%" />
+              <stop offset="0%" stopColor={color} stopOpacity={audioLevel} />
+              <stop offset="20%" stopColor={color} stopOpacity={0.5 * audioLevel} />
+              <stop offset="60%" stopColor={color} stopOpacity={0.4 * (audioLevel > 0.5 ? audioLevel - 0.5 : 0)} />
+              <stop offset="100%" stopColor={color} stopOpacity={0.1 * (audioLevel > 0.5 ? audioLevel - 0.5 : 0)} />
             </radialGradient>
           </defs>
-          <circle r={outerRadius + audioLevel * AUDIOLEVELSCALE}
+          <circle r={AUDIOLEVELSCALE}
             cy={svgCenter} cx={svgCenter} fill={`url(#gr${props.participantId})`} />
           <circle r={outerRadius} cy={svgCenter} cx={svgCenter} fill={color}
             style={{pointerEvents: 'fill'}} />

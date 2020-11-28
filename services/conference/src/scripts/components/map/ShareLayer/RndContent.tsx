@@ -1,4 +1,5 @@
 import content from '*.svg'
+import {useStore as useMapStore} from '@hooks/MapStore'
 import pinIcon from '@iconify/icons-mdi/pin'
 import pinOffIcon from '@iconify/icons-mdi/pin-off'
 import {Icon} from '@iconify/react'
@@ -76,7 +77,16 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   const rnd = useRef<Rnd>(null)                         //  ref to rnd to update position and size
   const {ref, dimensions} = useDimensions()             //  title dimensions measured
   const [showTitle, setShowTitle] = useState(!props.autoHideTitle || !props.content.pinned)
-  const [editing, setEditing] = useState(false)
+  const [editing, setEditingRaw] = useState(false)
+  const map = useMapStore()
+  function setEditing(flag: boolean) {
+    if (flag) {
+      map.keyInputUsers.add(props.content.id)
+    }else {
+      map.keyInputUsers.delete(props.content.id)
+    }
+    setEditingRaw(flag)
+  }
   const state = useRef<RndContentState>(new RndContentState())
 
   if (!_.isEqual(props.content.size, state.current.lastSize)) {

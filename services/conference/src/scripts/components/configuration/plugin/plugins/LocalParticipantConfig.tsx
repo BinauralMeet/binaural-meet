@@ -84,7 +84,7 @@ const LocalParticipantConfig: React.FC<Props> = (props: Props) => {
   return <>
     <Container>{form}</Container>
     <AudioControl key="audiocontrol" />
-    <ViewpointControl key="viewpointcontrol" />
+    {/*<ViewpointControl key="viewpointcontrol" />*/}
     <RemoteTrackLimitControl key="remotelimitcontrol" />
   </>
 }

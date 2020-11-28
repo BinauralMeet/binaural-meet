@@ -1,3 +1,4 @@
+import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore as useContentsStore} from '@hooks/SharedContentsStore'
 import ShareIcon from '@material-ui/icons/Share'
 import {makeStyles} from '@material-ui/styles'
@@ -13,10 +14,19 @@ const useStyles = makeStyles({
 })
 
 export const ShareButton: React.FC = () => {
-  const [openDialog, setOpenDialog] = useState<boolean>(false)
+  const [openDialog, setOpenDialogRaw] = useState<boolean>(false)
   const classes = useStyles()
   const store = useContentsStore()
   const sharing = useObserver(() => store.tracks.localMains.size + store.tracks.localContents.size)
+  const map = useMapStore()
+  function setOpenDialog(flag: boolean) {
+    if (flag) {
+      map.keyInputUsers.add('shareDialog')
+    }else {
+      map.keyInputUsers.delete('shareDialog')
+    }
+    setOpenDialogRaw(flag)
+  }
 
   return (
     <div className={classes.root}>

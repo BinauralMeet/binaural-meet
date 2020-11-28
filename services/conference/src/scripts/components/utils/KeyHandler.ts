@@ -39,10 +39,15 @@ export class KeyHandlerPlain{
   state: KeyHandlerPlainState
   preventList ?: Set<string>
   stopList ?: Set<string>
-  constructor(onTimer: KeyHandlerPlain_OnTimer, interval?:number, preventList?:Set<string>, stopList?:Set<string>) {
+  enabled = () => true
+  constructor(onTimer: KeyHandlerPlain_OnTimer, interval?:number,
+              preventList?:Set<string>, stopList?:Set<string>, enabled?:() => boolean) {
     this.state = useRef<KeyHandlerPlainState>(new KeyHandlerPlainState()).current
-    this.preventList = stopList
+    this.preventList = preventList
     this.stopList = stopList
+    if (enabled) {
+      this.enabled = enabled
+    }
     //  console.log('useRef:', this.state)
 
     this.onTimer = onTimer
@@ -73,6 +78,11 @@ export class KeyHandlerPlain{
   }
 
   onKeyDown = (e: KeyboardEvent) => {
+    if (!this.enabled()) {
+      this.state.keys.clear()
+
+      return
+    }
     if (!this.preventList || this.preventList?.has(e.code)) { e.preventDefault() }
     if (!this.stopList || this.stopList?.has(e.code)) { e.stopPropagation() }
     this.state.event = e
@@ -83,6 +93,9 @@ export class KeyHandlerPlain{
     }
   }
   onKeyUp = (e: KeyboardEvent) => {
+    if (!this.enabled()) {
+      return
+    }
     if (!this.preventList || this.preventList?.has(e.code)) { e.preventDefault() }
     if (!this.stopList || this.stopList?.has(e.code)) { e.stopPropagation() }
     this.state.event = e
