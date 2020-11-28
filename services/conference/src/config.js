@@ -31,6 +31,7 @@ const config_haselab_net = {
   bosh: 'https://jitsi.haselab.net/http-bind', // FIXME: use xep-0156 for that
   clientNode: 'http://jitsi.org/jitsimeet',
   focusUserJid: 'focus@auth.meet.jitsi',
+  disableSimulcast: true,
   channelLastN: -1,
   p2p: {
     enabled: false,
@@ -48,27 +49,11 @@ const config_party_haselab = {
   bosh: 'https://party.haselab.net/http-bind', // FIXME: use xep-0156 for that
   clientNode: 'http://jitsi.org/jitsimeet',
   focusUserJid: 'focus@auth.meet.jitsi',
+  disableSimulcast: true,
   channelLastN: -1,
   p2p: {
     enabled: false,
   },
-  rtc:rtcConfig
-}
-
-const config_alpha = {
-  hosts: {
-    domain: 'alpha.jitsi.net',
-    muc: 'conference.alpha.jitsi.net',
-    focus: 'focus.alpha.jitsi.net',
-  },
-  openBridgeChannel: 'websocket', // One of true, 'datachannel'==='true', or 'websocket'
-  p2p: {
-    enabled: false,
-    preferH264: true,
-    disableH264: true,
-    useStunTurn: true, // use XEP-0215 to fetch STUN and TURN servers for the P2P connection
-  },
-  bosh: 'https://alpha.jitsi.net/http-bind', // FIXME: use xep-0156 for that
   rtc:rtcConfig
 }
 
@@ -82,6 +67,7 @@ const config_local = {
   bosh: 'https://localhost:8443/http-bind', // FIXME: use xep-0156 for that
   clientNode: 'http://jitsi.org/jitsimeet',
   focusUserJid: 'focus@auth.meet.jitsi',
+  disableSimulcast: true,
   channelLastN: -1,
   p2p: {
     enabled: false,
@@ -97,6 +83,7 @@ const config_hasemeet = {
   openBridgeChannel: true, // One of true, 'datachannel'==='true', or 'websocket'
   bosh: '//hasemeet.haselab.net/http-bind',
   clientNode: 'http://jitsi.org/jitsimeet',
+  disableSimulcast: true,
   channelLastN: -1,
   p2p: {
     enabled: false,
@@ -104,6 +91,22 @@ const config_hasemeet = {
   rtc:rtcConfig
 }
 
-
+const config_alpha = {
+  hosts: {
+    domain: 'alpha.jitsi.net',
+    muc: 'conference.alpha.jitsi.net',
+    focus: 'focus.alpha.jitsi.net',
+  },
+  openBridgeChannel: 'websocket', // One of true, 'datachannel'==='true', or 'websocket'
+  disableSimulcast: true,
+  p2p: {
+    enabled: false,
+    preferH264: true,
+    disableH264: true,
+    useStunTurn: true, // use XEP-0215 to fetch STUN and TURN servers for the P2P connection
+  },
+  bosh: 'https://alpha.jitsi.net/http-bind', // FIXME: use xep-0156 for that
+  rtc:rtcConfig
+}
 const config = config_alpha
 config.thirdPersonView = true

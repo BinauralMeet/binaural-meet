@@ -24,7 +24,7 @@ export class StereoManager {
   }
 
   removeSpeaker(id: string) {
-    console.log('remove speaker')
+    //  console.log('remove speaker')
     this.nodes[id].disconnect()
     delete this.nodes[id]
   }

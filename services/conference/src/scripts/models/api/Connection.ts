@@ -49,7 +49,7 @@ const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
   desktopSharingChromeMinExtVersion: '0.1',
 
   // Whether desktop sharing should be disabled on Firefox.
-  desktopSharingFirefoxDisabled: true,
+  desktopSharingFirefoxDisabled: false,
 }
 
 const ConnectionEvents = {
