@@ -62,4 +62,7 @@ export class MapData {
   readonly keyInputUsers = new Set<string>()
 }
 
-export default new MapData()
+const mapData = new MapData()
+declare const d:any
+d.mapData = mapData
+export default mapData

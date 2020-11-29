@@ -33,6 +33,12 @@ export const ConfigurationButton: React.FC<ConfigurationButtonProps> = (props) =
       map.keyInputUsers.add('config')
     }else {
       map.keyInputUsers.delete('config')
+      // To route key input to window, focus the body after the fade out animation.
+      setTimeout(() => {
+        if (document.body) {
+          document.body.focus() //    <body tabindex="0"> is needed to focus on <body>
+        }
+      },         200)
     }
     setShowConfigRaw(flag)
   }
