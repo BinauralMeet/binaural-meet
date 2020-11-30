@@ -10,6 +10,9 @@ export function subV2(a:number[], b:number[]): [number, number] {
 export function mulV2(a:number, v:number[]): [number, number] {
   return [a * v[0], a * v[1]]
 }
+export function mulV3(a:number, v:number[]): [number, number, number] {
+  return [a * v[0], a * v[1], a * v[2]]
+}
 export function normV(v:number[]): number {
   let sum = 0
   v.forEach(e => sum += e * e)
@@ -127,4 +130,8 @@ export function transfromAt(center:[number, number], tranform: DOMMatrixReadOnly
   const newMatrix = multiply([itm, tranform, tm, baseMatrix])
 
   return newMatrix
+}
+
+export function square(s: number) {
+  return s * s
 }

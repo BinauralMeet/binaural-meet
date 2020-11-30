@@ -45,7 +45,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
     orientation: participant!.pose.orientation,
   }))
   const name = useObserver(() => participant!.information.name)
-  const audioLevel = useObserver(() => participant!.tracks.audioLevel)
+  const audioLevel = useObserver(() => Math.pow(participant!.tracks.audioLevel, 0.5))
   // console.log(`audioLevel ${audioLevel}`)
 
   const classes = useStyles({
@@ -79,9 +79,10 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
           <defs>
             <radialGradient id={`gr${props.participantId}`}>
               <stop offset="0%" stopColor={color} stopOpacity={audioLevel} />
-              <stop offset="20%" stopColor={color} stopOpacity={0.5 * audioLevel} />
-              <stop offset="60%" stopColor={color} stopOpacity={0.4 * (audioLevel > 0.5 ? audioLevel - 0.5 : 0)} />
-              <stop offset="100%" stopColor={color} stopOpacity={0.1 * (audioLevel > 0.5 ? audioLevel - 0.5 : 0)} />
+              <stop offset="15%" stopColor={color} stopOpacity={0.5 * audioLevel} />
+              <stop offset="35%" stopColor={color} stopOpacity={0.4 * (audioLevel > 0.5 ? audioLevel - 0.5 : 0)} />
+              <stop offset="60%" stopColor={color} stopOpacity={0.4 * (audioLevel > 0.7 ? audioLevel - 0.7 : 0)} />
+              <stop offset="100%" stopColor={color} stopOpacity={0.1 * (audioLevel > 0.7 ? audioLevel - 0.7 : 0)} />
             </radialGradient>
           </defs>
           <circle r={AUDIOLEVELSCALE}

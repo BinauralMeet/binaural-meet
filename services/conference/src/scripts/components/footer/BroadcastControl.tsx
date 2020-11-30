@@ -5,7 +5,7 @@ import Switch from '@material-ui/core/Switch'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 
-export const AudioControl: React.FC<{}> = () => {
+export const BroadcastControl: React.FC<{}> = () => {
   const local = useStore().local
   const broadcast = useObserver(() => local.get().physics.onStage)
   const audioBroadcastSwitch = <Switch checked={broadcast} name="broadcast" onChange={event => local.get().setPhysics({
@@ -15,8 +15,8 @@ export const AudioControl: React.FC<{}> = () => {
   return <Container>
     <FormControlLabel
       control={audioBroadcastSwitch}
-      label="Broadcast Audio"
+      label="Broadcast my voice"
     />
   </Container>
 }
-AudioControl.displayName = 'AudioControl'
+BroadcastControl.displayName = 'BroadcastControl'

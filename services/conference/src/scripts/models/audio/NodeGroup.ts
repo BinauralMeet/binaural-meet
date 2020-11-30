@@ -1,5 +1,6 @@
 import {PARTICIPANT_SIZE, Pose3DAudio} from '@models/Participant'
 import {isChrome} from '@models/utils'
+import {mulV3, normV} from '@models/utils/coordinates'
 import {ConfigurableParams, ConfigurableProp} from './StereoParameters'
 
 // NOTE Set default value will change nothing. Because value will be overwrite by store in ConnectedGroup
@@ -13,7 +14,7 @@ const DEFAULT_PANNER_NODE_CONFIG: Partial<PannerNode> & {refDistance: number} = 
   coneOuterAngle: 360,
   coneOuterGain: 0,
 }
-export const BROADCAST_DISTANCE = 1000
+export const BROADCAST_DISTANCE = 100000
 
 export type PlayMode = 'Context' | 'Element'
 
@@ -26,6 +27,7 @@ export class NodeGroup {
 
   private readonly context: AudioContext
   private playMode: PlayMode
+  private pose: Pose3DAudio = {position:[0, 0, 0], orientation:[0, 0, 1]}
 
   constructor(context: AudioContext, destination: MediaStreamAudioDestinationNode, playMode: PlayMode = 'Context') {
     this.context = context
@@ -75,11 +77,33 @@ export class NodeGroup {
   }
 
   updatePose(pose: Pose3DAudio) {
-    this.pannerNode.setPosition(...pose.position)
-    this.pannerNode.setOrientation(...pose.orientation)
+    this.pose = pose
+    const dist = normV(pose.position)
+    const mul = ((dist * dist) / (this.pannerNode.refDistance * this.pannerNode.refDistance)
+      + this.pannerNode.refDistance - 1) / dist
+
+    if (this.pannerNode.positionX && this.pannerNode.orientationX) {
+      this.pannerNode.positionX.setValueAtTime(mul * pose.position[0], this.context.currentTime)
+      this.pannerNode.positionY.setValueAtTime(mul * pose.position[1], this.context.currentTime)
+      this.pannerNode.positionZ.setValueAtTime(mul * pose.position[2], this.context.currentTime)
+      this.pannerNode.orientationX.setValueAtTime(pose.orientation[0], this.context.currentTime)
+      this.pannerNode.orientationY.setValueAtTime(pose.orientation[1], this.context.currentTime)
+      this.pannerNode.orientationZ.setValueAtTime(pose.orientation[2], this.context.currentTime)
+    }else {
+      this.pannerNode.setPosition(...mulV3(mul, pose.position))
+      this.pannerNode.setOrientation(...pose.orientation)
+    }
+    if (this.playMode === 'Element') {
+      const volume = Math.pow(Math.max(mul * dist, this.pannerNode.refDistance) / this.pannerNode.refDistance,
+                              - this.pannerNode.rolloffFactor)
+      if (this.audioElement) {
+        this.audioElement.volume = volume
+      }
+    }
   }
 
   private _defaultPannerRefDistance = PARTICIPANT_SIZE
+  private get defaultPannerRefDistance () { return this._defaultPannerRefDistance }
   private set defaultPannerRefDistance(val: number) {
     this._defaultPannerRefDistance = val
     if (this.pannerNode.refDistance !== BROADCAST_DISTANCE) { // not in broadcast mode
@@ -88,7 +112,7 @@ export class NodeGroup {
   }
   updateBroadcast(broadcast: boolean) {
     if (!broadcast) {
-      this.pannerNode.refDistance = this._defaultPannerRefDistance
+      this.pannerNode.refDistance = this.defaultPannerRefDistance
     } else {
       this.pannerNode.refDistance = BROADCAST_DISTANCE
     }
@@ -161,12 +185,13 @@ export class NodeGroup {
 
     this.sourceNode = this.context.createMediaStreamSource(stream)
 
-    if (isChrome) { // NOTE Chorme would not work if not connect stream to audio tag
-      if (this.audioElement === undefined) {
-        this.audioElement = new Audio()
-      }
-
-      this.audioElement.srcObject = stream
+    //  Anyway, soruce must be connected audioElement, for the case of Element mode.
+    //    if (isChrome) { // NOTE Chorme would not work if not connect stream to audio tag
+    if (this.audioElement === undefined) {
+      this.audioElement = new Audio()
     }
+
+    this.audioElement.srcObject = stream
+    //    }
   }
 }

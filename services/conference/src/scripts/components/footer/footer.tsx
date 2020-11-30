@@ -1,5 +1,7 @@
 import {BaseProps} from '@components/utils'
 import {useStore as useParticipantsStore} from '@hooks/ParticipantsStore'
+import megaphoneIcon from '@iconify/icons-mdi/megaphone'
+import {Icon} from '@iconify/react'
 import Menu from '@material-ui/core/Menu'
 import MenuItem from '@material-ui/core/MenuItem'
 import {makeStyles} from '@material-ui/core/styles'
@@ -12,10 +14,10 @@ import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
 import SpeakerOnIcon from '@material-ui/icons/VolumeUp'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
+import {BroadcastControl} from './BroadcastControl'
 import {FabMain, FabSub} from './FabNoFocus'
 import {ShareButton} from './share/ShareButton'
 import {StereoAudioSwitch} from './StereoAudioSwitch'
-import {StereoConfig} from './StereoConfig'
 
 const useStyles = makeStyles((theme) => {
   return ({
@@ -37,8 +39,6 @@ const useStyles = makeStyles((theme) => {
 export const Footer: React.FC<BaseProps> = (props) => {
   const classes = useStyles()
   const participants = useParticipantsStore()
-
-  const [stereoSwEl, setStereoSwEl] = React.useState<Element|null>(null)
 
   const [micMenuEl, setMicMenuEl] = React.useState<Element|null>(null)
   const closeMicMenu = (did:string) => {
@@ -77,12 +77,15 @@ export const Footer: React.FC<BaseProps> = (props) => {
       onClick={() => { close(info.deviceId) }}
       > { (selected ? '✔\u00A0' : '\u2003') + info.label }</MenuItem>  //  \u00A0: NBSP, u2003: EM space.
   }
-  const micMenuItems:JSX.Element[] = []
+
+  const micMenuItems:JSX.Element[] = [<BroadcastControl key = {'broadcast'} />]
   const speakerMenuItems:JSX.Element[] = []
   const videoMenuItems:JSX.Element[] = []
   deviceInfos.map((info) => {
     if (info.kind === 'audioinput') {
+      const broadcastControl = micMenuItems.pop() as JSX.Element
       micMenuItems.push(makeMenuItem(info, closeMicMenu))
+      micMenuItems.push(broadcastControl)
     }
     if (info.kind === 'audiooutput') {
       speakerMenuItems.push(makeMenuItem(info, closeSpeakerMenu))
@@ -100,10 +103,6 @@ export const Footer: React.FC<BaseProps> = (props) => {
   return (
     <div className={classes.box}>
       <StereoAudioSwitch />
-      <FabSub onClick = { (ev) => { setStereoSwEl(ev.currentTarget) }}>
-        <MoreIcon />
-      </FabSub>
-      <StereoConfig anchorEl = {stereoSwEl} onClose = { () => { setStereoSwEl(null) } } />
 
       <FabMain color={mute.muteS ? 'primary' : 'secondary' }
         aria-label="speaker" onClick = {
@@ -124,7 +123,8 @@ export const Footer: React.FC<BaseProps> = (props) => {
 
       <FabMain color={mute.muteA ? 'primary' : 'secondary' } aria-label="mic"
         onClick = { () => { participants.local.get().plugins.streamControl.muteAudio = !mute.muteA }}>
-        {mute.muteA ? <MicOffIcon /> : <MicIcon /> }
+        {mute.muteA ? <MicOffIcon /> : participants.local.get().physics.onStage ?
+          <Icon icon={megaphoneIcon} height={'1.8em'} /> : <MicIcon /> }
       </FabMain>
       <FabSub onClick = { (ev) => {
         updateDevices(ev)

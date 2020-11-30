@@ -13,12 +13,11 @@ export class StereoParameters implements ConfigurableParams {
   @observable coneInnerAngle = 0
   @observable coneOuterAngle = 180
   @observable coneOuterGain = 1
-  @observable distanceModel: DistanceModelType = 'inverse'
   @observable maxDistance = 10000
   @observable panningModel: PanningModelType = 'HRTF'
-  @observable refDistance = REFDISTANCE_MAX * DEFAULT_HEARABLE_RANGE / PERCENT
-//  @observable rolloffFactor = 8
-  @observable rolloffFactor = 12
+  @observable distanceModel: DistanceModelType = 'exponential'
+  @observable refDistance = 2 * PARTICIPANT_SIZE
+  @observable rolloffFactor = 20
   refDistanceNormal:number = this.refDistance
 
   //  0 to 100, 0 has strongest attenuation

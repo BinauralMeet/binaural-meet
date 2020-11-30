@@ -45,7 +45,6 @@ export class StereoManager {
               //  console.log('AudioContext successfully resumed')
               clearInterval(interval)
             }
-
             this.audioContext.resume()
             this.audioElement.play()  //  play() must be delayed
           },
