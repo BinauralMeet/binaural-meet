@@ -78,7 +78,7 @@ export const Footer: React.FC<BaseProps> = (props) => {
       > { (selected ? '✔\u00A0' : '\u2003') + info.label }</MenuItem>  //  \u00A0: NBSP, u2003: EM space.
   }
 
-  const micMenuItems:JSX.Element[] = [<BroadcastControl key = {'broadcast'} />]
+  const micMenuItems:JSX.Element[] = [<MenuItem  key = {'broadcast'} ><BroadcastControl /></MenuItem>]
   const speakerMenuItems:JSX.Element[] = []
   const videoMenuItems:JSX.Element[] = []
   deviceInfos.map((info) => {

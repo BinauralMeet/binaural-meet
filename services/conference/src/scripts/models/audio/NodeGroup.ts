@@ -80,7 +80,7 @@ export class NodeGroup {
     this.pose = pose
     const dist = normV(pose.position)
     const mul = ((dist * dist) / (this.pannerNode.refDistance * this.pannerNode.refDistance)
-      + this.pannerNode.refDistance - 1) / dist
+      + this.pannerNode.refDistance - 1) / (dist ? dist : 1)
 
     if (this.pannerNode.positionX && this.pannerNode.orientationX) {
       this.pannerNode.positionX.setValueAtTime(mul * pose.position[0], this.context.currentTime)

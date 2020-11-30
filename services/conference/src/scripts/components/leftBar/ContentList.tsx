@@ -6,6 +6,7 @@ import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {strcmp} from '@models/utils'
 import {MapData} from '@stores/MapObject/MapData'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
+import {getRandomColor} from '@stores/utils'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {contentTypeIcons} from '../map/ShareLayer/Content'
@@ -15,8 +16,8 @@ const height = 20
 const fontSize = 16
 
 export const ContentLine: React.FC<{participant: ParticipantBase, content: ISharedContent, map: MapData}> = (props) => {
-  const name = useObserver(() => props.participant.information.name)
-  const colors = props.participant.getColor()
+  const name = useObserver(() => props.participant ? props.participant.information.name : 'Anonymous')
+  const colors = props.participant ? props.participant.getColor() : getRandomColor('Anonymous')
   const contentName = useObserver(() => props.content.name)
   const contentType = useObserver(() => props.content.type)
   const classes = styleForList({height, fontSize})
