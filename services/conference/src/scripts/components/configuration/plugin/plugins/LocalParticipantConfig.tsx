@@ -5,9 +5,7 @@ import {defaultInformation} from '@models/Participant'
 import React, {useState} from 'react'
 import {BaseConfigurationProps, PluginBase} from '../PluginBase'
 import {registerPlugin} from '../registery'
-import {AudioControl} from './localParticipantConfig/AudioControl'
 import {RemoteTrackLimitControl} from './localParticipantConfig/RemoteTrackLimitControl'
-import {ViewpointControl} from './localParticipantConfig/ViewpointControl'
 
 export const LOCAL_PARTICIPANT_CONFIG = 'local_participant_type'
 
@@ -83,7 +81,6 @@ const LocalParticipantConfig: React.FC<Props> = (props: Props) => {
 
   return <>
     <Container>{form}</Container>
-    <AudioControl key="audiocontrol" />
     {/*<ViewpointControl key="viewpointcontrol" />*/}
     <RemoteTrackLimitControl key="remotelimitcontrol" />
   </>
