@@ -1,6 +1,6 @@
 const rtcConfig = {
-  maxBitrateForAudio: 32, // bitrate to send audio in kBPS
-  maxBitrateForVideo: 96, // bitrate to send video in kBPS
+  maxBitrateForAudio: 24, // bitrate to send audio in kBPS
+  maxBitrateForVideo: 64, // bitrate to send video in kBPS
   videoConstraints:{      // video constraint for getUserMedia()
     video:{
       facingMode:'user',
