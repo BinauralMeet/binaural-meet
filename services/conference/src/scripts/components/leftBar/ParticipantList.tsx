@@ -1,7 +1,7 @@
 import {ImageAvatar} from '@components/avatar/ImageAvatar'
 import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore as useParticipantsStore} from '@hooks/ParticipantsStore'
-import {normV, strcmp, subV2} from '@models/utils'
+import {strcmp} from '@models/utils'
 import {MapData} from '@stores/MapObject/MapData'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
@@ -62,7 +62,7 @@ export const ParticipantList: React.FC = () => {
 
   return (
     <div className={classes.container} >
-      <div className={classes.title}>People</div>
+      <div className={classes.title}>People {(store.remote.size + 1).toString()}</div>
       {localElement}{remoteElements}
     </div>
   )

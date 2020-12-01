@@ -59,10 +59,10 @@ export class DragHandler<ET extends Element>{  //  pointer drag
   bind() {
 
     const bindObject = {
-      onMouseDown: (e: React.MouseEvent<ET>) => {
-        e.stopPropagation()
-      },
-      onPointerDown : (e: React.PointerEvent<ET>) => {
+      onMouseDown: (e: React.MouseEvent<ET>) => { e.stopPropagation() },
+      onTouchStart: (e: React.TouchEvent<ET>) => { e.stopPropagation() },
+      onTouchMove: (e: React.TouchEvent<ET>) => { e.stopPropagation() },
+      onPointerDown: (e: React.PointerEvent<ET>) => {
         e.stopPropagation()
         this.memo.state = {dragging:false, buttons:e.buttons, xy:[e.clientX, e.clientY], event:e}
         if ((e.buttons & 1) && this.target.current &&

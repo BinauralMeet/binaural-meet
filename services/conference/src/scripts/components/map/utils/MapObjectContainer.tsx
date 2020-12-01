@@ -1,5 +1,4 @@
 import {makeStyles} from '@material-ui/core/styles'
-import {CallMissedSharp} from '@material-ui/icons'
 import {MapObject, Pose2DMap} from '@models/MapObject'
 import React, {useState} from 'react'
 import {ConfigurationButton} from './ConfigurationButton'
@@ -88,6 +87,8 @@ HTMLDivElement, React.PropsWithChildren<MapObjectContainerProps>> = (props, ref)
     className={rootClass.join(' ')} ref={ref}
     onMouseOver={() => setShowButton(true)}
     onMouseOut={() => setShowButton(false)}
+    onTouchStart={() => setShowButton(true)}
+    onTouchEnd={() => setShowButton(false)}
   >
     {props.children}
     {configurationPluginName  ? fab : undefined}

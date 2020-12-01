@@ -100,7 +100,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
           </g>
         </svg>
       </div>
-      <Tooltip title={`${name} ${props.participantId}`}>
+      <Tooltip title={`${name/*} ${props.participantId*/}`}>
         <div className={[classes.avatar, transform.counterRotationClass, 'draggableHandle'].join(' ')}>
             <Avatar {...props} />
         </div>

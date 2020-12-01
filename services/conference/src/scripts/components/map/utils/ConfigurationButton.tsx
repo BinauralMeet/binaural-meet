@@ -25,6 +25,10 @@ export const ConfigurationButton: React.FC<ConfigurationButtonProps> = (props) =
     setShowConfig(true)
     setAnchorEl(event.currentTarget)
   }
+  const handleTouch = (event: React.TouchEvent<HTMLButtonElement>) => {
+    setShowConfig(true)
+    setAnchorEl(event.currentTarget)
+  }
 
   const map = useMapStore()
   const [showConfig, setShowConfigRaw] = useState<boolean>(false)
@@ -61,7 +65,7 @@ export const ConfigurationButton: React.FC<ConfigurationButtonProps> = (props) =
     <div className={className}>
       <Zoom in={show}>
         <Tooltip title="Configure" aria-label="configure">
-          <IconButton onClick={handleClick} size={'small'}>
+          <IconButton onClick={handleClick} onTouchStart={handleTouch} size={'small'}>
             <MoreVertIcon htmlColor={props.color} />
           </IconButton>
         </Tooltip>
