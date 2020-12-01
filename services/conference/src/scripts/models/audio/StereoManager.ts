@@ -1,5 +1,5 @@
 import {assert} from '@models/utils'
-import {NodeGroup, PlayMode} from './NodeGroup'
+import {NodeGroup, PlayMode, setAudioOutputDevice} from './NodeGroup'
 
 export class StereoManager {
   private readonly audioContext: AudioContext = new window.AudioContext()
@@ -74,14 +74,11 @@ export class StereoManager {
   }
 
   setAudioOutput(deviceId:string) {
-    const audio: any = this.audioElement
-    if (audio.setSinkId) {
-      audio.setSinkId(deviceId).then(
-        () => { console.debug('audio.setSinkId:', deviceId, ' success') },
-      ).catch(
-        () => { console.warn('audio.setSinkId:', deviceId, ' failed') },
-      )
+    setAudioOutputDevice(this.audioElement, deviceId)
+    for (const node in this.nodes) {
+      this.nodes[node].setAudioOutput(deviceId)
     }
+
   }
 
   set audioOutputMuted(muted: boolean) {

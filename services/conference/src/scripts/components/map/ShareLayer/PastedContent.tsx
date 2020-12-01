@@ -1,6 +1,7 @@
 import {useStore as useMapStore} from '@hooks/MapStore'
-import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {createContent, createContentOfIframe, createContentOfImage, createContentOfText} from '@stores/sharedContents/SharedContentCreator'
+import {SharedContent, SharedContent as ISharedContent} from '@models/SharedContent'
+import {MapData} from '@stores/MapObject/MapData'
+import {createContent, createContentOfIframe, createContentOfImage, createContentOfPdf, createContentOfText} from '@stores/sharedContents/SharedContentCreator'
 import {default as sharedContents} from '@stores/sharedContents/SharedContents'
 import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
@@ -16,7 +17,7 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
   //  Pasted handler. It prevents paste to dialog.
   function onPaste(evt: ClipboardEvent) {
     //  console.log(`onPaste called enabled:${sharedContents.pasteEnabled}`)
-    if (sharedContents.pasteEnabled && evt.clipboardData) {
+    if (sharedContents.pasteEnabled && map.keyInputUsers.size === 0 && evt.clipboardData) {
       evt.preventDefault()
       setContent(evt.clipboardData)
     }
@@ -30,22 +31,32 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
     }
   }
 
-
   //  set pasted or dragged content to pasted content (not shared) or create shared content directly
   const SHARE_DIRECT = true
   function setContent(dataTransfer: DataTransfer) {
-    if (dataTransfer?.types.includes('Files')) {   //  If file is pasted (an image is also a file)
-      const imageFile = dataTransfer.items[0].getAsFile()
-      if (imageFile) {
-        createContentOfImage(imageFile, map).then((content) => {
-          content.name = imageFile.name
-          if (SHARE_DIRECT) {
-            sharedContents.shareContent(content)
-          } else {
-            sharedContents.setPasted(content)
+    if (dataTransfer?.types.includes('Files')) {   //  If file is pasted)
+      Array.from(dataTransfer.items).forEach((item) => {
+        const file = item.getAsFile()
+        if (item.kind === 'file' && file) {
+          let creator: ((file:File, map:MapData, offset?:[number, number]) => Promise<SharedContent>)
+            | undefined = undefined
+          if (item.type.indexOf('image') !== -1) {
+            creator = createContentOfImage
+          }else if (item.type === 'application/pdf') {
+            creator = createContentOfPdf
           }
-        })
-      }
+          if (creator) {
+            creator(file, map).then((content) => {
+              content.name = file.name
+              if (SHARE_DIRECT) {
+                sharedContents.shareContent(content)
+              } else {
+                sharedContents.setPasted(content)
+              }
+            })
+          }
+        }
+      })
     }else if (dataTransfer?.types.includes('text/plain')) {
       dataTransfer.items[0].getAsString((str:string) => {
         let content = undefined

@@ -166,7 +166,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     }
   }
 
-  const isFixed = props.autoHideTitle && props.content.pinned
+  const isFixed = (props.autoHideTitle && props.content.pinned) || editing
   const gesture = useGesture({
     onDrag: ({down, delta, event, xy, buttons}) => {
       // console.log('onDragTitle:', delta)
@@ -232,7 +232,8 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
             &nbsp;
           </div>
           <div className={classes.note} onClick={onClickShare}>Share</div>
-          <div className={classes.close} onClick={onClickClose}><CloseRoundedIcon /></div>
+          {props.content.pinned ? undefined :
+            <div className={classes.close} onClick={onClickClose}><CloseRoundedIcon /></div>}
         </div>
       </div>
       <div className={classes.content} >

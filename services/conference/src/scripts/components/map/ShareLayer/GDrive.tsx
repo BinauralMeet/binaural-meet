@@ -141,23 +141,7 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
     onPointerLeave = {() => { if (props.editing) { props.setEditing(false) } }}
   >
     <div className={(props.editing || !vscroll) ? classes.divClip : classes.divScroll} ref={divScroll}
-      onWheel = {ev => ev.ctrlKey || ev.stopPropagation() }
-      onKeyDownCapture ={ (ev) => {
-        console.log(`keydownCapture ${ev.key}`)
-      }}
-      onKeyPress = {
-        (ev) => {
-          console.log(`keypress ${ev.key}`)
-        }
-      }
-      onKeyDown = {
-        (ev) => {
-          console.log(`key = ${ev.key}`)
-          if (ev.key == '37' || ev.key == '38') {
-            ev.stopPropagation()
-          }
-        }}
-      >
+      onWheel = {ev => ev.ctrlKey || ev.stopPropagation() } >
       <iframe src={url}
         className={props.editing ? classes.iframeEdit : vscroll ? classes.iframeVScrool : classes.iframe}
       />

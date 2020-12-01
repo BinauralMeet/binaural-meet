@@ -125,6 +125,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   const bind = useGesture(
     {
       onDragStart: ({buttons}) => {
+        if (mapStore.keyInputUsers.size) { return }
         mem.current.dragging = true
         mem.current.mouseDown = true
         //  console.log('Base StartDrag:')
@@ -147,6 +148,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         }
       },
       onDrag: ({down, delta, xy, buttons}) => {
+        if (mapStore.keyInputUsers.size) { return }
         if (delta[0] || delta[1]) { mem.current.mouseDown = false }
         if (mem.current.dragging && down && outer.current) {
           if (!thirdPersonView && buttons === MOUSE_RIGHT) {  // right mouse drag - rotate map
@@ -208,6 +210,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       },
       onPinchEnd: () => mapStore.setCommittedMatrix(matrix),
       onWheel: ({movement}) => {
+        if (mapStore.keyInputUsers.size) { return }
         // tslint:disable-next-line: no-magic-numbers
         let scale = Math.pow(1.2, movement[1] / 1000)
         scale = limitScale(extractScaleX(matrix), scale)

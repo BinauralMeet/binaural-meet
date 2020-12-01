@@ -152,6 +152,48 @@ export function createContentOfImage(imageFile: File, map: MapData, offset?:[num
   return promise
 }
 
+declare const gapi:any    //  google api from index.html
+let GoogleAuth:any        // Google Auth object.
+let isAuthorized = false
+function updateSigninStatus(isSignedIn:boolean) {
+  if (isSignedIn) {
+    isAuthorized = true
+  } else {
+    isAuthorized = false
+  }
+}
+
+export function createContentOfPdf(file: File, map: MapData, offset?:[number, number]): Promise<SharedContent> {
+  const promise = new Promise<SharedContent>((resolutionFunc, rejectionFunc) => {
+    if (gapi) {
+      const API_KEY = 'AIzaSyCE4B2cKycH0fVmBznwfr1ynnNf2qNEU9M'
+      const CLIENT_ID = '188672642721-3f8u1671ecugbl2ukhjmb18nv283upm0.apps.googleusercontent.com'
+      gapi.client.init(
+        {
+          apiKey: API_KEY,
+          clientId: CLIENT_ID,
+          scope: 'https://www.googleapis.com/auth/drive.appdata',
+          discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+        },
+      ).then(
+        () => {
+          console.log('Before getAuthInstance')
+          GoogleAuth = gapi.auth2.getAuthInstance()
+          // Listen for sign-in state changes.
+          console.log('Before listen updateSigninStatus')
+          GoogleAuth.isSignedIn.listen(updateSigninStatus)
+        },
+        (reason:any) => {
+          console.log('gapi.client.init failed:', reason)
+        },
+      )
+    }
+  })
+
+  return promise
+}
+
+
 export function createContentOfVideo(tracks: JitsiLocalTrack[], map: MapData) {
   const pasted = new SharedContent()
   pasted.type = 'screen'

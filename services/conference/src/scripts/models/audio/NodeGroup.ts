@@ -3,6 +3,18 @@ import {isChrome} from '@models/utils'
 import {mulV3, normV} from '@models/utils/coordinates'
 import {ConfigurableParams, ConfigurableProp} from './StereoParameters'
 
+export function setAudioOutputDevice(audio: HTMLAudioElement, deviceId: string) {
+  const audioEx:any = audio
+  if (audioEx.setSinkId) {
+    audioEx.setSinkId(deviceId).then(
+      () => { console.debug('audio.setSinkId:', deviceId, ' success') },
+    ).catch(
+      () => { console.warn('audio.setSinkId:', deviceId, ' failed') },
+    )
+  }
+}
+
+
 // NOTE Set default value will change nothing. Because value will be overwrite by store in ConnectedGroup
 const DEFAULT_PANNER_NODE_CONFIG: Partial<PannerNode> & {refDistance: number} = {
   panningModel: 'HRTF',
@@ -27,7 +39,7 @@ export class NodeGroup {
 
   private readonly context: AudioContext
   private playMode: PlayMode
-  private pose: Pose3DAudio = {position:[0, 0, 0], orientation:[0, 0, 1]}
+  private audioDeviceId = ''
 
   constructor(context: AudioContext, destination: MediaStreamAudioDestinationNode, playMode: PlayMode = 'Context') {
     this.context = context
@@ -56,7 +68,7 @@ export class NodeGroup {
         this.sourceNode?.disconnect()
 
         if (this.audioElement === undefined) {
-          this.audioElement = new Audio()
+          this.audioElement = this.createAudioElement()
         }
         this.audioElement.muted = false
         this.audioElement.play()
@@ -71,13 +83,21 @@ export class NodeGroup {
     this.updateAudibility(this.audibility)
   }
 
+  setAudioOutput(id: string) {
+    if (this.audioDeviceId !== id) {
+      this.audioDeviceId = id
+      if (this.audioElement) {
+        setAudioOutputDevice(this.audioElement, this.audioDeviceId)
+      }
+    }
+  }
+
   updateStream(stream: MediaStream | undefined) {
     this.updateSourceStream(stream)
     this.usePlayMode(this.playMode)
   }
 
   updatePose(pose: Pose3DAudio) {
-    this.pose = pose
     const dist = normV(pose.position)
     const mul = ((dist * dist) / (this.pannerNode.refDistance * this.pannerNode.refDistance)
       + this.pannerNode.refDistance - 1) / (dist ? dist : 1)
@@ -188,10 +208,17 @@ export class NodeGroup {
     //  Anyway, soruce must be connected audioElement, for the case of Element mode.
     //    if (isChrome) { // NOTE Chorme would not work if not connect stream to audio tag
     if (this.audioElement === undefined) {
-      this.audioElement = new Audio()
+      this.audioElement = this.createAudioElement()
     }
 
     this.audioElement.srcObject = stream
     //    }
+  }
+
+  createAudioElement() {
+    const audio = new Audio()
+    setAudioOutputDevice(audio, this.audioDeviceId)
+
+    return audio
   }
 }
