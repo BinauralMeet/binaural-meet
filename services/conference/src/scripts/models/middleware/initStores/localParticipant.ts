@@ -8,12 +8,11 @@ import {reaction} from 'mobx'
 function applyUrlParameters(local: LocalParticipant) {
   local.loadInformationFromStorage()
   if (urlParameters.userName) { local.information.name = urlParameters.userName }
-  local.useStereoAudio = urlParameters.monaural !== null ? true : false
-  console.debug('URL audio', urlParameters.audio)
-  local.plugins.streamControl.muteAudio =
-    (urlParameters.muteMic === 'no' || urlParameters.muteMic === 'false') ? false : true
+  local.useStereoAudio = urlParameters.headphone !== null ? true : false
+  console.debug('URL headphone', urlParameters.headphone)
+  local.plugins.streamControl.muteAudio = urlParameters.muteMic !== null ? true : false
   console.debug('URL muteMic', urlParameters.muteMic)
-  local.plugins.streamControl.muteVideo = urlParameters.muteCamera ? true : false
+  local.plugins.streamControl.muteVideo = urlParameters.muteCamera !== null ? true : false
   console.debug('URL muteCamera', urlParameters.muteCamera)
 }
 

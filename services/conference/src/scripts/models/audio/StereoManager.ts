@@ -1,4 +1,4 @@
-import {assert} from '@models/utils'
+import {assert, isChrome} from '@models/utils'
 import {NodeGroup, PlayMode, setAudioOutputDevice} from './NodeGroup'
 
 export class StereoManager {
@@ -13,7 +13,59 @@ export class StereoManager {
   } = {}
 
   constructor() {
-    this.audioElement.srcObject = this.audioDestination.stream
+    if (false) {
+      //  For ACE workaround for chrome, make local RTC loopback. But it also make sound monaural and useless.
+      const peerGo = new RTCPeerConnection()
+      const peerBack = new RTCPeerConnection()
+      this.audioDestination.stream.getAudioTracks().forEach(track => peerGo.addTrack(track))
+      let inboundStream:MediaStream|undefined = undefined
+      peerBack.ontrack = (ev) => {
+        if (ev.streams && ev.streams[0]) {
+          this.audioElement.srcObject = ev.streams[0]
+        }else {
+          if (!inboundStream) {
+            inboundStream = new MediaStream()
+          }
+          inboundStream.addTrack(ev.track)
+          this.audioElement.srcObject = inboundStream
+        }
+      }
+      peerGo.createOffer().then((offer) => {
+        return peerGo.setLocalDescription(offer)
+      }).then(() => {
+        console.log('peerGo set offer.')
+      }).catch((reason) => {
+        console.error('peerGo set offer failed', reason)
+      })
+
+      let bAnswerSent = false
+      peerGo.onicecandidate = (ev) => {
+        if (bAnswerSent) { return }
+        bAnswerSent = true
+
+        const offer = peerGo.localDescription
+        if (offer) {
+          peerBack.setRemoteDescription(offer).then(() => {
+            peerBack.createAnswer().then((answer) => {
+              peerBack.setLocalDescription(answer)
+              console.log('peerBack set answer.')
+
+              console.log('peerGo.signalingState', peerGo.signalingState)
+              peerGo.setRemoteDescription(answer)
+              .then(() => {
+                console.log('peerGo set answer.')
+              }).catch((err) => {
+                console.error('peerGo set answer failed:', err)
+              })
+            })
+          })
+        }else {
+          console.error('onicecnadidate: offer is null')
+        }
+      }
+    }else {
+      this.audioElement.srcObject = this.audioDestination.stream
+    }
   }
 
   addSpeaker(id: string) {

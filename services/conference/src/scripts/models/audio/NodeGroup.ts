@@ -40,6 +40,7 @@ export class NodeGroup {
   private readonly context: AudioContext
   private playMode: PlayMode
   private audioDeviceId = ''
+  private distance = 1
 
   constructor(context: AudioContext, destination: MediaStreamAudioDestinationNode, playMode: PlayMode = 'Context') {
     this.context = context
@@ -81,6 +82,7 @@ export class NodeGroup {
     }
 
     this.updateAudibility(this.audibility)
+    this.updateVolume()
   }
 
   setAudioOutput(id: string) {
@@ -101,6 +103,7 @@ export class NodeGroup {
     const dist = normV(pose.position)
     const mul = ((dist * dist) / (this.pannerNode.refDistance * this.pannerNode.refDistance)
       + this.pannerNode.refDistance - 1) / (dist ? dist : 1)
+    this.distance = mul * dist
 
     if (this.pannerNode.positionX && this.pannerNode.orientationX) {
       this.pannerNode.positionX.setValueAtTime(mul * pose.position[0], this.context.currentTime)
@@ -113,12 +116,14 @@ export class NodeGroup {
       this.pannerNode.setPosition(...mulV3(mul, pose.position))
       this.pannerNode.setOrientation(...pose.orientation)
     }
-    if (this.playMode === 'Element') {
-      const volume = Math.pow(Math.max(mul * dist, this.pannerNode.refDistance) / this.pannerNode.refDistance,
-                              - this.pannerNode.rolloffFactor)
-      if (this.audioElement) {
-        this.audioElement.volume = volume
-      }
+    this.updateVolume()
+  }
+  private updateVolume() {
+    const amplitude = this.playMode === 'Element' ? 1 : isChrome ? 0.1 : 0
+    const volume = Math.pow(Math.max(this.distance, this.pannerNode.refDistance) / this.pannerNode.refDistance,
+                            - this.pannerNode.rolloffFactor)
+    if (this.audioElement) {
+      this.audioElement.volume = amplitude * volume
     }
   }
 
