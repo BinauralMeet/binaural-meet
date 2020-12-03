@@ -578,7 +578,28 @@ export class Conference extends EventEmitter {
               = JitsiMeetJS.mediaDevices.getAudioOutputDevice()
             },
           ). catch((reason:JitisTrackError) => {
-            console.warn(`getUserMedia() failed again: ${reason.name}:${reason.message}`)
+            console.error(`${reason.name}:${reason.message}. getUserMedia() failed again`)
+          })
+        }else {
+          console.warn(`${reason.name}:${reason.message}. Retry getUserMedia() without video`)
+          JitsiMeetJS.createLocalTracks({devices: ['audio']}).then(
+            (tracks) => {
+              tracks.forEach((track) => {
+                const did = track.getTrack().getSettings().deviceId || ''
+                if (track.getType() === 'audio') {
+                  ParticiantsStore.local.get().devicePreference.audioInputDevice = did
+                  this.setLocalMicTrack(track)
+                }else if (track.getType() === 'video') {
+                  // console.log('Video track created:', JSON.stringify(track))
+                  ParticiantsStore.local.get().devicePreference.videoInputDevice = did
+                  this.setLocalCameraTrack(track)
+                }
+              })
+              ParticiantsStore.local.get().devicePreference.audioOutputDevice
+              = JitsiMeetJS.mediaDevices.getAudioOutputDevice()
+            },
+          ).catch((reason:JitisTrackError) => {
+            console.error(`getUserMedia() failed again: ${reason.name}:${reason.message}`)
           })
         }
       })
