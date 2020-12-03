@@ -39,39 +39,22 @@ const useStyles = makeStyles((theme) => {
 export const Footer: React.FC<BaseProps> = (props) => {
   const classes = useStyles()
   const participants = useParticipantsStore()
-  const local = participants.local.get()
-
   const [micMenuEl, setMicMenuEl] = React.useState<Element|null>(null)
-  const closeMicMenu = (did:string) => {
-    if (did) { local.devicePreference.audioInputDevice = did }
-    setMicMenuEl(null)
-  }
-  const [speakerMenuEl, setSpeakerMenuEl] = React.useState<Element|null>(null)
-  const closeSpeakerMenu = (did:string) => {
-    if (did) { local.devicePreference.audioOutputDevice = did }
-    setSpeakerMenuEl(null)
-  }
-  const [videoMenuEl, setVideoMenuEl] = React.useState<Element|null>(null)
-  const closeVideoMenu = (did:string) => {
-    if (did) { local.devicePreference.videoInputDevice = did }
-    setVideoMenuEl(null)
-  }
   const [deviceInfos, setDeviceInfos] = React.useState<MediaDeviceInfo[]>([])
-
   const mute = useObserver(() => ({
-    muteA: local.plugins.streamControl.muteAudio,  //  mic
-    muteS: local.plugins.streamControl.muteSpeaker,  //  speaker
-    muteV: local.plugins.streamControl.muteVideo,  //  camera
+    muteA: participants.local.get().plugins.streamControl.muteAudio,  //  mic
+    muteS: participants.local.get().plugins.streamControl.muteSpeaker,  //  speaker
+    muteV: participants.local.get().plugins.streamControl.muteVideo,  //  camera
   }))
 
   function makeMenuItem(info: MediaDeviceInfo, close:(did:string) => void):JSX.Element {
     let selected = false
     if (info.kind === 'audioinput') {
-      selected = info.deviceId === local.devicePreference.audioInputDevice
+      selected = info.deviceId === participants.local.get().devicePreference.audioInputDevice
     }else if (info.kind === 'audiooutput') {
-      selected = info.deviceId === local.devicePreference.audioOutputDevice
+      selected = info.deviceId === participants.local.get().devicePreference.audioOutputDevice
     }else if (info.kind === 'videoinput') {
-      selected = info.deviceId === local.devicePreference.videoInputDevice
+      selected = info.deviceId === participants.local.get().devicePreference.videoInputDevice
     }
 
     return <MenuItem key={info.deviceId}
@@ -95,6 +78,20 @@ export const Footer: React.FC<BaseProps> = (props) => {
       videoMenuItems.push(makeMenuItem(info, closeVideoMenu))
     }
   })
+  const closeMicMenu = (did:string) => {
+    if (did) { participants.local.get().devicePreference.audioInputDevice = did }
+    setMicMenuEl(null)
+  }
+  const [speakerMenuEl, setSpeakerMenuEl] = React.useState<Element|null>(null)
+  const closeSpeakerMenu = (did:string) => {
+    if (did) { participants.local.get().devicePreference.audioOutputDevice = did }
+    setSpeakerMenuEl(null)
+  }
+  const [videoMenuEl, setVideoMenuEl] = React.useState<Element|null>(null)
+  const closeVideoMenu = (did:string) => {
+    if (did) { participants.local.get().devicePreference.videoInputDevice = did }
+    setVideoMenuEl(null)
+  }
   function updateDevices(ev:React.MouseEvent) {
     navigator.mediaDevices.enumerateDevices()
     .then(setDeviceInfos)
@@ -107,7 +104,11 @@ export const Footer: React.FC<BaseProps> = (props) => {
 
       <FabMain color={mute.muteS ? 'primary' : 'secondary' }
         aria-label="speaker" onClick = {
-           () => { local.plugins.streamControl.muteSpeaker = !mute.muteS }
+           () => {
+             participants.local.get().plugins.streamControl.muteSpeaker = !mute.muteS
+             participants.local.get().saveMuteStatusToStorage(false)
+             console.debug('muteSpeaker:', participants.local.get().plugins.streamControl.muteSpeaker)
+           }
         }>
         {mute.muteS ? <SpeakerOffIcon /> : <SpeakerOnIcon /> }
       </FabMain>
@@ -123,8 +124,12 @@ export const Footer: React.FC<BaseProps> = (props) => {
       </Menu>
 
       <FabMain color={mute.muteA ? 'primary' : 'secondary' } aria-label="mic"
-        onClick = { () => { local.plugins.streamControl.muteAudio = !mute.muteA }}>
-        {mute.muteA ? <MicOffIcon /> : local.physics.onStage ?
+        onClick = { () => {
+          participants.local.get().plugins.streamControl.muteAudio = !mute.muteA
+          participants.local.get().saveMuteStatusToStorage(false)
+          console.debug('muteAudio:', participants.local.get().plugins.streamControl.muteAudio)
+        }}>
+        {mute.muteA ? <MicOffIcon /> : participants.local.get().physics.onStage ?
           <Icon icon={megaphoneIcon} height={'1.8em'} color="gold" /> : <MicIcon /> }
       </FabMain>
       <FabSub onClick = { (ev) => {
@@ -140,8 +145,9 @@ export const Footer: React.FC<BaseProps> = (props) => {
 
       <FabMain color={mute.muteV ? 'primary' : 'secondary'}
           aria-label="camera" onClick = { () => {
-            local.plugins.streamControl.muteVideo = !mute.muteV
-            console.debug('muteV:', mute.muteV)
+            participants.local.get().plugins.streamControl.muteVideo = !mute.muteV
+            participants.local.get().saveMuteStatusToStorage(false)
+            console.debug('muteVideo:', participants.local.get().plugins.streamControl.muteVideo)
           }
       }>
         {mute.muteV ? <VideoOffIcon /> : <VideoIcon /> }

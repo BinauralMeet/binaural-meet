@@ -194,6 +194,11 @@ export class NodeGroup {
 
     this.gainNode.disconnect()
     this.pannerNode.disconnect()
+    if (this.audioElement) {
+      this.audioElement.volume = 0
+      this.audioElement.pause()
+      this.audioElement.remove()
+    }
   }
 
   get isBroadcast(): boolean {

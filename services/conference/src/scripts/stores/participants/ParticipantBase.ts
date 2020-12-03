@@ -30,25 +30,6 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
     this.plugins = new Plugins(this)
   }
 
-  saveInformationToStorage(isLocalStorage:boolean) {
-    let storage = sessionStorage
-    if (isLocalStorage) { storage = localStorage }
-    //  console.log(storage === localStorage ? 'Save to localStorage' : 'Save to sessionStorage')
-    storage.setItem('localParticipantInformation', JSON.stringify(this.information))
-  }
-
-  @action.bound
-  loadInformationFromStorage() {
-    let storage = localStorage
-    if (sessionStorage.getItem('localParticipantInformation')) {
-      storage = sessionStorage
-    }
-    console.debug(storage === localStorage ? 'Load from localStorage' : 'Load from sessionStorage')
-    const infoInStr = storage.getItem('localParticipantInformation')
-    if (infoInStr) {
-      Object.assign(this.information, JSON.parse(infoInStr))
-    }
-  }
   @action.bound
   setInformation(info: Information) {
     Object.assign(this.information, info)

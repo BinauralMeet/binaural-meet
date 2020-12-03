@@ -47,4 +47,7 @@ export class Participants {
   }
 }
 
-export default new Participants()
+const participants = new Participants()
+declare const d:any
+d.participants = participants
+export default participants

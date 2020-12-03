@@ -55,6 +55,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     } else {
       participant!.pose.position = addV2(transform.rotateG2L(delta), participant!.pose.position)
     }
+    participant.savePhysicsToStorage(false)
   }
   const moveParticipantByKey = (keys:Set<string>) => {
     let deltaF = 0
@@ -85,7 +86,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     let newA = participant!.pose.orientation + deltaA
     if (newA > HALF_DEGREE) { newA -= WHOLE_DEGREE }
     if (newA < -HALF_DEGREE) { newA += WHOLE_DEGREE }
-    participant!.pose.orientation = newA
+    participant.pose.orientation = newA
     if (!participants.local.get().thirdPersonView) {
       const center = transformPoint2D(map.matrix, participants.local.get().pose.position)
       const changeMatrix = (new DOMMatrix()).rotateSelf(0, 0, -deltaA)
@@ -100,7 +101,8 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     if (newPos[0] > MAP_SIZE * HALF) { newPos[0] = MAP_SIZE * HALF }
     if (newPos[1] < -MAP_SIZE * HALF) { newPos[1] = -MAP_SIZE * HALF }
     if (newPos[1] > MAP_SIZE * HALF) { newPos[1] = MAP_SIZE * HALF }
-    participant!.pose.position = newPos
+    participant.pose.position = newPos
+    participant.savePhysicsToStorage(false)
 
     return relatedKeyPressed
   }

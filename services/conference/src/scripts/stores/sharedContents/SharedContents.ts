@@ -286,4 +286,7 @@ export class SharedContents extends EventEmitter {
   }
 }
 
-export default new SharedContents()
+const contents = new SharedContents()
+declare const d:any
+d.contents = contents
+export default contents
