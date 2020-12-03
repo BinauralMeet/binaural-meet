@@ -12,6 +12,7 @@ export interface SharedContent extends MapObject {
   originalSize: [number, number]  //  original size of the content or [0, 0]
   pinned: boolean                 //  pinned (not resizable or resizable)
   isEditable(): boolean           //  editable or not
+  moveToTop(): void               //  change zorder to the top.
 }
 
 export interface TextPhrase {

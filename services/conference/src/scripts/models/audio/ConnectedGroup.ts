@@ -1,7 +1,6 @@
+import {LocalParticipant, RemoteParticipant} from '@models/Participant'
 import {convertToAudioCoordinate, getRelativePose} from '@models/utils'
 import {stereoParametersStore} from '@stores/AudioParameters'
-import {LocalParticipant} from '@stores/participants/LocalParticipant'
-import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import {JitsiTrack} from 'lib-jitsi-meet'
 import {autorun, IObservableValue, IReactionDisposer} from 'mobx'
 import {NodeGroup} from './NodeGroup'

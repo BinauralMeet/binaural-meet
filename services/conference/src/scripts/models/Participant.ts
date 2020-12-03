@@ -33,12 +33,16 @@ export const defaultInformation:Information = {
   md5Email: '',
   avatarSrc: '',
 }
-
 export interface Tracks {
   audio: JitsiTrack | undefined
   avatar: JitsiTrack | undefined
   audioStream: MediaStream | undefined
   avatarStream: MediaStream | undefined
+}
+
+export interface TrackStates{
+  micMuted: boolean,
+  headphone: boolean,
 }
 export interface Physics {
   onStage: boolean

@@ -1,9 +1,9 @@
 import {ParticipantContents as IParticipantContents, SharedContent as ISharedContent} from '@models/SharedContent'
+import {diffMap} from '@models/utils'
 import {default as participantsStore} from '@stores/participants/Participants'
-import {diffMap} from '@stores/utils'
 import {EventEmitter} from 'events'
 import _ from 'lodash'
-import {action, computed, observable} from 'mobx'
+import {action, autorun, computed, observable} from 'mobx'
 import {createContent, disposeContent} from './SharedContentCreator'
 import {SharedContentTracks} from './SharedContentTracks'
 
@@ -33,10 +33,28 @@ export const SharedContentsEvents = {
 }
 export class SharedContents extends EventEmitter {
   private localId = ''
+  constructor() {
+    super()
+    autorun(() => {
+      const newLocalId = participantsStore.localId
+      Array.from(this.owner.keys()).forEach((key) => {
+        if (this.owner.get(key) === this.localId) {
+          this.owner.set(key, newLocalId)
+        }
+      })
+      const local = this.participants.get(this.localId)
+      if (local) {
+        this.participants.delete(this.localId)
+        local.participantId = newLocalId
+        this.participants.set(newLocalId, local)
+      }
+      this.localId = newLocalId
+      contentLog(`Set new local id ${this.localId}`)
+    })
+  }
   tracks = new SharedContentTracks(this)
 
   @observable pasteEnabled = true
-
   // -----------------------------------------------------------------
   //  Contents management
   //  All shared contents in Z order. Observed by component.
@@ -57,26 +75,11 @@ export class SharedContents extends EventEmitter {
   }
   //  share content
   @action shareContent(content:ISharedContent) {
-    const TIME_RESOLUTION_IN_MS = 100
-    content.zorder = Math.floor(Date.now() / TIME_RESOLUTION_IN_MS)
+    content.moveToTop()
     this.addLocalContent(content)
   }
 
   @computed get localParticipant(): ParticipantContents {
-    if (this.localId !== participantsStore.localId) {
-      Array.from(this.owner.keys()).forEach((key) => {
-        if (this.owner.get(key) === this.localId) {
-          this.owner.set(key, participantsStore.localId)
-        }
-      })
-      const local = this.participants.get(this.localId)
-      if (local) {
-        this.participants.delete(this.localId)
-        this.participants.set(participantsStore.localId, local)
-      }
-      this.localId = participantsStore.localId
-      contentLog(`Set new local id ${this.localId}`)
-    }
     const p = this.participants.get(this.localId)
     if (!p) {
       const n = new ParticipantContents(this.localId)
@@ -106,7 +109,7 @@ export class SharedContents extends EventEmitter {
     this.participants.forEach((participant) => {
       newAll.push(... participant.myContents.values())
     })
-    newAll.slice().sort(contentComp)
+    newAll.sort(contentComp)
     this.all = newAll
     //  console.log('update all len=', this.all.length, ' all=', JSON.stringify(this.all))
   }
@@ -282,4 +285,5 @@ export class SharedContents extends EventEmitter {
     return ''
   }
 }
+
 export default new SharedContents()

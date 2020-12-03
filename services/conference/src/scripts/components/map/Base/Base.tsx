@@ -7,7 +7,7 @@ import {
   crossProduct, extractRotation, extractScaleX,
   radian2Degree, rotate90ClockWise, rotateVector2D, transformPoint2D, transfromAt, vectorLength,
 } from '@models/utils'
-import {addV2, mulV2, normV, subV2} from '@models/utils/coordinates'
+import {addV2, extractScale, mulV2, normV, subV2} from '@models/utils/coordinates'
 import {MapData} from '@stores/MapObject/MapData'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef, useState} from 'react'
@@ -166,7 +166,8 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
             const newMatrix = rotateMap(radian2Degree(angle), center)
             participants.local.get().pose.orientation = -radian2Degree(extractRotation(newMatrix))
-          } else {  // left mouse drag or touch screen drag - translate map
+          } else {
+            // left mouse drag or touch screen drag - translate map
             const diff = rotateVector2D(matrix.inverse(), delta)
             const newMatrix = matrix.translate(...diff)
             mapStore.setMatrix(newMatrix)
@@ -209,14 +210,23 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         return [d, a]
       },
       onPinchEnd: () => mapStore.setCommittedMatrix(matrix),
-      onWheel: ({movement}) => {
+      onWheel: ({movement, ctrlKey, event}) => {
+        event?.preventDefault()
+
         if (mapStore.keyInputUsers.size) { return }
-        // tslint:disable-next-line: no-magic-numbers
-        let scale = Math.pow(1.2, movement[1] / 1000)
-        scale = limitScale(extractScaleX(matrix), scale)
-        //  console.log(`Wheel: ${movement}  scale=${scale}`)
-        const newMatrix = matrix.scale(scale, scale, 1, ...transformPoint2D(matrix.inverse(), mapStore.mouse))
-        mapStore.setMatrix(newMatrix)
+        if (!ctrlKey) {
+          // scroll wheel - translate map
+          const diff = mulV2(0.2, rotateVector2D(matrix.inverse(), movement))
+          const newMatrix = matrix.translate(-diff[0], -diff[1])
+          mapStore.setMatrix(newMatrix)
+        }else {
+          //  CTRL+weel - zoom map
+          let scale = Math.pow(1.2, movement[1] / 1000)
+          scale = limitScale(extractScaleX(matrix), scale)
+          //  console.log(`Wheel: ${movement}  scale=${scale}`)
+          const newMatrix = matrix.scale(scale, scale, 1, ...transformPoint2D(matrix.inverse(), mapStore.mouse))
+          mapStore.setMatrix(newMatrix)
+        }
       },
       onWheelEnd: () => mapStore.setCommittedMatrix(matrix),
       onMove: ({xy}) => {

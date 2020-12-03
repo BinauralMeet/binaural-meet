@@ -2,12 +2,17 @@ import {Avatar, AvatarProps} from '@components/avatar'
 import {LOCAL_PARTICIPANT_CONFIG} from '@components/configuration/plugin/plugins/LocalParticipantConfig'
 import {useStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
+import megaphoneIcon from '@iconify/icons-mdi/megaphone'
+import {Icon} from '@iconify/react'
 import {Tooltip} from '@material-ui/core'
 import {makeStyles} from '@material-ui/core/styles'
+import HeadsetIcon from '@material-ui/icons/HeadsetMic'
+import MicOffIcon from '@material-ui/icons/MicOff'
 import {useObserver} from 'mobx-react-lite'
 import React, {forwardRef} from 'react'
 import {MapObjectContainer} from '../utils/MapObjectContainer'
 import {useValue as useTransform} from '../utils/useTransform'
+
 interface StyleProps {
   position: [number, number],
   orientation: number,
@@ -33,6 +38,14 @@ const useStyles = makeStyles({
     top: `-${SVG_RATIO * props.size * HALF}px`,
     pointerEvents: 'none',
   }),
+  icon: (props: StyleProps) => ({
+    position: 'absolute',
+    width: props.size * 0.4 ,
+    height: props.size * 0.4,
+    left: props.size * 0.1,
+    top: props.size * 0.1,
+    pointerEvents: 'none',
+  }),
 })
 
 export type ParticipantProps = Required<AvatarProps>
@@ -47,6 +60,9 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
   const name = useObserver(() => participant!.information.name)
   const audioLevel = useObserver(() => Math.pow(participant!.tracks.audioLevel, 0.5))
   // console.log(`audioLevel ${audioLevel}`)
+  const micMuted = useObserver(() => participant?.trackStates.micMuted)
+  const headphone = useObserver(() => participant?.trackStates.headphone)
+  const onStage = useObserver(() => participant?.physics.onStage)
 
   const classes = useStyles({
     ...participantProps,
@@ -67,9 +83,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
       //  currently we have no configulatoin for remote paritcipants
       configurationPluginName={isLocal ? LOCAL_PARTICIPANT_CONFIG : undefined}
       buttonSpacing={{
-        // tslint:disable-next-line: no-magic-numbers
         top: - props.size * HALF - 20,
-        // tslint:disable-next-line: no-magic-numbers
         right: - props.size * HALF - 20,
       }}
       counterRotateButtons={true}
@@ -100,11 +114,15 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
           </g>
         </svg>
       </div>
-      <Tooltip title={`${name/*} ${props.participantId*/}`}>
+      <Tooltip title={<span>{name}<br />{props.participantId}</span>}>
         <div className={[classes.avatar, transform.counterRotationClass, 'draggableHandle'].join(' ')}>
             <Avatar {...props} />
         </div>
-      </Tooltip>
+    </Tooltip>
+    {headphone ? <HeadsetIcon className={classes.icon} htmlColor="rgba(0, 0, 0, 0.3)" /> : undefined}
+    {micMuted ? <MicOffIcon className={classes.icon} color="secondary" /> : undefined}
+    {!micMuted && onStage ? <Icon className={classes.icon} icon={megaphoneIcon} color="gold" /> : undefined }
+
     </MapObjectContainer >
   )
 }

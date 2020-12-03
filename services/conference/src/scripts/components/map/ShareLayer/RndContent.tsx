@@ -8,6 +8,7 @@ import {CreateCSSProperties} from '@material-ui/core/styles/withStyles'
 import DoneIcon from '@material-ui/icons/CheckCircle'
 import CloseRoundedIcon from '@material-ui/icons/CloseRounded'
 import EditIcon from '@material-ui/icons/Edit'
+import FlipToFrontIcon from '@material-ui/icons/FlipToFront'
 import {Pose2DMap} from '@models/MapObject'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {rotateVector2DByDegree} from '@models/utils'
@@ -112,6 +113,11 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   //  handlers
   function onClickShare(evt: React.MouseEvent<HTMLDivElement>) { props.onShare?.call(null, evt) }
   function onClickClose(evt: React.MouseEvent<HTMLDivElement>) { props.onClose?.call(null, evt) }
+  function onClickMoveToTop(evt: React.MouseEvent<HTMLDivElement>) {
+    props.content.moveToTop()
+    const newContent = Object.assign({}, props.content)
+    props.onUpdate?.call(null, newContent)
+  }
   function onClickEdit(evt: React.MouseEvent<HTMLDivElement>) {
     setEditing(!editing)
   }
@@ -231,9 +237,11 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
                 : <EditIcon style={{fontSize:dimensions.clientHeight}} />}
             &nbsp;
           </div>
+          {props.content.pinned ? undefined :
+            <div className={classes.edit} onClick={onClickMoveToTop}>&nbsp; <FlipToFrontIcon /></div>}
           <div className={classes.note} onClick={onClickShare}>Share</div>
           {props.content.pinned ? undefined :
-            <div className={classes.close} onClick={onClickClose}><CloseRoundedIcon /></div>}
+             <div className={classes.close} onClick={onClickClose}><CloseRoundedIcon /></div>}
         </div>
       </div>
       <div className={classes.content} >

@@ -1,11 +1,9 @@
-import {linearReconciliator} from '@models/utils/linearReconciliator'
-import {ParticipantBase} from '@stores/participants/ParticipantBase'
+import {RemoteParticipant} from '@models/Participant'
+import {diffMap} from '@models/utils'
 import store from '@stores/participants/Participants'
-import {assert} from 'console'
-import {autorun, IObjectDidChange, reaction} from 'mobx'
+import {autorun, reaction} from 'mobx'
 import {ConnectedGroup} from './ConnectedGroup'
 import {StereoManager} from './StereoManager'
-
 export class ConnectedManager {
   private readonly manager = new StereoManager()
 
@@ -13,7 +11,7 @@ export class ConnectedManager {
     [key: string]: ConnectedGroup,
   } = {}
 
-  private participantsMemo: string[] = []
+  private participantsMemo = new Map<string, RemoteParticipant>()
 
   constructor() {
     autorun(this.onPopulationChange)
@@ -34,23 +32,25 @@ export class ConnectedManager {
   }
 
   private onPopulationChange = () => {
-    const currentParticipants = Array.from(store.remote.keys())
-    linearReconciliator(this.participantsMemo, currentParticipants, this.remove, this.add)
-    this.participantsMemo = currentParticipants
+    const newRemotes = new Map(store.remote)
+    const added = diffMap(newRemotes, this.participantsMemo)
+    const removed = diffMap(this.participantsMemo, newRemotes)
+    removed.forEach(this.remove)
+    added.forEach(this.add)
+    this.participantsMemo = newRemotes
+    console.log('Update conntectedGroups:', this.connectedGroups)
   }
 
-  private remove = (id: string) => {
+  private remove = (rp: RemoteParticipant) => {
+    const id = rp.id
     this.connectedGroups[id].dispose()
     delete this.connectedGroups[id]
 
     this.manager.removeSpeaker(id)
   }
 
-  private add = (id: string) => {
-    const group = this.manager.addSpeaker(id)
-
-    const remote = store.find(id) as ParticipantBase
-    const local = store.local
-    this.connectedGroups[id] = new ConnectedGroup(local, remote, group)
+  private add = (remote: RemoteParticipant) => {
+    const group = this.manager.addSpeaker(remote.id)
+    this.connectedGroups[remote.id] = new ConnectedGroup(store.local, remote, group)
   }
 }

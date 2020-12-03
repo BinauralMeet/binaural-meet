@@ -1,10 +1,10 @@
-import {defaultPerceptibility, Pose2DMap} from '@models/MapObject'
-import {Information, Physics} from '@models/Participant'
+import {Pose2DMap} from '@models/MapObject'
+import {Information, Physics, TrackStates} from '@models/Participant'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {participantsStore} from '@stores/participants'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {default as ParticiantsStore} from '@stores/participants/Participants'
-import {defaultContent, jsonToContents} from '@stores/sharedContents/SharedContentCreator'
+import {jsonToContents} from '@stores/sharedContents/SharedContentCreator'
 import sharedContents, {contentDebug, contentLog} from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
 import JitsiMeetJS, {JitisTrackError, JitsiLocalTrack, JitsiRemoteTrack, JitsiTrack, JitsiValues, TMediaType} from 'lib-jitsi-meet'
@@ -37,6 +37,7 @@ export const ParticipantProperties = {
   PPROP_INFO: 'info',
   PPROP_PHYSICS: 'physics',
   PPROP_TRACK_LIMITS: 'trackLimits',
+  PPROP_TRACK_STATES: 'trackStates',
 }
 
 //  Utility
@@ -156,6 +157,15 @@ export class Conference extends EventEmitter {
     () => {
       const info = {...ParticiantsStore.local.get().information}
       this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_INFO, JSON.stringify(info))
+      //  console.log('LocalParticipantInfo sent.', info)
+    },
+  )
+  //  Send local participant's property
+  private sendLocalParticipantTrackStatesDisposer = autorun(
+    () => {
+      const trackStates = {...ParticiantsStore.local.get().trackStates}
+      this._jitsiConference?.setLocalParticipantProperty(
+        ParticipantProperties.PPROP_TRACK_STATES, JSON.stringify(trackStates))
       //  console.log('LocalParticipantInfo sent.', info)
     },
   )
@@ -409,6 +419,15 @@ export class Conference extends EventEmitter {
             const info: Information = JSON.parse(value)
             if (target) {
               Object.assign(target.information, info)
+            }
+          }
+        }else if (name === ParticipantProperties.PPROP_TRACK_STATES) {
+          const id = participant.getId()
+          if (id !== local.id) {
+            const target = ParticiantsStore.remote.get(id)
+            const trackStates: TrackStates = JSON.parse(value)
+            if (target) {
+              Object.assign(target.trackStates, trackStates)
             }
           }
         }else if (name === ParticipantProperties.PPROP_PHYSICS) {

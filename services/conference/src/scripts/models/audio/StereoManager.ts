@@ -104,7 +104,7 @@ export class StereoManager {
         )
 
         for (const id in this.nodes) {
-          this.nodes[id].usePlayMode(playMode)
+          this.nodes[id].setPlayMode(playMode)
         }
         break
 
@@ -113,7 +113,7 @@ export class StereoManager {
         this.audioElement.pause()
 
         for (const id in this.nodes) {
-          this.nodes[id].usePlayMode(playMode)
+          this.nodes[id].setPlayMode(playMode)
         }
         break
 

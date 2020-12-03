@@ -1,6 +1,6 @@
-import {LocalParticipant as ILocalParticipant, Tracks} from '@models/Participant'
+import {LocalParticipant as ILocalParticipant, Tracks, TrackStates} from '@models/Participant'
 import {JitsiLocalTrack} from 'lib-jitsi-meet'
-import {action, observable} from 'mobx'
+import {action, computed, observable} from 'mobx'
 import {shallowObservable, Store} from '../utils'
 import {DevicePreference} from './localPlugins'
 import {ParticipantBase, TracksStore} from './ParticipantBase'
@@ -14,6 +14,12 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
   @observable remoteVideoLimit = config.remoteVideoLimit || -1 as number
   @observable remoteAudioLimit = config.remoteAudioLimit || -1 as number
   @action setThirdPersonView(tpv: boolean) { this.thirdPersonView = tpv }
+  @computed get trackStates():TrackStates {
+    return {
+      micMuted: this.plugins.streamControl.muteAudio,
+      headphone: this.useStereoAudio,
+    }
+  }
   constructor(id: string) {
     super(id)
   }

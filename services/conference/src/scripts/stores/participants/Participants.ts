@@ -31,7 +31,7 @@ export class Participants {
     this.local.set(new LocalParticipant(participantId))
   }
 
-  find(participantId: string): ParticipantBase | undefined {
+  find(participantId: string): LocalParticipant | RemoteParticipant | undefined {
     if (participantId === this.localId) {
 
       return this.local.get()

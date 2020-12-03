@@ -1,6 +1,6 @@
 import {
   defaultInformation, defaultPhysics,
-  Information, ParticipantBase as IParticipantBase, Physics, Tracks,
+  Information, ParticipantBase as IParticipantBase, Physics, Tracks, TrackStates,
 } from '@models/Participant'
 import {MapObject} from '@stores/MapObject'
 import {setupMaster} from 'cluster'

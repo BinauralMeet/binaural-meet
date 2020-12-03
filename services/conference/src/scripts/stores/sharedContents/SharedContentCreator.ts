@@ -21,6 +21,10 @@ export const defaultContent: ISharedContent = Object.assign({}, mapObjectDefault
   isEditable() {
     return this.type === 'text' || this.type === 'iframe' || this.type === 'gdrive'
   },
+  moveToTop() {
+    const TIME_RESOLUTION_IN_MS = 100
+    this.zorder = Math.floor(Date.now() / TIME_RESOLUTION_IN_MS)
+  },
 })
 
 ///  Add perceptibility and function to object obtained by JSON.parse()
@@ -29,6 +33,7 @@ export function jsonToContents(json: string, perceptibility = defaultPerceptibil
   for (const c of cs) {
     c.perceptibility = Object.assign({}, defaultPerceptibility)
     c.isEditable = defaultContent.isEditable
+    c.moveToTop = defaultContent.moveToTop
   }
 
   return cs as ISharedContent[]
@@ -47,9 +52,11 @@ class SharedContent implements ISharedContent {
   originalSize!:[number, number]
   perceptibility!: Perceptibility
   isEditable: () => boolean
+  moveToTop: () => void
   constructor() {
     Object.assign(this, _.cloneDeep(defaultContent))
     this.isEditable = defaultContent.isEditable
+    this.moveToTop = defaultContent.moveToTop
   }
 }
 

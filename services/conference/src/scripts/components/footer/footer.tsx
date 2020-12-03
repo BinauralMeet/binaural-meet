@@ -39,38 +39,39 @@ const useStyles = makeStyles((theme) => {
 export const Footer: React.FC<BaseProps> = (props) => {
   const classes = useStyles()
   const participants = useParticipantsStore()
+  const local = participants.local.get()
 
   const [micMenuEl, setMicMenuEl] = React.useState<Element|null>(null)
   const closeMicMenu = (did:string) => {
-    if (did) { participants.local.get().devicePreference.audioInputDevice = did }
+    if (did) { local.devicePreference.audioInputDevice = did }
     setMicMenuEl(null)
   }
   const [speakerMenuEl, setSpeakerMenuEl] = React.useState<Element|null>(null)
   const closeSpeakerMenu = (did:string) => {
-    if (did) { participants.local.get().devicePreference.audioOutputDevice = did }
+    if (did) { local.devicePreference.audioOutputDevice = did }
     setSpeakerMenuEl(null)
   }
   const [videoMenuEl, setVideoMenuEl] = React.useState<Element|null>(null)
   const closeVideoMenu = (did:string) => {
-    if (did) { participants.local.get().devicePreference.videoInputDevice = did }
+    if (did) { local.devicePreference.videoInputDevice = did }
     setVideoMenuEl(null)
   }
   const [deviceInfos, setDeviceInfos] = React.useState<MediaDeviceInfo[]>([])
 
   const mute = useObserver(() => ({
-    muteA: participants.local.get().plugins.streamControl.muteAudio,  //  mic
-    muteS: participants.local.get().plugins.streamControl.muteSpeaker,  //  speaker
-    muteV: participants.local.get().plugins.streamControl.muteVideo,  //  camera
+    muteA: local.plugins.streamControl.muteAudio,  //  mic
+    muteS: local.plugins.streamControl.muteSpeaker,  //  speaker
+    muteV: local.plugins.streamControl.muteVideo,  //  camera
   }))
 
   function makeMenuItem(info: MediaDeviceInfo, close:(did:string) => void):JSX.Element {
     let selected = false
     if (info.kind === 'audioinput') {
-      selected = info.deviceId === participants.local.get().devicePreference.audioInputDevice
+      selected = info.deviceId === local.devicePreference.audioInputDevice
     }else if (info.kind === 'audiooutput') {
-      selected = info.deviceId === participants.local.get().devicePreference.audioOutputDevice
+      selected = info.deviceId === local.devicePreference.audioOutputDevice
     }else if (info.kind === 'videoinput') {
-      selected = info.deviceId === participants.local.get().devicePreference.videoInputDevice
+      selected = info.deviceId === local.devicePreference.videoInputDevice
     }
 
     return <MenuItem key={info.deviceId}
@@ -106,7 +107,7 @@ export const Footer: React.FC<BaseProps> = (props) => {
 
       <FabMain color={mute.muteS ? 'primary' : 'secondary' }
         aria-label="speaker" onClick = {
-           () => { participants.local.get().plugins.streamControl.muteSpeaker = !mute.muteS }
+           () => { local.plugins.streamControl.muteSpeaker = !mute.muteS }
         }>
         {mute.muteS ? <SpeakerOffIcon /> : <SpeakerOnIcon /> }
       </FabMain>
@@ -122,9 +123,9 @@ export const Footer: React.FC<BaseProps> = (props) => {
       </Menu>
 
       <FabMain color={mute.muteA ? 'primary' : 'secondary' } aria-label="mic"
-        onClick = { () => { participants.local.get().plugins.streamControl.muteAudio = !mute.muteA }}>
-        {mute.muteA ? <MicOffIcon /> : participants.local.get().physics.onStage ?
-          <Icon icon={megaphoneIcon} height={'1.8em'} /> : <MicIcon /> }
+        onClick = { () => { local.plugins.streamControl.muteAudio = !mute.muteA }}>
+        {mute.muteA ? <MicOffIcon /> : local.physics.onStage ?
+          <Icon icon={megaphoneIcon} height={'1.8em'} color="gold" /> : <MicIcon /> }
       </FabMain>
       <FabSub onClick = { (ev) => {
         updateDevices(ev)
@@ -139,7 +140,7 @@ export const Footer: React.FC<BaseProps> = (props) => {
 
       <FabMain color={mute.muteV ? 'primary' : 'secondary'}
           aria-label="camera" onClick = { () => {
-            participants.local.get().plugins.streamControl.muteVideo = !mute.muteV
+            local.plugins.streamControl.muteVideo = !mute.muteV
             console.debug('muteV:', mute.muteV)
           }
       }>

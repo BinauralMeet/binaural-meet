@@ -1,5 +1,4 @@
 import {PARTICIPANT_SIZE, Pose3DAudio} from '@models/Participant'
-import {isChrome} from '@models/utils'
 import {mulV3, normV} from '@models/utils/coordinates'
 import {ConfigurableParams, ConfigurableProp} from './StereoParameters'
 
@@ -54,12 +53,17 @@ export class NodeGroup {
     this.playMode = playMode
   }
 
-  usePlayMode(playMode: PlayMode) {
+  interval:NodeJS.Timeout|undefined = undefined
+  setPlayMode(playMode: PlayMode) {
     this.playMode = playMode
 
     switch (playMode) {
       case 'Context': {
         this.sourceNode?.connect(this.gainNode)
+        if (this.interval) {
+          clearInterval(this.interval)
+          this.interval = undefined
+        }
         if (this.audioElement !== undefined) {
           this.audioElement.pause()
         }
@@ -72,8 +76,19 @@ export class NodeGroup {
           this.audioElement = this.createAudioElement()
         }
         this.audioElement.muted = false
-        this.audioElement.play()
-
+        if (!this.interval) {
+          this.interval = setInterval(
+            () => {
+              this?.audioElement?.play().then(() => {
+                if (this.interval) {
+                  clearInterval(this.interval)
+                  this.interval = undefined
+                }
+              })
+            },
+            500,
+          )
+        }
         break
       }
       default:
@@ -96,7 +111,7 @@ export class NodeGroup {
 
   updateStream(stream: MediaStream | undefined) {
     this.updateSourceStream(stream)
-    this.usePlayMode(this.playMode)
+    this.setPlayMode(this.playMode)
   }
 
   updatePose(pose: Pose3DAudio) {
@@ -119,11 +134,13 @@ export class NodeGroup {
     this.updateVolume()
   }
   private updateVolume() {
-    const amplitude = this.playMode === 'Element' ? 1 : isChrome ? 0.1 : 0
-    const volume = Math.pow(Math.max(this.distance, this.pannerNode.refDistance) / this.pannerNode.refDistance,
-                            - this.pannerNode.rolloffFactor)
+    let volume = 0
+    if (this.playMode === 'Element') {
+      volume = Math.pow(Math.max(this.distance, this.pannerNode.refDistance) / this.pannerNode.refDistance,
+                        - this.pannerNode.rolloffFactor)
+    }
     if (this.audioElement) {
-      this.audioElement.volume = amplitude * volume
+      this.audioElement.volume = volume
     }
   }
 
