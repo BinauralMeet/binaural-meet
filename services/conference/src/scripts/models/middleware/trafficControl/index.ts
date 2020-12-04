@@ -5,9 +5,11 @@ import {participantsStore} from '@stores/participants'
 import _ from 'lodash'
 import {autorun, reaction} from 'mobx'
 
-const priorityCalculator = new PriorityCalculator()
+export const priorityCalculator = new PriorityCalculator()
+
 const recalculateInterval = 1000
 let intervalHandle: number | undefined = undefined
+
 
 autorun(() => {
   const state = connectionInfo.state
@@ -42,6 +44,7 @@ const memoedUpdater = (() => {
       // Send res to Jitsi bridge
       connection.conference.setPerceptibles([res.video, res.audio])
       priorityLog('setPerceptibles:', res)
+      console.log(`setPerceptibles:${JSON.stringify(res)}`)
       memo = _.cloneDeep(res)
     }
   }

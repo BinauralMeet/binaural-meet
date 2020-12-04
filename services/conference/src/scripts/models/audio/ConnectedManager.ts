@@ -38,7 +38,7 @@ export class ConnectedManager {
     removed.forEach(this.remove)
     added.forEach(this.add)
     this.participantsMemo = newRemotes
-    console.log('Update conntectedGroups:', this.connectedGroups)
+    //  console.log('Update connectedGroups:', this.connectedGroups)
   }
 
   private remove = (rp: RemoteParticipant) => {

@@ -1,9 +1,9 @@
 import {SharedContent} from '@models/SharedContent'
+import {diffMap} from '@models/utils'
 import {participantsStore as participants} from '@stores/participants'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import contents from '@stores/sharedContents/SharedContents'
-import {diffMap} from '@models/utils'
 import {JitsiRemoteTrack, JitsiTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
 import {autorun, IReactionDisposer} from 'mobx'
@@ -83,6 +83,10 @@ export class PriorityCalculator {
     this.limitUpdated = true
   }
 
+  onAddRemoteTrack(track: JitsiRemoteTrack) {
+    this.updateSet.add(track.getParticipantId())
+  }
+
   get enabled(): boolean {
     return this._enabled
   }
@@ -145,20 +149,25 @@ export class PriorityCalculator {
       priorityLog('onRemoveContent:', id, this.priorityMaps[0])
     }
 
-    const onAddParticipant = (rp: RemoteParticipant) => remoteDiposers.set(rp.id, autorun(() => {
-      // tslint:disable-next-line: max-line-length
-      //  priorityLog(`prioirty ${id} chagned v=${(rp.tracks.avatar as JitsiRemoteTrack)?.getSSRC()} a=${(rp.tracks.audio as JitsiRemoteTrack)?.getSSRC()}`)
-
-      this.updateSet.add(rp.id)
+    const onAddParticipant = (rp: RemoteParticipant) => {
+      remoteDiposers.set(rp.id, autorun(() => {
+        // tslint:disable-next-line: max-line-length
+        //  priorityLog(`prioirty ${id} chagned v=${(rp.tracks.avatar as JitsiRemoteTrack)?.getSSRC()} a=${(rp.tracks.audio as JitsiRemoteTrack)?.getSSRC()}`)
+        if (rp.tracks.audio || rp.tracks.avatar) {
+          this.updateSet.add(rp.id)
+        }
+      }))
       priorityLog('onAddParticipant:', rp, this.priorityMaps[0])
-    }))
+    }
     const onAddContent = (tracks: Set<JitsiRemoteTrack>, id:string) => {
       remoteDiposers.set(id, autorun(() => {
         // tslint:disable-next-line: max-line-length
         //  priorityLog(`prioirty ${id} chagned v=${(rp.tracks.avatar as JitsiRemoteTrack)?.getSSRC()} a=${(rp.tracks.audio as JitsiRemoteTrack)?.getSSRC()}`)
-        this.updateSet.add(id)
-        priorityLog('onAddContent:', id, this.priorityMaps[0])
+        if (tracks.size) {
+          this.updateSet.add(id)
+        }
       }))
+      priorityLog('onAddContent:', id, this.priorityMaps[0])
     }
 
     this.disposers = [localChangeDisposer, remoteChangeDisposer, remoteContentsChangeDisposer]

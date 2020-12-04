@@ -1,4 +1,5 @@
 import {Pose2DMap} from '@models/MapObject'
+import {priorityCalculator} from '@models/middleware/trafficControl'
 import {Information, Physics, TrackStates} from '@models/Participant'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {participantsStore} from '@stores/participants'
@@ -671,6 +672,9 @@ export class Conference extends EventEmitter {
     if (this._isForTest) {
       return
     }
+
+    //  update priorty for setPerceptible message.
+    priorityCalculator.onAddRemoteTrack(track)
 
     //  console.log(`onRemoteTrackAdded ${track} videoType:'${track.videoType ? track.videoType : undefined}'.`)
     if (track.isMainScreen()) {
