@@ -138,6 +138,8 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
                 if (normV(diff) > PARTICIPANT_SIZE / 2) {
                   const dir = mulV2(10 / normV(diff), diff)
                   local.pose.position = addV2(local.pose.position, dir)
+                  local.pose.orientation = Math.atan2(dir[0], -dir[1]) * 180 / Math.PI
+
                   local.savePhysicsToStorage(false)
                 }
                 const TIMER_INTERVAL = 33
@@ -233,9 +235,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       onMove: ({xy}) => {
         mapStore.setMouse(xy)
         //  console.log('xyOnMap:', xyOnMap)
-        if (participants.local.get().mousePosition) {
-          participants.local.get().mousePosition = Object.assign({}, mapStore.mouseOnMap)
-        }
+        participants.local.get().mouse.position = Object.assign({}, mapStore.mouseOnMap)
       },
     },
     {

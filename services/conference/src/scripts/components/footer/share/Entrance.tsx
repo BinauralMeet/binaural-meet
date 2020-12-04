@@ -30,7 +30,7 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
   const map = useMapStore()
   const sharing = useObserver(() => (
     {main: sharedContents.tracks.localMains.size, contents: sharedContents.tracks.localContents.size}))
-  const mousePosition = useObserver(() => participants.local.get().mousePosition)
+  const showMouse = useObserver(() => participants.local.get().mouse.show)
 
   return (
     <List>
@@ -55,10 +55,9 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
       <ShareDialogItem
         key="shareMouse"
         icon={<Icon icon={cursorDefaultOutline} />}
-        text={mousePosition ?  'Stop sharing mouse cursor' : 'Mouse cursor'}
+        text={showMouse ?  'Stop sharing mouse cursor' : 'Mouse cursor'}
         onClick={() => {
-          participants.local.get().mousePosition =  mousePosition ? undefined :
-           Object.assign({}, map.mouseOnMap) as [number, number]
+          participants.local.get().mouse.show = !showMouse
           setStep('none')
         }}
       />

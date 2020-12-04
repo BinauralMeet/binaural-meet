@@ -1,6 +1,6 @@
 import {Pose2DMap} from '@models/MapObject'
 import {priorityCalculator} from '@models/middleware/trafficControl'
-import {Information, Physics, TrackStates} from '@models/Participant'
+import {Information, Mouse, Physics, TrackStates} from '@models/Participant'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {participantsStore} from '@stores/participants'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
@@ -31,7 +31,7 @@ const ConferenceEvents = {
 
 export const ParticipantProperties = {
   PPROP_POSE: 'pose',
-  PPROP_MOUSE_POSITION: 'mouse',
+  PPROP_MOUSE: 'mouse',
   PPROP_CONTENTS: 'contents',
   PPROP_CONTENTS_UPDATE: 'contents_update',
   PPROP_CONTENTS_REMOVE: 'contents_remove',
@@ -194,13 +194,12 @@ export class Conference extends EventEmitter {
       },
     )
     //  send mouse position
-    const throttledUpdateMousePosition = throttle(UPDATE_INTERVAL, (mousePos: [number, number]|undefined) => {
-      const str = mousePos ? JSON.stringify(mousePos) : ''
-      this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_MOUSE_POSITION, str)
+    const throttledUpdateMouse = throttle(UPDATE_INTERVAL, (mouse: Mouse) => {
+      this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_MOUSE, JSON.stringify(mouse))
     })
     const disposerMouse = autorun(
       () => {
-        throttledUpdateMousePosition(local.mousePosition)
+        throttledUpdateMouse(Object.assign({}, local.mouse))
       },
     )
   }
@@ -404,14 +403,10 @@ export class Conference extends EventEmitter {
             target.pose.orientation = pose.orientation
             target.pose.position = pose.position
           }
-        }else if (name === ParticipantProperties.PPROP_MOUSE_POSITION) {
+        }else if (name === ParticipantProperties.PPROP_MOUSE) {
           const target = ParticiantsStore.find(participant.getId())
           if (target) {
-            if (value && value.length > 0) {
-              target.mousePosition = JSON.parse(value)
-            }else {
-              target.mousePosition = undefined
-            }
+            Object.assign(target.mouse, JSON.parse(value))
           }
         }else if (name === ParticipantProperties.PPROP_INFO) {
           const id = participant.getId()

@@ -7,7 +7,7 @@ export interface ParticipantBase extends MapObject{
   information: Information
   physics: Physics
   tracks: Tracks
-  mousePosition: [number, number] | undefined
+  mouse: Mouse
 }
 
 export interface RemoteParticipant extends ParticipantBase {
@@ -49,4 +49,9 @@ export interface Physics {
 }
 export const defaultPhysics: Physics = {
   onStage: false,
+}
+
+export interface Mouse{
+  position:[number, number]
+  show: boolean
 }

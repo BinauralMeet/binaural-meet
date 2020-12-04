@@ -181,7 +181,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     drag.target.current?.focus({preventScroll:true})
   })
 
-
+/*  rotation changes sound localization and frequent changes are not good to hear.
   //  Rotate participant to look at the pointer
   useEffect(() => {
     const cleanup = reaction(() => mapData.mouse, (mouse) => {
@@ -198,6 +198,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     return cleanup
   },
             [])
+*/
 
   return (
     <div ref={drag.target} {...drag.bind()}>

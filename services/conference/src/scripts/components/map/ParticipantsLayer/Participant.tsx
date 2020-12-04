@@ -8,10 +8,12 @@ import {Tooltip} from '@material-ui/core'
 import {makeStyles} from '@material-ui/core/styles'
 import HeadsetIcon from '@material-ui/icons/HeadsetMic'
 import MicOffIcon from '@material-ui/icons/MicOff'
+import {addV2, assert, mulV2, normV, rotateVector2DByDegree, subV2, transformPoint2D, transfromAt} from '@models/utils'
 import {useObserver} from 'mobx-react-lite'
 import React, {forwardRef} from 'react'
 import {MapObjectContainer} from '../utils/MapObjectContainer'
 import {useValue as useTransform} from '../utils/useTransform'
+declare const config:any             //  from ../../config.js included from index.html
 
 interface StyleProps {
   position: [number, number],
@@ -56,6 +58,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
   const participantProps = useObserver(() => ({
     position: participant!.pose.position,
     orientation: participant!.pose.orientation,
+    mousePosition: participant!.mouse.position,
   }))
   const name = useObserver(() => participant!.information.name)
   const audioLevel = useObserver(() => Math.pow(participant!.tracks.audioLevel, 0.5))
@@ -76,6 +79,21 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
   const isLocal = participants.isLocal(props.participantId)
   const AUDIOLEVELSCALE = props.size * SVG_RATIO * HALF
   const svgCenter = SVG_RATIO * props.size * HALF
+
+  const dir = subV2(participantProps.mousePosition, participantProps.position)
+  const eyeOffsets:[[number, number], [number, number]]
+    = [[0.4 * outerRadius, -outerRadius], [-0.4 * outerRadius, -outerRadius]]
+  const dirs = eyeOffsets.map(offset => subV2(dir, rotateVector2DByDegree(participantProps.orientation, offset)))
+  const eyeballsGlobal = dirs.map((dir) => {
+    const norm = normV(dir)
+    const dist = Math.log(norm < 1 ? 1 : norm) * 0.3
+    const limit = 0.1 * outerRadius
+    const offset = dist > limit ? limit : dist
+
+    return mulV2(offset / norm, dir)
+  })
+  const eyeballs = eyeballsGlobal.map(g => addV2([0, -0.04 * outerRadius],
+                                                 rotateVector2DByDegree(-participantProps.orientation, g)))
 
   return (
     <MapObjectContainer pose={participantProps} ref={ref} disableRotation={true} color={color}
@@ -103,15 +121,31 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
             cy={svgCenter} cx={svgCenter} fill={`url(#gr${props.participantId})`} />
           <circle r={outerRadius} cy={svgCenter} cx={svgCenter} fill={color}
             style={{pointerEvents: 'fill'}} />
-          <g transform={`translate(${svgCenter} ${svgCenter}) rotate(-135) `}>
-            <rect style={{pointerEvents: 'fill'}}
-              height={outerRadius} width={outerRadius} fill={color} />
-            {isLocal ?
-              <path  d={`M 0 ${outerRadius} h ${outerRadius} v ${-outerRadius}` +
-                `a ${outerRadius} ${outerRadius} 0 1 0 ${-outerRadius} ${outerRadius}`}
-                 fill="none" stroke={textColor} />
-              : undefined}
-          </g>
+          {config.avatar === 'arrow' ?  //  arrow (circle with a corner) type avatar
+            <g transform={`translate(${svgCenter} ${svgCenter}) rotate(-135) `}>
+              <rect style={{pointerEvents: 'fill'}}
+                height={outerRadius} width={outerRadius} fill={color} />
+              {isLocal ?
+                <path  d={`M 0 ${outerRadius} h ${outerRadius} v ${-outerRadius}` +
+                  `a ${outerRadius} ${outerRadius} 0 1 0 ${-outerRadius} ${outerRadius}`}
+                  fill="none" stroke={textColor} />
+                : undefined}
+            </g>
+            : // Frog type (two eyes) avatar
+            <g style={{pointerEvents: 'fill'}} >
+              {isLocal ?
+                <circle r={outerRadius} cy={svgCenter} cx={svgCenter} fill="none" stroke={textColor} />
+                : undefined}
+              <circle r={0.3 * outerRadius} cy={svgCenter + eyeOffsets[0][1]}
+                cx={svgCenter + eyeOffsets[0][0]} fill={color} />
+              <circle r={0.3 * outerRadius} cy={svgCenter + eyeOffsets[1][1]}
+                cx={svgCenter + eyeOffsets[1][0]} fill={color} />
+              <circle r={0.14 * outerRadius} cy={svgCenter + eyeOffsets[0][1] + eyeballs[0][1]}
+                cx={svgCenter + eyeOffsets[0][0] +  eyeballs[0][0]} fill={textColor} />
+              <circle r={0.14 * outerRadius} cy={svgCenter + eyeOffsets[1][1] + eyeballs[1][1]}
+                cx={svgCenter + eyeOffsets[1][0] +  eyeballs[1][0]} fill={textColor} />
+            </g>
+          }
         </svg>
       </div>
       <Tooltip title={<span>{name}<br />{props.participantId}</span>}>

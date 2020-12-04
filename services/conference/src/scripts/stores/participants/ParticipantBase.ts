@@ -1,9 +1,8 @@
 import {
   defaultInformation, defaultPhysics,
-  Information, ParticipantBase as IParticipantBase, Physics, Tracks, TrackStates,
+  Information, Mouse, ParticipantBase as IParticipantBase, Physics, Tracks,
 } from '@models/Participant'
 import {MapObject} from '@stores/MapObject'
-import {setupMaster} from 'cluster'
 import {JitsiTrack} from 'lib-jitsi-meet'
 import {action, computed, observable} from 'mobx'
 import {getRandomColor, getRandomColorRGB, shallowObservable, Store} from '../utils'
@@ -15,7 +14,7 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
   plugins: Plugins
   tracks = shallowObservable<TracksStore<JitsiTrack>>(new TracksStore<JitsiTrack>())
   physics = shallowObservable<Physics>(defaultPhysics)
-  @observable.ref mousePosition: [number, number] | undefined = undefined
+  mouse = shallowObservable<Mouse>({position:[0, 0], show:false})
 
   getColor() {
     return getRandomColor(this.information.name)
