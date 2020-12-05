@@ -19,25 +19,24 @@ import {FabMain, FabSub} from './FabNoFocus'
 import {ShareButton} from './share/ShareButton'
 import {StereoAudioSwitch} from './StereoAudioSwitch'
 
-const useStyles = makeStyles((theme) => {
-  return ({
-    box: {
-      position: 'absolute',
-      bottom: 0,
-      opacity: 0.1,
-      '&:hover': {
-        opacity: 1.0,
-      },
-      pointerEvents: 'none',
+const useStyles = makeStyles({
+  box:(pointed: boolean) => ({
+    position: 'absolute',
+    bottom: 0,
+    opacity: pointed ? 0.15 : 1,
+    '&:hover': {
+      opacity: 1.0,
     },
-  })
+    pointerEvents: 'none',
+  }),
 })
 
 
 // onDrag: (state:DragState<ET>) => void
 
 export const Footer: React.FC<BaseProps> = (props) => {
-  const classes = useStyles()
+  const [pointed, setPointed] = React.useState<boolean>(false)
+  const classes = useStyles(pointed)
   const participants = useParticipantsStore()
   const [micMenuEl, setMicMenuEl] = React.useState<Element|null>(null)
   const [deviceInfos, setDeviceInfos] = React.useState<MediaDeviceInfo[]>([])
@@ -99,16 +98,21 @@ export const Footer: React.FC<BaseProps> = (props) => {
   }
 
   return (
-    <div className={classes.box}>
+    <div className={classes.box}
+      onPointerEnter = {() => { setPointed(true) }}
+    >
       <StereoAudioSwitch />
 
       <FabMain color={mute.muteS ? 'primary' : 'secondary' }
         aria-label="speaker" onClick = {
-           () => {
-             participants.local.get().plugins.streamControl.muteSpeaker = !mute.muteS
-             participants.local.get().saveMuteStatusToStorage(false)
-             console.debug('muteSpeaker:', participants.local.get().plugins.streamControl.muteSpeaker)
-           }
+          () => {
+            participants.local.get().plugins.streamControl.muteSpeaker = !mute.muteS
+            if (participants.local.get().plugins.streamControl.muteSpeaker) {
+              participants.local.get().plugins.streamControl.muteAudio = true
+            }
+            participants.local.get().saveMuteStatusToStorage(false)
+            console.debug('muteSpeaker:', participants.local.get().plugins.streamControl.muteSpeaker)
+          }
         }>
         {mute.muteS ? <SpeakerOffIcon /> : <SpeakerOnIcon /> }
       </FabMain>
@@ -126,6 +130,9 @@ export const Footer: React.FC<BaseProps> = (props) => {
       <FabMain color={mute.muteA ? 'primary' : 'secondary' } aria-label="mic"
         onClick = { () => {
           participants.local.get().plugins.streamControl.muteAudio = !mute.muteA
+          if (!participants.local.get().plugins.streamControl.muteAudio) {
+            participants.local.get().plugins.streamControl.muteSpeaker = false
+          }
           participants.local.get().saveMuteStatusToStorage(false)
           console.debug('muteAudio:', participants.local.get().plugins.streamControl.muteAudio)
         }}>

@@ -1,3 +1,4 @@
+import {ImageAvatar} from '@components/avatar/ImageAvatar'
 import {useStore} from '@hooks/ParticipantsStore'
 import Container from '@material-ui/core/Container'
 import {uploadToGyazo} from '@models/api/Gyazo'
@@ -37,6 +38,13 @@ const LocalParticipantConfig: React.FC<Props> = (props: Props) => {
 
   function submitHandler(ev: React.FormEvent) {
     ev.preventDefault()
+    if (submitType === 'clearAvatarSrc') {
+      setFile(null)
+      local.information.avatarSrc = undefined
+
+      return
+    }
+
     closeDialog()
     if (submitType === 'cancel') { return }
     if (submitType === 'clear') {
@@ -69,10 +77,15 @@ const LocalParticipantConfig: React.FC<Props> = (props: Props) => {
 
   const form = <form key="information" onSubmit = {submitHandler}>
     Name: <input type="text" {...name.args} /> <br />
-    Email: <input type="text" {...email.args} /> <br />
-    Avatar: <input type="file" onChange={(ev) => {
+    Avatar image file : &nbsp;
+    {local.information.avatarSrc ?
+      <> <img src={local.information.avatarSrc} style={{height:'1.5em', verticalAlign:'middle'}} />
+      <input type="submit" onClick={() => setSubmitType('clearAvatarSrc')} value="✕" /> &nbsp; </>
+       : undefined}
+    <input type="file" onChange={(ev) => {
       setFile(ev.target.files?.item(0))
     }} /> <br />
+    Email for Gravatar: <input type="text" {...email.args} /> <br />
     <input type="submit" onClick={() => setSubmitType('session')} value="Save" /> &nbsp;
     <input type="submit" onClick={() => setSubmitType('local')} value="Save to browser" />
     <input type="submit" onClick={() => setSubmitType('clear')} value="Clear" />&nbsp;

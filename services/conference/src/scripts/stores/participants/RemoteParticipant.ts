@@ -5,6 +5,7 @@ import {ParticipantBase} from './ParticipantBase'
 
 class TrackStates implements Store<ITrackStates>{
   @observable micMuted = false
+  @observable speakerMuted = false
   @observable headphone = false
 }
 

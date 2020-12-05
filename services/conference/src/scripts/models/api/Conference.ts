@@ -669,7 +669,7 @@ export class Conference extends EventEmitter {
     }
 
     //  update priorty for setPerceptible message.
-    priorityCalculator.onAddRemoteTrack(track)
+    priorityCalculator.onRemoteTrackAdded(track)
 
     //  console.log(`onRemoteTrackAdded ${track} videoType:'${track.videoType ? track.videoType : undefined}'.`)
     if (track.isMainScreen()) {

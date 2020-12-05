@@ -138,14 +138,14 @@ class Connection extends EventEmitter {
         this._jitsiConnection.addEventListener(
           JitsiMeetJS.events.connection.CONNECTION_FAILED,
           () => {
-            connDebug('Failed to connect.')
+            console.error('Failed to connect.')
             reject(ConnectionStates.DISCONNECTED)
           },
         )
         this._jitsiConnection.addEventListener(
           JitsiMeetJS.events.connection.CONNECTION_DISCONNECTED,
           () => {
-            connDebug('Disconnected from remote server.')
+            console.error('Disconnected from remote server.')
             this.emit(
               ConnectionEvents.CONNECTION_DISCONNECTED,
               ConnectionStates.DISCONNECTED,

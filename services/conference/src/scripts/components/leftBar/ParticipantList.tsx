@@ -13,15 +13,15 @@ const height = 20
 const fontSize = 16
 
 export const ParticipantLine: React.FC<{participant: ParticipantBase, map: MapData}> = (props) => {
-  const name = useObserver(() => props.participant.information.name)
+  const info = useObserver(() => (Object.assign({}, props.participant.information)))
   const colors = props.participant.getColor()
   const classes = styleForList({height, fontSize})
 
   return <div className={classes.line} style={{backgroundColor:colors[0], color:colors[1]}}
-  onClick={event => props.map.focusOn(props.participant)}>
-    <ImageAvatar information={props.participant.information} color={colors[0]}
+  onClick={() => props.map.focusOn(props.participant)}>
+    <ImageAvatar information={info} color={colors[0]}
       textColor={colors[1]} size={fontSize} style={{flexShrink: 0}} />
-    &nbsp; <div>{name}</div>
+    &nbsp; <div>{info.name}</div>
   </div>
 }
 

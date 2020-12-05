@@ -42,6 +42,7 @@ export interface Tracks {
 
 export interface TrackStates{
   micMuted: boolean,
+  speakerMuted: boolean,
   headphone: boolean,
 }
 export interface Physics {

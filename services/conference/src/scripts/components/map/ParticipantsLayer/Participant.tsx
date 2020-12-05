@@ -8,7 +8,8 @@ import {Tooltip} from '@material-ui/core'
 import {makeStyles} from '@material-ui/core/styles'
 import HeadsetIcon from '@material-ui/icons/HeadsetMic'
 import MicOffIcon from '@material-ui/icons/MicOff'
-import {addV2, assert, mulV2, normV, rotateVector2DByDegree, subV2, transformPoint2D, transfromAt} from '@models/utils'
+import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
+import {addV2, mulV2, normV, rotateVector2DByDegree, subV2} from '@models/utils'
 import {useObserver} from 'mobx-react-lite'
 import React, {forwardRef} from 'react'
 import {MapObjectContainer} from '../utils/MapObjectContainer'
@@ -64,6 +65,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
   const audioLevel = useObserver(() => Math.pow(participant!.tracks.audioLevel, 0.5))
   // console.log(`audioLevel ${audioLevel}`)
   const micMuted = useObserver(() => participant?.trackStates.micMuted)
+  const speakerMuted = useObserver(() => participant?.trackStates.speakerMuted)
   const headphone = useObserver(() => participant?.trackStates.headphone)
   const onStage = useObserver(() => participant?.physics.onStage)
 
@@ -74,7 +76,6 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
 
   const transform = useTransform()
   const [color, textColor, revColor] = participant ? participant.getColor() : ['white', 'black']
-  // tslint:disable-next-line: no-magic-numbers
   const outerRadius = props.size / 2 + 2
   const isLocal = participants.isLocal(props.participantId)
   const AUDIOLEVELSCALE = props.size * SVG_RATIO * HALF
@@ -136,14 +137,18 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
               {isLocal ?
                 <circle r={outerRadius} cy={svgCenter} cx={svgCenter} fill="none" stroke={textColor} />
                 : undefined}
-              <circle r={0.3 * outerRadius} cy={svgCenter + eyeOffsets[0][1]}
+              <circle r={0.35 * outerRadius} cy={svgCenter + eyeOffsets[0][1]}
                 cx={svgCenter + eyeOffsets[0][0]} fill={color} />
-              <circle r={0.3 * outerRadius} cy={svgCenter + eyeOffsets[1][1]}
+              <circle r={0.35 * outerRadius} cy={svgCenter + eyeOffsets[1][1]}
                 cx={svgCenter + eyeOffsets[1][0]} fill={color} />
+              <circle r={0.25 * outerRadius} cy={svgCenter + eyeOffsets[0][1]}
+                cx={svgCenter + eyeOffsets[0][0]} fill="white" />
+              <circle r={0.25 * outerRadius} cy={svgCenter + eyeOffsets[1][1]}
+                cx={svgCenter + eyeOffsets[1][0]} fill="white" />
               <circle r={0.14 * outerRadius} cy={svgCenter + eyeOffsets[0][1] + eyeballs[0][1]}
-                cx={svgCenter + eyeOffsets[0][0] +  eyeballs[0][0]} fill={textColor} />
+                cx={svgCenter + eyeOffsets[0][0] +  eyeballs[0][0]} fill="black" />
               <circle r={0.14 * outerRadius} cy={svgCenter + eyeOffsets[1][1] + eyeballs[1][1]}
-                cx={svgCenter + eyeOffsets[1][0] +  eyeballs[1][0]} fill={textColor} />
+                cx={svgCenter + eyeOffsets[1][0] +  eyeballs[1][0]} fill="black" />
             </g>
           }
         </svg>
@@ -154,7 +159,8 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
         </div>
     </Tooltip>
     {headphone ? <HeadsetIcon className={classes.icon} htmlColor="rgba(0, 0, 0, 0.3)" /> : undefined}
-    {micMuted ? <MicOffIcon className={classes.icon} color="secondary" /> : undefined}
+    {speakerMuted ? <SpeakerOffIcon className={classes.icon} color="secondary" /> :
+      (micMuted ? <MicOffIcon className={classes.icon} color="secondary" /> : undefined)}
     {!micMuted && onStage ? <Icon className={classes.icon} icon={megaphoneIcon} color="gold" /> : undefined }
 
     </MapObjectContainer >

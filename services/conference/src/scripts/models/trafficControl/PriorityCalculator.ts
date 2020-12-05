@@ -83,7 +83,7 @@ export class PriorityCalculator {
     this.limitUpdated = true
   }
 
-  onAddRemoteTrack(track: JitsiRemoteTrack) {
+  onRemoteTrackAdded(track: JitsiRemoteTrack) {
     this.updateSet.add(track.getParticipantId())
   }
 

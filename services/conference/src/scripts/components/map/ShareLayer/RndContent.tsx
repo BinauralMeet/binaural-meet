@@ -225,8 +225,8 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     <div className={classes.rndContainer} {...gesture()}>
       <div className={classes.titlePosition} {...gesture() /* title can be placed out of Rnd */}>
         <div ref={ref} className={classes.titleContainer}
-            onMouseEnter = {() => { if (props.autoHideTitle) { setShowTitle(true) } }}
-            onMouseLeave = {() => { if (props.autoHideTitle && props.content.pinned) { setShowTitle(false) } }}>
+            onPointerEnter = {() => { if (props.autoHideTitle) { setShowTitle(true) } }}
+            onPointerLeave = {() => { if (props.autoHideTitle && props.content.pinned) { setShowTitle(false) } }}>
           <div className={classes.pin} onClick={onClickPin}>
             {contentTypeIcons(props.content.type, dimensions.clientHeight)}
             <Icon icon={props.content.pinned ? pinIcon : pinOffIcon} height={dimensions.clientHeight} />

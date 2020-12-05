@@ -31,6 +31,7 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
   @computed get trackStates():TrackStates {
     return {
       micMuted: this.plugins.streamControl.muteAudio,
+      speakerMuted: this.plugins.streamControl.muteSpeaker,
       headphone: this.useStereoAudio,
     }
   }
