@@ -78,17 +78,17 @@ export const Footer: React.FC<BaseProps> = (props) => {
       videoMenuItems.push(makeMenuItem(info, closeVideoMenu))
     }
   })
-  const closeMicMenu = (did:string) => {
+  function closeMicMenu(did:string) {
     if (did) { participants.local.get().devicePreference.audioInputDevice = did }
     setMicMenuEl(null)
   }
   const [speakerMenuEl, setSpeakerMenuEl] = React.useState<Element|null>(null)
-  const closeSpeakerMenu = (did:string) => {
+  function closeSpeakerMenu(did:string) {
     if (did) { participants.local.get().devicePreference.audioOutputDevice = did }
     setSpeakerMenuEl(null)
   }
   const [videoMenuEl, setVideoMenuEl] = React.useState<Element|null>(null)
-  const closeVideoMenu = (did:string) => {
+  function closeVideoMenu(did:string) {
     if (did) { participants.local.get().devicePreference.videoInputDevice = did }
     setVideoMenuEl(null)
   }

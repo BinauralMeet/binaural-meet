@@ -33,6 +33,13 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
       Array.from(sharedContents.tracks.remoteContents.get(props.content.id) || [])),
     content: props.content,
   }
+  if (member.current.locals.length > 2) {
+    console.error(`content ${props.content.id} has ${member.current.locals.length} local tracks`, member.current.locals)
+  }
+  if (member.current.remotes.length > 2) {
+    console.error(
+      `content ${props.content.id} has ${member.current.remotes.length} remote tracks`, member.current.remotes)
+  }
 
   function setTrack() {
     if (ref.current) {

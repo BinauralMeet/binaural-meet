@@ -10,7 +10,7 @@ declare const d:any                  //  from index.html
 
 const useStyles = makeStyles({
   videoContainer: {
-    height: '90%',
+    height: '100%',
     width: '100%',
     backgroundColor: 'none',
   },
@@ -18,7 +18,7 @@ const useStyles = makeStyles({
     marginLeft: 'auto',
     marginRight: 'auto',
     display: 'block',
-    height: '100%',
+    //  height: '100%',
     width: '100%',
   },
 })
