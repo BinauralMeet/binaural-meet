@@ -38,16 +38,13 @@ export class SharedContentTracks {
     }
   }
   @action clearLocalMains() {
-    for (const track of this.localMains) {
-      track.stopStream()
+    const mains = new Set(this.localMains)
+    for (const track of mains) {
+      this.removeLocalMain(track)
     }
-    this.localMains = new Set()
   }
   //  Map of participantId->track for main screen from remotes
   @observable remoteMains: Map<string, Set<JitsiRemoteTrack>> = new Map()
-
-  //  This could make blinking of the main screen
-  //  @observable.shallow mutedRemoteMains: Set<JitsiRemoteTrack> = new Set()
 
   @computed get mainStream(): MediaStream|undefined {
     let tracks:Set<JitsiTrack> = new Set()
@@ -64,7 +61,6 @@ export class SharedContentTracks {
     if (tracks.size) {
       let stream:MediaStream|undefined = undefined
       for (const track of tracks) {
-        //  if (this.mutedRemoteMains.has(track as JitsiRemoteTrack)) { continue }
         if (!stream) {
           stream = track.getOriginalStream()
         } else if (track.getOriginalStream() !== stream) {
@@ -93,10 +89,6 @@ export class SharedContentTracks {
       return
     }
     //  console.log(`${track} videoType:${(track as any).videoType} added`)
-    /* This could make blinking of main screen.
-    track.getTrack().onmute = () => { this.mutedRemoteMains.add(track) }
-    track.getTrack().onunmute = () => { this.mutedRemoteMains.delete(track) }
-    */
 
     if (!this.remoteMains.has(track.videoType)) {
       this.remoteMains.set(track.getParticipantId(), new Set())
