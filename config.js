@@ -31,7 +31,7 @@ const config_haselab_net = {
   bosh: 'https://jitsi.haselab.net/http-bind', // FIXME: use xep-0156 for that
   clientNode: 'http://jitsi.org/jitsimeet',
   focusUserJid: 'focus@auth.meet.jitsi',
-  disableSimulcast: true,
+  //  disableSimulcast: true, //  Without simulcast, Safari/Firefox (unified plan) does not work
   channelLastN: -1,
   p2p: {
     enabled: false,
@@ -49,7 +49,7 @@ const config_party_haselab = {
   bosh: 'https://party.haselab.net/http-bind', // FIXME: use xep-0156 for that
   clientNode: 'http://jitsi.org/jitsimeet',
   focusUserJid: 'focus@auth.meet.jitsi',
-  disableSimulcast: true,
+  //  disableSimulcast: true, //  Without simulcast, Safari/Firefox (unified plan) does not work
   channelLastN: -1,
   p2p: {
     enabled: false,
@@ -67,7 +67,7 @@ const config_local = {
   bosh: 'https://localhost:8443/http-bind', // FIXME: use xep-0156 for that
   clientNode: 'http://jitsi.org/jitsimeet',
   focusUserJid: 'focus@auth.meet.jitsi',
-  disableSimulcast: true,
+  //  disableSimulcast: true, //  Without simulcast, Safari/Firefox (unified plan) does not work
   channelLastN: -1,
   p2p: {
     enabled: false,
@@ -83,7 +83,7 @@ const config_hasemeet = {
   openBridgeChannel: true, // One of true, 'datachannel'==='true', or 'websocket'
   bosh: '//hasemeet.haselab.net/http-bind',
   clientNode: 'http://jitsi.org/jitsimeet',
-  disableSimulcast: true,
+  //  disableSimulcast: true, //  Without simulcast, Safari/Firefox (unified plan) does not work
   channelLastN: -1,
   p2p: {
     enabled: false,
@@ -98,7 +98,7 @@ const config_alpha = {
     focus: 'focus.alpha.jitsi.net',
   },
   openBridgeChannel: 'websocket', // One of true, 'datachannel'==='true', or 'websocket'
-  disableSimulcast: true,
+  //  disableSimulcast: true, //  Without simulcast, Safari/Firefox (unified plan) does not work
   p2p: {
     enabled: false,
     preferH264: true,
