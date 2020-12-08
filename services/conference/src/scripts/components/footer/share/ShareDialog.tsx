@@ -67,7 +67,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
   const page: JSX.Element | undefined = getPage(step, wrappedSetStep)
 
   return  <Dialog open={open} onClose={onClose} onExited={() => setStep('entrance')} maxWidth="sm" fullWidth={true}
-      onMouseMove = {(ev) => {
+      onPointerMove = {(ev) => {
         map.setMouse([ev.clientX, ev.clientY])
       }}
     >
