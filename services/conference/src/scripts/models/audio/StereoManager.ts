@@ -70,7 +70,8 @@ export class StereoManager {
 
   addSpeaker(id: string) {
     assert(this.nodes[id] === undefined)
-    this.nodes[id] = new NodeGroup(this.audioContext, this.audioDestination, this.playMode)
+    this.nodes[id] = new NodeGroup(this.audioContext, this.audioDestination,
+      this.playMode, !this.audioOutputMuted)
 
     return this.nodes[id]
   }

@@ -3,7 +3,6 @@ import {makeStyles} from '@material-ui/core/styles'
 import {assert} from '@models/utils'
 import _ from 'lodash'
 import React, {useEffect, useRef, useState} from 'react'
-import {throttle} from 'throttle-debounce'
 import {ContentProps} from './Content'
 
 declare const gapi:any     //  google api from index.html
@@ -43,6 +42,7 @@ const useStyles = makeStyles({
 interface Member{
   props: ContentProps
   params: Map<string, string>
+  scrolling: boolean
 }
 
 function isPreviewScroll(mimeType: string) {
@@ -74,10 +74,11 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
   const [mimeType, setMimeType] = useState('')
   const divScroll = useRef<HTMLDivElement>(null)
   const contents = useStore()
-  const member = useRef<Member>({props, params})
+  const member = useRef<Member>({props, params, scrolling:false})
   member.current.props = props
   member.current.params = params
   if (!mimeType) {
+    //  console.log('GAPI try to get mimeType')
     const API_KEY = 'AIzaSyCE4B2cKycH0fVmBznwfr1ynnNf2qNEU9M'
     if (gapi) {
       gapi.client.setApiKey(API_KEY)
@@ -95,6 +96,9 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
             const newContent = Object.assign({}, props.content)
             props.onUpdate(newContent)
           }
+        }).catch((reason:any) => {
+          console.debug('GAPI error', reason)
+          setMimeType('application/vnd.google-apps.failed')
         })
       })
     }
@@ -105,7 +109,8 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
   //  scroll to given 'top' param
   useEffect(() => {
     const top = Number(member.current.params.get('top'))
-    if (divScroll.current && !isNaN(top) && top !== divScroll.current.scrollTop) {
+    if (!member.current.scrolling && divScroll.current
+      && !isNaN(top) && top !== divScroll.current.scrollTop) {
       const onscroll = divScroll.current.onscroll
       divScroll.current.onscroll = () => {}
       divScroll.current.scrollTop = top
@@ -116,20 +121,29 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
 
   //  Set onscroll handler setting 'top' param
   useEffect(() => {
+    function doSendScroll() {
+      const top = Number(member.current.params.get('top'))
+      if (divScroll.current && divScroll.current.scrollTop !== top) {
+        //  console.log(`doSendScrool top=${divScroll.current.scrollTop}`)
+        member.current.params.set('top', divScroll.current.scrollTop.toString())
+        updateUrl(member.current)
+      }
+    }
     if (divScroll.current) {
-      const INTERVAL = contents.localParticipant.myContents.has(props.content.id) ? 300 : 1000
-      const sendScroll = throttle(INTERVAL, true, () => {
-        setTimeout(() => {
-          const top = Number(member.current.params.get('top'))
-          if (divScroll.current && divScroll.current.scrollTop !== top) {
-            //  console.log(`onscrool top=${divScroll.current.scrollTop}`)
-            member.current.params.set('top', divScroll.current.scrollTop.toString())
-            updateUrl(member.current)
-          }
-        },         INTERVAL)
-      })
+      const mine = contents.localParticipant.myContents.has(props.content.id)
+      const INTERVAL = 100
+      const sendScroll = mine ? _.throttle(() => setTimeout(doSendScroll, INTERVAL), INTERVAL)
+        : _.debounce(doSendScroll, INTERVAL)
+      const endScroll = _.debounce(() => {
+        member.current.scrolling = false
+        //  console.log(`scrolling: ${member.current.scrolling}`)
+      },                           INTERVAL)
+
       divScroll.current.onscroll = () => {
+        member.current.scrolling = true
+        //  console.log(`scrolling: ${member.current.scrolling}`)
         sendScroll()
+        endScroll()
       }
     }
   },        [divScroll.current])

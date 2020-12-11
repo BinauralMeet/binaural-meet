@@ -35,17 +35,26 @@ reaction(() => {
   priorityCalculator.setLimits(limits)
 },
 )
+// let interval:NodeJS.Timeout|undefined = undefined
 const memoedUpdater = (() => {
   let memo: any = undefined
 
   return () => {
     const res = priorityCalculator.update()
     if (!_.isEqual(res, memo)) {
+      // if (interval) clearInterval(interval)
       // Send res to Jitsi bridge
       connection.conference.setPerceptibles([res.video, res.audio])
       priorityLog('setPerceptibles:', res)
       console.log(`setPerceptibles:${JSON.stringify(res)}`)
       memo = _.cloneDeep(res)
+      /*
+	  interval = setInterval(()=>{
+        connection.conference.setPerceptibles([res.video, res.audio])
+        priorityLog('setPerceptibles:', res)
+        console.log(`setPerceptibles:${JSON.stringify(res)}`)
+        }, 10 * 1000)
+       */
     }
   }
 })()

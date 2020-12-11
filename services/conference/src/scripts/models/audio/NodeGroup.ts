@@ -37,11 +37,12 @@ export class NodeGroup {
   private readonly pannerNode: PannerNode
 
   private readonly context: AudioContext
-  private playMode: PlayMode
+  private playMode: PlayMode|undefined
   private audioDeviceId = ''
   private distance = 1
 
-  constructor(context: AudioContext, destination: MediaStreamAudioDestinationNode, playMode: PlayMode = 'Context') {
+  constructor(context: AudioContext, destination: MediaStreamAudioDestinationNode,
+              playMode: PlayMode|undefined, audibility: boolean) {
     this.context = context
 
     this.gainNode = this.createGainNode(context)
@@ -51,10 +52,11 @@ export class NodeGroup {
     this.pannerNode.connect(destination)
 
     this.playMode = playMode
+    this.updateAudibility(audibility)
   }
 
   interval:NodeJS.Timeout|undefined = undefined
-  setPlayMode(playMode: PlayMode) {
+  setPlayMode(playMode: PlayMode|undefined) {
     this.playMode = playMode
 
     switch (playMode) {
@@ -172,7 +174,7 @@ export class NodeGroup {
     })
   }
 
-  private audibility = true
+  private audibility = false
   updateAudibility(audibility: boolean) {
     if (audibility) {
       this.gainNode.connect(this.pannerNode)

@@ -217,7 +217,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         event?.preventDefault()
 
         if (mapStore.keyInputUsers.size) { return }
-        if (!ctrlKey) {
+        if (false) {  // false:alwas zoom (or ctrlKey: scroll and zoom)
           // scroll wheel - translate map
           const diff = mulV2(0.2, rotateVector2D(matrix.inverse(), movement))
           const newMatrix = matrix.translate(-diff[0], -diff[1])

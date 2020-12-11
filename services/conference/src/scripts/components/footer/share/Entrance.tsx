@@ -61,7 +61,7 @@ function importItems(ev: React.ChangeEvent<HTMLInputElement>, sharedContents: Sh
   const files = ev.currentTarget?.files
   if (files && files.length) {
     files[0].text().then((text) => {
-      console.log('import:', text)
+      //  console.log('import:', text)
       const items = JSON.parse(text)
       if (isArray(items)) {
         items.forEach((item) => {

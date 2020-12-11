@@ -171,6 +171,7 @@ function updateSigninStatus(isSignedIn:boolean) {
 }
 
 export function createContentOfPdf(file: File, map: MapData, offset?:[number, number]): Promise<SharedContent> {
+  console.error('createContentOfPdf called.')
   const promise = new Promise<SharedContent>((resolutionFunc, rejectionFunc) => {
     if (gapi) {
       const API_KEY = 'AIzaSyCE4B2cKycH0fVmBznwfr1ynnNf2qNEU9M'
