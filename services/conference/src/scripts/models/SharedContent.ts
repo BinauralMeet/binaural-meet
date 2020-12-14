@@ -20,6 +20,10 @@ export interface TextPhrase {
   name: string,
   pid: string,
 }
+export interface TextPhrases {
+  texts: TextPhrase[]
+  scroll: [number, number]
+}
 
 export interface ParticipantContents{
   participantId: string

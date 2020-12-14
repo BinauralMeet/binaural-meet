@@ -1,12 +1,12 @@
 import {useStore as useParticipants} from '@hooks/ParticipantsStore'
 import {Tooltip} from '@material-ui/core'
 import {makeStyles} from '@material-ui/core/styles'
-import {TextPhrase} from '@models/SharedContent'
+import {TextPhrases} from '@models/SharedContent'
 import {assert} from '@models/utils'
 import {getRandomColorRGB, rgba} from '@stores/utils'
 import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
-import React, {useRef, useState} from 'react'
+import React, {useRef, useEffect} from 'react'
 import {ContentProps} from './Content'
 
 const useStyles = makeStyles({
@@ -32,7 +32,7 @@ const useStyles = makeStyles({
 
 export const Text: React.FC<ContentProps> = (props:ContentProps) => {
   assert(props.content.type === 'text')
-  function onUpdateTexts(newTexts: TextPhrase[]) {
+  function onUpdateTexts(newTexts: TextPhrases) {
     const newUrl = JSON.stringify(newTexts)
     if (props.content.url !== newUrl && props.onUpdate) {
       props.content.url = newUrl
@@ -45,18 +45,25 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
   const participants = useParticipants()
   const ref = useRef<HTMLDivElement>(null)
 
-  const texts = JSON.parse(url) as TextPhrase[]
+  const texts = JSON.parse(url) as TextPhrases
+  useEffect(()=>{
+    if (!props.editing){
+      ref.current?.scroll(texts.scroll[0], texts.scroll[1])
+    }
+  }, [props.content.url])
+
+
   if (props.editing) {
-    const last = texts.pop()
+    const last = texts.texts.pop()
     if (last) {
-      texts.push(last)
+      texts.texts.push(last)
       if (last?.pid !== participants.localId) {
-        texts.push({text:'', pid:participants.localId, name:participants.local.get().information.name})
+        texts.texts.push({text:'', pid:participants.localId, name:participants.local.get().information.name})
       }
     }
   }
 
-  const textElems = texts.map((text, idx) => {
+  const textElems = texts.texts.map((text, idx) => {
     const rgb = getRandomColorRGB(text.name)
     const textColor = rgb[0] / 17 + rgb[1] / 17 + rgb[2] / 17 * 0.2 > 20 ? [0, 0, 0] : [255, 255, 255]
     const textEditable = (props.editing && (text.pid === participants.localId || !participants.remote.has(text.pid)))
@@ -82,14 +89,23 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
       </div>
     </Tooltip>
   })
+  const INTERVAL = 200
+  const handleScroll = _.debounce((ev:React.UIEvent<HTMLDivElement, UIEvent>)=>{
+    const newTexts:TextPhrases = {
+      texts: texts.texts,
+      scroll:[ref.current ? ref.current.scrollLeft : 0, ref.current ? ref.current.scrollTop : 0]
+    }
+    onUpdateTexts(newTexts)
+  }, INTERVAL)
 
   return  <div ref={ref} className = {props.editing ? classes.textEdit : classes.text}
     onWheel = {ev => ev.ctrlKey || ev.stopPropagation() }
-    onDoubleClick = {() => { if (!props.editing) { props.setEditing(true) } } }
+    onScroll = {(ev)=>{ if (!props.editing) {  handleScroll(ev) } }}
+    onDoubleClick = {() => { if (!props.editing) { props.setEditing(true) } }}
     onPointerLeave = {() => {
       props.setEditing(false)
-      const newTexts = texts.filter(text => text.text.length)
-      onUpdateTexts(newTexts)
+      texts.texts = texts.texts.filter(text => text.text.length)
+      onUpdateTexts(texts)
     }}>
     {textElems}
   </div>
