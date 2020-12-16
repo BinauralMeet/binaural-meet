@@ -32,7 +32,7 @@ export const ShareButton: React.FC = () => {
     <div className={classes.root}>
       <FabMain color={sharing ? 'secondary' : 'primary'}
         aria-label="share" onClick={() => setOpenDialog(true)}>
-        <ShareIcon />
+        <ShareIcon fontSize="large" />
       </FabMain>
       <ShareDialog open={openDialog} onClose={() => setOpenDialog(false)} />
     </div>

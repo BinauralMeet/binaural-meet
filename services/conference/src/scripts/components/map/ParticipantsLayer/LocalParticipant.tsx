@@ -1,16 +1,18 @@
 import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
-import {PARTICIPANT_SIZE} from '@models/Participant'
-import {addV2, assert, mulV2, normV, rotateVector2DByDegree, subV2, transformPoint2D, transfromAt} from '@models/utils'
-import mapData from '@stores/MapObject/MapData'
-import {reaction} from 'mobx'
+import {addV2, assert, mulV2, rotateVector2DByDegree, subV2, transformPoint2D, transfromAt} from '@models/utils'
 import React, {useEffect, useRef} from 'react'
 import {DragHandler, DragState} from '../../utils/DragHandler'
 import {KeyHandlerPlain} from '../../utils/KeyHandler'
 import {MAP_SIZE} from '../Base/Base'
 import {useValue as useTransform} from '../utils/useTransform'
 import {Participant, ParticipantProps} from './Participant'
+import {MoreButton, MoreButtonMember, moreButtonControl} from '@components/utils/MoreButton'
+import {makeStyles} from '@material-ui/core/styles'
+import { useObserver } from 'mobx-react-lite'
+import {ConfigForm} from './LocalConfig/ConfigForm'
+import Popover from '@material-ui/core/Popover';
 
 const AVATAR_SPEED_LIMIT = 50
 const MAP_SPEED_LIMIT = 200
@@ -19,8 +21,26 @@ const WHOLE_DEGREE = 360
 const HALF = 0.5
 
 
+
+
 type LocalParticipantProps = ParticipantProps
-interface LocalParticipantMember{
+
+interface StyleProps {
+  position: [number, number],
+  size: number,
+}
+
+const useStyles = makeStyles({
+  more: (props: StyleProps) => ({
+    position: 'absolute',
+    width: props.size * 0.5 ,
+    height: props.size * 0.5,
+    left: props.position[0] + props.size * 0.4,
+    top: props.position[1] - props.size * 0.8,
+  }),
+})
+
+interface LocalParticipantMember extends MoreButtonMember{
   smoothedDelta: [number, number]
   scrollAgain: boolean
 }
@@ -31,6 +51,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   const map = useMapStore()
   const transform = useTransform()
   const member = useRef<LocalParticipantMember>(new Object() as LocalParticipantMember).current
+
 
   const moveParticipant = (state: DragState<HTMLDivElement>) => {
     //  move local participant
@@ -157,6 +178,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     return rv
   }
   const onDrag = (state:DragState<HTMLDivElement>) => {
+    //  console.log('participant onDrag')
     moveParticipant(state)
     scrollMap()
   }
@@ -176,7 +198,8 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
 
   //  pointer drag
   const TIMER_INTERVAL = 33
-  const drag = new DragHandler<HTMLDivElement>(onDrag, 'draggableHandle', onTimer, TIMER_INTERVAL)
+  const drag = new DragHandler<HTMLDivElement>(onDrag, 'draggableHandle',
+    onTimer, TIMER_INTERVAL, ()=>{setShowConfig(true)})
   useEffect(() => {
     drag.target.current?.focus({preventScroll:true})
   })
@@ -199,14 +222,44 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   },
             [])
 */
+  const styleProps = useObserver(()=>({
+    position: participant.pose.position,
+    size: props.size,
+  }))
+  const [color, textColor, revColor] = participant ? participant.getColor() : ['white', 'black']
+  const classes = useStyles(styleProps)
+  const [showMore, setShowMore] = React.useState(false)
+  const [showConfig, setShowConfig] = React.useState(false)
+  const moreControl = moreButtonControl(setShowMore, member)
+  function onCloseConfig(){
+    setShowConfig(false)
+  }
+  const ref = useRef<HTMLButtonElement>(null)
 
   return (
-    <div ref={drag.target} {...drag.bind()}>
-    <Participant {...props} />
+    <div ref={drag.target} {...drag.bind()} {...moreControl}
+    >
+    <Participant {...props}
+      onContextMenu={(ev)=>{
+        ev.preventDefault()
+        setShowConfig(true)
+      }
+    }
+/>
+    <MoreButton show={showMore} className={classes.more} htmlColor={color} {...moreControl}
+      buttonRef = {ref}
+      onClickMore={ (ev)=>{
+        setShowConfig(true)
+      } } />,
+    <Popover open={showConfig} onClose={onCloseConfig}
+      anchorEl={ref.current} anchorOrigin={{vertical:'top', horizontal:'left'}}
+      anchorReference = 'anchorEl'
+    >
+      <ConfigForm close={onCloseConfig}/>
+    </Popover>
     </div>
   )
 }
-
 
 export const MemoedLocalParticipant = memoComponent(LocalParticipant, ['participantId', 'size'])
 MemoedLocalParticipant.displayName = 'MemorizedLocalParticipant'

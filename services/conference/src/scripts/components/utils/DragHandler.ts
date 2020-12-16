@@ -1,4 +1,5 @@
 import React, {useRef} from 'react'
+import {subV2, normV} from '@models/utils'
 
 function checkClass<ET extends Element>(el: Element, stop:ET, clsToFind: string):Element | null {
   let cur = el
@@ -21,6 +22,8 @@ function checkClass<ET extends Element>(el: Element, stop:ET, clsToFind: string)
 export interface DragState<ET extends Element>{
   buttons: number
   xy: [number, number]
+  start: [number, number]
+  startTime: number
   dragging: boolean
   event:React.PointerEvent<ET>|undefined
 }
@@ -33,19 +36,22 @@ interface DragMemo<ET extends Element>{
 export class DragHandler<ET extends Element>{  //  pointer drag
   onDrag: (state:DragState<ET>) => void
   onTimer?: (state:DragState<ET>) => boolean
+  onContextMenu?: (ev: React.TouchEvent<ET>) => void
   interval?: number
   handle?: string  //  class name of dragging handle
   target: React.RefObject<ET>
   memo: DragMemo<ET>
 
   constructor(onDrag:(state:DragState<ET>) => void, handle?: string,
-              onTimer?:(state:DragState<ET>) => boolean, interval?: number) {
+              onTimer?:(state:DragState<ET>) => boolean, interval?: number,
+              onContextMenu?:(ev: React.TouchEvent<ET>)=>void) {
     this.interval = interval
     this.onDrag = onDrag
     this.onTimer = onTimer
     this.handle = handle
     this.target = useRef<ET>(null)
-    this.memo = useRef<DragMemo<ET>>(new Object() as DragMemo<ET>).current
+    this.onContextMenu = onContextMenu
+    this.memo = useRef<DragMemo<ET>>({state:{}} as DragMemo<ET>).current
   }
   timerFunc = () => {
     if (!this.memo.state.dragging && !this.memo.timerAgain) {
@@ -64,7 +70,8 @@ export class DragHandler<ET extends Element>{  //  pointer drag
       onTouchMove: (e: React.TouchEvent<ET>) => { e.stopPropagation() },
       onPointerDown: (e: React.PointerEvent<ET>) => {
         e.stopPropagation()
-        this.memo.state = {dragging:false, buttons:e.buttons, xy:[e.clientX, e.clientY], event:e}
+        this.memo.state = {dragging:false, buttons:e.buttons, xy:[e.clientX, e.clientY],
+          start:[e.clientX, e.clientY], startTime:Date.now(), event:e}
         if ((e.buttons & 1) && this.target.current &&
           (!this.handle || checkClass(e.target as Element, this.target.current, this.handle))) {
           (e.target as Element).setPointerCapture(e.pointerId)
@@ -78,16 +85,24 @@ export class DragHandler<ET extends Element>{  //  pointer drag
       },
       onPointerOut: (e: React.PointerEvent<ET>) => {
         e.stopPropagation()
-        this.memo.state = {dragging:false, buttons:e.buttons, xy:[e.clientX, e.clientY], event:e}
+        Object.assign(this.memo.state, {dragging:false, buttons:e.buttons, xy:[e.clientX, e.clientY], event:e})
         //  console.log(`onPointerOut: ${this.memo.state.dragging}`)
       },
       onPointerUp: (e: React.PointerEvent<ET>) => {
         bindObject.onPointerOut(e)
       },
+      onTouchEnd:(e: React.TouchEvent<ET>) => {
+        e.stopPropagation()
+        const delta = normV(subV2(this.memo.state.xy, this.memo.state.start))
+        const deltaT = Date.now() - this.memo.state.startTime
+        if (delta < 5 && deltaT > 0.5 && this.onContextMenu){
+          this.onContextMenu(e)
+        }
+      },
       onPointerMove: (e: React.PointerEvent<ET>) => {
         e.stopPropagation()
-        this.memo.state = {dragging:this.memo.state?.dragging ? true :false,
-          buttons:e.buttons, xy:[e.clientX, e.clientY], event:e}
+        Object.assign(this.memo.state, {dragging:this.memo.state?.dragging ? true :false,
+          buttons:e.buttons, xy:[e.clientX, e.clientY], event:e})
         //  console.log(`onPointerMove xy:${e.clientX},${e.clientY} buttons:${e.buttons} drag:${this.dragging ? 1 : 0}`)
 
         if (this.memo.state.dragging) {

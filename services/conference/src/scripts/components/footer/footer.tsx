@@ -5,7 +5,6 @@ import {Icon} from '@iconify/react'
 import Menu from '@material-ui/core/Menu'
 import MenuItem from '@material-ui/core/MenuItem'
 import {makeStyles} from '@material-ui/core/styles'
-import MoreIcon from '@material-ui/icons/ExpandMore'
 import MicIcon from '@material-ui/icons/Mic'
 import MicOffIcon from '@material-ui/icons/MicOff'
 import VideoIcon from '@material-ui/icons/Videocam'
@@ -13,29 +12,36 @@ import VideoOffIcon from '@material-ui/icons/VideocamOff'
 import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
 import SpeakerOnIcon from '@material-ui/icons/VolumeUp'
 import {useObserver} from 'mobx-react-lite'
-import React from 'react'
+import React, {useRef} from 'react'
 import {BroadcastControl} from './BroadcastControl'
-import {FabMain, FabSub} from './FabNoFocus'
+import {FabMain} from './FabNoFocus'
 import {ShareButton} from './share/ShareButton'
 import {StereoAudioSwitch} from './StereoAudioSwitch'
+import {Collapse} from '@material-ui/core';
 
 const useStyles = makeStyles({
-  box:(pointed: boolean) => ({
+  box:{
     position: 'absolute',
     bottom: 0,
-    opacity: pointed ? 0.15 : 1,
-    '&:hover': {
-      opacity: 1.0,
-    },
-    pointerEvents: 'none',
-  }),
+    //  backgroundColor: 'rgba(0,0,0,0.3)',
+    height: 60,
+    width: '100%',
+  },
+  container:{
+    position: 'absolute',
+    bottom: 0,
+    //  backgroundColor: 'rgba(255,0,0,0.3)',
+    padding: 8,
+  },
 })
 
 
-// onDrag: (state:DragState<ET>) => void
+class Member{
+  timeoutOut:NodeJS.Timeout|undefined = undefined
+}
 
 export const Footer: React.FC<BaseProps> = (props) => {
-  const [pointed, setPointed] = React.useState<boolean>(false)
+  const [pointed, setPointed] = React.useState<boolean>(true)
   const classes = useStyles(pointed)
   const participants = useParticipantsStore()
   const [micMenuEl, setMicMenuEl] = React.useState<Element|null>(null)
@@ -45,6 +51,8 @@ export const Footer: React.FC<BaseProps> = (props) => {
     muteS: participants.local.get().plugins.streamControl.muteSpeaker,  //  speaker
     muteV: participants.local.get().plugins.streamControl.muteVideo,  //  camera
   }))
+  const memberRef = useRef<Member>(new Member())
+  const member = memberRef.current
 
   function makeMenuItem(info: MediaDeviceInfo, close:(did:string) => void):JSX.Element {
     let selected = false
@@ -91,43 +99,57 @@ export const Footer: React.FC<BaseProps> = (props) => {
     if (did) { participants.local.get().devicePreference.videoInputDevice = did }
     setVideoMenuEl(null)
   }
-  function updateDevices(ev:React.MouseEvent) {
+  function updateDevices(ev:React.PointerEvent | React.MouseEvent) {
     navigator.mediaDevices.enumerateDevices()
     .then(setDeviceInfos)
     .catch(() => { console.log('Device enumeration error') })
   }
+  function showFooter(){
+    if (member.timeoutOut) {
+      clearTimeout(member.timeoutOut)
+      member.timeoutOut = undefined
+    }
+    setPointed(true)
+  }
+  function hideFooter(){
+    if (!member.timeoutOut) {
+      member.timeoutOut = setTimeout(()=>{
+        setPointed(false)
+        member.timeoutOut = undefined
+      }, 500)
+    }
+  }
+  function prevent(ev: React.MouseEvent){
+    ev.preventDefault()
+  }
 
-  return (
-    <div className={classes.box}
-      onPointerEnter = {() => { setPointed(true) }}
-    >
+  return <>
+  <div className={classes.box} onPointerOver = {showFooter} onPointerLeave = {hideFooter} onContextMenu={prevent}/>
+  <div className={classes.container} onPointerOver = {showFooter} onPointerLeave = {hideFooter} onContextMenu={prevent}>
+    <Collapse in={pointed}>
       <StereoAudioSwitch />
-
-      <FabMain color={mute.muteS ? 'primary' : 'secondary' }
-        aria-label="speaker" onClick = {
-          () => {
-            participants.local.get().plugins.streamControl.muteSpeaker = !mute.muteS
-            if (participants.local.get().plugins.streamControl.muteSpeaker) {
-              participants.local.get().plugins.streamControl.muteAudio = true
-            }
-            participants.local.get().saveMuteStatusToStorage(false)
-            console.debug('muteSpeaker:', participants.local.get().plugins.streamControl.muteSpeaker)
+      <FabMain more color={mute.muteS ? 'primary' : 'secondary' }
+        aria-label="speaker" onClick = { () => {
+          participants.local.get().plugins.streamControl.muteSpeaker = !mute.muteS
+          if (participants.local.get().plugins.streamControl.muteSpeaker) {
+            participants.local.get().plugins.streamControl.muteAudio = true
           }
-        }>
-        {mute.muteS ? <SpeakerOffIcon /> : <SpeakerOnIcon /> }
+          participants.local.get().saveMuteStatusToStorage(false)
+          console.debug('muteSpeaker:', participants.local.get().plugins.streamControl.muteSpeaker)
+        }}
+        onClickMore = { (ev) => {
+          updateDevices(ev)
+          setSpeakerMenuEl(ev.currentTarget)
+        }}
+        >
+        {mute.muteS ? <SpeakerOffIcon fontSize="large" /> : <SpeakerOnIcon fontSize="large" /> }
       </FabMain>
-      <FabSub onClick = { (ev) => {
-        updateDevices(ev)
-        setSpeakerMenuEl(ev.currentTarget)
-      }}>
-        <MoreIcon />
-      </FabSub>
       <Menu anchorEl={speakerMenuEl} keepMounted={true}
         open={Boolean(speakerMenuEl)} onClose={() => { closeSpeakerMenu('') }}>
         {speakerMenuItems}
       </Menu>
 
-      <FabMain color={mute.muteA ? 'primary' : 'secondary' } aria-label="mic"
+      <FabMain more color={mute.muteA ? 'primary' : 'secondary' } aria-label="mic"
         onClick = { () => {
           participants.local.get().plugins.streamControl.muteAudio = !mute.muteA
           if (!participants.local.get().plugins.streamControl.muteAudio) {
@@ -135,36 +157,33 @@ export const Footer: React.FC<BaseProps> = (props) => {
           }
           participants.local.get().saveMuteStatusToStorage(false)
           console.debug('muteAudio:', participants.local.get().plugins.streamControl.muteAudio)
-        }}>
-        {mute.muteA ? <MicOffIcon /> : participants.local.get().physics.onStage ?
-          <Icon icon={megaphoneIcon} height={'1.8em'} color="gold" /> : <MicIcon /> }
+        }}
+        onClickMore = { (ev) => {
+          updateDevices(ev)
+          setMicMenuEl(ev.currentTarget)
+        } }
+        >
+        {mute.muteA ? <MicOffIcon fontSize="large" /> : participants.local.get().physics.onStage ?
+          <Icon icon={megaphoneIcon} height={'2.4em'} color="gold" /> : <MicIcon fontSize="large" /> }
       </FabMain>
-      <FabSub onClick = { (ev) => {
-        updateDevices(ev)
-        setMicMenuEl(ev.currentTarget)
-      }}>
-        <MoreIcon />
-      </FabSub>
       <Menu anchorEl={micMenuEl} keepMounted={true}
         open={Boolean(micMenuEl)} onClose={() => { closeMicMenu('') }}>
         {micMenuItems}
       </Menu>
 
-      <FabMain color={mute.muteV ? 'primary' : 'secondary'}
-          aria-label="camera" onClick = { () => {
-            participants.local.get().plugins.streamControl.muteVideo = !mute.muteV
-            participants.local.get().saveMuteStatusToStorage(false)
-            console.debug('muteVideo:', participants.local.get().plugins.streamControl.muteVideo)
-          }
-      }>
-        {mute.muteV ? <VideoOffIcon /> : <VideoIcon /> }
+      <FabMain more color={mute.muteV ? 'primary' : 'secondary'} aria-label="camera"
+        onClick = { () => {
+          participants.local.get().plugins.streamControl.muteVideo = !mute.muteV
+          participants.local.get().saveMuteStatusToStorage(false)
+          console.debug('muteVideo:', participants.local.get().plugins.streamControl.muteVideo)
+        }}
+        onClickMore = { (ev) => {
+          updateDevices(ev)
+          setVideoMenuEl(ev.currentTarget)
+        } }
+      >
+        {mute.muteV ? <VideoOffIcon fontSize="large" /> : <VideoIcon fontSize="large" /> }
       </FabMain>
-      <FabSub aria-label="cameraSelect" onClick = { (ev) => {
-        updateDevices(ev)
-        setVideoMenuEl(ev.currentTarget)
-      }}>
-        <MoreIcon />
-      </FabSub>
       <Menu anchorEl={videoMenuEl} keepMounted={true}
         open={Boolean(videoMenuEl)} onClose={() => { closeVideoMenu('') }}>
         {videoMenuItems}
@@ -172,7 +191,8 @@ export const Footer: React.FC<BaseProps> = (props) => {
 
       <ShareButton />
 
-   </div >
-  )
+    </Collapse>
+  </div >
+  </>
 }
 Footer.displayName = 'Footer'

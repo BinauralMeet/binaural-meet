@@ -1,5 +1,4 @@
 import {Avatar, AvatarProps} from '@components/avatar'
-import {LOCAL_PARTICIPANT_CONFIG} from '@components/configuration/plugin/plugins/LocalParticipantConfig'
 import {useStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
 import megaphoneIcon from '@iconify/icons-mdi/megaphone'
@@ -11,8 +10,7 @@ import MicOffIcon from '@material-ui/icons/MicOff'
 import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
 import {addV2, mulV2, normV, rotateVector2DByDegree, subV2} from '@models/utils'
 import {useObserver} from 'mobx-react-lite'
-import React, {forwardRef} from 'react'
-import {MapObjectContainer} from '../utils/MapObjectContainer'
+import React, {forwardRef, useRef, useState} from 'react'
 import {useValue as useTransform} from '../utils/useTransform'
 declare const config:any             //  from ../../config.js included from index.html
 
@@ -26,10 +24,10 @@ const SVG_RATIO = 18
 const HALF = 0.5
 
 const useStyles = makeStyles({
-  avatar: (props: StyleProps) => ({
+  root: (props: StyleProps) => ({
     position: 'absolute',
-    left: `-${props.size * HALF}px`,
-    top: `-${props.size * HALF}px`,
+    left: props.position[0],
+    top: props.position[1],
   }),
   pointerRotate: (props: StyleProps) => ({
     transform: `rotate(${props.orientation}deg)`,
@@ -41,17 +39,31 @@ const useStyles = makeStyles({
     top: `-${SVG_RATIO * props.size * HALF}px`,
     pointerEvents: 'none',
   }),
+  avatar: (props: StyleProps) => ({
+    position: 'absolute',
+    left: `-${props.size * HALF}px`,
+    top: `-${props.size * HALF}px`,
+  }),
   icon: (props: StyleProps) => ({
     position: 'absolute',
     width: props.size * 0.4 ,
     height: props.size * 0.4,
-    left: props.size * 0.1,
-    top: props.size * 0.1,
+    left: props.size * 0.6,
+    top: props.size * 0.6,
     pointerEvents: 'none',
+  }),
+  more: (props: StyleProps) => ({
+    position: 'absolute',
+    width: props.size * 0.4 ,
+    height: props.size * 0.4,
+    left: props.size * 0.9,
+    top: -props.size * 0.3,
   }),
 })
 
-export type ParticipantProps = Required<AvatarProps>
+export interface ParticipantProps extends Required<AvatarProps>{
+  onContextMenu?:(ev:React.MouseEvent<HTMLDivElement, MouseEvent>)=>void
+}
 
 const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , ParticipantProps> = (props, ref) => {
   const participants = useStore()
@@ -95,18 +107,8 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
   })
   const eyeballs = eyeballsGlobal.map(g => addV2([0, -0.04 * outerRadius],
                                                  rotateVector2DByDegree(-participantProps.orientation, g)))
-
   return (
-    <MapObjectContainer pose={participantProps} ref={ref} disableRotation={true} color={color}
-      //  configurationPluginName={isLocal ? LOCAL_PARTICIPANT_CONFIG : REMOTE_PARTICIPANT_CONFIG}
-      //  currently we have no configulatoin for remote paritcipants
-      configurationPluginName={isLocal ? LOCAL_PARTICIPANT_CONFIG : undefined}
-      buttonSpacing={{
-        top: - props.size * HALF - 20,
-        right: - props.size * HALF - 20,
-      }}
-      counterRotateButtons={true}
-    >
+    <div className={classes.root} onContextMenu={props.onContextMenu}>
       <div className={classes.pointerRotate}>
         <svg className={classes.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO} xmlns="http://www.w3.org/2000/svg">
           <defs>
@@ -153,19 +155,21 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
           }
         </svg>
       </div>
-      <Tooltip title={<span>{name}<br />{props.participantId}</span>}>
-        <div className={[classes.avatar, transform.counterRotationClass, 'draggableHandle'].join(' ')}>
+      <div className={[classes.avatar, transform.counterRotationClass, 'draggableHandle'].join(' ')} >
+        <Tooltip title={<span>{name}<br />{props.participantId}</span>}>
+          <div>
             <Avatar {...props} />
-        </div>
-    </Tooltip>
-    {headphone ? <HeadsetIcon className={classes.icon} htmlColor="rgba(0, 0, 0, 0.3)" /> : undefined}
-    {speakerMuted ? <SpeakerOffIcon className={classes.icon} color="secondary" /> :
-      (micMuted ? <MicOffIcon className={classes.icon} color="secondary" /> : undefined)}
-    {!micMuted && onStage ? <Icon className={classes.icon} icon={megaphoneIcon} color="gold" /> : undefined }
-
-    </MapObjectContainer >
+            {headphone ? <HeadsetIcon className={classes.icon} htmlColor="rgba(0, 0, 0, 0.3)" /> : undefined}
+            {speakerMuted ? <SpeakerOffIcon className={classes.icon} color="secondary" /> :
+              (micMuted ? <MicOffIcon className={classes.icon} color="secondary" /> : undefined)}
+            {!micMuted && onStage ? <Icon className={classes.icon} icon={megaphoneIcon} color="gold" /> : undefined }
+          </div>
+        </Tooltip>
+      </div>
+    </div>
   )
 }
+RawParticipant.displayName = 'RawParticipant'
 
 export const Participant = forwardRef(RawParticipant)
 Participant.displayName = 'Participant'

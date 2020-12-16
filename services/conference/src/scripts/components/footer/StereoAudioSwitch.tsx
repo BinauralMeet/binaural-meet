@@ -20,7 +20,9 @@ export const StereoAudioSwitch: React.FC = () => {
       </React.Fragment>
     }>
     <span>
-    <FabMain onClick={switchStereo}>{stereo ? <HeadsetIcon /> : <SpeakerIcon />}</FabMain>
+      <FabMain onClick={switchStereo}>
+        {stereo ? <HeadsetIcon fontSize="large" /> : <SpeakerIcon fontSize="large" />}
+      </FabMain>
     </span>
   </Tooltip>
 }

@@ -214,7 +214,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       },
       onPinchEnd: () => mapStore.setCommittedMatrix(matrix),
       onWheel: ({movement, ctrlKey, event}) => {
-        event?.preventDefault()
+        //  event?.preventDefault()
 
         if (mapStore.keyInputUsers.size) { return }
         if (false) {  // false:alwas zoom (or ctrlKey: scroll and zoom)
