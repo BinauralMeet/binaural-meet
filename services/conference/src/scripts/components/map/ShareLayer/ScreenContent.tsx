@@ -44,7 +44,11 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
   function setTrack() {
     if (ref.current) {
       const ms = new MediaStream()
-      member.current.locals.forEach(track => ms.addTrack(track.getTrack()))
+      member.current.locals.forEach((track) => {
+        if (track.getType() !== 'audio'){ //  Never play local audio. It makes echo.
+          ms.addTrack(track.getTrack())
+        }
+      })
       member.current.remotes.forEach(track => ms.addTrack(track.getTrack()))
 
       const old = ref.current.srcObject instanceof MediaStream && ref.current.srcObject.getTracks()

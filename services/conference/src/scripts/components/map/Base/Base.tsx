@@ -126,6 +126,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
     {
       onDragStart: ({buttons}) => {
         if (mapStore.keyInputUsers.size) { return }
+        document.body.focus()
         mem.current.dragging = true
         mem.current.mouseDown = true
         //  console.log('Base StartDrag:')

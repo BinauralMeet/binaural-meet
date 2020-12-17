@@ -12,27 +12,39 @@ import VideoOffIcon from '@material-ui/icons/VideocamOff'
 import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
 import SpeakerOnIcon from '@material-ui/icons/VolumeUp'
 import {useObserver} from 'mobx-react-lite'
-import React, {useRef} from 'react'
+import React, {useRef, useEffect} from 'react'
 import {BroadcastControl} from './BroadcastControl'
 import {FabMain} from './FabNoFocus'
 import {ShareButton} from './share/ShareButton'
 import {StereoAudioSwitch} from './StereoAudioSwitch'
 import {Collapse} from '@material-ui/core';
+import {AdminConfigForm} from './adminConfig/AdminConfigForm'
+import Popover from '@material-ui/core/Popover';
 
 const useStyles = makeStyles({
   box:{
     position: 'absolute',
     bottom: 0,
     //  backgroundColor: 'rgba(0,0,0,0.3)',
-    height: 60,
+    height: 100,
     width: '100%',
   },
   container:{
     position: 'absolute',
+    width: '100%',
     bottom: 0,
     //  backgroundColor: 'rgba(255,0,0,0.3)',
     padding: 8,
+    outline: 'none',
   },
+  left:{
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    width:30,
+    height:10,
+    backgroundColor:'transparent'
+  }
 })
 
 
@@ -41,8 +53,12 @@ class Member{
 }
 
 export const Footer: React.FC<BaseProps> = (props) => {
-  const [pointed, setPointed] = React.useState<boolean>(true)
-  const classes = useStyles(pointed)
+  const [show, setShow] = React.useState<boolean>(true)
+  const [touch, setTouch] = React.useState<boolean>(false)
+
+  const [showAdmin, setShowAdmin] = React.useState<boolean>(false)
+
+  const classes = useStyles()
   const participants = useParticipantsStore()
   const [micMenuEl, setMicMenuEl] = React.useState<Element|null>(null)
   const [deviceInfos, setDeviceInfos] = React.useState<MediaDeviceInfo[]>([])
@@ -104,17 +120,23 @@ export const Footer: React.FC<BaseProps> = (props) => {
     .then(setDeviceInfos)
     .catch(() => { console.log('Device enumeration error') })
   }
+  const containerRef = useRef<HTMLDivElement>(null)
+  const adminButton = useRef<HTMLDivElement>(null)
   function showFooter(){
     if (member.timeoutOut) {
       clearTimeout(member.timeoutOut)
       member.timeoutOut = undefined
     }
-    setPointed(true)
+    containerRef.current?.focus()
+    setShow(true)
   }
+  useEffect(()=>{
+    containerRef.current?.focus()
+  }, [containerRef.current])
   function hideFooter(){
     if (!member.timeoutOut) {
       member.timeoutOut = setTimeout(()=>{
-        setPointed(false)
+        setShow(false)
         member.timeoutOut = undefined
       }, 500)
     }
@@ -124,9 +146,12 @@ export const Footer: React.FC<BaseProps> = (props) => {
   }
 
   return <>
-  <div className={classes.box} onPointerOver = {showFooter} onPointerLeave = {hideFooter} onContextMenu={prevent}/>
-  <div className={classes.container} onPointerOver = {showFooter} onPointerLeave = {hideFooter} onContextMenu={prevent}>
-    <Collapse in={pointed}>
+  <div className={classes.box} onMouseOver = {showFooter} onContextMenu={prevent}
+    onTouchStart = {(ev)=>{showFooter(); setTouch(true) }}
+  />
+  <div tabIndex={0} ref={containerRef} className={classes.container} onPointerOver = {showFooter}
+    onBlur = {(ev)=>{ if (touch) {setTouch(false); containerRef.current?.focus() } else { hideFooter()} } } onContextMenu={prevent}>
+    <Collapse in={show}>
       <StereoAudioSwitch />
       <FabMain more color={mute.muteS ? 'primary' : 'secondary' }
         aria-label="speaker" onClick = { () => {
@@ -190,6 +215,15 @@ export const Footer: React.FC<BaseProps> = (props) => {
       </Menu>
 
       <ShareButton />
+
+      <div className={classes.left} ref={adminButton}
+        onClick = { () => setShowAdmin(true) }>
+      </div>
+      <Popover open={showAdmin} onClose={()=>setShowAdmin(false)}
+          anchorEl={adminButton.current} anchorOrigin={{vertical:'top', horizontal:'left'}}
+          anchorReference = 'anchorEl' >
+          <AdminConfigForm close={()=>setShowAdmin(false)}/>
+        </Popover>
 
     </Collapse>
   </div >

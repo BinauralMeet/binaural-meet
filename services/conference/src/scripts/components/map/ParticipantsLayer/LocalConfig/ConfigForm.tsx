@@ -85,6 +85,5 @@ export const ConfigForm: React.FC<ConfigFormProps> = (props: ConfigFormProps) =>
   return <>
     <Container>{form}</Container>
     {/*<ViewpointControl key="viewpointcontrol" />*/}
-    <RemoteTrackLimitControl key="remotelimitcontrol" />
   </>
 }
