@@ -1,4 +1,4 @@
-import {MapData} from '@stores/MapObject/MapData'
+import {MapData} from '@stores/Map'
 import {createContext, useContext} from 'react'
 
 export const StoreContext = createContext<MapData>({} as MapData)

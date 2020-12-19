@@ -18,7 +18,7 @@ export const ParticipantsLayer: React.FC<{}> = (props) => {
   const mouseIds = useObserver(() => Array.from(store.remote.keys()).filter(id => (store.find(id)!.mouse.show)))
   const remoteMouseCursors = mouseIds.map(id => <MouseCursor key={`M_${id}`} participantId={id} />)
 
-  const showLocalMouse = useObserver(() => store.local.get().mouse.show)
+  const showLocalMouse = useObserver(() => store.local.mouse.show)
   const localMouseCursor = showLocalMouse ? <MouseCursor key={'M_local'} participantId={localId} /> : undefined
 
   return(

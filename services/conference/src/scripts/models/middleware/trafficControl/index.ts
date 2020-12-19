@@ -27,14 +27,10 @@ autorun(() => {
     }
   }
 })
-reaction(() => {
-  const local = participantsStore.local.get()
-
-  return [local.remoteVideoLimit, local.remoteAudioLimit]
-},       (limits) => {
-  priorityCalculator.setLimits(limits)
-},
-)
+autorun(() => {
+  const local = participantsStore.local
+  priorityCalculator.setLimits([local.remoteVideoLimit, local.remoteAudioLimit])
+})
 // let interval:NodeJS.Timeout|undefined = undefined
 const memoedUpdater = (() => {
   let memo: any = undefined

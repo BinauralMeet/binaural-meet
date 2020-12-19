@@ -1,5 +1,5 @@
 import {useStore as useMapStore} from '@hooks/MapStore'
-import {MapData} from '@stores/MapObject/MapData'
+import {MapData} from '@stores/Map'
 import IconButton from '@material-ui/core/IconButton'
 import Zoom from '@material-ui/core/Zoom'
 import MoreVertIcon from '@material-ui/icons/MoreVert'

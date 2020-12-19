@@ -1,6 +1,6 @@
 import {useStore as useMapStore} from '@hooks/MapStore'
 import {SharedContent, SharedContent as ISharedContent} from '@models/SharedContent'
-import {MapData} from '@stores/MapObject/MapData'
+import {MapData} from '@stores/Map'
 import {createContent, createContentOfIframe, createContentOfImage, createContentOfPdf, createContentOfText} from '@stores/sharedContents/SharedContentCreator'
 import {default as sharedContents} from '@stores/sharedContents/SharedContents'
 import _ from 'lodash'

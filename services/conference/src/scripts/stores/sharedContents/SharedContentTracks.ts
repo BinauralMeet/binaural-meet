@@ -47,32 +47,24 @@ export class SharedContentTracks {
   @observable remoteMains: Map<string, Set<JitsiRemoteTrack>> = new Map()
 
   @computed get mainStream(): MediaStream|undefined {
-    let tracks:Set<JitsiTrack> = new Set()
+    let tracks:JitsiTrack[] = []
     if (this.localMains.size) {
-      tracks = this.localMains
+      tracks = Array.from(this.localMains.values()).filter(track=>track.getType() !== 'audio')
     } else {
       const keys = Array.from(this.remoteMains.keys())
       if (keys.length) {
         keys.sort()
         const tracks_ = this.remoteMains.get(keys[keys.length - 1])
-        if (tracks_) { tracks =  tracks_ }
+        if (tracks_) { tracks =  Array.from(tracks_.values()) }
       }
     }
-    if (tracks.size) {
-      let stream:MediaStream|undefined = undefined
+    if (tracks.length){
+      const stream = new MediaStream()
       for (const track of tracks) {
-        if (!stream) {
-          stream = track.getOriginalStream()
-        } else if (track.getOriginalStream() !== stream) {
-          stream = new MediaStream
-          for (const t of tracks) { stream.addTrack(t.getTrack()) }
-          break
-        }
+        stream.addTrack(track.getTrack())
       }
-
       return stream
     }
-
     return undefined
   }
 

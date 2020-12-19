@@ -58,7 +58,7 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
     if (last) {
       texts.texts.push(last)
       if (last?.pid !== participants.localId) {
-        texts.texts.push({text:'', pid:participants.localId, name:participants.local.get().information.name})
+        texts.texts.push({text:'', pid:participants.localId, name:participants.local.information.name})
       }
     }
   }

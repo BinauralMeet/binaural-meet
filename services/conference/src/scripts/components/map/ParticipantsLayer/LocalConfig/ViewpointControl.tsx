@@ -7,9 +7,9 @@ import React from 'react'
 
 export const ViewpointControl: React.FC<{}> = () => {
   const local = useStore().local
-  const thirdPersonView = useObserver(() => local.get().thirdPersonView)
+  const thirdPersonView = useObserver(() => local.thirdPersonView)
   const viewpointSwitch = <Switch checked={!thirdPersonView} name="rotateMap"
-    onChange={event => local.get().setThirdPersonView(!event.target.checked)} />
+    onChange={event => local.setThirdPersonView(!event.target.checked)} />
 
   return <Container>
     <FormControlLabel

@@ -1,4 +1,3 @@
-import {BaseProps} from '@components/utils'
 import {useStore as useParticipantsStore} from '@hooks/ParticipantsStore'
 import megaphoneIcon from '@iconify/icons-mdi/megaphone'
 import {Icon} from '@iconify/react'
@@ -20,15 +19,13 @@ import {StereoAudioSwitch} from './StereoAudioSwitch'
 import {Collapse} from '@material-ui/core';
 import {AdminConfigForm} from './adminConfig/AdminConfigForm'
 import Popover from '@material-ui/core/Popover';
+import {useStore as useMap} from '@hooks/MapStore'
+
+function prevent(ev: React.MouseEvent){
+  ev.preventDefault()
+}
 
 const useStyles = makeStyles({
-  box:{
-    position: 'absolute',
-    bottom: 0,
-    //  backgroundColor: 'rgba(0,0,0,0.3)',
-    height: 100,
-    width: '100%',
-  },
   container:{
     position: 'absolute',
     width: '100%',
@@ -36,6 +33,7 @@ const useStyles = makeStyles({
     //  backgroundColor: 'rgba(255,0,0,0.3)',
     padding: 8,
     outline: 'none',
+    pointerEvents: 'none',
   },
   left:{
     position: 'absolute',
@@ -52,32 +50,63 @@ class Member{
   timeoutOut:NodeJS.Timeout|undefined = undefined
 }
 
-export const Footer: React.FC<BaseProps> = (props) => {
+export const Footer: React.FC = () => {
+  //  show and hide
   const [show, setShow] = React.useState<boolean>(true)
   const [touch, setTouch] = React.useState<boolean>(false)
-
   const [showAdmin, setShowAdmin] = React.useState<boolean>(false)
+  const memberRef = useRef<Member>(new Member())
+  const member = memberRef.current
+  const containerRef = useRef<HTMLDivElement>(null)
+  const map = useMap()
+  const mouseOnButtom = useObserver(()=> map.screenSize[1] - (map.mouse[1]-map.offset[1]) < 90)
+  useEffect(()=>{
+    containerRef.current?.focus()
+  }, [containerRef.current])
+  useEffect(()=>{
+    if (mouseOnButtom && !show){
+      showFooter()
+    }
+    if (!mouseOnButtom && show){
+      hideFooter()
+    }
+  })
+  function showFooter(){
+    setShow(true)
+    if (member.timeoutOut) {
+      clearTimeout(member.timeoutOut)
+      member.timeoutOut = undefined
+    }
+    containerRef.current?.focus()
+  }
+  function hideFooter(){
+    if (!member.timeoutOut) {
+      member.timeoutOut = setTimeout(()=>{
+        setShow(false)
+        member.timeoutOut = undefined
+      }, 500)
+    }
+  }
 
+  //  Fab state and menu
   const classes = useStyles()
   const participants = useParticipantsStore()
   const [micMenuEl, setMicMenuEl] = React.useState<Element|null>(null)
   const [deviceInfos, setDeviceInfos] = React.useState<MediaDeviceInfo[]>([])
   const mute = useObserver(() => ({
-    muteA: participants.local.get().plugins.streamControl.muteAudio,  //  mic
-    muteS: participants.local.get().plugins.streamControl.muteSpeaker,  //  speaker
-    muteV: participants.local.get().plugins.streamControl.muteVideo,  //  camera
+    muteA: participants.local.plugins.streamControl.muteAudio,  //  mic
+    muteS: participants.local.plugins.streamControl.muteSpeaker,  //  speaker
+    muteV: participants.local.plugins.streamControl.muteVideo,  //  camera
   }))
-  const memberRef = useRef<Member>(new Member())
-  const member = memberRef.current
 
   function makeMenuItem(info: MediaDeviceInfo, close:(did:string) => void):JSX.Element {
     let selected = false
     if (info.kind === 'audioinput') {
-      selected = info.deviceId === participants.local.get().devicePreference.audioInputDevice
+      selected = info.deviceId === participants.local.devicePreference.audioInputDevice
     }else if (info.kind === 'audiooutput') {
-      selected = info.deviceId === participants.local.get().devicePreference.audioOutputDevice
+      selected = info.deviceId === participants.local.devicePreference.audioOutputDevice
     }else if (info.kind === 'videoinput') {
-      selected = info.deviceId === participants.local.get().devicePreference.videoInputDevice
+      selected = info.deviceId === participants.local.devicePreference.videoInputDevice
     }
 
     return <MenuItem key={info.deviceId}
@@ -102,17 +131,17 @@ export const Footer: React.FC<BaseProps> = (props) => {
     }
   })
   function closeMicMenu(did:string) {
-    if (did) { participants.local.get().devicePreference.audioInputDevice = did }
+    if (did) { participants.local.devicePreference.audioInputDevice = did }
     setMicMenuEl(null)
   }
   const [speakerMenuEl, setSpeakerMenuEl] = React.useState<Element|null>(null)
   function closeSpeakerMenu(did:string) {
-    if (did) { participants.local.get().devicePreference.audioOutputDevice = did }
+    if (did) { participants.local.devicePreference.audioOutputDevice = did }
     setSpeakerMenuEl(null)
   }
   const [videoMenuEl, setVideoMenuEl] = React.useState<Element|null>(null)
   function closeVideoMenu(did:string) {
-    if (did) { participants.local.get().devicePreference.videoInputDevice = did }
+    if (did) { participants.local.devicePreference.videoInputDevice = did }
     setVideoMenuEl(null)
   }
   function updateDevices(ev:React.PointerEvent | React.MouseEvent) {
@@ -120,47 +149,21 @@ export const Footer: React.FC<BaseProps> = (props) => {
     .then(setDeviceInfos)
     .catch(() => { console.log('Device enumeration error') })
   }
-  const containerRef = useRef<HTMLDivElement>(null)
+
   const adminButton = useRef<HTMLDivElement>(null)
-  function showFooter(){
-    if (member.timeoutOut) {
-      clearTimeout(member.timeoutOut)
-      member.timeoutOut = undefined
-    }
-    containerRef.current?.focus()
-    setShow(true)
-  }
-  useEffect(()=>{
-    containerRef.current?.focus()
-  }, [containerRef.current])
-  function hideFooter(){
-    if (!member.timeoutOut) {
-      member.timeoutOut = setTimeout(()=>{
-        setShow(false)
-        member.timeoutOut = undefined
-      }, 500)
-    }
-  }
-  function prevent(ev: React.MouseEvent){
-    ev.preventDefault()
-  }
 
   return <>
-  <div className={classes.box} onMouseOver = {showFooter} onContextMenu={prevent}
-    onTouchStart = {(ev)=>{showFooter(); setTouch(true) }}
-  />
-  <div tabIndex={0} ref={containerRef} className={classes.container} onPointerOver = {showFooter}
-    onBlur = {(ev)=>{ if (touch) {setTouch(false); containerRef.current?.focus() } else { hideFooter()} } } onContextMenu={prevent}>
+  <div ref={containerRef} className={classes.container}>
     <Collapse in={show}>
       <StereoAudioSwitch />
       <FabMain more color={mute.muteS ? 'primary' : 'secondary' }
         aria-label="speaker" onClick = { () => {
-          participants.local.get().plugins.streamControl.muteSpeaker = !mute.muteS
-          if (participants.local.get().plugins.streamControl.muteSpeaker) {
-            participants.local.get().plugins.streamControl.muteAudio = true
+          participants.local.plugins.streamControl.muteSpeaker = !mute.muteS
+          if (participants.local.plugins.streamControl.muteSpeaker) {
+            participants.local.plugins.streamControl.muteAudio = true
           }
-          participants.local.get().saveMuteStatusToStorage(false)
-          console.debug('muteSpeaker:', participants.local.get().plugins.streamControl.muteSpeaker)
+          participants.local.saveMuteStatusToStorage(false)
+          console.debug('muteSpeaker:', participants.local.plugins.streamControl.muteSpeaker)
         }}
         onClickMore = { (ev) => {
           updateDevices(ev)
@@ -176,19 +179,19 @@ export const Footer: React.FC<BaseProps> = (props) => {
 
       <FabMain more color={mute.muteA ? 'primary' : 'secondary' } aria-label="mic"
         onClick = { () => {
-          participants.local.get().plugins.streamControl.muteAudio = !mute.muteA
-          if (!participants.local.get().plugins.streamControl.muteAudio) {
-            participants.local.get().plugins.streamControl.muteSpeaker = false
+          participants.local.plugins.streamControl.muteAudio = !mute.muteA
+          if (!participants.local.plugins.streamControl.muteAudio) {
+            participants.local.plugins.streamControl.muteSpeaker = false
           }
-          participants.local.get().saveMuteStatusToStorage(false)
-          console.debug('muteAudio:', participants.local.get().plugins.streamControl.muteAudio)
+          participants.local.saveMuteStatusToStorage(false)
+          console.debug('muteAudio:', participants.local.plugins.streamControl.muteAudio)
         }}
         onClickMore = { (ev) => {
           updateDevices(ev)
           setMicMenuEl(ev.currentTarget)
         } }
         >
-        {mute.muteA ? <MicOffIcon fontSize="large" /> : participants.local.get().physics.onStage ?
+        {mute.muteA ? <MicOffIcon fontSize="large" /> : participants.local.physics.onStage ?
           <Icon icon={megaphoneIcon} height={'2.4em'} color="gold" /> : <MicIcon fontSize="large" /> }
       </FabMain>
       <Menu anchorEl={micMenuEl} keepMounted={true}
@@ -198,9 +201,9 @@ export const Footer: React.FC<BaseProps> = (props) => {
 
       <FabMain more color={mute.muteV ? 'primary' : 'secondary'} aria-label="camera"
         onClick = { () => {
-          participants.local.get().plugins.streamControl.muteVideo = !mute.muteV
-          participants.local.get().saveMuteStatusToStorage(false)
-          console.debug('muteVideo:', participants.local.get().plugins.streamControl.muteVideo)
+          participants.local.plugins.streamControl.muteVideo = !mute.muteV
+          participants.local.saveMuteStatusToStorage(false)
+          console.debug('muteVideo:', participants.local.plugins.streamControl.muteVideo)
         }}
         onClickMore = { (ev) => {
           updateDevices(ev)

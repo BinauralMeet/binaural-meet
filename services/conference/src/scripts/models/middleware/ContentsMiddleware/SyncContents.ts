@@ -5,14 +5,14 @@ import {contentDebug, contentLog, default as sharedContents, ParticipantContents
 import _ from 'lodash'
 import {IReactionDisposer, reaction} from 'mobx'
 
-export const CONTENT_SYNC_DELAY = 300
+//  export const CONTENT_SYNC_DELAY = 300
 
 //  send contentes owned by local when updated.
 reaction(() => Array.from(sharedContents.localParticipant.myContents.values()),
          (contents) => {
            connection.conference.sendSharedContents(contents)
          },
-         {delay: CONTENT_SYNC_DELAY},
+//         {delay: CONTENT_SYNC_DELAY},
 )
 
 function removeDobuleRequest(requests:Set<string>|Map<string, ISharedContent>) {
@@ -42,7 +42,7 @@ reaction(() => Array.from(sharedContents.localParticipant.updateRequest.values()
            const reqs = Array.from(sharedContents.localParticipant.updateRequest.values())
            connection.conference.sendSharedContentsUpdateRequest(reqs)
          },
-         {delay: CONTENT_SYNC_DELAY},
+//         {delay: CONTENT_SYNC_DELAY},
 )
 //  send remove request from local to remotes.
 reaction(() => Array.from(sharedContents.localParticipant.removeRequest.values()),
@@ -52,7 +52,7 @@ reaction(() => Array.from(sharedContents.localParticipant.removeRequest.values()
            const reqs = Array.from(sharedContents.localParticipant.updateRequest.values())
            connection.conference.sendSharedContentsRemoveRequest(removes)
          },
-         {delay: CONTENT_SYNC_DELAY},
+//         {delay: CONTENT_SYNC_DELAY},
 )
 
 
@@ -92,7 +92,8 @@ sharedContents.on(SharedContentsEvents.REMOTE_JOIN, (participant: ParticipantCon
       }
     })
   },
-                         {delay: CONTENT_SYNC_DELAY})
+//                         {delay: CONTENT_SYNC_DELAY}
+  )
   disposers.set(participant.participantId, dispo)
 })
 

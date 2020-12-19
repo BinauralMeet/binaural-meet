@@ -46,7 +46,7 @@ interface LocalParticipantMember extends MoreButtonMember{
 }
 const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   const participants = useStore()
-  const participant = participants.local.get()
+  const participant = participants.local
   assert(props.participantId === participant.id)
   const map = useMapStore()
   const transform = useTransform()
@@ -61,7 +61,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
       delta = mulV2(AVATAR_SPEED_LIMIT / norm, delta)
     }
 
-    if (participants.local.get().thirdPersonView) {
+    if (participants.local.thirdPersonView) {
       const localDelta = transform.rotateG2L(delta)
       participant!.pose.position = addV2(participant!.pose.position, localDelta)
       const SMOOTHRATIO = 0.8
@@ -108,8 +108,8 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     if (newA > HALF_DEGREE) { newA -= WHOLE_DEGREE }
     if (newA < -HALF_DEGREE) { newA += WHOLE_DEGREE }
     participant.pose.orientation = newA
-    if (!participants.local.get().thirdPersonView) {
-      const center = transformPoint2D(map.matrix, participants.local.get().pose.position)
+    if (!participants.local.thirdPersonView) {
+      const center = transformPoint2D(map.matrix, participants.local.pose.position)
       const changeMatrix = (new DOMMatrix()).rotateSelf(0, 0, -deltaA)
       const newMatrix = transfromAt(center, changeMatrix, map.matrix)
       map.setMatrix(newMatrix)
@@ -135,7 +135,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     const left = map.left + map.screenSize[0] * RATIO
     const right = map.left +  map.screenSize[0] * (1 - RATIO)
     const bottom = map.screenSize[1] * (1 - RATIO)
-    const top = participants.local.get().thirdPersonView ? map.screenSize[1] * RATIO : bottom
+    const top = participants.local.thirdPersonView ? map.screenSize[1] * RATIO : bottom
     if (target[0] < left) { target[0] = left }
     if (target[0] > right) { target[0] = right }
     if (target[1] < top) { target[1] = top }
@@ -231,8 +231,13 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   const [showMore, setShowMore] = React.useState(false)
   const [showConfig, setShowConfig] = React.useState(false)
   const moreControl = moreButtonControl(setShowMore, member)
-  function onCloseConfig(){
+  function closeConfig(){
     setShowConfig(false)
+    map.keyInputUsers.delete('LocalParticipantConfig')
+  }
+  function openConfig(){
+    setShowConfig(true)
+    map.keyInputUsers.add('LocalParticipantConfig')
   }
   const ref = useRef<HTMLButtonElement>(null)
 
@@ -242,20 +247,18 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     <Participant {...props}
       onContextMenu={(ev)=>{
         ev.preventDefault()
-        setShowConfig(true)
+        openConfig()
       }
     }
 />
     <MoreButton show={showMore} className={classes.more} htmlColor={color} {...moreControl}
       buttonRef = {ref}
-      onClickMore={ (ev)=>{
-        setShowConfig(true)
-      } } />,
-    <Popover open={showConfig} onClose={onCloseConfig}
+      onClickMore = {openConfig} />,
+    <Popover open={showConfig} onClose={closeConfig}
       anchorEl={ref.current} anchorOrigin={{vertical:'top', horizontal:'left'}}
       anchorReference = 'anchorEl'
     >
-      <ConfigForm close={onCloseConfig}/>
+      <ConfigForm close={closeConfig}/>
     </Popover>
     </div>
   )

@@ -1,17 +1,36 @@
 import {LocalParticipant, RemoteParticipant} from '@models/Participant'
 import {convertToAudioCoordinate, getRelativePose} from '@models/utils'
 import {stereoParametersStore} from '@stores/AudioParameters'
-import {JitsiTrack} from 'lib-jitsi-meet'
+import {JitsiRemoteTrack, JitsiTrack} from 'lib-jitsi-meet'
 import {autorun, IObservableValue, IReactionDisposer} from 'mobx'
 import {NodeGroup} from './NodeGroup'
+import {SharedContent} from '@models/SharedContent'
+import {Pose2DMap} from '@models/MapObject'
+import contents from '@stores/sharedContents/SharedContents'
+import _ from 'lodash'
+
+function getRelativePoseFromObject(localPose: Pose2DMap, participant: RemoteParticipant|undefined, content: SharedContent|undefined){
+  const remotePose = _.cloneDeep(participant ? participant.pose : content ? content.pose : {position:[0,0], orientation:0}) as Pose2DMap
+  if (content){
+    //  remotePose.position = remotePose.position.map((pos, idx) => pos - 0.5 * content.size[idx]) as [number, number]
+    localPose.position.forEach((pos, idx)=>{
+      if (localPose.position[idx] > remotePose.position[idx]){
+        remotePose.position[idx] += Math.min(content.size[idx], localPose.position[idx] - remotePose.position[idx])
+      }
+    })
+  }
+  return getRelativePose(localPose, remotePose)
+}
 
 export class ConnectedGroup {
   private readonly disposers: IReactionDisposer[] = []
 
-  constructor(local: IObservableValue<LocalParticipant>, remote: RemoteParticipant, group: NodeGroup) {
+  constructor(local: IObservableValue<LocalParticipant>, remote: RemoteParticipant|undefined, contentTrack: JitsiRemoteTrack|undefined, group: NodeGroup) {
+    const cid = contentTrack?.getContentId()
+    const content = cid ? contents.find(cid) : undefined
     this.disposers.push(autorun(
       () => {
-        const relativePose = getRelativePose(local.get().pose, remote.pose)
+        const relativePose = getRelativePoseFromObject(local.get().pose, remote, content)
         const pose = convertToAudioCoordinate(relativePose)
         group.updatePose(pose)
       },
@@ -19,7 +38,7 @@ export class ConnectedGroup {
 
     this.disposers.push(autorun(
       () => {
-        const track: JitsiTrack | undefined = remote.tracks.audio
+        const track: JitsiTrack | undefined = remote ? remote.tracks.audio : contentTrack
         group.updateStream(track?.getOriginalStream())
       },
     ))
@@ -29,7 +48,7 @@ export class ConnectedGroup {
     ))
 
     this.disposers.push(autorun(
-      () => group.updateBroadcast(remote.physics.onStage),
+      () => group.updateBroadcast(remote?.physics.onStage ? true : false),
     ))
   }
 

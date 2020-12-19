@@ -6,10 +6,8 @@ import {SharedContents as SharedContentsStore} from '@stores/sharedContents/Shar
 import {addFakeParticipants} from '@test-utils/store'
 import React from 'react'
 import {addFakeSharedContents} from './ShareLayer'
-import {useBaseStyles} from './utils'
 
 const MapStory: React.FC<{}> = () => {
-  const classes = useBaseStyles()
 
   const store = new Participants()
   addFakeParticipants(store, {
@@ -21,7 +19,7 @@ const MapStory: React.FC<{}> = () => {
 
   return <ContentsProvider value={contentsStore}>
     <StoreProvider value={store}>
-      <Map className={classes.root} />
+      <Map />
     </StoreProvider>
   </ContentsProvider>
 }

@@ -12,14 +12,14 @@ function replaceTrack(newTrack:JitsiLocalTrack) {
   const did_ = newTrack.getTrack().getSettings().deviceId
   const did:string = did_ ? did_ : ''
   if (newTrack.getType() === 'audio') {
-    participants.local.get().devicePreference.audioInputDevice = did
+    participants.local.devicePreference.audioInputDevice = did
   }else if (newTrack.getType() === 'video') {
-    participants.local.get().devicePreference.videoInputDevice = did
+    participants.local.devicePreference.videoInputDevice = did
   }
 }
 
 reaction(
-  () => participants.local.get().devicePreference.audioInputDevice,
+  () => participants.local.devicePreference.audioInputDevice,
   (did) => {
     JitsiMeetJS.createLocalTracks({devices:['audio'], micDeviceId: did}).then(
       (tracks: JitsiLocalTrack[]) => { connection.conference.setLocalMicTrack(tracks[0]) },
@@ -30,7 +30,7 @@ reaction(
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
 reaction(
-  () => participants.local.get().devicePreference.videoInputDevice,
+  () => participants.local.devicePreference.videoInputDevice,
   (did) => {
     JitsiMeetJS.createLocalTracks({devices:['video'],
       constraints: config.rtc.videoConstraints, cameraDeviceId: did}).then(

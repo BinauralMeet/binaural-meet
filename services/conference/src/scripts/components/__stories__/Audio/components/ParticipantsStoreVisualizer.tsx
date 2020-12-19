@@ -26,7 +26,7 @@ export const ParticipantsVisualizer: React.FC<{}> = () => {
   })
 
   const local = useObserver(() => {
-    const store = participants.local.get()
+    const store = participants.local
 
     return <MemoedParticipant key={store.id} id={store.id} type={'local'} />
   })

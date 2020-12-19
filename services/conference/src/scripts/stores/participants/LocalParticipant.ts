@@ -1,6 +1,6 @@
 import {Pose2DMap} from '@models/MapObject'
 import {LocalParticipant as ILocalParticipant, Physics, TrackStates} from '@models/Participant'
-import mapData from '@stores/MapObject/MapData'
+import mapData from '@stores/Map'
 import {action, computed, observable} from 'mobx'
 import {Store} from '../utils'
 import {DevicePreference} from './localPlugins'

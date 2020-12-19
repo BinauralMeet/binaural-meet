@@ -31,7 +31,7 @@ const BaseStory: React.FC<{}> = () => {
 
   return (
     <StoreProvider value={participantsStore}>
-      <Base className={baseClasses.root}>
+      <Base>
         <div className={classes.background1} />
         <div className={classes.background2} />
       </Base>

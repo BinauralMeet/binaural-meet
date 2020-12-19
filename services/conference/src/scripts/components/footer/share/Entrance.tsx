@@ -89,7 +89,7 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
   const map = useMapStore()
   const sharing = useObserver(() => (
     {main: sharedContents.tracks.localMains.size, contents: sharedContents.tracks.localContents.size}))
-  const showMouse = useObserver(() => participants.local.get().mouse.show)
+  const showMouse = useObserver(() => participants.local.mouse.show)
   const fileInput = useRef<HTMLInputElement>(null)
 
   return (
@@ -169,7 +169,7 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
         icon={<Icon icon={cursorDefaultOutline} />}
         text={showMouse ?  'Stop sharing mouse cursor' : 'Mouse cursor'}
         onClick={() => {
-          participants.local.get().mouse.show = !showMouse
+          participants.local.mouse.show = !showMouse
           setStep('none')
         }}
       />

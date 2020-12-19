@@ -49,7 +49,11 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
           ms.addTrack(track.getTrack())
         }
       })
-      member.current.remotes.forEach(track => ms.addTrack(track.getTrack()))
+      member.current.remotes.forEach(track => {
+        if (track.getType() !== 'audio'){ //  Remote audio is played by ConnectedMananger
+          ms.addTrack(track.getTrack())
+        }
+      })
 
       const old = ref.current.srcObject instanceof MediaStream && ref.current.srcObject.getTracks()
       const cur = ms.getTracks()

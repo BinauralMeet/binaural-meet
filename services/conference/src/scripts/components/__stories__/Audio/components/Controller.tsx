@@ -6,7 +6,6 @@ import store from '@stores/participants/Participants'
 import {action} from 'mobx'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
-import {AudioSource} from './AudioSource'
 
 export const Controller: React.FC<{}> = () => {
   const participants = useStore()
@@ -44,7 +43,7 @@ const addRandomRemoteParticipants = action((id: number) => {
 })
 
 const randomPositionLocal = action(() => {
-  const local = store.local.get()
+  const local = store.local
   local.pose.position = randomPosition()
 })
 

@@ -8,9 +8,9 @@ import {FabMain} from './FabNoFocus'
 
 export const StereoAudioSwitch: React.FC = () => {
   const participants = useParticipantsStore()
-  const stereo = useObserver(() => participants.local.get().useStereoAudio)
+  const stereo = useObserver(() => participants.local.useStereoAudio)
   const switchStereo = () => {
-    participants.local.get().useStereoAudio = !stereo
+    participants.local.useStereoAudio = !stereo
   }
 
   return <Tooltip

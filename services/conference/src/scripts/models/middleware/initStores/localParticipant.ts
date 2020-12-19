@@ -17,7 +17,7 @@ function applyUrlParameters(local: LocalParticipant) {
 }
 
 reaction(
-  () => participantsStore.local.get(),
+  () => participantsStore.local,
   applyUrlParameters,
   {
     fireImmediately: true,

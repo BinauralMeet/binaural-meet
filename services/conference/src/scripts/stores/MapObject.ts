@@ -2,7 +2,7 @@ import {MAP_CENTER} from '@components/map/Base'
 import {MapObject as IMapObject, Perceptibility, Pose2DMap} from '@models/MapObject'
 import _ from 'lodash'
 import {IObservableObject} from 'mobx'
-import {shallowObservable, Store} from '../utils'
+import {shallowObservable, Store} from './utils'
 
 export const defaultValue: IMapObject = {
   pose: {

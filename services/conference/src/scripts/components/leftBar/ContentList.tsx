@@ -4,7 +4,7 @@ import {useStore as useContentsStore} from '@hooks/SharedContentsStore'
 import {Tooltip} from '@material-ui/core'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {strcmp} from '@models/utils'
-import {MapData} from '@stores/MapObject/MapData'
+import {MapData} from '@stores/Map'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import {getRandomColor} from '@stores/utils'
 import {useObserver} from 'mobx-react-lite'
@@ -60,7 +60,7 @@ export const ContentList: React.FC = () => {
     /* sort by distance
     const dists = new Map<string, number>()
     for (const c of sorted) {
-      const v = subV2(c.pose.position, participants.local.get().pose.position)
+      const v = subV2(c.pose.position, participants.local.pose.position)
       const d = v[0] * v[0] + v[1] * v[1]
       dists.set(c.id, d)
     }

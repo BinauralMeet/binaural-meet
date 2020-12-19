@@ -3,7 +3,7 @@ import {Perceptibility,  Pose2DMap} from '@models/MapObject'
 import {defaultPerceptibility} from '@models/MapObject'
 import {ContentType, SharedContent as ISharedContent, TextPhrases} from '@models/SharedContent'
 import {defaultValue as mapObjectDefaultValue} from '@stores/MapObject'
-import {MapData} from '@stores/MapObject/MapData'
+import {MapData} from '@stores/Map'
 import {JitsiLocalTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
 import participants from '../participants/Participants'
@@ -119,7 +119,7 @@ export function createContentOfText(text: string, map: MapData) {
   const textPhrase = {
     text,
     pid: participants.localId,
-    name: participants.local.get().information.name,
+    name: participants.local.information.name,
   }
   const texts: TextPhrases = {texts:[textPhrase], scroll:[0,0]}
   pasted.url = JSON.stringify(texts)

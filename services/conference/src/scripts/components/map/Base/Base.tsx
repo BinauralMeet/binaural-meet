@@ -8,7 +8,7 @@ import {
   radian2Degree, rotate90ClockWise, rotateVector2D, transformPoint2D, transfromAt, vectorLength,
 } from '@models/utils'
 import {addV2, extractScale, mulV2, normV, subV2} from '@models/utils/coordinates'
-import {MapData} from '@stores/MapObject/MapData'
+import {MapData} from '@stores/Map'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef, useState} from 'react'
 import ResizeObserver from 'react-resize-observer'
@@ -88,10 +88,10 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
     return mapStore.offset
   }
   const participants = useStore()
-  const thirdPersonView = useObserver(() => participants.local.get().thirdPersonView)
+  const thirdPersonView = useObserver(() => participants.local.thirdPersonView)
   const mem = useRef<BaseMember>(new BaseMember)
 
-  const center = transformPoint2D(matrix, participants.local.get().pose.position)
+  const center = transformPoint2D(matrix, participants.local.pose.position)
   if (thirdPersonView !== mem.current.prebThirdPersonView) {
     mem.current.prebThirdPersonView = thirdPersonView
     if (thirdPersonView) {
@@ -101,7 +101,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         mapStore.setCommittedMatrix(newMatrix)
       }
     }else {
-      const avatarRot = participants.local.get().pose.orientation
+      const avatarRot = participants.local.pose.orientation
       const mapRot = radian2Degree(extractRotation(matrix))
       if (avatarRot + mapRot) {
         const newMatrix = rotateMap(-(avatarRot + mapRot), center)
@@ -134,7 +134,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
           setTimeout(() => {
             function moveParticipant() {
               if (mem.current.mouseDown) {
-                const local = participants.local.get()
+                const local = participants.local
                 const diff = subV2(mapStore.mouseOnMap, local.pose.position)
                 if (normV(diff) > PARTICIPANT_SIZE / 2) {
                   const dir = mulV2(10 / normV(diff), diff)
@@ -156,7 +156,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         if (delta[0] || delta[1]) { mem.current.mouseDown = false }
         if (mem.current.dragging && down && outer.current) {
           if (!thirdPersonView && buttons === MOUSE_RIGHT) {  // right mouse drag - rotate map
-            const center = transformPoint2D(matrix, participants.local.get().pose.position)
+            const center = transformPoint2D(matrix, participants.local.pose.position)
             const target:[number, number] = addV2(xy, offset())
             const radius1 = subV2(target, center)
             const radius2 = subV2(radius1, delta)
@@ -169,7 +169,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
             }
 
             const newMatrix = rotateMap(radian2Degree(angle), center)
-            participants.local.get().pose.orientation = -radian2Degree(extractRotation(newMatrix))
+            participants.local.pose.orientation = -radian2Degree(extractRotation(newMatrix))
           } else {
             // left mouse drag or touch screen drag - translate map
             const diff = rotateVector2D(matrix.inverse(), delta)
@@ -208,7 +208,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         mapStore.setMatrix(newMatrix)
 
         if (!thirdPersonView) {
-          participants.local.get().pose.orientation = -radian2Degree(extractRotation(newMatrix))
+          participants.local.pose.orientation = -radian2Degree(extractRotation(newMatrix))
         }
 
         return [d, a]
@@ -233,11 +233,14 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         }
       },
       onWheelEnd: () => mapStore.setCommittedMatrix(matrix),
-      onMove: ({xy}) => {
+      onMove:({xy}) => {
         mapStore.setMouse(xy)
-        //  console.log('xyOnMap:', xyOnMap)
-        participants.local.get().mouse.position = Object.assign({}, mapStore.mouseOnMap)
+        participants.local.mouse.position = Object.assign({}, mapStore.mouseOnMap)
       },
+      onTouchStart:(ev)=>{
+        mapStore.setMouse([ev.touches[0].clientX, ev.touches[0].clientY])
+        participants.local.mouse.position = Object.assign({}, mapStore.mouseOnMap)
+      }
     },
     {
       eventOptions:{passive:false}, //  This prevents default zoom by browser when pinch.
@@ -347,7 +350,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   const transfromValue = createValue(mapStore.committedMatrix, [0, 0])
 
   return (
-    <div className={[classes.root, props.className].join(' ')} ref={outer} {...bind()}>
+    <div className={classes.root} ref={outer} {...bind()} >
       <ResizeObserver onResize = { onResizeOuter } />
       <div className={classes.center}>
         <TransformProvider value={transfromValue}>

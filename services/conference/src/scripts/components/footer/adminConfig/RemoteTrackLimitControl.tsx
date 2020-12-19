@@ -21,7 +21,7 @@ const MySlider: React.FC<MySliderProps> = (props) => {
 }
 
 export const RemoteTrackLimitControl: React.FC<{}> = () => {
-  const local = useStore().local.get()
+  const local = useStore().local
   const videoLimit = useObserver(() => local.remoteVideoLimit)
   const audioLimit = useObserver(() => local.remoteAudioLimit)
   const videoSlider = <MySlider value={videoLimit >= 0 ? videoLimit : MAX}

@@ -21,20 +21,26 @@ const MySlider: React.FC<MySliderProps> = (props) => {
 }
 
 export const RemoteTrackLimitControl: React.FC<{}> = () => {
-  const local = useStore().local.get()
+  const local = useStore().local
   const videoLimit = useObserver(() => local.remoteVideoLimit)
   const audioLimit = useObserver(() => local.remoteAudioLimit)
   const videoSlider = <MySlider value={videoLimit >= 0 ? videoLimit : MAX}
     setValue={(v) => {
-      local.remoteVideoLimit = v === MAX ? -1 : v
-      connection.conference.setLocalParticipantProperty(
-        ParticipantProperties.PPROP_TRACK_LIMITS, JSON.stringify([local.remoteVideoLimit, local.remoteAudioLimit]))
+      const newLimit = v === MAX ? -1 : v
+      if (videoLimit !== newLimit){
+        local.remoteVideoLimit = newLimit
+        connection.conference.setLocalParticipantProperty(
+          ParticipantProperties.PPROP_TRACK_LIMITS, JSON.stringify([local.remoteVideoLimit, local.remoteAudioLimit]))
+      }
     } } />
   const audioSlider = <MySlider value={audioLimit >= 0 ? audioLimit : MAX}
     setValue={(v) => {
-      local.remoteAudioLimit = v === MAX ? -1 : v
-      connection.conference.setLocalParticipantProperty(
+      const newLimit = v === MAX ? -1 : v
+      if (audioLimit !== newLimit){
+        local.remoteAudioLimit = newLimit
+        connection.conference.setLocalParticipantProperty(
         ParticipantProperties.PPROP_TRACK_LIMITS, JSON.stringify([local.remoteVideoLimit, local.remoteAudioLimit]))
+      }
     } } />
 
   return <><Container>

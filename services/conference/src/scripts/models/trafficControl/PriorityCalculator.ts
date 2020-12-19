@@ -74,7 +74,7 @@ export class PriorityCalculator {
   private _enabled = false
 
   constructor() {
-    this.local = extractPropsFromLocalParticipant(participants.local.get())
+    this.local = extractPropsFromLocalParticipant(participants.local)
   }
 
   setLimits(limits:number[]):void {
@@ -97,7 +97,7 @@ export class PriorityCalculator {
 
     // track local change
     const localChangeDisposer = autorun(() => {
-      const local = participants.local.get()
+      const local = participants.local
       this.local = extractPropsFromLocalParticipant(local)
 
       this.updateAll = true

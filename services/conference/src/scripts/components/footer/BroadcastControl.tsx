@@ -7,8 +7,8 @@ import React from 'react'
 
 export const BroadcastControl: React.FC<{}> = () => {
   const local = useStore().local
-  const broadcast = useObserver(() => local.get().physics.onStage)
-  const audioBroadcastSwitch = <Switch checked={broadcast} name="broadcast" onChange={event => local.get().setPhysics({
+  const broadcast = useObserver(() => local.physics.onStage)
+  const audioBroadcastSwitch = <Switch checked={broadcast} name="broadcast" onChange={event => local.setPhysics({
     onStage: event.target.checked,
   })} />
 

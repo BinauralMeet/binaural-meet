@@ -259,6 +259,10 @@ export class SharedContents extends EventEmitter {
     const participant = this.participants.get(pid)
     if (participant) {
       this.emit(SharedContentsEvents.REMOTE_LEAVE,  participant)
+      participant.myContents.forEach((content, cid) => {
+        this.localParticipant.updateRequest.delete(cid)
+        this.localParticipant.removeRequest.delete(cid)
+      })
       this.participants.delete(pid)
       //  myContents will move to another participant and owner will be overwrite. So, no change on owner.
     }

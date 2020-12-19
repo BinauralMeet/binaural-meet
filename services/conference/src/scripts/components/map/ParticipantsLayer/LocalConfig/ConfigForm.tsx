@@ -21,7 +21,7 @@ export interface ConfigFormProps{
 export const ConfigForm: React.FC<ConfigFormProps> = (props: ConfigFormProps) => {
   const [submitType, setSubmitType] = useState('')
   const participants = useStore()
-  const local = participants.local.get()
+  const local = participants.local
   const name = useInput(local.information.name)
   const email = useInput(local.information.email)
   const [file, setFile] = useState<File|null>()

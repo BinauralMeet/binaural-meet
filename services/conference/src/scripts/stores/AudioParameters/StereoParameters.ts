@@ -29,7 +29,7 @@ export class StereoParameters implements ConfigurableParams {
   @action
   setHearableRange(range:number) {
     this.refDistanceNormal = range / PERCENT * REFDISTANCE_MAX
-    const onStage = participants.local.get().physics.onStage
+    const onStage = participants.local.physics.onStage
     this.setBroadcast(onStage)
   }
 
@@ -50,6 +50,6 @@ const stereoParameters = new StereoParameters()
 export default stereoParameters
 
 autorun(() => {
-  const bcast = participants.local.get().physics.onStage
+  const bcast = participants.local.physics.onStage
   stereoParameters.setBroadcast(bcast)
 })
