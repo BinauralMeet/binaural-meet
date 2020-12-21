@@ -1,9 +1,11 @@
-import {ParticipantContents as IParticipantContents, SharedContent as ISharedContent} from '@models/SharedContent'
-import {diffMap} from '@models/utils'
+import {connection} from '@models/api/Connection'
+import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {default as participantsStore} from '@stores/participants/Participants'
+import {ParticipantStorePlugin} from '@stores/participants/plugins/utils'
 import {EventEmitter} from 'events'
 import _ from 'lodash'
 import {action, autorun, computed, observable} from 'mobx'
+import {syncBuiltinESMExports} from 'module'
 import {createContent, disposeContent} from './SharedContentCreator'
 import {SharedContentTracks} from './SharedContentTracks'
 
@@ -16,26 +18,23 @@ function contentComp(a:ISharedContent, b:ISharedContent) {
   return a.zorder - b.zorder
 }
 
-export class ParticipantContents implements IParticipantContents {
+export class ParticipantContents{
   constructor(pid: string) {
     this.participantId = pid
   }
   contentIdCounter = 0
   participantId = ''
   @observable.shallow myContents = new Map<string, ISharedContent>()
-  @observable.shallow updateRequest = new Map<string, ISharedContent>()
-  @observable.shallow removeRequest = new Set<string>()
+//  @observable.shallow updateRequest = new Map<string, ISharedContent>()
+//  @observable.shallow removeRequest = new Set<string>()
 }
 
-export const SharedContentsEvents = {
-  REMOTE_JOIN: 'join',
-  REMOTE_LEAVE: 'leave',
-}
 export class SharedContents extends EventEmitter {
   private localId = ''
   constructor() {
     super()
     autorun(() => {
+      //  sync localId to participantsStore
       const newLocalId = participantsStore.localId
       Array.from(this.owner.keys()).forEach((key) => {
         if (this.owner.get(key) === this.localId) {
@@ -51,17 +50,36 @@ export class SharedContents extends EventEmitter {
       this.localId = newLocalId
       contentLog(`Set new local id ${this.localId}`)
     })
+    //  remove leaving participants
+    autorun(() => {
+      this.leavingParticipants.forEach((pc) => {
+        if (pc.myContents.size === 0) {
+          this.removeParticipant(pc.participantId)
+        }
+      })
+    })
   }
   tracks = new SharedContentTracks(this)
 
   @observable pasteEnabled = true
+
   // -----------------------------------------------------------------
-  //  Contents management
+  //  Contents
   //  All shared contents in Z order. Observed by component.
   @observable.shallow all: ISharedContent[] = []
   //  contents by owner
   participants: Map < string, ParticipantContents > = new Map<string, ParticipantContents>()
   leavingParticipants: Map < string, ParticipantContents > = new Map<string, ParticipantContents>()
+  getParticipant(pid: string) {
+    //  prepare participantContents
+    let participant = this.participants.get(pid)
+    if (!participant) {
+      participant = new ParticipantContents(pid)
+      this.participants.set(pid, participant)
+    }
+
+    return participant
+  }
 
   //  pasted content
   @observable.ref pasted:ISharedContent = createContent()
@@ -80,20 +98,11 @@ export class SharedContents extends EventEmitter {
   }
 
   @computed get localParticipant(): ParticipantContents {
-    const p = this.participants.get(this.localId)
-    if (!p) {
-      const n = new ParticipantContents(this.localId)
-      this.participants.set(this.localId, n)
-      contentLog('Create ParticipantContents for local participant ', this.localId)
-
-      return n
-    }
-
-    return p
+    return this.getParticipant(this.localId)
   }
 
-  //  map from contentId to participantId
-  owner: Map < string, string > = new Map<string, string>()
+  //  Map<cid, pid>, map from contentId to participantId
+  owner: Map<string, string> = new Map<string, string>()
 
   public find(contentId: string) {
     const pid = this.owner.get(contentId)
@@ -128,100 +137,119 @@ export class SharedContents extends EventEmitter {
     this.updateAll()
   }
 
-  //  replace contents of one participant. A content can be new one (add) or exsiting one (update).
-  replaceRemoteContents(pid: string, cs:ISharedContent[]) { //  entries = [pid, content][]
-    if (pid === participantsStore.localId) {  //  this is for remote participant
-      console.error('Error replaceContents called for local participant')
-
-      return
-    }
-    //  prepare participantContents
-    let participant = this.participants.get(pid)
-    if (!participant) {
-      participant = new ParticipantContents(pid)
-      this.participants.set(pid, participant)
-      this.emit(SharedContentsEvents.REMOTE_JOIN,  participant)
-    }
-
-    const newContents = new Map(cs.map(c => [c.id, c]))
-    contentLog(`replaceContents for participant=${pid} n=${newContents.size} cids:`,
-               JSON.stringify(Array.from(newContents.keys())))
-    const removed = diffMap(participant.myContents, newContents)
-
-    //  Check remove request and update request to remove them.
-    removed.forEach((c) => {
-      this.localParticipant.removeRequest.delete(c.id)
-      this.localParticipant.updateRequest.delete(c.id)
-    })
-
-    //  Check if removal of leaving partitipant is possible or not.
-    this.leavingParticipants.forEach((leaving, pid) => {
-      contentLog('Leave check pid=', pid, ' cids:', JSON.stringify(Array.from(leaving.myContents.keys())))
-      const diff = diffMap(newContents, leaving.myContents)
-      if (diff.size !== newContents.size) {
-        this.leavingParticipants.delete(pid)
-        this.removeParticipant(pid)
+  private checkAndGetContent(cid: string, callBy?:string) {
+    const pid = this.owner.get(cid)
+    if (pid) {
+      const pc = pid ? this.participants.get(pid) : undefined
+      if (!pc) {
+        console.error(`${callBy}: Owner does not have cid=${cid}`)
       }
-    })
 
-    //  Remove update requests for newContents
-    for (const [key, nc] of newContents) {
-      this.localParticipant.updateRequest.delete(key)
+      return {pid, pc}
     }
+    console.error(`${callBy}: No owner for cid=${cid}`)
 
-    //  update contents
-    removed.forEach((c) => {
-      this.owner.delete(c.id)
-    })
-    newContents.forEach((c) => { this.owner.set(c.id, pid) })
-    participant.myContents = newContents
-    this.updateAll()
+    return {pid, pc:undefined}
   }
-
-  //  Update contents. For update requset.
-  updateContents(cs: ISharedContent[]) {
-    cs.forEach((c) => {
-      const pid = this.owner.get(c.id)
-      if (pid) {
-        const participant = this.participants.get(pid)
-        contentLog(`updateContents for participant:${pid}`)
-        contentDebug(` update ${c.id} by ${c}`)
-        contentDebug(' myContents=', JSON.stringify(participant?.myContents))
-
-        participant?.myContents.set(c.id, c)
-      }else {
-        console.error('unpdateContents called for ', c.id, ' with invalid owner pid=', pid)
+  //  updated by local user
+  updateByLocal(newContent: ISharedContent) {
+    const {pid, pc} = this.checkAndGetContent(newContent.id, 'updateByLocal')
+    if (pc) {
+      if (pid === this.localId) {
+        if (pc.myContents.has(newContent.id)) {
+          if (this.owner.get(newContent.id) !== pid) {
+            console.error(`updateByLocal: content owner not matched for ${newContent.id} owner=${this.owner.get(newContent.id)} pid=${pid}.`)
+          }
+        }else {
+          this.owner.set(newContent.id, participantsStore.localId)
+        }
+        pc.myContents.set(newContent.id, newContent)
+        this.updateAll()
+      }else if (pid) {
+        connection.conference.sync.sendContentUpdateRequest(pid, newContent)
       }
-    })
-    this.updateAll()
+    }
   }
-
-  //  Remove contents when the content is owned by local participant
-  removeContents(pid: string, cids: string[]) {
-    const participant = this.participants.get(pid)
-    if (participant) {
-      const mine = new Map<string, ISharedContent>(participant.myContents)
-
-      // dispose content
-      cids.forEach((cid) => {
-        const content = mine.get(cid)
-        if (content) { disposeContent(content) }
-      })
-
-      // remove them from myContents
-      cids.forEach(cid => mine.delete(cid))
-      participant.myContents = mine
-      this.updateAll()
-      if (pid !== this.localId) {
-        const newRemoveRequest = new Set<string>(this.localParticipant.removeRequest)
-        cids.forEach(cid => newRemoveRequest.add(cid))
-        this.localParticipant.removeRequest = newRemoveRequest
-        contentLog('removeContents update remove request', newRemoveRequest)
+  //  removed by local user
+  removeByLocal(cid: string) {
+    const {pid, pc} = this.checkAndGetContent(cid, 'removeByLocal')
+    if (pc) {
+      if (pid === this.localId) {
+        const toRemove = pc.myContents.get(cid)
+        if (toRemove) {
+          disposeContent(toRemove)
+          pc.myContents.delete(cid)
+          this.owner.delete(cid)
+          this.updateAll()
+        }else {
+          console.log(`Failed to find myContent ${cid} to remove.`)
+        }
+      }else if (pid) {
+        connection.conference.sync.sendContentRemoveRequest(pid, cid)
       }
-      contentLog('removeContents cids=', cids, ' all=', this.all.length, this.all)
+    }
+  }
+  //  Update request from remote.
+  updateByRemoteRequest(c: ISharedContent) {
+    const pid = this.owner.get(c.id)
+    if (pid === this.localId) {
+      this.updateByLocal(c)
     }else {
-      console.error('removeContents failed to find pid=', pid)
+      console.error(`This update request is for ${pid} and not for me.`)
     }
+  }
+  //  Remove request from remote.
+  removeByRemoteRequest(cid: string) {
+    const {pid, pc} = this.checkAndGetContent(cid, 'removeByRemoteRequest')
+    if (pc) {
+      if (pid === this.localId) {
+        this.removeByLocal(cid)
+      }else {
+        console.error('remote try to remove my content')
+      }
+    }
+  }
+
+  //  Update remote contents by remote.
+  updateRemoteContents(cs: ISharedContent[], pid:string) {
+    if (pid === contents.localId) {
+      console.error('Remote updates local contents.')
+    }
+    cs.forEach((c) => {
+      const participant = this.getParticipant(pid)
+      contentLog(`updateContents for participant:${pid}`)
+      contentDebug(` update ${c.id} by ${c}`)
+      contentDebug(' myContents=', JSON.stringify(participant?.myContents))
+
+      if (participant.myContents.has(c.id)) {
+        const owner = this.owner.get(c.id)
+        if (owner !== pid) {
+          console.error(`Owner not match for cid=${c.id} owner=${owner} pid=${pid}.`)
+        }
+      }else {
+        this.owner.set(c.id, pid)
+      }
+      participant.myContents.set(c.id, c)
+    })
+    this.updateAll()
+  }
+  //  Remove remote contents by remote.
+  removeRemoteContents(cids: string[], pid:string) {
+    if (pid === contents.localId) {
+      console.error('Remote removes local contents.')
+    }
+    const pc = this.getParticipant(pid)
+    cids.forEach((cid) => {
+      const c = pc.myContents.get(cid)
+      if (c) {
+        pc.myContents.delete(cid)
+        this.owner.delete(cid)
+        disposeContent(c)
+      }else {
+        console.error(`removeByRemote: failed to find content cid=${cid}`)
+      }
+    })
+    this.updateAll()
   }
 
   //  If I'm the next, obtain the contents
@@ -258,11 +286,6 @@ export class SharedContents extends EventEmitter {
   private removeParticipant(pid:string) {
     const participant = this.participants.get(pid)
     if (participant) {
-      this.emit(SharedContentsEvents.REMOTE_LEAVE,  participant)
-      participant.myContents.forEach((content, cid) => {
-        this.localParticipant.updateRequest.delete(cid)
-        this.localParticipant.removeRequest.delete(cid)
-      })
       this.participants.delete(pid)
       //  myContents will move to another participant and owner will be overwrite. So, no change on owner.
     }

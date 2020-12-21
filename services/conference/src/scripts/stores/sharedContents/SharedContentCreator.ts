@@ -39,6 +39,18 @@ export function jsonToContents(json: string, perceptibility = defaultPerceptibil
   return cs as ISharedContent[]
 }
 
+export function makeItContent(it: ISharedContent){
+  it.perceptibility = Object.assign({}, defaultPerceptibility)
+  it.isEditable = defaultContent.isEditable
+  it.moveToTop = defaultContent.moveToTop
+  return it
+}
+export function makeThemContents(them: ISharedContent[]){
+  for (const c of them) {
+    makeItContent(c)
+  }
+  return them
+}
 
 class SharedContent implements ISharedContent {
   name!: string

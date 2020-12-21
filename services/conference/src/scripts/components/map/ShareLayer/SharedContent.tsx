@@ -18,13 +18,13 @@ export const SharedContent: React.FC<SharedContentProps> = (props:SharedContentP
           evt.stopPropagation()
           const pid = store.owner.get(props.content.id)
           if (pid) {
-            store.removeContents(pid, [props.content.id])
+            store.removeByLocal(props.content.id)
           }
         }
       }
       onUpdate={
         (newContent: ISharedContent) => {
-          store.updateContents([newContent])
+          store.updateByLocal(newContent)
         }
       }
     />

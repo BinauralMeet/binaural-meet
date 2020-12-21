@@ -48,3 +48,12 @@ export function diffSet<K>(a:Set<K>, b:Set<K>) {
   return diff
 }
 
+export function intersectionMap<K, V1, V2>(a:Map<K, V1>, b:Map<K, V2>) {
+  const com = new Map<K, V1>()
+  a.forEach((v, k) => {
+    if (b.has(k)){
+      com.set(k, v)
+    }
+  })
+  return com
+}

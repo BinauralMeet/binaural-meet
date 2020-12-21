@@ -88,7 +88,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
       deltaF = VEL
       relatedKeyPressed = true
     }
-    if (keys.has('ArrowDown') || keys.has('KeyZ')) {
+    if (keys.has('ArrowDown') || keys.has('KeyS')) {
       deltaF = -VEL * HALF
       relatedKeyPressed = true
     }
@@ -96,7 +96,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
       deltaA = -ANGVEL
       relatedKeyPressed = true
     }
-    if (keys.has('ArrowRight') || keys.has('KeyS') || keys.has('KeyE')) {
+    if (keys.has('ArrowRight') || keys.has('KeyD') || keys.has('KeyE')) {
       deltaA = ANGVEL
       relatedKeyPressed = true
     }
@@ -193,7 +193,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     return false
   }
   const keycodesUse = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
-    'KeyW', 'KeyZ', 'KeyA', 'KeyS', 'KeyQ', 'KeyE'])
+    'KeyQ', 'KeyW', 'KeyE', 'KeyA', 'KeyS', 'KeyD'])
   const unused = new KeyHandlerPlain(onKeyTimer, 33, keycodesUse, keycodesUse, () => (map.keyInputUsers.size === 0))
 
   //  pointer drag

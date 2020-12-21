@@ -111,7 +111,7 @@ export class SharedContentTracks {
       this.localContents.set(cid, trackSet)
       connection.conference.addTracks(Array.from(tracks))
       tracks[0].getTrack().onended = (ev) => {
-        this.sharedContents.removeContents(participants.localId, [cid])
+        this.sharedContents.removeByLocal(cid)
       }
     }else {
       console.error('addLocals with no videoType', tracks)

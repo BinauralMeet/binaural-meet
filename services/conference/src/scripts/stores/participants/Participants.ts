@@ -3,7 +3,7 @@ import {LocalParticipant} from './LocalParticipant'
 import {RemoteParticipant} from './RemoteParticipant'
 export class Participants {
   @observable.shallow readonly remote = new Map<string, RemoteParticipant>()
-  local_ = observable.box(new LocalParticipant('default_local_participant_id'))
+  local_ = observable.box(new LocalParticipant(''))
 
   @computed get count(): number {
     return this.remote.size

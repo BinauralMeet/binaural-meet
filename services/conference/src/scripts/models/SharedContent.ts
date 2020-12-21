@@ -24,10 +24,3 @@ export interface TextPhrases {
   texts: TextPhrase[]
   scroll: [number, number]
 }
-
-export interface ParticipantContents{
-  participantId: string
-  myContents: Map<string, SharedContent>
-  updateRequest: Map<string, SharedContent>
-  removeRequest: Set<string>
-}

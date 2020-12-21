@@ -8,17 +8,19 @@ import {default as ParticiantsStore} from '@stores/participants/Participants'
 import {jsonToContents} from '@stores/sharedContents/SharedContentCreator'
 import sharedContents, {contentDebug, contentLog} from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
-import JitsiMeetJS, {JitisTrackError, JitsiLocalTrack, JitsiRemoteTrack, JitsiTrack, JitsiValues, TMediaType} from 'lib-jitsi-meet'
+import JitsiMeetJS, {JitisTrackError, JitsiConferenceEvents, JitsiLocalTrack, JitsiRemoteTrack,
+  JitsiTrack, JitsiValues, TMediaType} from 'lib-jitsi-meet'
 import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
 import {autorun} from 'mobx'
 import {throttle} from 'throttle-debounce'
+import {ConferenceSync} from './ConferenceSync'
 import {connDebug, connLog, trackLog, TRACKLOG} from './Connection'
 
 // config.js
 declare const config:any             //  from ../../config.js included from index.html
 declare const d:any                  //  from index.html
 
-const ConferenceEvents = {
+export const ConferenceEvents = {
   CONFERENCE_JOINED: 'conference_joined',
   REMOTE_PARTICIPANT_JOINED: 'remote_participant_joined',
   LOCAL_PARTICIPANT_JOINED: 'local_participant_joined',
@@ -30,11 +32,11 @@ const ConferenceEvents = {
 }
 
 export const ParticipantProperties = {
-  PPROP_POSE: 'pose',
+/*  PPROP_POSE: 'pose',
   PPROP_MOUSE: 'mouse',
   PPROP_CONTENTS: 'contents',
   PPROP_CONTENTS_UPDATE: 'contents_update',
-  PPROP_CONTENTS_REMOVE: 'contents_remove',
+  PPROP_CONTENTS_REMOVE: 'contents_remove', */
   PPROP_INFO: 'info',
   PPROP_PHYSICS: 'physics',
   PPROP_TRACK_LIMITS: 'trackLimits',
@@ -57,20 +59,24 @@ export class Conference extends EventEmitter {
   public _jitsiConference?: JitsiMeetJS.JitsiConference
   private _isForTest?: boolean
   public localId = ''
+  sync = new ConferenceSync(this)
 
   public init(jc: JitsiMeetJS.JitsiConference, isForTest: boolean) {
     this.registerEventHandlers()
     this._jitsiConference = jc
     this._isForTest = isForTest
     this.registerJistiConferenceEvents(this._jitsiConference)
+    this.sync.bind()
     this._jitsiConference.join('')
     this._jitsiConference.setSenderVideoConstraint(1080)
+
     //  To access from debug console, add object d to the window.
     d.conference = this
     d.jc = this._jitsiConference
   }
 
   //  Commmands for shared contents --------------------------------------------
+/*
   public sendSharedContents(cs: ISharedContent[]) {
     const ccs = removePerceptibility(cs)
     contentLog('send contents: ', ccs)
@@ -98,7 +104,7 @@ export class Conference extends EventEmitter {
 
     return []
   }
-
+*/
   //  Commmands for local tracks --------------------------------------------
   private localMicTrack?: JitsiLocalTrack
   private localCameraTrack?: JitsiLocalTrack
@@ -181,7 +187,7 @@ export class Conference extends EventEmitter {
   private bindStore(local: LocalParticipant) {
     const UPDATE_INTERVAL = 200
 
-    const throttledUpdatePose = throttle(UPDATE_INTERVAL, (newPose: Pose2DMap) => {
+/*    const throttledUpdatePose = throttle(UPDATE_INTERVAL, (newPose: Pose2DMap) => {
       this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_POSE, JSON.stringify(newPose))
     })
     const disposer = autorun(
@@ -201,7 +207,7 @@ export class Conference extends EventEmitter {
       () => {
         throttledUpdateMouse(Object.assign({}, local.mouse))
       },
-    )
+    )*/
   }
 
 
@@ -236,6 +242,12 @@ export class Conference extends EventEmitter {
     }
   }
 
+  sendMessage(type:string, to:string, value:any) {
+    const msg = {type, value}
+    const jc = this._jitsiConference as any
+    this._jitsiConference?.sendMessage(msg, to, jc?.rtc?._channel?.isOpen() ? true : false)
+  }
+
   //  event handlers
   /**
    * Bind lib-jitsi-meet events to party events.
@@ -243,6 +255,16 @@ export class Conference extends EventEmitter {
    */
   private registerJistiConferenceEvents(conference: JitsiMeetJS.JitsiConference) {
     const logField = 'JistiEvent'
+
+    conference.on(JitsiMeetJS.events.conference.ENDPOINT_MESSAGE_RECEIVED,
+                  (participant:JitsiParticipant, msg:any) => {
+      //  console.log(`ENDPOINT_MESSAGE_RECEIVED from ${participant.getId()}`, msg)
+                    if (msg.values) {
+                      this.emit(msg.type, participant.getId(), msg.values)
+                    }else {
+                      this.emit(msg.type, participant.getId(), msg.value)
+                    }
+                  })
 
     /**
      * Event: JitsiMeetJS.events.conference.CONFERENCE_JOINED
@@ -395,20 +417,7 @@ export class Conference extends EventEmitter {
 
         // Change store
         const local = ParticiantsStore.local
-        if (name === ParticipantProperties.PPROP_POSE) {
-          const pose: Pose2DMap = JSON.parse(value)
-          const id = participant.getId()
-          const target = ParticiantsStore.find(id)
-          if (target) {
-            target.pose.orientation = pose.orientation
-            target.pose.position = pose.position
-          }
-        }else if (name === ParticipantProperties.PPROP_MOUSE) {
-          const target = ParticiantsStore.find(participant.getId())
-          if (target) {
-            Object.assign(target.mouse, JSON.parse(value))
-          }
-        }else if (name === ParticipantProperties.PPROP_INFO) {
+        if (name === ParticipantProperties.PPROP_INFO) {
           const id = participant.getId()
           if (id !== local.id) {
             const target = ParticiantsStore.find(id)
@@ -435,7 +444,8 @@ export class Conference extends EventEmitter {
               Object.assign(target.physics, physics)
             }
           }
-        }else if (name === ParticipantProperties.PPROP_CONTENTS) {
+        }
+/*        else if (name === ParticipantProperties.PPROP_CONTENTS) {
           if (participant.getId() !== local.id) {
             contentLog(`Jitsi: content of ${participant.getId()} is updated.`)
             const contentsAsArray = jsonToContents(value)
@@ -457,7 +467,8 @@ export class Conference extends EventEmitter {
             const removes = JSON.parse(value) as string[]
             sharedContents.removeContents(local.id, removes)
           }
-        }else if (name === ParticipantProperties.PPROP_TRACK_LIMITS) {
+        }*/
+        else if (name === ParticipantProperties.PPROP_TRACK_LIMITS) {
           const local = ParticiantsStore.local
           if (participant.getId() !== local.id) {
             const limits = JSON.parse(value) as string[]
@@ -497,10 +508,6 @@ export class Conference extends EventEmitter {
     this.on(
       ConferenceEvents.REMOTE_PARTICIPANT_JOINED,
       this.onRemoteParticipantJoined.bind(this),
-    )
-    this.on(
-      ConferenceEvents.PARTICIPANT_LEFT,
-      this.onParticipantLeft.bind(this),
     )
     this.on(
       ConferenceEvents.LOCAL_TRACK_ADDED,
@@ -649,12 +656,6 @@ export class Conference extends EventEmitter {
     }
     // this.participants.set(id, participant)
     ParticiantsStore.join(id)
-  }
-
-  private onParticipantLeft(id: string) {
-    // this.participants.delete(id)
-    ParticiantsStore.leave(id)
-    sharedContents.onParticipantLeft(id)
   }
 
   private onRemoteTrackAdded(track: JitsiRemoteTrack) {

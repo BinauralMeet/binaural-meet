@@ -50,8 +50,8 @@ declare class JitsiConference {
   getLocalVideoTrack(): JitsiLocalTrack | null;
   on(eventId: string, handler: Function): void;
   off(eventId: string, handler: Function): void;
-  addEventListener: (eventId: number, handler: Function) => void;
-  removeEventListener: (eventId: number, handler: Function) => void;
+  addEventListener: (eventId: string, handler: Function) => void;
+  removeEventListener: (eventId: string, handler: Function) => void;
   addCommandListener(command: string, handler: (values: JitsiValues, jid:string, from:any) => void): void;
   removeCommandListener(command: string, handler: (values: JitsiValues) => void): void;
   sendCommand(name: string, values: JitsiValues): void;
@@ -113,7 +113,7 @@ declare class JitsiConference {
   sendEndpointMessage(to: string, payload: Object): void;
   broadcastEndpointMessage(payload: Object): void;
 
-  sendMessage(message: string, to: string, sendThroughVideobridge: boolean): void;
+  sendMessage(message: Object, to: string, sendThroughVideobridge: boolean): void;
   getProperty(key: string): any;
   isP2PActive(): boolean;
   getP2PConnectionState(): string | null;

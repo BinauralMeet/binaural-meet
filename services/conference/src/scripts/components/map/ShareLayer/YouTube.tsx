@@ -1,8 +1,7 @@
 import {makeStyles} from '@material-ui/core/styles'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {assert, shallowEqualsForMap} from '@models/utils'
-import {contentLog, SharedContents} from '@stores/sharedContents/SharedContents'
-import {useStore} from 'hooks/SharedContentsStore'
+import {contentLog} from '@stores/sharedContents/SharedContents'
 import React, {useEffect, useRef} from 'react'
 import YouTubePlayer from 'yt-player'
 import {ContentProps} from './Content'
@@ -27,7 +26,7 @@ class YTMember{
   playTimeout:NodeJS.Timeout|null = null
   params: Map<YTParam, string|undefined> = new Map()
   content?: ISharedContent
-  contents?: SharedContents
+  onUpdate: (newContent: ISharedContent) => void = ()=>{}
 }
 type YTParam = 'paused' | 'playing' | 'ended' | 'rate' | 'index' | 'list' | 'v'
 
@@ -96,7 +95,8 @@ function ytUpdateState(newState: string, time:number, member: YTMember) {
   params.set('rate', String(member.player?.getPlaybackRate()))
   const newContent = Object.assign({}, member.content)
   newContent.url = paramMap2Str(params)
-  member.contents?.updateContents([newContent])
+
+  member.onUpdate(newContent)
   contentLog(`YT sent member ${newState}`)
 }
 
@@ -111,7 +111,7 @@ function ytPauseInterval(member: YTMember) {
       params.set('paused', String(currentTime))
       const newContent = Object.assign({}, member.content)
       newContent.url = paramMap2Str(params)
-      member.contents?.updateContents([newContent])
+      member.onUpdate(newContent)
       contentLog(`YT sent current time of paused state time:${currentTime}`)
     }
   }else {
@@ -135,8 +135,8 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
   const classes = useStyles()
   const memberRef = useRef<YTMember>(new YTMember())
   const member = memberRef.current
-  member.contents = useStore()
   member.content = props.content
+  if (props.onUpdate){  member.onUpdate = props.onUpdate }
 
   //  Check params and reflect them
   const newParams = paramStr2map(props.content.url)
