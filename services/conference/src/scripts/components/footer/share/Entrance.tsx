@@ -152,7 +152,7 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
       <ShareDialogItem
         key="shareScreenContent"
         icon={<OpenInBrowserIcon />}
-        text={'Screen'}
+        text={'Screen in a window'}
         onClick={() => {
           startCapture().then((tracks) => {
             const content = createContentOfVideo(tracks, map)

@@ -7,7 +7,7 @@
     "clean": "del-cli dist",
     "build": "cross-env TS_NODE_PROJECT=\"tsconfig-for-webpack-config.json\" webpack",
     "lint": "tslint --fix -p .",
-    "dev": "webpack-dev-server --open",
+    "dev": "webpack-dev-server --open --host 0.0.0.0 --public localhost:9000 --https",
     "storybook": "start-storybook -s ./src/scripts/__tests__/blob/ -p 9999",
     "test": "jest",
     "link-lib-jitsi-meet": "cd libs/lib-jitsi-meet; yarn link; cd ../../; yarn link lib-jitsi-meet",

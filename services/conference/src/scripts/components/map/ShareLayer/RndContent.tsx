@@ -8,6 +8,7 @@ import {CreateCSSProperties} from '@material-ui/core/styles/withStyles'
 import DoneIcon from '@material-ui/icons/CheckCircle'
 import CloseRoundedIcon from '@material-ui/icons/CloseRounded'
 import EditIcon from '@material-ui/icons/Edit'
+import FlipToBackIcon from '@material-ui/icons/FlipToBack'
 import FlipToFrontIcon from '@material-ui/icons/FlipToFront'
 import {Pose2DMap} from '@models/MapObject'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
@@ -115,6 +116,11 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   function onClickClose(evt: React.MouseEvent<HTMLDivElement>) { props.onClose?.call(null, evt) }
   function onClickMoveToTop(evt: React.MouseEvent<HTMLDivElement>) {
     props.content.moveToTop()
+    const newContent = Object.assign({}, props.content)
+    props.onUpdate?.call(null, newContent)
+  }
+  function onClickMoveToBottom(evt: React.MouseEvent<HTMLDivElement>) {
+    props.content.moveToBottom()
     const newContent = Object.assign({}, props.content)
     props.onUpdate?.call(null, newContent)
   }
@@ -238,7 +244,9 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
             &nbsp;
           </div>
           {props.content.pinned ? undefined :
-            <div className={classes.edit} onClick={onClickMoveToTop}>&nbsp; <FlipToFrontIcon /></div>}
+            <div className={classes.titleButton} onClick={onClickMoveToTop}>&nbsp; <FlipToFrontIcon /></div>}
+          {props.content.pinned ? undefined :
+            <div className={classes.titleButton} onClick={onClickMoveToBottom}>&nbsp; <FlipToBackIcon /></div>}
           <div className={classes.note} onClick={onClickShare}>Share</div>
           {props.content.pinned ? undefined :
              <div className={classes.close} onClick={onClickClose}><CloseRoundedIcon /></div>}
@@ -348,6 +356,17 @@ const useStyles = makeStyles({
       height: props.dimensions.clientHeight,
       whiteSpace: 'pre',
       borderRadius: '0.5em 0 0 0',
+      cursor: 'default',
+      '&:hover': {
+        backgroundColor: 'firebrick',
+      },
+    } : {display:'none'}
+  ),
+  titleButton: (props:StyleProps) => (
+    props.showTitle ? {
+      display: 'block',
+      height: props.dimensions.clientHeight,
+      whiteSpace: 'pre',
       cursor: 'default',
       '&:hover': {
         backgroundColor: 'firebrick',

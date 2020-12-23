@@ -27,6 +27,7 @@ const config: webpack.Configuration = {
     compress: true,
     port: 9000,
     openPage: `?name=${DEV_CONFERENCE_ID}`,
+    host: '0.0.0.0',
   },
   output: {
     path: path.resolve(__dirname, 'dist'),

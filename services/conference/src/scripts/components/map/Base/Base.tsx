@@ -89,11 +89,12 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   }
   const participants = useStore()
   const thirdPersonView = useObserver(() => participants.local.thirdPersonView)
-  const mem = useRef<BaseMember>(new BaseMember)
+  const memRef = useRef<BaseMember>(new BaseMember)
+  const mem = memRef.current
 
   const center = transformPoint2D(matrix, participants.local.pose.position)
-  if (thirdPersonView !== mem.current.prebThirdPersonView) {
-    mem.current.prebThirdPersonView = thirdPersonView
+  if (thirdPersonView !== mem.prebThirdPersonView) {
+    mem.prebThirdPersonView = thirdPersonView
     if (thirdPersonView) {
       const mapRot = radian2Degree(extractRotation(matrix))
       if (mapRot) {
@@ -127,34 +128,36 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       onDragStart: ({buttons}) => {
         if (mapStore.keyInputUsers.size) { return }
         document.body.focus()
-        mem.current.dragging = true
-        mem.current.mouseDown = true
+        mem.dragging = true
+        mem.mouseDown = true
         //  console.log('Base StartDrag:')
-        if (buttons === MOUSE_LEFT) { //  move participant to mouse position
+        if (buttons === MOUSE_LEFT) {
+          //  move participant to mouse position
           setTimeout(() => {
-            function moveParticipant() {
-              if (mem.current.mouseDown) {
+            function moveParticipant(move: boolean) {
+              if (mem.mouseDown) {
                 const local = participants.local
                 const diff = subV2(mapStore.mouseOnMap, local.pose.position)
                 if (normV(diff) > PARTICIPANT_SIZE / 2) {
                   const dir = mulV2(10 / normV(diff), diff)
-                  local.pose.position = addV2(local.pose.position, dir)
                   local.pose.orientation = Math.atan2(dir[0], -dir[1]) * 180 / Math.PI
-
+                  if (move) {
+                    local.pose.position = addV2(local.pose.position, dir)
+                  }
                   local.savePhysicsToStorage(false)
                 }
-                const TIMER_INTERVAL = 33
-                setTimeout(moveParticipant, TIMER_INTERVAL)
+                const TIMER_INTERVAL = move ? 33 : 300
+                setTimeout(() => { moveParticipant(true) }, TIMER_INTERVAL)
               }
             }
-            moveParticipant()
+            moveParticipant(false)
           },         300)
         }
       },
       onDrag: ({down, delta, xy, buttons}) => {
         if (mapStore.keyInputUsers.size) { return }
-        if (delta[0] || delta[1]) { mem.current.mouseDown = false }
-        if (mem.current.dragging && down && outer.current) {
+        if (delta[0] || delta[1]) { mem.mouseDown = false }
+        if (mem.dragging && down && outer.current) {
           if (!thirdPersonView && buttons === MOUSE_RIGHT) {  // right mouse drag - rotate map
             const center = transformPoint2D(matrix, participants.local.pose.position)
             const target:[number, number] = addV2(xy, offset())
@@ -181,8 +184,8 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       },
       onDragEnd: () => {
         mapStore.setCommittedMatrix(matrix)
-        mem.current.dragging = false
-        mem.current.mouseDown = false
+        mem.dragging = false
+        mem.mouseDown = false
         //  console.log('Base onDragEnd:')
       },
       onPinch: ({da: [d, a], origin, event, memo}) => {
@@ -237,10 +240,10 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         mapStore.setMouse(xy)
         participants.local.mouse.position = Object.assign({}, mapStore.mouseOnMap)
       },
-      onTouchStart:(ev)=>{
+      onTouchStart:(ev) => {
         mapStore.setMouse([ev.touches[0].clientX, ev.touches[0].clientY])
         participants.local.mouse.position = Object.assign({}, mapStore.mouseOnMap)
-      }
+      },
     },
     {
       eventOptions:{passive:false}, //  This prevents default zoom by browser when pinch.

@@ -38,6 +38,7 @@ const pc: ISharedContent = {
   zorder: 1,
   isEditable:defaultContent.isEditable,
   moveToTop:defaultContent.moveToTop,
+  moveToBottom:defaultContent.moveToBottom,
   perceptibility: {
     audibility: true,
     coreContentVisibility: true,

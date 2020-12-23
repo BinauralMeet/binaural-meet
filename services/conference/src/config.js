@@ -20,42 +20,35 @@ const rtcConfig = {
     },
   },
 }
-
-const config_haselab_net = {
-  hosts: {
-    domain: 'meet.jitsi',
-    muc: 'muc.meet.jitsi',
-    focus: 'focus.meet.jitsi',
-  },
-  openBridgeChannel: true, // One of true, 'datachannel'==='true', or 'websocket'
-  bosh: 'https://jitsi.haselab.net/http-bind', // FIXME: use xep-0156 for that
+const common_config = {
+  openBridgeChannel: true, // One of true, 'datachannel'==='true', or 'websocket
   clientNode: 'http://jitsi.org/jitsimeet',
-  focusUserJid: 'focus@auth.meet.jitsi',
-  //  disableSimulcast: true, //  Without simulcast, Safari/Firefox (unified plan) does not work
+  disableSimulcast: true,
   channelLastN: -1,
   p2p: {
-    enabled: false,
+          enabled: false,
+          preferH264: true,
+          disableH264: true,
+          useStunTurn: true, // use XEP-0215 to fetch STUN and TURN servers for the P2P connection
   },
-  rtc:rtcConfig
+  rtc:rtcConfig,
+  testing: {
+    octo: {
+      probability: 1
+    },
+    capScreenshareBitrate: 128 * 1024,
+  },
+  thirdPersonView: true,
 }
 
-const config_party_haselab = {
+const config_binaural = {
   hosts: {
-    domain: 'meet.jitsi',
-    muc: 'muc.meet.jitsi',
-    focus: 'focus.meet.jitsi',
+    domain: 'binaural.me',
+    muc: 'conference.binaural.me'
   },
-  openBridgeChannel: true, // One of true, 'datachannel'==='true', or 'websocket'
-  bosh: 'https://party.haselab.net/http-bind', // FIXME: use xep-0156 for that
-  clientNode: 'http://jitsi.org/jitsimeet',
-  focusUserJid: 'focus@auth.meet.jitsi',
-  //  disableSimulcast: true, //  Without simulcast, Safari/Firefox (unified plan) does not work
-  channelLastN: -1,
-  p2p: {
-    enabled: false,
-  },
-  rtc:rtcConfig
+  bosh: '//binaural.me/http-bind',
 }
+Object.assign(config_binaural, Object.assign(common_config, config_binaural))
 
 const config_local = {
   hosts: {
@@ -63,33 +56,9 @@ const config_local = {
     muc: 'muc.meet.jitsi',
     focus: 'focus.meet.jitsi',
   },
-  openBridgeChannel: true, // One of true, 'datachannel'==='true', or 'websocket'
   bosh: 'https://localhost:8443/http-bind', // FIXME: use xep-0156 for that
-  clientNode: 'http://jitsi.org/jitsimeet',
-  focusUserJid: 'focus@auth.meet.jitsi',
-  //  disableSimulcast: true, //  Without simulcast, Safari/Firefox (unified plan) does not work
-  channelLastN: -1,
-  p2p: {
-    enabled: false,
-  },
-  rtc:rtcConfig
 }
-
-const config_hasemeet = {
-  hosts: {
-	domain: 'hasemeet.haselab.net',
-	muc: 'conference.hasemeet.haselab.net'
-  },
-  openBridgeChannel: true, // One of true, 'datachannel'==='true', or 'websocket'
-  bosh: '//hasemeet.haselab.net/http-bind',
-  clientNode: 'http://jitsi.org/jitsimeet',
-  //  disableSimulcast: true, //  Without simulcast, Safari/Firefox (unified plan) does not work
-  channelLastN: -1,
-  p2p: {
-    enabled: false,
-  },
-  rtc:rtcConfig
-}
+Object.assign(config_local, Object.assign(common_config, config_local))
 
 const config_alpha = {
   hosts: {
@@ -97,16 +66,9 @@ const config_alpha = {
     muc: 'conference.alpha.jitsi.net',
     focus: 'focus.alpha.jitsi.net',
   },
-  openBridgeChannel: 'websocket', // One of true, 'datachannel'==='true', or 'websocket'
-  //  disableSimulcast: true, //  Without simulcast, Safari/Firefox (unified plan) does not work
-  p2p: {
-    enabled: false,
-    preferH264: true,
-    disableH264: true,
-    useStunTurn: true, // use XEP-0215 to fetch STUN and TURN servers for the P2P connection
-  },
   bosh: 'https://alpha.jitsi.net/http-bind', // FIXME: use xep-0156 for that
-  rtc:rtcConfig
+  openBridgeChannel: 'websocket',
 }
-const config = config_alpha
-config.thirdPersonView = true
+Object.assign(config_alpha, Object.assign(common_config, config_alpha))
+
+const config = config_binaural

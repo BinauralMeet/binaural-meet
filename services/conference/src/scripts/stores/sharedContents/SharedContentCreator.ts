@@ -2,8 +2,8 @@ import {uploadToGyazo} from '@models/api/Gyazo'
 import {Perceptibility,  Pose2DMap} from '@models/MapObject'
 import {defaultPerceptibility} from '@models/MapObject'
 import {ContentType, SharedContent as ISharedContent, TextPhrases} from '@models/SharedContent'
-import {defaultValue as mapObjectDefaultValue} from '@stores/MapObject'
 import {MapData} from '@stores/Map'
+import {defaultValue as mapObjectDefaultValue} from '@stores/MapObject'
 import {JitsiLocalTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
 import participants from '../participants/Participants'
@@ -25,6 +25,11 @@ export const defaultContent: ISharedContent = Object.assign({}, mapObjectDefault
     const TIME_RESOLUTION_IN_MS = 100
     this.zorder = Math.floor(Date.now() / TIME_RESOLUTION_IN_MS)
   },
+  moveToBottom() {
+    const TIME_RESOLUTION_IN_MS = 100
+    const bottom = sharedContents.all[0]
+    this.zorder = bottom.zorder - TIME_RESOLUTION_IN_MS
+  },
 })
 
 ///  Add perceptibility and function to object obtained by JSON.parse()
@@ -34,21 +39,25 @@ export function jsonToContents(json: string, perceptibility = defaultPerceptibil
     c.perceptibility = Object.assign({}, defaultPerceptibility)
     c.isEditable = defaultContent.isEditable
     c.moveToTop = defaultContent.moveToTop
+    c.moveToBottom = defaultContent.moveToBottom
   }
 
   return cs as ISharedContent[]
 }
 
-export function makeItContent(it: ISharedContent){
+export function makeItContent(it: ISharedContent) {
   it.perceptibility = Object.assign({}, defaultPerceptibility)
   it.isEditable = defaultContent.isEditable
   it.moveToTop = defaultContent.moveToTop
+  it.moveToBottom = defaultContent.moveToBottom
+
   return it
 }
-export function makeThemContents(them: ISharedContent[]){
+export function makeThemContents(them: ISharedContent[]) {
   for (const c of them) {
     makeItContent(c)
   }
+
   return them
 }
 
@@ -65,10 +74,12 @@ class SharedContent implements ISharedContent {
   perceptibility!: Perceptibility
   isEditable: () => boolean
   moveToTop: () => void
+  moveToBottom: () => void
   constructor() {
     Object.assign(this, _.cloneDeep(defaultContent))
     this.isEditable = defaultContent.isEditable
     this.moveToTop = defaultContent.moveToTop
+    this.moveToBottom = defaultContent.moveToBottom
   }
 }
 
@@ -133,7 +144,7 @@ export function createContentOfText(text: string, map: MapData) {
     pid: participants.localId,
     name: participants.local.information.name,
   }
-  const texts: TextPhrases = {texts:[textPhrase], scroll:[0,0]}
+  const texts: TextPhrases = {texts:[textPhrase], scroll:[0, 0]}
   pasted.url = JSON.stringify(texts)
   pasted.pose.position[0] = map.mouseOnMap[0]
   pasted.pose.position[1] = map.mouseOnMap[1]

@@ -1,11 +1,10 @@
 import {connection} from '@models/api/Connection'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
+import {intersectionMap} from '@models/utils'
 import {default as participantsStore} from '@stores/participants/Participants'
-import {ParticipantStorePlugin} from '@stores/participants/plugins/utils'
 import {EventEmitter} from 'events'
 import _ from 'lodash'
 import {action, autorun, computed, observable} from 'mobx'
-import {syncBuiltinESMExports} from 'module'
 import {createContent, disposeContent} from './SharedContentCreator'
 import {SharedContentTracks} from './SharedContentTracks'
 
@@ -113,7 +112,19 @@ export class SharedContents extends EventEmitter {
     return undefined
   }
 
+  private removeDuplicated() {
+    this.participants.forEach((participant) => {
+      if (participant.participantId > this.localParticipant.participantId) {
+        const com = intersectionMap(participant.myContents, this.localParticipant.myContents)
+        com.forEach((c, cid) => {
+          disposeContent(c)
+          this.localParticipant.myContents.delete(cid)
+        })
+      }
+    })
+  }
   private updateAll() {
+    this.removeDuplicated()
     const newAll:ISharedContent[] = []
     this.participants.forEach((participant) => {
       newAll.push(... participant.myContents.values())
@@ -267,9 +278,15 @@ export class SharedContents extends EventEmitter {
         contentLog('Next is me')
         const myContents = new Map<string, ISharedContent>(this.localParticipant.myContents)
         participantLeave.myContents.forEach((c, cid) => {
-          myContents.set(cid, c)
-          this.owner.set(cid, this.localId)
-          contentLog('set owner for cid=', cid, ' pid=', this.localId)
+          if (c.type === 'screen') {
+            this.owner.delete(cid)
+            participantLeave.myContents.delete(cid)
+            disposeContent(c)
+          }else {
+            myContents.set(cid, c)
+            this.owner.set(cid, this.localId)
+            contentLog('set owner for cid=', cid, ' pid=', this.localId)
+          }
         })
         this.removeParticipant(pidLeave)
         contentLog('remove:', pidLeave, ' current:', JSON.stringify(allPids))

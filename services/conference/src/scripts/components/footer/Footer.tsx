@@ -1,8 +1,11 @@
+import {useStore as useMap} from '@hooks/MapStore'
 import {useStore as useParticipantsStore} from '@hooks/ParticipantsStore'
 import megaphoneIcon from '@iconify/icons-mdi/megaphone'
 import {Icon} from '@iconify/react'
+import {Collapse} from '@material-ui/core'
 import Menu from '@material-ui/core/Menu'
 import MenuItem from '@material-ui/core/MenuItem'
+import Popover from '@material-ui/core/Popover'
 import {makeStyles} from '@material-ui/core/styles'
 import MicIcon from '@material-ui/icons/Mic'
 import MicOffIcon from '@material-ui/icons/MicOff'
@@ -11,19 +14,12 @@ import VideoOffIcon from '@material-ui/icons/VideocamOff'
 import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
 import SpeakerOnIcon from '@material-ui/icons/VolumeUp'
 import {useObserver} from 'mobx-react-lite'
-import React, {useRef, useEffect} from 'react'
+import React, {useEffect, useRef} from 'react'
+import {AdminConfigForm} from './adminConfig/AdminConfigForm'
 import {BroadcastControl} from './BroadcastControl'
 import {FabMain} from './FabNoFocus'
 import {ShareButton} from './share/ShareButton'
 import {StereoAudioSwitch} from './StereoAudioSwitch'
-import {Collapse} from '@material-ui/core';
-import {AdminConfigForm} from './adminConfig/AdminConfigForm'
-import Popover from '@material-ui/core/Popover';
-import {useStore as useMap} from '@hooks/MapStore'
-
-function prevent(ev: React.MouseEvent){
-  ev.preventDefault()
-}
 
 const useStyles = makeStyles({
   container:{
@@ -40,51 +36,50 @@ const useStyles = makeStyles({
     bottom: 0,
     left: 0,
     width:30,
-    height:10,
-    backgroundColor:'transparent'
-  }
+    height:15,
+    pointerEvents: 'auto',
+    backgroundColor:'transparent',
+//    backgroundColor:'rgba(0,0,0,0.5)',
+  },
 })
 
 
 class Member{
   timeoutOut:NodeJS.Timeout|undefined = undefined
+  touched = false
 }
 
 export const Footer: React.FC = () => {
   //  show and hide
   const [show, setShow] = React.useState<boolean>(true)
-  const [touch, setTouch] = React.useState<boolean>(false)
   const [showAdmin, setShowAdmin] = React.useState<boolean>(false)
   const memberRef = useRef<Member>(new Member())
   const member = memberRef.current
   const containerRef = useRef<HTMLDivElement>(null)
   const map = useMap()
-  const mouseOnButtom = useObserver(()=> map.screenSize[1] - (map.mouse[1]-map.offset[1]) < 90)
-  useEffect(()=>{
-    containerRef.current?.focus()
-  }, [containerRef.current])
-  useEffect(()=>{
-    if (mouseOnButtom && !show){
-      showFooter()
-    }
-    if (!mouseOnButtom && show){
-      hideFooter()
-    }
-  })
-  function showFooter(){
-    setShow(true)
-    if (member.timeoutOut) {
-      clearTimeout(member.timeoutOut)
-      member.timeoutOut = undefined
-    }
-    containerRef.current?.focus()
+  function checkMouseOnBottom() {
+    return map.screenSize[1] - (map.mouse[1] - map.offset[1]) < 90
   }
-  function hideFooter(){
-    if (!member.timeoutOut) {
-      member.timeoutOut = setTimeout(()=>{
-        setShow(false)
+  const mouseOnBottom = useObserver(checkMouseOnBottom)
+  useEffect(() => {
+    if (checkMouseOnBottom()) { member.touched = true }
+    setShowFooter(mouseOnBottom || !member.touched)
+  })
+  function setShowFooter(show: boolean) {
+    if (show) {
+      setShow(true)
+      if (member.timeoutOut) {
+        clearTimeout(member.timeoutOut)
         member.timeoutOut = undefined
-      }, 500)
+      }
+      containerRef.current?.focus()
+    }else {
+      if (!member.timeoutOut) {
+        member.timeoutOut = setTimeout(() => {
+          setShow(false)
+          member.timeoutOut = undefined
+        },                             500)
+      }
     }
   }
 
@@ -156,7 +151,7 @@ export const Footer: React.FC = () => {
   <div ref={containerRef} className={classes.container}>
     <Collapse in={show}>
       <StereoAudioSwitch />
-      <FabMain more color={mute.muteS ? 'primary' : 'secondary' }
+      <FabMain more={true} color={mute.muteS ? 'primary' : 'secondary' }
         aria-label="speaker" onClick = { () => {
           participants.local.plugins.streamControl.muteSpeaker = !mute.muteS
           if (participants.local.plugins.streamControl.muteSpeaker) {
@@ -177,7 +172,7 @@ export const Footer: React.FC = () => {
         {speakerMenuItems}
       </Menu>
 
-      <FabMain more color={mute.muteA ? 'primary' : 'secondary' } aria-label="mic"
+      <FabMain more={true} color={mute.muteA ? 'primary' : 'secondary' } aria-label="mic"
         onClick = { () => {
           participants.local.plugins.streamControl.muteAudio = !mute.muteA
           if (!participants.local.plugins.streamControl.muteAudio) {
@@ -199,7 +194,7 @@ export const Footer: React.FC = () => {
         {micMenuItems}
       </Menu>
 
-      <FabMain more color={mute.muteV ? 'primary' : 'secondary'} aria-label="camera"
+      <FabMain more={true} color={mute.muteV ? 'primary' : 'secondary'} aria-label="camera"
         onClick = { () => {
           participants.local.plugins.streamControl.muteVideo = !mute.muteV
           participants.local.saveMuteStatusToStorage(false)
@@ -219,14 +214,12 @@ export const Footer: React.FC = () => {
 
       <ShareButton />
 
-      <div className={classes.left} ref={adminButton}
-        onClick = { () => setShowAdmin(true) }>
-      </div>
-      <Popover open={showAdmin} onClose={()=>setShowAdmin(false)}
-          anchorEl={adminButton.current} anchorOrigin={{vertical:'top', horizontal:'left'}}
-          anchorReference = 'anchorEl' >
-          <AdminConfigForm close={()=>setShowAdmin(false)}/>
-        </Popover>
+      <div className={classes.left} ref={adminButton} onClick = { () => setShowAdmin(true) } />
+      <Popover open={showAdmin} onClose={() => setShowAdmin(false)}
+        anchorEl={adminButton.current} anchorOrigin={{vertical:'top', horizontal:'left'}}
+        anchorReference = "anchorEl" >
+        <AdminConfigForm close={ () => setShowAdmin(false) } />
+      </Popover>
 
     </Collapse>
   </div >

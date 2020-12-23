@@ -1,6 +1,6 @@
 import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore as useContentsStore} from '@hooks/SharedContentsStore'
-import ShareIcon from '@material-ui/icons/Share'
+import ScreenShareIcon from '@material-ui/icons/ScreenShare'
 import {makeStyles} from '@material-ui/styles'
 import {useObserver} from 'mobx-react-lite'
 import React, {useState} from 'react'
@@ -32,7 +32,7 @@ export const ShareButton: React.FC = () => {
     <div className={classes.root}>
       <FabMain color={sharing ? 'secondary' : 'primary'}
         aria-label="share" onClick={() => setOpenDialog(true)}>
-        <ShareIcon fontSize="large" />
+        <ScreenShareIcon fontSize="large" />
       </FabMain>
       <ShareDialog open={openDialog} onClose={() => setOpenDialog(false)} />
     </div>
