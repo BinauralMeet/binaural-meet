@@ -7,20 +7,27 @@ import * as webpackDevServer from 'webpack-dev-server'
 
 const Visualizer = require('webpack-visualizer-plugin')
 const WebpackGitHash = require('webpack-git-hash')
-
+const webpackMode_ = process.env.MODE as ('production' | 'development')
+const webpackMode = webpackMode_ ? webpackMode_ : 'development'
 // Handle with error of tsconfig-paths-webpack-plugin
 // https://github.com/dividab/tsconfig-paths-webpack-plugin/issues/32
 delete process.env.TS_NODE_PROJECT
 
 const DEV_CONFERENCE_ID = 'conference-name'
 
+const reactDom = process.env.PROFILING === 'true' ? 'react-dom/profiling' : 'react-dom'
+const schedulerTracing = process.env.PROFILING === 'true' ?  'scheduler/tracing-profiling' : 'scheduler/tracing'
+const doMinimize = (webpackMode === 'production') ? true : false
+
 const config: webpack.Configuration = {
   stats: 'normal',
   entry: './src/scripts/index.tsx',
   devtool: 'source-map',
-  mode: 'development',
+  mode: webpackMode,
+  //  mode: 'development',
+  //  mode: 'production',
   optimization: {
-    minimize: false,
+    minimize: doMinimize,
   },
   devServer: {
     contentBase: 'dist',
@@ -88,6 +95,8 @@ const config: webpack.Configuration = {
   resolve: {
     alias: {
       '@libs/lib-jitsi-meet': path.resolve(__dirname, 'dist', 'lib-jitsi-meet.min'),
+      'react-dom$': reactDom,
+      'scheduler/tracing': schedulerTracing,
     },
     extensions: ['.tsx', '.ts', '.js'],
     plugins: [

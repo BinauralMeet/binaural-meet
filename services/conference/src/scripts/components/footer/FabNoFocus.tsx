@@ -1,7 +1,7 @@
+import {FabColor, IconColor, MoreButton, moreButtonControl, MoreButtonMember} from '@components/utils/MoreButton'
 import Fab from '@material-ui/core/Fab'
 import {makeStyles} from '@material-ui/core/styles'
-import React, {useState, useRef} from 'react'
-import {MoreButton, IconColor, FabColor, moreButtonControl, MoreButtonMember} from '@components/utils/MoreButton'
+import React, {useRef, useState} from 'react'
 
 const useStyles = makeStyles((theme) => {
   return ({
@@ -23,10 +23,10 @@ interface MyFabProps{
   children: React.ReactElement,
   onClick?: (e: React.PointerEvent<HTMLButtonElement>) => void,
   onClickMore?: (e: React.PointerEvent<HTMLButtonElement>|React.MouseEvent<HTMLButtonElement>) => void,
-  more?: boolean
   color?: FabColor
   iconColor?: IconColor
   htmlColor?: string
+  className?: string
 }
 
 export const FabMain: React.FC<MyFabProps> = (props) => {
@@ -35,25 +35,25 @@ export const FabMain: React.FC<MyFabProps> = (props) => {
   const memberRef = useRef<MoreButtonMember>({timeout:undefined})
   const member = memberRef.current
 
-  return <span className={classes.container}
+  return <span className={classes.container + (props.className ? ` ${props.className}` : '')}
     {...moreButtonControl(setShowMore, member)}
   >
     <Fab
       onClick = {props.onClick}
-      onContextMenu={(ev)=>{
+      onContextMenu={(ev) => {
         ev.preventDefault()
-        if (props.onClickMore){ props.onClickMore(ev) }
+        if (props.onClickMore) { props.onClickMore(ev) }
       }}
       color = {props.color} onFocus = {(e) => { (e.target as HTMLElement)?.blur() }}>
       {props.children}
     </Fab>
-    {props.more ? <MoreButton style={{position:'relative', top:-25, left:-10, marginRight:-30}}
+    {props.onClickMore ? <MoreButton style={{position:'relative', top:-35, left:-15, marginRight:-41}}
     show={showMore} color={props.color} htmlColor={props.htmlColor} iconColor={props.iconColor}
     onClickMore = {props.onClickMore}
     /> : undefined}
   </span>
 }
-
+/*
 export const FabSub: React.FC<MyFabProps> = (props) => {
   const classes = useStyles()
 
@@ -62,3 +62,4 @@ export const FabSub: React.FC<MyFabProps> = (props) => {
         {props.children}
       </Fab>
 }
+*/

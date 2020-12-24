@@ -18,7 +18,7 @@ export class Participants {
   }
 
   @action
-  setLocalId(id: string){
+  setLocalId(id: string) {
     const newLocal = new LocalParticipant(id)
     const oldLocal = this.local
     if (oldLocal) {
@@ -27,7 +27,7 @@ export class Participants {
       newLocal.remoteVideoLimit = oldLocal.remoteVideoLimit
     }
     this.local_.set(newLocal)
-    if (oldLocal){
+    if (oldLocal) {
       //  copy parameters which should send to remote.
       Object.assign(oldLocal, {id:newLocal.id})
       Object.assign(newLocal, oldLocal)

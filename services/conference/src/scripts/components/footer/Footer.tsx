@@ -151,7 +151,7 @@ export const Footer: React.FC = () => {
   <div ref={containerRef} className={classes.container}>
     <Collapse in={show}>
       <StereoAudioSwitch />
-      <FabMain more={true} color={mute.muteS ? 'primary' : 'secondary' }
+      <FabMain color={mute.muteS ? 'primary' : 'secondary' }
         aria-label="speaker" onClick = { () => {
           participants.local.plugins.streamControl.muteSpeaker = !mute.muteS
           if (participants.local.plugins.streamControl.muteSpeaker) {
@@ -172,7 +172,7 @@ export const Footer: React.FC = () => {
         {speakerMenuItems}
       </Menu>
 
-      <FabMain more={true} color={mute.muteA ? 'primary' : 'secondary' } aria-label="mic"
+      <FabMain color={mute.muteA ? 'primary' : 'secondary' } aria-label="mic"
         onClick = { () => {
           participants.local.plugins.streamControl.muteAudio = !mute.muteA
           if (!participants.local.plugins.streamControl.muteAudio) {
@@ -194,7 +194,7 @@ export const Footer: React.FC = () => {
         {micMenuItems}
       </Menu>
 
-      <FabMain more={true} color={mute.muteV ? 'primary' : 'secondary'} aria-label="camera"
+      <FabMain color={mute.muteV ? 'primary' : 'secondary'} aria-label="camera"
         onClick = { () => {
           participants.local.plugins.streamControl.muteVideo = !mute.muteV
           participants.local.saveMuteStatusToStorage(false)

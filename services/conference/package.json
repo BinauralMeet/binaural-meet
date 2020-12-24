@@ -5,14 +5,15 @@
   "license": "MIT",
   "scripts": {
     "clean": "del-cli dist",
-    "build": "cross-env TS_NODE_PROJECT=\"tsconfig-for-webpack-config.json\" webpack",
+    "build": "MODE=production;PROFILING=false; cross-env TS_NODE_PROJECT=\"tsconfig-for-webpack-config.json\" webpack",
     "lint": "tslint --fix -p .",
-    "dev": "webpack-dev-server --open --host 0.0.0.0 --public localhost:9000 --https",
+    "dev": "MODE=development; webpack-dev-server --open --host 0.0.0.0 --public localhost:9000 --https",
+    "pro": "MODE=production;PROFILING=true; webpack-dev-server --open --host 0.0.0.0 --public localhost:9000 --https",
     "storybook": "start-storybook -s ./src/scripts/__tests__/blob/ -p 9999",
     "test": "jest",
     "link-lib-jitsi-meet": "cd libs/lib-jitsi-meet; yarn link; cd ../../; yarn link lib-jitsi-meet",
     "link-typing-lib-jitsi-meet": "cd libs/@types/lib-jitsi-meet; yarn link; cd ../../../; yarn link @types/lib-jitsi-meet",
-    "link": "yarn run link-lib-jitsi-meet; yarn run link-typing-lib-jitsi-meet",
+    "link": "; yarn run link-lib-jitsi-meet; yarn run link-typing-lib-jitsi-meet",
     "deploy": "gh-pages -d dist",
     "publish-demo": "yarn build && yarn deploy"
   },

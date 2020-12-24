@@ -1,43 +1,42 @@
 import {useStore as useMapStore} from '@hooks/MapStore'
-import {MapData} from '@stores/Map'
 import IconButton from '@material-ui/core/IconButton'
 import Zoom from '@material-ui/core/Zoom'
 import MoreVertIcon from '@material-ui/icons/MoreVert'
-import React from 'react'
-import {CSSProperties} from 'react'
+import {MapData} from '@stores/Map'
+import React, {CSSProperties} from 'react'
 
 //  utility to control more button
 export interface MoreButtonMember{
   timeout:NodeJS.Timeout|undefined
 }
-export function moreButtonControl(setShowMore:(show:boolean)=>void, member:MoreButtonMember) {
+export function moreButtonControl(setShowMore:(show:boolean) => void, member:MoreButtonMember) {
   return {
-    onMouseOver(ev:React.MouseEvent){
+    onMouseOver(ev:React.MouseEvent) {
       //  console.log('over')
-      if (! (ev.nativeEvent as any).sourceCapabilities?.firesTouchEvents){
-        if (member.timeout){
+      if (! (ev.nativeEvent as any).sourceCapabilities?.firesTouchEvents) {
+        if (member.timeout) {
           clearTimeout(member.timeout)
           member.timeout = undefined
         }
-        setShowMore(true);
+        setShowMore(true)
       }
     },
-    onMouseOut(ev:React.MouseEvent){
+    onMouseOut(ev:React.MouseEvent) {
       //  console.log('out')
-      if (member.timeout){
+      if (member.timeout) {
         clearTimeout(member.timeout)
       }
-      member.timeout = setTimeout(()=>{
+      member.timeout = setTimeout(() => {
         setShowMore(false)
         member.timeout = undefined
-      }, 500)
+      },                          500)
     },
   }
 }
 
 
-export type IconColor = "inherit" | "disabled" | "primary" | "secondary" | "action" | "error" | undefined
-export type FabColor = "inherit" | "default" | "primary" | "secondary" | undefined
+export type IconColor = 'inherit' | 'disabled' | 'primary' | 'secondary' | 'action' | 'error' | undefined
+export type FabColor = 'inherit' | 'default' | 'primary' | 'secondary' | undefined
 export interface MoreButtonProps{
   show: boolean
   htmlColor?: string
@@ -52,17 +51,14 @@ export interface MoreButtonProps{
 export const MoreButton: React.FC<MoreButtonProps> = (props) => {
   const map = useMapStore()
   const handleClick = (event: React.PointerEvent<HTMLButtonElement>) => {
-    if(props.onClickMore){ props.onClickMore(event, map) }
+    if (props.onClickMore) { props.onClickMore(event, map) }
   }
 
   return <Zoom in={props.show} style={props.style} >
     <IconButton className={props.className} color={props.color} onClick={handleClick}
       size={'small'} ref={props.buttonRef}
     >
-      <MoreVertIcon color={props.iconColor} htmlColor={props.htmlColor}/>
+      <MoreVertIcon color={props.iconColor} htmlColor={props.htmlColor} fontSize="large" />
     </IconButton>
   </Zoom>
 }
-
-
-

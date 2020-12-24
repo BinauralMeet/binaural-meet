@@ -1,7 +1,7 @@
 import {Pose2DMap} from '@models/MapObject'
-import {LocalParticipant as ILocalParticipant, Physics, TrackStates} from '@models/Participant'
+import {LocalParticipant as ILocalParticipant, Physics, SoundLocalizationBase, TrackStates} from '@models/Participant'
 import mapData from '@stores/Map'
-import {action, computed, observable, autorun} from 'mobx'
+import {action, autorun, computed, observable} from 'mobx'
 import {Store} from '../utils'
 import {DevicePreference} from './localPlugins'
 import {ParticipantBase} from './ParticipantBase'
@@ -21,10 +21,13 @@ interface PhysicsInfo{
   pose: Pose2DMap,
   physics: Physics,
 }
+
+
 export class LocalParticipant extends ParticipantBase implements Store<ILocalParticipant> {
   devicePreference = new DevicePreference()
   @observable useStereoAudio = false  //  will be override by url switch
   @observable thirdPersonView = config.thirdPersonView as boolean
+  @observable soundLocalizationBase = config.soundLocalizationBase ? config.soundLocalizationBase : 'user'
   @observable remoteVideoLimit = config.remoteVideoLimit || -1 as number
   @observable remoteAudioLimit = config.remoteAudioLimit || -1 as number
   @action setThirdPersonView(tpv: boolean) { this.thirdPersonView = tpv }
