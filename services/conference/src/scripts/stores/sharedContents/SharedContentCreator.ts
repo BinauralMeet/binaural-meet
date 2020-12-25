@@ -1,7 +1,7 @@
 import {uploadToGyazo} from '@models/api/Gyazo'
 import {Perceptibility,  Pose2DMap} from '@models/MapObject'
 import {defaultPerceptibility} from '@models/MapObject'
-import {ContentType, SharedContent as ISharedContent, TextPhrases} from '@models/SharedContent'
+import {ContentType, SharedContent as ISharedContent, TextMessages} from '@models/SharedContent'
 import {MapData} from '@stores/Map'
 import {defaultValue as mapObjectDefaultValue} from '@stores/MapObject'
 import {JitsiLocalTrack} from 'lib-jitsi-meet'
@@ -136,19 +136,20 @@ export function createContentOfIframe(urlStr: string, map: MapData) {
 
   return pasted
 }
-export function createContentOfText(text: string, map: MapData) {
+export function createContentOfText(message: string, map: MapData) {
   const pasted = new SharedContent()
   pasted.type = 'text'
-  const textPhrase = {
-    text,
+  const textMessage = {
+    message,
     pid: participants.localId,
     name: participants.local.information.name,
+    time: Date.now(),
   }
-  const texts: TextPhrases = {texts:[textPhrase], scroll:[0, 0]}
+  const texts: TextMessages = {messages:[textMessage], scroll:[0, 0]}
   pasted.url = JSON.stringify(texts)
   pasted.pose.position[0] = map.mouseOnMap[0]
   pasted.pose.position[1] = map.mouseOnMap[1]
-  const slen = Math.sqrt(text.length)
+  const slen = Math.sqrt(message.length)
   const STRING_SCALE_W = 20
   const STRING_SCALE_H = 15
   pasted.size[0] = Math.max(slen * STRING_SCALE_W, 200)

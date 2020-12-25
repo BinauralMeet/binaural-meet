@@ -16,12 +16,17 @@ export interface SharedContent extends MapObject {
   moveToBottom(): void            //  change zorder to the top.
 }
 
-export interface TextPhrase {
-  text: string,
-  name: string,
-  pid: string,
+export interface TextMessage {
+  message: string, //  text to display
+  name: string, //  The name of whom create this text
+  pid: string,  //  The pid of whom create this text
+  time: number, //  Timestamp when this message created.
 }
-export interface TextPhrases {
-  texts: TextPhrase[]
+export interface TextMessages {
+  messages: TextMessage[]
   scroll: [number, number]
+}
+
+export function compTextMessage(t1: TextMessage, t2: TextMessage) {
+  return t1.time - t2.time
 }

@@ -20,6 +20,19 @@ export const MessageType = {
   CONTENT_REMOVE_MINE: 'content_remove_mine',
   CONTENT_UPDATE_REQUEST: 'content_update',
   CONTENT_REMOVE_REQUEST: 'content_remove',
+  FRAGMENT_HEAD: 'frag_head',
+  FRAGMENT_CONTENT: 'frag_cont',
+}
+
+const FRAGMENTING_LENGTH = 200
+
+interface FragmentedMessageHead{
+  type: string
+  length: number
+}
+interface FragmentedMessage{
+  c: number
+  s: string
 }
 
 export class ConferenceSync{
@@ -73,9 +86,12 @@ export class ConferenceSync{
       contentLog(`recv remote contents ${JSON.stringify(cs.map(c => c.id))} from ${from}.`, cs)
     })
     const sendMyContentsUpdated = (contents:ISharedContent[], to?: string) => {
-      if (contents.length) {
-        const contentsToSend = removePerceptibility(contents)
-        contentLog(`send contents ${JSON.stringify(contentsToSend.map(c => c.id))} to ${to}.`, contentsToSend)
+      const contentsToSend = removePerceptibility(contents)
+      contentLog(`send contents ${JSON.stringify(contentsToSend.map(c => c.id))} to ${to}.`, contentsToSend)
+      const total = contentsToSend.map(c => c.url.length).reduce((prev, cur) => prev + cur, 0)
+      if (total > FRAGMENTING_LENGTH || contentsToSend.length > FRAGMENTING_LENGTH / 50) {
+        this.sendFragmentedMessage(MessageType.CONTENT_UPDATE_MINE, to ? to : '', contentsToSend)
+      }else {
         this.conference.sendMessage(MessageType.CONTENT_UPDATE_MINE, to ? to : '', contentsToSend)
       }
     }
@@ -93,10 +109,16 @@ export class ConferenceSync{
       const com = intersectionMap(contents.localParticipant.myContents, myContentsOld)
       const added = diffMap(contents.localParticipant.myContents, com)
       const removed = diffMap(myContentsOld, com)
-      sendMyContentsUpdated(Array.from(added.values()))
-      sendMyContentsRemoved(Array.from(removed.keys()))
+      if (added.size) {
+        sendMyContentsUpdated(Array.from(added.values()))
+      }
+      if (removed.size) {
+        sendMyContentsRemoved(Array.from(removed.keys()))
+      }
       const updated = Array.from(com.values()).filter(v => v !== myContentsOld.get(v.id))
-      sendMyContentsUpdated(updated)
+      if (updated.length) {
+        sendMyContentsUpdated(updated)
+      }
       myContentsOld = new Map(contents.localParticipant.myContents)
     }))
 
@@ -131,12 +153,24 @@ export class ConferenceSync{
     this.conference.addListener(MessageType.REQUEST_INFO, (from:string, none:Object) => {
       sendPose(from)
       sendMouse(from)
-      if (contents.localParticipant.myContents.size) {
-        contents.localParticipant.myContents.forEach((c) => {
-          sendMyContentsUpdated([c], from)
-        })
-      }else {
-        sendMyContentsUpdated([], from)
+      sendMyContentsUpdated(Array.from(contents.localParticipant.myContents.values()), from)
+    })
+    //  fragmented message
+    this.conference.addListener(MessageType.FRAGMENT_HEAD, (from:string, msg:FragmentedMessageHead) => {
+      this.fragmentedMessageHead = msg
+      this.fragmentedMessages = []
+    })
+    this.conference.addListener(MessageType.FRAGMENT_CONTENT, (from:string, msg:FragmentedMessage) => {
+      this.fragmentedMessages[msg.c] = msg
+      if (this.fragmentedMessageHead.length && this.fragmentedMessages.length === this.fragmentedMessageHead.length
+        && (this.fragmentedMessages.findIndex(msg => msg === undefined) === -1)) {
+        let str = ''
+        this.fragmentedMessages.forEach(msg => str += msg.s)
+        //  console.log('JSON', str)
+        const obj = JSON.parse(str)
+        this.conference.emit(this.fragmentedMessageHead.type, from, obj)
+        this.fragmentedMessageHead = {type:'', length:0}
+        this.fragmentedMessages = []
       }
     })
   }
@@ -154,9 +188,26 @@ export class ConferenceSync{
     }
   }
   //  Utilities
+  private fragmentedMessages:FragmentedMessage[] = []
+  private fragmentedMessageHead:FragmentedMessageHead = {type:'', length:0}
+  sendFragmentedMessage(type: string, to: string, value: Object) {
+    const str = JSON.stringify(value)
+    const head: FragmentedMessageHead = {type, length:Math.ceil(str.length / FRAGMENTING_LENGTH)}
+    this.conference.sendMessage(MessageType.FRAGMENT_HEAD, to, head)
+    let count = 0
+    for (let i = 0; i < str.length; i += FRAGMENTING_LENGTH) {
+      this.conference.sendMessage(MessageType.FRAGMENT_CONTENT, to, {c:count, s:str.slice(i, i + FRAGMENTING_LENGTH)})
+      count += 1
+    }
+  }
+
   //  Send content update request to pid
   sendContentUpdateRequest(pid: string, updated: ISharedContent) {
-    this.conference.sendMessage(MessageType.CONTENT_UPDATE_REQUEST, pid, updated)
+    if (updated.url.length > FRAGMENTING_LENGTH) {
+      this.sendFragmentedMessage(MessageType.CONTENT_UPDATE_REQUEST, pid, updated)
+    }else {
+      this.conference.sendMessage(MessageType.CONTENT_UPDATE_REQUEST, pid, updated)
+    }
   }
   //  Send content remove request to pid
   sendContentRemoveRequest(pid: string, removed: string) {

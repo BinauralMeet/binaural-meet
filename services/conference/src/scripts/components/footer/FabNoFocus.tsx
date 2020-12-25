@@ -53,13 +53,3 @@ export const FabMain: React.FC<MyFabProps> = (props) => {
     /> : undefined}
   </span>
 }
-/*
-export const FabSub: React.FC<MyFabProps> = (props) => {
-  const classes = useStyles()
-
-  return <Fab className= {classes.small} size = "small" onClick = {props.onClick}
-  color = {props.color} onFocus = {(e) => { (e.target as HTMLElement)?.blur() }} >
-        {props.children}
-      </Fab>
-}
-*/
