@@ -17,7 +17,7 @@ export const SoundLocalizationSetting: React.FC<{}> = () => {
 
   return <Container>
     <Grid component="label" container={true} alignItems="center" spacing={1}>
-      <Grid item={true}>User (top direction)</Grid>
+      <Grid item={true}>User (top is front)</Grid>
       <Grid item={true}>
         <Switch checked={soundLocalizationBase === 'avatar'} onChange={() => {
           participants.local.soundLocalizationBase = soundLocalizationBase === 'avatar' ? 'user' : 'avatar'

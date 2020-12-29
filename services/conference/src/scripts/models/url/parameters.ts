@@ -20,6 +20,7 @@ export function decodeGetParams(url: string): Params {
     },
     {} as Params,
   )
+  res.name = urlObj.pathname.substr(1).toLowerCase().replace(/[\.\/\@]/, '_') + (res.name ? res.name.toLowerCase() : '')
 
   return res
 }

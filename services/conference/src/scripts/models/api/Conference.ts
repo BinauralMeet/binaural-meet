@@ -481,7 +481,7 @@ export class Conference extends EventEmitter {
     )
 
     conference.on(JitsiMeetJS.events.conference.TRACK_AUDIO_LEVEL_CHANGED, (id:string, level:number) => {
-      console.debug(`Audio level of ${id} changed to ${level}.`)
+      //  console.debug(`Audio level of ${id} changed to ${level}.`)
       let participant = participantsStore.find(id)
       if (!participant) {
         participant = participantsStore.local

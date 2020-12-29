@@ -87,7 +87,8 @@ export class ConferenceSync{
     })
     const sendMyContentsUpdated = (contents:ISharedContent[], to?: string) => {
       const contentsToSend = removePerceptibility(contents)
-      contentLog(`send contents ${JSON.stringify(contentsToSend.map(c => c.id))} to ${to}.`, contentsToSend)
+      contentLog(`send contents ${JSON.stringify(contentsToSend.map(c => c.id))} to ${to ? to : 'all'}.`,
+                 contentsToSend)
       const total = contentsToSend.map(c => c.url.length).reduce((prev, cur) => prev + cur, 0)
       if (total > FRAGMENTING_LENGTH || contentsToSend.length > FRAGMENTING_LENGTH / 50) {
         this.sendFragmentedMessage(MessageType.CONTENT_UPDATE_MINE, to ? to : '', contentsToSend)
