@@ -9,10 +9,20 @@ import JitsiLocalTrack from './modules/RTC/JitsiLocalTrack'
 import JitsiRemoteTrack from './modules/RTC/JitsiRemoteTrack'
 import { JitsiConnection } from './JitsiConnection';
 import { JitsiConference, JitsiValues } from "./JitsiConference";
-
 export const version: string;
 export const events: JitsiMeetEvents;
 export const errors: JitsiMeetErrors;
+
+declare class BrowserCapabilities{
+  constructor()
+  supportsP2P(): boolean
+  isChromiumBased(): boolean
+  isSupported(): boolean
+  isUserInteractionRequiredForUnmute(): boolean
+  usesPlanB():boolean
+  usesUnifiedPlan(): boolean
+}
+export const browser: BrowserCapabilities
 
 interface ProxyConnectionService { }
 

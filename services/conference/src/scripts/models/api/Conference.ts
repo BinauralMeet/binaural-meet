@@ -14,7 +14,7 @@ import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
 import {autorun} from 'mobx'
 import {throttle} from 'throttle-debounce'
 import {ConferenceSync} from './ConferenceSync'
-import {connDebug, connLog, trackLog, TRACKLOG} from './Connection'
+import {connDebug, connection, connLog, trackLog, TRACKLOG} from './Connection'
 
 // config.js
 declare const config:any             //  from ../../config.js included from index.html
@@ -583,6 +583,20 @@ export class Conference extends EventEmitter {
             }
           })
         }
+        /** unified plan test. start from 3 tracks
+        const canvas = document.createElement('canvas')
+        canvas.width = canvas.height = 1
+        canvas.getContext('2d')
+        const vStream = (canvas as any).captureStream()
+        connection.createJitisLocalTracksFromStream(vStream).then(
+          (tracks) => {
+            tracks.forEach((track) => {
+              this._jitsiConference?.addTrack(track)
+            })
+          },
+        )
+        */
+
       } else {
         //  create mic and camera tracks
         JitsiMeetJS.createLocalTracks({devices: ['audio', 'video'], constraints: config.rtc.videoConstraints}).then(
@@ -647,6 +661,7 @@ export class Conference extends EventEmitter {
           }
         })
       }
+
     }
   }
 

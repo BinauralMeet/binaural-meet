@@ -45,12 +45,12 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
     if (ref.current) {
       const ms = new MediaStream()
       member.current.locals.forEach((track) => {
-        if (track.getType() !== 'audio'){ //  Never play local audio. It makes echo.
+        if (track.getType() !== 'audio') { //  Never play local audio. It makes echo.
           ms.addTrack(track.getTrack())
         }
       })
       member.current.remotes.forEach(track => {
-        if (track.getType() !== 'audio'){ //  Remote audio is played by ConnectedMananger
+        if (track.getType() !== 'audio') { //  Remote audio is played by ConnectedMananger
           ms.addTrack(track.getTrack())
         }
       })
@@ -75,7 +75,8 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
         const video = tracks.find(track => track.kind === 'video')
         const settings = video?.getSettings()
         const newSize = [settings?.width || 0, settings?.height || 0] as [number, number]
-        if (newSize[0] && member.current.content.originalSize.toString() !== newSize.toString()) {
+        if (member.current.content.originalSize[0] && newSize[0]
+          && member.current.content.originalSize.toString() !== newSize.toString()) {
           const scale = member.current.content.size[0] / member.current.content.originalSize[0]
           member.current.content.originalSize = newSize
           member.current.content.size = mulV2(scale, newSize)

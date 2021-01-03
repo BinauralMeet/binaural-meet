@@ -46,7 +46,7 @@ const config_binaural = {
     domain: 'binaural.me',
     muc: 'conference.binaural.me'
   },
-  bosh: '//binaural.me/http-bind',
+  bosh: 'https://binaural.me/http-bind',
 }
 Object.assign(config_binaural, Object.assign(common_config, config_binaural))
 

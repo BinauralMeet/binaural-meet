@@ -17,15 +17,18 @@ import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {assert} from '@models/utils'
 import {createContent, createContentOfVideo} from '@stores/sharedContents/SharedContentCreator'
 import {SharedContents} from '@stores/sharedContents/SharedContents'
-import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'
+import JitsiMeetJS, {JitsiLocalTrack, browser} from 'lib-jitsi-meet'
 import {isArray} from 'lodash'
 import {useObserver} from 'mobx-react-lite'
 import React, {useRef} from 'react'
 import {DialogPageProps} from './DialogPage'
 import {ShareDialogItem} from './SharedDialogItem'
 
-
 async function startCapture(displayMediaOptions: any = {}) {
+  if (browser.usesUnifiedPlan())  {
+    return []
+  }
+
   let captureTracks = null
 
   try {
@@ -42,6 +45,7 @@ async function startCapture(displayMediaOptions: any = {}) {
 
   return captureTracks as JitsiLocalTrack[]
 }
+
 function downloadItems(contents:SharedContents) {
   const content = JSON.stringify(contents.all)
   const blob = new Blob([content], {type: 'text/plain'})
