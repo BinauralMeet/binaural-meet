@@ -1,5 +1,6 @@
 import Button from '@material-ui/core/Button'
 import {Connection} from '@models/api/Connection'
+import {ConnectionForContent} from '@models/api/ConnectionForScreenContent'
 import {urlParameters} from '@models/url'
 import React from 'react'
 import {RemoteTrackLimitControl} from './RemoteTrackLimitControl'
@@ -14,12 +15,10 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
     <RemoteTrackLimitControl key="remotelimitcontrol" />
     <br />
     <Button onClick={() => {
-      const connection = new Connection
-      const conferenceName = urlParameters.name || 'haselabtest'
-
-      connection.init().then(
-        () => connection.joinConference(conferenceName),
-      )
+      const connection = new ConnectionForContent
+      connection.init().then(() => {
+        console.log('ConnectionForContent connected.')
+      })
     }}> Test </Button>
     </>
 }

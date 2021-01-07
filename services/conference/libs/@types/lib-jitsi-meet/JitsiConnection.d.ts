@@ -15,7 +15,7 @@ declare class XMPP{
   connection: XmppConnection
 }
 declare class JitsiConnection {
-  constructor(appId: string, token: string, options: Object);
+  constructor(appId: string|null, token: string|undefined, options: Object);
 
   connect(options?: JitsiConnectionOptions): void;
   attach(options: any): void;

@@ -10,6 +10,7 @@ import JitsiMeetJS from 'lib-jitsi-meet'
 import _ from 'lodash'
 import {autorun, IReactionDisposer} from 'mobx'
 import {Conference, ConferenceEvents} from './Conference'
+import {contentTrackCarrierName} from './ConnectionForScreenContent'
 
 export const MessageType = {
   REQUEST_INFO: 'req_info',
@@ -45,10 +46,16 @@ export class ConferenceSync{
   }
   bind() {
     //  participant related -----------------------------------------------------------------------
-    this.conference.addListener(ConferenceEvents.PARTICIPANT_LEFT, (id) => {
+    this.conference.addListener(ConferenceEvents.USER_LEFT, (id) => {
       participants.leave(id)
     })
+    this.conference.addListener(ConferenceEvents.USER_JOINED, (id) => {
+      if (this.conference._jitsiConference?.getParticipantById(id).getDisplayName() === contentTrackCarrierName) {
 
+      }else {
+        participants.join(id)
+      }
+    })
     //  pose
     this.conference.addListener(MessageType.PARTICIPANT_POSE, (from:string, pose:Pose2DMap) => {
       const remote = participants.remote.get(from)
@@ -75,7 +82,7 @@ export class ConferenceSync{
 
 
     // contents related ---------------------------------------------------------------
-    this.conference.addListener(ConferenceEvents.PARTICIPANT_LEFT, (id) => {
+    this.conference.addListener(ConferenceEvents.USER_LEFT, (id) => {
       contents.onParticipantLeft(id)
     })
     //  my contents

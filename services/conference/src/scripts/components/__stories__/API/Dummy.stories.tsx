@@ -1,18 +1,18 @@
-import { Button, ButtonGroup, CircularProgress, Table, TableBody, TableContainer, TableRow } from '@material-ui/core'
+import {Button, ButtonGroup, CircularProgress, Table, TableBody, TableContainer, TableRow} from '@material-ui/core'
 import Card from '@material-ui/core/Card'
-import CardContent from "@material-ui/core/CardContent";
+import CardContent from '@material-ui/core/CardContent'
 import CardHeader from '@material-ui/core/CardHeader'
-import Grid from "@material-ui/core/Grid";
+import Grid from '@material-ui/core/Grid'
 import {createStyles, makeStyles, Theme} from '@material-ui/core/styles'
-import TextField from "@material-ui/core/TextField"
-import { FastForward } from '@material-ui/icons'
+import TextField from '@material-ui/core/TextField'
+import {FastForward} from '@material-ui/icons'
 import {Connection, ConnectionStates, Logger} from '@models/api'
+import {createJitisLocalTracksFromStream} from '@models/utils/jitsiTrack'
 import {dummyConnectionStore as store, StoreProvider, useStore} from '@test-utils/DummyParticipants'
-import { DummyAudio } from '@test-utils/tone'
-import { init as initWorker, resetWorker, worker } from '@test-utils/worker'
+import {DummyAudio} from '@test-utils/tone'
+import {init as initWorker, resetWorker, worker} from '@test-utils/worker'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef, useState} from 'react'
-
 
 export default {
   title: 'Dummy Connection',
@@ -173,7 +173,7 @@ const DummyParticipantVisualizer: React.FC<{}> = () => {
       dummies.map(
         (p: IDummyParticipant, index: number) => {
           if (!p.participantState) {
-            const connection = new Connection(true)
+            const connection = new Connection()
 
             connection.init().then(
               () => {
@@ -240,7 +240,7 @@ const Video: React.FC<IVideoProps> = (props: IVideoProps) => {
 
     logger?.debug('Got stream')
     console.log(stream)
-    props.connection.createJitisLocalTracksFromStream(stream)
+    createJitisLocalTracksFromStream(stream)
       .then((tracks) => {
         props.connection.joinConference(props.conferenceName)
         props.connection.conference.addTracks(tracks)

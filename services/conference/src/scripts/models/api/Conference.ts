@@ -1,71 +1,45 @@
-import {Pose2DMap} from '@models/MapObject'
 import {priorityCalculator} from '@models/middleware/trafficControl'
-import {Information, Mouse, Physics, TrackStates} from '@models/Participant'
-import {SharedContent as ISharedContent} from '@models/SharedContent'
+import {Information, Physics, TrackStates} from '@models/Participant'
 import {participantsStore} from '@stores/participants'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {default as ParticiantsStore} from '@stores/participants/Participants'
-import {jsonToContents} from '@stores/sharedContents/SharedContentCreator'
-import sharedContents, {contentDebug, contentLog} from '@stores/sharedContents/SharedContents'
+import sharedContents from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
-import JitsiMeetJS, {JitisTrackError, JitsiConferenceEvents, JitsiLocalTrack, JitsiRemoteTrack,
+import JitsiMeetJS, {JitisTrackError, JitsiLocalTrack, JitsiRemoteTrack,
   JitsiTrack, JitsiValues, TMediaType} from 'lib-jitsi-meet'
 import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
 import {autorun} from 'mobx'
-import {throttle} from 'throttle-debounce'
 import {ConferenceSync} from './ConferenceSync'
-import {connDebug, connection, connLog, trackLog, TRACKLOG} from './Connection'
+import {connDebug, connLog, trackLog, TRACKLOG} from './Connection'
 
 // config.js
 declare const config:any             //  from ../../config.js included from index.html
 declare const d:any                  //  from index.html
 
+const CONF = JitsiMeetJS.events.conference
 export const ConferenceEvents = {
-  CONFERENCE_JOINED: 'conference_joined',
-  REMOTE_PARTICIPANT_JOINED: 'remote_participant_joined',
-  LOCAL_PARTICIPANT_JOINED: 'local_participant_joined',
+  USER_JOINED: 'joined',
+  USER_LEFT: 'left',
   REMOTE_TRACK_ADDED: 'remote_track_added',
-  LOCAL_TRACK_ADDED: 'local_track_added',
-  REMOTE_TRACK_REMOVED: 'remote_track_removed',
-  LOCAL_TRACK_REMOVED: 'local_track_removed',
-  PARTICIPANT_LEFT: 'participant_left',
+  REMOTE_TRACK_REMOVED: 'remote_track_added',
 }
 
 export const ParticipantProperties = {
-/*  PPROP_POSE: 'pose',
-  PPROP_MOUSE: 'mouse',
-  PPROP_CONTENTS: 'contents',
-  PPROP_CONTENTS_UPDATE: 'contents_update',
-  PPROP_CONTENTS_REMOVE: 'contents_remove', */
   PPROP_INFO: 'info',
   PPROP_PHYSICS: 'physics',
   PPROP_TRACK_LIMITS: 'trackLimits',
   PPROP_TRACK_STATES: 'trackStates',
 }
 
-//  Utility
-function removePerceptibility(cs: ISharedContent[]):any {
-  const rv = []
-  for (const c of cs) {
-    const cc:any = Object.assign({}, c)
-    delete cc.perceptibility
-    rv.push(cc)
-  }
-
-  return rv
-}
 
 export class Conference extends EventEmitter {
   public _jitsiConference?: JitsiMeetJS.JitsiConference
-  private _isForTest?: boolean
   public localId = ''
   sync = new ConferenceSync(this)
 
-  public init(jc: JitsiMeetJS.JitsiConference, isForTest: boolean) {
-    this.registerEventHandlers()
+  public init(jc: JitsiMeetJS.JitsiConference) {
     this._jitsiConference = jc
-    this._isForTest = isForTest
-    this.registerJistiConferenceEvents(this._jitsiConference)
+    this.registerJistiConferenceEvents()
     this.sync.bind()
     this._jitsiConference.join('')
     this._jitsiConference.setSenderVideoConstraint(1080)
@@ -75,36 +49,6 @@ export class Conference extends EventEmitter {
     d.jc = this._jitsiConference
   }
 
-  //  Commmands for shared contents --------------------------------------------
-/*
-  public sendSharedContents(cs: ISharedContent[]) {
-    const ccs = removePerceptibility(cs)
-    contentLog('send contents: ', ccs)
-    this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_CONTENTS, JSON.stringify(ccs))
-  }
-  public sendSharedContentsUpdateRequest(cs: ISharedContent[]) {
-    const ccs = removePerceptibility(cs)
-    contentLog('send contents update request: ', ccs)
-    this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_CONTENTS_UPDATE, JSON.stringify(ccs))
-  }
-  public sendSharedContentsRemoveRequest(ids: string[]) {
-    contentLog('send contents remove request: ', ids)
-    this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_CONTENTS_REMOVE, JSON.stringify(ids))
-  }
-  public getSharedContents(pid: string): ISharedContent[] {
-    const participant = this._jitsiConference?.getParticipantById(pid)
-    if (participant) {
-      const str = participant.getProperty(ParticipantProperties.PPROP_CONTENTS)
-      if (str && str.length > 0) {
-        const cs = jsonToContents(str)
-
-        return cs
-      }
-    }
-
-    return []
-  }
-*/
   //  Commmands for local tracks --------------------------------------------
   private localMicTrack?: JitsiLocalTrack
   private localCameraTrack?: JitsiLocalTrack
@@ -248,239 +192,112 @@ export class Conference extends EventEmitter {
     this._jitsiConference?.sendMessage(msg, to, jc?.rtc?._channel?.isOpen() ? true : false)
   }
 
-  //  event handlers
-  /**
-   * Bind lib-jitsi-meet events to party events.
-   * @param conference Conference instance of JitsiMeet
-   */
-  private registerJistiConferenceEvents(conference: JitsiMeetJS.JitsiConference) {
-    const logField = 'JistiEvent'
+  //  register event handlers
+  private registerJistiConferenceEvents() {
+    if (!this._jitsiConference) {
+      console.error('Dose not connected to conference yet.')
 
-    conference.on(JitsiMeetJS.events.conference.ENDPOINT_MESSAGE_RECEIVED,
-                  (participant:JitsiParticipant, msg:any) => {
+      return
+    }
+    this._jitsiConference.on(CONF.ENDPOINT_MESSAGE_RECEIVED, (participant:JitsiParticipant, msg:any) => {
       //  console.log(`ENDPOINT_MESSAGE_RECEIVED from ${participant.getId()}`, msg)
-                    if (msg.values) {
-                      this.emit(msg.type, participant.getId(), msg.values)
-                    }else {
-                      this.emit(msg.type, participant.getId(), msg.value)
-                    }
-                  })
+      if (msg.values) {
+        this.emit(msg.type, participant.getId(), msg.values)
+      }else {
+        this.emit(msg.type, participant.getId(), msg.value)
+      }
+    })
 
-    /**
-     * Event: JitsiMeetJS.events.conference.CONFERENCE_JOINED
-     * @emits ConnectionEvents.LOCAL_PARTICIPANT_JOINED
-     */
-    conference.on(
-      JitsiMeetJS.events.conference.CONFERENCE_JOINED,
-      () => {
-        connLog('Joined a conference room.', logField)
-        this.emit(ConferenceEvents.LOCAL_PARTICIPANT_JOINED)
-      },
-    )
-    /**
-     * Event: JitsiMeetJS.events.conference.USER_JOINED
-     * @emits ConferenceEvents.REMOTE_PARTICIPANT_JOINED
-     */
-    conference.on(
-      JitsiMeetJS.events.conference.USER_JOINED,
-      (id: string, user: JitsiParticipant) => {
-        connLog(`New participant[${id}] joined.`, logField)
-        this.emit(
-          ConferenceEvents.REMOTE_PARTICIPANT_JOINED,
-          id,
-          {jitsiInstance: user, isLocal: false},
-        )
-      },
-    )
-    /**
-     * Event: JitsiMeetJS.events.conference.USER_LEFT
-     * @emits ConferenceEvents.USER_LEFT
-     */
-    conference.on(
-      JitsiMeetJS.events.conference.USER_LEFT,
-      (id: string, user: JitsiParticipant) => {
-        connLog('A participant left.', logField)
-        this.emit(
-          ConferenceEvents.PARTICIPANT_LEFT,
-          id,
-        )
-      },
-    )
-    /**
-     * Event: JitsiMeetJS.events.conference.TRACK_ADDED
-     * @emits ConferenceEvents.LOCAL_TRACK_ADDED
-     * @emits ConferenceEvents.REMOTE_TRACK_ADDED
-     */
-    conference.on(
-      JitsiMeetJS.events.conference.TRACK_ADDED,
-      (track: JitsiTrack) => {
-        trackLog(`TRACK_ADDED: ${track} type:${track.getType()} usage:${track.getUsageLabel()} tid:${track.getId()} msid:${track.getOriginalStream().id}`)
+    this._jitsiConference.on(CONF.CONFERENCE_JOINED, () => {
+      connLog('Joined to a conference room.')
+      this.onConferenceJoined()
+    })
+    this._jitsiConference.on(CONF.USER_JOINED, (id: string, user: JitsiParticipant) => {
+      connLog(`New participant[${id}] joined.`)
+      this.emit(ConferenceEvents.USER_JOINED, id, user)
+    })
+    this._jitsiConference.on(CONF.USER_LEFT, (id: string, user: JitsiParticipant) => {
+      this.emit(ConferenceEvents.USER_LEFT, id, user)
+      connLog('A participant left.')
+    })
+    this._jitsiConference.on(CONF.TRACK_ADDED, (track: JitsiTrack) => {
+      trackLog(`TRACK_ADDED: ${track} type:${track.getType()} usage:${track.getUsageLabel()} tid:${track.getId()} msid:${track.getOriginalStream().id}`)
+      if (track.isLocal()) {
+        this.onLocalTrackAdded(track as JitsiLocalTrack)
+      }else {
+        this.emit(ConferenceEvents.REMOTE_TRACK_ADDED, track)
+        this.onRemoteTrackAdded(track as JitsiRemoteTrack)
+      }
+    })
 
-        if (track.isLocal()) {
-          this.emit(
-            ConferenceEvents.LOCAL_TRACK_ADDED,
-            track as JitsiLocalTrack,
-          )
-        } else {
-          if ((track as JitsiRemoteTrack).isP2P) {
-            //  this._loggerHandler?.log(
-            //    `P2P Remote PID: ${(<JitsiRemoteTrack>track).getParticipantId()}`, 'TRACK_ADDED')
-            this.emit(
-              ConferenceEvents.REMOTE_TRACK_ADDED,
-              track as JitsiRemoteTrack,
-            )
-          }else {
-            //  this._loggerHandler?.log(
-            //    `JVB Remote PID: ${(<JitsiRemoteTrack>track).getParticipantId()}`, 'TRACK_ADDED')
-            this.emit(
-              ConferenceEvents.REMOTE_TRACK_ADDED,
-              track as JitsiRemoteTrack,
-            )
-            this.reduceBitrate()
+    this._jitsiConference.on(JitsiMeetJS.events.conference.TRACK_REMOVED, (track: JitsiTrack) => {
+      trackLog(`TRACK_REMOVED: ${track} type:${track.getType()} ${track.getUsageLabel()} tid:${track.getId()} msid:${track.getOriginalStream().id}`)
+      if (track.isLocal()) {
+        this.onLocalTrackRemoved(track as JitsiLocalTrack)
+      }else {
+        this.emit(ConferenceEvents.REMOTE_TRACK_REMOVED, track)
+        this.onRemoteTrackRemoved(track as JitsiRemoteTrack)
+      }
+    })
+    this._jitsiConference.on(CONF.REMOTE_TRACK_VIDEOTYPE_CHANGING, (track: JitsiRemoteTrack, newType: string) => {
+      this.onRemoteTrackRemoved(track)
+    })
+    this._jitsiConference.on(CONF.REMOTE_TRACK_VIDEOTYPE_CHANGED, (track: JitsiRemoteTrack, oldType: string) => {
+      this.onRemoteTrackAdded(track)
+    })
+    this._jitsiConference.on(CONF.TRACK_MUTE_CHANGED, (track: JitsiTrack) => {
+      trackLog(`TRACK_MUTE_CHANGED on ${track}.`)
+      if (track.isLocal()) { return }
+      const remoteTrack = track as JitsiRemoteTrack
+      const target = ParticiantsStore.find(remoteTrack.getParticipantId())
+      if (target && remoteTrack.isVideoTrack() && !remoteTrack.isScreenSharing()) {
+        target.plugins.streamControl.muteVideo = remoteTrack.isMuted()
+      }
+    })
+    this._jitsiConference.on(CONF.PARTICIPANT_PROPERTY_CHANGED, (participant: JitsiParticipant, name: string, oldValue: string, value: string) => {
+      connDebug('Participant property has changed.')
+
+      // Change store
+      const local = ParticiantsStore.local
+      if (name === ParticipantProperties.PPROP_INFO) {
+        const id = participant.getId()
+        if (id !== local.id) {
+          const target = ParticiantsStore.find(id)
+          const info: Information = JSON.parse(value)
+          if (target) {
+            Object.assign(target.information, info)
           }
         }
-      },
-    )
-
-    /**
-     * Event: JitsiMeetJS.events.conference.TRACK_REMOVED
-     * @emits ConferenceEvents.LOCAL_TRACK_REMOVED
-     * @emits ConferenceEvents.REMOTE_TRACK_REMOVED
-     */
-    conference.on(
-      JitsiMeetJS.events.conference.TRACK_REMOVED,
-      (track: JitsiTrack) => {
-        trackLog(`TRACK_REMOVED: ${track} type:${track.getType()} ${track.getUsageLabel()} tid:${track.getId()} msid:${track.getOriginalStream().id}`)
-
-        if (track.isLocal()) {
-          this.emit(
-            ConferenceEvents.LOCAL_TRACK_REMOVED,
-            track as JitsiLocalTrack,
-          )
-        } else {
-          if ((track as JitsiRemoteTrack).isP2P) {
-            //  this._loggerHandler?.log(
-            //    `P2P Remote participant ID: ${(<JitsiRemoteTrack>track).getParticipantId()}`, 'TRACK_REMOVED')
-            this.emit(
-              ConferenceEvents.REMOTE_TRACK_REMOVED,
-              track as JitsiRemoteTrack,
-            )
-          }else {
-            //  this._loggerHandler?.log(
-            //    `JVB Remote  participant ID: ${(<JitsiRemoteTrack>track).getParticipantId()}`, 'TRACK_REMOVED')
-            this.emit(
-              ConferenceEvents.REMOTE_TRACK_REMOVED,
-              track as JitsiRemoteTrack,
-            )
+      }else if (name === ParticipantProperties.PPROP_TRACK_STATES) {
+        const id = participant.getId()
+        if (id !== local.id) {
+          const target = ParticiantsStore.remote.get(id)
+          const trackStates: TrackStates = JSON.parse(value)
+          if (target) {
+            Object.assign(target.trackStates, trackStates)
           }
         }
-      },
-    )
-
-    /**
-     * Event: JitsiMeetJS.events.conference.TRACK_VIDEOTYPE_CHANGED
-     */
-    conference.on(
-      JitsiMeetJS.events.conference.REMOTE_TRACK_VIDEOTYPE_CHANGING,
-      (track: JitsiRemoteTrack, newType: string) => {
-        this.onRemoteTrackRemoved(track)
-      })
-    conference.on(
-      JitsiMeetJS.events.conference.REMOTE_TRACK_VIDEOTYPE_CHANGED,
-      (track: JitsiRemoteTrack, oldType: string) => {
-        this.onRemoteTrackAdded(track)
-      })
-
-
-    /**
-     * Event: JitsiMeetJS.events.conference.TRACK_MUTE_CHANGED
-     * @emits ConferenceEvents.TRACK_MUTE_CHANGED
-     */
-    conference.on(
-      JitsiMeetJS.events.conference.TRACK_MUTE_CHANGED,
-      (track: JitsiTrack) => {
-        trackLog(`TRACK_MUTE_CHANGED on ${track}.`)
-        if (track.isLocal()) { return }
-        const remoteTrack = track as JitsiRemoteTrack
-        const target = ParticiantsStore.find(remoteTrack.getParticipantId())
-        if (target && remoteTrack.isVideoTrack() && !remoteTrack.isScreenSharing()) {
-          target.plugins.streamControl.muteVideo = remoteTrack.isMuted()
+      }else if (name === ParticipantProperties.PPROP_PHYSICS) {
+        const id = participant.getId()
+        if (id !== local.id) {
+          const target = ParticiantsStore.find(id)
+          const physics: Physics = JSON.parse(value)
+          if (target) {
+            Object.assign(target.physics, physics)
+          }
         }
-      },
-    )
-
-    conference.on(
-      JitsiMeetJS.events.conference.PARTICIPANT_PROPERTY_CHANGED,
-      // tslint:disable-next-line: cyclomatic-complexity
-      (participant: JitsiParticipant, name: string, oldValue: string, value: string) => {
-        connDebug('Participant property has changed.')
-
-        // Change store
+      }else if (name === ParticipantProperties.PPROP_TRACK_LIMITS) {
         const local = ParticiantsStore.local
-        if (name === ParticipantProperties.PPROP_INFO) {
-          const id = participant.getId()
-          if (id !== local.id) {
-            const target = ParticiantsStore.find(id)
-            const info: Information = JSON.parse(value)
-            if (target) {
-              Object.assign(target.information, info)
-            }
-          }
-        }else if (name === ParticipantProperties.PPROP_TRACK_STATES) {
-          const id = participant.getId()
-          if (id !== local.id) {
-            const target = ParticiantsStore.remote.get(id)
-            const trackStates: TrackStates = JSON.parse(value)
-            if (target) {
-              Object.assign(target.trackStates, trackStates)
-            }
-          }
-        }else if (name === ParticipantProperties.PPROP_PHYSICS) {
-          const id = participant.getId()
-          if (id !== local.id) {
-            const target = ParticiantsStore.find(id)
-            const physics: Physics = JSON.parse(value)
-            if (target) {
-              Object.assign(target.physics, physics)
-            }
-          }
+        if (participant.getId() !== local.id) {
+          const limits = JSON.parse(value) as string[]
+          //  console.log(`PPROP_TRACK_LIMITS of ${limits} received.`)
+          local.remoteVideoLimit = limits[0]
+          local.remoteAudioLimit = limits[1]
         }
-/*        else if (name === ParticipantProperties.PPROP_CONTENTS) {
-          if (participant.getId() !== local.id) {
-            contentLog(`Jitsi: content of ${participant.getId()} is updated.`)
-            const contentsAsArray = jsonToContents(value)
-            contentDebug(' updated to ', contentsAsArray)
-            sharedContents.replaceRemoteContents(participant.getId(), contentsAsArray)
-          }
-        }else if (name === ParticipantProperties.PPROP_CONTENTS_UPDATE) {
-          const local = ParticiantsStore.local
-          contentLog(`Jitsi: update request of ${participant.getId()} is updated.`)
-          if (participant.getId() !== local.id) {
-            const update = jsonToContents(value)
-            contentDebug(' update by ', update)
-            sharedContents.updateContents(update)
-          }
-        }else if (name === ParticipantProperties.PPROP_CONTENTS_REMOVE) {
-          const local = ParticiantsStore.local
-          if (participant.getId() !== local.id) {
-            contentLog(`Jitsi: remove request of ${participant.getId()} is updated.`)
-            const removes = JSON.parse(value) as string[]
-            sharedContents.removeContents(local.id, removes)
-          }
-        }*/
-        else if (name === ParticipantProperties.PPROP_TRACK_LIMITS) {
-          const local = ParticiantsStore.local
-          if (participant.getId() !== local.id) {
-            const limits = JSON.parse(value) as string[]
-            //  console.log(`PPROP_TRACK_LIMITS of ${limits} received.`)
-            local.remoteVideoLimit = limits[0]
-            local.remoteAudioLimit = limits[1]
-          }
-        }
-      },
-    )
+      }
+    })
 
-    conference.on(JitsiMeetJS.events.conference.TRACK_AUDIO_LEVEL_CHANGED, (id:string, level:number) => {
+    this._jitsiConference.on(JitsiMeetJS.events.conference.TRACK_AUDIO_LEVEL_CHANGED, (id:string, level:number) => {
       //  console.debug(`Audio level of ${id} changed to ${level}.`)
       let participant = participantsStore.find(id)
       if (!participant) {
@@ -494,112 +311,15 @@ export class Conference extends EventEmitter {
     })
   }
 
-  //  Register event handeler for Conference (not JitsiConference, routed by above) events.
-  private registerEventHandlers() {
-    // Conference events
-    this.on(
-      ConferenceEvents.CONFERENCE_JOINED,
-      this.onConferenceJoined.bind(this),
-    )
-    this.on(
-      ConferenceEvents.LOCAL_PARTICIPANT_JOINED,
-      this.onLocalParticipantJoined.bind(this),
-    )
-    this.on(
-      ConferenceEvents.REMOTE_PARTICIPANT_JOINED,
-      this.onRemoteParticipantJoined.bind(this),
-    )
-    this.on(
-      ConferenceEvents.LOCAL_TRACK_ADDED,
-      this.onLocalTrackAdded.bind(this),
-    )
-    this.on(
-      ConferenceEvents.LOCAL_TRACK_REMOVED,
-      this.onLocalTrackRemoved.bind(this),
-    )
-    this.on(
-      ConferenceEvents.REMOTE_TRACK_ADDED,
-      this.onRemoteTrackAdded.bind(this),
-    )
-    this.on(
-      ConferenceEvents.REMOTE_TRACK_REMOVED,
-      this.onRemoteTrackRemoved.bind(this),
-    )
-  }
-
   private onConferenceJoined() {
-    connLog('Party: Joined conference room.')
-  }
-  private onLocalParticipantJoined() {
-    if (!this._isForTest) {
-      connLog('Party: Local Participant Joined.')
-      this.localId = this._jitsiConference!.myUserId()
-      ParticiantsStore.setLocalId(this.localId)
+    this.localId = this._jitsiConference!.myUserId()
+    ParticiantsStore.setLocalId(this.localId)
 
-      this.bindStore(ParticiantsStore.local)
+    this.bindStore(ParticiantsStore.local)
 
-      if (true) {  //  create mic then camera
-        for (const type of ['audio', 'video']) {
-          JitsiMeetJS.createLocalTracks({devices: [type], constraints: config.rtc.videoConstraints}).then(
-            (tracks) => {
-              tracks.forEach((track) => {
-                const did = track.getTrack().getSettings().deviceId || ''
-                if (track.getType() === 'audio') {
-                  this.setLocalMicTrack(track)
-                  ParticiantsStore.local.devicePreference.audioInputDevice = did
-                }else if (track.getType() === 'video') {
-                  // console.log('Video track created:', JSON.stringify(track))
-                  this.setLocalCameraTrack(track)
-                  ParticiantsStore.local.devicePreference.videoInputDevice = did
-                }
-              })
-              if (type === 'audio') {
-                ParticiantsStore.local.devicePreference.audioOutputDevice
-                  = JitsiMeetJS.mediaDevices.getAudioOutputDevice()
-              }
-            },
-          ).catch((reason:JitisTrackError) => {
-            console.warn(`${reason.name}:${reason.message}. Retry getUserMedia() without constraint`)
-            if (reason.name !== 'gum.permission_denied') {
-              JitsiMeetJS.createLocalTracks({devices: [type]}).then(
-                (tracks) => {
-                  tracks.forEach((track) => {
-                    const did = track.getTrack().getSettings().deviceId || ''
-                    if (track.getType() === 'audio') {
-                      ParticiantsStore.local.devicePreference.audioInputDevice = did
-                      this.setLocalMicTrack(track)
-                    }else if (track.getType() === 'video') {
-                      // console.log('Video track created:', JSON.stringify(track))
-                      ParticiantsStore.local.devicePreference.videoInputDevice = did
-                      this.setLocalCameraTrack(track)
-                    }
-                  })
-                  ParticiantsStore.local.devicePreference.audioOutputDevice
-                  = JitsiMeetJS.mediaDevices.getAudioOutputDevice()
-                },
-              ). catch((reason:JitisTrackError) => {
-                console.error(`${reason.name}:${reason.message}. getUserMedia() failed again`)
-              })
-            }
-          })
-        }
-        /** unified plan test. start from 3 tracks
-        const canvas = document.createElement('canvas')
-        canvas.width = canvas.height = 1
-        canvas.getContext('2d')
-        const vStream = (canvas as any).captureStream()
-        connection.createJitisLocalTracksFromStream(vStream).then(
-          (tracks) => {
-            tracks.forEach((track) => {
-              this._jitsiConference?.addTrack(track)
-            })
-          },
-        )
-        */
-
-      } else {
-        //  create mic and camera tracks
-        JitsiMeetJS.createLocalTracks({devices: ['audio', 'video'], constraints: config.rtc.videoConstraints}).then(
+    if (true) {  //  create mic then camera
+      for (const type of ['audio', 'video']) {
+        JitsiMeetJS.createLocalTracks({devices: [type], constraints: config.rtc.videoConstraints}).then(
           (tracks) => {
             tracks.forEach((track) => {
               const did = track.getTrack().getSettings().deviceId || ''
@@ -612,13 +332,15 @@ export class Conference extends EventEmitter {
                 ParticiantsStore.local.devicePreference.videoInputDevice = did
               }
             })
-            ParticiantsStore.local.devicePreference.audioOutputDevice
-            = JitsiMeetJS.mediaDevices.getAudioOutputDevice()
+            if (type === 'audio') {
+              ParticiantsStore.local.devicePreference.audioOutputDevice
+                = JitsiMeetJS.mediaDevices.getAudioOutputDevice()
+            }
           },
-        ). catch((reason:JitisTrackError) => {
+        ).catch((reason:JitisTrackError) => {
           console.warn(`${reason.name}:${reason.message}. Retry getUserMedia() without constraint`)
           if (reason.name !== 'gum.permission_denied') {
-            JitsiMeetJS.createLocalTracks({devices: ['audio', 'video']}).then(
+            JitsiMeetJS.createLocalTracks({devices: [type]}).then(
               (tracks) => {
                 tracks.forEach((track) => {
                   const did = track.getTrack().getSettings().deviceId || ''
@@ -637,47 +359,76 @@ export class Conference extends EventEmitter {
             ). catch((reason:JitisTrackError) => {
               console.error(`${reason.name}:${reason.message}. getUserMedia() failed again`)
             })
-          }else {
-            console.warn(`${reason.name}:${reason.message}. Retry getUserMedia() without video`)
-            JitsiMeetJS.createLocalTracks({devices: ['audio']}).then(
-              (tracks) => {
-                tracks.forEach((track) => {
-                  const did = track.getTrack().getSettings().deviceId || ''
-                  if (track.getType() === 'audio') {
-                    ParticiantsStore.local.devicePreference.audioInputDevice = did
-                    this.setLocalMicTrack(track)
-                  }else if (track.getType() === 'video') {
-                    // console.log('Video track created:', JSON.stringify(track))
-                    ParticiantsStore.local.devicePreference.videoInputDevice = did
-                    this.setLocalCameraTrack(track)
-                  }
-                })
-                ParticiantsStore.local.devicePreference.audioOutputDevice
-                = JitsiMeetJS.mediaDevices.getAudioOutputDevice()
-              },
-            ).catch((reason:JitisTrackError) => {
-              console.error(`getUserMedia() failed again: ${reason.name}:${reason.message}`)
-            })
           }
         })
       }
-
+    } else {
+      //  create mic and camera tracks
+      JitsiMeetJS.createLocalTracks({devices: ['audio', 'video'], constraints: config.rtc.videoConstraints}).then(
+        (tracks) => {
+          tracks.forEach((track) => {
+            const did = track.getTrack().getSettings().deviceId || ''
+            if (track.getType() === 'audio') {
+              this.setLocalMicTrack(track)
+              ParticiantsStore.local.devicePreference.audioInputDevice = did
+            }else if (track.getType() === 'video') {
+              // console.log('Video track created:', JSON.stringify(track))
+              this.setLocalCameraTrack(track)
+              ParticiantsStore.local.devicePreference.videoInputDevice = did
+            }
+          })
+          ParticiantsStore.local.devicePreference.audioOutputDevice
+          = JitsiMeetJS.mediaDevices.getAudioOutputDevice()
+        },
+      ). catch((reason:JitisTrackError) => {
+        console.warn(`${reason.name}:${reason.message}. Retry getUserMedia() without constraint`)
+        if (reason.name !== 'gum.permission_denied') {
+          JitsiMeetJS.createLocalTracks({devices: ['audio', 'video']}).then(
+            (tracks) => {
+              tracks.forEach((track) => {
+                const did = track.getTrack().getSettings().deviceId || ''
+                if (track.getType() === 'audio') {
+                  ParticiantsStore.local.devicePreference.audioInputDevice = did
+                  this.setLocalMicTrack(track)
+                }else if (track.getType() === 'video') {
+                  // console.log('Video track created:', JSON.stringify(track))
+                  ParticiantsStore.local.devicePreference.videoInputDevice = did
+                  this.setLocalCameraTrack(track)
+                }
+              })
+              ParticiantsStore.local.devicePreference.audioOutputDevice
+              = JitsiMeetJS.mediaDevices.getAudioOutputDevice()
+            },
+          ). catch((reason:JitisTrackError) => {
+            console.error(`${reason.name}:${reason.message}. getUserMedia() failed again`)
+          })
+        }else {
+          console.warn(`${reason.name}:${reason.message}. Retry getUserMedia() without video`)
+          JitsiMeetJS.createLocalTracks({devices: ['audio']}).then(
+            (tracks) => {
+              tracks.forEach((track) => {
+                const did = track.getTrack().getSettings().deviceId || ''
+                if (track.getType() === 'audio') {
+                  ParticiantsStore.local.devicePreference.audioInputDevice = did
+                  this.setLocalMicTrack(track)
+                }else if (track.getType() === 'video') {
+                  // console.log('Video track created:', JSON.stringify(track))
+                  ParticiantsStore.local.devicePreference.videoInputDevice = did
+                  this.setLocalCameraTrack(track)
+                }
+              })
+              ParticiantsStore.local.devicePreference.audioOutputDevice
+              = JitsiMeetJS.mediaDevices.getAudioOutputDevice()
+            },
+          ).catch((reason:JitisTrackError) => {
+            console.error(`getUserMedia() failed again: ${reason.name}:${reason.message}`)
+          })
+        }
+      })
     }
-  }
-
-  private onRemoteParticipantJoined(id: string, participant: {jitsiInstance: JitsiParticipant, isLocal: false}) {
-    if (this._isForTest) {
-      return
-    }
-    // this.participants.set(id, participant)
-    ParticiantsStore.join(id)
   }
 
   private onRemoteTrackAdded(track: JitsiRemoteTrack) {
-    if (this._isForTest) {
-      return
-    }
-
     //  update priorty for setPerceptible message.
     priorityCalculator.onRemoteTrackAdded(track)
 
@@ -721,9 +472,6 @@ export class Conference extends EventEmitter {
   }
 
   private onLocalTrackAdded(track: JitsiLocalTrack) {
-    if (this._isForTest) {
-      return
-    }
     const local = ParticiantsStore.local
     if (!track.isScreenSharing()) { //  mic and camera
       if (track.isAudioTrack()) {
