@@ -52,20 +52,32 @@ export class Conference extends EventEmitter {
   private localMicTrack?: JitsiLocalTrack
   private localCameraTrack?: JitsiLocalTrack
   public setLocalMicTrack(track: JitsiLocalTrack) {
-    if (this.localMicTrack) {
-      this._jitsiConference?.removeTrack(this.localMicTrack)
+    function doSetLocalMicTrack(conf:Conference, track:JitsiLocalTrack) {
+      conf.localMicTrack = track
+      conf.localMicTrack.videoType = 'mic'
+      conf._jitsiConference?.addTrack(conf.localMicTrack)
     }
-    this.localMicTrack = track
-    this.localMicTrack.videoType = 'mic'
-    this._jitsiConference?.addTrack(this.localMicTrack)
+    if (this.localMicTrack) {
+      this._jitsiConference?.removeTrack(this.localMicTrack).then(() => {
+        doSetLocalMicTrack(this, track)
+      })
+    }else {
+      doSetLocalMicTrack(this, track)
+    }
   }
   public setLocalCameraTrack(track: JitsiLocalTrack) {
-    if (this.localCameraTrack) {
-      this._jitsiConference?.removeTrack(this.localCameraTrack)
+    function doSetLocalCameraTrack(conf:Conference, track:JitsiLocalTrack) {
+      conf.localCameraTrack = track
+      conf.localCameraTrack.videoType = 'camera'
+      conf._jitsiConference?.addTrack(conf.localCameraTrack)
     }
-    this.localCameraTrack = track
-    this.localCameraTrack.videoType = 'camera'
-    this._jitsiConference?.addTrack(this.localCameraTrack)
+    if (this.localCameraTrack) {
+      this._jitsiConference?.removeTrack(this.localCameraTrack).then(() => {
+        doSetLocalCameraTrack(this, track)
+      })
+    }else {
+      doSetLocalCameraTrack(this, track)
+    }
   }
   public getLocalMicTrack() {
     return this.localMicTrack
@@ -231,7 +243,7 @@ export class Conference extends EventEmitter {
       if (track.isLocal()) { return }
       const remoteTrack = track as JitsiRemoteTrack
       const target = participants.find(remoteTrack.getParticipantId())
-      if (target && remoteTrack.isVideoTrack() && !remoteTrack.isScreenSharing()) {
+      if (target && remoteTrack.isVideoTrack()) {
         target.plugins.streamControl.muteVideo = remoteTrack.isMuted()
       }
     })
@@ -412,25 +424,21 @@ export class Conference extends EventEmitter {
 
   private onLocalTrackAdded(track: JitsiLocalTrack) {
     const local = participants.local
-    if (!track.isScreenSharing()) { //  mic and camera
-      if (track.isAudioTrack()) {
-        if (local.plugins.streamControl.muteAudio) { track.mute() }
-        else { track.unmute() }
-        local.tracks.audio = track
-      } else {
-        local.tracks.avatar = track
-        if (local.plugins.streamControl.muteVideo) { this.removeTrack(track) }
-      }
+    if (track.isAudioTrack()) {
+      if (local.plugins.streamControl.muteAudio) { track.mute() }
+      else { track.unmute() }
+      local.tracks.audio = track
+    } else {
+      local.tracks.avatar = track
+      if (local.plugins.streamControl.muteVideo) { this.removeTrack(track) }
     }
   }
   private onLocalTrackRemoved(track: JitsiLocalTrack) {
     const local = participants.local
-    if (!track.isScreenSharing()) { //  mic and camera
-      if (track.isAudioTrack()) {
-        local.tracks.audio = undefined
-      } else {
-        local.tracks.avatar = undefined
-      }
+    if (track.isAudioTrack()) {
+      local.tracks.audio = undefined
+    } else {
+      local.tracks.avatar = undefined
     }
   }
   public getLocalTracks(track ?: TMediaType):JitsiLocalTrack[] {

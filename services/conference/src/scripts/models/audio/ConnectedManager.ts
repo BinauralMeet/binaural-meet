@@ -2,7 +2,7 @@ import {RemoteParticipant} from '@models/Participant'
 import {diffMap} from '@models/utils'
 import participants from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
-import { JitsiRemoteTrack } from 'lib-jitsi-meet'
+import {JitsiRemoteTrack} from 'lib-jitsi-meet'
 import {autorun, reaction} from 'mobx'
 import {ConnectedGroup} from './ConnectedGroup'
 import {StereoManager} from './StereoManager'
@@ -70,14 +70,14 @@ export class ConnectedManager {
   private removeContent = (tracks: Set<JitsiRemoteTrack>) => {
     const audioTrack = Array.from(tracks.values()).find(track => track.getType() === 'audio')
 
-    if (audioTrack){
-      const id = audioTrack.getContentId()
-      if (id){
-        this.connectedGroups[id].dispose()
-        delete this.connectedGroups[id]
+    if (audioTrack) {
+      const carrierId = audioTrack.getParticipantId()
+      if (carrierId) {
+        this.connectedGroups[carrierId].dispose()
+        delete this.connectedGroups[carrierId]
 
-        this.manager.removeSpeaker(id)
-      }else{
+        this.manager.removeSpeaker(carrierId)
+      }else {
         console.error('removeContent: track does not have content id.', audioTrack)
       }
     }
@@ -85,12 +85,12 @@ export class ConnectedManager {
 
   private addContent = (tracks: Set<JitsiRemoteTrack>) => {
     const audioTrack = Array.from(tracks.values()).find(track => track.getType() === 'audio')
-    if (audioTrack){
-      const id = audioTrack.getContentId()
-      if (id){
-        const group = this.manager.addSpeaker(id)
-        this.connectedGroups[id] = new ConnectedGroup(participants.local_, undefined, audioTrack, group)
-      }else{
+    if (audioTrack) {
+      const carrierId = audioTrack.getParticipantId()
+      if (carrierId) {
+        const group = this.manager.addSpeaker(carrierId)
+        this.connectedGroups[carrierId] = new ConnectedGroup(participants.local_, undefined, audioTrack, group)
+      }else {
         console.error('addContent: track does not have content id.', audioTrack)
       }
     }

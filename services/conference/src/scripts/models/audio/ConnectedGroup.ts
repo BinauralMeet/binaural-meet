@@ -30,7 +30,8 @@ export class ConnectedGroup {
 
   constructor(local: IObservableValue<LocalParticipant>, remote: RemoteParticipant|undefined,
               contentTrack: JitsiRemoteTrack|undefined, group: NodeGroup) {
-    const cid = contentTrack?.getContentId()
+    const carrierId = contentTrack?.getParticipantId()
+    const cid = carrierId && contents.tracks.carrierMap.get(carrierId)
     const content = cid ? contents.find(cid) : undefined
     this.disposers.push(autorun(
       () => {

@@ -56,12 +56,18 @@ export class SharedContentTracks {
     }
   }
   public removeRemoteTrack(track: JitsiRemoteTrack) {
-    const pid = track.getParticipantId()
-    const cid = this.carrierMap.get(pid)
-    if (cid) {
+    const carrierId = track.getParticipantId()
+    const cid = this.carrierMap.get(carrierId)
+    if (cid === CID_MAINSCREEN) {
+      this.removeRemoteMain(track)
+    }else if (cid) {
       this.removeRemoteContent(track)
     }else {
-      this.removeRemoteMain(track)
+      const tracks = this.remoteTrackPool.get(track.getParticipantId())
+      tracks?.delete(track)
+      if (tracks?.size === 0) {
+        this.remoteTrackPool.delete(track.getParticipantId())
+      }
     }
   }
   public onMainScreenCarrier(carrierId: string, enable: boolean) {
@@ -167,6 +173,7 @@ export class SharedContentTracks {
     this.remoteMains.get(track.getParticipantId())?.delete(track)
     if (this.remoteMains.get(track.getParticipantId())?.size === 0) {
       this.remoteMains.delete(track.getParticipantId())
+      this.carrierMap.delete(track.getParticipantId())
     }
   }
 
@@ -231,6 +238,7 @@ export class SharedContentTracks {
       trackSet?.delete(track)
       if (trackSet?.size === 0) {
         this.remoteContents.delete(cid)
+        this.carrierMap.delete(cid)
       }
     }else {
       console.warn(`No cid found for carrier ${track.getParticipantId()} of track ${track.toString()}`)
