@@ -33,7 +33,7 @@ const config: webpack.Configuration = {
     contentBase: 'dist',
     compress: true,
     port: 9000,
-    openPage: `?name=${DEV_CONFERENCE_ID}`,
+    openPage: `?room=${DEV_CONFERENCE_ID}`,
     host: '0.0.0.0',
   },
   output: {
