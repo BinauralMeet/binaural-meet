@@ -1,6 +1,8 @@
+import {JitsiRemoteTrack} from 'lib-jitsi-meet'
 import {action, computed, observable} from 'mobx'
 import {LocalParticipant} from './LocalParticipant'
 import {RemoteParticipant} from './RemoteParticipant'
+
 export class Participants {
   @observable.shallow readonly remote = new Map<string, RemoteParticipant>()
   local_ = observable.box(new LocalParticipant(''))
@@ -54,6 +56,32 @@ export class Participants {
     const res = this.remote.get(participantId)
 
     return res
+  }
+
+  addRemoteTrack(track: JitsiRemoteTrack):boolean {
+    const remote = this.remote.get(track.getParticipantId())
+    if (!remote) { return false }
+    if (track.isAudioTrack()) {
+      remote.tracks.audio = track
+    } else {
+      remote.tracks.avatar = track
+      track.getTrack().onended = () => { remote.tracks.avatar = undefined }
+      track.getTrack().onmute = () => { remote.tracks.onMuteChanged(track, true) }
+      track.getTrack().onunmute = () => { remote.tracks.onMuteChanged(track, false) }
+    }
+
+    return true
+  }
+  removeRemoteTrack(track: JitsiRemoteTrack):boolean {
+    const remote = this.remote.get(track.getParticipantId())
+    if (!remote) { return false }
+    if (track.isAudioTrack()) {
+      remote.tracks.audio = undefined
+    } else {
+      remote.tracks.avatar = undefined
+    }
+
+    return true
   }
 
   isLocal(participantId: string) {

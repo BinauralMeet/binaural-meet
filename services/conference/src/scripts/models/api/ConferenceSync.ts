@@ -4,8 +4,9 @@ import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {diffMap, diffSet, intersectionMap} from '@models/utils'
 import participants from '@stores/participants/Participants'
 import {makeItContent, makeThemContents} from '@stores/sharedContents/SharedContentCreator'
-import contents, {contentLog as contentLogOrg} from '@stores/sharedContents/SharedContents'
+import contents from '@stores/sharedContents/SharedContents'
 const contentLog = console.log
+import {priorityCalculator} from '@models/middleware/trafficControl'
 import JitsiMeetJS from 'lib-jitsi-meet'
 import _ from 'lodash'
 import {autorun, IReactionDisposer} from 'mobx'
@@ -17,6 +18,7 @@ export const MessageType = {
   PARTICIPANT_POSE: 'participant_pose',
   PARTICIPANT_MOUSE: 'participant_mouse',
   PARTICIPANT_PHYSICS: 'participant_physics',
+  MAIN_SCREEN_CARRIER: 'main_screen_carrier',
   CONTENT_UPDATE_MINE: 'content_update_mine',
   CONTENT_REMOVE_MINE: 'content_remove_mine',
   CONTENT_UPDATE_REQUEST: 'content_update',
@@ -46,18 +48,33 @@ export class ConferenceSync{
   }
   bind() {
     //  participant related -----------------------------------------------------------------------
-    this.conference.addListener(ConferenceEvents.USER_LEFT, (id) => {
+    this.conference.on(ConferenceEvents.USER_LEFT, (id) => {
       participants.leave(id)
     })
-    this.conference.addListener(ConferenceEvents.USER_JOINED, (id) => {
+    this.conference.on(ConferenceEvents.USER_JOINED, (id) => {
       if (this.conference._jitsiConference?.getParticipantById(id).getDisplayName() === contentTrackCarrierName) {
 
       }else {
         participants.join(id)
       }
     })
+    this.conference.on(ConferenceEvents.REMOTE_TRACK_ADDED, (track) => {
+      //  update priorty for setPerceptible message.
+      priorityCalculator.onRemoteTrackAdded(track)
+
+      //  console.log(`onRemoteTrackAdded ${track} videoType:'${track.videoType ? track.videoType : undefined}'.`)
+      if (!participants.addRemoteTrack(track)) {
+        contents.tracks.addRemoteTrack(track)
+      }
+    })
+    this.conference.on(ConferenceEvents.REMOTE_TRACK_REMOVED, (track) => {
+      //  console.log(`onRemoteTrackAdded ${track} videoType:'${track.videoType ? track.videoType : undefined}'.`)
+      if (!participants.removeRemoteTrack(track)) {
+        contents.tracks.removeRemoteTrack(track)
+      }
+    })
     //  pose
-    this.conference.addListener(MessageType.PARTICIPANT_POSE, (from:string, pose:Pose2DMap) => {
+    this.conference.on(MessageType.PARTICIPANT_POSE, (from:string, pose:Pose2DMap) => {
       const remote = participants.remote.get(from)
       if (remote) {
         remote.pose.orientation = pose.orientation
@@ -70,8 +87,8 @@ export class ConferenceSync{
     }
     this.disposers.push(autorun(() => { sendPose('') }))
 
-    // mouse
-    this.conference.addListener(MessageType.PARTICIPANT_MOUSE, (from:string, mouse:Mouse) => {
+        // mouse
+    this.conference.on(MessageType.PARTICIPANT_MOUSE, (from:string, mouse:Mouse) => {
       const remote = participants.remote.get(from)
       if (remote) { Object.assign(remote.mouse, mouse) }
     })
@@ -82,11 +99,15 @@ export class ConferenceSync{
 
 
     // contents related ---------------------------------------------------------------
-    this.conference.addListener(ConferenceEvents.USER_LEFT, (id) => {
+    this.conference.on(ConferenceEvents.USER_LEFT, (id) => {
       contents.onParticipantLeft(id)
     })
+    //  main screen track's carrier id
+    this.conference.on(MessageType.MAIN_SCREEN_CARRIER, (from: string, {carrierId, enable}) => {
+      contents.tracks.onMainScreenCarrier(carrierId, enable)
+    })
     //  my contents
-    this.conference.addListener(MessageType.CONTENT_UPDATE_MINE, (from:string, cs_:ISharedContent[]) => {
+    this.conference.on(MessageType.CONTENT_UPDATE_MINE, (from:string, cs_:ISharedContent[]) => {
       const cs = makeThemContents(cs_)
       contents.updateRemoteContents(cs, from)
       this.contentResponses.add(from)
@@ -104,7 +125,7 @@ export class ConferenceSync{
       }
     }
 
-    this.conference.addListener(MessageType.CONTENT_REMOVE_MINE, (from:string, cids:string[]) => {
+    this.conference.on(MessageType.CONTENT_REMOVE_MINE, (from:string, cids:string[]) => {
       contents.removeRemoteContents(cids, from)
     })
     const sendMyContentsRemoved = (cids: string[]) => {
@@ -131,12 +152,12 @@ export class ConferenceSync{
     }))
 
     //  request
-    this.conference.addListener(MessageType.CONTENT_UPDATE_REQUEST, (from:string, c:ISharedContent) => {
+    this.conference.on(MessageType.CONTENT_UPDATE_REQUEST, (from:string, c:ISharedContent) => {
       const content = makeItContent(c)
       contents.updateByRemoteRequest(content)
     })
 
-    this.conference.addListener(MessageType.CONTENT_REMOVE_REQUEST, (from:string, cid:string) => {
+    this.conference.on(MessageType.CONTENT_REMOVE_REQUEST, (from:string, cid:string) => {
       contents.removeByRemoteRequest(cid)
     })
 
@@ -150,7 +171,7 @@ export class ConferenceSync{
       setTimeout(this.checkResponse.bind(this), 1000)
     })
     const startTime = Date.now()
-    this.conference.addListener(ConferenceEvents.REMOTE_TRACK_ADDED, () => {
+    this.conference.on(ConferenceEvents.REMOTE_TRACK_ADDED, () => {
       if (requestSent) { return }
       if (Date.now() - startTime < 10 * 1000) { return }
       this.conference.sendMessage(MessageType.REQUEST_INFO, '', '')
@@ -158,17 +179,19 @@ export class ConferenceSync{
       requestSent = true
       setTimeout(this.checkResponse.bind(this), 1000)
     })
-    this.conference.addListener(MessageType.REQUEST_INFO, (from:string, none:Object) => {
+    this.conference.on(MessageType.REQUEST_INFO, (from:string, none:Object) => {
       sendPose(from)
       sendMouse(from)
       sendMyContentsUpdated(Array.from(contents.localParticipant.myContents.values()), from)
+      this.sendMainScreenCarrier(from, true)
     })
+
     //  fragmented message
-    this.conference.addListener(MessageType.FRAGMENT_HEAD, (from:string, msg:FragmentedMessageHead) => {
+    this.conference.on(MessageType.FRAGMENT_HEAD, (from:string, msg:FragmentedMessageHead) => {
       this.fragmentedMessageHead = msg
       this.fragmentedMessages = []
     })
-    this.conference.addListener(MessageType.FRAGMENT_CONTENT, (from:string, msg:FragmentedMessage) => {
+    this.conference.on(MessageType.FRAGMENT_CONTENT, (from:string, msg:FragmentedMessage) => {
       this.fragmentedMessages[msg.c] = msg
       if (this.fragmentedMessageHead.length && this.fragmentedMessages.length === this.fragmentedMessageHead.length
         && (this.fragmentedMessages.findIndex(msg => msg === undefined) === -1)) {
@@ -182,6 +205,7 @@ export class ConferenceSync{
       }
     })
   }
+
   clear() {
     this.disposers.forEach(d => d())
   }
@@ -220,6 +244,13 @@ export class ConferenceSync{
   //  Send content remove request to pid
   sendContentRemoveRequest(pid: string, removed: string) {
     this.conference.sendMessage(MessageType.CONTENT_REMOVE_REQUEST, pid, removed)
+  }
+  //  send main screen carrir
+  sendMainScreenCarrier(to: string, enable: boolean) {
+    const carrierId = contents.tracks.localMainConnection?.getParticipantId()
+    if (carrierId) {
+      this.conference.sendMessage(MessageType.MAIN_SCREEN_CARRIER, to, {carrierId, enable})
+    }
   }
 }
 

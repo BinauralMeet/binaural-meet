@@ -17,7 +17,7 @@ import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {assert} from '@models/utils'
 import {createContent, createContentOfVideo} from '@stores/sharedContents/SharedContentCreator'
 import {SharedContents} from '@stores/sharedContents/SharedContents'
-import JitsiMeetJS, {browser, JitsiLocalTrack} from 'lib-jitsi-meet'
+import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'
 import {isArray} from 'lodash'
 import {useObserver} from 'mobx-react-lite'
 import React, {useRef} from 'react'
@@ -25,10 +25,6 @@ import {DialogPageProps} from './DialogPage'
 import {ShareDialogItem} from './SharedDialogItem'
 
 async function startCapture(displayMediaOptions: any = {}) {
-  if (browser.usesUnifiedPlan())  {
-    return []
-  }
-
   let captureTracks = null
 
   try {
@@ -144,15 +140,14 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
         key="shareScreen"
         icon={sharing.main ? <StopScreenShareIcon /> : <ScreenShareIcon />}
         text={
-          browser.usesUnifiedPlan() ? 'Screen as the background not available, please use Chrome.'
-          : sharing.main ? 'Stop background screen' : 'Screen as the background'
+          sharing.main ? 'Stop background screen' : 'Screen as the background'
         }
         onClick={() => {
           if (sharing.main) {
             sharedContents.tracks.clearLocalMains()
           } else {
             startCapture().then((tracks) => {
-              if (tracks.length){
+              if (tracks.length) {
                 sharedContents.tracks.addLocalMains(tracks)
               }
             })
@@ -163,15 +158,14 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
       <ShareDialogItem
         key="shareScreenContent"
         icon={<OpenInBrowserIcon />}
-        text={`Screen in a window${(browser.usesUnifiedPlan() ? ' not available, please use Chrome.' : '')}`}
+        text={'Screen in a window'}
         onClick={() => {
           startCapture().then((tracks) => {
-            if (tracks.length){
+            if (tracks.length) {
               const content = createContentOfVideo(tracks, map)
               sharedContents.shareContent(content)
               assert(content.id)
-              tracks.forEach(track => track.videoType = content.id)
-              sharedContents.tracks.addLocalContents(tracks)
+              sharedContents.tracks.addLocalContents(content.id, tracks)
             }
           })
           setStep('none')

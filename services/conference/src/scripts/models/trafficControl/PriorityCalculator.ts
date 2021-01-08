@@ -164,7 +164,7 @@ export class PriorityCalculator {
         // tslint:disable-next-line: max-line-length
         //  priorityLog(`prioirty ${id} chagned v=${(rp.tracks.avatar as JitsiRemoteTrack)?.getSSRC()} a=${(rp.tracks.audio as JitsiRemoteTrack)?.getSSRC()}`)
         if (tracks.size) {
-          this.updateSet.add(id)
+          this.updateSet.add((tracks.values().next().value as JitsiRemoteTrack).getParticipantId())
         }
       }))
       priorityLog('onAddContent:', id, this.priorityMaps[0])
@@ -214,14 +214,15 @@ export class PriorityCalculator {
     })
     //  list contents
     const contentTracks = Array.from(contents.tracks.remoteContents.values())
-    const contentIds = contentTracks.map((tracks) => {
+    const carrierIds = contentTracks.map((tracks) => {
       const next = tracks.values().next()
 
-      return next.done ? undefined : next.value.getContentId()
+      return next.done ? undefined : next.value.getParticipantId()
     })
-    const recalculateContentsList = contentIds.filter(key => key && (this.updateAll ? true : this.updateSet.has(key)))
-    recalculateContentsList.forEach((id) => {
-      const content = contents.find(id!)
+    const recalculateCarrierList = carrierIds.filter(pid => pid && (this.updateAll ? true : this.updateSet.has(pid)))
+    recalculateCarrierList.forEach((pid) => {
+      const cid = contents.tracks.carrierMap.get(pid!)
+      const content = cid ? contents.find(cid) : undefined
       if (content) {
         const tracks = Array.from(contents.tracks.remoteContents.get(content.id)!)
         const videoAudio = [tracks.find(track => track.isVideoTrack()), tracks.find(track => track.isAudioTrack())]
@@ -234,7 +235,6 @@ export class PriorityCalculator {
         })
       }
     })
-
 
     const prioritizedTrackInfoLists =
       this.priorityMaps.map(priorityMap => Array.from(priorityMap.values()).sort((a, b) => a.priority - b.priority))

@@ -1,6 +1,6 @@
 import {connection} from '@models/api/Connection'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {intersectionMap} from '@models/utils'
+import {assert, intersectionMap} from '@models/utils'
 import {default as participantsStore} from '@stores/participants/Participants'
 import {EventEmitter} from 'events'
 import _ from 'lodash'
@@ -239,6 +239,9 @@ export class SharedContents extends EventEmitter {
         }
       }else {
         this.owner.set(c.id, pid)
+      }
+      if (c.type === 'screen') {
+        this.tracks.onUpdateContent(c)
       }
       participant.myContents.set(c.id, c)
     })

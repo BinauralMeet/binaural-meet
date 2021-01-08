@@ -1,8 +1,7 @@
-import {priorityCalculator} from '@models/middleware/trafficControl'
 import {Information, Physics, TrackStates} from '@models/Participant'
 import {participantsStore} from '@stores/participants'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
-import {default as ParticiantsStore} from '@stores/participants/Participants'
+import {default as participants} from '@stores/participants/Participants'
 import sharedContents from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
 import JitsiMeetJS, {JitisTrackError, JitsiLocalTrack, JitsiRemoteTrack,
@@ -21,7 +20,7 @@ export const ConferenceEvents = {
   USER_JOINED: 'joined',
   USER_LEFT: 'left',
   REMOTE_TRACK_ADDED: 'remote_track_added',
-  REMOTE_TRACK_REMOVED: 'remote_track_added',
+  REMOTE_TRACK_REMOVED: 'remote_track_removed',
 }
 
 export const ParticipantProperties = {
@@ -106,7 +105,7 @@ export class Conference extends EventEmitter {
   //  Send local participant's property
   private sendLocalParticipantInformationDisposer = autorun(
     () => {
-      const info = {...ParticiantsStore.local.information}
+      const info = {...participants.local.information}
       this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_INFO, JSON.stringify(info))
       //  console.log('LocalParticipantInfo sent.', info)
     },
@@ -114,7 +113,7 @@ export class Conference extends EventEmitter {
   //  Send local participant's property
   private sendLocalParticipantTrackStatesDisposer = autorun(
     () => {
-      const trackStates = {...ParticiantsStore.local.trackStates}
+      const trackStates = {...participants.local.trackStates}
       this._jitsiConference?.setLocalParticipantProperty(
         ParticipantProperties.PPROP_TRACK_STATES, JSON.stringify(trackStates))
       //  console.log('LocalParticipantInfo sent.', info)
@@ -122,7 +121,7 @@ export class Conference extends EventEmitter {
   )
   private sendLocalParticipantPhysicsDisposer = autorun(
     () => {
-      const physics = {...ParticiantsStore.local.physics}
+      const physics = {...participants.local.physics}
       this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_PHYSICS, JSON.stringify(physics))
       //  console.log('LocalParticipantPhysics sent.', physics)
     },
@@ -130,28 +129,6 @@ export class Conference extends EventEmitter {
   //  send participant's pose
   private bindStore(local: LocalParticipant) {
     const UPDATE_INTERVAL = 200
-
-/*    const throttledUpdatePose = throttle(UPDATE_INTERVAL, (newPose: Pose2DMap) => {
-      this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_POSE, JSON.stringify(newPose))
-    })
-    const disposer = autorun(
-      () => {
-        const newPose = {
-          position: local.pose.position,
-          orientation: local.pose.orientation,
-        }
-        throttledUpdatePose(newPose)
-      },
-    )
-    //  send mouse position
-    const throttledUpdateMouse = throttle(UPDATE_INTERVAL, (mouse: Mouse) => {
-      this._jitsiConference?.setLocalParticipantProperty(ParticipantProperties.PPROP_MOUSE, JSON.stringify(mouse))
-    })
-    const disposerMouse = autorun(
-      () => {
-        throttledUpdateMouse(Object.assign({}, local.mouse))
-      },
-    )*/
   }
 
 
@@ -171,6 +148,9 @@ export class Conference extends EventEmitter {
           if (sender && sender.track) {
             const params = sender.getParameters()
             // console.log('params:', params)
+            if (params.encodings.length === 0) {
+              params.encodings.push({})
+            }
             params.encodings.forEach((encording) => {
               const ONE_KILO = 1024
               if (sender.track!.kind === 'video' && config.rtc.maxBitrateForVideo) {
@@ -226,43 +206,45 @@ export class Conference extends EventEmitter {
         this.onLocalTrackAdded(track as JitsiLocalTrack)
       }else {
         this.emit(ConferenceEvents.REMOTE_TRACK_ADDED, track)
-        this.onRemoteTrackAdded(track as JitsiRemoteTrack)
+        setTimeout(() => {
+          this.reduceBitrate()
+        },         3000)
       }
     })
 
-    this._jitsiConference.on(JitsiMeetJS.events.conference.TRACK_REMOVED, (track: JitsiTrack) => {
+    this._jitsiConference.on(CONF.TRACK_REMOVED, (track: JitsiTrack) => {
       trackLog(`TRACK_REMOVED: ${track} type:${track.getType()} ${track.getUsageLabel()} tid:${track.getId()} msid:${track.getOriginalStream().id}`)
       if (track.isLocal()) {
         this.onLocalTrackRemoved(track as JitsiLocalTrack)
       }else {
         this.emit(ConferenceEvents.REMOTE_TRACK_REMOVED, track)
-        this.onRemoteTrackRemoved(track as JitsiRemoteTrack)
       }
     })
     this._jitsiConference.on(CONF.REMOTE_TRACK_VIDEOTYPE_CHANGING, (track: JitsiRemoteTrack, newType: string) => {
-      this.onRemoteTrackRemoved(track)
+      participants.removeRemoteTrack(track)
     })
     this._jitsiConference.on(CONF.REMOTE_TRACK_VIDEOTYPE_CHANGED, (track: JitsiRemoteTrack, oldType: string) => {
-      this.onRemoteTrackAdded(track)
+      participants.addRemoteTrack(track)
     })
     this._jitsiConference.on(CONF.TRACK_MUTE_CHANGED, (track: JitsiTrack) => {
       trackLog(`TRACK_MUTE_CHANGED on ${track}.`)
       if (track.isLocal()) { return }
       const remoteTrack = track as JitsiRemoteTrack
-      const target = ParticiantsStore.find(remoteTrack.getParticipantId())
+      const target = participants.find(remoteTrack.getParticipantId())
       if (target && remoteTrack.isVideoTrack() && !remoteTrack.isScreenSharing()) {
         target.plugins.streamControl.muteVideo = remoteTrack.isMuted()
       }
     })
-    this._jitsiConference.on(CONF.PARTICIPANT_PROPERTY_CHANGED, (participant: JitsiParticipant, name: string, oldValue: string, value: string) => {
+    this._jitsiConference.on(
+    CONF.PARTICIPANT_PROPERTY_CHANGED, (participant: JitsiParticipant, name: string, old: string, value: string) => {
       connDebug('Participant property has changed.')
 
-      // Change store
-      const local = ParticiantsStore.local
+        // Change store
+      const local = participants.local
       if (name === ParticipantProperties.PPROP_INFO) {
         const id = participant.getId()
         if (id !== local.id) {
-          const target = ParticiantsStore.find(id)
+          const target = participants.find(id)
           const info: Information = JSON.parse(value)
           if (target) {
             Object.assign(target.information, info)
@@ -271,7 +253,7 @@ export class Conference extends EventEmitter {
       }else if (name === ParticipantProperties.PPROP_TRACK_STATES) {
         const id = participant.getId()
         if (id !== local.id) {
-          const target = ParticiantsStore.remote.get(id)
+          const target = participants.remote.get(id)
           const trackStates: TrackStates = JSON.parse(value)
           if (target) {
             Object.assign(target.trackStates, trackStates)
@@ -280,14 +262,14 @@ export class Conference extends EventEmitter {
       }else if (name === ParticipantProperties.PPROP_PHYSICS) {
         const id = participant.getId()
         if (id !== local.id) {
-          const target = ParticiantsStore.find(id)
+          const target = participants.find(id)
           const physics: Physics = JSON.parse(value)
           if (target) {
             Object.assign(target.physics, physics)
           }
         }
       }else if (name === ParticipantProperties.PPROP_TRACK_LIMITS) {
-        const local = ParticiantsStore.local
+        const local = participants.local
         if (participant.getId() !== local.id) {
           const limits = JSON.parse(value) as string[]
           //  console.log(`PPROP_TRACK_LIMITS of ${limits} received.`)
@@ -313,9 +295,9 @@ export class Conference extends EventEmitter {
 
   private onConferenceJoined() {
     this.localId = this._jitsiConference!.myUserId()
-    ParticiantsStore.setLocalId(this.localId)
+    participants.setLocalId(this.localId)
 
-    this.bindStore(ParticiantsStore.local)
+    this.bindStore(participants.local)
 
     if (true) {  //  create mic then camera
       for (const type of ['audio', 'video']) {
@@ -325,15 +307,15 @@ export class Conference extends EventEmitter {
               const did = track.getTrack().getSettings().deviceId || ''
               if (track.getType() === 'audio') {
                 this.setLocalMicTrack(track)
-                ParticiantsStore.local.devicePreference.audioInputDevice = did
+                participants.local.devicePreference.audioInputDevice = did
               }else if (track.getType() === 'video') {
                 // console.log('Video track created:', JSON.stringify(track))
                 this.setLocalCameraTrack(track)
-                ParticiantsStore.local.devicePreference.videoInputDevice = did
+                participants.local.devicePreference.videoInputDevice = did
               }
             })
             if (type === 'audio') {
-              ParticiantsStore.local.devicePreference.audioOutputDevice
+              participants.local.devicePreference.audioOutputDevice
                 = JitsiMeetJS.mediaDevices.getAudioOutputDevice()
             }
           },
@@ -345,15 +327,15 @@ export class Conference extends EventEmitter {
                 tracks.forEach((track) => {
                   const did = track.getTrack().getSettings().deviceId || ''
                   if (track.getType() === 'audio') {
-                    ParticiantsStore.local.devicePreference.audioInputDevice = did
+                    participants.local.devicePreference.audioInputDevice = did
                     this.setLocalMicTrack(track)
                   }else if (track.getType() === 'video') {
                     // console.log('Video track created:', JSON.stringify(track))
-                    ParticiantsStore.local.devicePreference.videoInputDevice = did
+                    participants.local.devicePreference.videoInputDevice = did
                     this.setLocalCameraTrack(track)
                   }
                 })
-                ParticiantsStore.local.devicePreference.audioOutputDevice
+                participants.local.devicePreference.audioOutputDevice
                 = JitsiMeetJS.mediaDevices.getAudioOutputDevice()
               },
             ). catch((reason:JitisTrackError) => {
@@ -370,14 +352,14 @@ export class Conference extends EventEmitter {
             const did = track.getTrack().getSettings().deviceId || ''
             if (track.getType() === 'audio') {
               this.setLocalMicTrack(track)
-              ParticiantsStore.local.devicePreference.audioInputDevice = did
+              participants.local.devicePreference.audioInputDevice = did
             }else if (track.getType() === 'video') {
               // console.log('Video track created:', JSON.stringify(track))
               this.setLocalCameraTrack(track)
-              ParticiantsStore.local.devicePreference.videoInputDevice = did
+              participants.local.devicePreference.videoInputDevice = did
             }
           })
-          ParticiantsStore.local.devicePreference.audioOutputDevice
+          participants.local.devicePreference.audioOutputDevice
           = JitsiMeetJS.mediaDevices.getAudioOutputDevice()
         },
       ). catch((reason:JitisTrackError) => {
@@ -388,15 +370,15 @@ export class Conference extends EventEmitter {
               tracks.forEach((track) => {
                 const did = track.getTrack().getSettings().deviceId || ''
                 if (track.getType() === 'audio') {
-                  ParticiantsStore.local.devicePreference.audioInputDevice = did
+                  participants.local.devicePreference.audioInputDevice = did
                   this.setLocalMicTrack(track)
                 }else if (track.getType() === 'video') {
                   // console.log('Video track created:', JSON.stringify(track))
-                  ParticiantsStore.local.devicePreference.videoInputDevice = did
+                  participants.local.devicePreference.videoInputDevice = did
                   this.setLocalCameraTrack(track)
                 }
               })
-              ParticiantsStore.local.devicePreference.audioOutputDevice
+              participants.local.devicePreference.audioOutputDevice
               = JitsiMeetJS.mediaDevices.getAudioOutputDevice()
             },
           ). catch((reason:JitisTrackError) => {
@@ -409,15 +391,15 @@ export class Conference extends EventEmitter {
               tracks.forEach((track) => {
                 const did = track.getTrack().getSettings().deviceId || ''
                 if (track.getType() === 'audio') {
-                  ParticiantsStore.local.devicePreference.audioInputDevice = did
+                  participants.local.devicePreference.audioInputDevice = did
                   this.setLocalMicTrack(track)
                 }else if (track.getType() === 'video') {
                   // console.log('Video track created:', JSON.stringify(track))
-                  ParticiantsStore.local.devicePreference.videoInputDevice = did
+                  participants.local.devicePreference.videoInputDevice = did
                   this.setLocalCameraTrack(track)
                 }
               })
-              ParticiantsStore.local.devicePreference.audioOutputDevice
+              participants.local.devicePreference.audioOutputDevice
               = JitsiMeetJS.mediaDevices.getAudioOutputDevice()
             },
           ).catch((reason:JitisTrackError) => {
@@ -428,51 +410,8 @@ export class Conference extends EventEmitter {
     }
   }
 
-  private onRemoteTrackAdded(track: JitsiRemoteTrack) {
-    //  update priorty for setPerceptible message.
-    priorityCalculator.onRemoteTrackAdded(track)
-
-    //  console.log(`onRemoteTrackAdded ${track} videoType:'${track.videoType ? track.videoType : undefined}'.`)
-    if (track.isMainScreen()) {
-      sharedContents.tracks.addRemoteMain(track)
-    }else if (track.isScreenSharing()) {
-      sharedContents.tracks.addRemoteContent(track)
-    }else { //  remote mic and camera
-      const remote = ParticiantsStore.remote.get(track.getParticipantId())
-      if (remote) {
-        if (track.isAudioTrack()) {
-          remote.tracks.audio = track
-        } else {
-          remote.tracks.avatar = track
-          track.getTrack().onended = () => {
-            trackLog('avatar track ${track} ended.')
-            remote.tracks.avatar = undefined
-          }
-          track.getTrack().onmute = () => { remote.tracks.onMuteChanged(track, true) }
-          track.getTrack().onunmute = () => { remote.tracks.onMuteChanged(track, false) }
-        }
-      }
-    }
-  }
-  private onRemoteTrackRemoved(track: JitsiRemoteTrack) {
-    if (track.isMainScreen()) {
-      sharedContents.tracks.removeRemoteMain(track)
-    }else if (track.isScreenSharing()) {
-      sharedContents.tracks.removeRemoteContent(track)
-    }else { //  mic and camera
-      const remote = ParticiantsStore.remote.get(track.getParticipantId())
-      if (remote) {
-        if (track.isAudioTrack()) {
-          remote.tracks.audio = undefined
-        } else {
-          remote.tracks.avatar = undefined
-        }
-      }
-    }
-  }
-
   private onLocalTrackAdded(track: JitsiLocalTrack) {
-    const local = ParticiantsStore.local
+    const local = participants.local
     if (!track.isScreenSharing()) { //  mic and camera
       if (track.isAudioTrack()) {
         if (local.plugins.streamControl.muteAudio) { track.mute() }
@@ -485,7 +424,7 @@ export class Conference extends EventEmitter {
     }
   }
   private onLocalTrackRemoved(track: JitsiLocalTrack) {
-    const local = ParticiantsStore.local
+    const local = participants.local
     if (!track.isScreenSharing()) { //  mic and camera
       if (track.isAudioTrack()) {
         local.tracks.audio = undefined
