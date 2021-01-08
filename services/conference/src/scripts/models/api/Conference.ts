@@ -2,7 +2,7 @@ import {Information, Physics, TrackStates} from '@models/Participant'
 import {participantsStore} from '@stores/participants'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {default as participants} from '@stores/participants/Participants'
-import sharedContents from '@stores/sharedContents/SharedContents'
+import contents from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
 import JitsiMeetJS, {JitisTrackError, JitsiLocalTrack, JitsiRemoteTrack,
   JitsiTrack, JitsiValues, TMediaType} from 'lib-jitsi-meet'
@@ -46,6 +46,11 @@ export class Conference extends EventEmitter {
     //  To access from debug console, add object d to the window.
     d.conference = this
     d.jc = this._jitsiConference
+    d.showState = () => {
+      console.log(`carrierMap: ${JSON.stringify(contents.tracks.carrierMap)}`)
+      console.log(`contentCarriers: ${JSON.stringify(contents.tracks.contentCarriers)}`)
+      console.log(`remoteMains: ${JSON.stringify(contents.tracks.remoteMains.keys())}`)
+    }
   }
 
   //  Commmands for local tracks --------------------------------------------
@@ -292,7 +297,6 @@ export class Conference extends EventEmitter {
     })
 
     this._jitsiConference.on(JitsiMeetJS.events.conference.TRACK_AUDIO_LEVEL_CHANGED, (id:string, level:number) => {
-      //  console.debug(`Audio level of ${id} changed to ${level}.`)
       let participant = participantsStore.find(id)
       if (!participant) {
         participant = participantsStore.local

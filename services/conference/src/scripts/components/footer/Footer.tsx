@@ -158,7 +158,6 @@ export const Footer: React.FC = () => {
             participants.local.plugins.streamControl.muteAudio = true
           }
           participants.local.saveMuteStatusToStorage(false)
-          console.debug('muteSpeaker:', participants.local.plugins.streamControl.muteSpeaker)
         }}
         onClickMore = { (ev) => {
           updateDevices(ev)
@@ -179,7 +178,6 @@ export const Footer: React.FC = () => {
             participants.local.plugins.streamControl.muteSpeaker = false
           }
           participants.local.saveMuteStatusToStorage(false)
-          console.debug('muteAudio:', participants.local.plugins.streamControl.muteAudio)
         }}
         onClickMore = { (ev) => {
           updateDevices(ev)
@@ -198,7 +196,6 @@ export const Footer: React.FC = () => {
         onClick = { () => {
           participants.local.plugins.streamControl.muteVideo = !mute.muteV
           participants.local.saveMuteStatusToStorage(false)
-          console.debug('muteVideo:', participants.local.plugins.streamControl.muteVideo)
         }}
         onClickMore = { (ev) => {
           updateDevices(ev)

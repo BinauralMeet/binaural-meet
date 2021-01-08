@@ -40,7 +40,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
             setStep={setStep}
             onFinishInput={(value) => {
               sharedContents.shareContent(createContentOfText(value, map))
-              console.debug(`share text: ${value}`)
+              //  console.debug(`share text: ${value}`)
             }}
             textLabel = "Text"
           />
@@ -49,7 +49,6 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
             setStep={setStep}
             onFinishInput={(value) => {
               sharedContents.shareContent(createContentOfIframe(value, map))
-              console.debug(`share iframe: ${value}`)
             }}
             textLabel = "URL"
           />
@@ -60,7 +59,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
     }
   }
 
-  console.debug(`step=${step}, pasteEnabled=${sharedContents.pasteEnabled}`)
+  //  console.debug(`step=${step}, pasteEnabled=${sharedContents.pasteEnabled}`)
   sharedContents.pasteEnabled = step === 'none' || step === 'entrance'
 
   const title = stepTitle[step]

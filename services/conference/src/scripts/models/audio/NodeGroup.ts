@@ -6,7 +6,9 @@ export function setAudioOutputDevice(audio: HTMLAudioElement, deviceId: string) 
   const audioEx:any = audio
   if (audioEx.setSinkId) {
     audioEx.setSinkId(deviceId).then(
-      () => { console.debug('audio.setSinkId:', deviceId, ' success') },
+      () => {
+        //  console.debug('audio.setSinkId:', deviceId, ' success')
+      },
     ).catch(
       () => { console.warn('audio.setSinkId:', deviceId, ' failed') },
     )

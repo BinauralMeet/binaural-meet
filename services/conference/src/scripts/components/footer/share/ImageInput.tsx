@@ -31,7 +31,6 @@ export const ImageInput: React.FC<ImageInputProps> = (props) => {
     <Input
       setStep={setStep}
       onFinishInput={(files) => {
-        console.debug(`Share image files: ${files}`)
         // TODO modify store
         files.forEach((file, i) => {
           const IMAGE_OFFSET_X = 30

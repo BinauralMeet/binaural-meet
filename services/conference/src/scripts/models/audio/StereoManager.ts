@@ -135,7 +135,6 @@ export class StereoManager {
   }
 
   set audioOutputMuted(muted: boolean) {
-    console.debug('audioOutputMuted', muted)
     for (const id in this.nodes) {
       this.nodes[id].updateAudibility(!muted)
     }

@@ -180,7 +180,7 @@ export class SharedContentTracks {
   // -----------------------------------------------------------------
   //  Tracks for contents   contentId - tracks
   @observable localContents: Map<string, Set<JitsiLocalTrack>> = new Map()
-  contentsConnection: Map<string, ConnectionForContent> = new Map()
+  contentCarriers: Map<string, ConnectionForContent> = new Map()
   @action addLocalContents(cid:string, tracks: JitsiLocalTrack[]) {
     assert(tracks.length)
     const trackSet = new Set(this.localContents.get(cid))
@@ -188,7 +188,7 @@ export class SharedContentTracks {
     assert(!this.localContents.has(cid))
     this.localContents.set(cid, trackSet)
     const conn = new ConnectionForContent()
-    this.contentsConnection.set(cid, conn)
+    this.contentCarriers.set(cid, conn)
     conn.init().then(() => {
       this.carrierMap.set(conn.getParticipantId(), cid)
       const content = this.sharedContents.find(cid)
@@ -208,7 +208,7 @@ export class SharedContentTracks {
       track.stopStream()
     })
     if (tracks) {
-      const conn = this.contentsConnection.get(cid)
+      const conn = this.contentCarriers.get(cid)
       assert(conn)
       this.carrierMap.delete(conn.getParticipantId())
       tracks.forEach(track => conn.removeTrack(track).then(() => {
@@ -216,7 +216,7 @@ export class SharedContentTracks {
       }))
     }
     this.localContents.delete(cid)
-    this.contentsConnection.delete(cid)
+    this.contentCarriers.delete(cid)
   }
   //  Map of contentId -> track for content tracks from remotes
   @observable remoteContents: Map<string, Set<JitsiRemoteTrack>> = new Map()

@@ -54,7 +54,7 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
     if (sessionStorage.getItem('localParticipantInformation')) {
       storage = sessionStorage
     }
-    console.debug(storage === localStorage ? 'Load from localStorage' : 'Load from sessionStorage')
+    //  console.debug(storage === localStorage ? 'Load from localStorage' : 'Load from sessionStorage')
     const infoInStr = storage.getItem('localParticipantInformation')
     if (infoInStr) {
       Object.assign(this.information, JSON.parse(infoInStr))
@@ -80,7 +80,7 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
     if (sessionStorage.getItem('localParticipantStreamControl')) {
       storage = sessionStorage
     }
-    console.debug(storage === localStorage ? 'Load from localStorage' : 'Load from sessionStorage')
+    //  console.debug(storage === localStorage ? 'Load from localStorage' : 'Load from sessionStorage')
     const muteStatusInStr = storage.getItem('localParticipantStreamControl')
     if (muteStatusInStr) {
       const muteStateus = JSON.parse(muteStatusInStr) as MuteStatus
@@ -104,7 +104,7 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
     if (sessionStorage.getItem('localParticipantPhysics')) {
       storage = sessionStorage
     }
-    console.debug(storage === localStorage ? 'Load from localStorage' : 'Load from sessionStorage')
+    //  console.debug(storage === localStorage ? 'Load from localStorage' : 'Load from sessionStorage')
     const str = storage.getItem('localParticipantPhysics')
     if (str) {
       const physics = JSON.parse(str) as PhysicsInfo

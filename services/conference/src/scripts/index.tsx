@@ -19,7 +19,7 @@ function main() {
 }
 
 function onStart() {
-  console.debug('start')
+  //  console.debug('start')
 }
 
 function renderDOM() {

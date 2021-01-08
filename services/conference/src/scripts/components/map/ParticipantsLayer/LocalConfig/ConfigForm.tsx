@@ -1,9 +1,10 @@
 import {useStore} from '@hooks/ParticipantsStore'
-import Container from '@material-ui/core/Container'
+import DialogContent from '@material-ui/core/DialogContent'
+import DialogTitle from '@material-ui/core/DialogTitle'
 import {uploadToGyazo} from '@models/api/Gyazo'
 import {defaultInformation} from '@models/Participant'
 import React, {useState} from 'react'
-import {RemoteTrackLimitControl} from './RemoteTrackLimitControl'
+import {ViewpointControl} from './ViewpointControl'
 
 function useInput<T>(initialValue:T) {
   const [value, set] = useState(initialValue)
@@ -15,7 +16,7 @@ function useInput<T>(initialValue:T) {
   return {value, set, args: {value, onChange: handler}}
 }
 export interface ConfigFormProps{
-  close?: ()=>void,
+  close?: () => void,
 }
 
 export const ConfigForm: React.FC<ConfigFormProps> = (props: ConfigFormProps) => {
@@ -65,7 +66,7 @@ export const ConfigForm: React.FC<ConfigFormProps> = (props: ConfigFormProps) =>
     }
   }
 
-  const form = <form key="information" onSubmit = {submitHandler}>
+  const form = <form key="information" onSubmit = {submitHandler} style={{lineHeight:'2em'}}>
     Name: <input type="text" {...name.args} /> <br />
     Avatar image file : &nbsp;
     {local.information.avatarSrc ?
@@ -77,13 +78,16 @@ export const ConfigForm: React.FC<ConfigFormProps> = (props: ConfigFormProps) =>
     }} /> <br />
     Email for Gravatar: <input type="text" {...email.args} /> <br />
     <input type="submit" onClick={() => setSubmitType('session')} value="Save" /> &nbsp;
-    <input type="submit" onClick={() => setSubmitType('local')} value="Save to browser" />
+    <input type="submit" onClick={() => setSubmitType('local')} value="Save to browser" /> &nbsp;
     <input type="submit" onClick={() => setSubmitType('clear')} value="Clear" />&nbsp;
     <input type="submit" onClick={() => setSubmitType('cancel')} value="Cancel" />
   </form>
 
   return <>
-    <Container>{form}</Container>
-    {/*<ViewpointControl key="viewpointcontrol" />*/}
+    <DialogTitle>Avatar's setting</DialogTitle>
+    <DialogContent>
+      {form}
+      <br />
+    </DialogContent>
   </>
 }

@@ -7,10 +7,9 @@ import {
   crossProduct, extractRotation, extractScaleX,
   radian2Degree, rotate90ClockWise, rotateVector2D, transformPoint2D, transfromAt, vectorLength,
 } from '@models/utils'
-import {addV2, extractScale, mulV2, normV, subV2} from '@models/utils/coordinates'
-import {MapData} from '@stores/Map'
+import {addV2, mulV2, normV, subV2} from '@models/utils/coordinates'
 import {useObserver} from 'mobx-react-lite'
-import React, {useEffect, useRef, useState} from 'react'
+import React, {useEffect, useRef} from 'react'
 import ResizeObserver from 'react-resize-observer'
 import {useGesture} from 'react-use-gesture'
 import {createValue, Provider as TransformProvider} from '../utils/useTransform'

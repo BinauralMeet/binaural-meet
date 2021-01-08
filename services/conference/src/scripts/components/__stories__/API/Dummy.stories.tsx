@@ -6,7 +6,7 @@ import Grid from '@material-ui/core/Grid'
 import {createStyles, makeStyles, Theme} from '@material-ui/core/styles'
 import TextField from '@material-ui/core/TextField'
 import {FastForward} from '@material-ui/icons'
-import {Connection, ConnectionStates, Logger} from '@models/api'
+import {Connection, ConnectionStates} from '@models/api'
 import {createJitisLocalTracksFromStream} from '@models/utils/jitsiTrack'
 import {dummyConnectionStore as store, StoreProvider, useStore} from '@test-utils/DummyParticipants'
 import {DummyAudio} from '@test-utils/tone'
@@ -29,7 +29,6 @@ const useStyles = makeStyles((theme: Theme) =>
   }),
 )
 
-const logger = Logger.default.setHandler('DummyStories')
 const dummyAudio = new DummyAudio()
 
 interface ExtendedHTMLVideoElement extends HTMLVideoElement {
@@ -238,7 +237,7 @@ const Video: React.FC<IVideoProps> = (props: IVideoProps) => {
       stream.addTrack(props.audioStream.getAudioTracks()[0])
     }
 
-    logger?.debug('Got stream')
+    console.debug('Got stream')
     console.log(stream)
     createJitisLocalTracksFromStream(stream)
       .then((tracks) => {

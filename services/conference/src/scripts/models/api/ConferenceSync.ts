@@ -1,12 +1,11 @@
 import {Pose2DMap} from '@models/MapObject'
+import {priorityCalculator} from '@models/middleware/trafficControl'
 import {Mouse} from '@models/Participant'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {diffMap, diffSet, intersectionMap} from '@models/utils'
 import participants from '@stores/participants/Participants'
 import {makeItContent, makeThemContents} from '@stores/sharedContents/SharedContentCreator'
-import contents from '@stores/sharedContents/SharedContents'
-const contentLog = console.log
-import {priorityCalculator} from '@models/middleware/trafficControl'
+import contents, {contentLog} from '@stores/sharedContents/SharedContents'
 import JitsiMeetJS from 'lib-jitsi-meet'
 import _ from 'lodash'
 import {autorun, IReactionDisposer} from 'mobx'
@@ -166,7 +165,7 @@ export class ConferenceSync{
     this.conference._jitsiConference?.addEventListener(JitsiMeetJS.events.conference.DATA_CHANNEL_OPENED, () => {
       if (requestSent) { return }
       this.conference.sendMessage(MessageType.REQUEST_INFO, '', '')
-      console.log('REQUEST_INFO sent by DATA_CHANNEL_OPENED.')
+      contentLog('REQUEST_INFO sent by DATA_CHANNEL_OPENED.')
       requestSent = true
       setTimeout(this.checkResponse.bind(this), 1000)
     })
@@ -175,7 +174,7 @@ export class ConferenceSync{
       if (requestSent) { return }
       if (Date.now() - startTime < 10 * 1000) { return }
       this.conference.sendMessage(MessageType.REQUEST_INFO, '', '')
-      console.log('REQUEST_INFO sent by REMOTE_TRACK_ADDED.')
+      contentLog('REQUEST_INFO sent by REMOTE_TRACK_ADDED.')
       requestSent = true
       setTimeout(this.checkResponse.bind(this), 1000)
     })

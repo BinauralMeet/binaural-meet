@@ -45,6 +45,7 @@ const useStyles = makeStyles({
       height: '10em',
       userDrag: 'none',
       userSelect: 'none',
+      pointerEvents: 'none',
     }
   },
 })
