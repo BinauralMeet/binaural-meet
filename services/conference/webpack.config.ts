@@ -120,6 +120,7 @@ const config: webpack.Configuration = {
       patterns: [
         {from: './src/config.js', to: path.resolve(__dirname, 'dist')},
         {from: './src/entrance.html', to: path.resolve(__dirname, 'dist')},
+        {from: './src/entrance.ja.html', to: path.resolve(__dirname, 'dist')},
         {from: './src/favicon.ico', to: path.resolve(__dirname, 'dist')},
       ],
       options: {

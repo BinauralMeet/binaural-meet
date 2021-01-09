@@ -4,7 +4,7 @@ Conference is a space for users to communicate.
 
 ## Conference room name
 ```
-https://this/is/url/?name=conference-room-name
+https://this/is/url/?room=conference-room-name&name=user-name
 ```
 In the above url, `conference-room-name` would be read as id. And that id would be used to join corresponding conference.
 
@@ -28,7 +28,7 @@ In the above url, `conference-room-name` would be read as id. And that id would 
       yarn install
       cd ../../
       ```
-   
+
    2. Link to our project
 
       ```bash
@@ -60,16 +60,16 @@ In the above url, `conference-room-name` would be read as id. And that id would 
   yarn publish-demo
   ```
 
-  
+
 
 ### Test
 
 - Watch mode
-  
+
    ```bash
    yarn dev
    ```
-   
+
 - Storybook
    ```bash
    yarn storybook
@@ -77,9 +77,9 @@ In the above url, `conference-room-name` would be read as id. And that id would 
 
 - Test dev build with dummy participants
 
-   In this part, we need two separate bash to hold two developments environments.  
-   
-   ```bash  
+   In this part, we need two separate bash to hold two developments environments.
+
+   ```bash
    yarn storybook
    ```
 

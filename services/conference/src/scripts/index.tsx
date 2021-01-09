@@ -28,7 +28,7 @@ function renderDOM() {
 }
 
 function connectConference() {
-  const conferenceName = urlParameters.name || 'haselabtest'
+  const conferenceName = urlParameters.room || 'haselabtest'
 
   connection.init().then(
     () => connection.joinConference(conferenceName),

@@ -1,7 +1,5 @@
 import Button from '@material-ui/core/Button'
-import {Connection} from '@models/api/Connection'
 import {ConnectionForContent} from '@models/api/ConnectionForScreenContent'
-import {urlParameters} from '@models/url'
 import React from 'react'
 import {RemoteTrackLimitControl} from './RemoteTrackLimitControl'
 
