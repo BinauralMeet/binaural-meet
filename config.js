@@ -3,15 +3,15 @@ const rtcConfig = {
   maxBitrateForVideo: 64, // bitrate to send video in kBPS
   videoConstraints:{      // video constraint for getUserMedia()
     video:{
-      facingMode:'user',
+      //  facingMode:'user',  //  This rejects some virtual cameras
       width:{
-        max:1920,
-        min:160,
+        //  max:1920, //  somtimes it prohibit to use very heigh resolution cameras
+        //  min:160,
         ideal:320,
       },
       height:{
-        max:1080,
-        min:120,
+        //  max:1080, //   somtimes it prohibit to use very heigh resolution cameras
+        //  min:120,
         ideal:240,
       },
       frameRate: {
