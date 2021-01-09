@@ -1,17 +1,26 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <script>
+      var lang = (window.navigator.languages && window.navigator.languages[0]) ||
+                  window.navigator.language ||
+                  window.navigator.userLanguage ||
+                  window.navigator.browserLanguage;
+      if (lang && lang.indexOf('ja') === 0){
+        location.href='./entrance.ja.html';
+      }
+    </script>
     <meta charset="UTF-8">
-    <title>Binaural Meet entrance</title>
+    <title>Binaural Meet</title>
     <style type="text/css">
       div {margin: 0.4em; clear:both; }
       img {margin: 0.4em; }
     </style>
   </head>
   <body>
-    <h2>Binaural Meet entrance</h2>
+    <h2>Binaural Meet</h2>
     <form action="./index.html" method="get">
-		Your name:<input type="text" name="user" /><br>
+		Your name:<input type="text" name="name" /><br>
 		Room name to join:<input type="text" name="room" /><br>
     <input type="submit" value=" Enter the room " />
     </form>
