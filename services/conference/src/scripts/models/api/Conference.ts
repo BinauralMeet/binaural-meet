@@ -1,7 +1,9 @@
 import {Information, Physics, TrackStates} from '@models/Participant'
+import map from '@stores/Map'
 import {participantsStore} from '@stores/participants'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {default as participants} from '@stores/participants/Participants'
+import {createContentOfVideo} from '@stores/sharedContents/SharedContentCreator'
 import contents from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
 import JitsiMeetJS, {JitisTrackError, JitsiLocalTrack, JitsiRemoteTrack,
@@ -71,6 +73,7 @@ export class Conference extends EventEmitter {
     }
   }
   public setLocalCameraTrack(track: JitsiLocalTrack) {
+    this.cameraTrackConverter(track)
     function doSetLocalCameraTrack(conf:Conference, track:JitsiLocalTrack) {
       conf.localCameraTrack = track
       conf.localCameraTrack.videoType = 'camera'
@@ -309,6 +312,44 @@ export class Conference extends EventEmitter {
     })
   }
 
+  private video:undefined | HTMLVideoElement = undefined
+  private canvas:undefined | HTMLCanvasElement = undefined
+  private cameraTrackConverter(track: JitsiLocalTrack) {
+    if (!this.video) {
+      this.video = document.createElement('video')
+    }
+    this.video.srcObject = new MediaStream([track.getTrack()])
+    const aspectRatio = track.getTrack().getSettings().aspectRatio
+    const videoCfg = config.rtc.videoConstraints.video
+    const VIDEO_SIZE = videoCfg.height.ideal ? videoCfg.height.ideal : videoCfg.width.ideal ? videoCfg.width.ideal : 360
+    if (aspectRatio) {
+      let sx = 0
+      let sy = 0
+      if (aspectRatio > 1) {
+        this.video.style.height = `${VIDEO_SIZE}px`
+        sx = (aspectRatio - 1) * VIDEO_SIZE / 2
+      }else {
+        this.video.style.width = `${VIDEO_SIZE}px`
+        sy = (1 / aspectRatio - 1) * VIDEO_SIZE / 2
+      }
+      this.video.autoplay = true
+      if (!this.canvas) {
+        this.canvas = document.createElement('canvas')
+        this.canvas.style.width = `${VIDEO_SIZE}px`
+        this.canvas.style.height = `${VIDEO_SIZE}px`
+        const ctx = this.canvas.getContext('2d')
+        const drawVideo = () => {
+          if (this.video) {
+            ctx?.drawImage(this.video, sx, sy, VIDEO_SIZE, VIDEO_SIZE, 0, 0, VIDEO_SIZE, VIDEO_SIZE)
+          }
+          window.requestAnimationFrame(drawVideo)
+        }
+        window.requestAnimationFrame(drawVideo)
+        const stream = (this.canvas as any).captureStream(20) as MediaStream
+        (track as any).track = stream.getVideoTracks()[0]
+      }
+    }
+  }
   private onConferenceJoined() {
     this.localId = this._jitsiConference!.myUserId()
     participants.setLocalId(this.localId)
@@ -327,7 +368,6 @@ export class Conference extends EventEmitter {
               }else if (track.getType() === 'video') {
                 // console.log('Video track created:', JSON.stringify(track))
                 this.setLocalCameraTrack(track)
-                participants.local.devicePreference.videoInputDevice = did
               }
             })
             if (type === 'audio') {

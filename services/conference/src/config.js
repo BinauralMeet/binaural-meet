@@ -7,12 +7,12 @@ const rtcConfig = {
       width:{
         //  max:1920, //  somtimes it prohibit to use very heigh resolution cameras
         //  min:160,
-        ideal:320,
+        ideal:480,
       },
       height:{
         //  max:1080, //   somtimes it prohibit to use very heigh resolution cameras
         //  min:120,
-        ideal:240,
+        ideal:360,
       },
       frameRate: {
         ideal: 20,
