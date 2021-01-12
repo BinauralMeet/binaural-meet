@@ -17,7 +17,7 @@ export const defaultValue: IMapObject = {
 }
 
 export class MapObject implements Store<IMapObject> {
-  pose: Pose2DMap & IObservableObject
+  pose: (Pose2DMap) & IObservableObject
   // perceptibility is influenced by distance, determines whether the participant would be rendered or not
   perceptibility: Perceptibility & IObservableObject
 

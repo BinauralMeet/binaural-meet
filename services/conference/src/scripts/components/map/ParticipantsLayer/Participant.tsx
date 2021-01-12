@@ -111,13 +111,13 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
 
   const audioMeterSteps = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
   const audioMeter = audioMeterSteps.map(step => audioLevel > step ?
-    <>
+    <React.Fragment key={step}>
       <circle r={props.size * HALF + step * AUDIOLEVELSCALE} cy={svgCenter} cx={svgCenter}
         stroke={color} fill="none" opacity={0.4 * (1 - step)} strokeDasharray="4 4 4 24" />
       <circle r={props.size * HALF + step * AUDIOLEVELSCALE} cy={svgCenter} cx={svgCenter}
-      stroke="black" fill="none" opacity={0.4 * (1 - step)} strokeDasharray="4 32" stroke-dashoffset="-4" />
-    </>
-      : undefined)
+      stroke="black" fill="none" opacity={0.4 * (1 - step)} strokeDasharray="4 32" strokeDashoffset="-4" />
+    </React.Fragment>
+    : undefined)
 
   return (
     <div className={classes.root} onContextMenu={props.onContextMenu}>

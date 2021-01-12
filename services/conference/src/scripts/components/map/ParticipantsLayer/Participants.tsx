@@ -8,9 +8,11 @@ import {MemoedParticipant as RemoteParticipant} from './Participant'
 
 export const ParticipantsLayer: React.FC<{}> = (props) => {
   const store = useStore()
-  const ids = useObserver(() => Array.from(store.remote.keys()).filter(id => (
-    store.find(id)!.perceptibility.visibility
-  )))
+  const ids = useObserver(() => Array.from(store.remote.keys()).filter((id) => {
+    const remote = store.find(id)!
+
+    return remote.perceptibility.visibility && remote.physics.located
+  }))
   const localId = useObserver(() => store.localId)
   const remoteElements = ids.map(id => <RemoteParticipant key={id} participantId={id} size={PARTICIPANT_SIZE} />)
   const localElement = (<LocalParticipant key={'local'} participantId={localId} size={PARTICIPANT_SIZE} />)

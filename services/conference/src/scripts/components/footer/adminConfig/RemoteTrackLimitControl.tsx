@@ -5,7 +5,6 @@ import Grid from '@material-ui/core/Grid'
 import Slider from '@material-ui/core/Slider'
 import {connection} from '@models/api'
 import {useObserver} from 'mobx-react-lite'
-import {ParticipantProperties} from 'models/api/Conference'
 import React from 'react'
 
 interface MySliderProps{
@@ -27,14 +26,12 @@ export const RemoteTrackLimitControl: React.FC<{}> = () => {
   const videoSlider = <MySlider value={videoLimit >= 0 ? videoLimit : MAX}
     setValue={(v) => {
       local.remoteVideoLimit = v === MAX ? -1 : v
-      connection.conference.setLocalParticipantProperty(
-        ParticipantProperties.PPROP_TRACK_LIMITS, JSON.stringify([local.remoteVideoLimit, local.remoteAudioLimit]))
+      connection.conference.sync.sendTrackLimits('', [local.remoteVideoLimit, local.remoteAudioLimit])
     } } />
   const audioSlider = <MySlider value={audioLimit >= 0 ? audioLimit : MAX}
     setValue={(v) => {
       local.remoteAudioLimit = v === MAX ? -1 : v
-      connection.conference.setLocalParticipantProperty(
-        ParticipantProperties.PPROP_TRACK_LIMITS, JSON.stringify([local.remoteVideoLimit, local.remoteAudioLimit]))
+      connection.conference.sync.sendTrackLimits('', [local.remoteVideoLimit, local.remoteAudioLimit])
     } } />
 
   return <><Container>

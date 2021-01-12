@@ -1,3 +1,4 @@
+import {MAP_SIZE} from '@components/map/Base'
 import {Pose2DMap} from '@models/MapObject'
 import {LocalParticipant, RemoteParticipant} from '@models/Participant'
 import {SharedContent} from '@models/SharedContent'
@@ -39,9 +40,13 @@ export class ConnectedGroup {
         if (local.get().soundLocalizationBase === 'user') {
           base.orientation = 0
         }
-        const relativePose = getRelativePoseFromObject(base, remote, content)
-        const pose = convertToAudioCoordinate(relativePose)
-        group.updatePose(pose)
+        if (remote && !remote.physics.located) {
+          group.updatePose(convertToAudioCoordinate({orientation:0, position:[MAP_SIZE, MAP_SIZE]}))
+        }else {
+          const relativePose = getRelativePoseFromObject(base, remote, content)
+          const pose = convertToAudioCoordinate(relativePose)
+          group.updatePose(pose)
+        }
       },
     ))
 

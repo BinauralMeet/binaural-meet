@@ -48,9 +48,11 @@ export interface TrackStates{
   headphone: boolean,
 }
 export interface Physics {
+  located: boolean
   onStage: boolean
 }
 export const defaultPhysics: Physics = {
+  located: true,
   onStage: false,
 }
 

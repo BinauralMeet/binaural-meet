@@ -1,6 +1,6 @@
 import {Pose2DMap} from '@models/MapObject'
 import {priorityCalculator} from '@models/middleware/trafficControl'
-import {Mouse} from '@models/Participant'
+import {Information, Mouse, Physics, TrackStates} from '@models/Participant'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {diffMap, diffSet, intersectionMap} from '@models/utils'
 import participants from '@stores/participants/Participants'
@@ -14,9 +14,12 @@ import {contentTrackCarrierName} from './ConnectionForScreenContent'
 
 export const MessageType = {
   REQUEST_INFO: 'req_info',
+  PARTICIPANT_INFO: 'participant_info',
   PARTICIPANT_POSE: 'participant_pose',
   PARTICIPANT_MOUSE: 'participant_mouse',
   PARTICIPANT_PHYSICS: 'participant_physics',
+  PARTICIPANT_TRACKSTATES: 'participant_trackstates',
+  PARTICIPANT_TRACKLIMITS: 'participant_track_limits',
   MAIN_SCREEN_CARRIER: 'main_screen_carrier',
   CONTENT_UPDATE_MINE: 'content_update_mine',
   CONTENT_REMOVE_MINE: 'content_remove_mine',
@@ -45,8 +48,19 @@ export class ConferenceSync{
   constructor(c:Conference) {
     this.conference = c
   }
+  sendTrackLimits(to:string, limits?:string[]) {
+    this.conference.sendMessage(MessageType.PARTICIPANT_TRACKLIMITS, to ? to : '', limits ? limits :
+                                [participants.local.remoteVideoLimit, participants.local.remoteAudioLimit])
+  }
   bind() {
     //  participant related -----------------------------------------------------------------------
+    //  track limit
+    this.conference.on(MessageType.PARTICIPANT_TRACKLIMITS, (from:string, limits:string[]) => {
+      participants.local.remoteVideoLimit = limits[0]
+      participants.local.remoteAudioLimit = limits[1]
+    })
+
+    //  left/join
     this.conference.on(ConferenceEvents.USER_LEFT, (id) => {
       participants.leave(id)
     })
@@ -57,6 +71,8 @@ export class ConferenceSync{
         participants.join(id)
       }
     })
+
+    //  track
     this.conference.on(ConferenceEvents.REMOTE_TRACK_ADDED, (track) => {
       //  update priorty for setPerceptible message.
       priorityCalculator.onRemoteTrackAdded(track)
@@ -72,12 +88,35 @@ export class ConferenceSync{
         contents.tracks.removeRemoteTrack(track)
       }
     })
+
+    //  info
+    this.conference.on(MessageType.PARTICIPANT_INFO, (from:string, info:Information) => {
+      const remote = participants.remote.get(from)
+      if (remote) { Object.assign(remote.information, info) }
+    })
+    const sendInfo = (to:string) => {
+      this.conference.sendMessage(MessageType.PARTICIPANT_INFO, to ? to : '', {...participants.local.information})
+    }
+    this.disposers.push(autorun(() => { sendInfo('') }))
+
+    //  track states
+    this.conference.on(MessageType.PARTICIPANT_TRACKSTATES, (from:string, states:TrackStates) => {
+      const remote = participants.remote.get(from)
+      if (remote) { Object.assign(remote.trackStates, states) }
+    })
+    const sendTrackStates = (to:string) => {
+      this.conference.sendMessage(MessageType.PARTICIPANT_TRACKSTATES,
+                                  to ? to : '', {...participants.local.trackStates})
+    }
+    this.disposers.push(autorun(() => { sendTrackStates('') }))
+
     //  pose
     this.conference.on(MessageType.PARTICIPANT_POSE, (from:string, pose:Pose2DMap) => {
       const remote = participants.remote.get(from)
       if (remote) {
         remote.pose.orientation = pose.orientation
         remote.pose.position = pose.position
+        remote.physics.located = true
       }
     })
     const sendPose = (to:string) => {
@@ -86,7 +125,19 @@ export class ConferenceSync{
     }
     this.disposers.push(autorun(() => { sendPose('') }))
 
-        // mouse
+    // physics
+    this.conference.on(MessageType.PARTICIPANT_PHYSICS, (from:string, physics:Physics) => {
+      const remote = participants.remote.get(from)
+      if (remote) {
+        remote.physics.onStage = physics.onStage
+      }
+    })
+    const sendPhysics = (to:string) => {
+      this.conference.sendMessage(MessageType.PARTICIPANT_PHYSICS, to ? to : '', {...participants.local.physics})
+    }
+    this.disposers.push(autorun(() => { sendPhysics('') }))
+
+    // mouse
     this.conference.on(MessageType.PARTICIPANT_MOUSE, (from:string, mouse:Mouse) => {
       const remote = participants.remote.get(from)
       if (remote) { Object.assign(remote.mouse, mouse) }
@@ -181,6 +232,10 @@ export class ConferenceSync{
     this.conference.on(MessageType.REQUEST_INFO, (from:string, none:Object) => {
       sendPose(from)
       sendMouse(from)
+      sendInfo(from)
+      sendPhysics(from)
+      sendTrackStates(from)
+      this.sendTrackLimits(from)
       sendMyContentsUpdated(Array.from(contents.localParticipant.myContents.values()), from)
       this.sendMainScreenCarrier(from, true)
     })
