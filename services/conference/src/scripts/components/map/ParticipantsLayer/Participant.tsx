@@ -20,7 +20,8 @@ interface StyleProps {
   size: number,
 }
 
-const SVG_RATIO = 18
+// const SVG_RATIO = 18
+const SVG_RATIO = 12
 const HALF = 0.5
 
 const useStyles = makeStyles({
@@ -62,7 +63,7 @@ const useStyles = makeStyles({
 })
 
 export interface ParticipantProps extends Required<AvatarProps>{
-  onContextMenu?:(ev:React.MouseEvent<HTMLDivElement, MouseEvent>)=>void
+  onContextMenu?:(ev:React.MouseEvent<HTMLDivElement, MouseEvent>) => void
 }
 
 const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , ParticipantProps> = (props, ref) => {
@@ -107,23 +108,23 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
   })
   const eyeballs = eyeballsGlobal.map(g => addV2([0, -0.04 * outerRadius],
                                                  rotateVector2DByDegree(-participantProps.orientation, g)))
+
+  const audioMeterSteps = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+  const audioMeter = audioMeterSteps.map(step => audioLevel > step ?
+    <>
+      <circle r={props.size * HALF + step * AUDIOLEVELSCALE} cy={svgCenter} cx={svgCenter}
+        stroke={color} fill="none" opacity={0.4 * (1 - step)} strokeDasharray="4 4 4 24" />
+      <circle r={props.size * HALF + step * AUDIOLEVELSCALE} cy={svgCenter} cx={svgCenter}
+      stroke="black" fill="none" opacity={0.4 * (1 - step)} strokeDasharray="4 32" stroke-dashoffset="-4" />
+    </>
+      : undefined)
+
   return (
     <div className={classes.root} onContextMenu={props.onContextMenu}>
       <div className={classes.pointerRotate}>
         <svg className={classes.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO} xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <radialGradient id={`gr${props.participantId}`}>
-              <stop offset="0%" stopColor={color} stopOpacity={audioLevel} />
-              <stop offset="15%" stopColor={color} stopOpacity={0.5 * audioLevel} />
-              <stop offset="35%" stopColor={color} stopOpacity={0.4 * (audioLevel > 0.5 ? audioLevel - 0.5 : 0)} />
-              <stop offset="60%" stopColor={color} stopOpacity={0.4 * (audioLevel > 0.7 ? audioLevel - 0.7 : 0)} />
-              <stop offset="100%" stopColor={color} stopOpacity={0.1 * (audioLevel > 0.7 ? audioLevel - 0.7 : 0)} />
-            </radialGradient>
-          </defs>
-          <circle r={AUDIOLEVELSCALE}
-            cy={svgCenter} cx={svgCenter} fill={`url(#gr${props.participantId})`} />
-          <circle r={outerRadius} cy={svgCenter} cx={svgCenter} fill={color}
-            style={{pointerEvents: 'fill'}} />
+          <circle r={outerRadius} cy={svgCenter} cx={svgCenter} stroke="none" fill={color} />
+          {audioMeter}
           {config.avatar === 'arrow' ?  //  arrow (circle with a corner) type avatar
             <g transform={`translate(${svgCenter} ${svgCenter}) rotate(-135) `}>
               <rect style={{pointerEvents: 'fill'}}
