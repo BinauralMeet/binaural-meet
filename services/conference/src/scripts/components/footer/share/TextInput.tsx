@@ -1,5 +1,5 @@
 import TextField from '@material-ui/core/TextField'
-import React, {useState} from 'react'
+import React, {useEffect, useRef, useState} from 'react'
 import {DialogPageProps} from './DialogPage'
 import {Input} from './Input'
 
@@ -16,15 +16,11 @@ export const TextInput: React.FC<TextInputProps> = (props) => {
     textLabel,
     defaultValue,
   } = props
-
   const [value, setValue] = useState<string>(defaultValue === undefined ? '' : defaultValue)
   const field = (
-    <TextField
-        label={textLabel}
-        multiline={true}
-        value={value}
+    <TextField  label={textLabel} multiline={true} value={value}
         onChange={event => setValue(event.target.value)}
-        fullWidth={true}
+        fullWidth={true} inputProps={{autoFocus:true}}
     />
   )
 

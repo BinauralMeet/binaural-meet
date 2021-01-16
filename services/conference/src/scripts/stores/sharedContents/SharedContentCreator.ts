@@ -151,9 +151,9 @@ export function createContentOfText(message: string, map: MapData) {
   pasted.pose.position[1] = map.mouseOnMap[1]
   const slen = Math.sqrt(message.length)
   const STRING_SCALE_W = 20
-  const STRING_SCALE_H = 15
+  const STRING_SCALE_H = 20
   pasted.size[0] = Math.max(slen * STRING_SCALE_W, 200)
-  pasted.size[1] = slen * STRING_SCALE_H
+  pasted.size[1] = Math.max(slen * STRING_SCALE_H, STRING_SCALE_H)
 
   return pasted
 }

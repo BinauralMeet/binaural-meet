@@ -15,12 +15,12 @@ import StopScreenShareIcon from '@material-ui/icons/StopScreenShare'
 import SubjectIcon from '@material-ui/icons/Subject'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {assert} from '@models/utils'
-import {createContent, createContentOfVideo} from '@stores/sharedContents/SharedContentCreator'
+import {createContent, createContentOfText, createContentOfVideo} from '@stores/sharedContents/SharedContentCreator'
 import {SharedContents} from '@stores/sharedContents/SharedContents'
 import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'
 import {isArray} from 'lodash'
 import {useObserver} from 'mobx-react-lite'
-import React, {useRef} from 'react'
+import React, {useEffect, useRef} from 'react'
 import {DialogPageProps} from './DialogPage'
 import {ShareDialogItem} from './SharedDialogItem'
 
@@ -36,6 +36,7 @@ async function startCapture(displayMediaOptions: any = {}) {
     throw err
 
   }
+
   return captureTracks as JitsiLocalTrack[]
 }
 
@@ -88,6 +89,48 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
     {main: sharedContents.tracks.localMains.size, contents: sharedContents.tracks.localContents.size}))
   const showMouse = useObserver(() => participants.local.mouse.show)
   const fileInput = useRef<HTMLInputElement>(null)
+
+  //  keyboard shortcut
+  useEffect(() => {
+    const onKeyPress = (e: KeyboardEvent) => {
+      if (map.keyInputUsers.has('shareDialog')) {
+        if (e.code === 'KeyI') {  //  import
+          fileInput.current?.click()
+        }else if (e.code === 'KeyD') {  //  download
+          setStep('none')
+          downloadItems(sharedContents)
+        }else if (e.code === 'KeyT') {  //  download
+          e.preventDefault()
+          //  setStep('text')
+          setStep('none')
+          const tc = createContentOfText('', map)
+          sharedContents.shareContent(tc)
+          sharedContents.editingId = tc.id
+        }else if (e.code === 'KeyS') {  //  download
+          startCapture().then((tracks) => {
+            if (tracks.length) {
+              const content = createContentOfVideo(tracks, map)
+              sharedContents.shareContent(content)
+              assert(content.id)
+              sharedContents.tracks.addLocalContents(content.id, tracks)
+            }
+          })
+          setStep('none')
+        }else if (e.code === 'KeyM') {  //  download
+          participants.local.mouse.show = !showMouse
+          setStep('none')
+        }else if (e.code === 'KeyC') {
+          setStep('none')
+        }
+      }
+    }
+    window.addEventListener('keypress', onKeyPress)
+
+    return () => {
+      window.removeEventListener('keypress', onKeyPress)
+    }
+  },        [])
+
 
   return (
     <List>

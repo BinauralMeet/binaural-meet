@@ -17,7 +17,7 @@ export const ShareLayer: React.FC<{}> = () => {
   const store = useStore()
   const classes = useStyles()
   const contents = useObserver(() =>
-    store.all.map(val => <SharedContent key={val.id} content={val} />))
+    store.all.map(val => <SharedContent key={val.id} content={val} editing={store.editingId === val.id} />))
 
   return(
     <div className={classes.slContainer} >

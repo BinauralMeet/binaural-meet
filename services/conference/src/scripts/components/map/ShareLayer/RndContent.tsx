@@ -1,5 +1,7 @@
 import content from '*.svg'
 import {useStore as useMapStore} from '@hooks/MapStore'
+import {useStore} from '@hooks/ParticipantStore'
+import {useStore as useContents} from '@hooks/SharedContentsStore'
 import pinIcon from '@iconify/icons-mdi/pin'
 import pinOffIcon from '@iconify/icons-mdi/pin-off'
 import {Icon} from '@iconify/react'
@@ -14,6 +16,7 @@ import {Pose2DMap} from '@models/MapObject'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {rotateVector2DByDegree} from '@models/utils'
 import {addV2, subV2} from '@models/utils/coordinates'
+import {SharedContents} from '@stores/sharedContents/SharedContents'
 import _ from 'lodash'
 import React, {useLayoutEffect, useRef, useState} from 'react'
 import {Dimensions, useDimensions} from 'react-dimensions-hook'
@@ -30,6 +33,7 @@ export interface RndContentProps{
   content: ISharedContent
   hideAll?: boolean
   autoHideTitle?: boolean
+  editing: boolean
   onShare?: (evt: React.MouseEvent<HTMLDivElement>) => void
   onClose?: (evt: React.MouseEvent<HTMLDivElement>) => void
   onUpdate?: (newContent: ISharedContent) => void
@@ -71,6 +75,8 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     return gv
   }
 
+  useStore()
+
   // states
   const [pose, setPose] = useState(props.content.pose)  //  pose of content
   const [size, setSize] = useState(props.content.size)  //  size of content
@@ -79,15 +85,21 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   const rnd = useRef<Rnd>(null)                         //  ref to rnd to update position and size
   const {ref, dimensions} = useDimensions()             //  title dimensions measured
   const [showTitle, setShowTitle] = useState(!props.autoHideTitle || !props.content.pinned)
-  const [editing, setEditingRaw] = useState(false)
+  // const [editing, setEditingRaw] = useState(false)
   const map = useMapStore()
+  const contents = useContents()
   function setEditing(flag: boolean) {
     if (flag) {
       map.keyInputUsers.add(props.content.id)
     }else {
       map.keyInputUsers.delete(props.content.id)
     }
-    setEditingRaw(flag)
+    if (flag) {
+      contents.editingId = props.content.id
+    }else if (contents.editingId === props.content.id) {
+      contents.editingId = ''
+    }
+    //  setEditingRaw(flag)
   }
   const state = useRef<RndContentState>(new RndContentState())
 
@@ -125,7 +137,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     props.onUpdate?.call(null, newContent)
   }
   function onClickEdit(evt: React.MouseEvent<HTMLDivElement>) {
-    setEditing(!editing)
+    setEditing(!props.editing)
   }
   function onClickPin(evt: React.MouseEvent<HTMLDivElement>) {
     updateHandler(!props.content.pinned)
@@ -178,7 +190,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     }
   }
 
-  const isFixed = (props.autoHideTitle && props.content.pinned) || editing
+  const isFixed = (props.autoHideTitle && props.content.pinned) || props.editing
   const gesture = useGesture({
     onDrag: ({down, delta, event, xy, buttons}) => {
       // console.log('onDragTitle:', delta)
@@ -239,7 +251,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
           </div>
           <div className={classes.edit} onClick={onClickEdit}>
             &nbsp; {
-              editing ? <DoneIcon style={{fontSize:dimensions.clientHeight}} />
+              props.editing ? <DoneIcon style={{fontSize:dimensions.clientHeight}} />
                 : <EditIcon style={{fontSize:dimensions.clientHeight}} />}
             &nbsp;
           </div>
@@ -253,7 +265,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
         </div>
       </div>
       <div className={classes.content} >
-        <Content content={props.content} onUpdate={props.onUpdate} editing= {editing} setEditing={setEditing}  />
+        <Content content={props.content} onUpdate={props.onUpdate} editing= {props.editing} setEditing={setEditing}  />
       </div>
     </div>
   const titleHeight = showTitle ? dimensions.clientHeight : 0

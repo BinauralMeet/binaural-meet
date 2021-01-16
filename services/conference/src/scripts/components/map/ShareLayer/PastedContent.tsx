@@ -1,4 +1,5 @@
 import {useStore as useMapStore} from '@hooks/MapStore'
+import {useStore as useContents} from '@hooks/SharedContentsStore'
 import {SharedContent, SharedContent as ISharedContent} from '@models/SharedContent'
 import {MapData} from '@stores/Map'
 import {createContent, createContentOfIframe, createContentOfImage, createContentOfPdf, createContentOfText} from '@stores/sharedContents/SharedContentCreator'
@@ -131,10 +132,12 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
     [],
   )
   const pastedContent = useObserver(() => sharedContents.pasted)
+  const contents = useContents()
   //  console.log('Pasted contents rendered.')
 
   return (
     <RndContent content={pastedContent} hideAll={pastedContent.type === ''}
+      editing={props.content?.id === contents.editingId}
       onShare = {(evt: React.MouseEvent<HTMLDivElement>) => { onShare() }}
       onClose = {(evt: React.MouseEvent<HTMLDivElement>) => {
         sharedContents.setPasted(createContent())

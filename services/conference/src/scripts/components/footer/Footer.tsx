@@ -83,17 +83,36 @@ export const Footer: React.FC = () => {
     }
   }
 
-  //  Fab state and menu
-  const classes = useStyles()
+  //  Stores, observers and states
   const participants = useParticipantsStore()
-  const [micMenuEl, setMicMenuEl] = React.useState<Element|null>(null)
-  const [deviceInfos, setDeviceInfos] = React.useState<MediaDeviceInfo[]>([])
   const mute = useObserver(() => ({
     muteA: participants.local.plugins.streamControl.muteAudio,  //  mic
     muteS: participants.local.plugins.streamControl.muteSpeaker,  //  speaker
     muteV: participants.local.plugins.streamControl.muteVideo,  //  camera
   }))
+  const [micMenuEl, setMicMenuEl] = React.useState<Element|null>(null)
+  const [deviceInfos, setDeviceInfos] = React.useState<MediaDeviceInfo[]>([])
 
+  //  keyboard shortcut
+  useEffect(() => {
+    const onKeyPress = (e: KeyboardEvent) => {
+      if (map.keyInputUsers.size === 0) {
+        if (e.code === 'KeyM') {  //  mute/unmute audio
+          participants.local.plugins.streamControl.muteAudio = !participants.local.plugins.streamControl.muteAudio
+          setShowFooter(true)
+        }
+      }
+    }
+    window.addEventListener('keypress', onKeyPress)
+
+    return () => {
+      window.removeEventListener('keypress', onKeyPress)
+    }
+  },        [])
+
+
+  //  Fab state and menu
+  const classes = useStyles()
   function makeMenuItem(info: MediaDeviceInfo, close:(did:string) => void):JSX.Element {
     let selected = false
     if (info.kind === 'audioinput') {

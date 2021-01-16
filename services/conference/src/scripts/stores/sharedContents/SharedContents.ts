@@ -61,6 +61,7 @@ export class SharedContents extends EventEmitter {
   tracks = new SharedContentTracks(this)
 
   @observable pasteEnabled = true
+  @observable editingId = ''
 
   // -----------------------------------------------------------------
   //  Contents

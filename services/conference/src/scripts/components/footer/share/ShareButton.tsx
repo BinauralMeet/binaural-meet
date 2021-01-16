@@ -3,7 +3,7 @@ import {useStore as useContentsStore} from '@hooks/SharedContentsStore'
 import ScreenShareIcon from '@material-ui/icons/ScreenShare'
 import {makeStyles} from '@material-ui/styles'
 import {useObserver} from 'mobx-react-lite'
-import React, {useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import {FabMain} from '../FabNoFocus'
 import {ShareDialog} from './ShareDialog'
 
@@ -27,6 +27,21 @@ export const ShareButton: React.FC = () => {
     }
     setOpenDialogRaw(flag)
   }
+  //  keyboard shortcut
+  useEffect(() => {
+    const onKeyPress = (e: KeyboardEvent) => {
+      if (map.keyInputUsers.size === 0) {
+        if (e.code === 'KeyC') {  //  Create share dialog
+          setOpenDialog(true)
+        }
+      }
+    }
+    window.addEventListener('keypress', onKeyPress)
+
+    return () => {
+      window.removeEventListener('keypress', onKeyPress)
+    }
+  },        [])
 
   return (
     <div className={classes.root}>

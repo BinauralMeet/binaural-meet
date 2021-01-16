@@ -1,26 +1,24 @@
+import {MoreButton, moreButtonControl, MoreButtonMember} from '@components/utils/MoreButton'
 import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
+import Popover from '@material-ui/core/Popover'
+import {makeStyles} from '@material-ui/core/styles'
 import {addV2, assert, mulV2, rotateVector2DByDegree, subV2, transformPoint2D, transfromAt} from '@models/utils'
+import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import {DragHandler, DragState} from '../../utils/DragHandler'
 import {KeyHandlerPlain} from '../../utils/KeyHandler'
 import {MAP_SIZE} from '../Base/Base'
 import {useValue as useTransform} from '../utils/useTransform'
-import {Participant, ParticipantProps} from './Participant'
-import {MoreButton, MoreButtonMember, moreButtonControl} from '@components/utils/MoreButton'
-import {makeStyles} from '@material-ui/core/styles'
-import { useObserver } from 'mobx-react-lite'
 import {ConfigForm} from './LocalConfig/ConfigForm'
-import Popover from '@material-ui/core/Popover';
+import {Participant, ParticipantProps} from './Participant'
 
 const AVATAR_SPEED_LIMIT = 50
 const MAP_SPEED_LIMIT = 200
 const HALF_DEGREE = 180
 const WHOLE_DEGREE = 360
 const HALF = 0.5
-
-
 
 
 type LocalParticipantProps = ParticipantProps
@@ -199,7 +197,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   //  pointer drag
   const TIMER_INTERVAL = 33
   const drag = new DragHandler<HTMLDivElement>(onDrag, 'draggableHandle',
-    onTimer, TIMER_INTERVAL, ()=>{setShowConfig(true)})
+                                               onTimer, TIMER_INTERVAL, () => { setShowConfig(true) })
   useEffect(() => {
     drag.target.current?.focus({preventScroll:true})
   })
@@ -222,7 +220,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   },
             [])
 */
-  const styleProps = useObserver(()=>({
+  const styleProps = useObserver(() => ({
     position: participant.pose.position,
     size: props.size,
   }))
@@ -231,11 +229,11 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   const [showMore, setShowMore] = React.useState(false)
   const [showConfig, setShowConfig] = React.useState(false)
   const moreControl = moreButtonControl(setShowMore, member)
-  function closeConfig(){
+  function closeConfig() {
     setShowConfig(false)
     map.keyInputUsers.delete('LocalParticipantConfig')
   }
-  function openConfig(){
+  function openConfig() {
     setShowConfig(true)
     map.keyInputUsers.add('LocalParticipantConfig')
   }
@@ -245,7 +243,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     <div ref={drag.target} {...drag.bind()} {...moreControl}
     >
     <Participant {...props}
-      onContextMenu={(ev)=>{
+      onContextMenu={(ev) => {
         ev.preventDefault()
         openConfig()
       }
@@ -256,9 +254,9 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
       onClickMore = {openConfig} />,
     <Popover open={showConfig} onClose={closeConfig}
       anchorEl={ref.current} anchorOrigin={{vertical:'top', horizontal:'left'}}
-      anchorReference = 'anchorEl'
+      anchorReference = "anchorEl"
     >
-      <ConfigForm close={closeConfig}/>
+      <ConfigForm close={closeConfig} />
     </Popover>
     </div>
   )
