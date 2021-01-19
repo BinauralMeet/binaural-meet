@@ -20,6 +20,7 @@ export const MessageType = {
   PARTICIPANT_PHYSICS: 'participant_physics',
   PARTICIPANT_TRACKSTATES: 'participant_trackstates',
   PARTICIPANT_TRACKLIMITS: 'participant_track_limits',
+  DIRECT_REMOTES: 'direct_remotes',
   MAIN_SCREEN_CARRIER: 'main_screen_carrier',
   CONTENT_UPDATE_MINE: 'content_update_mine',
   CONTENT_REMOVE_MINE: 'content_remove_mine',
@@ -147,6 +148,19 @@ export class ConferenceSync{
     }
     this.disposers.push(autorun(() => { sendMouse('') }))
 
+    //  direct remotes
+    this.conference.on(MessageType.DIRECT_REMOTES, (from:string, drArray:string[]) => {
+      const myself = drArray.find(id => id === participants.localId)
+      if (myself) {
+        participants.directRemotes.add(from)
+      }else {
+        participants.directRemotes.delete(from)
+      }
+    })
+    const sendDirectRemotes = (to: string) => {
+      this.conference.sendMessage(MessageType.DIRECT_REMOTES, '', Array.from(participants.directRemotes))
+    }
+    this.disposers.push(autorun(() => { sendDirectRemotes('') }))
 
     // contents related ---------------------------------------------------------------
     this.conference.on(ConferenceEvents.USER_LEFT, (id) => {
@@ -160,7 +174,7 @@ export class ConferenceSync{
     this.conference.on(MessageType.CONTENT_UPDATE_MINE, (from:string, cs_:ISharedContent[]) => {
       const cs = makeThemContents(cs_)
       contents.updateRemoteContents(cs, from)
-      this.contentResponses.add(from)
+      this.gotResponse(from)
       contentLog(`recv remote contents ${JSON.stringify(cs.map(c => c.id))} from ${from}.`, cs)
     })
     const sendMyContentsUpdated = (contents:ISharedContent[], to?: string) => {
@@ -264,12 +278,19 @@ export class ConferenceSync{
     this.disposers.forEach(d => d())
   }
 
+  private gotResponse(from:string) {
+    const remote = participants.remote.get(from)
+    if (remote && remote.physics.located) {
+      this.contentResponses.add(from)
+    }
+  }
   private checkResponse() {
     const toSends = diffSet(new Set(participants.remote.keys()),  this.contentResponses)
     toSends.forEach((pid) => {
       this.conference.sendMessage(MessageType.REQUEST_INFO, pid, '')
     })
     if (toSends.size) {
+      console.warn(`Failed to get info from ${JSON.stringify(Array.from(toSends))}`)
       setTimeout(this.checkResponse.bind(this), 1000)
     }
   }

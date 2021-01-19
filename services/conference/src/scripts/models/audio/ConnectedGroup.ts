@@ -1,9 +1,10 @@
 import {MAP_SIZE} from '@components/map/Base'
 import {Pose2DMap} from '@models/MapObject'
-import {LocalParticipant, RemoteParticipant} from '@models/Participant'
+import {LocalParticipant, PARTICIPANT_SIZE, RemoteParticipant} from '@models/Participant'
 import {SharedContent} from '@models/SharedContent'
-import {convertToAudioCoordinate, getRelativePose} from '@models/utils'
+import {addV2, convertToAudioCoordinate, getRelativePose, mulV2, normV, subV2} from '@models/utils'
 import {stereoParametersStore} from '@stores/AudioParameters'
+import participants from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
 import {JitsiRemoteTrack, JitsiTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
@@ -21,6 +22,15 @@ function getRelativePoseFromObject(localPose: Pose2DMap, participant: RemotePart
         remotePose.position[idx] += Math.min(content.size[idx], localPose.position[idx] - remotePose.position[idx])
       }
     })
+  }
+  if (participant && participants.directRemotes.has(participant.id)) {
+    //  This remote participant is directly connected to local participant
+    const diff = subV2(remotePose.position, localPose.position)
+    const dist = normV(diff)
+    if (dist > PARTICIPANT_SIZE * 0.5) {
+      const dir = mulV2(0.5 / dist, diff)
+      remotePose.position = addV2(localPose.position, dir)
+    }
   }
 
   return getRelativePose(localPose, remotePose)
@@ -41,6 +51,7 @@ export class ConnectedGroup {
           base.orientation = 0
         }
         if (remote && !remote.physics.located) {
+          // not located yet -> mute sound
           group.updatePose(convertToAudioCoordinate({orientation:0, position:[MAP_SIZE, MAP_SIZE]}))
         }else {
           const relativePose = getRelativePoseFromObject(base, remote, content)

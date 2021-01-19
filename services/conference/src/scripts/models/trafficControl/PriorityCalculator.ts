@@ -16,7 +16,8 @@ export const priorityDebug = PRIORITYLOG ? console.debug : (a:any) => {}
 function extractParticipantTrackInfo(participant: RemoteParticipant, track:JitsiTrack): RemoteTrackInfo {
   return {
     track: track as JitsiRemoteTrack,
-    onStage : !track.isVideoTrack() && participant.physics.onStage,
+    onStage : track.isAudioTrack() &&
+      (participant.physics.onStage || participants.directRemotes.has(participant.id)),
     pose: {
       ...participant.pose,
     },
@@ -154,6 +155,8 @@ export class PriorityCalculator {
         // tslint:disable-next-line: max-line-length
         //  priorityLog(`prioirty ${id} chagned v=${(rp.tracks.avatar as JitsiRemoteTrack)?.getSSRC()} a=${(rp.tracks.audio as JitsiRemoteTrack)?.getSSRC()}`)
         if (rp.tracks.audio || rp.tracks.avatar) {
+          const important = rp.physics.onStage || participants.directRemotes.has(rp.id)
+          const moved = rp.pose.position
           this.updateSet.add(rp.id)
         }
       }))
@@ -275,6 +278,7 @@ export class PriorityCalculator {
 
   // lower value means higher priority
   private calcPriorityValue(local: TrackInfo, remote: RemoteTrackInfo): number {
+    if (remote.onStage) { return 0 }
     const delta = remote.size.map((sz, idx) => {
       let diff = remote.pose.position[idx] - local.pose.position[idx]
       if (diff < 0) {
