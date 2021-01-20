@@ -2,7 +2,10 @@
 // Project: [~THE PROJECT NAME~]
 // Definitions by: [~YOUR NAME~] <[~A URL FOR YOU~]>
 
+import JitsiRemoteTrack from "./RTC/JitsiRemoteTrack";
 import JitsiTrack from "./RTC/JitsiTrack";
+import TraceablePeerConnection from "./RTC/TraceablePeerConnection";
+import {BridgeChannel} from "./RTC/BridgeChannel"
 
 declare class Transcriber {
   constructor();
@@ -46,5 +49,11 @@ interface IRTCOptions {
   desktopSharingFirfoxDisavbled: boolean;
 }
 
-export { Transcriber, IStatisticsOptions, IRTCOptions };
+declare class RTC{
+  peerConnections:Map<number, TraceablePeerConnection>
+  localTracks:JitsiTrack[]
+  _channel:BridgeChannel|null
+}
+
+export { Transcriber, IStatisticsOptions, IRTCOptions, RTC };
 

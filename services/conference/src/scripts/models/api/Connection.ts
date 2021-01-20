@@ -1,4 +1,5 @@
 // import a global variant $ for lib-jitsi-meet
+import errorInfo from '@stores/ErrorInfo'
 import {ConnectionInfo, default as ConnectionInfoStore} from '@stores/ConnectionInfo'
 import {EventEmitter} from 'events'
 import jquery from 'jquery'
@@ -69,6 +70,7 @@ export class Connection extends EventEmitter {
   }
 
   public init(): Promise<string> {
+    errorInfo.connectionStart()
     return new Promise<string>((resolve, reject) => {
       JitsiMeetJS.init(initOptions)
       JitsiMeetJS.setLogLevel(JITSILOGLEVEL)

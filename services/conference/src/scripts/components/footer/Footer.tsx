@@ -1,3 +1,4 @@
+import {ErrorDialog} from '@components/error/ErrorDialog'
 import {useStore as useMap} from '@hooks/MapStore'
 import {useStore as useParticipantsStore} from '@hooks/ParticipantsStore'
 import megaphoneIcon from '@iconify/icons-mdi/megaphone'
@@ -229,6 +230,8 @@ export const Footer: React.FC = () => {
       </Menu>
 
       <ShareButton />
+
+      <ErrorDialog />
 
       <div className={classes.left} ref={adminButton} onClick = { () => setShowAdmin(true) } />
       <Popover open={showAdmin} onClose={() => setShowAdmin(false)}

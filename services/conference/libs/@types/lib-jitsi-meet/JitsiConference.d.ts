@@ -8,6 +8,7 @@ import JitsiLocalTrack from './modules/RTC/JitsiLocalTrack'
 import JitsiParticipant from "./JitsiParticipant";
 import { Transcriber } from "./modules";
 import TraceablePeerConnection from "./modules/RTC/TraceablePeerConnection";
+import RTC from "./modules/RTC/RTC";
 
 declare interface JitsiValuesChildren {
   tagName:string
@@ -25,6 +26,8 @@ declare class JingleSessionPC{
   peerconnection: TraceablePeerConnection
 }
 declare class JitsiConference {
+  rtc: RTC
+
   constructor(options: any);
 
   static resourceCreator(jid: string, isAuthenticatedUser: boolean): string;
