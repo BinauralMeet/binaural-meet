@@ -1,4 +1,3 @@
-import content from '*.svg'
 import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore} from '@hooks/ParticipantStore'
 import {useStore as useContents} from '@hooks/SharedContentsStore'
@@ -12,11 +11,12 @@ import CloseRoundedIcon from '@material-ui/icons/CloseRounded'
 import EditIcon from '@material-ui/icons/Edit'
 import FlipToBackIcon from '@material-ui/icons/FlipToBack'
 import FlipToFrontIcon from '@material-ui/icons/FlipToFront'
+import WallpaperIcon from '@material-ui/icons/Wallpaper'
 import {Pose2DMap} from '@models/MapObject'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {rotateVector2DByDegree} from '@models/utils'
 import {addV2, subV2} from '@models/utils/coordinates'
-import {SharedContents} from '@stores/sharedContents/SharedContents'
+import {TEN_YEAR} from '@stores/sharedContents/SharedContentCreator'
 import _ from 'lodash'
 import React, {useLayoutEffect, useRef, useState} from 'react'
 import {Dimensions, useDimensions} from 'react-dimensions-hook'
@@ -133,6 +133,11 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   }
   function onClickMoveToBottom(evt: React.MouseEvent<HTMLDivElement>) {
     props.content.moveToBottom()
+    const newContent = Object.assign({}, props.content)
+    props.onUpdate?.call(null, newContent)
+  }
+  function onClickWallpaper(evt: React.MouseEvent<HTMLDivElement>) {
+    props.content.moveToBackground()
     const newContent = Object.assign({}, props.content)
     props.onUpdate?.call(null, newContent)
   }
@@ -259,6 +264,8 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
             <div className={classes.titleButton} onClick={onClickMoveToTop}>&nbsp; <FlipToFrontIcon /></div>}
           {props.content.pinned ? undefined :
             <div className={classes.titleButton} onClick={onClickMoveToBottom}>&nbsp; <FlipToBackIcon /></div>}
+          {(props.content.pinned || props.content.type !== 'img' || props.content.zorder < TEN_YEAR) ? undefined :
+            <div className={classes.titleButton} onClick={onClickWallpaper}>&nbsp; <WallpaperIcon /></div>}
           <div className={classes.note} onClick={onClickShare}>Share</div>
           {props.content.pinned ? undefined :
              <div className={classes.close} onClick={onClickClose}><CloseRoundedIcon /></div>}

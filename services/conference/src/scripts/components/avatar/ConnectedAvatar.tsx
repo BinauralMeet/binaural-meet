@@ -29,7 +29,7 @@ const ConnectedAvatar: React.FC<ConnectedAvatarProps> = (props) => {
   })
 
   return <ComposedAvatar information={information} stream={showVideo ? stream : undefined}
-     color={color} textColor={textColor} size={props.size} />
+     color={color} textColor={textColor} size={props.size} style={{pointerEvents:'none'}} />
 }
 
 export const MemoedAvatar = memoComponent(ConnectedAvatar, ['participantId', 'size'])

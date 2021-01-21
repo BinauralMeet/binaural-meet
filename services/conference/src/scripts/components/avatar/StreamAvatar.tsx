@@ -25,6 +25,7 @@ const useStyles = makeStyles({
 export interface StreamAvatarProps {
   stream: MediaStream
   size?: number
+  style?: any
 }
 
 const setStream = (
@@ -75,7 +76,9 @@ export const StreamAvatar: React.FC<StreamAvatarProps> = (props: StreamAvatarPro
     [videoRef],
   )
 
-  return <div className={classes.root}><video ref={videoRef} /></div>
+  return <div className={classes.root} style={props.style}>
+    <video ref={videoRef} style={props.style} />
+  </div>
 }
 
 StreamAvatar.defaultProps = {

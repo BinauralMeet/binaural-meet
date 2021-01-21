@@ -9,6 +9,8 @@ import _ from 'lodash'
 import participants from '../participants/Participants'
 import sharedContents, {contentLog} from './SharedContents'
 
+const TIME_RESOLUTION_IN_MS = 100
+export const TEN_YEAR = 1000 * 60 * 60 * 24 * 365 * 10 / TIME_RESOLUTION_IN_MS
 export const defaultContent: ISharedContent = Object.assign({}, mapObjectDefaultValue, {
   name: '',
   ownerName: '',
@@ -23,13 +25,23 @@ export const defaultContent: ISharedContent = Object.assign({}, mapObjectDefault
     return this.type === 'text' || this.type === 'iframe' || this.type === 'gdrive'
   },
   moveToTop() {
-    const TIME_RESOLUTION_IN_MS = 100
     this.zorder = Math.floor(Date.now() / TIME_RESOLUTION_IN_MS)
   },
   moveToBottom() {
-    const TIME_RESOLUTION_IN_MS = 100
-    const bottom = sharedContents.all[0]
-    this.zorder = bottom.zorder - TIME_RESOLUTION_IN_MS
+    let idx = 0
+    while (idx < sharedContents.all.length &&
+      sharedContents.all[idx].zorder < TEN_YEAR) { //  1980.01.01
+      idx += 1
+    }
+    if (idx < sharedContents.all.length) {
+      const bottom = sharedContents.all[idx]
+      this.zorder = bottom.zorder - TIME_RESOLUTION_IN_MS
+    }else {
+      this.zorder = Math.floor(Date.now() / TIME_RESOLUTION_IN_MS)
+    }
+  },
+  moveToBackground() {
+    this.zorder = TEN_YEAR - (Math.floor(Date.now() / TIME_RESOLUTION_IN_MS) - this.zorder)
   },
 })
 
@@ -77,11 +89,13 @@ class SharedContent implements ISharedContent {
   isEditable: () => boolean
   moveToTop: () => void
   moveToBottom: () => void
+  moveToBackground: () => void
   constructor() {
     Object.assign(this, _.cloneDeep(defaultContent))
     this.isEditable = defaultContent.isEditable
     this.moveToTop = defaultContent.moveToTop
     this.moveToBottom = defaultContent.moveToBottom
+    this.moveToBackground = defaultContent.moveToBackground
   }
 }
 

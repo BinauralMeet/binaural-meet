@@ -14,7 +14,8 @@ export interface SharedContent extends MapObject {
   pinned: boolean                 //  pinned (not resizable or resizable)
   isEditable(): boolean           //  editable or not
   moveToTop(): void               //  change zorder to the top.
-  moveToBottom(): void            //  change zorder to the top.
+  moveToBottom(): void            //  change zorder to the bottom.
+  moveToBackground(): void        //  change zorder to far below the bottom.
 }
 
 export interface TextMessage {
