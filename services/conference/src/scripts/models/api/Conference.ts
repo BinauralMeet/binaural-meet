@@ -254,10 +254,10 @@ export class Conference extends EventEmitter {
         if (this.video) {
           ctx?.drawImage(this.video, sx, sy, VIDEO_SIZE, VIDEO_SIZE, 0, 0, VIDEO_SIZE, VIDEO_SIZE)
         }
-        window.requestAnimationFrame(drawVideo)
       }
-      window.requestAnimationFrame(drawVideo)
-      const stream = (this.canvas as any).captureStream(20) as MediaStream
+      const FRAMERATE = 20
+      setInterval(drawVideo, 1000 / FRAMERATE)
+      const stream = (this.canvas as any).captureStream(FRAMERATE) as MediaStream
       (track as any).track = stream.getVideoTracks()[0]
     }
   }

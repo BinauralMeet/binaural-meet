@@ -4,13 +4,14 @@ interface Params {
   name: string | null  // user name
   headphone: headphoneType | null  // stereo headphone output
   speaker: headphoneType | null // monaural speaker output
-  muteMic: muteType | null      // Mute the mic at start
   muteCamera: muteType | null   // Mute the camera at start
+  muteMic: muteType | null      // Mute the mic at start
+  testBot: string | null      // Tester bot mode
 }
 
 export function decodeGetParams(url: string): Params {
   const urlObj = new URL(url)
-  const props = ['room', 'name', 'headphone', 'speaker', 'muteCamera', 'muteMic']
+  const props = ['room', 'name', 'headphone', 'speaker', 'muteCamera', 'muteMic', 'testBot']
 
   const res: Params = props.reduce(
     (pre, prop) => {
