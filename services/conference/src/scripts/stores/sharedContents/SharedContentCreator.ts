@@ -11,6 +11,7 @@ import sharedContents, {contentLog} from './SharedContents'
 
 export const defaultContent: ISharedContent = Object.assign({}, mapObjectDefaultValue, {
   name: '',
+  ownerName: '',
   type: '' as ContentType,
   url: '',
   size: [0, 0] as [number, number],
@@ -63,6 +64,7 @@ export function makeThemContents(them: ISharedContent[]) {
 
 class SharedContent implements ISharedContent {
   name!: string
+  ownerName!: string
   type!: ContentType
   url!: string
   id!: string
@@ -84,11 +86,14 @@ class SharedContent implements ISharedContent {
 }
 
 export function createContent() {
-  return new SharedContent()
+  const content = new SharedContent()
+  content.ownerName = participants.local.information.name
+
+  return content
 }
 
 export function createContentOfIframe(urlStr: string, map: MapData) {
-  const pasted = new SharedContent()
+  const pasted = createContent()
   const url = new URL(urlStr)
   if (url.hostname === 'youtu.be' || url.hostname === 'youtube.com' || url.hostname === 'www.youtube.com') {
     const paramStrs = url.search.slice(1).split('&')
@@ -137,7 +142,7 @@ export function createContentOfIframe(urlStr: string, map: MapData) {
   return pasted
 }
 export function createContentOfText(message: string, map: MapData) {
-  const pasted = new SharedContent()
+  const pasted = createContent()
   pasted.type = 'text'
   const textMessage = {
     message,
@@ -162,7 +167,7 @@ export function createContentOfImage(imageFile: File, map: MapData, offset?:[num
   const promise = new Promise<SharedContent>((resolutionFunc, rejectionFunc) => {
     uploadToGyazo(imageFile).then(({url, size}) => {
       // console.log("mousePos:" + (global as any).mousePositionOnMap)
-      const pasted = new SharedContent()
+      const pasted = createContent()
       pasted.type = 'img'
       pasted.url = url
       const max = size[0] > size[1] ? size[0] : size [1]
@@ -228,7 +233,7 @@ export function createContentOfPdf(file: File, map: MapData, offset?:[number, nu
 
 
 export function createContentOfVideo(tracks: JitsiLocalTrack[], map: MapData) {
-  const pasted = new SharedContent()
+  const pasted = createContent()
   pasted.type = 'screen'
   pasted.url = ''
   pasted.pose.position[0] = map.mouseOnMap[0]

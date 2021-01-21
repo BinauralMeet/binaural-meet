@@ -6,7 +6,7 @@ import {createJitisLocalTracksFromStream} from '@models/utils/jitsiTrack'
 import participants from '@stores/participants/Participants'
 import {action, computed, observable} from 'mobx'
 
-type ErrorType = '' | 'connection' | 'noMic' | 'micPermission' | 'channel'
+export type ErrorType = '' | 'connection' | 'noMic' | 'micPermission' | 'channel'
 
 export class ErrorInfo {
   @observable message = ''

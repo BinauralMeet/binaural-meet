@@ -4,11 +4,11 @@ import '@models/audio'  // init audio manager (DO NOT delete)
 import '@models/middleware'
 import {urlParameters} from '@models/url'
 import {resolveAtEnd} from '@models/utils'
-import '@stores/index' // init store (DO NOT delete)
+import errorInfo from '@stores/ErrorInfo'
+import '@stores/index'  // init store (DO NOT delete)
 import 'mobx-react-lite/batchingForReactDom'
 import React from 'react'
 import ReactDOM from 'react-dom'
-
 
 main()
 
@@ -28,9 +28,19 @@ function renderDOM() {
 }
 
 function connectConference() {
-  const conferenceName = urlParameters.room || 'haselabtest'
+  window.addEventListener('beforeunload', (ev) => {
+    if (!errorInfo.type) {
+      ev.preventDefault()
+      ev.stopImmediatePropagation()
+      ev.returnValue = 'Really leave from Binaural Meet ?'
+    }
+  },                      true)
 
+  const conferenceName = urlParameters.room || 'haselabtest'
+  errorInfo.connectionStart()
   connection.init().then(
-    () => connection.joinConference(conferenceName),
+    () => {
+      connection.joinConference(conferenceName)
+    },
   )
 }

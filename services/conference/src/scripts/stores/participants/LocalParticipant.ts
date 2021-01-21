@@ -1,7 +1,6 @@
 import {Pose2DMap} from '@models/MapObject'
-import {LocalParticipant as ILocalParticipant, Physics, SoundLocalizationBase, TrackStates} from '@models/Participant'
-import mapData from '@stores/Map'
-import {action, autorun, computed, observable} from 'mobx'
+import {LocalParticipant as ILocalParticipant, Physics, TrackStates} from '@models/Participant'
+import {action, computed, observable} from 'mobx'
 import {Store} from '../utils'
 import {DevicePreference} from './localPlugins'
 import {ParticipantBase} from './ParticipantBase'
@@ -110,7 +109,6 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
       const physics = JSON.parse(str) as PhysicsInfo
       Object.assign(this.physics, physics.physics)
       Object.assign(this.pose, physics.pose)
-      mapData.focusOn(this)
     }
   }
 }

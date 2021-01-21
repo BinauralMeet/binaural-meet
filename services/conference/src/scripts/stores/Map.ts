@@ -5,6 +5,10 @@ import {action, computed, observable} from 'mobx'
 
 const HALF = 0.5
 export class MapData {
+  constructor() {
+    this.loadMatrixFromStorage()
+  }
+
   @observable matrix: DOMMatrixReadOnly = new DOMMatrixReadOnly()
   @observable committedMatrix: DOMMatrixReadOnly = new DOMMatrixReadOnly()
   @observable screenSize: [number, number] = [0, 0]
@@ -24,6 +28,7 @@ export class MapData {
     const mouse = this.toWindow(this.mouseOnMap)
     this.committedMatrix = m
     this.mouseOnMap = this.fromWindow(mouse)
+    this.saveMatrixToStorage(false)
   }
   @action setScreenSize(s:[number, number]) {
     this.screenSize[0] = s[0]
@@ -60,6 +65,32 @@ export class MapData {
     return rotateVector2D(this.matrix, pos)
   }
   readonly keyInputUsers = new Set<string>()
+
+  saveMatrixToStorage(isLocalStorage: boolean) {
+    let storage = sessionStorage
+    if (isLocalStorage) { storage = localStorage }
+    const ar = [this.matrix.a, this.matrix.b, this.matrix.c, this.matrix.d, this.matrix.e, this.matrix.f]
+    storage.setItem('mapMatrix', JSON.stringify(ar))
+  }
+  @action loadMatrixFromStorage() {
+    let storage = localStorage
+    if (sessionStorage.getItem('mapMatrix')) {
+      storage = sessionStorage
+    }
+    const str = storage.getItem('mapMatrix')
+    if (str) {
+      const ar = JSON.parse(str)
+      const newMat = new DOMMatrix()
+      newMat.a = ar[0]
+      newMat.b = ar[1]
+      newMat.c = ar[2]
+      newMat.d = ar[3]
+      newMat.e = ar[4]
+      newMat.f = ar[5]
+      this.setMatrix(newMat)
+      this.setCommittedMatrix(newMat)
+    }
+  }
 }
 
 const map = new MapData()
