@@ -3,7 +3,7 @@ import {PriorityCalculator, priorityLog} from '@models/trafficControl/PriorityCa
 import {connectionInfo} from '@stores/index'
 import {participantsStore} from '@stores/participants'
 import _ from 'lodash'
-import {autorun, reaction} from 'mobx'
+import {autorun} from 'mobx'
 
 export const priorityCalculator = new PriorityCalculator()
 
@@ -38,19 +38,11 @@ const memoedUpdater = (() => {
   return () => {
     const res = priorityCalculator.update()
     if (!_.isEqual(res, memo)) {
-      // if (interval) clearInterval(interval)
       // Send res to Jitsi bridge
       connection.conference.setPerceptibles([res.video, res.audio])
       priorityLog('setPerceptibles:', res)
       console.log(`setPerceptibles:${JSON.stringify(res)}`)
       memo = _.cloneDeep(res)
-      /*
-	  interval = setInterval(()=>{
-        connection.conference.setPerceptibles([res.video, res.audio])
-        priorityLog('setPerceptibles:', res)
-        console.log(`setPerceptibles:${JSON.stringify(res)}`)
-        }, 10 * 1000)
-       */
     }
   }
 })()

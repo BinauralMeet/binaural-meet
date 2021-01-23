@@ -1,6 +1,7 @@
 import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore as useParticipantsStore} from '@hooks/ParticipantsStore'
 import {useStore as useContentsStore} from '@hooks/SharedContentsStore'
+import bxWindowClose from '@iconify-icons/bx/bx-window-close'
 import cursorDefaultOutline from '@iconify/icons-mdi/cursor-default-outline'
 import {Icon} from '@iconify/react'
 import Divider from '@material-ui/core/Divider'
@@ -90,37 +91,57 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
   const showMouse = useObserver(() => participants.local.mouse.show)
   const fileInput = useRef<HTMLInputElement>(null)
 
-  //  keyboard shortcut
+  const importFile = () => {
+    fileInput.current?.click()
+  }
+  const downloadFile = () => {
+    setStep('none')
+    downloadItems(sharedContents)
+  }
+  const createText = () => {
+    //  setStep('text')
+    setStep('none')
+    const tc = createContentOfText('', map)
+    sharedContents.shareContent(tc)
+    sharedContents.editingId = tc.id
+  }
+  const createScreen = () => {
+    startCapture().then((tracks) => {
+      if (tracks.length) {
+        const content = createContentOfVideo(tracks, map)
+        sharedContents.shareContent(content)
+        assert(content.id)
+        sharedContents.tracks.addLocalContents(content.id, tracks)
+      }
+    })
+    setStep('none')
+  }
+  const startMouse = () => {
+    participants.local.mouse.show = !showMouse
+    setStep('none')
+  }
+  const closeAllScreens = () => {
+    const cids = Array.from(sharedContents.tracks.localContents.keys())
+    cids.forEach(cid => sharedContents.removeByLocal(cid))
+    setStep('none')
+  }
+ //  keyboard shortcut
   useEffect(() => {
     const onKeyPress = (e: KeyboardEvent) => {
       if (map.keyInputUsers.has('shareDialog')) {
         if (e.code === 'KeyI') {  //  import
-          fileInput.current?.click()
+          importFile()
         }else if (e.code === 'KeyD') {  //  download
-          setStep('none')
-          downloadItems(sharedContents)
+          downloadFile()
         }else if (e.code === 'KeyT') {  //  download
           e.preventDefault()
-          //  setStep('text')
-          setStep('none')
-          const tc = createContentOfText('', map)
-          sharedContents.shareContent(tc)
-          sharedContents.editingId = tc.id
+          createText()
         }else if (e.code === 'KeyS') {  //  download
-          startCapture().then((tracks) => {
-            if (tracks.length) {
-              const content = createContentOfVideo(tracks, map)
-              sharedContents.shareContent(content)
-              assert(content.id)
-              sharedContents.tracks.addLocalContents(content.id, tracks)
-            }
-          })
-          setStep('none')
+          createScreen()
         }else if (e.code === 'KeyM') {  //  download
-          participants.local.mouse.show = !showMouse
-          setStep('none')
+          startMouse()
         }else if (e.code === 'KeyC') {
-          setStep('none')
+          closeAllScreens()
         }
       }
     }
@@ -144,17 +165,14 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
       />
       <ShareDialogItem
         key="shareImport" icon={<UploadIcon />}
-        text="Import shared items from file"
-        onClick={() => { fileInput.current?.click() }}
+        text="_Import shared items from file"
+        onClick={importFile}
       />
       <ShareDialogItem
         key="shareDownload"
         icon={<DownloadIcon />}
-        text="Download shared items as a file"
-        onClick={() => {
-          setStep('none')
-          downloadItems(sharedContents)
-        }}
+        text="_Download shared items as a file"
+        onClick={downloadFile}
       />
       <Divider />
       <ShareDialogItem
@@ -166,8 +184,8 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
       <ShareDialogItem
         key="shareText"
         icon={<SubjectIcon />}
-        text="Text"
-        onClick={() => setStep('text')}
+        text="_Text"
+        onClick={createText}
       />
       <ShareDialogItem
         key="shareImage"
@@ -179,9 +197,7 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
       <ShareDialogItem
         key="shareScreen"
         icon={sharing.main ? <StopScreenShareIcon /> : <ScreenShareIcon />}
-        text={
-          sharing.main ? 'Stop background screen' : 'Screen as the background'
-        }
+        text={sharing.main ? 'Stop background screen' : 'Screen as the background'}
         onClick={() => {
           if (sharing.main) {
             sharedContents.tracks.clearLocalMains()
@@ -198,23 +214,20 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
       <ShareDialogItem
         key="shareScreenContent"
         icon={<OpenInBrowserIcon />}
-        text={'Screen in a window'}
-        onClick={() => {
-          startCapture().then((tracks) => {
-            if (tracks.length) {
-              const content = createContentOfVideo(tracks, map)
-              sharedContents.shareContent(content)
-              assert(content.id)
-              sharedContents.tracks.addLocalContents(content.id, tracks)
-            }
-          })
-          setStep('none')
-        }}
+        text={'_Screen in a window'}
+        onClick={createScreen}
       />
+      {sharedContents.tracks.localContents.size ?
+        <ShareDialogItem
+          key = "stopScreen"
+          icon={<Icon icon={bxWindowClose} />}
+          text={'_Close all screen windows'}
+          onClick={closeAllScreens}
+          /> : undefined}
       <ShareDialogItem
         key="shareMouse"
         icon={<Icon icon={cursorDefaultOutline} />}
-        text={showMouse ?  'Stop sharing mouse cursor' : 'Mouse cursor'}
+        text={showMouse ?  'Stop sharing _Mouse cursor' : '_Mouse cursor'}
         onClick={() => {
           participants.local.mouse.show = !showMouse
           setStep('none')

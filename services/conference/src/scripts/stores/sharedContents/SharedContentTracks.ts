@@ -3,13 +3,15 @@ import {connection} from '@models/api'
 import {ConnectionForContent} from '@models/api/ConnectionForScreenContent'
 import {SharedContent} from '@models/SharedContent'
 import {assert} from '@models/utils'
-import participants from '@stores/participants/Participants'
 import {SharedContents} from '@stores/sharedContents/SharedContents'
 import {JitsiLocalTrack, JitsiRemoteTrack, JitsiTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
 import {action, computed, observable} from 'mobx'
 
 export const CID_MAINSCREEN = 'mainScreen'
+
+const LOG_CONTENT_TRACK = false
+const contentTrackLog = LOG_CONTENT_TRACK ? console.log : () => {}
 export class SharedContentTracks {
   private sharedContents:SharedContents
   constructor(sharedContents: SharedContents) {
@@ -23,7 +25,7 @@ export class SharedContentTracks {
   // -----------------------------------------------------------------
   //  Public interface
   public onUpdateContent(c: SharedContent) {
-    console.log(`update SC: id:${c.id} pid:${c.url} cid in map:${this.carrierMap.get(c.url)}`)
+    contentTrackLog(`update SC: id:${c.id} pid:${c.url} cid in map:${this.carrierMap.get(c.url)}`)
     assert(!this.carrierMap.has(c.url) || this.carrierMap.get(c.url) === c.id)
     this.carrierMap.set(c.url, c.id)
     const tracks = this.remoteTrackPool.get(c.url)
@@ -48,9 +50,9 @@ export class SharedContentTracks {
       this.addRemoteMain(track)
     }else {
       if (this.sharedContents.localParticipant.myContents.has(cid)) {
-        console.log(`SC addRT:Local: cid:${cid} pid:${track.getParticipantId()} track:${track.toString()}`)
+        contentTrackLog(`SC addRT:Local: cid:${cid} pid:${track.getParticipantId()} track:${track.toString()}`)
       }else {
-        console.log(`SC addRT:cid:${cid} pid:${track.getParticipantId()} track:${track.toString()}`)
+        contentTrackLog(`SC addRT:cid:${cid} pid:${track.getParticipantId()} track:${track.toString()}`)
         this.addRemoteContent(track)
       }
     }
@@ -102,7 +104,7 @@ export class SharedContentTracks {
       }
       //  set onended
       tracks.forEach(track => track.getTrack().onended = () => {
-        console.log('stop sharing screen of ', track)
+        contentTrackLog('stop sharing screen of ', track)
         this.removeLocalMain(track)
       })
     }else {

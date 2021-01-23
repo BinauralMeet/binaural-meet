@@ -146,17 +146,26 @@ export const Footer: React.FC = () => {
     }
   })
   function closeMicMenu(did:string) {
-    if (did) { participants.local.devicePreference.audioInputDevice = did }
+    if (did) {
+      participants.local.devicePreference.audioInputDevice = did
+      participants.local.saveMediaSettingsToStorage(false)
+    }
     setMicMenuEl(null)
   }
   const [speakerMenuEl, setSpeakerMenuEl] = React.useState<Element|null>(null)
   function closeSpeakerMenu(did:string) {
-    if (did) { participants.local.devicePreference.audioOutputDevice = did }
+    if (did) {
+      participants.local.devicePreference.audioOutputDevice = did
+      participants.local.saveMediaSettingsToStorage(false)
+    }
     setSpeakerMenuEl(null)
   }
   const [videoMenuEl, setVideoMenuEl] = React.useState<Element|null>(null)
   function closeVideoMenu(did:string) {
-    if (did) { participants.local.devicePreference.videoInputDevice = did }
+    if (did) {
+      participants.local.devicePreference.videoInputDevice = did
+      participants.local.saveMediaSettingsToStorage(false)
+    }
     setVideoMenuEl(null)
   }
   function updateDevices(ev:React.PointerEvent | React.MouseEvent) {
@@ -177,7 +186,7 @@ export const Footer: React.FC = () => {
           if (participants.local.plugins.streamControl.muteSpeaker) {
             participants.local.plugins.streamControl.muteAudio = true
           }
-          participants.local.saveMuteStatusToStorage(false)
+          participants.local.saveMediaSettingsToStorage(false)
         }}
         onClickMore = { (ev) => {
           updateDevices(ev)
@@ -197,7 +206,7 @@ export const Footer: React.FC = () => {
           if (!participants.local.plugins.streamControl.muteAudio) {
             participants.local.plugins.streamControl.muteSpeaker = false
           }
-          participants.local.saveMuteStatusToStorage(false)
+          participants.local.saveMediaSettingsToStorage(false)
         }}
         onClickMore = { (ev) => {
           updateDevices(ev)
@@ -215,7 +224,7 @@ export const Footer: React.FC = () => {
       <FabMain color={mute.muteV ? 'primary' : 'secondary'} aria-label="camera"
         onClick = { () => {
           participants.local.plugins.streamControl.muteVideo = !mute.muteV
-          participants.local.saveMuteStatusToStorage(false)
+          participants.local.saveMediaSettingsToStorage(false)
         }}
         onClickMore = { (ev) => {
           updateDevices(ev)

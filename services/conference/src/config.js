@@ -7,7 +7,7 @@ const rtcConfig = {
       width:{
         //  max:1920, //  somtimes it prohibit to use very heigh resolution cameras
         //  min:160,
-        ideal:480,
+        ideal:360,
       },
       height:{
         //  max:1080, //   somtimes it prohibit to use very heigh resolution cameras
@@ -31,13 +31,15 @@ const common_config = {
           disableH264: true,
           useStunTurn: true, // use XEP-0215 to fetch STUN and TURN servers for the P2P connection
   },
-  rtc:rtcConfig,
   testing: {
     octo: {
       probability: 1
     },
     capScreenshareBitrate: 128 * 1024,
   },
+  rtc:rtcConfig,
+  remoteVideoLimit:15,
+  remoteAudioLimit:20,
   thirdPersonView: true,
 }
 

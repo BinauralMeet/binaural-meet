@@ -6,6 +6,7 @@ import {urlParameters} from '@models/url'
 import {resolveAtEnd} from '@models/utils'
 import errorInfo from '@stores/ErrorInfo'
 import '@stores/index'  // init store (DO NOT delete)
+import contents from '@stores/sharedContents/SharedContents'
 import 'mobx-react-lite/batchingForReactDom'
 import React from 'react'
 import ReactDOM from 'react-dom'
@@ -29,7 +30,9 @@ function renderDOM() {
 
 function connectConference() {
   window.addEventListener('beforeunload', (ev) => {
-    if (!errorInfo.type) {
+    //  prevent leaving or reloading browser when the user shares screen(s).
+    if (!errorInfo.type &&
+      (contents.tracks.localMains.size || contents.tracks.localContents.size)) {
       ev.preventDefault()
       ev.stopImmediatePropagation()
       ev.returnValue = 'Really leave from Binaural Meet ?'

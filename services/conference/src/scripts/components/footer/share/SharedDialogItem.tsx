@@ -1,6 +1,7 @@
 import ListItem from '@material-ui/core/ListItem'
 import ListItemAvatar from '@material-ui/core/ListItemAvatar'
 import ListItemText from '@material-ui/core/ListItemText'
+import {assert} from '@models/utils'
 import React from 'react'
 
 interface ShareDialogItemProps {
@@ -15,6 +16,10 @@ export const ShareDialogItem: React.FC<ShareDialogItemProps> = (props) => {
     text,
     onClick,
   } = props
+  const texts = text.split('_')
+  assert(texts.length <= 2)
+  const textEl = <>{texts[0]}{texts[1] ?
+     <><strong>{texts[1].substr(0, 1)}</strong>{texts[1].substr(1)}</> : undefined}</>
 
   return (
     <ListItem button={true} onClick={onClick}>
@@ -22,7 +27,7 @@ export const ShareDialogItem: React.FC<ShareDialogItemProps> = (props) => {
         {icon}
       </ListItemAvatar>
       <ListItemText>
-        {text}
+        {textEl}
       </ListItemText>
     </ListItem>
   )

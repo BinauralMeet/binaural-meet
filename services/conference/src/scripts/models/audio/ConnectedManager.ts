@@ -16,17 +16,12 @@ export class ConnectedManager {
   private participantsMemo = new Map<string, RemoteParticipant>()
   private contentsMemo = new Map<string, Set<JitsiRemoteTrack>>()
 
+  public setAudioOutput(deviceId: string) {
+    this.manager.setAudioOutput(deviceId)
+  }
   constructor() {
     autorun(this.onPopulationChange)
     autorun(this.onScreenContentsChange)
-
-    reaction(
-      () => participants.local.devicePreference.audioOutputDevice,
-      (deviceId) => {
-        this.manager.setAudioOutput(deviceId)
-      },
-    )
-
     autorun(
       () => {
         this.manager.switchPlayMode(participants.local.useStereoAudio ? 'Context' : 'Element',

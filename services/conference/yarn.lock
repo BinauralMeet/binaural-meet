@@ -1104,6 +1104,11 @@
     reflect-metadata "^0.1.12"
     tslib "^1.8.1"
 
+"@iconify-icons/bx@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@iconify-icons/bx/-/bx-1.1.0.tgz#7c248552375b7a3faba9fee0a632b650336cffdf"
+  integrity sha512-JlCsrgpp4vujb7tDaZtJ/OfeTnsSFyDFSauNO+2ilsHviCb/u3VXbLjdIoDIR5ISGMr0a+W/f0YNOHn3zUqChA==
+
 "@iconify/icons-mdi@^1.0.125":
   version "1.0.147"
   resolved "https://registry.yarnpkg.com/@iconify/icons-mdi/-/icons-mdi-1.0.147.tgz#0925960cfbc0c32d4d969d5fed23624372c9fc50"

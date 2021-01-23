@@ -1,7 +1,8 @@
 import {observable} from 'mobx'
 
 export class DevicePreference {
-  @observable audioInputDevice = ''
-  @observable videoInputDevice = ''
-  @observable audioOutputDevice = ''
+  [id: string]: string|undefined
+  @observable audioInputDevice:string|undefined = undefined
+  @observable videoInputDevice:string|undefined = undefined
+  @observable audioOutputDevice:string|undefined = undefined
 }

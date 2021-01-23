@@ -7,13 +7,15 @@ import {ParticipantBase} from './ParticipantBase'
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
 
-interface MuteStatus {
+interface MediaSettings {
   stream:{
     muteVideo: boolean,
     muteAudio: boolean,
     muteSpeaker: boolean,
   },
+  device:DevicePreference,
   headphone: boolean,
+  soundLocalizationBase: string,
 }
 
 interface PhysicsInfo{
@@ -41,6 +43,7 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
     super(id)
   }
 
+  //  save and load participant's name etc.
   saveInformationToStorage(isLocalStorage:boolean) {
     let storage = sessionStorage
     if (isLocalStorage) { storage = localStorage }
@@ -59,34 +62,41 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
       Object.assign(this.information, JSON.parse(infoInStr))
     }
   }
-  saveMuteStatusToStorage(isLocalStorage:boolean) {
+
+  //  Save and MediaSettings etc.
+  saveMediaSettingsToStorage(isLocalStorage:boolean) {
     let storage = sessionStorage
     if (isLocalStorage) { storage = localStorage }
-    const muteStatus:MuteStatus = {
+    const muteStatus:MediaSettings = {
       stream:{
         muteVideo: this.plugins.streamControl.muteVideo,
         muteAudio: this.plugins.streamControl.muteAudio,
         muteSpeaker: this.plugins.streamControl.muteSpeaker,
       },
+      device:this.devicePreference,
       headphone: this.useStereoAudio,
+      soundLocalizationBase: this.soundLocalizationBase,
     }
     //  console.log(storage === localStorage ? 'Save to localStorage' : 'Save to sessionStorage')
     storage.setItem('localParticipantStreamControl', JSON.stringify(muteStatus))
   }
   @action.bound
-  loadMuteStatusFromStorage() {
+  loadMediaSettingsFromStorage() {
     let storage = localStorage
     if (sessionStorage.getItem('localParticipantStreamControl')) {
       storage = sessionStorage
     }
-    //  console.debug(storage === localStorage ? 'Load from localStorage' : 'Load from sessionStorage')
-    const muteStatusInStr = storage.getItem('localParticipantStreamControl')
-    if (muteStatusInStr) {
-      const muteStateus = JSON.parse(muteStatusInStr) as MuteStatus
-      Object.assign(this.plugins.streamControl, muteStateus.stream)
-      this.useStereoAudio = muteStateus.headphone
+    const settingInStr = storage.getItem('localParticipantStreamControl')
+    if (settingInStr) {
+      const setting = JSON.parse(settingInStr) as MediaSettings
+      Object.assign(this.plugins.streamControl, setting.stream)
+      Object.assign(this.devicePreference.videoInputDevice, setting.device)
+      this.useStereoAudio = setting.headphone
+      this.soundLocalizationBase = setting.soundLocalizationBase
     }
   }
+
+  //  Save and load physics
   savePhysicsToStorage(isLocalStorage:boolean) {
     let storage = sessionStorage
     if (isLocalStorage) { storage = localStorage }
