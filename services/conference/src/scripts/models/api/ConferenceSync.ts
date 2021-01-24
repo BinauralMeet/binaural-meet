@@ -5,7 +5,7 @@ import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {diffMap, diffSet, intersectionMap} from '@models/utils'
 import participants from '@stores/participants/Participants'
 import {makeItContent, makeThemContents} from '@stores/sharedContents/SharedContentCreator'
-import contents, {contentLog} from '@stores/sharedContents/SharedContents'
+import contents from '@stores/sharedContents/SharedContents'
 import JitsiMeetJS from 'lib-jitsi-meet'
 import _ from 'lodash'
 import {autorun, IReactionDisposer} from 'mobx'
@@ -40,6 +40,9 @@ interface FragmentedMessage{
   c: number
   s: string
 }
+
+const SYNC_LOG = false
+const syncLog = SYNC_LOG ? console.log : () => {}
 
 export class ConferenceSync{
   conference: Conference
@@ -96,9 +99,11 @@ export class ConferenceSync{
       if (remote) { Object.assign(remote.information, info) }
     })
     const sendInfo = (to:string) => {
-      this.conference.sendMessage(MessageType.PARTICIPANT_INFO, to ? to : '', {...participants.local.information})
+      if (this.conference.channelOpened) {
+        this.conference.sendMessage(MessageType.PARTICIPANT_INFO, to ? to : '', {...participants.local.information})
+      }
     }
-    this.disposers.push(autorun(() => { sendInfo('') }))
+    this.disposers.push(autorun(() => sendInfo('')))
 
     //  track states
     this.conference.on(MessageType.PARTICIPANT_TRACKSTATES, (from:string, states:TrackStates) => {
@@ -106,8 +111,10 @@ export class ConferenceSync{
       if (remote) { Object.assign(remote.trackStates, states) }
     })
     const sendTrackStates = (to:string) => {
-      this.conference.sendMessage(MessageType.PARTICIPANT_TRACKSTATES,
-                                  to ? to : '', {...participants.local.trackStates})
+      if (this.conference.channelOpened) {
+        this.conference.sendMessage(MessageType.PARTICIPANT_TRACKSTATES,
+                                    to ? to : '', {...participants.local.trackStates})
+      }
     }
     this.disposers.push(autorun(() => { sendTrackStates('') }))
 
@@ -121,8 +128,10 @@ export class ConferenceSync{
       }
     })
     const sendPose = (to:string) => {
-      const newPose = Object.assign({}, participants.local.pose)
-      this.conference.sendMessage(MessageType.PARTICIPANT_POSE, to ? to : '', newPose)
+      if (this.conference.channelOpened) {
+        const newPose = Object.assign({}, participants.local.pose)
+        this.conference.sendMessage(MessageType.PARTICIPANT_POSE, to ? to : '', newPose)
+      }
     }
     this.disposers.push(autorun(() => { sendPose('') }))
 
@@ -134,7 +143,9 @@ export class ConferenceSync{
       }
     })
     const sendPhysics = (to:string) => {
-      this.conference.sendMessage(MessageType.PARTICIPANT_PHYSICS, to ? to : '', {...participants.local.physics})
+      if (this.conference.channelOpened) {
+        this.conference.sendMessage(MessageType.PARTICIPANT_PHYSICS, to ? to : '', {...participants.local.physics})
+      }
     }
     this.disposers.push(autorun(() => { sendPhysics('') }))
 
@@ -144,7 +155,9 @@ export class ConferenceSync{
       if (remote) { Object.assign(remote.mouse, mouse) }
     })
     const sendMouse = (to: string) => {
-      this.conference.sendMessage(MessageType.PARTICIPANT_MOUSE, '', Object.assign({}, participants.local.mouse))
+      if (this.conference.channelOpened) {
+        this.conference.sendMessage(MessageType.PARTICIPANT_MOUSE, '', Object.assign({}, participants.local.mouse))
+      }
     }
     this.disposers.push(autorun(() => { sendMouse('') }))
 
@@ -158,7 +171,9 @@ export class ConferenceSync{
       }
     })
     const sendDirectRemotes = (to: string) => {
-      this.conference.sendMessage(MessageType.DIRECT_REMOTES, '', Array.from(participants.directRemotes))
+      if (this.conference.channelOpened) {
+        this.conference.sendMessage(MessageType.DIRECT_REMOTES, '', Array.from(participants.directRemotes))
+      }
     }
     this.disposers.push(autorun(() => { sendDirectRemotes('') }))
 
@@ -175,12 +190,12 @@ export class ConferenceSync{
       const cs = makeThemContents(cs_)
       contents.updateRemoteContents(cs, from)
       this.gotResponse(from)
-      contentLog(`recv remote contents ${JSON.stringify(cs.map(c => c.id))} from ${from}.`, cs)
+      syncLog(`recv remote contents ${JSON.stringify(cs.map(c => c.id))} from ${from}.`, cs)
     })
     const sendMyContentsUpdated = (contents:ISharedContent[], to?: string) => {
       const contentsToSend = removePerceptibility(contents)
-      contentLog(`send contents ${JSON.stringify(contentsToSend.map(c => c.id))} to ${to ? to : 'all'}.`,
-                 contentsToSend)
+      syncLog(`send contents ${JSON.stringify(contentsToSend.map(c => c.id))} to ${to ? to : 'all'}.`,
+              contentsToSend)
       const total = contentsToSend.map(c => c.url.length).reduce((prev, cur) => prev + cur, 0)
       if (total > FRAGMENTING_LENGTH || contentsToSend.length > FRAGMENTING_LENGTH / 50) {
         this.sendFragmentedMessage(MessageType.CONTENT_UPDATE_MINE, to ? to : '', contentsToSend)
@@ -199,20 +214,22 @@ export class ConferenceSync{
     }
     let myContentsOld:Map<string, ISharedContent> = new Map()
     this.disposers.push(autorun(() => {
-      const com = intersectionMap(contents.localParticipant.myContents, myContentsOld)
-      const added = diffMap(contents.localParticipant.myContents, com)
-      const removed = diffMap(myContentsOld, com)
-      if (added.size) {
-        sendMyContentsUpdated(Array.from(added.values()))
+      if (this.conference.channelOpened) {
+        const com = intersectionMap(contents.localParticipant.myContents, myContentsOld)
+        const added = diffMap(contents.localParticipant.myContents, com)
+        const removed = diffMap(myContentsOld, com)
+        if (added.size) {
+          sendMyContentsUpdated(Array.from(added.values()))
+        }
+        if (removed.size) {
+          sendMyContentsRemoved(Array.from(removed.keys()))
+        }
+        const updated = Array.from(com.values()).filter(v => v !== myContentsOld.get(v.id))
+        if (updated.length) {
+          sendMyContentsUpdated(updated)
+        }
+        myContentsOld = new Map(contents.localParticipant.myContents)
       }
-      if (removed.size) {
-        sendMyContentsRemoved(Array.from(removed.keys()))
-      }
-      const updated = Array.from(com.values()).filter(v => v !== myContentsOld.get(v.id))
-      if (updated.length) {
-        sendMyContentsUpdated(updated)
-      }
-      myContentsOld = new Map(contents.localParticipant.myContents)
     }))
 
     //  request
@@ -228,9 +245,10 @@ export class ConferenceSync{
     //  request info after join and got data channel.
     let requestSent = false
     this.conference._jitsiConference?.addEventListener(JitsiMeetJS.events.conference.DATA_CHANNEL_OPENED, () => {
+      this.conference.channelOpened = true
       if (requestSent) { return }
       this.conference.sendMessage(MessageType.REQUEST_INFO, '', '')
-      contentLog('REQUEST_INFO sent by DATA_CHANNEL_OPENED.')
+      syncLog('REQUEST_INFO sent by DATA_CHANNEL_OPENED.')
       requestSent = true
       setTimeout(this.checkResponse.bind(this), 1000)
     })
@@ -239,7 +257,7 @@ export class ConferenceSync{
       if (requestSent) { return }
       if (Date.now() - startTime < 10 * 1000) { return }
       this.conference.sendMessage(MessageType.REQUEST_INFO, '', '')
-      contentLog('REQUEST_INFO sent by REMOTE_TRACK_ADDED.')
+      syncLog('REQUEST_INFO sent by REMOTE_TRACK_ADDED.')
       requestSent = true
       setTimeout(this.checkResponse.bind(this), 1000)
     })

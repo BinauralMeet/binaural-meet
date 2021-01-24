@@ -3,7 +3,6 @@ import {MapObject} from './MapObject'
 
 export const PARTICIPANT_SIZE = 60
 export interface ParticipantBase extends MapObject{
-  id: string
   information: Information
   physics: Physics
   tracks: Tracks
@@ -11,12 +10,15 @@ export interface ParticipantBase extends MapObject{
 }
 
 export interface RemoteParticipant extends ParticipantBase {
+  id: string
 }
 
 export type SoundLocalizationBase = 'avatar' | 'user'
 export interface LocalParticipant extends ParticipantBase {
+  id: string
   soundLocalizationBase: SoundLocalizationBase
 }
+export type Participant = LocalParticipant | RemoteParticipant
 
 export interface Pose3DAudio {  // right hand cartesian coordinate system
   position: [number, number, number],

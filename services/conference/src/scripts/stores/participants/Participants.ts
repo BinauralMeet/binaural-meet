@@ -5,7 +5,7 @@ import {RemoteParticipant} from './RemoteParticipant'
 
 export class Participants {
   @observable.shallow readonly remote = new Map<string, RemoteParticipant>()
-  local_ = observable.box(new LocalParticipant(''))
+  local_ = observable.box(new LocalParticipant())
 
   @observable.shallow readonly directRemotes = new Set<string>()
 
@@ -23,19 +23,7 @@ export class Participants {
 
   @action
   setLocalId(id: string) {
-    const newLocal = new LocalParticipant(id)
-    const oldLocal = this.local
-    if (oldLocal) {
-      //  copy parameters which should NOT send to remote.
-      newLocal.remoteAudioLimit = oldLocal.remoteAudioLimit
-      newLocal.remoteVideoLimit = oldLocal.remoteVideoLimit
-    }
-    this.local_.set(newLocal)
-    if (oldLocal) {
-      //  copy parameters which should send to remote.
-      Object.assign(oldLocal, {id:newLocal.id})
-      Object.assign(newLocal, oldLocal)
-    }
+    this.local.id = id
   }
 
   @action
@@ -69,9 +57,13 @@ export class Participants {
       remote.tracks.audio = track
     } else {
       remote.tracks.avatar = track
-      track.getTrack().onended = () => { remote.tracks.avatar = undefined }
-      track.getTrack().onmute = () => { remote.tracks.onMuteChanged(track, true) }
-      track.getTrack().onunmute = () => { remote.tracks.onMuteChanged(track, false) }
+      track.getTrack().addEventListener('ended', () => { remote.tracks.avatar = undefined })
+      track.getTrack().addEventListener('mute', () => { remote.tracks.onMuteChanged(track, true) })
+      track.getTrack().addEventListener('unmute', () => { remote.tracks.onMuteChanged(track, false) })
+      /*
+        track.getTrack().onended = () => { remote.tracks.avatar = undefined }
+        track.getTrack().onmute = () => { remote.tracks.onMuteChanged(track, true) }
+        track.getTrack().onunmute = () => { remote.tracks.onMuteChanged(track, false) } */
     }
 
     return true

@@ -148,7 +148,7 @@ export const Footer: React.FC = () => {
   function closeMicMenu(did:string) {
     if (did) {
       participants.local.devicePreference.audioInputDevice = did
-      participants.local.saveMediaSettingsToStorage(false)
+      participants.local.saveMediaSettingsToStorage(true)
     }
     setMicMenuEl(null)
   }
@@ -156,7 +156,7 @@ export const Footer: React.FC = () => {
   function closeSpeakerMenu(did:string) {
     if (did) {
       participants.local.devicePreference.audioOutputDevice = did
-      participants.local.saveMediaSettingsToStorage(false)
+      participants.local.saveMediaSettingsToStorage(true)
     }
     setSpeakerMenuEl(null)
   }
@@ -164,7 +164,7 @@ export const Footer: React.FC = () => {
   function closeVideoMenu(did:string) {
     if (did) {
       participants.local.devicePreference.videoInputDevice = did
-      participants.local.saveMediaSettingsToStorage(false)
+      participants.local.saveMediaSettingsToStorage(true)
     }
     setVideoMenuEl(null)
   }
@@ -186,7 +186,7 @@ export const Footer: React.FC = () => {
           if (participants.local.plugins.streamControl.muteSpeaker) {
             participants.local.plugins.streamControl.muteAudio = true
           }
-          participants.local.saveMediaSettingsToStorage(false)
+          participants.local.saveMediaSettingsToStorage(true)
         }}
         onClickMore = { (ev) => {
           updateDevices(ev)
@@ -206,7 +206,7 @@ export const Footer: React.FC = () => {
           if (!participants.local.plugins.streamControl.muteAudio) {
             participants.local.plugins.streamControl.muteSpeaker = false
           }
-          participants.local.saveMediaSettingsToStorage(false)
+          participants.local.saveMediaSettingsToStorage(true)
         }}
         onClickMore = { (ev) => {
           updateDevices(ev)
@@ -224,7 +224,7 @@ export const Footer: React.FC = () => {
       <FabMain color={mute.muteV ? 'primary' : 'secondary'} aria-label="camera"
         onClick = { () => {
           participants.local.plugins.streamControl.muteVideo = !mute.muteV
-          participants.local.saveMediaSettingsToStorage(false)
+          participants.local.saveMediaSettingsToStorage(true)
         }}
         onClickMore = { (ev) => {
           updateDevices(ev)

@@ -10,5 +10,10 @@ class TrackStates implements Store<ITrackStates>{
 }
 
 export class RemoteParticipant extends ParticipantBase implements Store<IRemoteParticipant> {
+  readonly id:string
+  constructor(id:string) {
+    super()
+    this.id = id
+  }
   @observable trackStates = new TrackStates()
 }

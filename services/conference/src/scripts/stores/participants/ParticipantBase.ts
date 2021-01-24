@@ -9,7 +9,6 @@ import {getRandomColor, getRandomColorRGB, shallowObservable, Store} from '../ut
 import {Plugins} from './plugins'
 
 export class ParticipantBase extends MapObject implements Store<IParticipantBase> {
-  readonly id: string
   information = shallowObservable<Information>(defaultInformation)
   plugins: Plugins
   tracks = shallowObservable<TracksStore<JitsiTrack>>(new TracksStore<JitsiTrack>())
@@ -23,9 +22,8 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
     return getRandomColorRGB(this.information.name)
   }
 
-  constructor(id: string) {
+  constructor() {
     super()
-    this.id = id
     this.plugins = new Plugins(this)
   }
 

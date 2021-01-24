@@ -1,5 +1,6 @@
 import {Pose2DMap} from '@models/MapObject'
 import {LocalParticipant as ILocalParticipant, Physics, TrackStates} from '@models/Participant'
+import {urlParameters} from '@models/url'
 import {action, computed, observable} from 'mobx'
 import {Store} from '../utils'
 import {DevicePreference} from './localPlugins'
@@ -26,6 +27,7 @@ interface PhysicsInfo{
 
 export class LocalParticipant extends ParticipantBase implements Store<ILocalParticipant> {
   devicePreference = new DevicePreference()
+  @observable id = ''
   @observable useStereoAudio = false  //  will be override by url switch
   @observable thirdPersonView = config.thirdPersonView as boolean
   @observable soundLocalizationBase = config.soundLocalizationBase ? config.soundLocalizationBase : 'user'
@@ -39,8 +41,18 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
       headphone: this.useStereoAudio,
     }
   }
-  constructor(id: string) {
-    super(id)
+  constructor() {
+    super()
+    this.loadInformationFromStorage()
+    if (urlParameters.name) { this.information.name = urlParameters.name }
+    this.useStereoAudio = urlParameters.headphone !== null ? true : false
+    //  console.debug('URL headphone', urlParameters.headphone)
+    this.plugins.streamControl.muteAudio = urlParameters.muteMic !== null ? true : false
+    //  console.debug('URL muteMic', urlParameters.muteMic)
+    this.plugins.streamControl.muteVideo = urlParameters.muteCamera !== null ? true : false
+    //  console.debug('URL muteCamera', urlParameters.muteCamera)
+    this.loadMediaSettingsFromStorage()
+    this.loadPhysicsFromStorage()
   }
 
   //  save and load participant's name etc.
@@ -90,7 +102,7 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
     if (settingInStr) {
       const setting = JSON.parse(settingInStr) as MediaSettings
       Object.assign(this.plugins.streamControl, setting.stream)
-      Object.assign(this.devicePreference.videoInputDevice, setting.device)
+      Object.assign(this.devicePreference, setting.device)
       this.useStereoAudio = setting.headphone
       this.soundLocalizationBase = setting.soundLocalizationBase
     }

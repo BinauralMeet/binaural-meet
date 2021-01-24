@@ -21,7 +21,7 @@ export const SoundLocalizationSetting: React.FC<{}> = () => {
       <Grid item={true}>
         <Switch checked={soundLocalizationBase === 'avatar'} onChange={() => {
           participants.local.soundLocalizationBase = soundLocalizationBase === 'avatar' ? 'user' : 'avatar'
-          participants.local.saveMediaSettingsToStorage(false)
+          participants.local.saveMediaSettingsToStorage(true)
         }} name="soundLoc" />
       </Grid>
       <Grid item={true}>Avatar (avatar's direction)</Grid>
@@ -44,7 +44,7 @@ export const StereoAudioSwitch: React.FC = () => {
 
   const switchStereo = () => {
     participants.local.useStereoAudio = !stereo
-    participants.local.saveMediaSettingsToStorage(false)
+    participants.local.saveMediaSettingsToStorage(true)
   }
 
   const classes = useStyles()
