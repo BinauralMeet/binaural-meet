@@ -1,5 +1,3 @@
-import {useStore as useMapStore} from '@hooks/MapStore'
-import {useStore} from '@hooks/ParticipantStore'
 import {useStore as useContents} from '@hooks/SharedContentsStore'
 import pinIcon from '@iconify/icons-mdi/pin'
 import pinOffIcon from '@iconify/icons-mdi/pin-off'
@@ -75,8 +73,6 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     return gv
   }
 
-  useStore()
-
   // states
   const [pose, setPose] = useState(props.content.pose)  //  pose of content
   const [size, setSize] = useState(props.content.size)  //  size of content
@@ -85,21 +81,13 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   const rnd = useRef<Rnd>(null)                         //  ref to rnd to update position and size
   const {ref, dimensions} = useDimensions()             //  title dimensions measured
   const [showTitle, setShowTitle] = useState(!props.autoHideTitle || !props.content.pinned)
-  // const [editing, setEditingRaw] = useState(false)
-  const map = useMapStore()
   const contents = useContents()
   function setEditing(flag: boolean) {
-    if (flag) {
-      map.keyInputUsers.add(props.content.id)
-    }else {
-      map.keyInputUsers.delete(props.content.id)
-    }
     if (flag) {
       contents.editingId = props.content.id
     }else if (contents.editingId === props.content.id) {
       contents.editingId = ''
     }
-    //  setEditingRaw(flag)
   }
   const state = useRef<RndContentState>(new RndContentState())
 

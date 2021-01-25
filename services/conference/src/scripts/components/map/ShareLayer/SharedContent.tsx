@@ -1,3 +1,4 @@
+import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore} from '@hooks/SharedContentsStore'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {contentLog} from '@stores/sharedContents/SharedContents'
@@ -10,6 +11,13 @@ export interface SharedContentProps{
 
 export const SharedContent: React.FC<SharedContentProps> = (props:SharedContentProps) => {
   const store = useStore()
+  //  set whether use keyboard input or not
+  const map = useMapStore()
+  if (props.editing) {
+    map.keyInputUsers.add(props.content.id)
+  }else {
+    map.keyInputUsers.delete(props.content.id)
+  }
 
   return (
     <RndContent content={props.content} autoHideTitle={true} editing={props.editing ? true : false}

@@ -1,9 +1,9 @@
 import {connection} from '@models/api/Connection'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {assert, intersectionMap} from '@models/utils'
+import {assert, diffMap, intersectionMap} from '@models/utils'
 import {default as participantsStore} from '@stores/participants/Participants'
 import {EventEmitter} from 'events'
-import _ from 'lodash'
+import _, {map} from 'lodash'
 import {action, autorun, computed, observable} from 'mobx'
 import {createContent, disposeContent} from './SharedContentCreator'
 import {SharedContentTracks} from './SharedContentTracks'
@@ -12,11 +12,9 @@ export const CONTENTLOG = false      // show manipulations and sharing of conten
 export const contentLog = CONTENTLOG ? console.log : (a:any) => {}
 export const contentDebug = CONTENTLOG ? console.debug : (a:any) => {}
 
-
 function contentComp(a:ISharedContent, b:ISharedContent) {
   return a.zorder - b.zorder
 }
-
 export class ParticipantContents{
   constructor(pid: string) {
     this.participantId = pid
@@ -24,8 +22,6 @@ export class ParticipantContents{
   contentIdCounter = 0
   participantId = ''
   @observable.shallow myContents = new Map<string, ISharedContent>()
-//  @observable.shallow updateRequest = new Map<string, ISharedContent>()
-//  @observable.shallow removeRequest = new Set<string>()
 }
 
 export class SharedContents extends EventEmitter {
@@ -49,14 +45,6 @@ export class SharedContents extends EventEmitter {
       this.localId = newLocalId
       contentLog(`Set new local id ${this.localId}`)
     })
-    //  remove leaving participants
-    autorun(() => {
-      this.leavingParticipants.forEach((pc) => {
-        if (pc.myContents.size === 0) {
-          this.removeParticipant(pc.participantId)
-        }
-      })
-    })
   }
   tracks = new SharedContentTracks(this)
 
@@ -69,7 +57,6 @@ export class SharedContents extends EventEmitter {
   @observable.shallow all: ISharedContent[] = []
   //  contents by owner
   participants: Map < string, ParticipantContents > = new Map<string, ParticipantContents>()
-  leavingParticipants: Map < string, ParticipantContents > = new Map<string, ParticipantContents>()
   getParticipant(pid: string) {
     //  prepare participantContents
     let participant = this.participants.get(pid)
@@ -114,15 +101,20 @@ export class SharedContents extends EventEmitter {
   }
 
   private removeDuplicated() {
-    this.participants.forEach((participant) => {
-      if (participant.participantId > this.localParticipant.participantId) {
-        const com = intersectionMap(participant.myContents, this.localParticipant.myContents)
+    let changed = false
+    this.participants.forEach((remote) => {
+      if (remote.participantId > this.localParticipant.participantId) {
+        const com = intersectionMap(remote.myContents, this.localParticipant.myContents)
         com.forEach((c, cid) => {
           disposeContent(c)
           this.localParticipant.myContents.delete(cid)
         })
+        changed = changed || com.size !== 0
       }
     })
+    if (changed) {
+      connection.conference.sync.sendAllMyContents()
+    }
   }
   private updateAll() {
     this.removeDuplicated()
@@ -222,10 +214,24 @@ export class SharedContents extends EventEmitter {
     }
   }
 
+  //  replace remote contents of an remote user by remote.
+  replaceRemoteContents(cs: ISharedContent[], pid:string) {
+    if (pid === contents.localId) {
+      console.error('A remote tries to replace local contents.')
+    }
+    this.updateRemoteContents(cs, pid)
+    const participant = this.getParticipant(pid)
+    if (participant) {
+      const newContents = new Map(cs.map(c => [c.id, c]))
+      const remove = diffMap(participant.myContents, newContents)
+      this.removeRemoteContents(Array.from(remove.keys()), pid)
+    }
+  }
+
   //  Update remote contents by remote.
   updateRemoteContents(cs: ISharedContent[], pid:string) {
     if (pid === contents.localId) {
-      console.error('Remote updates local contents.')
+      console.error('A remote tries to updates local contents.')
     }
     cs.forEach((c) => {
       const participant = this.getParticipant(pid)
@@ -280,27 +286,25 @@ export class SharedContents extends EventEmitter {
       contentLog('next = ', next)
       if (next === this.localId) {
         contentLog('Next is me')
-        const myContents = new Map<string, ISharedContent>(this.localParticipant.myContents)
         participantLeave.myContents.forEach((c, cid) => {
           if (c.type === 'screen') {
             this.owner.delete(cid)
             participantLeave.myContents.delete(cid)
             disposeContent(c)
           }else {
-            myContents.set(cid, c)
+            this.localParticipant.myContents.set(cid, c)
             this.owner.set(cid, this.localId)
             contentLog('set owner for cid=', cid, ' pid=', this.localId)
           }
         })
-        this.removeParticipant(pidLeave)
         contentLog('remove:', pidLeave, ' current:', JSON.stringify(allPids))
-        contentLog('local contents sz:', myContents.size, ' json:', JSON.stringify(Array.from(myContents.keys())))
-        this.localParticipant.myContents = myContents
-        this.updateAll()
+        contentLog('local contents sz:', this.localParticipant.myContents.size,
+                   ' json:', JSON.stringify(Array.from(this.localParticipant.myContents.keys())))
       }else {
         contentLog('Next is remote')
-        this.leavingParticipants.set(pidLeave, participantLeave)
       }
+      this.removeParticipant(pidLeave)
+      this.updateAll()
     }
   }
 

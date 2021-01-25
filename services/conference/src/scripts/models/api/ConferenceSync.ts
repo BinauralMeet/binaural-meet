@@ -4,6 +4,7 @@ import {Information, Mouse, Physics, TrackStates} from '@models/Participant'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {diffMap, diffSet, intersectionMap} from '@models/utils'
 import participants from '@stores/participants/Participants'
+import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import {makeItContent, makeThemContents} from '@stores/sharedContents/SharedContentCreator'
 import contents from '@stores/sharedContents/SharedContents'
 import JitsiMeetJS from 'lib-jitsi-meet'
@@ -22,8 +23,9 @@ export const MessageType = {
   PARTICIPANT_TRACKLIMITS: 'participant_track_limits',
   DIRECT_REMOTES: 'direct_remotes',
   MAIN_SCREEN_CARRIER: 'main_screen_carrier',
-  CONTENT_UPDATE_MINE: 'content_update_mine',
-  CONTENT_REMOVE_MINE: 'content_remove_mine',
+  CONTENT_ALL: 'content_all',
+  CONTENT_UPDATED: 'content_updated',
+  CONTENT_REMOVED: 'content_removed',
   CONTENT_UPDATE_REQUEST: 'content_update',
   CONTENT_REMOVE_REQUEST: 'content_remove',
   FRAGMENT_HEAD: 'frag_head',
@@ -47,7 +49,6 @@ const syncLog = SYNC_LOG ? console.log : () => {}
 export class ConferenceSync{
   conference: Conference
   disposers: IReactionDisposer[] = []
-  contentResponses = new Set<string>()  //  pids
 
   constructor(c:Conference) {
     this.conference = c
@@ -96,7 +97,10 @@ export class ConferenceSync{
     //  info
     this.conference.on(MessageType.PARTICIPANT_INFO, (from:string, info:Information) => {
       const remote = participants.remote.get(from)
-      if (remote) { Object.assign(remote.information, info) }
+      if (remote) {
+        remote.updateTime.info = Date.now()
+        Object.assign(remote.information, info)
+      }
     })
     const sendInfo = (to:string) => {
       if (this.conference.channelOpened) {
@@ -108,7 +112,10 @@ export class ConferenceSync{
     //  track states
     this.conference.on(MessageType.PARTICIPANT_TRACKSTATES, (from:string, states:TrackStates) => {
       const remote = participants.remote.get(from)
-      if (remote) { Object.assign(remote.trackStates, states) }
+      if (remote) {
+        remote.updateTime.trackStates = Date.now()
+        Object.assign(remote.trackStates, states)
+      }
     })
     const sendTrackStates = (to:string) => {
       if (this.conference.channelOpened) {
@@ -122,6 +129,7 @@ export class ConferenceSync{
     this.conference.on(MessageType.PARTICIPANT_POSE, (from:string, pose:Pose2DMap) => {
       const remote = participants.remote.get(from)
       if (remote) {
+        remote.updateTime.pose = Date.now()
         remote.pose.orientation = pose.orientation
         remote.pose.position = pose.position
         remote.physics.located = true
@@ -139,6 +147,7 @@ export class ConferenceSync{
     this.conference.on(MessageType.PARTICIPANT_PHYSICS, (from:string, physics:Physics) => {
       const remote = participants.remote.get(from)
       if (remote) {
+        remote.updateTime.physhics = Date.now()
         remote.physics.onStage = physics.onStage
       }
     })
@@ -152,7 +161,10 @@ export class ConferenceSync{
     // mouse
     this.conference.on(MessageType.PARTICIPANT_MOUSE, (from:string, mouse:Mouse) => {
       const remote = participants.remote.get(from)
-      if (remote) { Object.assign(remote.mouse, mouse) }
+      if (remote) {
+        remote.updateTime.mouse = Date.now()
+        Object.assign(remote.mouse, mouse)
+      }
     })
     const sendMouse = (to: string) => {
       if (this.conference.channelOpened) {
@@ -183,33 +195,43 @@ export class ConferenceSync{
     })
     //  main screen track's carrier id
     this.conference.on(MessageType.MAIN_SCREEN_CARRIER, (from: string, {carrierId, enable}) => {
-      contents.tracks.onMainScreenCarrier(carrierId, enable)
+      const remote = participants.remote.get(from)
+      if (remote) {
+        remote.updateTime.mainScreenCarrier = Date.now()
+        contents.tracks.onMainScreenCarrier(carrierId, enable)
+      }
     })
     //  my contents
-    this.conference.on(MessageType.CONTENT_UPDATE_MINE, (from:string, cs_:ISharedContent[]) => {
+    //  Part of my contents updated and send them to remote.
+    this.conference.on(MessageType.CONTENT_UPDATED, (from:string, cs_:ISharedContent[]) => {
       const cs = makeThemContents(cs_)
       contents.updateRemoteContents(cs, from)
-      this.gotResponse(from)
       syncLog(`recv remote contents ${JSON.stringify(cs.map(c => c.id))} from ${from}.`, cs)
     })
     const sendMyContentsUpdated = (contents:ISharedContent[], to?: string) => {
       const contentsToSend = removePerceptibility(contents)
       syncLog(`send contents ${JSON.stringify(contentsToSend.map(c => c.id))} to ${to ? to : 'all'}.`,
               contentsToSend)
-      const total = contentsToSend.map(c => c.url.length).reduce((prev, cur) => prev + cur, 0)
-      if (total > FRAGMENTING_LENGTH || contentsToSend.length > FRAGMENTING_LENGTH / 50) {
-        this.sendFragmentedMessage(MessageType.CONTENT_UPDATE_MINE, to ? to : '', contentsToSend)
-      }else {
-        this.conference.sendMessage(MessageType.CONTENT_UPDATE_MINE, to ? to : '', contentsToSend)
-      }
+      this.doSendContent(MessageType.CONTENT_UPDATED, contentsToSend, to)
     }
+    //  Send all my content to remote to refresh.
+    this.conference.on(MessageType.CONTENT_ALL, (from:string, cs_:ISharedContent[]) => {
+      const cs = makeThemContents(cs_)
+      contents.replaceRemoteContents(cs, from)
+      const remote = participants.remote.get(from)
+      if (remote) {
+        remote.updateTime.contents = Date.now()
+      }
+      syncLog(`recv remote contents ${JSON.stringify(cs.map(c => c.id))} from ${from}.`, cs)
+    })
 
-    this.conference.on(MessageType.CONTENT_REMOVE_MINE, (from:string, cids:string[]) => {
+    //  remove
+    this.conference.on(MessageType.CONTENT_REMOVED, (from:string, cids:string[]) => {
       contents.removeRemoteContents(cids, from)
     })
     const sendMyContentsRemoved = (cids: string[]) => {
       if (cids.length) {
-        this.conference.sendMessage(MessageType.CONTENT_REMOVE_MINE, '', cids)
+        this.conference.sendMessage(MessageType.CONTENT_REMOVED, '', cids)
       }
     }
     let myContentsOld:Map<string, ISharedContent> = new Map()
@@ -231,6 +253,12 @@ export class ConferenceSync{
         myContentsOld = new Map(contents.localParticipant.myContents)
       }
     }))
+
+    this.conference.on(MessageType.CONTENT_UPDATED, (from:string, cs_:ISharedContent[]) => {
+      const cs = makeThemContents(cs_)
+      contents.updateRemoteContents(cs, from)
+      syncLog(`recv remote contents ${JSON.stringify(cs.map(c => c.id))} from ${from}.`, cs)
+    })
 
     //  request
     this.conference.on(MessageType.CONTENT_UPDATE_REQUEST, (from:string, c:ISharedContent) => {
@@ -257,7 +285,7 @@ export class ConferenceSync{
       if (requestSent) { return }
       if (Date.now() - startTime < 10 * 1000) { return }
       this.conference.sendMessage(MessageType.REQUEST_INFO, '', '')
-      syncLog('REQUEST_INFO sent by REMOTE_TRACK_ADDED.')
+      console.warn('REQUEST_INFO sent by REMOTE_TRACK_ADDED.')
       requestSent = true
       setTimeout(this.checkResponse.bind(this), 1000)
     })
@@ -268,7 +296,7 @@ export class ConferenceSync{
       sendPhysics(from)
       sendTrackStates(from)
       this.sendTrackLimits(from)
-      sendMyContentsUpdated(Array.from(contents.localParticipant.myContents.values()), from)
+      this.sendAllMyContents(from)
       this.sendMainScreenCarrier(from, true)
     })
 
@@ -296,22 +324,23 @@ export class ConferenceSync{
     this.disposers.forEach(d => d())
   }
 
-  private gotResponse(from:string) {
-    const remote = participants.remote.get(from)
-    if (remote && remote.physics.located) {
-      this.contentResponses.add(from)
-    }
-  }
   private checkResponse() {
-    const toSends = diffSet(new Set(participants.remote.keys()),  this.contentResponses)
-    toSends.forEach((pid) => {
-      this.conference.sendMessage(MessageType.REQUEST_INFO, pid, '')
+    const remotes = Array.from(participants.remote.values())
+    const noRes = remotes.filter(remote => remote.updateTime.hasNoResponse())
+    noRes.forEach((remote) => {
+      this.conference.sendMessage(MessageType.REQUEST_INFO, remote.id, '')
     })
-    if (toSends.size) {
-      console.warn(`Failed to get info from ${JSON.stringify(Array.from(toSends))}`)
-      setTimeout(this.checkResponse.bind(this), 1000)
+    const olds:RemoteParticipant[] = []
+    //  const olds = remotes.filter(remote => remote.updateTime.hasOlderThan(Date.now() - 60 * 1000))
+    olds.forEach((remote) => {
+      this.conference.sendMessage(MessageType.REQUEST_INFO, remote.id, '')
+    })
+    if (noRes.length) {
+      console.warn(`Failed to get response from ${JSON.stringify(noRes.map(r => r.id))}`)
     }
+    setTimeout(this.checkResponse.bind(this), 1000)
   }
+
   //  Utilities
   private fragmentedMessages:FragmentedMessage[] = []
   private fragmentedMessageHead:FragmentedMessageHead = {type:'', length:0}
@@ -343,8 +372,28 @@ export class ConferenceSync{
     const carrierId = contents.tracks.localMainConnection?.getParticipantId()
     if (carrierId) {
       this.conference.sendMessage(MessageType.MAIN_SCREEN_CARRIER, to, {carrierId, enable})
+    }else {
+      this.conference.sendMessage(MessageType.MAIN_SCREEN_CARRIER, to, {carrierId, enable:false})
     }
   }
+
+  doSendContent(type:string, contentsToSend:ISharedContent[], to?:string) {
+    const total = contentsToSend.map(c => c.url.length).reduce((prev, cur) => prev + cur, 0)
+    if ((total + contentsToSend.length * 40) > FRAGMENTING_LENGTH) {
+      this.sendFragmentedMessage(type, to ? to : '', contentsToSend)
+    }else {
+      this.conference.sendMessage(type, to ? to : '', contentsToSend)
+    }
+  }
+
+  sendAllMyContents(to?: string) {
+    const cs = Array.from(contents.localParticipant.myContents.values())
+    const contentsToSend = removePerceptibility(cs)
+    syncLog(`send all contents ${JSON.stringify(contentsToSend.map(c => c.id))} to ${to ? to : 'all'}.`,
+            contentsToSend)
+    this.doSendContent(MessageType.CONTENT_ALL, contentsToSend, to)
+  }
+
 }
 
 //  remove unnessary info from contents to send.

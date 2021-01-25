@@ -60,10 +60,6 @@ export class Participants {
       track.getTrack().addEventListener('ended', () => { remote.tracks.avatar = undefined })
       track.getTrack().addEventListener('mute', () => { remote.tracks.onMuteChanged(track, true) })
       track.getTrack().addEventListener('unmute', () => { remote.tracks.onMuteChanged(track, false) })
-      /*
-        track.getTrack().onended = () => { remote.tracks.avatar = undefined }
-        track.getTrack().onmute = () => { remote.tracks.onMuteChanged(track, true) }
-        track.getTrack().onunmute = () => { remote.tracks.onMuteChanged(track, false) } */
     }
 
     return true
