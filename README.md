@@ -1,5 +1,5 @@
 # binaural-meet
-Real-time video web application with binaural sound localization.
+Video chat web application with 2D map and binaural sound localization. See demo below.
 Details are [here](https://scrapbox.io/binaural-meet/)
 
 ## Demo
