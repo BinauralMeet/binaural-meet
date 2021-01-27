@@ -4,15 +4,15 @@ import {urlParameters} from '@models/url'
 import {addV2, mulV2} from '@models/utils'
 import {createJitisLocalTracksFromStream} from '@models/utils/jitsiTrack'
 import participants from '@stores/participants/Participants'
-import {action, computed, observable} from 'mobx'
+import {action, autorun, computed, observable} from 'mobx'
 
-export type ErrorType = '' | 'connection' | 'noMic' | 'micPermission' | 'channel'
+export type ErrorType = '' | 'connection' | 'noMic' | 'micPermission' | 'channel' | 'enterance'
 
 export class ErrorInfo {
   @observable message = ''
-  @observable title = ''
   @computed get fatal() { return !this.type }
-  @observable type:ErrorType = ''
+  @observable type:ErrorType = 'enterance'
+  @observable title = 'Enter the venue'
 
   //  media devices
   private videoInputs:MediaDeviceInfo[] = []
@@ -33,7 +33,12 @@ export class ErrorInfo {
   /// check errors after try to start the connection to the XMPP server.
   @action connectionStart() {
     this.enumerateDevices()
-    setTimeout(this.checkConnection.bind(this), 4 * 1000)
+    const disposer = autorun(() => {
+      if (this.type === '') {
+        setTimeout(this.checkConnection.bind(this), 4 * 1000)
+        disposer()
+      }
+    })
   }
   @action clear() {
     this.type = ''

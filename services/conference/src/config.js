@@ -48,7 +48,8 @@ const config_binaural = {
     domain: 'binaural.me',
     muc: 'conference.binaural.me'
   },
-  bosh: 'https://binaural.me/http-bind',
+  serviceUrl: 'wss://binaural.me/xmpp-websocket',
+  //  bosh: 'https://binaural.me/http-bind',
 }
 Object.assign(config_binaural, Object.assign(common_config, config_binaural))
 

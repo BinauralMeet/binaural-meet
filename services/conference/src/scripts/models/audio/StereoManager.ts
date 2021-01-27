@@ -1,4 +1,5 @@
 import {assert, isChrome} from '@models/utils'
+import errorInfo from '@stores/ErrorInfo'
 import {NodeGroup, PlayMode, setAudioOutputDevice} from './NodeGroup'
 
 export class StereoManager {
@@ -71,7 +72,7 @@ export class StereoManager {
   addSpeaker(id: string) {
     assert(this.nodes[id] === undefined)
     this.nodes[id] = new NodeGroup(this.audioContext, this.audioDestination,
-      this.playMode, !this.audioOutputMuted)
+                                   this.playMode, !this.audioOutputMuted)
 
     return this.nodes[id]
   }
@@ -99,7 +100,9 @@ export class StereoManager {
               clearInterval(interval)
             }
             this.audioContext.resume()
-            this.audioElement.play()  //  play() must be delayed
+            if (!errorInfo.type) {
+              this.audioElement.play()  //  play() must be delayed
+            }
           },
           1000,
         )

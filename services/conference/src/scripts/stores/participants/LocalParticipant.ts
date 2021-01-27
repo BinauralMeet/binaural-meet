@@ -24,7 +24,6 @@ interface PhysicsInfo{
   physics: Physics,
 }
 
-
 export class LocalParticipant extends ParticipantBase implements Store<ILocalParticipant> {
   devicePreference = new DevicePreference()
   @observable id = ''
@@ -133,4 +132,5 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
       Object.assign(this.pose, physics.pose)
     }
   }
+
 }

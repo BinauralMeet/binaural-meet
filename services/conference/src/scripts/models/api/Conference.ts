@@ -1,3 +1,4 @@
+import errorInfo from '@stores/ErrorInfo'
 import {participantsStore} from '@stores/participants'
 import {default as participants} from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
@@ -5,7 +6,8 @@ import {EventEmitter} from 'events'
 import JitsiMeetJS, {JitisTrackError, JitsiLocalTrack, JitsiRemoteTrack,
   JitsiTrack, JitsiValues, TMediaType} from 'lib-jitsi-meet'
 import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
-import {observable} from 'mobx'
+import {autorun, observable} from 'mobx'
+import {connection} from '.'
 import {ConferenceSync} from './ConferenceSync'
 import {connLog, trackLog, TRACKLOG} from './Connection'
 
@@ -30,8 +32,9 @@ export class Conference extends EventEmitter {
     this._jitsiConference = jc
     this.registerJistiConferenceEvents()
     this.sync.bind()
-    this._jitsiConference.join('')
-    this._jitsiConference.setSenderVideoConstraint(1080)
+    const jitsiConf = this._jitsiConference
+    jitsiConf.join('')
+    jitsiConf.setSenderVideoConstraint(1080)
 
     //  To access from debug console, add object d to the window.
     d.conference = this
@@ -270,6 +273,17 @@ export class Conference extends EventEmitter {
       if (participants.local.devicePreference[prop] === undefined) {
         participants.local.devicePreference[prop] = ''
       }
+    }
+    //  update ghost info
+    if (connection.conferenceName !== participants.ghostCandidates.room) {
+      participants.ghostCandidates = {room:connection.conferenceName, pids:[]}
+    }else {
+      setTimeout(() => {
+        participants.ghostCandidates.pids =
+          participants.ghostCandidates.pids.filter(pid => participants.remote.has(pid[0]))
+        participants.localGhosts = new Set(participants.ghostCandidates.pids.map(pid => pid[0]))
+        this.sync.addGhosts(Array.from(participants.localGhosts))
+      },         1 * 1000)
     }
   }
 

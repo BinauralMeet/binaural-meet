@@ -1,5 +1,6 @@
 import {PARTICIPANT_SIZE, Pose3DAudio} from '@models/Participant'
 import {mulV3, normV} from '@models/utils/coordinates'
+import errorInfo from '@stores/ErrorInfo'
 import {ConfigurableParams, ConfigurableProp} from './StereoParameters'
 
 export function setAudioOutputDevice(audio: HTMLAudioElement, deviceId: string) {
@@ -83,12 +84,14 @@ export class NodeGroup {
         if (!this.interval) {
           this.interval = setInterval(
             () => {
-              this?.audioElement?.play().then(() => {
-                if (this.interval) {
-                  clearInterval(this.interval)
-                  this.interval = undefined
-                }
-              })
+              if (!errorInfo.type) {
+                this?.audioElement?.play().then(() => {
+                  if (this.interval) {
+                    clearInterval(this.interval)
+                    this.interval = undefined
+                  }
+                })
+              }
             },
             500,
           )

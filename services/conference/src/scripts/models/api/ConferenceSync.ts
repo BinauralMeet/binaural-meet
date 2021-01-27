@@ -21,6 +21,7 @@ export const MessageType = {
   PARTICIPANT_PHYSICS: 'participant_physics',
   PARTICIPANT_TRACKSTATES: 'participant_trackstates',
   PARTICIPANT_TRACKLIMITS: 'participant_track_limits',
+  GHOSTS: 'participant_ghosts',
   DIRECT_REMOTES: 'direct_remotes',
   MAIN_SCREEN_CARRIER: 'main_screen_carrier',
   CONTENT_ALL: 'content_all',
@@ -189,6 +190,13 @@ export class ConferenceSync{
     }
     this.disposers.push(autorun(() => { sendDirectRemotes('') }))
 
+    //  ghost pids
+    this.conference.on(MessageType.GHOSTS, (from:string, ghosts:string[]) => {
+      this.addGhosts(ghosts)
+    })
+    this.disposers.push(autorun(() => { this.sendGhosts('') }))
+    this.disposers.push(autorun(() => { this.addGhosts([]) }))
+
     // contents related ---------------------------------------------------------------
     this.conference.on(ConferenceEvents.USER_LEFT, (id) => {
       contents.onParticipantLeft(id)
@@ -298,6 +306,7 @@ export class ConferenceSync{
       this.sendTrackLimits(from)
       this.sendAllMyContents(from)
       this.sendMainScreenCarrier(from, true)
+      this.sendGhosts(from)
     })
 
     //  fragmented message
@@ -331,7 +340,8 @@ export class ConferenceSync{
       this.conference.sendMessage(MessageType.REQUEST_INFO, remote.id, '')
     })
     const olds:RemoteParticipant[] = []
-    //  const olds = remotes.filter(remote => remote.updateTime.hasOlderThan(Date.now() - 60 * 1000))
+    //  const olds = remotes.filter(remote =>
+    //  remote.updateTime.hasOlderThan(Date.now() - 60 * 1000) && !participants.ghosts.has(remote.id))
     olds.forEach((remote) => {
       this.conference.sendMessage(MessageType.REQUEST_INFO, remote.id, '')
     })
@@ -376,8 +386,20 @@ export class ConferenceSync{
       this.conference.sendMessage(MessageType.MAIN_SCREEN_CARRIER, to, {carrierId, enable:false})
     }
   }
+  sendGhosts(to: string) {
+    if (this.conference.channelOpened && participants.ghosts.size) {
+      this.conference.sendMessage(MessageType.GHOSTS, '', Array.from(participants.ghosts))
+      //  console.log(`my ghosts sent ${Array.from(participants.ghosts)}`)
+    }
+  }
+  addGhosts(ghosts:string[]) {
+    //  console.log(`add ghosts called ${ghosts}`)
+    ghosts.forEach(g => participants.ghosts.add(g))
+    const all = Array.from(participants.ghosts)
+    all.forEach(g => participants.remote.delete(g))
+  }
 
-  doSendContent(type:string, contentsToSend:ISharedContent[], to?:string) {
+  doSendContent(type:string, contentsToSend:ISharedContent[], to ?:string) {
     const total = contentsToSend.map(c => c.url.length).reduce((prev, cur) => prev + cur, 0)
     if ((total + contentsToSend.length * 40) > FRAGMENTING_LENGTH) {
       this.sendFragmentedMessage(type, to ? to : '', contentsToSend)
@@ -386,7 +408,7 @@ export class ConferenceSync{
     }
   }
 
-  sendAllMyContents(to?: string) {
+  sendAllMyContents(to ?: string) {
     const cs = Array.from(contents.localParticipant.myContents.values())
     const contentsToSend = removePerceptibility(cs)
     syncLog(`send all contents ${JSON.stringify(contentsToSend.map(c => c.id))} to ${to ? to : 'all'}.`,
