@@ -1,6 +1,5 @@
 import {uploadToGyazo} from '@models/api/Gyazo'
-import {Perceptibility,  Pose2DMap} from '@models/MapObject'
-import {defaultPerceptibility} from '@models/MapObject'
+import {defaultPerceptibility,  Perceptibility, Pose2DMap} from '@models/MapObject'
 import {ContentType, SharedContent as ISharedContent, TextMessages} from '@models/SharedContent'
 import {MapData} from '@stores/Map'
 import {defaultValue as mapObjectDefaultValue} from '@stores/MapObject'

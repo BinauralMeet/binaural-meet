@@ -17,24 +17,31 @@ export const TheEntrance: React.FC<{}> = (props) => {
     button.current?.focus()
   },        [])
 
+  const onClose = () => {
+    participants.local.information.name = name
+    urlParameters.room = room
+    sessionStorage.setItem('room', room)
+    errorInfo.type = ''
+  }
+  const onKeyPress = (ev:React.KeyboardEvent) => {
+    if (ev.key === 'Enter') {
+      onClose()
+    }
+  }
+
   return <DialogContent>
     <TextField label={'Your name'} multiline={false} value={name}
-    onChange={event => setName(event.target.value)}
+    onChange={event => setName(event.target.value)} onKeyPress={onKeyPress}
     fullWidth={true} inputProps={{autoFocus:true}}
     />
     <Box mt={4}>
       <TextField label={'Venue to enter'} multiline={false} value={room}
-      onChange={event => setRoom(event.target.value)}
+      onChange={event => setRoom(event.target.value)} onKeyPress={onKeyPress}
       fullWidth={true} inputProps={{autoFocus:true}}
       />
     </Box>
     <Box mt={4}>
-      <Button ref={button} variant="contained" color="primary" onClick={() => {
-        participants.local.information.name = name
-        urlParameters.room = room
-        sessionStorage.setItem('room', room)
-        errorInfo.type = ''
-      }}>
+      <Button ref={button} variant="contained" color="primary" onClick={onClose}>
         Enter the venue
       </Button>
     </Box>

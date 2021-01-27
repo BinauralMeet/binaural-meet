@@ -94,6 +94,8 @@ export class KeyHandlerPlain{
   }
   onKeyUp = (e: KeyboardEvent) => {
     if (!this.enabled()) {
+      this.state.keys.clear()
+
       return
     }
     if (!this.preventList || this.preventList?.has(e.code)) { e.preventDefault() }
