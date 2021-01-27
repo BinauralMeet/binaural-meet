@@ -3,6 +3,7 @@ import {ConnectionStates} from '@models/api/Constants'
 import {urlParameters} from '@models/url'
 import {addV2, mulV2} from '@models/utils'
 import {createJitisLocalTracksFromStream} from '@models/utils/jitsiTrack'
+import map from '@stores/map'
 import participants from '@stores/participants/Participants'
 import {action, autorun, computed, observable} from 'mobx'
 
@@ -13,6 +14,16 @@ export class ErrorInfo {
   @computed get fatal() { return !this.type }
   @observable type:ErrorType = 'enterance'
   @observable title = 'Enter the venue'
+
+  constructor() {
+    autorun(() => {
+      if (this.type) {
+        map.keyInputUsers.add('errorDialog')
+      }else {
+        map.keyInputUsers.delete('errorDialog')
+      }
+    })
+  }
 
   //  media devices
   private videoInputs:MediaDeviceInfo[] = []

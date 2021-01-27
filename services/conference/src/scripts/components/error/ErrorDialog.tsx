@@ -19,12 +19,8 @@ export const ErrorDialog: React.FC<{}> = (props) => {
   if (pages.has(errorInfo.type)) {
     page = pages.get(errorInfo.type)!
   }
-  if (open) { map.keyInputUsers.add(ErrorDialog.displayName!) }
 
-  return <Dialog open={open} onClose={ () => {
-    map.keyInputUsers.delete(ErrorDialog.displayName!)
-    errorInfo.type = ''
-  }}
+  return <Dialog open={open} onClose={ () => { errorInfo.clear() }}
     maxWidth="sm" fullWidth={true} >
     <DialogTitle id="simple-dialog-title">{title}</DialogTitle>
     {page}
