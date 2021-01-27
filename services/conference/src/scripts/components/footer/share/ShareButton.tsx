@@ -4,7 +4,7 @@ import ScreenShareIcon from '@material-ui/icons/ScreenShare'
 import {makeStyles} from '@material-ui/styles'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useState} from 'react'
-import {FabMain} from '../FabNoFocus'
+import {FabMain, FabWithTooltip} from '../FabNoFocus'
 import {ShareDialog} from './ShareDialog'
 
 const useStyles = makeStyles({
@@ -12,44 +12,24 @@ const useStyles = makeStyles({
     display: 'inline-block',
   },
 })
-
-export const ShareButton: React.FC = () => {
-  const [openDialog, setOpenDialogRaw] = useState<boolean>(false)
+interface ShareButtonProps{
+  showDialog:boolean
+  setShowDialog(flag: boolean):void
+}
+export const ShareButton: React.FC<ShareButtonProps> = (props) => {
   const classes = useStyles()
   const store = useContentsStore()
   const sharing = useObserver(() => store.tracks.localMains.size + store.tracks.localContents.size)
   const map = useMapStore()
-  function setOpenDialog(flag: boolean) {
-    if (flag) {
-      map.keyInputUsers.add('shareDialog')
-    }else {
-      map.keyInputUsers.delete('shareDialog')
-    }
-    setOpenDialogRaw(flag)
-  }
-  //  keyboard shortcut
-  useEffect(() => {
-    const onKeyPress = (e: KeyboardEvent) => {
-      if (map.keyInputUsers.size === 0) {
-        if (e.code === 'KeyC') {  //  Create share dialog
-          setOpenDialog(true)
-        }
-      }
-    }
-    window.addEventListener('keypress', onKeyPress)
-
-    return () => {
-      window.removeEventListener('keypress', onKeyPress)
-    }
-  },        [])
 
   return (
     <div className={classes.root}>
-      <FabMain color={sharing ? 'secondary' : 'primary'}
-        aria-label="share" onClick={() => setOpenDialog(true)}>
+      <FabWithTooltip color={sharing ? 'secondary' : 'primary'}
+        title = {<><strong>C</strong>reate and share</>}
+        aria-label="share" onClick={() => props.setShowDialog(true)}>
         <ScreenShareIcon fontSize="large" />
-      </FabMain>
-      <ShareDialog open={openDialog} onClose={() => setOpenDialog(false)} />
+      </FabWithTooltip>
+      <ShareDialog open={props.showDialog} onClose={() => props.setShowDialog(false)} />
     </div>
   )
 }

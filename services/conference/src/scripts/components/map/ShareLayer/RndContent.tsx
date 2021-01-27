@@ -243,17 +243,16 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
             <Icon icon={props.content.pinned ? pinIcon : pinOffIcon} height={dimensions.clientHeight} />
           </div>
           <div className={classes.edit} onClick={onClickEdit}>
-            &nbsp; {
+             {
               props.editing ? <DoneIcon style={{fontSize:dimensions.clientHeight}} />
                 : <EditIcon style={{fontSize:dimensions.clientHeight}} />}
-            &nbsp;
           </div>
           {props.content.pinned ? undefined :
-            <div className={classes.titleButton} onClick={onClickMoveToTop}>&nbsp; <FlipToFrontIcon /></div>}
+            <div className={classes.titleButton} onClick={onClickMoveToTop}> <FlipToFrontIcon /></div>}
           {props.content.pinned ? undefined :
-            <div className={classes.titleButton} onClick={onClickMoveToBottom}>&nbsp; <FlipToBackIcon /></div>}
+            <div className={classes.titleButton} onClick={onClickMoveToBottom}> <FlipToBackIcon /></div>}
           {(props.content.pinned || props.content.type !== 'img' || props.content.zorder < TEN_YEAR) ? undefined :
-            <div className={classes.titleButton} onClick={onClickWallpaper}>&nbsp; <WallpaperIcon /></div>}
+            <div className={classes.titleButton} onClick={onClickWallpaper}> <WallpaperIcon /></div>}
           <div className={classes.note} onClick={onClickShare}>Share</div>
           {props.content.pinned ? undefined :
              <div className={classes.close} onClick={onClickClose}><CloseRoundedIcon /></div>}

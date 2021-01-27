@@ -10,7 +10,7 @@ import SpeakerIcon from '@material-ui/icons/Speaker'
 import participants from '@stores/participants/Participants'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
-import {FabMain} from './FabNoFocus'
+import {FabMain, FabWithTooltip} from './FabNoFocus'
 
 export const SoundLocalizationSetting: React.FC<{}> = () => {
   const soundLocalizationBase = useObserver(() => participants.local.soundLocalizationBase)
@@ -50,20 +50,15 @@ export const StereoAudioSwitch: React.FC = () => {
   const classes = useStyles()
 
   return <>
-    <Tooltip placement="top-start" arrow={true}
-      title={
+    <FabWithTooltip title={
         <React.Fragment>
           {'Stereo headset'} <strong>{'without echo canceller'}</strong><br />{'/ Monaural speaker with echo canceller'}
-        </React.Fragment>
-      }>
-      <span className={classes.button}>
-        <FabMain onClick={switchStereo} color = {stereo ? 'secondary' : 'primary'}
-          onClickMore = {stereo ? (ev) => { setButton(ev.currentTarget) } : undefined} >
-          {stereo ? <HeadsetIcon fontSize="large" />  :
-          <SpeakerIcon fontSize="large" />}
-        </FabMain>
-      </span>
-    </Tooltip>
+        </React.Fragment>}
+      onClick={switchStereo} color = {stereo ? 'secondary' : 'primary'}
+      onClickMore = {stereo ? (ev) => { setButton(ev.currentTarget) } : undefined} >
+      {stereo ? <HeadsetIcon fontSize="large" />  :
+      <SpeakerIcon fontSize="large" />}
+    </FabWithTooltip>
     <Popover open={Boolean(button)} onClose={() => setButton(null)}
       anchorEl={button} anchorOrigin={{vertical:'top', horizontal:'left'}}
       anchorReference = "anchorEl" >

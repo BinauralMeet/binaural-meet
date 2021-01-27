@@ -1,4 +1,5 @@
 import {useStore as useParticipants} from '@hooks/ParticipantsStore'
+import {useStore as useContents} from '@hooks/SharedContentsStore'
 import {Tooltip} from '@material-ui/core'
 import {makeStyles} from '@material-ui/core/styles'
 import {compTextMessage, TextMessages} from '@models/SharedContent'
@@ -53,6 +54,7 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
   const memberRef = React.useRef<TextMember>(new TextMember)
   const member = memberRef.current
   const participants = useParticipants()
+  const contents = useContents()
   const ref = useRef<HTMLDivElement>(null)
   const newTexts = JSON.parse(url) as TextMessages
   useEffect(() => {
@@ -139,6 +141,13 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
         onInput={(ev) => {
           text.message = ev.currentTarget.innerText
         } }
+        onKeyDown={(ev) => {
+          if (ev.key === 'Escape' || ev.key === 'Esc') {
+            member.text.messages = member.text.messages.filter(text => text.message.length)
+            onUpdateTexts(member.text)
+            contents.editingId = ''
+          }
+        }}
         onBlur={(ev) => {
           member.text.messages = member.text.messages.filter(text => text.message.length)
           onUpdateTexts(member.text)

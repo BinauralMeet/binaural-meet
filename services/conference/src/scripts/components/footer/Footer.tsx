@@ -18,7 +18,7 @@ import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import {AdminConfigForm} from './adminConfig/AdminConfigForm'
 import {BroadcastControl} from './BroadcastControl'
-import {FabMain} from './FabNoFocus'
+import {FabMain, FabWithTooltip} from './FabNoFocus'
 import {ShareButton} from './share/ShareButton'
 import {StereoAudioSwitch} from './StereoAudioSwitch'
 
@@ -54,6 +54,16 @@ export const Footer: React.FC = () => {
   //  show and hide
   const [show, setShow] = React.useState<boolean>(true)
   const [showAdmin, setShowAdmin] = React.useState<boolean>(false)
+  const [showShare, setShowShareRaw] = React.useState<boolean>(false)
+  function setShowShare(flag: boolean) {
+    if (flag) {
+      map.keyInputUsers.add('shareDialog')
+    }else {
+      map.keyInputUsers.delete('shareDialog')
+    }
+    setShowShareRaw(flag)
+  }
+
   const memberRef = useRef<Member>(new Member())
   const member = memberRef.current
   const containerRef = useRef<HTMLDivElement>(null)
@@ -101,6 +111,10 @@ export const Footer: React.FC = () => {
         if (e.code === 'KeyM') {  //  mute/unmute audio
           participants.local.plugins.streamControl.muteAudio = !participants.local.plugins.streamControl.muteAudio
           setShowFooter(true)
+        }
+        if (e.code === 'KeyC') {  //  Create share dialog
+          setShowFooter(true)
+          setShowShare(true)
         }
       }
     }
@@ -200,7 +214,8 @@ export const Footer: React.FC = () => {
         {speakerMenuItems}
       </Menu>
 
-      <FabMain color={mute.muteA ? 'primary' : 'secondary' } aria-label="mic"
+      <FabWithTooltip color={mute.muteA ? 'primary' : 'secondary' } aria-label="mic"
+        title = {<><strong>M</strong>ic mute</>}
         onClick = { () => {
           participants.local.plugins.streamControl.muteAudio = !mute.muteA
           if (!participants.local.plugins.streamControl.muteAudio) {
@@ -215,7 +230,7 @@ export const Footer: React.FC = () => {
         >
         {mute.muteA ? <MicOffIcon fontSize="large" /> : participants.local.physics.onStage ?
           <Icon icon={megaphoneIcon} height={'2.4em'} color="gold" /> : <MicIcon fontSize="large" /> }
-      </FabMain>
+      </FabWithTooltip>
       <Menu anchorEl={micMenuEl} keepMounted={true}
         open={Boolean(micMenuEl)} onClose={() => { closeMicMenu('') }}>
         {micMenuItems}
@@ -238,7 +253,7 @@ export const Footer: React.FC = () => {
         {videoMenuItems}
       </Menu>
 
-      <ShareButton />
+      <ShareButton showDialog={showShare} setShowDialog={setShowShare} />
 
       <ErrorDialog />
 

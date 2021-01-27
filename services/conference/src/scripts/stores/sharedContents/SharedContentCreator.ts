@@ -167,11 +167,11 @@ export function createContentOfText(message: string, map: MapData) {
   pasted.url = JSON.stringify(texts)
   pasted.pose.position[0] = map.mouseOnMap[0]
   pasted.pose.position[1] = map.mouseOnMap[1]
-  const slen = Math.sqrt(message.length)
+  const slen = Math.ceil(Math.sqrt(message.length))
   const STRING_SCALE_W = 20
-  const STRING_SCALE_H = 20
+  const STRING_SCALE_H = 25
   pasted.size[0] = Math.max(slen * STRING_SCALE_W, 200)
-  pasted.size[1] = Math.max(slen * STRING_SCALE_H, STRING_SCALE_H)
+  pasted.size[1] = Math.max(slen * STRING_SCALE_H, slen ? STRING_SCALE_H : STRING_SCALE_H * 3)
 
   return pasted
 }

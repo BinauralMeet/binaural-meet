@@ -17,15 +17,19 @@ export const TheEntrance: React.FC<{}> = (props) => {
     button.current?.focus()
   },        [])
 
-  const onClose = () => {
-    participants.local.information.name = name
-    urlParameters.room = room
-    sessionStorage.setItem('room', room)
-    errorInfo.type = ''
+  const onClose = (save: boolean) => {
+    if (save) {
+      participants.local.information.name = name
+      urlParameters.room = room
+      sessionStorage.setItem('room', room)
+    }
+    errorInfo.clear()
   }
   const onKeyPress = (ev:React.KeyboardEvent) => {
     if (ev.key === 'Enter') {
-      onClose()
+      onClose(true)
+    }else if (ev.key === 'Esc' || ev.key === 'Escape') {
+      onClose(false)
     }
   }
 
@@ -41,7 +45,7 @@ export const TheEntrance: React.FC<{}> = (props) => {
       />
     </Box>
     <Box mt={4}>
-      <Button ref={button} variant="contained" color="primary" onClick={onClose}>
+      <Button ref={button} variant="contained" color="primary" onClick={() => onClose(true)}>
         Enter the venue
       </Button>
     </Box>

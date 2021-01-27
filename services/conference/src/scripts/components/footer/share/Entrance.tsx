@@ -125,7 +125,20 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
     cids.forEach(cid => sharedContents.removeByLocal(cid))
     setStep('none')
   }
- //  keyboard shortcut
+  const screenAsBackgrouond = () => {
+    if (sharing.main) {
+      sharedContents.tracks.clearLocalMains()
+    } else {
+      startCapture().then((tracks) => {
+        if (tracks.length) {
+          sharedContents.tracks.addLocalMains(tracks)
+        }
+      })
+    }
+    setStep('none')
+  }
+
+  //  keyboard shortcut
   useEffect(() => {
     const onKeyPress = (e: KeyboardEvent) => {
       if (map.keyInputUsers.has('shareDialog')) {
@@ -133,9 +146,17 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
           importFile()
         }else if (e.code === 'KeyD') {  //  download
           downloadFile()
+        }else if (e.code === 'KeyF') {  //  download
+          e.preventDefault()
+          setStep('iframe')
         }else if (e.code === 'KeyT') {  //  download
           e.preventDefault()
           createText()
+        }else if (e.code === 'KeyG') {  //  download
+          e.preventDefault()
+          setStep('image')
+        }else if (e.code === 'KeyB') {  //  download
+          screenAsBackgrouond()
         }else if (e.code === 'KeyS') {  //  download
           createScreen()
         }else if (e.code === 'KeyM') {  //  download
@@ -178,7 +199,7 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
       <ShareDialogItem
         key="shareIframe"
         icon={<HttpIcon />}
-        text="Iframe"
+        text="I_frame"
         onClick={() => setStep('iframe')}
       />
       <ShareDialogItem
@@ -190,26 +211,15 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
       <ShareDialogItem
         key="shareImage"
         icon={<ImageIcon />}
-        text="Image"
+        text="Ima_ge"
         onClick={() => setStep('image')}
       />
       <Divider />
       <ShareDialogItem
         key="shareScreen"
         icon={sharing.main ? <StopScreenShareIcon /> : <ScreenShareIcon />}
-        text={sharing.main ? 'Stop background screen' : 'Screen as the background'}
-        onClick={() => {
-          if (sharing.main) {
-            sharedContents.tracks.clearLocalMains()
-          } else {
-            startCapture().then((tracks) => {
-              if (tracks.length) {
-                sharedContents.tracks.addLocalMains(tracks)
-              }
-            })
-          }
-          setStep('none')
-        }}
+        text={sharing.main ? 'Stop _background screen' : 'Screen as the _background'}
+        onClick={() => screenAsBackgrouond}
       />
       <ShareDialogItem
         key="shareScreenContent"

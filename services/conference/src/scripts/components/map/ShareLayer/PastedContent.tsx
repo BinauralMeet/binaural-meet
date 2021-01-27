@@ -69,6 +69,11 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
             content.name = '! recursive reference'
           }else {
             content = createContentOfIframe(str, map)
+            if (content.type === 'iframe') {
+              //  iframe is not work well because of CORS problem.
+              content = createContentOfText(str, map)
+              content.name = `${url.host}${url.pathname}${url.search}`
+            }
             if (content.type === 'youtube') {
               content.name = `${url.search.substring(1)}`
             }else {

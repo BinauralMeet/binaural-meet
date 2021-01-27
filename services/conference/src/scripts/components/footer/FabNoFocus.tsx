@@ -1,4 +1,5 @@
 import {FabColor, IconColor, MoreButton, moreButtonControl, MoreButtonMember} from '@components/utils/MoreButton'
+import {Tooltip} from '@material-ui/core'
 import Fab from '@material-ui/core/Fab'
 import {makeStyles} from '@material-ui/core/styles'
 import React, {useRef, useState} from 'react'
@@ -27,7 +28,9 @@ interface MyFabProps{
   iconColor?: IconColor
   htmlColor?: string
   className?: string
+  title?: string | React.ReactElement
 }
+
 
 export const FabMain: React.FC<MyFabProps> = (props) => {
   const classes = useStyles()
@@ -52,4 +55,17 @@ export const FabMain: React.FC<MyFabProps> = (props) => {
     onClickMore = {props.onClickMore}
     /> : undefined}
   </span>
+}
+
+export const FabWithTooltip: React.FC<MyFabProps> = (props) => {
+  if (props.title) {
+    return <Tooltip placement="top-start" arrow={true}
+    title={props.title}>
+    <span style={{paddingTop:20}} >
+      <FabMain {...props} />
+    </span>
+    </Tooltip>
+  }
+
+  return <FabMain {...props} />
 }
