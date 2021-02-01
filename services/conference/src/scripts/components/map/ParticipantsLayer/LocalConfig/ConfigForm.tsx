@@ -77,8 +77,7 @@ export const ConfigForm: React.FC<ConfigFormProps> = (props: ConfigFormProps) =>
       setFile(ev.target.files?.item(0))
     }} /> <br />
     Email for Gravatar: <input type="text" {...email.args} /> <br />
-    <input type="submit" onClick={() => setSubmitType('session')} value="Save" /> &nbsp;
-    <input type="submit" onClick={() => setSubmitType('local')} value="Save to browser" /> &nbsp;
+    <input type="submit" onClick={() => setSubmitType('local')} value="Save" /> &nbsp;
     <input type="submit" onClick={() => setSubmitType('clear')} value="Clear" />&nbsp;
     <input type="submit" onClick={() => setSubmitType('cancel')} value="Cancel" />
   </form>

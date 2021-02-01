@@ -1,3 +1,4 @@
+import { PARTICIPANT_SIZE } from '@models/Participant'
 import {SharedContent} from '@models/SharedContent'
 import {diffMap} from '@models/utils'
 import {participantsStore as participants} from '@stores/participants'
@@ -22,7 +23,8 @@ function extractParticipantTrackInfo(participant: RemoteParticipant, track:Jitsi
       ...participant.pose,
     },
     size: [0, 0],
-    priority: 0,
+    offset: 0,
+    priority : 0,
   }
 }
 function extractContentTrackInfo(content: SharedContent, track:JitsiTrack): RemoteTrackInfo {
@@ -33,7 +35,8 @@ function extractContentTrackInfo(content: SharedContent, track:JitsiTrack): Remo
       ...content.pose,
     },
     size: content.size,
-    priority: 0,
+    offset: -PARTICIPANT_SIZE * 10,
+    priority : 0,
   }
 }
 function extractMainTrackInfo(mainTrack:JitsiRemoteTrack): RemoteTrackInfo {
@@ -42,7 +45,8 @@ function extractMainTrackInfo(mainTrack:JitsiRemoteTrack): RemoteTrackInfo {
     onStage : true,
     pose: {position:[0, 0], orientation: 0},
     size: [0, 0],
-    priority: 0,
+    offset: -PARTICIPANT_SIZE * 100,
+    priority : 0,
   }
 }
 
@@ -288,9 +292,9 @@ export class PriorityCalculator {
 
       return diff
     })
-    const distance2 = delta[0] * delta[0] + delta[1] * delta[1]
+    let distance = Math.sqrt(delta[0] * delta[0] + delta[1] * delta[1]) + remote.offset
 
-    return distance2
+    return distance
     //  const position = [local.pose.position, remote.pose.position]
     //  const distance = Math.pow(position[0][0] - position[1][0], 2) + Math.pow(position[0][1] - position[1][1], 2)
   }

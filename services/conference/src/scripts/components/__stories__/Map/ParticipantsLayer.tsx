@@ -4,6 +4,7 @@ import {Participants} from '@stores/participants/Participants'
 import {addFakeParticipants} from '@test-utils/store'
 import React from 'react'
 
+
 const ParticipantsLayerStory: React.FC<{}> = () => {
   const store = new Participants()
   addFakeParticipants(store)

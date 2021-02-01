@@ -4,7 +4,7 @@ import ScreenShareIcon from '@material-ui/icons/ScreenShare'
 import {makeStyles} from '@material-ui/styles'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useState} from 'react'
-import {FabMain, FabWithTooltip} from '../FabNoFocus'
+import {FabMain, FabWithTooltip} from '../FabEx'
 import {ShareDialog} from './ShareDialog'
 
 const useStyles = makeStyles({

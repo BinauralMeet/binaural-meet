@@ -9,7 +9,7 @@
     "lint": "tslint --fix -p .",
     "dev": "MODE=development; webpack-dev-server --open --host 0.0.0.0 --public localhost:9000 --https",
     "pro": "MODE=production;PROFILING=true; webpack-dev-server --open --host 0.0.0.0 --public localhost:9000 --https",
-    "storybook": "start-storybook -s ./src/scripts/__tests__/blob/ -p 9999",
+    "storybook": "start-storybook -s ./src/,./src/scripts/__tests__/blob/ -p 9999",
     "test": "jest",
     "link-lib-jitsi-meet": "cd libs/lib-jitsi-meet; yarn link; cd ../../; yarn link lib-jitsi-meet",
     "link-typing-lib-jitsi-meet": "cd libs/@types/lib-jitsi-meet; yarn link; cd ../../../; yarn link @types/lib-jitsi-meet",

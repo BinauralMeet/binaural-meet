@@ -10,7 +10,7 @@ import SpeakerIcon from '@material-ui/icons/Speaker'
 import participants from '@stores/participants/Participants'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
-import {FabMain, FabWithTooltip} from './FabNoFocus'
+import {FabMain, FabWithTooltip} from './FabEx'
 
 export const SoundLocalizationSetting: React.FC<{}> = () => {
   const soundLocalizationBase = useObserver(() => participants.local.soundLocalizationBase)

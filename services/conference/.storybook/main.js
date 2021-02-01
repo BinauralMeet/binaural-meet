@@ -16,6 +16,8 @@ module.exports = {
       ],
     });
 
+    config.devtool = 'source-map';
+
     // modify storybook's file-loader rule to avoid conflicts with your inline svg
     const fileLoaderRule = config.module.rules.find(rule => rule.test.test('.svg'));
     fileLoaderRule.exclude = /\.svg$/;
@@ -55,8 +57,8 @@ module.exports = {
         plugins: [
           '@babel/plugin-transform-flow-strip-types',
           '@babel/plugin-proposal-class-properties',
-          '@babel/plugin-proposal-export-namespace-from'
-        ]
+          '@babel/plugin-proposal-export-namespace-from',
+                    ]
       },
       test: /\.js$/
     });
