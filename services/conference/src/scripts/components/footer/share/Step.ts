@@ -1,4 +1,4 @@
-export type Step = 'entrance' | 'none' | 'text' | 'iframe' | 'image'
+export type Step = 'entrance' | 'none' | 'text' | 'iframe' | 'image' | 'camera'
 
 export const stepTitle: {
   [key: string]: string,
@@ -8,4 +8,5 @@ export const stepTitle: {
   iframe: 'Share iframe',
   image: 'Share image',
   none: 'None',
+  camera: 'Select video camera to share',
 }

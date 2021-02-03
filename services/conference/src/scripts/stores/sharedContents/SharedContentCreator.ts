@@ -245,9 +245,9 @@ export function createContentOfPdf(file: File, map: MapData, offset?:[number, nu
 }
 
 
-export function createContentOfVideo(tracks: JitsiLocalTrack[], map: MapData) {
+export function createContentOfVideo(tracks: JitsiLocalTrack[], map: MapData, type:ContentType) {
   const pasted = createContent()
-  pasted.type = 'screen'
+  pasted.type = type
   pasted.url = ''
   pasted.pose.position[0] = map.mouseOnMap[0]
   pasted.pose.position[1] = map.mouseOnMap[1]
@@ -264,7 +264,7 @@ export function createContentOfVideo(tracks: JitsiLocalTrack[], map: MapData) {
 }
 
 export function disposeContent(c: ISharedContent) {
-  if (c.type === 'screen') {
+  if (c.type === 'screen' || c.type === 'camera') {
     const pid = sharedContents.owner.get(c.id)
     if (pid === participants.localId) {
       sharedContents.tracks.clearLocalContent(c.id)

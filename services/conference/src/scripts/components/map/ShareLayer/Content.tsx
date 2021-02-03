@@ -1,7 +1,7 @@
-
 import GoogleDriveIcon from '@iconify/icons-mdi/google-drive'
 import {Icon} from '@iconify/react'
 import {makeStyles} from '@material-ui/core/styles'
+import CameraAltIcon from '@material-ui/icons/CameraAlt'
 import HttpIcon from '@material-ui/icons/Http'
 import PhotoIcon from '@material-ui/icons/Photo'
 import ScreenShareIcon from '@material-ui/icons/ScreenShare'
@@ -22,6 +22,7 @@ export function contentTypeIcons(type: ContentType, size = 12) {
     youtube: <YouTubeIcon style={{fontSize:size}} />,
     screen: <ScreenShareIcon style={{fontSize:size}} />,
     gdrive: <span style={{width:size, height:size}}><Icon icon={GoogleDriveIcon} height={size} /></span>,
+    camera: <CameraAltIcon style={{fontSize:size}} />,
     '': undefined,
   }
 
@@ -78,7 +79,7 @@ export const Content: React.FC<ContentProps> = (props:ContentProps) => {
     rv = <GDrive {...props} />
   }else if (props.content.type === 'text') {
     rv = <Text {...props} />
-  }else if (props.content.type === 'screen') {
+  }else if (props.content.type === 'screen' || props.content.type === 'camera') {
     rv = <ScreenContent {...props} />
   }else {
     rv = <div>Unknow type:{props.content.type} for {props.content.url}</div>

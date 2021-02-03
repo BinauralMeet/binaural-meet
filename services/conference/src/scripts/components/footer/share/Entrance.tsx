@@ -6,6 +6,7 @@ import cursorDefaultOutline from '@iconify/icons-mdi/cursor-default-outline'
 import {Icon} from '@iconify/react'
 import Divider from '@material-ui/core/Divider'
 import List from '@material-ui/core/List'
+import CameraAltIcon from '@material-ui/icons/CameraAlt'
 import DownloadIcon from '@material-ui/icons/GetApp'
 import HttpIcon from '@material-ui/icons/Http'
 import ImageIcon from '@material-ui/icons/Image'
@@ -24,7 +25,6 @@ import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import {DialogPageProps} from './DialogPage'
 import {ShareDialogItem} from './SharedDialogItem'
-
 async function startCapture(displayMediaOptions: any = {}) {
   let captureTracks = null
 
@@ -65,7 +65,7 @@ function importItems(ev: React.ChangeEvent<HTMLInputElement>, sharedContents: Sh
       if (isArray(items)) {
         items.forEach((item) => {
           const content = item as ISharedContent
-          if (content.type === 'screen') { return }
+          if (content.type === 'screen' || content.type === 'camera') { return }
           const newContent = createContent()
           content.id = ''
           Object.assign(newContent, item)
@@ -108,7 +108,7 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
   const createScreen = () => {
     startCapture().then((tracks) => {
       if (tracks.length) {
-        const content = createContentOfVideo(tracks, map)
+        const content = createContentOfVideo(tracks, map, 'screen')
         sharedContents.shareContent(content)
         assert(content.id)
         sharedContents.tracks.addLocalContents(content.id, tracks)
@@ -162,6 +162,8 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
         }else if (e.code === 'KeyM') {  //  download
           startMouse()
         }else if (e.code === 'KeyC') {
+          setStep('camera')
+        }else if (e.code === 'KeyW') {
           closeAllScreens()
         }
       }
@@ -216,6 +218,12 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
       />
       <Divider />
       <ShareDialogItem
+        key="shareCamera"
+        icon={<CameraAltIcon />}
+        text="_Camera"
+        onClick={() => setStep('camera')}
+      />
+      <ShareDialogItem
         key="shareScreen"
         icon={sharing.main ? <StopScreenShareIcon /> : <ScreenShareIcon />}
         text={sharing.main ? 'Stop _background screen' : 'Screen as the _background'}
@@ -231,7 +239,7 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
         <ShareDialogItem
           key = "stopScreen"
           icon={<Icon icon={bxWindowClose} />}
-          text={'_Close all screen windows'}
+          text={'Close all screen _windows'}
           onClick={closeAllScreens}
           /> : undefined}
       <ShareDialogItem

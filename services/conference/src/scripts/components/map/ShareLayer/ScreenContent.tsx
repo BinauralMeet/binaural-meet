@@ -22,7 +22,7 @@ interface ScreenContentMember{
 }
 
 export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
-  assert(props.content.type === 'screen')
+  assert(props.content.type === 'screen' || props.content.type === 'camera')
   const classes = useStyles()
   const ref = useRef<HTMLVideoElement>(null)
   const member = useRef<ScreenContentMember>({} as ScreenContentMember)
@@ -49,7 +49,7 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
           ms.addTrack(track.getTrack())
         }
       })
-      member.current.remotes.forEach(track => {
+      member.current.remotes.forEach((track) => {
         if (track.getType() !== 'audio') { //  Remote audio is played by ConnectedMananger
           ms.addTrack(track.getTrack())
         }
@@ -77,6 +77,10 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
         const newSize = [settings?.width || 0, settings?.height || 0] as [number, number]
         if (member.current.content.originalSize[0] && newSize[0]
           && member.current.content.originalSize.toString() !== newSize.toString()) {
+          const sx = member.current.content.originalSize[0] / newSize[0]
+          const sy = member.current.content.originalSize[1] / newSize[1]
+          if ((sx === 0.25 && sy === 0.25) || (sx === 0.5 && sy === 0.5) ||
+            (sx === 2 && sy === 2) || (sx === 4 && sy === 4)) { return }
           const scale = member.current.content.size[0] / member.current.content.originalSize[0]
           member.current.content.originalSize = newSize
           member.current.content.size = mulV2(scale, newSize)

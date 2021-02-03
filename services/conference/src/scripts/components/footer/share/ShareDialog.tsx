@@ -5,6 +5,7 @@ import DialogTitle from '@material-ui/core/DialogTitle'
 import {createContentOfIframe, createContentOfText} from '@stores/sharedContents/SharedContentCreator'
 import sharedContents from '@stores/sharedContents/SharedContents'
 import React, {useState} from 'react'
+import {CameraSelector} from './CameraSelector'
 import {Entrance} from './Entrance'
 import {ImageInput} from './ImageInput'
 import {Step, stepTitle} from './Step'
@@ -54,6 +55,8 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
           />
       case 'image':
         return <ImageInput setStep={setStep} />
+      case 'camera':
+        return <CameraSelector setStep={setStep} />
       default:
         throw new Error(`Unknown step: ${step}`)
     }

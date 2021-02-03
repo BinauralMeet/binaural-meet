@@ -247,7 +247,7 @@ export class SharedContents extends EventEmitter {
       }else {
         this.owner.set(c.id, pid)
       }
-      if (c.type === 'screen') {
+      if (c.type === 'screen' || c.type === 'camera') {
         this.tracks.onUpdateContent(c)
       }
       participant.myContents.set(c.id, c)
@@ -287,7 +287,7 @@ export class SharedContents extends EventEmitter {
       if (next === this.localId) {
         contentLog('Next is me')
         participantLeave.myContents.forEach((c, cid) => {
-          if (c.type === 'screen') {
+          if (c.type === 'screen' || c.type === 'camera') {
             this.owner.delete(cid)
             participantLeave.myContents.delete(cid)
             disposeContent(c)
