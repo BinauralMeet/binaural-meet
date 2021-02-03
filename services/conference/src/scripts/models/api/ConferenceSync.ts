@@ -2,10 +2,10 @@ import {Pose2DMap} from '@models/MapObject'
 import {priorityCalculator} from '@models/middleware/trafficControl'
 import {Information, Mouse, Physics, TrackStates} from '@models/Participant'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {diffMap, diffSet, intersectionMap} from '@models/utils'
+import {diffMap, intersectionMap} from '@models/utils'
 import participants from '@stores/participants/Participants'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
-import {makeItContent, makeThemContents} from '@stores/sharedContents/SharedContentCreator'
+import {makeItContent, makeThemContents, removePerceptibility} from '@stores/sharedContents/SharedContentCreator'
 import contents from '@stores/sharedContents/SharedContents'
 import JitsiMeetJS from 'lib-jitsi-meet'
 import _ from 'lodash'
@@ -333,7 +333,9 @@ export class ConferenceSync{
     this.disposers.forEach(d => d())
   }
 
+  checkCount = 0
   private checkResponse() {
+    this.checkCount += 1
     const remotes = Array.from(participants.remote.values())
     const noRes = remotes.filter(remote => remote.updateTime.hasNoResponse())
     noRes.forEach((remote) => {
@@ -347,6 +349,8 @@ export class ConferenceSync{
     })
     if (noRes.length) {
       console.warn(`Failed to get response from ${JSON.stringify(noRes.map(r => r.id))}`)
+    }else if (this.checkCount > 5) {
+      contents.loadBackground()
     }
     setTimeout(this.checkResponse.bind(this), 1000)
   }
@@ -416,16 +420,4 @@ export class ConferenceSync{
     this.doSendContent(MessageType.CONTENT_ALL, contentsToSend, to)
   }
 
-}
-
-//  remove unnessary info from contents to send.
-function removePerceptibility(cs: ISharedContent[]): ISharedContent[] {
-  const rv = []
-  for (const c of cs) {
-    const cc:any = Object.assign({}, c)
-    delete cc.perceptibility
-    rv.push(cc)
-  }
-
-  return rv
 }

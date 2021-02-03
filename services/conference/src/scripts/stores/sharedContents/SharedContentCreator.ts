@@ -1,4 +1,4 @@
-import {uploadToGyazo} from '@models/api/Gyazo'
+import {getImageSize, uploadToGyazo} from '@models/api/Gyazo'
 import {defaultPerceptibility,  Perceptibility, Pose2DMap} from '@models/MapObject'
 import {ContentType, SharedContent as ISharedContent, TextMessages} from '@models/SharedContent'
 import {MapData} from '@stores/Map'
@@ -43,6 +43,9 @@ export const defaultContent: ISharedContent = Object.assign({}, mapObjectDefault
     this.zorder = TEN_YEAR - (Math.floor(Date.now() / TIME_RESOLUTION_IN_MS) - this.zorder)
   },
 })
+export function isBackground(c:ISharedContent) {
+  return c.zorder < TEN_YEAR
+}
 
 ///  Add perceptibility and function to object obtained by JSON.parse()
 export function jsonToContents(json: string, perceptibility = defaultPerceptibility) {
@@ -176,9 +179,19 @@ export function createContentOfText(message: string, map: MapData) {
   return pasted
 }
 export function createContentOfImage(imageFile: File, map: MapData, offset?:[number, number]): Promise<SharedContent> {
+  const promise = new Promise<SharedContent>((resolutionFunc, rejectionFunc) => {
+    uploadToGyazo(imageFile).then((url) => {
+      createContentOfImageUrl(url, map, offset).then(resolutionFunc)
+    }).catch(rejectionFunc)
+  })
+
+  return promise
+}
+
+export function createContentOfImageUrl(url: string, map: MapData, offset?:[number, number]): Promise<SharedContent> {
   const IMAGESIZE_LIMIT = 500
   const promise = new Promise<SharedContent>((resolutionFunc, rejectionFunc) => {
-    uploadToGyazo(imageFile).then(({url, size}) => {
+    getImageSize(url).then((size) => {
       // console.log("mousePos:" + (global as any).mousePositionOnMap)
       const pasted = createContent()
       pasted.type = 'img'
@@ -272,4 +285,15 @@ export function disposeContent(c: ISharedContent) {
       sharedContents.tracks.clearRemoteContent(c.id)
     }
   }
+}
+
+export function removePerceptibility(cs: ISharedContent[]): ISharedContent[] {
+  const rv = []
+  for (const c of cs) {
+    const cc:any = Object.assign({}, c)
+    delete cc.perceptibility
+    rv.push(cc)
+  }
+
+  return rv
 }

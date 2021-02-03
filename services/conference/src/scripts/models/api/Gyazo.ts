@@ -2,8 +2,8 @@ export interface GayazoReturnType{
   url: string,
   size: [number, number],
 }
-export function uploadToGyazo<T extends number[]>(imageFile: File):Promise< GayazoReturnType> {
-  const promise = new Promise<GayazoReturnType>((resolutionFunc, rejectionFunc) => {
+export function uploadToGyazo<T extends number[]>(imageFile: File):Promise<string> {
+  const promise = new Promise<string>((resolutionFunc, rejectionFunc) => {
     const formData = new FormData()
     formData.append('access_token', 'e9889a51fca19f2712ec046016b7ec0808953103e32cd327b91f11bfddaa8533')
     formData.append('imagedata', imageFile)
@@ -12,18 +12,26 @@ export function uploadToGyazo<T extends number[]>(imageFile: File):Promise< Gaya
     .then((responseJson) => {
       // console.log("URL = " + responseJson.url)
       //  To do, add URL and ask user position to place the image
-      const img = new Image()
-      img.src = responseJson.url
-      img.onload = () => {
-        const size:[number, number] = [img.width, img.height]
-        const url = responseJson.url
-        resolutionFunc({url, size})
-      }
+      resolutionFunc(responseJson.url)
     })
     .catch((error) => {
       console.error(error)
-      rejectionFunc({undefined, size:[0, 0]})
+      rejectionFunc('')
     })
+  })
+
+  return promise
+}
+
+export function getImageSize(url: string) {
+  const promise = new Promise<[number, number]>((resolutionFunc, rejectionFunc) => {
+    const img = new Image()
+    img.src = url
+    img.onload = () => {
+      const size:[number, number] = [img.width, img.height]
+      resolutionFunc(size)
+    }
+    img.onerror = () => { rejectionFunc([0, 0]) }
   })
 
   return promise

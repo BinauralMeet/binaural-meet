@@ -2,7 +2,8 @@ import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore as useContents} from '@hooks/SharedContentsStore'
 import {SharedContent, SharedContent as ISharedContent} from '@models/SharedContent'
 import {MapData} from '@stores/Map'
-import {createContent, createContentOfIframe, createContentOfImage, createContentOfPdf, createContentOfText} from '@stores/sharedContents/SharedContentCreator'
+import {createContent, createContentOfIframe, createContentOfImage, createContentOfImageUrl,
+  createContentOfPdf, createContentOfText} from '@stores/sharedContents/SharedContentCreator'
 import {default as sharedContents} from '@stores/sharedContents/SharedContents'
 import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
@@ -63,10 +64,20 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
         let content = undefined
         if (str.indexOf('http://') === 0 || str.indexOf('https://') === 0) {
           const url = new URL(str)
+          const ext = str.slice(-4)
           if (url.host === location.host && url.pathname === location.pathname) {
             //  Openning of self url makes infinite loop. So, create text instead.
             content = createContentOfText(str, map)
             content.name = '! recursive reference'
+          }else if (ext === '.jpg' || ext === '.JPG' || ext === 'jpeg' || ext === 'JPEG' || ext === '.png' || ext === '.PNG') {
+            createContentOfImageUrl(str, map).then((content) => {
+              content.name = url.pathname
+              if (SHARE_DIRECT) {
+                sharedContents.shareContent(content)
+              } else {
+                sharedContents.setPasted(content)
+              }
+            })
           }else {
             content = createContentOfIframe(str, map)
             if (content.type === 'iframe') {
@@ -84,10 +95,12 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
           content = createContentOfText(str, map)
           content.name = str.substring(0, 20)
         }
-        if (SHARE_DIRECT) {
-          sharedContents.shareContent(content)
-        } else {
-          sharedContents.setPasted(content)
+        if (content) {
+          if (SHARE_DIRECT) {
+            sharedContents.shareContent(content)
+          } else {
+            sharedContents.setPasted(content)
+          }
         }
       })
     }else {

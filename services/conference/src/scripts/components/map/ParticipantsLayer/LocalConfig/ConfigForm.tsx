@@ -54,7 +54,7 @@ export const ConfigForm: React.FC<ConfigFormProps> = (props: ConfigFormProps) =>
     info.avatarSrc = local.information.avatarSrc
 
     if (file) {
-      uploadToGyazo(file).then(({url, size}) => {
+      uploadToGyazo(file).then((url) => {
         info.avatarSrc = url
         local.setInformation(info)
         console.log(`info.avatar = ${local.information.avatarSrc}`)
