@@ -67,7 +67,7 @@ function importItems(ev: React.ChangeEvent<HTMLInputElement>, sharedContents: Sh
           const content = item as ISharedContent
           if (content.type === 'screen' || content.type === 'camera') { return }
           const newContent = createContent()
-          content.id = ''
+          delete (content as any).id
           Object.assign(newContent, content)
           sharedContents.shareContent(newContent)
         })

@@ -213,6 +213,7 @@ export class ConferenceSync{
     //  Part of my contents updated and send them to remote.
     this.conference.on(MessageType.CONTENT_UPDATED, (from:string, cs_:ISharedContent[]) => {
       const cs = makeThemContents(cs_)
+      contents.checkDuplicatedBackground(from, cs)
       contents.updateRemoteContents(cs, from)
       syncLog(`recv remote contents ${JSON.stringify(cs.map(c => c.id))} from ${from}.`, cs)
     })
@@ -225,6 +226,7 @@ export class ConferenceSync{
     //  Send all my content to remote to refresh.
     this.conference.on(MessageType.CONTENT_ALL, (from:string, cs_:ISharedContent[]) => {
       const cs = makeThemContents(cs_)
+      contents.checkDuplicatedBackground(from, cs)
       contents.replaceRemoteContents(cs, from)
       const remote = participants.remote.get(from)
       if (remote) {
@@ -287,6 +289,7 @@ export class ConferenceSync{
       syncLog('REQUEST_INFO sent by DATA_CHANNEL_OPENED.')
       requestSent = true
       setTimeout(this.checkResponse.bind(this), 1000)
+      setTimeout(contents.loadBackground.bind(contents), 2000)
     })
     const startTime = Date.now()
     this.conference.on(ConferenceEvents.REMOTE_TRACK_ADDED, () => {
@@ -333,9 +336,7 @@ export class ConferenceSync{
     this.disposers.forEach(d => d())
   }
 
-  checkCount = 0
   private checkResponse() {
-    this.checkCount += 1
     const remotes = Array.from(participants.remote.values())
     const noRes = remotes.filter(remote => remote.updateTime.hasNoResponse())
     noRes.forEach((remote) => {
@@ -349,8 +350,6 @@ export class ConferenceSync{
     })
     if (noRes.length) {
       console.warn(`Failed to get response from ${JSON.stringify(noRes.map(r => r.id))}`)
-    }else if (this.checkCount > 5) {
-      contents.loadBackground()
     }
     setTimeout(this.checkResponse.bind(this), 1000)
   }

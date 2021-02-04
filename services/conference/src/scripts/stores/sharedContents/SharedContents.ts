@@ -1,12 +1,11 @@
 import {connection} from '@models/api/Connection'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {assert, diffMap, intersectionMap} from '@models/utils'
+import {diffMap, intersectionMap} from '@models/utils'
 import {default as participantsStore} from '@stores/participants/Participants'
 import {EventEmitter} from 'events'
 import _ from 'lodash'
 import {action, autorun, computed, observable} from 'mobx'
-import {createContent, disposeContent, isBackground} from './SharedContentCreator'
-import {removePerceptibility} from './SharedContentCreator'
+import {createContent, disposeContent, isBackground, removePerceptibility} from './SharedContentCreator'
 import {SharedContentTracks} from './SharedContentTracks'
 
 export const CONTENTLOG = false      // show manipulations and sharing of content
@@ -101,6 +100,20 @@ export class SharedContents extends EventEmitter {
     return undefined
   }
 
+  checkDuplicatedBackground(pid: string, cs: ISharedContent[]) {
+    if (pid < this.localId) {
+      const targets = cs.filter(isBackground)
+      this.localParticipant.myContents.forEach((c) => {
+        if (isBackground(c)) {
+          if (targets.find(t => c.url === t.url && _.isEqual(c.pose, t.pose))) {
+            this.removeByLocal(c.id)
+            console.warn(`My background id:${c.id} url:${c.url} removed.`)
+          }
+        }
+      })
+    }
+  }
+
   private removeDuplicated() {
     let changed = false
     this.participants.forEach((remote) => {
@@ -154,6 +167,7 @@ export class SharedContents extends EventEmitter {
       loaded.forEach((l) => {
         if (!cur.find(c => c.url === l.url && _.isEqual(c.pose.position, l.pose.position))) {
           const newContent = createContent()
+          delete (l as any).id
           Object.assign(newContent, l)
           this.addLocalContent(newContent)
         }
