@@ -289,7 +289,6 @@ export class ConferenceSync{
       syncLog('REQUEST_INFO sent by DATA_CHANNEL_OPENED.')
       requestSent = true
       setTimeout(this.checkResponse.bind(this), 1000)
-      setTimeout(contents.loadBackground.bind(contents), 2000)
     })
     const startTime = Date.now()
     this.conference.on(ConferenceEvents.REMOTE_TRACK_ADDED, () => {

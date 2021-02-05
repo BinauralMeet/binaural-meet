@@ -267,13 +267,18 @@ export class Conference extends EventEmitter {
     }
   }
   private onConferenceJoined() {
+    //  set localId
     this.localId = this._jitsiConference!.myUserId()
     participants.setLocalId(this.localId)
+    //  create tracks
     for (const prop in participants.local.devicePreference) {
       if (participants.local.devicePreference[prop] === undefined) {
         participants.local.devicePreference[prop] = ''
       }
     }
+    //  load background after 2secs
+    setTimeout(contents.loadBackground.bind(contents), 2000)
+
     //  update ghost info
     if (connection.conferenceName !== participants.ghostCandidates.room) {
       participants.ghostCandidates = {room:connection.conferenceName, pids:[]}

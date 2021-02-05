@@ -1,4 +1,4 @@
-import {MapObject} from './MapObject'
+import {MapObject, Pose2DMap} from './MapObject'
 
 export type ContentType = 'img' | 'text' | 'youtube' | 'iframe' | 'screen' | 'camera' | 'gdrive' | ''
 
@@ -16,6 +16,21 @@ export interface SharedContent extends MapObject {
   moveToTop(): void               //  change zorder to the top.
   moveToBottom(): void            //  change zorder to the bottom.
   moveToBackground(): void        //  change zorder to far below the bottom.
+}
+export interface SharedContentData {
+  zorder: number                  //  unix timestamp when shared or moved to top.
+  name: string                    //  name or title of the content.
+  ownerName: string               //  name of the initial owner
+  type: ContentType               //  content type ('img', etc)
+  url: string                     //  url or text to share
+  pose: Pose2DMap                 //  position and orientation
+  size: [number, number]          //  current size of the content
+  originalSize: [number, number]  //  original size of the content or [0, 0]
+  pinned: boolean                 //  pinned (not resizable or resizable)
+}
+export interface BackgroundContents {
+  room: string
+  contents: SharedContentData[]
 }
 
 export interface TextMessage {

@@ -1,5 +1,6 @@
+import {Background} from '@components/map/BackgroundLayer/Background'
 import {connection} from '@models/api/Connection'
-import {SharedContent as ISharedContent} from '@models/SharedContent'
+import {BackgroundContents, SharedContent as ISharedContent} from '@models/SharedContent'
 import {diffMap, intersectionMap} from '@models/utils'
 import {default as participantsStore} from '@stores/participants/Participants'
 import {EventEmitter} from 'events'
@@ -139,39 +140,58 @@ export class SharedContents extends EventEmitter {
     newAll.sort(contentComp)
     this.all = newAll
 
-    let nBackground = this.all.findIndex(c => !isBackground(c))
-    if (nBackground < 0) { nBackground = this.all.length }
-
-    this.saveBackground(this.all.slice(0, nBackground))
+    this.saveBackground()
 
     //  console.log('update all len=', this.all.length, ' all=', JSON.stringify(this.all))
   }
   background = ''
-  private saveBackground(cs: ISharedContent[]) {
-    removePerceptibility(cs)
-    const str = JSON.stringify(cs)
-    if (str !== this.background) {
-      this.background = str
-      localStorage.setItem('background', this.background)
+  private getBackground() {
+    let nBackground = this.all.findIndex(c => !isBackground(c))
+    if (nBackground < 0) { nBackground = this.all.length }
+
+    return this.all.slice(0, nBackground)
+  }
+  private saveBackground() {
+    if (!this.background) {
+      this.loadBackground()
+    }
+    const cs_ = this.getBackground()
+    const strcs = JSON.stringify(cs_)
+    if (this.background !== strcs) {
+      this.background = strcs
+      const cs = removePerceptibility(cs_)
+      cs.forEach(c => delete (c as any).id)
+      const backgroundContents:BackgroundContents = {room:connection.conferenceName, contents:cs}
+      const oldStr = localStorage.getItem('background')
+      let bcs:BackgroundContents[] = []
+      if (oldStr) { bcs = JSON.parse(oldStr) as BackgroundContents[] }
+      const idx = bcs.findIndex(bc => bc.room === backgroundContents.room)
+      idx === -1 ? bcs.push(backgroundContents) : bcs[idx] = backgroundContents
+      localStorage.setItem('background', JSON.stringify(bcs))
     }
   }
   loadBackground() {
     if (this.background) { return }
     const str = localStorage.getItem('background')
-    if (str) {
-      this.background = str
-      const loaded = JSON.parse(str) as ISharedContent[]
-      let nBackground = this.all.findIndex(c => !isBackground(c))
-      if (nBackground < 0) { nBackground = this.all.length }
-      const cur = this.all.slice(0, nBackground)
-      loaded.forEach((l) => {
-        if (!cur.find(c => c.url === l.url && _.isEqual(c.pose.position, l.pose.position))) {
-          const newContent = createContent()
-          delete (l as any).id
-          Object.assign(newContent, l)
-          this.addLocalContent(newContent)
-        }
-      })
+    if (!str) {
+      this.background = JSON.stringify([])
+    }else {
+      const bcs = JSON.parse(str) as BackgroundContents[]
+      const loaded = bcs.find(bc => bc.room === connection.conferenceName)
+      if (loaded) {
+        let nBackground = this.all.findIndex(c => !isBackground(c))
+        if (nBackground < 0) { nBackground = this.all.length }
+        const cur = this.all.slice(0, nBackground)
+        loaded.contents.forEach((l) => {
+          if (!cur.find(c => c.url === l.url && _.isEqual(c.pose.position, l.pose.position))) {
+            const newContent = createContent()
+            Object.assign(newContent, l)
+            this.addLocalContent(newContent)
+          }
+        })
+        const cs_ = this.getBackground()
+        this.background = JSON.stringify(cs_)
+      }
     }
   }
 
