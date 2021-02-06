@@ -8,7 +8,8 @@ import errorInfo from '@stores/ErrorInfo'
 import '@stores/index'  // init store (DO NOT delete)
 import participants from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
-import {autorun} from 'mobx'
+import {JitsiLocalTrack} from 'lib-jitsi-meet'
+import {when} from 'mobx'
 import 'mobx-react-lite/batchingForReactDom'
 import React from 'react'
 import ReactDOM from 'react-dom'
@@ -30,8 +31,11 @@ function renderDOM() {
   ReactDOM.render(<App />, root)
 }
 
+let logStr = ''
 function connectConference() {
   window.addEventListener('beforeunload', (ev) => {
+    logStr = `${logStr}beforeunload called. ${Date()} `
+    localStorage.setItem('log', logStr)
     //  save my pid as ghost candidate.
     const idx = participants.ghostCandidates.pids.findIndex(pid => pid[0] === participants.localId)
     if (idx >= 0) {
@@ -44,23 +48,40 @@ function connectConference() {
     //  prevent leaving from and reloading browser, when the user shares screen(s).
     if (!errorInfo.type &&
       (contents.tracks.localMains.size || contents.tracks.localContents.size)) {
+      logStr += 'Ask user. '
       ev.preventDefault()
       ev.stopImmediatePropagation()
       ev.returnValue = ''
+      localStorage.setItem('log', logStr)
 
       return ev.returnValue
     }
+
+    if (participants.local.tracks.audio) {
+      connection.conference.removeTrack(participants.local.tracks.audio as JitsiLocalTrack)
+    }
+    if (participants.local.tracks.avatar) {
+      connection.conference.removeTrack(participants.local.tracks.avatar as JitsiLocalTrack)
+    }
+    connection.conference._jitsiConference?.leave().then((arg) => {
+      logStr += `leave (${arg}). `
+      localStorage.setItem('log', logStr)
+    })
+    connection.disconnect().then((arg) => {
+      logStr += `Diconnected (${arg}). `
+      localStorage.setItem('log', logStr)
+    }).catch((reason) => {
+      logStr += `Failed to diconnected (${reason}). `
+      localStorage.setItem('log', logStr)
+    })
   })
 
   errorInfo.connectionStart()
   connection.init().then(
     () => {
-      const disposer = autorun(() => {
-        if (!errorInfo.type) {
-          const conferenceName = urlParameters.room || 'haselabtest'
-          connection.joinConference(conferenceName)
-          disposer()
-        }
+      when(() => errorInfo.type === '', () => {
+        const conferenceName = urlParameters.room || '_'
+        connection.joinConference(conferenceName)
       })
     },
   )

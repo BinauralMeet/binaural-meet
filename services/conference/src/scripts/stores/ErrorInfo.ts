@@ -5,7 +5,7 @@ import {addV2, mulV2} from '@models/utils'
 import {createJitisLocalTracksFromStream} from '@models/utils/jitsiTrack'
 import map from '@stores/Map'
 import participants from '@stores/participants/Participants'
-import {action, autorun, computed, observable} from 'mobx'
+import {action, autorun, computed, observable, when} from 'mobx'
 
 export type ErrorType = '' | 'connection' | 'noMic' | 'micPermission' | 'channel' | 'enterance'
 
@@ -16,6 +16,9 @@ export class ErrorInfo {
   @observable title = 'Enter the venue'
 
   constructor() {
+    if (urlParameters['testBot'] !== null) {
+      this.clear()
+    }
     autorun(() => {
       if (this.type) {
         map.keyInputUsers.add('errorDialog')
@@ -44,12 +47,13 @@ export class ErrorInfo {
   /// check errors after try to start the connection to the XMPP server.
   @action connectionStart() {
     this.enumerateDevices()
-    const disposer = autorun(() => {
-      if (this.type === '') {
+    if (urlParameters.testBot === null)  {
+      when(() => this.type === '', () => {
         setTimeout(this.checkConnection.bind(this), 4 * 1000)
-        disposer()
-      }
-    })
+      })
+    }else { //  testBot
+      setTimeout(this.startTestBot.bind(this), 3000)
+    }
   }
   @action clear() {
     this.type = ''
@@ -64,11 +68,7 @@ export class ErrorInfo {
       setTimeout(this.checkConnection.bind(this), 5 * 1000)
     }else {
       this.clear()
-      if (urlParameters.testBot !== null)  {
-        this.startTestBot()
-      }else {
-        this.checkMic()
-      }
+      this.checkMic()
     }
   }
   @action checkMic() {
@@ -117,7 +117,6 @@ export class ErrorInfo {
   startTestBot () {
     let counter = 0
     //  Create dummy audio
-    window.AudioContext = window.AudioContext
     const ctxA = new AudioContext()
     this.oscillator = ctxA.createOscillator()
     this.oscillator.type = 'triangle' // sine, square, sawtooth, triangleがある

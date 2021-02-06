@@ -1,12 +1,13 @@
 import {connection} from '@models/api'
 import {manager as audioManager} from '@models/audio'
+import {urlParameters} from '@models/url'
 import participants from '@stores/participants/Participants'
 import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'
 import {autorun} from 'mobx'
 
 autorun(() => {
   const did = participants.local.devicePreference.audioInputDevice
-  if (participants.localId) {
+  if (participants.localId && urlParameters.testBot === null) {
     const track = connection.conference.getLocalMicTrack()
     if (track && track.getDeviceId() === did) { return }
     JitsiMeetJS.createLocalTracks({devices:['audio'], micDeviceId: did}).then(
@@ -19,7 +20,7 @@ autorun(() => {
 declare const config:any                  //  from ../../config.js included from index.html
 autorun(() => {
   const did = participants.local.devicePreference.videoInputDevice
-  if (participants.localId) {
+  if (participants.localId && urlParameters.testBot === null) {
     const track = connection.conference.getLocalCameraTrack()
     if (track && track.getDeviceId() === did) { return }
     JitsiMeetJS.createLocalTracks({devices:['video'],

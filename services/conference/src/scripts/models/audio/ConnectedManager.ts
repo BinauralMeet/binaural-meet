@@ -3,7 +3,7 @@ import {diffMap} from '@models/utils'
 import participants from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
 import {JitsiRemoteTrack} from 'lib-jitsi-meet'
-import {autorun, reaction} from 'mobx'
+import {autorun} from 'mobx'
 import {ConnectedGroup} from './ConnectedGroup'
 import {StereoManager} from './StereoManager'
 export class ConnectedManager {
