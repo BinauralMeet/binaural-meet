@@ -1,11 +1,11 @@
 import {useStore} from '@hooks/ParticipantsStore'
 import {PARTICIPANT_SIZE} from '@models/Participant'
+import {urlParameters} from '@models/url'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {MemoedLocalParticipant as LocalParticipant} from './LocalParticipant'
 import {MouseCursor} from './MouseCursor'
 import {MemoedRemoteParticipant as RemoteParticipant} from './RemoteParticipant'
-
 interface LineProps {
   start: [number, number]
   end: [number, number]
@@ -50,6 +50,8 @@ export const ParticipantsLayer: React.FC<{}> = (props) => {
 
   const showLocalMouse = useObserver(() => store.local.mouse.show)
   const localMouseCursor = showLocalMouse ? <MouseCursor key={'M_local'} participantId={localId} /> : undefined
+
+  if (urlParameters.testBot !== null) { return <div /> }
 
   return(
     <div>
