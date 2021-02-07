@@ -2,6 +2,7 @@ import {Pose2DMap} from '@models/MapObject'
 import {priorityCalculator} from '@models/middleware/trafficControl'
 import {Information, Mouse, Physics, TrackStates} from '@models/Participant'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
+import {urlParameters} from '@models/url'
 import {diffMap, intersectionMap} from '@models/utils'
 import participants from '@stores/participants/Participants'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
@@ -90,6 +91,7 @@ export class ConferenceSync{
     })
     this.conference.on(ConferenceEvents.REMOTE_TRACK_REMOVED, (track) => {
       //  console.log(`onRemoteTrackAdded ${track} videoType:'${track.videoType ? track.videoType : undefined}'.`)
+
       if (!participants.removeRemoteTrack(track)) {
         contents.tracks.removeRemoteTrack(track)
       }
@@ -97,6 +99,8 @@ export class ConferenceSync{
 
     //  info
     this.conference.on(MessageType.PARTICIPANT_INFO, (from:string, info:Information) => {
+      if (urlParameters.testBot !== null) { return }
+
       const remote = participants.remote.get(from)
       if (remote) {
         remote.updateTime.info = Date.now()
@@ -112,6 +116,8 @@ export class ConferenceSync{
 
     //  track states
     this.conference.on(MessageType.PARTICIPANT_TRACKSTATES, (from:string, states:TrackStates) => {
+      if (urlParameters.testBot !== null) { return }
+
       const remote = participants.remote.get(from)
       if (remote) {
         remote.updateTime.trackStates = Date.now()
@@ -146,6 +152,8 @@ export class ConferenceSync{
 
     // physics
     this.conference.on(MessageType.PARTICIPANT_PHYSICS, (from:string, physics:Physics) => {
+      if (urlParameters.testBot !== null) { return }
+
       const remote = participants.remote.get(from)
       if (remote) {
         remote.updateTime.physhics = Date.now()
@@ -161,6 +169,8 @@ export class ConferenceSync{
 
     // mouse
     this.conference.on(MessageType.PARTICIPANT_MOUSE, (from:string, mouse:Mouse) => {
+      if (urlParameters.testBot !== null) { return }
+
       const remote = participants.remote.get(from)
       if (remote) {
         remote.updateTime.mouse = Date.now()

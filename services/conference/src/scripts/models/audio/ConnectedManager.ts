@@ -1,4 +1,5 @@
 import {RemoteParticipant} from '@models/Participant'
+import {urlParameters} from '@models/url'
 import {diffMap} from '@models/utils'
 import participants from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
@@ -20,6 +21,8 @@ export class ConnectedManager {
     this.manager.setAudioOutput(deviceId)
   }
   constructor() {
+    if (urlParameters.testBot !== null) { return }
+
     autorun(this.onPopulationChange)
     autorun(this.onScreenContentsChange)
     autorun(

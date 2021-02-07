@@ -144,14 +144,26 @@ export class ErrorInfo {
       ctx.beginPath()
       ctx.ellipse(width / 4, height / 4, width * 0.1, height * 0.4, -counter / 20, 0, Math.PI * 2)
       ctx.fill()
-      ctx.fillStyle = 'blue'
+/*      ctx.fillStyle = 'blue'
       ctx.beginPath()
       ctx.ellipse(width / 4, height / 4, width * 0.1, height * 0.4, counter / 10, 0, Math.PI * 2)
-      ctx.fill()
+      ctx.fill()*/
       counter += 1
-      participants.local.pose.position = addV2(center, mulV2(100, [Math.cos(counter / 60), Math.sin(counter / 60)]))
     }
     setInterval(draw, 1000 / 20)
+    const move = () => {
+      participants.local.pose.position = addV2(center, mulV2(100, [Math.cos(counter / 60), Math.sin(counter / 60)]))
+    }
+    const win = window as any
+    if (win.requestIdleCallback) {
+      const moveTask = () => {
+        move()
+        win.requestIdleCallback(moveTask)
+      }
+      moveTask()
+    }else {
+      setInterval(move, 1000)
+    }
 
     const vidoeStream = (this.canvas as any).captureStream(20) as MediaStream
     const audioStream = destination.stream
