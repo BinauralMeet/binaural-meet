@@ -1,6 +1,6 @@
 import {getImageSize, uploadToGyazo} from '@models/api/Gyazo'
 import {defaultPerceptibility,  Perceptibility, Pose2DMap} from '@models/MapObject'
-import {ContentType, SharedContent as ISharedContent, TextMessages} from '@models/SharedContent'
+import {ContentType, SharedContent as ISharedContent, SharedContentData as ISharedContentData, TextMessages} from '@models/SharedContent'
 import {MapData} from '@stores/Map'
 import {defaultValue as mapObjectDefaultValue} from '@stores/MapObject'
 import {JitsiLocalTrack} from 'lib-jitsi-meet'
@@ -23,50 +23,51 @@ export const defaultContent: ISharedContent = Object.assign({}, mapObjectDefault
   isEditable() {
     return this.type === 'text' || this.type === 'iframe' || this.type === 'gdrive'
   },
+  isBackground() {
+    return this.zorder < TEN_YEAR
+  },
   moveToTop() {
     this.zorder = Math.floor(Date.now() / TIME_RESOLUTION_IN_MS)
   },
   moveToBottom() {
-    let idx = 0
-    while (idx < sharedContents.all.length &&
-      sharedContents.all[idx].zorder < TEN_YEAR) { //  1980.01.01
-      idx += 1
+    const bottom = sharedContents.all.find(c => c.zorder > TEN_YEAR)
+    if (!bottom) {
+      this.moveToTop()
+
+      return
     }
-    if (idx < sharedContents.all.length) {
-      const bottom = sharedContents.all[idx]
-      this.zorder = bottom.zorder - TIME_RESOLUTION_IN_MS
-    }else {
-      this.zorder = Math.floor(Date.now() / TIME_RESOLUTION_IN_MS)
-    }
+    this.zorder = bottom.zorder - 1
   },
   moveToBackground() {
+    if (this.isBackground()) { return }
     this.zorder = TEN_YEAR - (Math.floor(Date.now() / TIME_RESOLUTION_IN_MS) - this.zorder)
   },
 })
-export function isBackground(c:ISharedContent) {
-  return c.zorder < TEN_YEAR
-}
 
+function addContentFunctions(c: ISharedContent) {
+  c.isEditable = defaultContent.isEditable
+  c.isBackground = defaultContent.isBackground
+  c.moveToTop = defaultContent.moveToTop
+  c.moveToBottom = defaultContent.moveToBottom
+  c.moveToBottom = defaultContent.moveToBottom
+}
 ///  Add perceptibility and function to object obtained by JSON.parse()
 export function jsonToContents(json: string, perceptibility = defaultPerceptibility) {
   const cs = JSON.parse(json)
   for (const c of cs) {
     c.perceptibility = Object.assign({}, defaultPerceptibility)
-    c.isEditable = defaultContent.isEditable
-    c.moveToTop = defaultContent.moveToTop
-    c.moveToBottom = defaultContent.moveToBottom
+    addContentFunctions(c)
   }
 
   return cs as ISharedContent[]
 }
 
-export function makeItContent(it: ISharedContent) {
-  it.perceptibility = Object.assign({}, defaultPerceptibility)
-  it.isEditable = defaultContent.isEditable
-  it.moveToTop = defaultContent.moveToTop
-  it.moveToBottom = defaultContent.moveToBottom
+export function makeItContent(it: ISharedContentData) {
+  const sc = it as ISharedContent
+  sc.perceptibility = Object.assign({}, defaultPerceptibility)
+  addContentFunctions(sc)
 
-  return it
+  return sc
 }
 export function makeThemContents(them: ISharedContent[]) {
   for (const c of them) {
@@ -76,7 +77,7 @@ export function makeThemContents(them: ISharedContent[]) {
   return them
 }
 
-class SharedContent implements ISharedContent {
+export class SharedContent implements ISharedContent {
   name!: string
   ownerName!: string
   type!: ContentType
@@ -88,16 +89,14 @@ class SharedContent implements ISharedContent {
   size!: [number, number]
   originalSize!:[number, number]
   perceptibility!: Perceptibility
-  isEditable: () => boolean
-  moveToTop: () => void
-  moveToBottom: () => void
-  moveToBackground: () => void
+  isEditable!: () => boolean
+  isBackground!: () => boolean
+  moveToTop!: () => void
+  moveToBottom!: () => void
+  moveToBackground!: () => void
   constructor() {
     Object.assign(this, _.cloneDeep(defaultContent))
-    this.isEditable = defaultContent.isEditable
-    this.moveToTop = defaultContent.moveToTop
-    this.moveToBottom = defaultContent.moveToBottom
-    this.moveToBackground = defaultContent.moveToBackground
+    addContentFunctions(this)
   }
 }
 

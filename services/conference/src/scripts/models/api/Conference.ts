@@ -217,14 +217,13 @@ export class Conference extends EventEmitter {
     })
 
     this._jitsiConference.on(JitsiMeetJS.events.conference.TRACK_AUDIO_LEVEL_CHANGED, (id:string, level:number) => {
-      let participant = participantsStore.find(id)
-      if (!participant) {
-        participant = participantsStore.local
-      }
-      if (! (participant === participantsStore.local && participant.plugins.streamControl.muteAudio)) {
-        participant?.tracks.setAudioLevel(level)
-      }else {
-        participant?.tracks.setAudioLevel(0)
+      const participant = participantsStore.find(id)
+      if (participant) {
+        if (! (participant === participantsStore.local && participant.plugins.streamControl.muteAudio)) {
+          participant?.tracks.setAudioLevel(level)
+        }else {
+          participant?.tracks.setAudioLevel(0)
+        }
       }
     })
   }

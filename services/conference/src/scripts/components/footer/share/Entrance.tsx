@@ -239,7 +239,7 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
         <ShareDialogItem
           key = "stopScreen"
           icon={<Icon icon={bxWindowClose} />}
-          text={'Close all screen _windows'}
+          text={'Close all screen and camera _windows'}
           onClick={closeAllScreens}
           /> : undefined}
       <ShareDialogItem

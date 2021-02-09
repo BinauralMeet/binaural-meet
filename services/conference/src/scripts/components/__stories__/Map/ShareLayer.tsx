@@ -2,8 +2,7 @@ import {PastedContent} from '@components/map/ShareLayer/PastedContent'
 import {SharedContent} from '@components/map/ShareLayer/SharedContent'
 import {StoreProvider as ContentsProvider} from '@hooks/SharedContentsStore'
 import {makeStyles} from '@material-ui/core/styles'
-import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {createContent, defaultContent} from '@stores/sharedContents/SharedContentCreator'
+import {createContent, SharedContent as CSharedContent} from '@stores/sharedContents/SharedContentCreator'
 import {SharedContents as SharedContentsStore} from '@stores/sharedContents/SharedContents'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
@@ -23,7 +22,7 @@ export function addFakeSharedContents(store: SharedContentsStore) {
   store.addLocalContent(sc)
 }
 
-const pc: ISharedContent = {
+const pc = Object.assign(new CSharedContent(), {
   id: 'new',
   name: 'pc',
   ownerName: 'owner name',
@@ -37,16 +36,7 @@ const pc: ISharedContent = {
   originalSize: [100, 100],
   pinned: true,
   zorder: 1,
-  isEditable:defaultContent.isEditable,
-  moveToTop:defaultContent.moveToTop,
-  moveToBottom:defaultContent.moveToBottom,
-  moveToBackground:defaultContent.moveToBackground,
-  perceptibility: {
-    audibility: true,
-    coreContentVisibility: true,
-    visibility: true,
-  },
-}
+})
 const useStyles = makeStyles({
   slContainer:{
     backgroundColor: 'rgba(255,0,0,0.2)',

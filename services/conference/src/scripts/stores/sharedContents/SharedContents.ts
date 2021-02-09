@@ -6,7 +6,7 @@ import {default as participantsStore} from '@stores/participants/Participants'
 import {EventEmitter} from 'events'
 import _ from 'lodash'
 import {action, autorun, computed, observable} from 'mobx'
-import {createContent, disposeContent, isBackground, removePerceptibility} from './SharedContentCreator'
+import {createContent, disposeContent, removePerceptibility} from './SharedContentCreator'
 import {SharedContentTracks} from './SharedContentTracks'
 
 export const CONTENTLOG = false      // show manipulations and sharing of content
@@ -101,11 +101,30 @@ export class SharedContents extends EventEmitter {
     return undefined
   }
 
+  removeSameBackground(bgs: ISharedContent[]) {
+    let rv = false
+    this.localParticipant.myContents.forEach((c) => {
+      if (c.isBackground()) {
+        const same = bgs.find(t => c.url === t.url && _.isEqual(c.pose, t.pose))
+        if (same) {
+          const pid = this.owner.get(same.id)
+          if (pid && (pid < this.localId) || (pid === this.localId && same.id !== c.id)) {
+            this.removeByLocal(c.id)
+            rv = true
+            console.warn(`My background id:${c.id} url:${c.url} removed.`)
+          }
+        }
+      }
+    })
+
+    return rv
+  }
+
   checkDuplicatedBackground(pid: string, cs: ISharedContent[]) {
     if (pid < this.localId) {
-      const targets = cs.filter(isBackground)
+      const targets = cs.filter(c => c.isBackground())
       this.localParticipant.myContents.forEach((c) => {
-        if (isBackground(c)) {
+        if (c.isBackground()) {
           if (targets.find(t => c.url === t.url && _.isEqual(c.pose, t.pose))) {
             this.removeByLocal(c.id)
             console.warn(`My background id:${c.id} url:${c.url} removed.`)
@@ -146,7 +165,7 @@ export class SharedContents extends EventEmitter {
   }
   background = ''
   private getBackground() {
-    let nBackground = this.all.findIndex(c => !isBackground(c))
+    let nBackground = this.all.findIndex(c => !c.isBackground())
     if (nBackground < 0) { nBackground = this.all.length }
 
     return this.all.slice(0, nBackground)
@@ -155,7 +174,8 @@ export class SharedContents extends EventEmitter {
     if (!this.background) {
       this.loadBackground()
     }
-    const cs_ = this.getBackground()
+    let cs_ = this.getBackground()
+    if (this.removeSameBackground(cs_)) { cs_ = this.getBackground() }
     const strcs = JSON.stringify(cs_)
     if (this.background !== strcs) {
       this.background = strcs
@@ -179,7 +199,7 @@ export class SharedContents extends EventEmitter {
       const bcs = JSON.parse(str) as BackgroundContents[]
       const loaded = bcs.find(bc => bc.room === connection.conferenceName)
       if (loaded) {
-        let nBackground = this.all.findIndex(c => !isBackground(c))
+        let nBackground = this.all.findIndex(c => !c.isBackground())
         if (nBackground < 0) { nBackground = this.all.length }
         const cur = this.all.slice(0, nBackground)
         loaded.contents.forEach((l) => {
@@ -302,12 +322,13 @@ export class SharedContents extends EventEmitter {
       console.error('A remote tries to updates local contents.')
     }
     cs.forEach((c) => {
-      const participant = this.getParticipant(pid)
+      const remote = this.getParticipant(pid)
       contentLog(`updateContents for participant:${pid}`)
       contentDebug(` update ${c.id} by ${c}`)
-      contentDebug(' myContents=', JSON.stringify(participant?.myContents))
+      contentDebug(' myContents=', JSON.stringify(remote?.myContents))
 
-      if (participant.myContents.has(c.id)) {
+      //  set owner
+      if (remote.myContents.has(c.id)) {
         const owner = this.owner.get(c.id)
         if (owner !== pid) {
           console.error(`Owner not match for cid=${c.id} owner=${owner} pid=${pid}.`)
@@ -315,10 +336,12 @@ export class SharedContents extends EventEmitter {
       }else {
         this.owner.set(c.id, pid)
       }
+      //  set content
+      remote.myContents.set(c.id, c)
+      //  update track in cases of track based contents.
       if (c.type === 'screen' || c.type === 'camera') {
         this.tracks.onUpdateContent(c)
       }
-      participant.myContents.set(c.id, c)
     })
     this.updateAll()
   }
