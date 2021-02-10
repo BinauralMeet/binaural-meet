@@ -121,7 +121,7 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
       if (before) {
         textToShow.push(<span key={start}>{before}</span>)
       }
-      textToShow.push(<a key={start + before.length} href={regResult[0]} target="link">{regResult[0]}</a>)
+      textToShow.push(<a key={start + before.length} href={regResult[0]} target="_blank">{regResult[0]}</a>)
       start += before.length + regResult[0].length
     }
     textToShow.push(<span key={start}>{text.message.slice(start)}</span>)

@@ -7,15 +7,14 @@ export interface ParticipantBase extends MapObject{
   physics: Physics
   tracks: Tracks
   mouse: Mouse
+  id: string
 }
 
 export interface RemoteParticipant extends ParticipantBase {
-  id: string
 }
 
 export type SoundLocalizationBase = 'avatar' | 'user'
 export interface LocalParticipant extends ParticipantBase {
-  id: string
   soundLocalizationBase: SoundLocalizationBase
 }
 export type Participant = LocalParticipant | RemoteParticipant

@@ -1,8 +1,8 @@
 import {ImageAvatar} from '@components/avatar/ImageAvatar'
 import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore as useParticipantsStore} from '@hooks/ParticipantsStore'
+import {Tooltip} from '@material-ui/core'
 import {connection} from '@models/api/Connection'
-import {strcmp} from '@models/utils'
 import {MapData} from '@stores/Map'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
@@ -18,12 +18,14 @@ export const ParticipantLine: React.FC<{participant: ParticipantBase, map: MapDa
   const colors = props.participant.getColor()
   const classes = styleForList({height, fontSize})
 
-  return <div className={classes.line} style={{backgroundColor:colors[0], color:colors[1]}}
-  onClick={() => props.map.focusOn(props.participant)}>
-    <ImageAvatar information={info} color={colors[0]}
-      textColor={colors[1]} size={fontSize} style={{flexShrink: 0}} />
-    &nbsp; <div>{info.name}</div>
-  </div>
+  return <Tooltip title={props.participant.id} placement="right">
+    <div className={classes.line} style={{backgroundColor:colors[0], color:colors[1]}}
+    onClick={() => props.map.focusOn(props.participant)}>
+      <ImageAvatar information={info} color={colors[0]}
+        textColor={colors[1]} size={fontSize} style={{flexShrink: 0}} />
+      &nbsp; <div>{info.name}</div>
+    </div>
+  </Tooltip>
 }
 
 export const ParticipantList: React.FC = () => {
@@ -35,9 +37,9 @@ export const ParticipantList: React.FC = () => {
   ids.sort((a, b) => {
     const pa = store.remote.get(a)
     const pb = store.remote.get(b)
-    let rv = strcmp(pa!.information.name, pb!.information.name)
+    let rv = pa!.information.name.localeCompare(pb!.information.name, undefined, {sensitivity: 'accent'})
     if (rv === 0) {
-      rv = strcmp(pa!.information.email || '', pb!.information.email || '')
+      rv = (pa!.information.email || '').localeCompare(pb!.information.email || '', undefined, {sensitivity: 'accent'})
     }
 
     return rv

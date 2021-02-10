@@ -26,7 +26,6 @@ interface PhysicsInfo{
 
 export class LocalParticipant extends ParticipantBase implements Store<ILocalParticipant> {
   devicePreference = new DevicePreference()
-  @observable id = ''
   @observable useStereoAudio = false  //  will be override by url switch
   @observable thirdPersonView = config.thirdPersonView as boolean
   @observable soundLocalizationBase = config.soundLocalizationBase ? config.soundLocalizationBase : 'user'

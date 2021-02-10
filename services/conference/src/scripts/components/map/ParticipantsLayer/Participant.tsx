@@ -157,7 +157,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
         </svg>
       </div>
       <div className={[classes.avatar, transform.counterRotationClass, 'draggableHandle'].join(' ')} >
-        <Tooltip title={<span>{name}<br />{props.participantId}</span>}>
+        <Tooltip title={name}>
           <div>
             <Avatar {...props} />
             {headphone ? <HeadsetIcon className={classes.icon} htmlColor="rgba(0, 0, 0, 0.3)" /> : undefined}

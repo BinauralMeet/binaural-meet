@@ -191,7 +191,14 @@ export class SharedContents extends EventEmitter {
     }
   }
   loadBackground() {
-    if (this.background) { return }
+    if (this.background) { return }         //  already loaded
+    const curBg = this.getBackground()
+    if (curBg.length) {                      //  already exist
+      this.background = JSON.stringify(curBg)
+
+      return
+    }
+    //  load background from local storage
     const str = localStorage.getItem('background')
     if (!str) {
       this.background = JSON.stringify([])

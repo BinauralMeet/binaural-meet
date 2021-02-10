@@ -32,7 +32,6 @@ export class UpdateTime{
 }
 
 export class RemoteParticipant extends ParticipantBase implements Store<IRemoteParticipant> {
-  readonly id:string
   constructor(id:string) {
     super()
     this.id = id

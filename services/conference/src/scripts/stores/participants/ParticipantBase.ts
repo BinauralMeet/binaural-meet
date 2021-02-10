@@ -9,6 +9,7 @@ import {getRandomColor, getRandomColorRGB, shallowObservable, Store} from '../ut
 import {Plugins} from './plugins'
 
 export class ParticipantBase extends MapObject implements Store<IParticipantBase> {
+  @observable id = ''
   information = shallowObservable<Information>(defaultInformation)
   plugins: Plugins
   tracks = shallowObservable<TracksStore<JitsiTrack>>(new TracksStore<JitsiTrack>())

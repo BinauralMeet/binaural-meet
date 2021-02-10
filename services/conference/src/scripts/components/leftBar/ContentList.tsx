@@ -49,12 +49,15 @@ export const ContentList: React.FC = () => {
       return false
     })
     const sorted = array.sort((a, b) => {
+      //  layer order
+      return b.zorder - a.zorder
+      /*  //  sort by type and name
       let rv = strcmp(a.type, b.type)
       if (rv === 0) {
         rv = strcmp(a.name, b.name)
       }
 
-      return rv
+      return rv */
     })
 
     /* sort by distance
