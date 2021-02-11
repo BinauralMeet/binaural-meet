@@ -1,4 +1,4 @@
-import { PARTICIPANT_SIZE } from '@models/Participant'
+import {PARTICIPANT_SIZE} from '@models/Participant'
 import {SharedContent} from '@models/SharedContent'
 import {diffMap} from '@models/utils'
 import {participantsStore as participants} from '@stores/participants'
@@ -7,8 +7,8 @@ import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import contents from '@stores/sharedContents/SharedContents'
 import {JitsiRemoteTrack, JitsiTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
-import {autorun, IReactionDisposer} from 'mobx'
-import {Priority, RemoteTrackInfo, TrackInfo} from './priorityTypes'
+import {autorun, IReactionDisposer, observable} from 'mobx'
+import {RemoteTrackInfo, TrackInfo} from './priorityTypes'
 
 export const PRIORITYLOG = false
 export const priorityLog = PRIORITYLOG ? console.log : (a:any) => {}
@@ -70,10 +70,10 @@ export class PriorityCalculator {
 
   // priority cache
   private readonly priorityMaps = [new Map<string, RemoteTrackInfo>(), new Map<string, RemoteTrackInfo>()]
-  private lastPriority: Priority = {
-    video: [],
-    audio: [],
-  }
+  private lastPriority: [number[], number[]] = [[], []] //  video ssrcs, audio ssrcs
+
+  // list of observable track info lists
+  @observable tracksToAccept:[RemoteTrackInfo[], RemoteTrackInfo[]] = [[], []]
 
   private disposers: IReactionDisposer[] = []
   private _enabled = false
@@ -189,7 +189,7 @@ export class PriorityCalculator {
   }
 
   // returns same reference when no updates
-  update(): Priority {
+  update(): [number[], number[]] {
     if (!this.haveUpdates) {
       return this.lastPriority
     }
@@ -203,7 +203,7 @@ export class PriorityCalculator {
     return priority
   }
 
-  private calcPriority(): Priority {
+  private calcPriority() {
     //  list participants
     const recalculateList = Array.from(participants.remote.keys()).
       filter(key => this.updateAll ? true : this.updateSet.has(key))
@@ -243,9 +243,12 @@ export class PriorityCalculator {
       }
     })
 
+    //  update prioritizedTrackLists
     const prioritizedTrackInfoLists =
-      this.priorityMaps.map(priorityMap => Array.from(priorityMap.values()).sort((a, b) => a.priority - b.priority))
-
+      this.priorityMaps.map(priorityMap =>
+        Array.from(priorityMap.values()).sort(
+          (a, b) => a.priority - b.priority)) as [RemoteTrackInfo[], RemoteTrackInfo[]]
+    //  add main tracks
     const mainTracks = contents.tracks.remoteMainTrack()
     if (mainTracks) {
       prioritizedTrackInfoLists.forEach((list, idx) => {
@@ -256,28 +259,28 @@ export class PriorityCalculator {
         }
       })
     }
-
+    //  limit numbers of tracks
     prioritizedTrackInfoLists.forEach((list, idx) => {
       if (this.limits[idx] >= 0 && list.length > this.limits[idx]) {
         list.splice(this.limits[idx])
       }
     })
-    const prioritizedSsrcLists = prioritizedTrackInfoLists.map((infos) => {
+    //  done
+    this.tracksToAccept = prioritizedTrackInfoLists
+
+    //  ssrcs must be sent to JVB.
+    const prioritizedSsrcLists = this.tracksToAccept.map((infos) => {
       const rv:number[] = []
       for (const info of infos) {
         rv.push(... info.track.getSSRCs())
       }
 
       return rv
-    })
+    }) as [number[], number[]]
 
-    const res: Priority = {
-      video: prioritizedSsrcLists[0],
-      audio: prioritizedSsrcLists[1],
-    }
-    this.lastPriority = res
+    this.lastPriority = prioritizedSsrcLists
 
-    return res
+    return this.lastPriority
   }
 
   // lower value means higher priority
@@ -292,7 +295,7 @@ export class PriorityCalculator {
 
       return diff
     })
-    let distance = Math.sqrt(delta[0] * delta[0] + delta[1] * delta[1]) + remote.offset
+    const distance = Math.sqrt(delta[0] * delta[0] + delta[1] * delta[1]) + remote.offset
 
     return distance
     //  const position = [local.pose.position, remote.pose.position]

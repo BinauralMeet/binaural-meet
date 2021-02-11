@@ -119,18 +119,18 @@ export class ErrorInfo {
     //  Create dummy audio
     const ctxA = new AudioContext()
     this.oscillator = ctxA.createOscillator()
-    this.oscillator.type = 'triangle' // sine, square, sawtooth, triangleがある
+    this.oscillator.type = 'triangle' // sine, square, sawtooth, triangle
     const destination = ctxA.createMediaStreamDestination()
     this.oscillator.connect(destination)
     this.oscillator.start()
     //  Create dummy video
     this.canvas = document.createElement('canvas')
-    const width = 480
-    const height = 270
+    const width = 240
+    const height = 240
     this.canvas.style.width = `${width}px`
     this.canvas.style.height = `${height}px`
     const ctx = this.canvas.getContext('2d')
-    const center = [Math.random() * 800, Math.random() * 800 - 200]
+    const center = [Math.random() * 1600, (Math.random() - 0.5) * 1600]
     const draw = () => {
       if (!ctx || !ctxA) { return }
       //  update audio frequency also
@@ -138,11 +138,11 @@ export class ErrorInfo {
       //  update camera image
       ctx.fillStyle = 'red'
       ctx.beginPath()
-      ctx.ellipse(width / 4, height / 4, width * 0.1, height * 0.4, counter / 20, 0, Math.PI * 2)
+      ctx.ellipse(width * 0.63, height * 0.33, width * 0.1, height * 0.4, counter / 20, 0, Math.PI * 2)
       ctx.fill()
-      ctx.fillStyle = 'green'
+      ctx.fillStyle = 'blue'
       ctx.beginPath()
-      ctx.ellipse(width / 4, height / 4, width * 0.1, height * 0.4, -counter / 20, 0, Math.PI * 2)
+      ctx.ellipse(width * 0.63, height * 0.33, width * 0.1, height * 0.4, -counter / 20, 0, Math.PI * 2)
       ctx.fill()
 /*      ctx.fillStyle = 'blue'
       ctx.beginPath()

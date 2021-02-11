@@ -30,7 +30,7 @@ const DEFAULT_PANNER_NODE_CONFIG: Partial<PannerNode> & {refDistance: number} = 
 }
 export const BROADCAST_DISTANCE = 100000
 
-export type PlayMode = 'Context' | 'Element'
+export type PlayMode = 'Context' | 'Element' | 'Pause'
 
 export class NodeGroup {
   private sourceNode: MediaStreamAudioSourceNode | undefined = undefined
@@ -38,6 +38,7 @@ export class NodeGroup {
 
   private readonly gainNode: GainNode
   private readonly pannerNode: PannerNode
+  private readonly destination: MediaStreamAudioDestinationNode
 
   private readonly context: AudioContext
   private playMode: PlayMode|undefined
@@ -47,12 +48,13 @@ export class NodeGroup {
   constructor(context: AudioContext, destination: MediaStreamAudioDestinationNode,
               playMode: PlayMode|undefined, audibility: boolean) {
     this.context = context
+    this.destination = destination
 
     this.gainNode = this.createGainNode(context)
     this.pannerNode = this.createPannerNode(context)
 
     this.gainNode.connect(this.pannerNode)
-    this.pannerNode.connect(destination)
+    this.pannerNode.connect(this.destination)
 
     this.playMode = playMode
     this.updateAudibility(audibility)
@@ -63,21 +65,40 @@ export class NodeGroup {
     this.playMode = playMode
 
     switch (playMode) {
-      case 'Context': {
-        this.sourceNode?.connect(this.gainNode)
+      case 'Pause': {
+        this.sourceNode?.disconnect()
+        /*try {
+          this.pannerNode.disconnect(this.destination)
+        }catch (e) {}*/
+
         if (this.interval) {
           clearInterval(this.interval)
           this.interval = undefined
         }
-        if (this.audioElement !== undefined) {
+        if (this.audioElement) {
+          this.audioElement.pause()
+        }
+        break
+      }
+      case 'Context': {
+        this.sourceNode?.connect(this.gainNode)
+        //  this.pannerNode.connect(this.destination)
+        if (this.interval) {
+          clearInterval(this.interval)
+          this.interval = undefined
+        }
+        if (this.audioElement) {
           this.audioElement.pause()
         }
         break
       }
       case 'Element': {
         this.sourceNode?.disconnect()
+        /*try {
+          this.pannerNode.disconnect(this.destination)
+        }catch (e) {}*/
 
-        if (this.audioElement === undefined) {
+        if (!this.audioElement) {
           this.audioElement = this.createAudioElement()
         }
         this.audioElement.muted = false
@@ -227,7 +248,7 @@ export class NodeGroup {
   }
 
   private updateSourceStream(stream: MediaStream | undefined) {
-    if (this.sourceNode !== undefined) {
+    if (this.sourceNode) {
       this.sourceNode.disconnect()
     }
 

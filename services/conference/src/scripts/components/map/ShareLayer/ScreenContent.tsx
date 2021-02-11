@@ -67,7 +67,7 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
     }
   }
   setTrack()
-
+  const simulcastRatios = [0.25, 0.5, 0.75, 4.0 / 3, 2, 4]
   function checkVideoSize() {
     if (ref.current) {
       const tracks = ref.current.srcObject instanceof MediaStream && ref.current.srcObject.getTracks()
@@ -79,8 +79,7 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
           && member.current.content.originalSize.toString() !== newSize.toString()) {
           const sx = member.current.content.originalSize[0] / newSize[0]
           const sy = member.current.content.originalSize[1] / newSize[1]
-          if ((sx === 0.25 && sy === 0.25) || (sx === 0.5 && sy === 0.5) ||
-            (sx === 2 && sy === 2) || (sx === 4 && sy === 4)) { return }
+          if (sx === sy && simulcastRatios.find(s => s === sx)) { return }
           const scale = member.current.content.size[0] / member.current.content.originalSize[0]
           member.current.content.originalSize = newSize
           member.current.content.size = mulV2(scale, newSize)

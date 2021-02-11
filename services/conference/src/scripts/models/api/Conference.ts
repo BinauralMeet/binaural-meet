@@ -63,20 +63,39 @@ export class Conference extends EventEmitter {
       doSetLocalMicTrack(this, track)
     }
   }
-  public setLocalCameraTrack(track: JitsiLocalTrack) {
-    this.cameraTrackConverter(track)
-    function doSetLocalCameraTrack(conf:Conference, track:JitsiLocalTrack) {
-      conf.localCameraTrack = track
-      conf.localCameraTrack.videoType = 'camera'
-      conf._jitsiConference?.addTrack(conf.localCameraTrack)
-    }
-    if (this.localCameraTrack) {
-      this._jitsiConference?.removeTrack(this.localCameraTrack).then(() => {
-        doSetLocalCameraTrack(this, track)
-      })
-    }else {
-      doSetLocalCameraTrack(this, track)
-    }
+  private doSetLocalCameraTrack(conf:Conference, track:JitsiLocalTrack) {
+    conf.localCameraTrack = track
+    conf.localCameraTrack.videoType = 'camera'
+    conf._jitsiConference?.addTrack(conf.localCameraTrack)
+  }
+  public setLocalCameraTrack(track: JitsiLocalTrack|undefined) {
+    const promise = new Promise<JitsiLocalTrack|undefined>((resolveFunc, rejectionFunc) => {
+      if (track) {
+        this.cameraTrackConverter(track)
+        if (this.localCameraTrack) {
+          const prev = this.localCameraTrack
+          this._jitsiConference?.removeTrack(this.localCameraTrack).then(() => {
+            this.doSetLocalCameraTrack(this, track)
+            resolveFunc(prev)
+          })
+        }else {
+          this.doSetLocalCameraTrack(this, track)
+          resolveFunc(undefined)
+        }
+      }else {
+        if (this.localCameraTrack) {
+          this._jitsiConference?.removeTrack(this.localCameraTrack).then(() => {
+            const prev = this.localCameraTrack
+            this.localCameraTrack = undefined
+            resolveFunc(prev)
+          })
+        }else {
+          resolveFunc(undefined)
+        }
+      }
+    })
+
+    return promise
   }
   public getLocalMicTrack() {
     return this.localMicTrack

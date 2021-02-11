@@ -14,8 +14,3 @@ export interface RemoteTrackInfo extends TrackInfo {
 }
 
 type Id = number
-
-export interface Priority {
-  video: Id[],
-  audio: Id[],
-}

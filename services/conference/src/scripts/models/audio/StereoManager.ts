@@ -1,13 +1,15 @@
+import {priorityCalculator} from '@models/middleware/trafficControl'
 import {assert, isChrome} from '@models/utils'
 import errorInfo from '@stores/ErrorInfo'
+import {autorun} from 'mobx'
 import {NodeGroup, PlayMode, setAudioOutputDevice} from './NodeGroup'
 
 export class StereoManager {
   private readonly audioContext: AudioContext = new window.AudioContext()
   private readonly audioDestination = this.audioContext.createMediaStreamDestination()
 
-  private readonly audioElement = new Audio()
-  private playMode: PlayMode | undefined
+  private readonly audioElement = new Audio()   //  audioElement for context mode
+  private playMode: PlayMode = 'Pause'
 
   nodes: {
     [key: string]: NodeGroup,
@@ -84,6 +86,21 @@ export class StereoManager {
   }
 
   switchPlayMode(playMode: PlayMode, muted: boolean) {
+    assert(playMode !== 'Pause')
+    if (this.playMode === 'Pause') {
+      //  this occurs only once when valid playMode has been set
+      autorun(() => {
+        const accepts = new Set(priorityCalculator.tracksToAccept[1].map(info => info.track.getParticipantId()))
+        for (const id in this.nodes) {
+          if (accepts.has(id)) {
+            this.nodes[id].setPlayMode(this.playMode)
+          }else {
+            this.nodes[id].setPlayMode('Pause')
+          }
+        }
+      })
+    }
+
     if (playMode === this.playMode && muted === this.audioOutputMuted) {
       return
     }

@@ -18,17 +18,26 @@ autorun(() => {
 
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
+export function createLocalCamera() {
+  const promise = new Promise<JitsiLocalTrack>((resolutionFunc, rejectionFunc) => {
+    const did = participants.local.devicePreference.videoInputDevice
+    JitsiMeetJS.createLocalTracks({devices:['video'],
+      constraints: config.rtc.videoConstraints, cameraDeviceId: did}).then(
+      (tracks: JitsiLocalTrack[]) => {
+        connection.conference.setLocalCameraTrack(tracks[0])
+        resolutionFunc(tracks[0])
+      },
+    ).catch(rejectionFunc)
+  })
+
+  return promise
+}
 autorun(() => {
   const did = participants.local.devicePreference.videoInputDevice
   if (participants.localId && urlParameters.testBot === null) {
     const track = connection.conference.getLocalCameraTrack()
     if (track && track.getDeviceId() === did) { return }
-    JitsiMeetJS.createLocalTracks({devices:['video'],
-      constraints: config.rtc.videoConstraints, cameraDeviceId: did}).then(
-      (tracks: JitsiLocalTrack[]) => {
-        connection.conference.setLocalCameraTrack(tracks[0])
-      },
-    )
+    createLocalCamera()
   }
 })
 

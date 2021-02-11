@@ -1,5 +1,5 @@
 import {connection} from '@models/api'
-import {manager as audioManager} from '@models/audio'
+import {createLocalCamera} from '@models/middleware/chooseDevice'
 import participants from '@stores/participants/Participants'
 import {JitsiLocalTrack} from 'lib-jitsi-meet'
 import {reaction} from 'mobx'
@@ -13,17 +13,29 @@ reaction(() => participants.local.plugins.streamControl.muteAudio,
            }
          },
 )
-reaction(() => participants.local.plugins.streamControl.muteVideo,
-         (muteVideo) => {
-           const track = connection.conference.getLocalCameraTrack()
-           if (track) {
-             if (muteVideo) {
-               connection.conference.removeTrack(track)
-               participants.local.tracks.avatar = undefined
-             }else {
-               connection.conference.addTrack(track)
-               participants.local.tracks.avatar = track
-             }
-           }
-         },
-)
+const DELETE_TRACK = true
+reaction(() => participants.local.plugins.streamControl.muteVideo, (muteVideo) => {
+  if (muteVideo) {
+    participants.local.tracks.avatar = undefined
+    const track = connection.conference.getLocalCameraTrack()
+    if (DELETE_TRACK) {
+      connection.conference.setLocalCameraTrack(undefined).then(track => track?.dispose())
+    }else {
+      if (track) {
+        connection.conference.removeTrack(track)
+      }
+    }
+  }else {
+    if (DELETE_TRACK) {
+      createLocalCamera().then((track) => {
+        participants.local.tracks.avatar = track
+      })
+    }else {
+      const track = connection.conference.getLocalCameraTrack()
+      if (track) {
+        connection.conference.addTrack(track)
+        participants.local.tracks.avatar = track
+      }
+    }
+  }
+})

@@ -39,7 +39,7 @@ const memoedUpdater = (() => {
     const res = priorityCalculator.update()
     if (!_.isEqual(res, memo)) {
       // Send res to Jitsi bridge
-      connection.conference.setPerceptibles([res.video, res.audio])
+      connection.conference.setPerceptibles(res)
       priorityLog('setPerceptibles:', res)
       console.log(`setPerceptibles:${JSON.stringify(res)}`)
       memo = _.cloneDeep(res)
