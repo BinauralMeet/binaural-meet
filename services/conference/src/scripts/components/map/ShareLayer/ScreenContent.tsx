@@ -91,7 +91,7 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
   }
   useEffect(() => {
     setTrack()
-    const interval = setInterval(checkVideoSize, 333)   //  Notify of exact video size may take time.
+    const interval = setInterval(checkVideoSize, 333)   //  Notification of exact video size may take time.
 
     return () => clearInterval(interval)
   },

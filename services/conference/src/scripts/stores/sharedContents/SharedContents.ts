@@ -361,9 +361,9 @@ export class SharedContents extends EventEmitter {
     cids.forEach((cid) => {
       const c = pc.myContents.get(cid)
       if (c) {
+        disposeContent(c)
         pc.myContents.delete(cid)
         this.owner.delete(cid)
-        disposeContent(c)
       }else {
         console.error(`removeByRemote: failed to find content cid=${cid}`)
       }

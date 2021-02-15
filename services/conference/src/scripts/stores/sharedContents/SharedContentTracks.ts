@@ -26,13 +26,15 @@ export class SharedContentTracks {
   //  Public interface
   public onUpdateContent(c: SharedContent) {
     contentTrackLog(`update SC: id:${c.id} pid:${c.url} cid in map:${this.carrierMap.get(c.url)}`)
-    assert(!this.carrierMap.has(c.url) || this.carrierMap.get(c.url) === c.id)
-    this.carrierMap.set(c.url, c.id)
-    const tracks = this.remoteTrackPool.get(c.url)
-    this.remoteTrackPool.delete(c.url)
-    tracks?.forEach((track) => {
-      this.addRemoteContent(track)
-    })
+    if (c.url) {
+      assert(!this.carrierMap.has(c.url) || this.carrierMap.get(c.url) === c.id)
+      this.carrierMap.set(c.url, c.id)
+      const tracks = this.remoteTrackPool.get(c.url)
+      this.remoteTrackPool.delete(c.url)
+      tracks?.forEach((track) => {
+        this.addRemoteContent(track)
+      })
+    }
   }
 
   public addRemoteTrack(track: JitsiRemoteTrack) {
