@@ -12,35 +12,28 @@ import FlipToFrontIcon from '@material-ui/icons/FlipToFront'
 import WallpaperIcon from '@material-ui/icons/Wallpaper'
 import {Pose2DMap} from '@models/MapObject'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {rotateVector2DByDegree} from '@models/utils'
-import {addV2, subV2} from '@models/utils/coordinates'
+import {addV2, mulV, rotateVector2DByDegree, subV2} from '@models/utils'
+import mapData from '@stores/Map'
 import {TEN_YEAR} from '@stores/sharedContents/SharedContentCreator'
 import _ from 'lodash'
 import React, {useLayoutEffect, useRef, useState} from 'react'
-import {Dimensions, useDimensions} from 'react-dimensions-hook'
 import {Rnd} from 'react-rnd'
 import {useGesture} from 'react-use-gesture'
-import {useValue as useTransform} from '../utils/useTransform'
 import {Content, contentTypeIcons} from './Content'
 
-function mulV<S extends number, T extends number[]>(s: S, v2: T): T {
-  return v2.map(v => s * v) as T
-}
-
-export interface RndContentProps{
+interface RndContentProps {
   content: ISharedContent
-  hideAll?: boolean
-  autoHideTitle?: boolean
+  hideAll ?: boolean
+  autoHideTitle ?: boolean
   editing: boolean
-  onShare?: (evt: React.MouseEvent<HTMLDivElement>) => void
-  onClose?: (evt: React.MouseEvent<HTMLDivElement>) => void
-  onUpdate?: (newContent: ISharedContent) => void
+  onShare ?: (evt: React.MouseEvent<HTMLDivElement>) => void
+  onClose ?: (evt: React.MouseEvent<HTMLDivElement>) => void
+  onUpdate ?: (newContent: ISharedContent) => void
 }
 interface StyleProps{
   props: RndContentProps,
   pose: Pose2DMap,
   size: [number, number],
-  dimensions: Dimensions,
   showTitle: boolean,
   pinned: boolean,
 }
@@ -50,17 +43,19 @@ class RndContentState{
   lastPose: Pose2DMap = {orientation:0, position:[0, 0]}
 }
 
+
 //  -----------------------------------------------------------------------------------
 //  The RnDContent component
+export const TITLE_HEIGHT = 24
 export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => {
-  const transform = useTransform()
   function rotateG2C(gv: [number, number]) {
-    const lv = transform.rotateG2L(gv)
+    const lv = mapData.rotateFromWindow(gv)
     const cv = rotateVector2DByDegree(-pose.orientation, lv)
     //  console.log('rotateG2C called ori', pose.orientation, ' tran:', transform.rotation)
 
     return cv
   }
+  /*
   function rotateG2L(gv: [number, number]) {
     const lv = transform.rotateG2L(gv)
 
@@ -71,7 +66,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     const gv = transform.rotateL2G(lv)
 
     return gv
-  }
+  }*/
 
   // states
   const [pose, setPose] = useState(props.content.pose)  //  pose of content
@@ -79,7 +74,6 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   const [resizeBase, setResizeBase] = useState(size)    //  size when resize start
   const [resizeBasePos, setResizeBasePos] = useState(pose.position)    //  position when resize start
   const rnd = useRef<Rnd>(null)                         //  ref to rnd to update position and size
-  const {ref, dimensions} = useDimensions()             //  title dimensions measured
   const [showTitle, setShowTitle] = useState(!props.autoHideTitle || !props.content.pinned)
   const contents = useContents()
   function setEditing(flag: boolean) {
@@ -102,13 +96,12 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
 
   useLayoutEffect(  //  reflect pose etc. to rnd size
     () => {
-      if (rnd.current) { rnd.current.resizable.orientation = pose.orientation + transform.rotation }
-      const titleHeight = showTitle ? dimensions.clientHeight : 0
+      if (rnd.current) { rnd.current.resizable.orientation = pose.orientation + mapData.rotation }
+      const titleHeight = showTitle ? TITLE_HEIGHT : 0
       rnd.current?.updatePosition({x:pose.position[0], y:pose.position[1] - titleHeight})
       rnd.current?.updateSize({width:size[0], height:size[1] + titleHeight})
-      //  if (rnd.curr {ent) console.log('update pose and size:', pose, s }ize)
     },
-    [pose, size, showTitle, dimensions],
+    [pose, size, showTitle],
   )
 
   //  handlers
@@ -230,22 +223,22 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     }
     setSize(newSize)
   }
-  const classes = useStyles({props, pose, size, dimensions, showTitle, pinned:props.content.pinned})
-  //  console.log('render: dimensions.clientHeight:', dimensions.clientHeight)
+  const classes = useStyles({props, pose, size, showTitle, pinned:props.content.pinned})
+  //  console.log('render: TITLE_HEIGHT:', TITLE_HEIGHT)
   const theContent =
     <div className={classes.rndContainer} {...gesture()}>
       <div className={classes.titlePosition} {...gesture() /* title can be placed out of Rnd */}>
-        <div ref={ref} className={classes.titleContainer}
+        <div className={classes.titleContainer}
             onPointerEnter = {() => { if (props.autoHideTitle) { setShowTitle(true) } }}
             onPointerLeave = {() => { if (props.autoHideTitle && props.content.pinned) { setShowTitle(false) } }}>
           <div className={classes.pin} onClick={onClickPin}>
-            {contentTypeIcons(props.content.type, dimensions.clientHeight)}
-            <Icon icon={props.content.pinned ? pinIcon : pinOffIcon} height={dimensions.clientHeight} />
+            {contentTypeIcons(props.content.type, TITLE_HEIGHT)}
+            <Icon icon={props.content.pinned ? pinIcon : pinOffIcon} height={TITLE_HEIGHT} />
           </div>
           <div className={classes.edit} onClick={onClickEdit}>
              {
-              props.editing ? <DoneIcon style={{fontSize:dimensions.clientHeight}} />
-                : <EditIcon style={{fontSize:dimensions.clientHeight}} />}
+              props.editing ? <DoneIcon style={{fontSize:TITLE_HEIGHT}} />
+                : <EditIcon style={{fontSize:TITLE_HEIGHT}} />}
           </div>
           {props.content.pinned ? undefined :
             <div className={classes.titleButton} onClick={onClickMoveToTop}> <FlipToFrontIcon /></div>}
@@ -262,7 +255,6 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
         <Content content={props.content} onUpdate={props.onUpdate} editing= {props.editing} setEditing={setEditing}  />
       </div>
     </div>
-  const titleHeight = showTitle ? dimensions.clientHeight : 0
   //  console.log('Rnd rendered.')
 
 
@@ -359,7 +351,7 @@ const useStyles = makeStyles({
   pin: (props:StyleProps) => (
     props.showTitle ? {
       display: props.props.onShare ? 'none' : 'block',
-      height: props.dimensions.clientHeight,
+      height: TITLE_HEIGHT,
       whiteSpace: 'pre',
       borderRadius: '0.5em 0 0 0',
       cursor: 'default',
@@ -371,7 +363,7 @@ const useStyles = makeStyles({
   titleButton: (props:StyleProps) => (
     props.showTitle ? {
       display: 'block',
-      height: props.dimensions.clientHeight,
+      height: TITLE_HEIGHT,
       whiteSpace: 'pre',
       cursor: 'default',
       '&:hover': {
@@ -382,7 +374,7 @@ const useStyles = makeStyles({
   edit: (props:StyleProps) => (
     props.showTitle ? {
       display: (props.props.onShare || !props.props.content.isEditable()) ? 'none' : 'block',
-      height: props.dimensions.clientHeight,
+      height: TITLE_HEIGHT,
       whiteSpace: 'pre',
       cursor: 'default',
       '&:hover': {
@@ -392,7 +384,7 @@ const useStyles = makeStyles({
   ),
   type: (props: StyleProps) => ({
     display: props.showTitle ? 'block' : 'none',
-    height: props.dimensions.clientHeight,
+    height: TITLE_HEIGHT,
   }),
   close: (props: StyleProps) => ({
     visibility: props.showTitle ? 'visible' : 'hidden',
@@ -400,7 +392,7 @@ const useStyles = makeStyles({
     right:0,
     margin:0,
     padding:0,
-    height: props.dimensions.clientHeight,
+    height: TITLE_HEIGHT,
     borderRadius: '0 0.5em 0 0',
     cursor: 'default',
     '&:hover': {
@@ -429,3 +421,5 @@ const resizeDisable = {
   topLeft: false,
   topRight:false,
 }
+
+RndContent.displayName = 'RndContent'

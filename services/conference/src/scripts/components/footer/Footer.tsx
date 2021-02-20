@@ -1,6 +1,5 @@
 import {ErrorDialog} from '@components/error/ErrorDialog'
-import {useStore as useMap} from '@hooks/MapStore'
-import {useStore as useParticipantsStore} from '@hooks/ParticipantsStore'
+import {Stores} from '@components/utils'
 import megaphoneIcon from '@iconify/icons-mdi/megaphone'
 import {Icon} from '@iconify/react'
 import {Collapse} from '@material-ui/core'
@@ -44,22 +43,21 @@ const useStyles = makeStyles({
   },
 })
 
-
 class Member{
   timeoutOut:NodeJS.Timeout|undefined = undefined
   touched = false
 }
 
-export const Footer: React.FC = () => {
+export const Footer: React.FC<Stores> = (props) => {
   //  show and hide
   const [show, setShow] = React.useState<boolean>(true)
   const [showAdmin, setShowAdmin] = React.useState<boolean>(false)
   const [showShare, setShowShareRaw] = React.useState<boolean>(false)
   function setShowShare(flag: boolean) {
     if (flag) {
-      map.keyInputUsers.add('shareDialog')
+      props.map.keyInputUsers.add('shareDialog')
     }else {
-      map.keyInputUsers.delete('shareDialog')
+      props.map.keyInputUsers.delete('shareDialog')
     }
     setShowShareRaw(flag)
   }
@@ -67,15 +65,14 @@ export const Footer: React.FC = () => {
   const memberRef = useRef<Member>(new Member())
   const member = memberRef.current
   const containerRef = useRef<HTMLDivElement>(null)
-  const map = useMap()
   function checkMouseOnBottom() {
-    return map.screenSize[1] - (map.mouse[1] - map.offset[1]) < 90
+    return props.map.screenSize[1] - (props.map.mouse[1] - props.map.offset[1]) < 90
   }
   const mouseOnBottom = useObserver(checkMouseOnBottom)
   useEffect(() => {
     if (checkMouseOnBottom()) { member.touched = true }
     setShowFooter(mouseOnBottom || !member.touched)
-  })
+  },        [mouseOnBottom, member.touched])
   function setShowFooter(show: boolean) {
     if (show) {
       setShow(true)
@@ -95,7 +92,7 @@ export const Footer: React.FC = () => {
   }
 
   //  Stores, observers and states
-  const participants = useParticipantsStore()
+  const participants = props.participants
   const mute = useObserver(() => ({
     muteA: participants.local.plugins.streamControl.muteAudio,  //  mic
     muteS: participants.local.plugins.streamControl.muteSpeaker,  //  speaker
@@ -107,7 +104,7 @@ export const Footer: React.FC = () => {
   //  keyboard shortcut
   useEffect(() => {
     const onKeyPress = (e: KeyboardEvent) => {
-      if (map.keyInputUsers.size === 0) {
+      if (props.map.keyInputUsers.size === 0) {
         if (e.code === 'KeyM') {  //  mute/unmute audio
           participants.local.plugins.streamControl.muteAudio = !participants.local.plugins.streamControl.muteAudio
           setShowFooter(true)
@@ -190,8 +187,7 @@ export const Footer: React.FC = () => {
 
   const adminButton = useRef<HTMLDivElement>(null)
 
-  return <>
-  <div ref={containerRef} className={classes.container}>
+  return React.useMemo(() => <div ref={containerRef} className={classes.container}>
     <Collapse in={show}>
       <StereoAudioSwitch />
       <FabMain color={mute.muteS ? 'primary' : 'secondary' }
@@ -265,7 +261,8 @@ export const Footer: React.FC = () => {
       </Popover>
 
     </Collapse>
-  </div >
-  </>
+  </div >,             [mute.muteA, mute.muteS, mute.muteV, participants.local.physics.onStage,
+    show, showAdmin, showShare, micMenuEl, micMenuItems, speakerMenuEl, speakerMenuItems,
+    videoMenuEl, videoMenuItems])
 }
 Footer.displayName = 'Footer'

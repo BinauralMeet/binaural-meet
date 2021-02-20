@@ -1,6 +1,7 @@
 import {useStore} from '@hooks/ParticipantsStore'
 import {PARTICIPANT_SIZE} from '@models/Participant'
 import {urlParameters} from '@models/url'
+import {Participants} from '@stores/participants/Participants'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {MemoedLocalParticipant as LocalParticipant} from './LocalParticipant'
@@ -9,6 +10,8 @@ import {MemoedRemoteParticipant as RemoteParticipant} from './RemoteParticipant'
 interface LineProps {
   start: [number, number]
   end: [number, number]
+  participants: Participants,
+  remote: string,
 }
 
 const Line: React.FC<LineProps> = (props) => {
@@ -17,8 +20,10 @@ const Line: React.FC<LineProps> = (props) => {
   const width = Math.abs(props.start[0] - props.end[0])
   const height = Math.abs(props.start[1] - props.end[1])
 
-  return <svg xmlns="http://www.w3.org/2000/svg" style={{position:'absolute', left, top, width, height}}
-    viewBox={`0, 0, ${width}, ${height}`} >
+  return <svg xmlns="http://www.w3.org/2000/svg" style={{position:'absolute', left, top, width, height, pointerEvents:'stroke'}}
+    viewBox={`0, 0, ${width}, ${height}`}
+    onClick = {() => { props.participants.directRemotes.delete(props.remote) }}
+    >
     <line x1={props.start[0] - left} y1={props.start[1] - top}
       x2={props.end[0] - left} y2={props.end[1] - top} stroke="black" />
   </svg>
@@ -41,7 +46,7 @@ export const ParticipantsLayer: React.FC<{}> = (props) => {
       if (!remote) { return undefined }
       const end = remote.pose.position
 
-      return <Line start={start} end={end} key={rid} />
+      return <Line start={start} end={end} key={rid} participants={store} remote={rid} />
     }),
   )
 

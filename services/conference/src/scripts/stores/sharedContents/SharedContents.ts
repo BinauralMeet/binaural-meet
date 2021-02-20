@@ -108,7 +108,7 @@ export class SharedContents extends EventEmitter {
         const same = bgs.find(t => c.url === t.url && _.isEqual(c.pose, t.pose))
         if (same) {
           const pid = this.owner.get(same.id)
-          if (pid && (pid < this.localId) || (pid === this.localId && same.id !== c.id)) {
+          if (same.id !== c.id && same.zorder <= c.zorder) {
             this.removeByLocal(c.id)
             rv = true
             console.warn(`My background id:${c.id} url:${c.url} removed.`)
@@ -121,17 +121,16 @@ export class SharedContents extends EventEmitter {
   }
 
   checkDuplicatedBackground(pid: string, cs: ISharedContent[]) {
-    if (pid < this.localId) {
-      const targets = cs.filter(c => c.isBackground())
-      this.localParticipant.myContents.forEach((c) => {
-        if (c.isBackground()) {
-          if (targets.find(t => c.url === t.url && _.isEqual(c.pose, t.pose))) {
-            this.removeByLocal(c.id)
-            console.warn(`My background id:${c.id} url:${c.url} removed.`)
-          }
+    const targets = cs.filter(c => c.isBackground())
+    this.localParticipant.myContents.forEach((c) => {
+      if (c.isBackground()) {
+        const same = targets.find(t => c.url === t.url && _.isEqual(c.pose, t.pose))
+        if (same && same.zorder <= c.zorder) {
+          this.removeByLocal(c.id)
+          console.warn(`My background id:${c.id} url:${c.url} removed.`)
         }
-      })
-    }
+      }
+    })
   }
 
   private removeDuplicated() {

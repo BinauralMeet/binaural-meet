@@ -70,13 +70,13 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
       member.text.messages.push(newMessage)
     }else {
       indices.add(index)
-      if (newMessage.pid !== participants.localId) {
-        member.text.messages[index] = newMessage
-      }else {
-        assert(member.text.messages[index].message === newMessage.message)
+//      if (newMessage.pid !== participants.localId) {
+      member.text.messages[index] = newMessage
+//      }else {
+//        assert(member.text.messages[index].message === newMessage.message)
         //  Changed by myself -> ignore the update.
         //  console.error('Some one try to change my message.')
-      }
+//      }
     }
   })
   for (let i = length - 1; i >= 0; i -= 1) {

@@ -1,8 +1,9 @@
 import {Base} from '@components/map/Base'
-import {BaseProps} from '@components/utils'
 import {StoreProvider} from '@hooks/ParticipantsStore'
 import {makeStyles} from '@material-ui/core/styles'
+import mapData from '@stores/Map'
 import participantsStore from '@stores/participants/Participants'
+import {SharedContents as SharedContentsStore} from '@stores/sharedContents/SharedContents'
 import React from 'react'
 import {useBaseStyles} from './utils'
 
@@ -28,10 +29,11 @@ const useStyles = makeStyles({
 const BaseStory: React.FC<{}> = () => {
   const classes = useStyles()
   const baseClasses = useBaseStyles()
+  const contentsStore = new SharedContentsStore()
 
   return (
     <StoreProvider value={participantsStore}>
-      <Base>
+      <Base participants={participantsStore} contents={contentsStore} map={mapData}>
         <div className={classes.background1} />
         <div className={classes.background2} />
       </Base>

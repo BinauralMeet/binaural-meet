@@ -1,6 +1,4 @@
 import {ImageAvatar} from '@components/avatar/ImageAvatar'
-import {useStore as useMapStore} from '@hooks/MapStore'
-import {useStore as useParticipantsStore} from '@hooks/ParticipantsStore'
 import {Tooltip} from '@material-ui/core'
 import {connection} from '@models/api/Connection'
 import {MapData} from '@stores/Map'
@@ -8,6 +6,7 @@ import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
+import {Stores} from '../utils'
 import {styleForList} from '../utils/styles'
 
 const height = 20
@@ -28,12 +27,12 @@ export const ParticipantLine: React.FC<{participant: ParticipantBase, map: MapDa
   </Tooltip>
 }
 
-export const ParticipantList: React.FC = () => {
-  const store = useParticipantsStore()
-  const map = useMapStore()
+export const RawParticipantList: React.FC<Stores&{localId: string, remoteIds: string[]}> = (props) => {
+  const store = props.participants
+  const map = props.map
   const classes = styleForList({height, fontSize})
-  const localId = useObserver(() => store.localId)
-  const ids = useObserver(() => Array.from(store.remote.keys()))
+  const localId = props.localId
+  const ids = props.remoteIds
   ids.sort((a, b) => {
     const pa = store.remote.get(a)
     const pb = store.remote.get(b)
@@ -44,21 +43,6 @@ export const ParticipantList: React.FC = () => {
 
     return rv
   })
-  /** sort by distance
-  const dists = new Map<string, number>()
-  for (const p of store.remote) {
-    const v = subV2(p[1].pose.position, store.local.pose.position)
-    const d = v[0] * v[0] + v[1] * v[1]
-    dists.set(p[0], d)
-  }
-
-  ids.sort((a, b) => {
-    const da = dists.get(a) as number
-    const db = dists.get(b) as number
-
-    return da - db
-  })
-*/
   const remoteElements = ids.map(id =>
     <ParticipantLine key={id} participant={store.remote.get(id) as RemoteParticipant} map={map} />)
   const localElement = (<ParticipantLine key={localId} participant={store.local} map={map} />)
@@ -70,4 +54,13 @@ export const ParticipantList: React.FC = () => {
     </div>
   )
 }
-ParticipantList.displayName = 'ParticipantList'
+RawParticipantList.displayName = 'ParticipantList'
+
+export const ParticipantList = React.memo<Stores>(
+  (props) => {
+    const localId = useObserver(() => props.participants.localId)
+    const ids = useObserver(() => Array.from(props.participants.remote.keys()))
+
+    return <RawParticipantList {...props} localId={localId} remoteIds = {ids} />
+  },
+)

@@ -2,6 +2,8 @@ import {PastedContent} from '@components/map/ShareLayer/PastedContent'
 import {SharedContent} from '@components/map/ShareLayer/SharedContent'
 import {StoreProvider as ContentsProvider} from '@hooks/SharedContentsStore'
 import {makeStyles} from '@material-ui/core/styles'
+import mapData from '@stores/Map'
+import participants from '@stores/participants/Participants'
 import {createContent, SharedContent as CSharedContent} from '@stores/sharedContents/SharedContentCreator'
 import {SharedContents as SharedContentsStore} from '@stores/sharedContents/SharedContents'
 import {useObserver} from 'mobx-react-lite'
@@ -49,7 +51,8 @@ const ShareLayerStory: React.FC<{}> = () => {
   const store = new SharedContentsStore()
   addFakeSharedContents(store)
   const contents = useObserver(() =>
-    store.all.map(val => <SharedContent key={val.id} content={val} />))
+    store.all.map(val => <SharedContent key={val.id} content={val}
+      participants = {participants} contents={store} map = {mapData} />))
   const classes = useStyles()
 
   return (

@@ -408,7 +408,12 @@ export class ConferenceSync{
     //  console.log(`add ghosts called ${ghosts}`)
     ghosts.forEach(g => participants.ghosts.add(g))
     const all = Array.from(participants.ghosts)
-    all.forEach(g => participants.remote.delete(g))
+    all.forEach((g) => {
+      if (participants.remote.has(g)) {
+        contents.onParticipantLeft(g)
+        participants.remote.delete(g)
+      }
+    })
   }
 
   doSendContent(type:string, contentsToSend:ISharedContent[], to ?:string) {

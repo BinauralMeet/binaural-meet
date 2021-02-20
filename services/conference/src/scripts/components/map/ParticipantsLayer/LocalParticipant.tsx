@@ -10,7 +10,6 @@ import React, {useEffect, useRef} from 'react'
 import {DragHandler, DragState} from '../../utils/DragHandler'
 import {KeyHandlerPlain} from '../../utils/KeyHandler'
 import {MAP_SIZE} from '../Base/Base'
-import {useValue as useTransform} from '../utils/useTransform'
 import {ConfigForm} from './LocalConfig/ConfigForm'
 import {Participant, ParticipantProps} from './Participant'
 
@@ -47,7 +46,6 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   const participant = participants.local
   assert(props.participantId === participant.id)
   const map = useMapStore()
-  const transform = useTransform()
   const member = useRef<LocalParticipantMember>(new Object() as LocalParticipantMember).current
 
 
@@ -60,7 +58,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     }
 
     if (participants.local.thirdPersonView) {
-      const localDelta = transform.rotateG2L(delta)
+      const localDelta = map.rotateFromWindow(delta)  // transform.rotateG2L(delta)
       participant!.pose.position = addV2(participant!.pose.position, localDelta)
       const SMOOTHRATIO = 0.8
       if (!member.smoothedDelta) { member.smoothedDelta = [delta[0], delta[1]] }
@@ -72,7 +70,8 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
       const ROTATION_SPEED = 0.2
       participant!.pose.orientation += diff * ROTATION_SPEED
     } else {
-      participant!.pose.position = addV2(transform.rotateG2L(delta), participant!.pose.position)
+      participant!.pose.position = addV2(map.rotateFromWindow(delta), //    transform.rotateG2L(delta),
+                                         participant!.pose.position)
     }
     participant.savePhysicsToStorage(false)
   }

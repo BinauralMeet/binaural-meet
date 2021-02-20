@@ -1,8 +1,8 @@
-import {useStore} from '@hooks/SharedContentsStore'
 import {makeStyles} from '@material-ui/core/styles'
+import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
-import {PastedContent} from './PastedContent'
+import {Stores} from '../../utils'
 import {SharedContent} from './SharedContent'
 
 const useStyles = makeStyles({
@@ -13,17 +13,21 @@ const useStyles = makeStyles({
   },
 })
 
-export const ShareLayer: React.FC<{}> = () => {
-  const store = useStore()
-  const classes = useStyles()
-  const contents = useObserver(() =>
-    store.all.map(val => <SharedContent key={val.id} content={val} editing={store.editingId === val.id} />))
 
-  return(
-    <div className={classes.slContainer} >
+export const ShareLayer = React.memo<Stores>(
+  (props) => {
+    const classes = useStyles()
+    const contents = useObserver(() =>
+      props.contents.all.map(val =>
+        <SharedContent key={val.id} content={val} editing={props.contents.editingId === val.id} {...props} />))
+
+    return  <div className={classes.slContainer} >
       {contents}
-      <PastedContent />
+      {/* <PastedContent /> */}
     </div>
-  )
-}
+  },
+  (prev, next) => {
+    return _.isEqual(prev.contents.all, next.contents.all)
+  },
+)
 ShareLayer.displayName = 'ShareLayer'

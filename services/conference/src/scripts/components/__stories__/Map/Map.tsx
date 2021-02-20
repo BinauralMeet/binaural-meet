@@ -1,6 +1,7 @@
 import {Map} from '@components/map/map'
 import {StoreProvider} from '@hooks/ParticipantsStore'
 import {StoreProvider as ContentsProvider} from '@hooks/SharedContentsStore'
+import mapData from '@stores/Map'
 import {Participants} from '@stores/participants/Participants'
 import {SharedContents as SharedContentsStore} from '@stores/sharedContents/SharedContents'
 import {addFakeParticipants} from '@test-utils/store'
@@ -19,7 +20,7 @@ const MapStory: React.FC<{}> = () => {
 
   return <ContentsProvider value={contentsStore}>
     <StoreProvider value={store}>
-      <Map />
+      <Map participants={store} contents={contentsStore} map={mapData} />
     </StoreProvider>
   </ContentsProvider>
 }

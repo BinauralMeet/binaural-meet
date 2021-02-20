@@ -14,7 +14,7 @@ export const Map: React.FC<BaseProps> = (props) => {
   return (
     <Base {...props}>
       <BackgroundLayer transparent={props.transparent} />
-      <ShareLayer />
+      <ShareLayer {...props} />
       <ParticipantsLayer />
     </Base>
   )

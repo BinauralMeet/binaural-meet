@@ -1,18 +1,19 @@
+import {Stores} from '@components/utils'
 import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore} from '@hooks/SharedContentsStore'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {contentLog} from '@stores/sharedContents/SharedContents'
 import React from 'react'
 import {RndContent} from './RndContent'
-export interface SharedContentProps{
+export interface SharedContentProps extends Stores{
   content: ISharedContent,
   editing?: boolean
 }
 
 export const SharedContent: React.FC<SharedContentProps> = (props:SharedContentProps) => {
-  const store = useStore()
   //  set whether use keyboard input or not
-  const map = useMapStore()
+  const map = props.map
+  const store = props.contents
   if (props.editing) {
     map.keyInputUsers.add(props.content.id)
   }else {
@@ -39,3 +40,6 @@ export const SharedContent: React.FC<SharedContentProps> = (props:SharedContentP
     />
   )
 }
+
+SharedContent.displayName = 'SharedContent'
+

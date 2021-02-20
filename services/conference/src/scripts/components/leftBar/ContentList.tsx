@@ -1,15 +1,13 @@
-import {useStore as useMapStore} from '@hooks/MapStore'
-import {useStore as useParticipantsStore} from '@hooks/ParticipantsStore'
-import {useStore as useContentsStore} from '@hooks/SharedContentsStore'
 import {Tooltip} from '@material-ui/core'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {strcmp} from '@models/utils'
 import {MapData} from '@stores/Map'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import {getRandomColor} from '@stores/utils'
+import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {contentTypeIcons} from '../map/ShareLayer/Content'
+import {Stores} from '../utils'
 import {styleForList} from '../utils/styles'
 
 const height = 20
@@ -31,64 +29,35 @@ export const ContentLine: React.FC<{participant: ParticipantBase, content: IShar
   </Tooltip>
 }
 
-
-export const ContentList: React.FC = () => {
-  const participants = useParticipantsStore()
-  const contents = useContentsStore()
-  const map = useMapStore()
-  const all = useObserver(() => {
-    const array = Array.from(contents.all)
-    const filtered = array.filter((c) => {
-      const owner = contents.owner.get(c?.id)
-      if (owner) {
-        if (participants.find(owner)) {
-          return true
-        }
-      }
-
-      return false
-    })
-    const sorted = array.sort((a, b) => {
-      //  layer order
-      return b.zorder - a.zorder
-      /*  //  sort by type and name
-      let rv = strcmp(a.type, b.type)
-      if (rv === 0) {
-        rv = strcmp(a.name, b.name)
-      }
-
-      return rv */
-    })
-
-    /* sort by distance
-    const dists = new Map<string, number>()
-    for (const c of sorted) {
-      const v = subV2(c.pose.position, participants.local.pose.position)
-      const d = v[0] * v[0] + v[1] * v[1]
-      dists.set(c.id, d)
-    }
-    sorted.sort((a, b) => {
-      const da = dists.get(a.id) as number
-      const db = dists.get(b.id) as number
-
-      return da - db
-    })
-    */
-
-    return sorted
-  })
+export const RawContentList: React.FC<Stores&{all: ISharedContent[]}> = (props: Stores&{all: ISharedContent[]}) => {
+  //  console.log('Render RawContentList')
+  const contents = props.contents
+  const all:ISharedContent[] = []
+  Object.assign(all, props.all)
+  all.reverse() // Already sorted in the reverse order. all.sort((a, b) => { return b.zorder - a.zorder } )
 
   const classes = styleForList({height, fontSize})
 
+  const participants = props.participants
+  const map = props.map
   const elements = all.map(c =>
     <ContentLine key={c.id} content = {c} map={map}
       participant={participants.find(contents.owner.get(c.id) as string) as ParticipantBase} />)
 
-  return (
-    <div className={classes.container} >
-      <div className={classes.title}>Contents</div>
-      {elements}
-    </div>
-  )
+  return <div className={classes.container} >
+    <div className={classes.title}>Contents</div>
+    {elements}
+  </div>
 }
-ContentList.displayName = 'ContentList'
+RawContentList.displayName = 'RawContentList'
+
+export const ContentList = React.memo<Stores>(
+  (props) => {
+    const all = useObserver(() => props.contents.all)
+
+    return <RawContentList {...props} all = {all} />
+  },
+  (prev, next) => {
+    return _.isEqual(prev.contents.all.map(c => c.id), next.contents.all.map(c => c.id))
+  },
+)

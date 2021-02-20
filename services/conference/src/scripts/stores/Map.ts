@@ -1,6 +1,6 @@
 import {MapObject as IMapObject} from '@models/MapObject'
 import {
-  addV2, rotateVector2D, subV2, transformPoint2D} from '@models/utils'
+  addV2, extractRotation, radian2Degree, rotateVector2D, subV2, transformPoint2D} from '@models/utils'
 import {action, computed, observable} from 'mobx'
 
 const HALF = 0.5
@@ -17,6 +17,9 @@ export class MapData {
   }
   @computed get offsetFromElement(): [number, number] {
     return [-(this.screenSize[0] * HALF), -(this.screenSize[1] * HALF)]
+  }
+  @computed get rotation(): number {
+    return radian2Degree(extractRotation(this.committedMatrix))
   }
   @observable left = 0
   @observable mouse: [number, number] = [0, 0]

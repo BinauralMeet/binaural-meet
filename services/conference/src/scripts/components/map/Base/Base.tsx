@@ -12,7 +12,6 @@ import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import ResizeObserver from 'react-resize-observer'
 import {useGesture} from 'react-use-gesture'
-import {createValue, Provider as TransformProvider} from '../utils/useTransform'
 
 export const MAP_SIZE = 5000
 const HALF = 0.5
@@ -349,17 +348,14 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
     matrix,
   }
   const classes = useStyles(styleProps)
-  const transfromValue = createValue(mapStore.committedMatrix, [0, 0])
 
   return (
     <div className={classes.root} ref={outer} {...bind()} >
       <ResizeObserver onResize = { onResizeOuter } />
       <div className={classes.center}>
-        <TransformProvider value={transfromValue}>
-          <div id="map-transform" className={classes.transform} ref={container}>
-              {props.children}
-          </div>
-        </TransformProvider>
+        <div id="map-transform" className={classes.transform} ref={container}>
+            {props.children}
+        </div>
       </div>
     </div>
   )

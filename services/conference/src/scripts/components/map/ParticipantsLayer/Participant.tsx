@@ -1,4 +1,5 @@
 import {Avatar, AvatarProps} from '@components/avatar'
+import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
 import megaphoneIcon from '@iconify/icons-mdi/megaphone'
@@ -11,7 +12,6 @@ import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
 import {addV2, mulV2, normV, rotateVector2DByDegree, subV2} from '@models/utils'
 import {useObserver} from 'mobx-react-lite'
 import React, {forwardRef, useRef, useState} from 'react'
-import {useValue as useTransform} from '../utils/useTransform'
 declare const config:any             //  from ../../config.js included from index.html
 
 interface StyleProps {
@@ -67,6 +67,7 @@ export interface ParticipantProps extends Required<AvatarProps>{
 }
 
 const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , ParticipantProps> = (props, ref) => {
+  const mapData = useMapStore()
   const participants = useStore()
   const participant = participants.find(props.participantId)
   const participantProps = useObserver(() => ({
@@ -87,7 +88,6 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
     size: props.size,
   })
 
-  const transform = useTransform()
   const [color, textColor, revColor] = participant ? participant.getColor() : ['white', 'black']
   const outerRadius = props.size / 2 + 2
   const isLocal = participants.isLocal(props.participantId)
@@ -156,7 +156,8 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
           }
         </svg>
       </div>
-      <div className={[classes.avatar, transform.counterRotationClass, 'draggableHandle'].join(' ')} >
+      <div className={[classes.avatar, 'draggableHandle'].join(' ')}
+        style = {{transform: `rotate(${-mapData.rotation}deg)`}} >
         <Tooltip title={name}>
           <div>
             <Avatar {...props} />
