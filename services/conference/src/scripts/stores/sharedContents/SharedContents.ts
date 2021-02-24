@@ -146,7 +146,7 @@ export class SharedContents extends EventEmitter {
       }
     })
     if (changed) {
-      connection.conference.sync.sendAllMyContents()
+      connection.conference.sync.sendMyContents()
     }
   }
   private updateAll() {

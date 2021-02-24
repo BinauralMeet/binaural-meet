@@ -38,8 +38,8 @@ const common_config = {
     capScreenshareBitrate: 128 * 1024,
   },
   rtc:rtcConfig,
-  remoteVideoLimit:15,
-  remoteAudioLimit:20,
+  remoteVideoLimit:10,
+  remoteAudioLimit:15,
   thirdPersonView: true,
 }
 

@@ -1,3 +1,4 @@
+import {MAP_SIZE} from '@components/map/Base'
 import {connection} from '@models/api/Connection'
 import {ConnectionStates} from '@models/api/Constants'
 import {urlParameters} from '@models/url'
@@ -130,7 +131,7 @@ export class ErrorInfo {
     this.canvas.style.width = `${width}px`
     this.canvas.style.height = `${height}px`
     const ctx = this.canvas.getContext('2d')
-    const center = [Math.random() * 1600, (Math.random() - 0.5) * 1600]
+    const center = [Math.random() * MAP_SIZE / 2, (Math.random() - 0.5) * MAP_SIZE]
     const draw = () => {
       if (!ctx || !ctxA) { return }
       //  update audio frequency also
@@ -144,21 +145,26 @@ export class ErrorInfo {
       ctx.beginPath()
       ctx.ellipse(width * 0.63, height * 0.33, width * 0.1, height * 0.4, -counter / 20, 0, Math.PI * 2)
       ctx.fill()
-/*      ctx.fillStyle = 'blue'
-      ctx.beginPath()
-      ctx.ellipse(width / 4, height / 4, width * 0.1, height * 0.4, counter / 10, 0, Math.PI * 2)
-      ctx.fill()*/
       counter += 1
     }
     setInterval(draw, 1000 / 20)
+    const chars = '01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijlkmnopqrstuvwxyz'
+    const randChar = () =>  chars.substr(Math.floor(Math.random() * chars.length), 1)
+    participants.local.information.name = `testBot ${randChar()}${randChar()}${randChar()}`
+    participants.local.pose.position = center as [number, number]
+    participants.local.remoteAudioLimit = 2
+    participants.local.remoteVideoLimit = 1
+
     const move = () => {
       participants.local.pose.position = addV2(center, mulV2(100, [Math.cos(counter / 60), Math.sin(counter / 60)]))
     }
     const win = window as any
     if (win.requestIdleCallback) {
-      const moveTask = () => {
-        move()
-        win.requestIdleCallback(moveTask)
+      const moveTask = () => {  //  onIdle, wait 500ms and run move()
+        setTimeout(() => {
+          move()
+          win.requestIdleCallback(moveTask)
+        },         500)
       }
       moveTask()
     }else {

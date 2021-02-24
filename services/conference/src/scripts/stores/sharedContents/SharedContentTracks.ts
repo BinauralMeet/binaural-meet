@@ -98,7 +98,7 @@ export class SharedContentTracks {
       if (!this.localMainConnection) {
         this.localMainConnection = new ConnectionForContent
         this.localMainConnection.init().then(() => {
-          connection.conference.sync.sendMainScreenCarrier('', true)
+          connection.conference.sync.sendMainScreenCarrier(true)
           tracks.forEach(track => this.localMainConnection!.addTrack(track))
         })
       }else {
@@ -119,7 +119,7 @@ export class SharedContentTracks {
 
       return
     }
-    connection.conference.sync.sendMainScreenCarrier('', false)
+    connection.conference.sync.sendMainScreenCarrier(false)
     this.localMainConnection!.removeTrack(track).then(() => {
       if (this.localMainConnection!.getLocalTracks().length === 0) {
         this.localMainConnection!.disconnect()

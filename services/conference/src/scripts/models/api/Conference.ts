@@ -112,8 +112,11 @@ export class Conference extends EventEmitter {
   public removeCommand(name: string) {
     this._jitsiConference?.removeCommand(name)
   }
+  public addCommandListener(name: string, handler: (node: JitsiValues, jid:string, path:string) => void) {
+    this._jitsiConference?.addCommandListener(name, handler)
+  }
   public setLocalParticipantProperty(name: string, value:Object) {
-    this._jitsiConference?.setLocalParticipantProperty(name, value)
+    this._jitsiConference?.setLocalParticipantProperty(name, JSON.stringify(value))
   }
   public getLocalParticipantProperty(name: string): any {
     return this._jitsiConference?.getLocalParticipantProperty(name)
@@ -186,7 +189,10 @@ export class Conference extends EventEmitter {
         this.emit(msg.type, participant.getId(), msg.value)
       }
     })
-
+    this._jitsiConference.on(CONF.PARTICIPANT_PROPERTY_CHANGED, (participant:JitsiParticipant, name: string,
+                                                                 oldValue:any, value:any) => {
+      this.emit(name, participant.getId(), JSON.parse(value), oldValue)
+    })
     this._jitsiConference.on(CONF.CONFERENCE_JOINED, () => {
       connLog('Joined to a conference room.')
       this.onConferenceJoined()

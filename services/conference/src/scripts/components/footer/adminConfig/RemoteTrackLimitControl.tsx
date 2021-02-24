@@ -1,4 +1,5 @@
 import {useStore} from '@hooks/ParticipantsStore'
+import Button from '@material-ui/core/Button'
 import Container from '@material-ui/core/Container'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
 import Grid from '@material-ui/core/Grid'
@@ -11,7 +12,7 @@ interface MySliderProps{
   value:number, setValue(v:number):void
 }
 
-const MAX = 50
+const MAX = 30
 const MySlider: React.FC<MySliderProps> = (props) => {
   return <Grid container={true} spacing={2}><Slider value={props.value} min={0} max={MAX}
   track={false} valueLabelDisplay="auto" aria-labelledby="continuous-slider" style={{width:200}}
@@ -26,12 +27,10 @@ export const RemoteTrackLimitControl: React.FC<{}> = () => {
   const videoSlider = <MySlider value={videoLimit >= 0 ? videoLimit : MAX}
     setValue={(v) => {
       local.remoteVideoLimit = v === MAX ? -1 : v
-      connection.conference.sync.sendTrackLimits('', [local.remoteVideoLimit, local.remoteAudioLimit])
     } } />
   const audioSlider = <MySlider value={audioLimit >= 0 ? audioLimit : MAX}
     setValue={(v) => {
       local.remoteAudioLimit = v === MAX ? -1 : v
-      connection.conference.sync.sendTrackLimits('', [local.remoteVideoLimit, local.remoteAudioLimit])
     } } />
 
   return <><Container>
@@ -45,6 +44,13 @@ export const RemoteTrackLimitControl: React.FC<{}> = () => {
       control={audioSlider}
       label="Max remote audios"
     />
+  </Container>
+  <Container>
+  <Button variant="contained"
+      onClick = { () => {
+        connection.conference.sync.sendTrackLimits('', [local.remoteVideoLimit, local.remoteAudioLimit])
+      }}
+  >Sync limits</Button>
   </Container></>
 }
 RemoteTrackLimitControl.displayName = 'RemoteTrackLimitControl'

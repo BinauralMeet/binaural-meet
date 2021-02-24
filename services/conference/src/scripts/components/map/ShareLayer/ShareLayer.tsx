@@ -3,6 +3,7 @@ import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {Stores} from '../../utils'
+import {PastedContent} from './PastedContent'
 import {SharedContent} from './SharedContent'
 
 const useStyles = makeStyles({
@@ -23,7 +24,7 @@ export const ShareLayer = React.memo<Stores>(
 
     return  <div className={classes.slContainer} >
       {contents}
-      {/* <PastedContent /> */}
+    <PastedContent />
     </div>
   },
   (prev, next) => {

@@ -1,6 +1,7 @@
 import {PARTICIPANT_SIZE} from '@models/Participant'
 import {SharedContent} from '@models/SharedContent'
 import {diffMap} from '@models/utils'
+import {addV2} from '@models/utils'
 import {participantsStore as participants} from '@stores/participants'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
@@ -205,6 +206,7 @@ export class PriorityCalculator {
 
   private calcPriority() {
     //  list participants
+    const numDisabled = [0, 0]  //  Does not include disabled (muted) tracks to the limits.
     const recalculateList = Array.from(participants.remote.keys()).
       filter(key => this.updateAll ? true : this.updateSet.has(key))
     recalculateList.forEach((id) => {
@@ -215,10 +217,16 @@ export class PriorityCalculator {
             const trackInfo = extractParticipantTrackInfo(rp, track)
             trackInfo.priority = this.calcPriorityValue(this.local, trackInfo)
             this.priorityMaps[idx].set(rp.id, trackInfo)
+            if (idx === 0) {
+              if (rp.plugins.streamControl.muteVideo) { numDisabled[idx] += 1 }
+            }else {
+              if (rp.plugins.streamControl.muteAudio) { numDisabled[idx] += 1 }
+            }
           }
         })
       }
     })
+
     //  list contents
     const contentTracks = Array.from(contents.tracks.remoteContents.values())
     const carrierIds = contentTracks.map((tracks) => {
@@ -260,9 +268,10 @@ export class PriorityCalculator {
       })
     }
     //  limit numbers of tracks
+    const limits = addV2(this.limits, numDisabled)  //  ignore (not count) disabled (muted) tracks.
     prioritizedTrackInfoLists.forEach((list, idx) => {
-      if (this.limits[idx] >= 0 && list.length > this.limits[idx]) {
-        list.splice(this.limits[idx])
+      if (this.limits[idx] >= 0 && list.length > limits[idx]) {
+        list.splice(limits[idx])
       }
     })
     //  done

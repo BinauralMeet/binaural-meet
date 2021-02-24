@@ -55,7 +55,7 @@ declare class JitsiConference {
   off(eventId: string, handler: Function): void;
   addEventListener: (eventId: string, handler: Function) => void;
   removeEventListener: (eventId: string, handler: Function) => void;
-  addCommandListener(command: string, handler: (values: JitsiValues, jid:string, from:any) => void): void;
+  addCommandListener(command: string, handler: (node: JitsiValues, jid:string, path:string) => void): void;
   removeCommandListener(command: string, handler: (values: JitsiValues) => void): void;
   sendCommand(name: string, values: JitsiValues): void;
   sendCommandOnce(name: string, values: JitsiValues): void;
