@@ -1,12 +1,11 @@
-import {Background} from '@components/map/BackgroundLayer/Background'
 import {connection} from '@models/api/Connection'
-import {BackgroundContents, SharedContent as ISharedContent} from '@models/SharedContent'
+import {BackgroundContents, SharedContent as ISharedContent, SharedContentData as ISharedContentData} from '@models/SharedContent'
 import {diffMap, intersectionMap} from '@models/utils'
 import {default as participantsStore} from '@stores/participants/Participants'
 import {EventEmitter} from 'events'
 import _ from 'lodash'
 import {action, autorun, computed, observable} from 'mobx'
-import {createContent, disposeContent, removePerceptibility} from './SharedContentCreator'
+import {createContent, disposeContent, extractContentDatas} from './SharedContentCreator'
 import {SharedContentTracks} from './SharedContentTracks'
 
 export const CONTENTLOG = false      // show manipulations and sharing of content
@@ -178,8 +177,7 @@ export class SharedContents extends EventEmitter {
     const strcs = JSON.stringify(cs_)
     if (this.background !== strcs) {
       this.background = strcs
-      const cs = removePerceptibility(cs_)
-      cs.forEach(c => delete (c as any).id)
+      const cs = extractContentDatas(cs_)
       const backgroundContents:BackgroundContents = {room:connection.conferenceName, contents:cs}
       const oldStr = localStorage.getItem('background')
       let bcs:BackgroundContents[] = []
@@ -192,11 +190,12 @@ export class SharedContents extends EventEmitter {
   loadBackground() {
     if (this.background) { return }         //  already loaded
     const curBg = this.getBackground()
-    if (curBg.length) {                      //  already exist
+    if (curBg.length) {                     //  already exist
       this.background = JSON.stringify(curBg)
 
       return
     }
+
     //  load background from local storage
     const str = localStorage.getItem('background')
     if (!str) {
@@ -205,18 +204,12 @@ export class SharedContents extends EventEmitter {
       const bcs = JSON.parse(str) as BackgroundContents[]
       const loaded = bcs.find(bc => bc.room === connection.conferenceName)
       if (loaded) {
-        let nBackground = this.all.findIndex(c => !c.isBackground())
-        if (nBackground < 0) { nBackground = this.all.length }
-        const cur = this.all.slice(0, nBackground)
         loaded.contents.forEach((l) => {
-          if (!cur.find(c => c.url === l.url && _.isEqual(c.pose.position, l.pose.position))) {
-            const newContent = createContent()
-            Object.assign(newContent, l)
-            this.addLocalContent(newContent)
-          }
+          const newContent = createContent()
+          Object.assign(newContent, l)
+          this.addLocalContent(newContent)
         })
-        const cs_ = this.getBackground()
-        this.background = JSON.stringify(cs_)
+        this.background = JSON.stringify(this.getBackground())
       }
     }
   }

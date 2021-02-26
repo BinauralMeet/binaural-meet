@@ -12,7 +12,7 @@ import FlipToFrontIcon from '@material-ui/icons/FlipToFront'
 import WallpaperIcon from '@material-ui/icons/Wallpaper'
 import {Pose2DMap} from '@models/MapObject'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {addV2, mulV, rotateVector2DByDegree, subV2} from '@models/utils'
+import {addV2, extractScaleX, extractScaleY, mulV, rotateVector2DByDegree, subV2} from '@models/utils'
 import mapData from '@stores/Map'
 import {TEN_YEAR} from '@stores/sharedContents/SharedContentCreator'
 import _ from 'lodash'
@@ -21,13 +21,14 @@ import {Rnd} from 'react-rnd'
 import {useGesture} from 'react-use-gesture'
 import {Content, contentTypeIcons} from './Content'
 
+export type MouseOrTouch = React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>
 interface RndContentProps {
   content: ISharedContent
   hideAll ?: boolean
   autoHideTitle ?: boolean
   editing: boolean
-  onShare ?: (evt: React.MouseEvent<HTMLDivElement>) => void
-  onClose ?: (evt: React.MouseEvent<HTMLDivElement>) => void
+  onShare ?: (evt: MouseOrTouch) => void
+  onClose ?: (evt: MouseOrTouch) => void
   onUpdate ?: (newContent: ISharedContent) => void
 }
 interface StyleProps{
@@ -105,30 +106,41 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   )
 
   //  handlers
-  function onClickShare(evt: React.MouseEvent<HTMLDivElement>) { props.onShare?.call(null, evt) }
-  function onClickClose(evt: React.MouseEvent<HTMLDivElement>) { props.onClose?.call(null, evt) }
-  function onClickMoveToTop(evt: React.MouseEvent<HTMLDivElement>) {
+  function onClickShare(evt: MouseOrTouch) {
+    evt.stopPropagation()
+    props.onShare?.call(null, evt)
+  }
+  function onClickClose(evt: MouseOrTouch) {
+    evt.stopPropagation()
+    props.onClose?.call(null, evt)
+  }
+  function onClickMoveToTop(evt: MouseOrTouch) {
+    evt.stopPropagation()
     props.content.moveToTop()
     const newContent = Object.assign({}, props.content)
     props.onUpdate?.call(null, newContent)
   }
-  function onClickMoveToBottom(evt: React.MouseEvent<HTMLDivElement>) {
+  function onClickMoveToBottom(evt: MouseOrTouch) {
+    evt.stopPropagation()
     props.content.moveToBottom()
     const newContent = Object.assign({}, props.content)
     props.onUpdate?.call(null, newContent)
   }
-  function onClickWallpaper(evt: React.MouseEvent<HTMLDivElement>) {
+  function onClickWallpaper(evt: MouseOrTouch) {
+    evt.stopPropagation()
     props.content.moveToBackground()
     const newContent = Object.assign({}, props.content)
     props.onUpdate?.call(null, newContent)
   }
-  function onClickEdit(evt: React.MouseEvent<HTMLDivElement>) {
+  function onClickEdit(evt: MouseOrTouch) {
+    evt.stopPropagation()
     setEditing(!props.editing)
   }
-  function onClickPin(evt: React.MouseEvent<HTMLDivElement>) {
+  function onClickPin(evt: MouseOrTouch) {
+    evt.stopPropagation()
     updateHandler(!props.content.pinned)
   }
-  function  updateHandler(pinned?:boolean) {
+  function updateHandler(pinned?:boolean) {
     let bChange = false
     if (! _.isEqual(pose, props.content.pose)) {
       bChange = true
@@ -171,7 +183,9 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       pose.orientation = newOri
       setPose(Object.assign({}, pose))
     }else {
-      pose.position = addV2(pose.position, rotateG2C(delta))
+      const lv = mapData.rotateFromWindow(delta)
+      const cv = rotateVector2DByDegree(-pose.orientation, lv)
+      pose.position = addV2(pose.position, cv)
       setPose(Object.assign({}, pose))
     }
   }
@@ -193,7 +207,8 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   )
   function onResize(evt:MouseEvent | TouchEvent, dir: any, elem:HTMLDivElement, delta:any, pos:any) {
     evt.stopPropagation(); evt.preventDefault()
-    const cd:[number, number] = [delta.width, delta.height]
+    const scale = (extractScaleX(mapData.matrix) + extractScaleY(mapData.matrix)) / 2
+    const cd:[number, number] = [delta.width / scale, delta.height / scale]
     // console.log('resize dir:', dir, ' delta:', delta, ' d:', d, ' pos:', pos)
     if (dir === 'left' || dir === 'right') {
       cd[1] = 0
@@ -229,30 +244,44 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     <div className={classes.rndContainer} {...gesture()}>
       <div className={classes.titlePosition} {...gesture() /* title can be placed out of Rnd */}>
         <div className={classes.titleContainer}
-            onPointerEnter = {() => { if (props.autoHideTitle) { setShowTitle(true) } }}
-            onPointerLeave = {() => { if (props.autoHideTitle && props.content.pinned) { setShowTitle(false) } }}>
-          <div className={classes.pin} onClick={onClickPin}>
+            onMouseEnter = {() => { if (props.autoHideTitle) { setShowTitle(true) } }}
+            onMouseLeave = {() => { if (props.autoHideTitle && props.content.pinned) { setShowTitle(false) } }}
+            onTouchStart = {() => {
+              if (props.autoHideTitle) {
+                if (!showTitle) {
+                  setShowTitle(true)
+                }else if (props.content.pinned) {
+                  setShowTitle(false)
+                }
+              }
+            }}
+            >
+          <div className={classes.pin} onClick={onClickPin} onTouchStart={onClickPin}>
             {contentTypeIcons(props.content.type, TITLE_HEIGHT)}
             <Icon icon={props.content.pinned ? pinIcon : pinOffIcon} height={TITLE_HEIGHT} />
           </div>
-          <div className={classes.edit} onClick={onClickEdit}>
+          <div className={classes.edit} onClick={onClickEdit} onTouchStart={onClickEdit}>
              {
               props.editing ? <DoneIcon style={{fontSize:TITLE_HEIGHT}} />
                 : <EditIcon style={{fontSize:TITLE_HEIGHT}} />}
           </div>
           {props.content.pinned ? undefined :
-            <div className={classes.titleButton} onClick={onClickMoveToTop}> <FlipToFrontIcon /></div>}
+            <div className={classes.titleButton} onClick={onClickMoveToTop}
+              onTouchStart={onClickMoveToTop}><FlipToFrontIcon /></div>}
           {props.content.pinned ? undefined :
-            <div className={classes.titleButton} onClick={onClickMoveToBottom}> <FlipToBackIcon /></div>}
+            <div className={classes.titleButton} onClick={onClickMoveToBottom}
+              onTouchStart={onClickMoveToBottom}><FlipToBackIcon /></div>}
           {(props.content.pinned || props.content.type !== 'img' || props.content.zorder < TEN_YEAR) ? undefined :
-            <div className={classes.titleButton} onClick={onClickWallpaper}> <WallpaperIcon /></div>}
-          <div className={classes.note} onClick={onClickShare}>Share</div>
+            <div className={classes.titleButton} onClick={onClickWallpaper}
+              onTouchStart={onClickWallpaper}><WallpaperIcon /></div>}
+          <div className={classes.note} onClick={onClickShare} onTouchStart={onClickShare}>Share</div>
           {props.content.pinned ? undefined :
-             <div className={classes.close} onClick={onClickClose}><CloseRoundedIcon /></div>}
+             <div className={classes.close} onClick={onClickClose} onTouchStart={onClickClose}>
+               <CloseRoundedIcon /></div>}
         </div>
       </div>
       <div className={classes.content} >
-        <Content content={props.content} onUpdate={props.onUpdate} editing= {props.editing} setEditing={setEditing}  />
+        <Content content={props.content} onUpdate={props.onUpdate} editing= {props.editing} setEditing={setEditing} />
       </div>
     </div>
   //  console.log('Rnd rendered.')
@@ -274,7 +303,6 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
         } }
         onResize = {onResize}
         onResizeStop = { (e, dir, elem, delta, pos) => {
-          onResize(e, dir, elem, delta, pos)
           updateHandler()
         } }
       >

@@ -4,7 +4,7 @@ import {Information, Mouse, Physics, TrackStates} from '@models/Participant'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {urlParameters} from '@models/url'
 import participants from '@stores/participants/Participants'
-import {makeItContent, makeThemContents, removePerceptibility} from '@stores/sharedContents/SharedContentCreator'
+import {extractContentDataAndIds, makeItContent, makeThemContents} from '@stores/sharedContents/SharedContentCreator'
 import contents from '@stores/sharedContents/SharedContents'
 import JitsiMeetJS from 'lib-jitsi-meet'
 import _ from 'lodash'
@@ -97,7 +97,7 @@ export class ConferenceSync{
 
   sendMyContents() {
     const cs = Array.from(contents.localParticipant.myContents.values())
-    const contentsToSend = removePerceptibility(cs)
+    const contentsToSend = extractContentDataAndIds(cs)
     syncLog(`send all contents ${JSON.stringify(contentsToSend.map(c => c.id))}.`,
             contentsToSend)
     this.conference.setLocalParticipantProperty(PropertyType.MY_CONTENT, contentsToSend)
@@ -183,6 +183,10 @@ export class ConferenceSync{
     this.conference.on(MessageType.PARTICIPANT_POSE, onPose)
     this.conference.on(PropertyType.PARTICIPANT_POSE, onPose)
     let updateTime = 0
+    let poseWait = 0
+    const calcWait = () => Math.ceil(Math.max(20, 20 * (participants.remote.size / 5) / 20) * 20)
+
+    let sendPoseMessage: (pose:Pose2DMap) => void
     this.disposers.push(autorun(() => {
       const pose = {...participants.local.pose}
       const now = Date.now()
@@ -190,10 +194,41 @@ export class ConferenceSync{
         this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_POSE, pose)
         updateTime = Date.now()
       }
+      const newWait = calcWait()
+      if (newWait !== poseWait) {
+        poseWait = newWait
+        sendPoseMessage = _.throttle((pose:Pose2DMap) => {
+          this.conference.sendMessage(MessageType.PARTICIPANT_POSE, '', pose)
+        },                           poseWait)  //  30fps
+      }
+
       if (this.conference.channelOpened) {
-        this.conference.sendMessage(MessageType.PARTICIPANT_POSE, '', pose)
+        sendPoseMessage(pose)
       }
     }))
+
+    // mouse
+    this.conference.on(MessageType.PARTICIPANT_MOUSE, (from:string, mouse:Mouse) => {
+      if (urlParameters.testBot !== null) { return }
+      const remote = participants.remote.get(from)
+      if (remote) { Object.assign(remote.mouse, mouse) }
+    })
+    let wait = 0
+    let sendMouseMessage: (mouse:Mouse) => void
+    const sendMouse = (to: string) => {
+      const newWait = calcWait()
+      if (wait !== newWait) {
+        wait = newWait
+        sendMouseMessage = _.throttle((mouse: Mouse) => {
+          this.conference.sendMessage(MessageType.PARTICIPANT_MOUSE, '', mouse)
+        },                            wait)
+      }
+      if (this.conference.channelOpened) {
+        sendMouseMessage({...participants.local.mouse})
+      }
+    }
+    this.disposers.push(autorun(() => { sendMouse('') }))
+
 
     // physics
     this.conference.on(PropertyType.PARTICIPANT_PHYSICS, (from:string, physics:Physics) => {
@@ -210,22 +245,6 @@ export class ConferenceSync{
       }
     }
     this.disposers.push(autorun(() => { sendPhysics() }))
-
-    // mouse
-    this.conference.on(MessageType.PARTICIPANT_MOUSE, (from:string, mouse:Mouse) => {
-      if (urlParameters.testBot !== null) { return }
-
-      const remote = participants.remote.get(from)
-      if (remote) {
-        Object.assign(remote.mouse, mouse)
-      }
-    })
-    const sendMouse = (to: string) => {
-      if (this.conference.channelOpened) {
-        this.conference.sendMessage(MessageType.PARTICIPANT_MOUSE, '', Object.assign({}, participants.local.mouse))
-      }
-    }
-    this.disposers.push(autorun(() => { sendMouse('') }))
 
     //  direct remotes
     this.conference.on(MessageType.DIRECT_REMOTES, (from:string, drArray:string[]) => {
@@ -271,7 +290,7 @@ export class ConferenceSync{
       syncLog(`recv remote contents ${JSON.stringify(cs.map(c => c.id))} from ${from}.`, cs)
     })
     this.disposers.push(autorun(() => {
-      const cs = removePerceptibility(Array.from(contents.localParticipant.myContents.values()))
+      const cs = extractContentDataAndIds(Array.from(contents.localParticipant.myContents.values()))
       this.conference.setLocalParticipantProperty(PropertyType.MY_CONTENT, cs)
     }))
     //  request

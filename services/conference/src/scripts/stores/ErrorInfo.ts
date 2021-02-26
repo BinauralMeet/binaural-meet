@@ -1,6 +1,7 @@
 import {MAP_SIZE} from '@components/map/Base'
 import {connection} from '@models/api/Connection'
 import {ConnectionStates} from '@models/api/Constants'
+import {priorityCalculator} from '@models/middleware/trafficControl'
 import {urlParameters} from '@models/url'
 import {addV2, mulV2} from '@models/utils'
 import {createJitisLocalTracksFromStream} from '@models/utils/jitsiTrack'
@@ -137,11 +138,14 @@ export class ErrorInfo {
       //  update audio frequency also
       this.oscillator?.frequency.setValueAtTime(440 + counter % 440, ctxA.currentTime) // 440HzはA4(4番目のラ)
       //  update camera image
-      ctx.fillStyle = 'red'
+      const colors = ['green', 'blue']
+      if (priorityCalculator.tracksToAccept[0][0]?.track.getTrack()?.muted) { colors[0] = 'yellow' }
+      if (priorityCalculator.tracksToAccept[1][0]?.track.getTrack()?.muted) { colors[1] = 'red' }
+      ctx.fillStyle = colors[0]
       ctx.beginPath()
       ctx.ellipse(width * 0.63, height * 0.33, width * 0.1, height * 0.4, counter / 20, 0, Math.PI * 2)
       ctx.fill()
-      ctx.fillStyle = 'blue'
+      ctx.fillStyle = colors[1]
       ctx.beginPath()
       ctx.ellipse(width * 0.63, height * 0.33, width * 0.1, height * 0.4, -counter / 20, 0, Math.PI * 2)
       ctx.fill()
@@ -152,8 +156,8 @@ export class ErrorInfo {
     const randChar = () =>  chars.substr(Math.floor(Math.random() * chars.length), 1)
     participants.local.information.name = `testBot ${randChar()}${randChar()}${randChar()}`
     participants.local.pose.position = center as [number, number]
-    participants.local.remoteAudioLimit = 2
-    participants.local.remoteVideoLimit = 1
+    //  participants.local.remoteAudioLimit = 2
+    //  participants.local.remoteVideoLimit = 1
 
     const move = () => {
       participants.local.pose.position = addV2(center, mulV2(100, [Math.cos(counter / 60), Math.sin(counter / 60)]))

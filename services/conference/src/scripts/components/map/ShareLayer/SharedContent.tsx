@@ -4,7 +4,7 @@ import {useStore} from '@hooks/SharedContentsStore'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {contentLog} from '@stores/sharedContents/SharedContents'
 import React from 'react'
-import {RndContent} from './RndContent'
+import {MouseOrTouch, RndContent} from './RndContent'
 export interface SharedContentProps extends Stores{
   content: ISharedContent,
   editing?: boolean
@@ -23,7 +23,7 @@ export const SharedContent: React.FC<SharedContentProps> = (props:SharedContentP
   return (
     <RndContent content={props.content} autoHideTitle={true} editing={props.editing ? true : false}
       onClose={
-        (evt: React.MouseEvent<HTMLDivElement>) => {
+        (evt: MouseOrTouch) => {
           contentLog('RndContent onClose for ', props.content.id)
           evt.stopPropagation()
           const pid = store.owner.get(props.content.id)

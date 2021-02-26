@@ -88,7 +88,6 @@
     "mobx-react-lite": "^2.0.6",
     "react": "^16.13.1",
     "react-avatar": "https://github.com/BinauralMeet/react-avatar-module.git",
-    "react-dimensions-hook": "https://github.com/hasevr/react-dimensions-hook.git",
     "react-dom": "^16.13.1",
     "react-draggable": "^4.4.3",
     "react-resize-observer": "^1.1.1",

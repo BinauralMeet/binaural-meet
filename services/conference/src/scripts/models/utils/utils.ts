@@ -51,9 +51,29 @@ export function diffSet<K>(a:Set<K>, b:Set<K>) {
 export function intersectionMap<K, V1, V2>(a:Map<K, V1>, b:Map<K, V2>) {
   const com = new Map<K, V1>()
   a.forEach((v, k) => {
-    if (b.has(k)){
+    if (b.has(k)) {
       com.set(k, v)
     }
   })
+
   return com
+}
+
+export function extract<T>(properties: Record<keyof T, true>) {
+  return function<TActual extends T>(value: TActual) {
+    const result = {} as T
+    for (const property of Object.keys(properties) as (keyof T)[]) {
+      result[property] = value[property]
+    }
+
+    return result
+  }
+}
+
+export function isSmartphone() {
+  if (navigator.userAgent.match(/iPhone|Android.+Mobile/)) {
+    return true
+  }
+
+  return false
 }

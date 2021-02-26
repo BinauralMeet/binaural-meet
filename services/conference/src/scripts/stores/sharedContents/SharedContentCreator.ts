@@ -1,6 +1,8 @@
 import {getImageSize, uploadToGyazo} from '@models/api/Gyazo'
 import {defaultPerceptibility,  Perceptibility, Pose2DMap} from '@models/MapObject'
-import {ContentType, SharedContent as ISharedContent, SharedContentData as ISharedContentData, TextMessages} from '@models/SharedContent'
+import {ContentType, SharedContent as ISharedContent,
+  SharedContentData as ISharedContentData, SharedContentId as ISharedContentId, TextMessages} from '@models/SharedContent'
+import {extract} from '@models/utils'
 import {MapData} from '@stores/Map'
 import {defaultValue as mapObjectDefaultValue} from '@stores/MapObject'
 import {JitsiLocalTrack} from 'lib-jitsi-meet'
@@ -286,13 +288,23 @@ export function disposeContent(c: ISharedContent) {
   }
 }
 
-export function removePerceptibility(cs: ISharedContent[]): ISharedContent[] {
-  const rv = []
-  for (const c of cs) {
-    const cc:any = Object.assign({}, c)
-    delete cc.perceptibility
-    rv.push(cc)
-  }
-
-  return rv
+const extractData = extract<ISharedContentData>({ zorder: true, name: true, ownerName: true,
+  type: true, url: true, pose: true, size: true, originalSize: true,
+  pinned: true,
+})
+export function extractContentData(c:ISharedContent) {
+  return extractData(c)
+}
+export function extractContentDatas(cs:ISharedContent[]) {
+  return cs.map(extractContentData)
+}
+const extractDataAndId = extract<ISharedContentData&ISharedContentId>({ zorder: true, name: true, ownerName: true,
+  type: true, url: true, pose: true, size: true, originalSize: true,
+  pinned: true, id: true,
+})
+export function extractContentDataAndId(c: ISharedContent) {
+  return extractDataAndId(c)
+}
+export function extractContentDataAndIds(cs: ISharedContent[]) {
+  return cs.map(extractDataAndId)
 }

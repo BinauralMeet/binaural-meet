@@ -8,7 +8,7 @@ import {default as sharedContents} from '@stores/sharedContents/SharedContents'
 import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect} from 'react'
-import {RndContent} from './RndContent'
+import {MouseOrTouch, RndContent} from './RndContent'
 
 export interface PastedContentProps{
   content?:ISharedContent
@@ -156,8 +156,8 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
   return (
     <RndContent content={pastedContent} hideAll={pastedContent.type === ''}
       editing={props.content?.id === contents.editingId}
-      onShare = {(evt: React.MouseEvent<HTMLDivElement>) => { onShare() }}
-      onClose = {(evt: React.MouseEvent<HTMLDivElement>) => {
+      onShare = {(evt: MouseOrTouch) => { onShare() }}
+      onClose = {(evt: MouseOrTouch) => {
         sharedContents.setPasted(createContent())
         evt.stopPropagation()
       }}

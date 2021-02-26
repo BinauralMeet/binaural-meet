@@ -1,4 +1,3 @@
-import {useStore as useMap} from '@hooks/MapStore'
 import Dialog from '@material-ui/core/Dialog'
 import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
@@ -11,7 +10,6 @@ export const pages = new Map<ErrorType, JSX.Element>()
 pages.set('enterance', <TheEntrance />)
 
 export const ErrorDialog: React.FC<{}> = (props) => {
-  const map = useMap()
   const title = useObserver(() => errorInfo.title)
   const message = useObserver(() => errorInfo.message)
   const open = useObserver(() => errorInfo.type !== '')
