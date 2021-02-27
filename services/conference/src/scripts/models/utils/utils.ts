@@ -77,3 +77,11 @@ export function isSmartphone() {
 
   return false
 }
+
+export function isPortrait() {
+  if (window.parent.screen.width < window.parent.screen.height) {
+    return true
+  }
+
+  return false
+}

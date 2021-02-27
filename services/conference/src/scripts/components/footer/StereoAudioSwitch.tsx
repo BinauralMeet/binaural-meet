@@ -37,7 +37,7 @@ const useStyles = makeStyles({
 })
 
 
-export const StereoAudioSwitch: React.FC = () => {
+export const StereoAudioSwitch: React.FC<{size?: number, iconSize:number}> = (props) => {
   const participants = useParticipantsStore()
   const stereo = useObserver(() => participants.local.useStereoAudio)
   const [button, setButton] = React.useState<Element|null>(null)
@@ -50,14 +50,14 @@ export const StereoAudioSwitch: React.FC = () => {
   const classes = useStyles()
 
   return <>
-    <FabWithTooltip title={
+    <FabWithTooltip size={props.size} title={
         <React.Fragment>
           {'Stereo headset'} <strong>{'without echo canceller'}</strong><br />{'/ Monaural speaker with echo canceller'}
         </React.Fragment>}
       onClick={switchStereo} color = {stereo ? 'secondary' : 'primary'}
       onClickMore = {stereo ? (ev) => { setButton(ev.currentTarget) } : undefined} >
-      {stereo ? <HeadsetIcon fontSize="large" />  :
-      <SpeakerIcon fontSize="large" />}
+      {stereo ? <HeadsetIcon style={{width:props.iconSize, height:props.iconSize}} />  :
+      <SpeakerIcon style={{width:props.iconSize, height:props.iconSize}} /> }
     </FabWithTooltip>
     <Popover open={Boolean(button)} onClose={() => setButton(null)}
       anchorEl={button} anchorOrigin={{vertical:'top', horizontal:'left'}}

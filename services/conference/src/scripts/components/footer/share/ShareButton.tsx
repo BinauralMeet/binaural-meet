@@ -15,6 +15,8 @@ const useStyles = makeStyles({
 interface ShareButtonProps{
   showDialog:boolean
   setShowDialog(flag: boolean):void
+  size?: number
+  iconSize?: number
 }
 export const ShareButton: React.FC<ShareButtonProps> = (props) => {
   const classes = useStyles()
@@ -24,10 +26,10 @@ export const ShareButton: React.FC<ShareButtonProps> = (props) => {
 
   return (
     <div className={classes.root}>
-      <FabWithTooltip color={sharing ? 'secondary' : 'primary'}
+      <FabWithTooltip size={props.size} color={sharing ? 'secondary' : 'primary'}
         title = {<><strong>C</strong>reate and share</>}
         aria-label="share" onClick={() => props.setShowDialog(true)}>
-        <ScreenShareIcon fontSize="large" />
+        <ScreenShareIcon style={{width:props.iconSize, height:props.iconSize}} />
       </FabWithTooltip>
       <ShareDialog open={props.showDialog} onClose={() => props.setShowDialog(false)} />
     </div>

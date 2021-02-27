@@ -48,7 +48,7 @@ class Member{
   touched = false
 }
 
-export const Footer: React.FC<Stores> = (props) => {
+export const Footer: React.FC<Stores&{height?:number}> = (props) => {
   //  show and hide
   const [show, setShow] = React.useState<boolean>(true)
   const [showAdmin, setShowAdmin] = React.useState<boolean>(false)
@@ -186,11 +186,13 @@ export const Footer: React.FC<Stores> = (props) => {
   }
 
   const adminButton = useRef<HTMLDivElement>(null)
+  const fabSize = props.height
+  const iconSize = props.height ? props.height * 0.7 : 36
 
   return React.useMemo(() => <div ref={containerRef} className={classes.container}>
     <Collapse in={show}>
-      <StereoAudioSwitch />
-      <FabMain color={mute.muteS ? 'primary' : 'secondary' }
+      <StereoAudioSwitch size={fabSize} iconSize={iconSize} />
+      <FabMain size={fabSize} color={mute.muteS ? 'primary' : 'secondary' }
         aria-label="speaker" onClick = { () => {
           participants.local.plugins.streamControl.muteSpeaker = !mute.muteS
           if (participants.local.plugins.streamControl.muteSpeaker) {
@@ -203,14 +205,15 @@ export const Footer: React.FC<Stores> = (props) => {
           setSpeakerMenuEl(ev.currentTarget)
         }}
         >
-        {mute.muteS ? <SpeakerOffIcon fontSize="large" /> : <SpeakerOnIcon fontSize="large" /> }
+        {mute.muteS ? <SpeakerOffIcon style={{width:iconSize, height:iconSize}} />
+          : <SpeakerOnIcon style={{width:iconSize, height:iconSize}} /> }
       </FabMain>
       <Menu anchorEl={speakerMenuEl} keepMounted={true}
         open={Boolean(speakerMenuEl)} onClose={() => { closeSpeakerMenu('') }}>
         {speakerMenuItems}
       </Menu>
 
-      <FabWithTooltip color={mute.muteA ? 'primary' : 'secondary' } aria-label="mic"
+      <FabWithTooltip size={fabSize} color={mute.muteA ? 'primary' : 'secondary' } aria-label="mic"
         title = {<><strong>M</strong>ic mute</>}
         onClick = { () => {
           participants.local.plugins.streamControl.muteAudio = !mute.muteA
@@ -224,15 +227,17 @@ export const Footer: React.FC<Stores> = (props) => {
           setMicMenuEl(ev.currentTarget)
         } }
         >
-        {mute.muteA ? <MicOffIcon fontSize="large" /> : participants.local.physics.onStage ?
-          <Icon icon={megaphoneIcon} height={'2.4em'} color="gold" /> : <MicIcon fontSize="large" /> }
+        {mute.muteA ? <MicOffIcon style={{width:iconSize, height:iconSize}} /> :
+          participants.local.physics.onStage ?
+            <Icon icon={megaphoneIcon} style={{width:iconSize, height:iconSize}} color="gold" />
+            : <MicIcon style={{width:iconSize, height:iconSize}} /> }
       </FabWithTooltip>
       <Menu anchorEl={micMenuEl} keepMounted={true}
         open={Boolean(micMenuEl)} onClose={() => { closeMicMenu('') }}>
         {micMenuItems}
       </Menu>
 
-      <FabMain color={mute.muteV ? 'primary' : 'secondary'} aria-label="camera"
+      <FabMain size={fabSize} color={mute.muteV ? 'primary' : 'secondary'} aria-label="camera"
         onClick = { () => {
           participants.local.plugins.streamControl.muteVideo = !mute.muteV
           participants.local.saveMediaSettingsToStorage(true)
@@ -242,14 +247,15 @@ export const Footer: React.FC<Stores> = (props) => {
           setVideoMenuEl(ev.currentTarget)
         } }
       >
-        {mute.muteV ? <VideoOffIcon fontSize="large" /> : <VideoIcon fontSize="large" /> }
+        {mute.muteV ? <VideoOffIcon style={{width:iconSize, height:iconSize}} />
+          : <VideoIcon style={{width:iconSize, height:iconSize}} /> }
       </FabMain>
       <Menu anchorEl={videoMenuEl} keepMounted={true}
         open={Boolean(videoMenuEl)} onClose={() => { closeVideoMenu('') }}>
         {videoMenuItems}
       </Menu>
 
-      <ShareButton showDialog={showShare} setShowDialog={setShowShare} />
+      <ShareButton size={fabSize} iconSize={iconSize} showDialog={showShare} setShowDialog={setShowShare} />
 
       <ErrorDialog />
 

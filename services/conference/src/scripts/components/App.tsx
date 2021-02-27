@@ -1,6 +1,7 @@
 import {StoreProvider as MapProvider} from '@hooks/MapStore'
 import {StoreProvider as ParticipantsProvider} from '@hooks/ParticipantsStore'
 import {StoreProvider as ContentsProvider} from '@hooks/SharedContentsStore'
+import {isPortrait, isSmartphone} from '@models/utils'
 import mapStore from '@stores/Map'
 import participantsStore from '@stores/participants/Participants'
 import sharedContentsStore from '@stores/sharedContents/SharedContents'
@@ -36,7 +37,7 @@ export const App: React.FC<{}> = () => {
           <Fragment>
             <MainScreen showAllTracks = {DEBUG_VIDEO} />
             <Map transparent={stream !== undefined || DEBUG_VIDEO} {...stores} />
-            <Footer {...stores} />
+            <Footer {...stores} height={(isSmartphone() && isPortrait()) ? 100 : undefined} />
           </Fragment>
         </SplitPane>
       </div>

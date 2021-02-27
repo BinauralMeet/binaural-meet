@@ -2,7 +2,6 @@ import {FabColor, IconColor, MoreButton, moreButtonControl, MoreButtonMember} fr
 import {Tooltip} from '@material-ui/core'
 import Fab from '@material-ui/core/Fab'
 import {makeStyles} from '@material-ui/core/styles'
-import {isSmartphone} from '@models/utils'
 import React, {useRef, useState} from 'react'
 
 const useStyles = makeStyles((theme) => {
@@ -22,6 +21,7 @@ interface MyFabProps{
   htmlColor?: string
   className?: string
   title?: string | React.ReactElement,
+  size?: number,
 }
 
 
@@ -34,7 +34,8 @@ export const FabMain: React.FC<MyFabProps> = (props) => {
   return <span className={classes.container + (props.className ? ` ${props.className}` : '')}
     {...moreButtonControl(setShowMore, member)}
   >
-    <Fab size={isSmartphone() ? 'large' : 'medium'}
+    <Fab
+      style={{height:props.size, width:props.size}}
       onClick = {props.onClick}
       onContextMenu={(ev) => {
         ev.preventDefault()
