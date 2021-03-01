@@ -1,6 +1,6 @@
 # binaural-meet
 Video chat web application with 2D map and binaural sound localization. See demo below.
-Details are [here](https://scrapbox.io/binaural-meet/)
+For more info please visit [here](https://scrapbox.io/binaural-meet/)
 
 ## Demo
 https://binaural.me/
