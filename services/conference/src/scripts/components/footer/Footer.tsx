@@ -1,5 +1,6 @@
 import {ErrorDialog} from '@components/error/ErrorDialog'
 import {Stores} from '@components/utils'
+import {acceleratorText2El} from '@components/utils/formatter'
 import megaphoneIcon from '@iconify/icons-mdi/megaphone'
 import {Icon} from '@iconify/react'
 import {Collapse} from '@material-ui/core'
@@ -13,6 +14,7 @@ import VideoIcon from '@material-ui/icons/Videocam'
 import VideoOffIcon from '@material-ui/icons/VideocamOff'
 import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
 import SpeakerOnIcon from '@material-ui/icons/VolumeUp'
+import {useTranslation} from '@models/locales'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import {AdminConfigForm} from './adminConfig/AdminConfigForm'
@@ -188,6 +190,7 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
   const adminButton = useRef<HTMLDivElement>(null)
   const fabSize = props.height
   const iconSize = props.height ? props.height * 0.7 : 36
+  const {t} = useTranslation()
 
   return React.useMemo(() => <div ref={containerRef} className={classes.container}>
     <Collapse in={show}>
@@ -214,7 +217,7 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
       </Menu>
 
       <FabWithTooltip size={fabSize} color={mute.muteA ? 'primary' : 'secondary' } aria-label="mic"
-        title = {<><strong>M</strong>ic mute</>}
+        title = {acceleratorText2El(t('ttMicMute'))}
         onClick = { () => {
           participants.local.plugins.streamControl.muteAudio = !mute.muteA
           if (!participants.local.plugins.streamControl.muteAudio) {

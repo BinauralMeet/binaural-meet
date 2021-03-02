@@ -1,3 +1,4 @@
+import {acceleratorText2El} from '@components/utils/formatter'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemAvatar from '@material-ui/core/ListItemAvatar'
 import ListItemText from '@material-ui/core/ListItemText'
@@ -16,10 +17,7 @@ export const ShareDialogItem: React.FC<ShareDialogItemProps> = (props) => {
     text,
     onClick,
   } = props
-  const texts = text.split('_')
-  assert(texts.length <= 2)
-  const textEl = <>{texts[0]}{texts[1] ?
-     <><strong>{texts[1].substr(0, 1)}</strong>{texts[1].substr(1)}</> : undefined}</>
+  const textEl = acceleratorText2El(text)
 
   return (
     <ListItem button={true} onClick={onClick}>

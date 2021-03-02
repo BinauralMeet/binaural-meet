@@ -1,5 +1,4 @@
 import {useStore as useParticipantsStore} from '@hooks/ParticipantsStore'
-import {Tooltip} from '@material-ui/core'
 import Container from '@material-ui/core/Container'
 import Grid from '@material-ui/core/Grid'
 import Popover from '@material-ui/core/Popover'
@@ -7,10 +6,11 @@ import {makeStyles} from '@material-ui/core/styles'
 import Switch from '@material-ui/core/Switch'
 import HeadsetIcon from '@material-ui/icons/HeadsetMic'
 import SpeakerIcon from '@material-ui/icons/Speaker'
+import {useTranslation} from '@models/locales'
 import participants from '@stores/participants/Participants'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
-import {FabMain, FabWithTooltip} from './FabEx'
+import {FabWithTooltip} from './FabEx'
 
 export const SoundLocalizationSetting: React.FC<{}> = () => {
   const soundLocalizationBase = useObserver(() => participants.local.soundLocalizationBase)
@@ -48,12 +48,14 @@ export const StereoAudioSwitch: React.FC<{size?: number, iconSize:number}> = (pr
   }
 
   const classes = useStyles()
+  const {t} = useTranslation()
 
   return <>
     <FabWithTooltip size={props.size} title={
-        <React.Fragment>
-          {'Stereo headset'} <strong>{'without echo canceller'}</strong><br />{'/ Monaural speaker with echo canceller'}
-        </React.Fragment>}
+        <>
+          {t('headphoneL1')} <br />
+          {t('headphoneL2')}
+        </>}
       onClick={switchStereo} color = {stereo ? 'secondary' : 'primary'}
       onClickMore = {stereo ? (ev) => { setButton(ev.currentTarget) } : undefined} >
       {stereo ? <HeadsetIcon style={{width:props.iconSize, height:props.iconSize}} />  :

@@ -15,6 +15,7 @@ import UploadIcon from '@material-ui/icons/Publish'
 import ScreenShareIcon from '@material-ui/icons/ScreenShare'
 import StopScreenShareIcon from '@material-ui/icons/StopScreenShare'
 import SubjectIcon from '@material-ui/icons/Subject'
+import {useTranslation} from '@models/locales'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {assert} from '@models/utils'
 import {createContent, createContentOfText, createContentOfVideo} from '@stores/sharedContents/SharedContentCreator'
@@ -25,6 +26,7 @@ import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import {DialogPageProps} from './DialogPage'
 import {ShareDialogItem} from './SharedDialogItem'
+
 async function startCapture(displayMediaOptions: any = {}) {
   let captureTracks = null
 
@@ -80,6 +82,7 @@ interface EntranceProps extends DialogPageProps {
 }
 
 export const Entrance: React.FC<EntranceProps> = (props) => {
+  const {t} = useTranslation()
   const {
     setStep,
   } = props
@@ -187,65 +190,49 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
        }
       />
       <ShareDialogItem
-        key="shareImport" icon={<UploadIcon />}
-        text="_Import shared items from file"
-        onClick={importFile}
+        key="shareImport" text={t('shareImport')} icon={<UploadIcon />} onClick={importFile}
       />
       <ShareDialogItem
-        key="shareDownload"
-        icon={<DownloadIcon />}
-        text="_Download shared items as a file"
-        onClick={downloadFile}
+        key="shareDownload" text={t('shareDownload')} icon={<DownloadIcon />} onClick={downloadFile}
       />
       <Divider />
       <ShareDialogItem
-        key="shareIframe"
-        icon={<HttpIcon />}
-        text="I_frame"
-        onClick={() => setStep('iframe')}
+        key="shareIframe" text={t('shareIframe')} icon={<HttpIcon />} onClick={() => setStep('iframe')}
       />
       <ShareDialogItem
-        key="shareText"
-        icon={<SubjectIcon />}
-        text="_Text"
+        key="shareText" text={t('shareText')} icon={<SubjectIcon />}
         onClick={createText}
       />
       <ShareDialogItem
-        key="shareImage"
-        icon={<ImageIcon />}
-        text="Ima_ge"
-        onClick={() => setStep('image')}
+        key="shareImage" text={t('shareImage')} icon={<ImageIcon />} onClick={() => setStep('image')}
       />
       <Divider />
-      <ShareDialogItem
-        key="shareCamera"
-        icon={<CameraAltIcon />}
-        text="_Camera"
+      <ShareDialogItem key="shareCamera" text={t('shareCamera')} icon={<CameraAltIcon />}
         onClick={() => setStep('camera')}
       />
       <ShareDialogItem
-        key="shareScreen"
+        key="shareScreenBackground"
         icon={sharing.main ? <StopScreenShareIcon /> : <ScreenShareIcon />}
-        text={sharing.main ? 'Stop _background screen' : 'Screen as the _background'}
+        text={sharing.main ? t('stopScreenBackground') : t('shareScreenBackground')}
         onClick={() => screenAsBackgrouond}
       />
       <ShareDialogItem
         key="shareScreenContent"
         icon={<OpenInBrowserIcon />}
-        text={'_Screen in a window'}
+        text={t('shareScreenContent')}
         onClick={createScreen}
       />
       {sharedContents.tracks.localContents.size ?
         <ShareDialogItem
           key = "stopScreen"
           icon={<Icon icon={bxWindowClose} />}
-          text={'Close all screen and camera _windows'}
+          text={t('stopScreen')}
           onClick={closeAllScreens}
           /> : undefined}
       <ShareDialogItem
         key="shareMouse"
         icon={<Icon icon={cursorDefaultOutline} />}
-        text={showMouse ?  'Stop sharing _Mouse cursor' : '_Mouse cursor'}
+        text={showMouse ?  t('stopMouse') : t('shareMouse')}
         onClick={() => {
           participants.local.mouse.show = !showMouse
           setStep('none')

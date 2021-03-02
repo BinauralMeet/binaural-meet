@@ -2,13 +2,14 @@ import {useStore as useMapStore} from '@hooks/MapStore'
 import Dialog from '@material-ui/core/Dialog'
 import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
+import {useTranslation} from '@models/locales'
 import {createContentOfIframe, createContentOfText} from '@stores/sharedContents/SharedContentCreator'
 import sharedContents from '@stores/sharedContents/SharedContents'
 import React, {useState} from 'react'
 import {CameraSelector} from './CameraSelector'
 import {Entrance} from './Entrance'
 import {ImageInput} from './ImageInput'
-import {Step, stepTitle} from './Step'
+import {Step} from './Step'
 import {TextInput} from './TextInput'
 
 interface ShareDialogProps {
@@ -65,6 +66,17 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
   //  console.debug(`step=${step}, pasteEnabled=${sharedContents.pasteEnabled}`)
   sharedContents.pasteEnabled = step === 'none' || step === 'entrance'
 
+  const {t} = useTranslation()
+  const stepTitle: {
+    [key: string]: string,
+  } = {
+    entrance: t('Create and Share'),
+    text: t('Share Text'),
+    iframe: t('Share iframe'),
+    image: t('Share image'),
+    none: 'None',
+    camera: t('Select video camera to share'),
+  }
   const title = stepTitle[step]
   const page: JSX.Element | undefined = getPage(step, wrappedSetStep)
 

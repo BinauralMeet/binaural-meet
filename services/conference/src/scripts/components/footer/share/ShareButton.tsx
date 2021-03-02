@@ -1,11 +1,14 @@
+import {acceleratorText2El} from '@components/utils/formatter'
 import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore as useContentsStore} from '@hooks/SharedContentsStore'
 import ScreenShareIcon from '@material-ui/icons/ScreenShare'
 import {makeStyles} from '@material-ui/styles'
+import {useTranslation} from '@models/locales'
 import {useObserver} from 'mobx-react-lite'
-import React, {useEffect, useState} from 'react'
-import {FabMain, FabWithTooltip} from '../FabEx'
+import React from 'react'
+import {FabWithTooltip} from '../FabEx'
 import {ShareDialog} from './ShareDialog'
+
 
 const useStyles = makeStyles({
   root: {
@@ -23,11 +26,12 @@ export const ShareButton: React.FC<ShareButtonProps> = (props) => {
   const store = useContentsStore()
   const sharing = useObserver(() => store.tracks.localMains.size + store.tracks.localContents.size)
   const map = useMapStore()
+  const {t} = useTranslation()
 
   return (
     <div className={classes.root}>
       <FabWithTooltip size={props.size} color={sharing ? 'secondary' : 'primary'}
-        title = {<><strong>C</strong>reate and share</>}
+        title = {acceleratorText2El(t('ttCreateAndshare'))}
         aria-label="share" onClick={() => props.setShowDialog(true)}>
         <ScreenShareIcon style={{width:props.iconSize, height:props.iconSize}} />
       </FabWithTooltip>
