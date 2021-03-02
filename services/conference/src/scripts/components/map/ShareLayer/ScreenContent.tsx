@@ -66,7 +66,6 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
       }
     }
   }
-  setTrack()
   const simulcastRatios = [0.25, 0.5, 0.75, 4.0 / 3, 2, 4]
   function checkVideoSize() {
     if (ref.current) {
@@ -91,6 +90,8 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
   }
   useEffect(() => {
     setTrack()
+  },        [ref.current, member.current.locals, member.current.remotes])
+  useEffect(() => {
     const interval = setInterval(checkVideoSize, 333)   //  Notification of exact video size may take time.
 
     return () => clearInterval(interval)
