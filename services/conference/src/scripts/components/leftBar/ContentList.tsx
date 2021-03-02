@@ -1,4 +1,5 @@
 import {Tooltip} from '@material-ui/core'
+import {useTranslation} from '@models/locales'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {MapData} from '@stores/Map'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
@@ -43,9 +44,10 @@ export const RawContentList: React.FC<Stores&{all: ISharedContent[]}> = (props: 
   const elements = all.map(c =>
     <ContentLine key={c.id} content = {c} map={map}
       participant={participants.find(contents.owner.get(c.id) as string) as ParticipantBase} />)
+  const {t} = useTranslation()
 
   return <div className={classes.container} >
-    <div className={classes.title}>Contents</div>
+    <div className={classes.title}>{t('Contents')}</div>
     {elements}
   </div>
 }

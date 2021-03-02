@@ -21,6 +21,7 @@
       "import-spacing": true,
       "interface-over-type-literal": true,
       "jsx-space-before-trailing-slash": true,
+      "jsx-boolean-value": false,
       "max-line-length": [true, 120],
       "newline-before-return": true,
       "no-consecutive-blank-lines": [true, 2],

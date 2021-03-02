@@ -14,7 +14,9 @@ import 'mobx-react-lite/batchingForReactDom'
 import React from 'react'
 import ReactDOM from 'react-dom'
 
-main()
+import {i18nInit} from '@models/locales'
+
+i18nInit().then(main)
 
 function main() {
   const startPromise = resolveAtEnd(onStart)()

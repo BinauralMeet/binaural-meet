@@ -20,7 +20,7 @@ export const ErrorDialog: React.FC<{}> = (props) => {
 
   return <Dialog open={open} onClose={ () => { errorInfo.clear() }}
     maxWidth="sm" fullWidth={true} >
-    <DialogTitle id="simple-dialog-title">{title}</DialogTitle>
+    {title ? <DialogTitle id="simple-dialog-title">{title}</DialogTitle> : undefined }
     {page}
   </Dialog>
 }

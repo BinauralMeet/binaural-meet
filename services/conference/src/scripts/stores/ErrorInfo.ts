@@ -15,7 +15,7 @@ export class ErrorInfo {
   @observable message = ''
   @computed get fatal() { return !this.type }
   @observable type:ErrorType = 'enterance'
-  @observable title = 'Enter the venue'
+  @observable title = ''
 
   constructor() {
     if (urlParameters['testBot'] !== null) {
