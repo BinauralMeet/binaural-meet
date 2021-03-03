@@ -45,5 +45,9 @@ export const enTranslate = {
   Save: 'Save',
   Clear: 'Clear',
   Cancel: 'Cancel',
+  broadcastMyVoice: 'Broadcast my voice',
+  soundLocalizationBasedOn: 'Sound localization based on',
+  slAvatar: 'Avatar (avatar\'s direction)',
+  slUser: 'User (top is front)',
 }
 export type EnKeyList = keyof typeof enTranslate

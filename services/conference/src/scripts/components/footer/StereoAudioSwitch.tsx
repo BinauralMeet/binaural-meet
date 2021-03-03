@@ -14,17 +14,18 @@ import {FabWithTooltip} from './FabEx'
 
 export const SoundLocalizationSetting: React.FC<{}> = () => {
   const soundLocalizationBase = useObserver(() => participants.local.soundLocalizationBase)
+  const {t} = useTranslation()
 
   return <Container>
     <Grid component="label" container={true} alignItems="center" spacing={1}>
-      <Grid item={true}>User (top is front)</Grid>
+      <Grid item={true}>{t('slUser')}</Grid>
       <Grid item={true}>
         <Switch checked={soundLocalizationBase === 'avatar'} onChange={() => {
           participants.local.soundLocalizationBase = soundLocalizationBase === 'avatar' ? 'user' : 'avatar'
           participants.local.saveMediaSettingsToStorage(true)
         }} name="soundLoc" />
       </Grid>
-      <Grid item={true}>Avatar (avatar's direction)</Grid>
+      <Grid item={true}>{t('slAvatar')}</Grid>
     </Grid>
   </Container>
 }
@@ -65,7 +66,7 @@ export const StereoAudioSwitch: React.FC<{size?: number, iconSize:number}> = (pr
       anchorEl={button} anchorOrigin={{vertical:'top', horizontal:'left'}}
       anchorReference = "anchorEl" >
       <div style={{padding:20}}>
-        Sound localization based on <br />
+        {t('soundLocalizationBasedOn')} <br />
         <SoundLocalizationSetting />
       </div>
     </Popover>
