@@ -4,8 +4,12 @@ import {initReactI18next, useTranslation as useTrans} from 'react-i18next'
 import {EnKeyList, enTranslate} from './en'
 import {JaKeyList, jaTranslate} from './ja'
 
+export type KeyList = EnKeyList & JaKeyList
+export function t(key: KeyList) {
+  return i18n.t(key)
+}
 export interface UseTranslationResponse{
-  t:(key: EnKeyList & JaKeyList) => string
+  t:(key: KeyList) => string
   i18n: typeof i18n
   ready: boolean
 }

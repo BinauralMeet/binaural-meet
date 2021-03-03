@@ -1,6 +1,7 @@
 import {MAP_SIZE} from '@components/map/Base'
 import {connection} from '@models/api/Connection'
 import {ConnectionStates} from '@models/api/Constants'
+import {KeyList, t} from '@models/locales'
 import {priorityCalculator} from '@models/middleware/trafficControl'
 import {urlParameters} from '@models/url'
 import {addV2, mulV2} from '@models/utils'
@@ -65,8 +66,8 @@ export class ErrorInfo {
   @action checkConnection() {
     if (connection.state !== ConnectionStates.CONNECTED) {
       this.type = 'connection'
-      this.title = 'No connection'
-      this.message = 'Please check internet connection. Binaural Meet uses https. If internet is OK, the server may have problems.'
+      this.title = t('etConnection')
+      this.message = t('emConnection')
       setTimeout(this.checkConnection.bind(this), 5 * 1000)
     }else {
       this.clear()
@@ -77,16 +78,15 @@ export class ErrorInfo {
     if (!connection.conference.getLocalMicTrack()) {
       if (this.audioInputs.length) {
         this.type = 'micPermission'
-        this.title = 'No permission to use microphone'
-        this.message = 'Your browser does not permit to use microphone. Please give me the permission and reload your browser.'
+        this.title = t('etMicPermission')
+        this.message = t('emMicPermission')
         //  this.message += 'You have: '
         //  this.audioInputs.forEach((device) => { this.message += `[${device.deviceId} - ${device.label}]` })
       }else {
         this.type = 'noMic'
-        this.title = 'No microphone'
-        this.message = 'Please check if your PC has a microphone. Binaural Meet requires it.'
+        this.title = t('etNoMic')
+        this.message = t('emNoMic')
       }
-
       setTimeout(this.checkMic.bind(this),   5 * 1000)
     }else {
       this.clear()
@@ -104,8 +104,8 @@ export class ErrorInfo {
     if (participants.remote.size > 0) {
       if (!connection.conference._jitsiConference?.rtc._channel?.isOpen()) {
         this.type = 'channel'
-        this.title = 'No data channel'
-        this.message = 'Please check firewall setting. Binaural Meet connect to port 10000-10010.'
+        this.title = t('etNoChannel')
+        this.message = t('emNoChannel')
         setTimeout(this.checkChannel.bind(this), 5 * 1000)
       }else {
         this.clear()

@@ -1,7 +1,8 @@
 export const enTranslate = {
   aboutBM: 'A video chat with a 2D map, where you will hear others\' voices based on the location.'
     + ' It holds multiple conversations in a venue parallelly, and you may walk around between them.'
-    + ' Sharing screens, cameras, texts, images, YouTube, and documents on google drive are supported.',
+    + ' Sharing screens, cameras, texts, images, YouTube, and documents on google drive are supported.'
+    + ' You may drop or paste on the map.',
   BMmoreInfo: '... more info',
   YourName: 'Your name',
   Venue: 'Venue',
@@ -28,5 +29,21 @@ export const enTranslate = {
   ttMicMute: '_Mic mute',
   headphoneL1: 'Stereo headphone (no echo cancel)',
   headphoneL2: 'Monaural speaker (echo cancel)',
+  etConnection: 'No connection',
+  emConnection: 'Please check internet connection. Binaural Meet uses https. If internet is OK, the server may have problems.',
+  etMicPermission: 'No permission to use microphone',
+  emMicPermission: 'Your browser does not permit to use microphone. Please give me the permission and reload your browser.',
+  etNoMic: 'No microphone',
+  emNoMic: 'Please check if your PC has a microphone. Binaural Meet requires it.',
+  etNoChannel: 'No data channel',
+  emNoChannel: 'Please check firewall setting. Binaural Meet connect to https (443) port and port 10000-10010.',
+  imageDropzoneText:'Drag and drop images here or click',
+  asTitle:'Avatar setting',
+  asName: 'Name',
+  asImageFile: 'Avatar image file',
+  asEmail: 'Email to get image from Gravatar',
+  Save: 'Save',
+  Clear: 'Clear',
+  Cancel: 'Cancel',
 }
 export type EnKeyList = keyof typeof enTranslate

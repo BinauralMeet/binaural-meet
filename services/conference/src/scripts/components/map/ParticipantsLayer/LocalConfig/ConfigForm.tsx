@@ -2,9 +2,9 @@ import {useStore} from '@hooks/ParticipantsStore'
 import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
 import {uploadToGyazo} from '@models/api/Gyazo'
+import {useTranslation} from '@models/locales'
 import {defaultInformation} from '@models/Participant'
 import React, {useState} from 'react'
-import {ViewpointControl} from './ViewpointControl'
 
 function useInput<T>(initialValue:T) {
   const [value, set] = useState(initialValue)
@@ -26,6 +26,7 @@ export const ConfigForm: React.FC<ConfigFormProps> = (props: ConfigFormProps) =>
   const name = useInput(local.information.name)
   const email = useInput(local.information.email)
   const [file, setFile] = useState<File|null>()
+  const {t} = useTranslation()
 
   function submitHandler(ev: React.FormEvent) {
     ev.preventDefault()
@@ -67,8 +68,8 @@ export const ConfigForm: React.FC<ConfigFormProps> = (props: ConfigFormProps) =>
   }
 
   const form = <form key="information" onSubmit = {submitHandler} style={{lineHeight:'2em'}}>
-    Name: <input type="text" {...name.args} /> <br />
-    Avatar image file : &nbsp;
+    {t('asName')}: <input type="text" {...name.args} /> <br />
+    {t('asImageFile')}: &nbsp;
     {local.information.avatarSrc ?
       <> <img src={local.information.avatarSrc} style={{height:'1.5em', verticalAlign:'middle'}} />
       <input type="submit" onClick={() => setSubmitType('clearAvatarSrc')} value="✕" /> &nbsp; </>
@@ -76,14 +77,14 @@ export const ConfigForm: React.FC<ConfigFormProps> = (props: ConfigFormProps) =>
     <input type="file" onChange={(ev) => {
       setFile(ev.target.files?.item(0))
     }} /> <br />
-    Email for Gravatar: <input type="text" {...email.args} /> <br />
-    <input type="submit" onClick={() => setSubmitType('local')} value="Save" /> &nbsp;
-    <input type="submit" onClick={() => setSubmitType('clear')} value="Clear" />&nbsp;
-    <input type="submit" onClick={() => setSubmitType('cancel')} value="Cancel" />
+    {t('asEmail')}: <input type="text" {...email.args} /> <br />
+    <input type="submit" onClick={() => setSubmitType('local')} value={t('Save')} /> &nbsp;
+    <input type="submit" onClick={() => setSubmitType('clear')} value={t('Clear')} />&nbsp;
+    <input type="submit" onClick={() => setSubmitType('cancel')} value={t('Cancel')} />
   </form>
 
   return <>
-    <DialogTitle>Avatar's setting</DialogTitle>
+    <DialogTitle>{t('asTitle')}</DialogTitle>
     <DialogContent>
       {form}
       <br />

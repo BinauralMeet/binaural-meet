@@ -1,7 +1,7 @@
 export const jaTranslate = {
   aboutBM: '位置に応じて声が届く2Dマップ付きビデオチャットです。'
   + '会場内に複数の会話が並立し、会話間を歩き回ることができます。'
-  + '画面、カメラ、テキスト、画像、YouTube、Googleドライブの文書を共有できます。',
+  + '画面、カメラ、テキスト、画像、YouTube、Googleドライブの文書を共有できます。マップにURL等をドロップ/ペーストできます。',
   BMmoreInfo: '詳細',
   YourName: 'お名前',
   Venue: '会場名',
@@ -26,7 +26,23 @@ export const jaTranslate = {
   stopMouse: 'マウスカーソルの共有停止 (_m)',
   ttCreateAndshare: '作成と共有 (_c)',
   ttMicMute: 'マイクのミュート (_m)',
-  headphoneL1: 'ヘッドフォン (ステレオ・エコーキャンセラーなし)',
-  headphoneL2: 'スピーカー (モノラル・エコーキャンセルあり)',
+  headphoneL1: 'ヘッドフォン (ステレオ・エコキャンなし)',
+  headphoneL2: 'スピーカー (モノラル・エコキャンあり)',
+  etConnection: 'インターネット接続なし',
+  emConnection: 'インターネット接続を確認してください。Binaural Meetは https を使います。インターネット接続の問題でなければ、サーバの問題かもしれません。',
+  etMicPermission: 'マイク利用不可',
+  emMicPermission: 'ブラウザがマイクの利用を許可しませんでした。ブラウザのURLの左の鍵のアイコンから許可し、ブラウザをリロードしてください。',
+  etNoMic: 'マイクがありません',
+  emNoMic: 'Binaural Meetにはマイクが必要です。パソコンにマイクがついていることを確認してください。',
+  etNoChannel: 'データ通信ができません',
+  emNoChannel: 'ファイアウォールの設定を確認してください。Binaural Meet は https(443番)と10000-10010番のポートに接続します。',
+  imageDropzoneText:'画像をドラッグ＆ドロップするか、クリックしてください',
+  asTitle:'アバターの設定',
+  asName: 'お名前',
+  asImageFile: 'アバターの画像ファイル',
+  asEmail: 'Gravatarの画像を使う場合のEmail',
+  Save: '保存',
+  Clear: 'クリア',
+  Cancel: 'キャンセル',
 }
 export type JaKeyList = keyof typeof jaTranslate

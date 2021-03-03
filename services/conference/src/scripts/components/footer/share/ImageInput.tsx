@@ -1,4 +1,5 @@
 import {useStore as useMapStore} from '@hooks/MapStore'
+import {useTranslation} from '@models/locales'
 import {createContentOfImage} from '@stores/sharedContents/SharedContentCreator'
 import sharedContents from '@stores/sharedContents/SharedContents'
 import {DropzoneArea} from 'material-ui-dropzone'
@@ -17,10 +18,11 @@ export const ImageInput: React.FC<ImageInputProps> = (props) => {
 
   const [files, setFiles] = useState<File[]>([])
 
+  const {t} = useTranslation()
   const field = (
     <DropzoneArea
       acceptedFiles={['image/*']}
-      dropzoneText="Drag and drop an image here or click"
+      dropzoneText={t('imageDropzoneText')}
       onChange={setFiles}
     />
   )

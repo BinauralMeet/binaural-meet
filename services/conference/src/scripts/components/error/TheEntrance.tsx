@@ -47,7 +47,7 @@ export const TheEntrance: React.FC<{}> = (props) => {
     </Button>
     <h2>Binaural Meet</h2>
     <p>{t('aboutBM')}&nbsp;
-    <a href="https://github.com/BinauralMeet/binaural-meet/">{t('BMmoreInfo')}</a>
+    <a href="https://scrapbox.io/binaural-meet/Top_page">{t('BMmoreInfo')}</a>
     </p>
     <br />
     <TextField label={t('YourName')} multiline={false} value={name}
