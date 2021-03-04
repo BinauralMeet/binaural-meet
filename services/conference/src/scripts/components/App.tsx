@@ -6,13 +6,13 @@ import mapStore from '@stores/Map'
 import participantsStore from '@stores/participants/Participants'
 import sharedContentsStore from '@stores/sharedContents/SharedContents'
 import {useObserver} from 'mobx-react-lite'
-import React, {Fragment} from 'react'
+import React, {Fragment, useRef} from 'react'
 import SplitPane from 'react-split-pane'
 import {Footer} from './footer/Footer'
 import {LeftBar} from './leftBar/LeftBar'
 import {MainScreen} from './map/MainScreen'
 import {Map} from './map/map'
-import {Stores} from './utils'
+import {addListenerToPreventDefault, Stores} from './utils'
 import {styleCommon, styleForSplit} from './utils/styles'
 
 export const App: React.FC<{}> = () => {
@@ -25,12 +25,18 @@ export const App: React.FC<{}> = () => {
     participants: participantsStore,
     contents: sharedContentsStore,
   }
+  const refWin = useRef(window)
+  const refDiv = useRef<HTMLDivElement>(null)
+  //  contextmenu: prevent to show context menu with right mouse click
+  //  touchstart: prevent browser zoom by pinch
+  addListenerToPreventDefault(refWin, ['touchstart', 'contextmenu'])
+  addListenerToPreventDefault(refDiv, ['touchstart', 'contextmenu'])
 
   return (
     <ParticipantsProvider value={participantsStore}>
     <ContentsProvider value={sharedContentsStore}>
     <MapProvider value={mapStore}>
-      <div className={classes.back}>
+      <div ref={refDiv} className={classes.back}>
         <SplitPane className={classes.fill} split="vertical" resizerClassName={clsSplit.resizerVertical}
           minSize={0} defaultSize="7em">
           <LeftBar {...stores} />

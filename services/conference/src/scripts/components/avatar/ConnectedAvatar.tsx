@@ -7,7 +7,7 @@ import {ComposedAvatar} from './ComposedAvatar'
 
 export interface ConnectedAvatarProps {
   participantId: string
-  size?: number
+  size: number
 }
 
 const ConnectedAvatar: React.FC<ConnectedAvatarProps> = (props) => {

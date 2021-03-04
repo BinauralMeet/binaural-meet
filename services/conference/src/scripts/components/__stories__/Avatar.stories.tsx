@@ -15,7 +15,7 @@ const informationName: Information = {
 export const name = () => {
   const [color, fColor] = getRandomColor(informationName.name)
 
-  return <ImageAvatar information={informationName} color={color} textColor={fColor} />
+  return <ImageAvatar information={informationName} color={color} textColor={fColor} size={50} />
 }
 
 const informationEmal: Information = Object.assign({}, informationName, {
@@ -24,7 +24,7 @@ const informationEmal: Information = Object.assign({}, informationName, {
 export const gavatar = () => {
   const [color, fColor] = getRandomColor(informationName.name)
 
-  return <ImageAvatar information={informationEmal} color={color} textColor={fColor} />
+  return <ImageAvatar information={informationEmal} color={color} textColor={fColor} size={50} />
 }
 
 function captureVideo() {

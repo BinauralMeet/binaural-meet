@@ -55,8 +55,19 @@ export const styleForList = makeStyles({
   container: {
     width:'100%',
   },
-  title: {
-    fontSize: 'small',
+  title: (props: ListLineProps) => ({
+    fontSize: props.fontSize * 0.8,
+    justifyContent: 'start',
+    justifyItems: 'start',
+    alignItems: 'center',
+    userSelect: 'none',
+    userDrag: 'none',
+    whiteSpace: 'nowrap',
+    width: '100%',
+  }),
+  outer: {
+    display: 'flex',
+    whiteSpace: 'nowrap',
   },
   line: (props: ListLineProps) => ({
     display: 'flex',

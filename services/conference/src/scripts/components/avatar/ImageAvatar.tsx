@@ -4,23 +4,24 @@ import ReactAvatar from 'react-avatar'
 
 export interface ImageAvatarProps {
   information: Information
-  size?: number
+  size: number
   color: string
   textColor: string
   style?: any
 }
 
 export const ImageAvatar: React.FC<ImageAvatarProps> = (props: ImageAvatarProps) => {
-  const size = props.size !== undefined ? `${props.size}px` : undefined
-  //  console.log(`avatar = ${props.information.avatarSrc}`)
+  const size = `${props.size}px`
 
   return (
-    <ReactAvatar style={props.style}
+    <ReactAvatar
       name={props.information.name}
       email={props.information.email}
       md5Email={props.information.md5Email}
       round={true}
       size={size}
+      textSizeRatio={2.5}
+      style={props.style}
       src={props.information.avatarSrc}
       color={props.color}
       fgColor={props.textColor}

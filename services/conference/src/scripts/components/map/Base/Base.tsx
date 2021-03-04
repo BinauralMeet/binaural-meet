@@ -248,22 +248,13 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
     },
   )
 
-  //  prevent default behavior of browser on map, setClientRect of the outer.
+  //  setClientRect of the outer.
   useEffect(
     () => {
       onResizeOuter()
-      const cb = (e: Event) => { e.preventDefault() }
-      //  Not to show context menu with right mouse click
-      outer.current?.addEventListener('contextmenu', cb)
-      //  Not to zoom by pinch
-      outer.current?.addEventListener('touchstart', cb)
-
-      return () => {
-        outer.current?.removeEventListener('contextmenu', cb)
-        outer.current?.removeEventListener('touchstart', cb)
-      }
     },
-    [outer])
+    [outer.current],
+  )
 
   // Prevent browser's zoom
   useEffect(
