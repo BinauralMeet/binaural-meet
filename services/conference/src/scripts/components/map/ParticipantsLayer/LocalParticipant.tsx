@@ -239,15 +239,13 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   const ref = useRef<HTMLButtonElement>(null)
 
   return (
-    <div ref={drag.target} {...drag.bind()} {...moreControl}
-    >
+    <div ref={drag.target} {...drag.bind()} {...moreControl}>
     <Participant {...props}
       onContextMenu={(ev) => {
         ev.preventDefault()
         openConfig()
-      }
-    }
-/>
+      }}
+    />
     <MoreButton show={showMore} className={classes.more} htmlColor={color} {...moreControl}
       buttonRef = {ref}
       onClickMore = {openConfig} />,

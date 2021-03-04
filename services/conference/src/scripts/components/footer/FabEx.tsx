@@ -14,8 +14,9 @@ const useStyles = makeStyles((theme) => {
 })
 interface MyFabProps{
   children: React.ReactElement,
-  onClick?: (e: React.PointerEvent<HTMLButtonElement>) => void,
-  onClickMore?: (e: React.PointerEvent<HTMLButtonElement>|React.MouseEvent<HTMLButtonElement>) => void,
+  onClick?: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>|React.TouchEvent<HTMLButtonElement>) => void,
+  onClickMore?: (e: React.PointerEvent<HTMLButtonElement>
+    |React.MouseEvent<HTMLButtonElement, MouseEvent>|React.TouchEvent<HTMLButtonElement>) => void,
   color?: FabColor
   iconColor?: IconColor
   htmlColor?: string
@@ -34,9 +35,8 @@ export const FabMain: React.FC<MyFabProps> = (props) => {
   return <span className={classes.container + (props.className ? ` ${props.className}` : '')}
     {...moreButtonControl(setShowMore, member)}
   >
-    <Fab
-      style={{height:props.size, width:props.size}}
-      onClick = {props.onClick}
+    <Fab style={{height:props.size, width:props.size}}
+      onClick = {(ev) => { if (props.onClick) { props.onClick(ev) } } }
       onContextMenu={(ev) => {
         ev.preventDefault()
         if (props.onClickMore) { props.onClickMore(ev) }

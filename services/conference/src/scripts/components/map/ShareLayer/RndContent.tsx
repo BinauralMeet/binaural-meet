@@ -106,38 +106,49 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   )
 
   //  handlers
+  function stop(ev:MouseOrTouch|React.PointerEvent) {
+    ev.stopPropagation()
+    ev.preventDefault()
+  }
   function onClickShare(evt: MouseOrTouch) {
     evt.stopPropagation()
+    evt.preventDefault()
     props.onShare?.call(null, evt)
   }
   function onClickClose(evt: MouseOrTouch) {
     evt.stopPropagation()
+    evt.preventDefault()
     props.onClose?.call(null, evt)
   }
   function onClickMoveToTop(evt: MouseOrTouch) {
     evt.stopPropagation()
+    evt.preventDefault()
     props.content.moveToTop()
     const newContent = Object.assign({}, props.content)
     props.onUpdate?.call(null, newContent)
   }
   function onClickMoveToBottom(evt: MouseOrTouch) {
     evt.stopPropagation()
+    evt.preventDefault()
     props.content.moveToBottom()
     const newContent = Object.assign({}, props.content)
     props.onUpdate?.call(null, newContent)
   }
   function onClickWallpaper(evt: MouseOrTouch) {
     evt.stopPropagation()
+    evt.preventDefault()
     props.content.moveToBackground()
     const newContent = Object.assign({}, props.content)
     props.onUpdate?.call(null, newContent)
   }
   function onClickEdit(evt: MouseOrTouch) {
     evt.stopPropagation()
+    evt.preventDefault()
     setEditing(!props.editing)
   }
   function onClickPin(evt: MouseOrTouch) {
     evt.stopPropagation()
+    evt.preventDefault()
     updateHandler(!props.content.pinned)
   }
   function updateHandler(pinned?:boolean) {
@@ -256,27 +267,27 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
               }
             }}
             >
-          <div className={classes.pin} onClick={onClickPin} onTouchStart={onClickPin}>
+          <div className={classes.pin} onClick={onClickPin} onTouchStart={stop}>
             {contentTypeIcons(props.content.type, TITLE_HEIGHT)}
             <Icon icon={props.content.pinned ? pinIcon : pinOffIcon} height={TITLE_HEIGHT} />
           </div>
-          <div className={classes.edit} onClick={onClickEdit} onTouchStart={onClickEdit}>
+          <div className={classes.edit} onClick={onClickEdit} onTouchStart={stop}>
              {
               props.editing ? <DoneIcon style={{fontSize:TITLE_HEIGHT}} />
                 : <EditIcon style={{fontSize:TITLE_HEIGHT}} />}
           </div>
           {props.content.pinned ? undefined :
             <div className={classes.titleButton} onClick={onClickMoveToTop}
-              onTouchStart={onClickMoveToTop}><FlipToFrontIcon /></div>}
+              onTouchStart={stop}><FlipToFrontIcon /></div>}
           {props.content.pinned ? undefined :
             <div className={classes.titleButton} onClick={onClickMoveToBottom}
-              onTouchStart={onClickMoveToBottom}><FlipToBackIcon /></div>}
+              onTouchStart={stop}><FlipToBackIcon /></div>}
           {(props.content.pinned || props.content.type !== 'img' || props.content.zorder < TEN_YEAR) ? undefined :
             <div className={classes.titleButton} onClick={onClickWallpaper}
-              onTouchStart={onClickWallpaper}><WallpaperIcon /></div>}
-          <div className={classes.note} onClick={onClickShare} onTouchStart={onClickShare}>Share</div>
+              onTouchStart={stop}><WallpaperIcon /></div>}
+          <div className={classes.note} onClick={onClickShare} onTouchStart={stop}>Share</div>
           {props.content.pinned ? undefined :
-             <div className={classes.close} onClick={onClickClose} onTouchStart={onClickClose}>
+             <div className={classes.close} onClick={onClickClose} onTouchStart={stop}>
                <CloseRoundedIcon /></div>}
         </div>
       </div>

@@ -181,7 +181,7 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
     }
     setVideoMenuEl(null)
   }
-  function updateDevices(ev:React.PointerEvent | React.MouseEvent) {
+  function updateDevices(ev:React.PointerEvent | React.MouseEvent | React.TouchEvent) {
     navigator.mediaDevices.enumerateDevices()
     .then(setDeviceInfos)
     .catch(() => { console.log('Device enumeration error') })
@@ -196,7 +196,7 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
     <Collapse in={show}>
       <StereoAudioSwitch size={fabSize} iconSize={iconSize} />
       <FabMain size={fabSize} color={mute.muteS ? 'primary' : 'secondary' }
-        aria-label="speaker" onClick = { () => {
+        aria-label="speaker" onClick={() => {
           participants.local.plugins.streamControl.muteSpeaker = !mute.muteS
           if (participants.local.plugins.streamControl.muteSpeaker) {
             participants.local.plugins.streamControl.muteAudio = true

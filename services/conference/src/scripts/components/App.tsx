@@ -12,7 +12,7 @@ import {Footer} from './footer/Footer'
 import {LeftBar} from './leftBar/LeftBar'
 import {MainScreen} from './map/MainScreen'
 import {Map} from './map/map'
-import {addListenerToPreventDefault, Stores} from './utils'
+import {Stores} from './utils'
 import {styleCommon, styleForSplit} from './utils/styles'
 
 export const App: React.FC<{}> = () => {
@@ -27,10 +27,16 @@ export const App: React.FC<{}> = () => {
   }
   const refWin = useRef(window)
   const refDiv = useRef<HTMLDivElement>(null)
+  //  toucmove: prevent browser zoom by pinch
+  window.addEventListener('touchmove', (ev) => {
+    if (ev.touches.length > 1) {
+      ev.preventDefault()
+    }
+  },                      {passive: false, capture: false})
   //  contextmenu: prevent to show context menu with right mouse click
-  //  touchstart: prevent browser zoom by pinch
-  addListenerToPreventDefault(refWin, ['touchstart', 'contextmenu'])
-  addListenerToPreventDefault(refDiv, ['touchstart', 'contextmenu'])
+  window.addEventListener('contextmenu', (ev) => {
+    ev.preventDefault()
+  },                      {passive: false, capture: false})
 
   return (
     <ParticipantsProvider value={participantsStore}>

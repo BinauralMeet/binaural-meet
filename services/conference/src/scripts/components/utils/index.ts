@@ -11,5 +11,4 @@ export interface BaseProps extends Stores {
   transparent?: boolean
 }
 
-export * from './util'
 export * from './formatter'

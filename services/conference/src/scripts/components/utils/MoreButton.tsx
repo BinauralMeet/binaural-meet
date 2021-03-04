@@ -44,7 +44,7 @@ export interface MoreButtonProps{
   color?: FabColor
   className?: string
   style?: CSSProperties
-  onClickMore?(ev:React.PointerEvent<HTMLButtonElement>|React.MouseEvent<HTMLButtonElement>, map:MapData): void
+  onClickMore?(ev:React.PointerEvent|React.MouseEvent|React.TouchEvent, map:MapData): void
   buttonRef?: React.RefObject<HTMLButtonElement>
 }
 

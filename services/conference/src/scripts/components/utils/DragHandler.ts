@@ -1,5 +1,5 @@
-import React, {useRef} from 'react'
-import {subV2, normV} from '@models/utils'
+import {normV, subV2} from '@models/utils'
+import React, {useEffect, useRef} from 'react'
 
 function checkClass<ET extends Element>(el: Element, stop:ET, clsToFind: string):Element | null {
   let cur = el
@@ -44,7 +44,7 @@ export class DragHandler<ET extends Element>{  //  pointer drag
 
   constructor(onDrag:(state:DragState<ET>) => void, handle?: string,
               onTimer?:(state:DragState<ET>) => boolean, interval?: number,
-              onContextMenu?:(ev: React.TouchEvent<ET>)=>void) {
+              onContextMenu?:(ev: React.TouchEvent<ET>) => void) {
     this.interval = interval
     this.onDrag = onDrag
     this.onTimer = onTimer
@@ -62,12 +62,23 @@ export class DragHandler<ET extends Element>{  //  pointer drag
     }
   }
 
-  bind() {
+  //  To prevent browser zoom, onTouchMove must call preventDefault() and need {passive:false}
+  onTouchMove(ev: Event) {
+    ev.preventDefault()
+    ev.stopPropagation()
+  }
 
+  bind() {
+    useEffect(() => {
+      this.target.current?.addEventListener('touchmove', this.onTouchMove, {passive:false})
+
+      return () => {
+        this.target.current?.removeEventListener('touchmove', this.onTouchMove)
+      }
+    },        [this.target.current])
     const bindObject = {
       onMouseDown: (e: React.MouseEvent<ET>) => { e.stopPropagation() },
       onTouchStart: (e: React.TouchEvent<ET>) => { e.stopPropagation() },
-      onTouchMove: (e: React.TouchEvent<ET>) => { e.stopPropagation() },
       onPointerDown: (e: React.PointerEvent<ET>) => {
         e.stopPropagation()
         this.memo.state = {dragging:false, buttons:e.buttons, xy:[e.clientX, e.clientY],
@@ -95,7 +106,7 @@ export class DragHandler<ET extends Element>{  //  pointer drag
         e.stopPropagation()
         const delta = normV(subV2(this.memo.state.xy, this.memo.state.start))
         const deltaT = Date.now() - this.memo.state.startTime
-        if (delta < 5 && deltaT > 0.5 && this.onContextMenu){
+        if (delta < 5 && deltaT > 0.5 && this.onContextMenu) {
           this.onContextMenu(e)
         }
       },
