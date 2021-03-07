@@ -1,7 +1,8 @@
 import {acceleratorText2El} from '@components/utils/formatter'
 import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore as useContentsStore} from '@hooks/SharedContentsStore'
-import ScreenShareIcon from '@material-ui/icons/ScreenShare'
+import shareSquare from '@iconify-icons/fa-solid/share-square'
+import {Icon} from '@iconify/react'
 import {makeStyles} from '@material-ui/styles'
 import {useTranslation} from '@models/locales'
 import {useObserver} from 'mobx-react-lite'
@@ -33,7 +34,7 @@ export const ShareButton: React.FC<ShareButtonProps> = (props) => {
       <FabWithTooltip size={props.size} color={sharing ? 'secondary' : 'primary'}
         title = {acceleratorText2El(t('ttCreateAndshare'))}
         aria-label="share" onClick={() => props.setShowDialog(true)}>
-        <ScreenShareIcon style={{width:props.iconSize, height:props.iconSize}} />
+        <Icon icon={shareSquare} style={{width:props.iconSize, height:props.iconSize}} />
       </FabWithTooltip>
       <ShareDialog open={props.showDialog} onClose={() => props.setShowDialog(false)} />
     </div>

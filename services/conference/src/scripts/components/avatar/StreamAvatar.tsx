@@ -1,6 +1,7 @@
 import {makeStyles} from '@material-ui/core/styles'
 import {JitsiTrack} from 'lib-jitsi-meet'
 import React, {useCallback, useEffect, useRef} from 'react'
+import {Scale} from 'tone'
 
 const CENTER = 0.5
 const useStyles = makeStyles({
@@ -14,18 +15,21 @@ const useStyles = makeStyles({
     clipPath: `circle(${(props.size || 0) * CENTER}px  at center)`,
     overflow: 'hidden',
   }),
-  videoLargerWidth: {
+  videoLargerWidth: (props: StreamAvatarProps) => ({
     height: '100%',
-  },
-  videoLargerHeight: {
+    transform: `scale(${props.mirror ? -1 : 1}, 1)`,
+  }),
+  videoLargerHeight: (props: StreamAvatarProps) => ({
     width: '100%',
-  },
+    transform: `scale(${props.mirror ? -1 : 1}, 1)`,
+  }),
 })
 
 export interface StreamAvatarProps {
   stream: MediaStream
   size?: number
   style?: any
+  mirror?: boolean
 }
 
 const setStream = (

@@ -19,17 +19,19 @@ const ConnectedAvatar: React.FC<ConnectedAvatarProps> = (props) => {
     information,
     stream,
     showVideo,
+    isLocal,
   } = useObserver(() => {
 
     return {
       information: {...participant.information},
       stream: participant.tracks.avatarStream,
       showVideo: participant.plugins.streamControl.showVideo,
+      isLocal: participantsStore.isLocal(props.participantId),
     }
   })
 
   return <ComposedAvatar information={information} stream={showVideo ? stream : undefined}
-     color={color} textColor={textColor} size={props.size} style={{pointerEvents:'none'}} />
+     color={color} textColor={textColor} size={props.size} style={{pointerEvents:'none'}} mirror={isLocal} />
 }
 
 export const MemoedAvatar = memoComponent(ConnectedAvatar, ['participantId', 'size'])

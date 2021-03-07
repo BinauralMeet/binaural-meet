@@ -35,6 +35,7 @@ const useStyles = makeStyles({
     height: '100%',
     verticalAlign: 'bottom',
     userDrag: 'none',
+    pointerEvents: 'none',
   },
   iframe: {
     width: '100%',

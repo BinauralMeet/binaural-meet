@@ -29,9 +29,9 @@ export const App: React.FC<{}> = () => {
   const refDiv = useRef<HTMLDivElement>(null)
   //  toucmove: prevent browser zoom by pinch
   window.addEventListener('touchmove', (ev) => {
-    if (ev.touches.length > 1) {
-      ev.preventDefault()
-    }
+    //  if (ev.touches.length > 1) {
+    ev.preventDefault()
+    //  }
   },                      {passive: false, capture: false})
   //  contextmenu: prevent to show context menu with right mouse click
   window.addEventListener('contextmenu', (ev) => {

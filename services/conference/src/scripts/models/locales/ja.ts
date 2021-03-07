@@ -48,5 +48,6 @@ export const jaTranslate = {
   soundLocalizationBasedOn: '音像定位の向きの基準',
   slAvatar: 'アバターの向き',
   slUser: 'ユーザーの向き(上が前)',
+  usage: '使い方',
 }
 export type JaKeyList = keyof typeof jaTranslate

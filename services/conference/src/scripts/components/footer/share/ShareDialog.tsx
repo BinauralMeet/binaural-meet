@@ -3,6 +3,7 @@ import Dialog from '@material-ui/core/Dialog'
 import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
 import {useTranslation} from '@models/locales'
+import {isSmartphone} from '@models/utils'
 import {createContentOfIframe, createContentOfText} from '@stores/sharedContents/SharedContentCreator'
 import sharedContents from '@stores/sharedContents/SharedContents'
 import React, {useState} from 'react'
@@ -85,7 +86,8 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
         map.setMouse([ev.clientX, ev.clientY])
       }}
     >
-    <DialogTitle id="simple-dialog-title">{title}</DialogTitle>
+    <DialogTitle id="simple-dialog-title" style={{fontSize: isSmartphone() ? '2.5em' : '1em'}}>
+      {title}</DialogTitle>
     <DialogContent>{page}</DialogContent>
   </Dialog>
 }

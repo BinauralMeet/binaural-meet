@@ -4,6 +4,7 @@ import DialogTitle from '@material-ui/core/DialogTitle'
 import {uploadToGyazo} from '@models/api/Gyazo'
 import {useTranslation} from '@models/locales'
 import {defaultInformation} from '@models/Participant'
+import {isSmartphone} from '@models/utils/utils'
 import React, {useState} from 'react'
 
 function useInput<T>(initialValue:T) {
@@ -67,24 +68,31 @@ export const ConfigForm: React.FC<ConfigFormProps> = (props: ConfigFormProps) =>
     }
   }
 
-  const form = <form key="information" onSubmit = {submitHandler} style={{lineHeight:'2em'}}>
-    {t('asName')}: <input type="text" {...name.args} /> <br />
+  const iStyle = {fontSize: isSmartphone() ? '2.5rem' : '1rem'}
+  const form = <form key="information" onSubmit = {submitHandler}
+    style={{lineHeight:'2em', fontSize: isSmartphone() ? '2.5em' : '1em'}}>
+    {t('asName')}: <input style={iStyle} type="text" {...name.args} /> <br />
     {t('asImageFile')}: &nbsp;
     {local.information.avatarSrc ?
       <> <img src={local.information.avatarSrc} style={{height:'1.5em', verticalAlign:'middle'}} />
-      <input type="submit" onClick={() => setSubmitType('clearAvatarSrc')} value="✕" /> &nbsp; </>
+      <input style={iStyle} type="submit"
+        onClick={() => setSubmitType('clearAvatarSrc')} value="✕" /> &nbsp; </>
        : undefined}
-    <input type="file" onChange={(ev) => {
+    <input style={iStyle} type="file" onChange={(ev) => {
       setFile(ev.target.files?.item(0))
     }} /> <br />
-    {t('asEmail')}: <input type="text" {...email.args} /> <br />
-    <input type="submit" onClick={() => setSubmitType('local')} value={t('Save')} /> &nbsp;
-    <input type="submit" onClick={() => setSubmitType('clear')} value={t('Clear')} />&nbsp;
-    <input type="submit" onClick={() => setSubmitType('cancel')} value={t('Cancel')} />
+    {t('asEmail')}: <input style={iStyle} type="text" {...email.args} /> <br />
+    <input style={iStyle} type="submit" onClick={() => setSubmitType('local')} value={t('Save')} /> &nbsp;
+    <input style={iStyle} type="submit" onClick={() => setSubmitType('clear')} value={t('Clear')} />&nbsp;
+    <input style={iStyle} type="submit" onClick={() => setSubmitType('cancel')} value={t('Cancel')} />
   </form>
 
   return <>
-    <DialogTitle>{t('asTitle')}</DialogTitle>
+    <DialogTitle>
+      <span  style={{fontSize: isSmartphone() ? '2.5em' : '1em'}}>
+        {t('asTitle')}
+      </span>
+    </DialogTitle>
     <DialogContent>
       {form}
       <br />

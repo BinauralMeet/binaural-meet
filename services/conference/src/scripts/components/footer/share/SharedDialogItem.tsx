@@ -2,7 +2,7 @@ import {acceleratorText2El} from '@components/utils/formatter'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemAvatar from '@material-ui/core/ListItemAvatar'
 import ListItemText from '@material-ui/core/ListItemText'
-import {assert} from '@models/utils'
+import {assert, isSmartphone} from '@models/utils'
 import React from 'react'
 
 interface ShareDialogItemProps {
@@ -21,10 +21,10 @@ export const ShareDialogItem: React.FC<ShareDialogItemProps> = (props) => {
 
   return (
     <ListItem button={true} onClick={onClick}>
-      <ListItemAvatar>
+      <ListItemAvatar style={{fontSize: isSmartphone() ? '2.5em' : '1em'}}>
         {icon}
       </ListItemAvatar>
-      <ListItemText>
+      <ListItemText style={{fontSize: isSmartphone() ? '2.5em' : '1em'}}>
         {textEl}
       </ListItemText>
     </ListItem>

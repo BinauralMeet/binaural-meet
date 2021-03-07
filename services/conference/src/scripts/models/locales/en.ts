@@ -49,5 +49,6 @@ export const enTranslate = {
   soundLocalizationBasedOn: 'Sound localization based on',
   slAvatar: 'Avatar (avatar\'s direction)',
   slUser: 'User (top is front)',
+  usage: 'How to use',
 }
 export type EnKeyList = keyof typeof enTranslate

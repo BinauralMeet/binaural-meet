@@ -169,6 +169,7 @@ export class SharedContents extends EventEmitter {
     return this.all.slice(0, nBackground)
   }
   private saveBackground() {
+    if (!this.localId) { return }
     if (!this.background) {
       this.loadBackground()
     }
