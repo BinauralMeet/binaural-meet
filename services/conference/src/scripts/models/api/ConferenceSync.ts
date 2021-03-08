@@ -184,7 +184,7 @@ export class ConferenceSync{
     this.conference.on(PropertyType.PARTICIPANT_POSE, onPose)
     let updateTime = 0
     let poseWait = 0
-    const calcWait = () => Math.ceil(Math.max(20, 20 * (participants.remote.size / 5) / 20) * 20)
+    const calcWait = () => Math.ceil(Math.max((participants.remote.size / 5) * 20, 20))
 
     let sendPoseMessage: (pose:Pose2DMap) => void
     this.disposers.push(autorun(() => {
