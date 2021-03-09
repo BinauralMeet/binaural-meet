@@ -7,6 +7,7 @@ import Switch from '@material-ui/core/Switch'
 import HeadsetIcon from '@material-ui/icons/HeadsetMic'
 import SpeakerIcon from '@material-ui/icons/Speaker'
 import {useTranslation} from '@models/locales'
+import {isChromium} from '@models/utils'
 import participants from '@stores/participants/Participants'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
@@ -54,7 +55,7 @@ export const StereoAudioSwitch: React.FC<{size?: number, iconSize:number}> = (pr
   return <>
     <FabWithTooltip size={props.size} title={
         <>
-          {t('headphoneL1')} <br />
+          {isChromium ? t('headphoneL1Chrome') : t('headphoneL1')} <br />
           {t('headphoneL2')}
         </>}
       onClick={switchStereo} color = {stereo ? 'secondary' : 'primary'}

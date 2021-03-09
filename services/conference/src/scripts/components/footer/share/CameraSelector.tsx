@@ -5,36 +5,27 @@ import MenuItem from '@material-ui/core/MenuItem'
 import {assert} from '@models/utils'
 import {createContentOfVideo} from '@stores/sharedContents/SharedContentCreator'
 import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'
-import React, {useEffect, useRef, useState} from 'react'
+import {observable} from 'mobx'
+import {useObserver} from 'mobx-react-lite'
+import React, {useEffect} from 'react'
 import {DialogPageProps} from './DialogPage'
 
-interface CameraSelectorProps extends DialogPageProps{
+export class CameraSelectorMember{
+  @observable.shallow videos: MediaDeviceInfo[] = []
 }
-
-class CameraSelectorMember{
-  videos: MediaDeviceInfo[] = []}
+interface CameraSelectorProps extends DialogPageProps{
+  cameras: CameraSelectorMember
+}
 
 export const CameraSelector: React.FC<CameraSelectorProps> = (props) => {
   const {
     setStep,
   } = props
-  const member = useRef(new CameraSelectorMember())
   const contents = useContents()
   const map = useMapStore()
   const participants = useParticipants()
-  const [deviceInfos, setDeviceInfos] = useState<MediaDeviceInfo[]>([])
-  function updateDevices() {
-    navigator.mediaDevices.enumerateDevices()
-    .then((infos) => {
-      member.current.videos = infos.filter(info => info.kind === 'videoinput')
-      setDeviceInfos(member.current.videos)
-    })
-    .catch(() => { console.log('Device enumeration error') })
-  }
-  useEffect(() => {
-    updateDevices()
-  })
-  const videoMenuItems = member.current.videos.map((info, idx) => makeMenuItem(info, closeVideoMenu, idx))
+  const videoMenuItems = useObserver(() =>
+    props.cameras.videos.map((info, idx) => makeMenuItem(info, closeVideoMenu, idx)))
   function makeMenuItem(info: MediaDeviceInfo, close:(did:string) => void, key:number):JSX.Element {
     let selected = false
     selected = info.deviceId === participants.local.devicePreference.videoInputDevice
@@ -65,7 +56,7 @@ export const CameraSelector: React.FC<CameraSelectorProps> = (props) => {
     const onKeyPress = (e: KeyboardEvent) => {
       if (e.code.substr(0, 3) === 'Key') {
         const keyNum = e.code.charCodeAt(3) - 65
-        closeVideoMenu(member.current.videos[keyNum].deviceId)
+        closeVideoMenu(props.cameras.videos[keyNum]?.deviceId)
       }
     }
     window.addEventListener('keypress', onKeyPress)
@@ -80,3 +71,4 @@ export const CameraSelector: React.FC<CameraSelectorProps> = (props) => {
     {videoMenuItems}
   </>
 }
+CameraSelector.displayName = 'CameraSelector'

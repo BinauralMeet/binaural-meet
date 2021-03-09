@@ -11,6 +11,7 @@ export function strcmp(a:string, b:string) {
   return 0
 }
 
+export const isChromium = /Chrome/.test(navigator.userAgent)
 export const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor)
 
 export function shallowEqualsForMap<T1, T2>(map1:Map<T1, T2>, map2:Map<T1, T2>) {

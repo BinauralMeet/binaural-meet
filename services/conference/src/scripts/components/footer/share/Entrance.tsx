@@ -24,8 +24,10 @@ import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'
 import {isArray} from 'lodash'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
+import {CameraSelectorMember} from './CameraSelector'
 import {DialogPageProps} from './DialogPage'
 import {ShareDialogItem} from './SharedDialogItem'
+import {Step} from './Step'
 
 async function startCapture(displayMediaOptions: any = {}) {
   let captureTracks = null
@@ -79,13 +81,12 @@ function importItems(ev: React.ChangeEvent<HTMLInputElement>, sharedContents: Sh
 }
 
 interface EntranceProps extends DialogPageProps {
+  cameras: CameraSelectorMember
 }
+
 
 export const Entrance: React.FC<EntranceProps> = (props) => {
   const {t} = useTranslation()
-  const {
-    setStep,
-  } = props
   const sharedContents = useContentsStore()
   const participants = useParticipantsStore()
   const map = useMapStore()
@@ -94,6 +95,21 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
   const showMouse = useObserver(() => participants.local.mouse.show)
   const fileInput = useRef<HTMLInputElement>(null)
 
+  //  for CameraSelector
+  function updateDevices() {
+    navigator.mediaDevices.enumerateDevices().then((infos) => {
+      props.cameras.videos = infos.filter(info => info.kind === 'videoinput')
+    })
+    .catch(() => { console.log('Device enumeration error') })
+  }
+  function setStep(step: Step) {
+    if (step === 'camera'){
+      updateDevices()
+    }
+    props.setStep(step)
+  }
+
+  //  menu handlers
   const importFile = () => {
     fileInput.current?.click()
   }

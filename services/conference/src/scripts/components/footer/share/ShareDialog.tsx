@@ -6,8 +6,9 @@ import {useTranslation} from '@models/locales'
 import {isSmartphone} from '@models/utils'
 import {createContentOfIframe, createContentOfText} from '@stores/sharedContents/SharedContentCreator'
 import sharedContents from '@stores/sharedContents/SharedContents'
-import React, {useState} from 'react'
+import React, {useRef, useState} from 'react'
 import {CameraSelector} from './CameraSelector'
+import {CameraSelectorMember} from './CameraSelector'
 import {Entrance} from './Entrance'
 import {ImageInput} from './ImageInput'
 import {Step} from './Step'
@@ -24,6 +25,8 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
     onClose,
   } = props
 
+  const cameras = useRef(new CameraSelectorMember())
+
   const map = useMapStore()
   const [step, setStep] = useState<Step>('entrance')
 
@@ -37,7 +40,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
   function getPage(step: Step, setStep: (step: Step) => void): JSX.Element | undefined {
     switch (step) {
       case 'entrance':
-        return <Entrance setStep={setStep} />
+        return <Entrance setStep={setStep} cameras={cameras.current} />
       case 'text':
         return <TextInput
             setStep={setStep}
@@ -58,7 +61,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
       case 'image':
         return <ImageInput setStep={setStep} />
       case 'camera':
-        return <CameraSelector setStep={setStep} />
+        return <CameraSelector setStep={setStep} cameras={cameras.current} />
       default:
         throw new Error(`Unknown step: ${step}`)
     }
