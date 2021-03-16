@@ -13,7 +13,7 @@
     "test": "jest",
     "link-lib-jitsi-meet": "cd libs/lib-jitsi-meet; yarn link; cd ../../; yarn link lib-jitsi-meet",
     "link-typing-lib-jitsi-meet": "cd libs/@types/lib-jitsi-meet; yarn link; cd ../../../; yarn link @types/lib-jitsi-meet",
-    "link": "; yarn run link-lib-jitsi-meet; yarn run link-typing-lib-jitsi-meet",
+    "link-lib": "yarn run link-lib-jitsi-meet;yarn run link-typing-lib-jitsi-meet",
     "deploy": "gh-pages -d dist",
     "publish-demo": "yarn build && yarn deploy"
   },
