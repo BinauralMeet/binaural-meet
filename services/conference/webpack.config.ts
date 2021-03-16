@@ -5,6 +5,8 @@ import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin'
 import * as webpack from 'webpack'
 import * as webpackDevServer from 'webpack-dev-server'
 
+
+const TerserPlugin = require('terser-webpack-plugin')
 const Visualizer = require('webpack-visualizer-plugin')
 const WebpackGitHash = require('webpack-git-hash')
 const webpackMode_ = process.env.MODE as ('production' | 'development')
@@ -24,10 +26,9 @@ const config: webpack.Configuration = {
   entry: './src/scripts/index.tsx',
   devtool: 'source-map',
   mode: webpackMode,
-  //  mode: 'development',
-  //  mode: 'production',
   optimization: {
     minimize: doMinimize,
+    minimizer: [new TerserPlugin()],
   },
   devServer: {
     contentBase: 'dist',

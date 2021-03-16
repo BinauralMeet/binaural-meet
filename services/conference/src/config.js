@@ -19,6 +19,12 @@ const rtcConfig = {
       },
     },
   },
+  screenOptions:{
+    desktopSharingFrameRate:{
+      min:  0.3,
+      max:  3,
+    },
+  },
 }
 const common_config = {
   openBridgeChannel: 'datachannel', // One of true, 'datachannel'==='true', or 'websocket

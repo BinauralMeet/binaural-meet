@@ -5,10 +5,10 @@
   "license": "MIT",
   "scripts": {
     "clean": "del-cli dist",
-    "build": "MODE=production;PROFILING=false; cross-env TS_NODE_PROJECT=\"tsconfig-for-webpack-config.json\" webpack",
+    "build": "export MODE=production; export PROFILING=false; cross-env TS_NODE_PROJECT=\"tsconfig-for-webpack-config.json\" webpack",
     "lint": "tslint --fix -p .",
-    "dev": "MODE=development; webpack-dev-server --open --host 0.0.0.0 --public localhost:9000 --https",
-    "pro": "MODE=production;PROFILING=true; webpack-dev-server --open --host 0.0.0.0 --public localhost:9000 --https",
+    "dev": "export MODE=development; webpack-dev-server --open --host 0.0.0.0 --public localhost:9000 --https",
+    "pro": "export MODE=production; export PROFILING=true; webpack-dev-server --open --host 0.0.0.0 --public localhost:9000 --https",
     "storybook": "start-storybook -s ./src/,./src/scripts/__tests__/blob/ -p 9999",
     "test": "jest",
     "link-lib-jitsi-meet": "cd libs/lib-jitsi-meet; yarn link; cd ../../; yarn link lib-jitsi-meet",

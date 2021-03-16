@@ -34,7 +34,7 @@ async function startCapture(displayMediaOptions: any = {}) {
 
   try {
     // @ts-ignore FIXME: https://github.com/microsoft/TypeScript/issues/33232
-    captureTracks = await JitsiMeetJS.createLocalTracks({devices:['desktop']})
+    captureTracks = await JitsiMeetJS.createLocalTracks({devices:['desktop'], ...config.rtc.screenOptions})
     //  captureStream = await navigator.mediaDevices.getDisplayMedia(displayMediaOptions)
   } catch (err) {
     console.error(`Share screen error: ${err}`)

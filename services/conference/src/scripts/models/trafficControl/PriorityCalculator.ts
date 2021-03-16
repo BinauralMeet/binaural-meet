@@ -171,7 +171,8 @@ export class PriorityCalculator {
       remoteDiposers.set(id, autorun(() => {
         // tslint:disable-next-line: max-line-length
         //  priorityLog(`prioirty ${id} chagned v=${(rp.tracks.avatar as JitsiRemoteTrack)?.getSSRC()} a=${(rp.tracks.audio as JitsiRemoteTrack)?.getSSRC()}`)
-        if (tracks.size) {
+        if (tracks.size) { //  update when number of the tracks changed
+          const content = contents.find(id) //  or content changed.
           this.updateSet.add((tracks.values().next().value as JitsiRemoteTrack).getParticipantId())
         }
       }))
