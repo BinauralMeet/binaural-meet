@@ -74,12 +74,14 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
         const video = tracks.find(track => track.kind === 'video')
         const settings = video?.getSettings()
         const newSize = [settings?.width || 0, settings?.height || 0] as [number, number]
-        if (member.current.content.originalSize[0] && newSize[0]
-          && member.current.content.originalSize.toString() !== newSize.toString()) {
-          const sx = member.current.content.originalSize[0] / newSize[0]
-          const sy = member.current.content.originalSize[1] / newSize[1]
-          if (sx === sy && simulcastRatios.find(s => s === sx)) { return }
-          const scale = member.current.content.size[0] / member.current.content.originalSize[0]
+        if (newSize[0] && member.current.content.originalSize.toString() !== newSize.toString()) {
+          if (member.current.content.originalSize[0]){
+            const sx = member.current.content.originalSize[0] / newSize[0]
+            const sy = member.current.content.originalSize[1] / newSize[1]
+            if (sx === sy && simulcastRatios.find(s => s === sx)) { return }
+          }
+          const scale = member.current.content.size[0] /
+            (member.current.content.originalSize[0] ? member.current.content.originalSize[0] : newSize[0])
           member.current.content.originalSize = newSize
           member.current.content.size = mulV2(scale, newSize)
           const newContent = Object.assign({}, member.current.content)

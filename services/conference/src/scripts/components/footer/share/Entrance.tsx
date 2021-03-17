@@ -230,7 +230,7 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
         key="shareScreenBackground"
         icon={sharing.main ? <StopScreenShareIcon /> : <ScreenShareIcon />}
         text={sharing.main ? t('stopScreenBackground') : t('shareScreenBackground')}
-        onClick={() => screenAsBackgrouond}
+        onClick={screenAsBackgrouond}
       />
       <ShareDialogItem
         key="shareScreenContent"
