@@ -1,4 +1,4 @@
-import {App} from '@components/app'
+import {App} from '@components/App'
 import {connection} from '@models/api'
 import '@models/audio'  // init audio manager (DO NOT delete)
 import '@models/middleware'

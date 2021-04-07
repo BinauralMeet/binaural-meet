@@ -15,9 +15,9 @@ declare const config:any                  //  from ../../config.js included from
 export const JITSILOGLEVEL = 'warn'  // log level for lib-jitsi-meet {debug|log|warn|error}
 export const TRACKLOG = false        // show add, remove... of tracks
 export const CONNECTIONLOG = false
-if (TPC.setTPCLogger !== undefined) {
+//  if (TPC.setTPCLogger !== undefined) {
   //  TPC.setTPCLogger(TRACKLOG ? console.log : (a:any) => {})
-}
+//  }
 export const trackLog = TRACKLOG ? console.log : (a:any) => {}
 export const connLog = CONNECTIONLOG ? console.log : (a:any) => {}
 export const connDebug = CONNECTIONLOG ? console.debug : (a:any) => {}
