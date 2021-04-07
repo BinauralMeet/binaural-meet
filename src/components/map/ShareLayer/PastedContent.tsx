@@ -65,7 +65,7 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
         if (str.indexOf('http://') === 0 || str.indexOf('https://') === 0) {
           const url = new URL(str)
           const ext = str.slice(-4)
-          if (url.host === location.host && url.pathname === location.pathname) {
+          if (url.host === window.location.host && url.pathname === window.location.pathname) {
             //  Openning of self url makes infinite loop. So, create text instead.
             content = createContentOfText(str, map)
             content.name = '! recursive reference'

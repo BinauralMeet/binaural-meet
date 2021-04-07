@@ -267,7 +267,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       }
       window.document.body.addEventListener('wheel', handler, {passive: false})
 
-      return () => removeEventListener('wheel', handler)
+      return () => window.document.body.removeEventListener('wheel', handler)
     },
     [],
   )
