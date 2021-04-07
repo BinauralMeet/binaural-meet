@@ -1,7 +1,7 @@
 import {MAP_SIZE} from '@components/map/Base'
 import {connection} from '@models/api/Connection'
 import {ConnectionStates} from '@models/api/Constants'
-import {KeyList, t} from '@models/locales'
+import {t} from '@models/locales'
 import {priorityCalculator} from '@models/middleware/trafficControl'
 import {urlParameters} from '@models/url'
 import {addV2, mulV2} from '@models/utils'

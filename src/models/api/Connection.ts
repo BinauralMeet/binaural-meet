@@ -3,24 +3,17 @@ import {ConnectionInfo, default as ConnectionInfoStore} from '@stores/Connection
 import {EventEmitter} from 'events'
 import jquery from 'jquery'
 import JitsiMeetJS from 'lib-jitsi-meet'
-import * as TPC from 'lib-jitsi-meet/modules/RTC/TPCUtils'
+//  import * as TPC from 'lib-jitsi-meet/modules/RTC/TPCUtils'
 import {Store} from '../../stores/utils'
-import {Conference} from './Conference'
+import {Conference, connDebug, connLog, JITSILOGLEVEL} from './Conference'
 import {ConnectionStates, ConnectionStatesType} from './Constants'
 
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
 
-//  Log level and module log options
-export const JITSILOGLEVEL = 'warn'  // log level for lib-jitsi-meet {debug|log|warn|error}
-export const TRACKLOG = false        // show add, remove... of tracks
-export const CONNECTIONLOG = false
 //  if (TPC.setTPCLogger !== undefined) {
   //  TPC.setTPCLogger(TRACKLOG ? console.log : (a:any) => {})
 //  }
-export const trackLog = TRACKLOG ? console.log : (a:any) => {}
-export const connLog = CONNECTIONLOG ? console.log : (a:any) => {}
-export const connDebug = CONNECTIONLOG ? console.debug : (a:any) => {}
 
 declare var global: any
 global.$ = jquery
@@ -60,10 +53,6 @@ export class Connection extends EventEmitter {
   public conferenceName = ''
   public state = ConnectionStates.DISCONNECTED
 
-  constructor() {
-    super()
-  }
-
   public set Store(store: Store<ConnectionInfo>) {
     this._store = store
   }
@@ -94,7 +83,7 @@ export class Connection extends EventEmitter {
     if (this._jitsiConnection) {
       this.conferenceName = conferenceName
       const jitsiConference = this._jitsiConnection.initJitsiConference(conferenceName, config)
-      this.conference.init(jitsiConference)
+      this.conference.init(jitsiConference, conferenceName)
 
       return
     }
@@ -102,7 +91,7 @@ export class Connection extends EventEmitter {
   }
 
   public disconnect(): Promise < any > {
-    if (this ._jitsiConnection) {
+    if (this._jitsiConnection) {
       connLog('Disconnection order has been sent.')
 
       return this._jitsiConnection?.disconnect()

@@ -1,6 +1,6 @@
-import JitsiLocalTrack from 'lib-jitsi-meet/modules/RTC/JitsiLocalTrack'
 import JitsiMeetJS from 'lib-jitsi-meet'
-import * as TPC from 'lib-jitsi-meet/modules/RTC/TPCUtils'
+import JitsiLocalTrack from 'lib-jitsi-meet/modules/RTC/JitsiLocalTrack'
+//import * as TPC from 'lib-jitsi-meet/modules/RTC/TPCUtils'
 
 export function createJitisLocalTracksFromStream(stream: MediaStream): Promise < JitsiLocalTrack[] > {
   const videoTrack: MediaStreamTrack = stream.getVideoTracks()[0]

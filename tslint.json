@@ -1,9 +1,4 @@
 {
-    "extends": [
-      "tslint-config-airbnb",
-      "tslint-react",
-      "tslint-react-hooks"
-    ],
     "linterOptions": {
       "exclude": [
         "./src/**/__tests__/**/*.json",
@@ -17,6 +12,7 @@
       "class-name": true,
       "curly": true,
       "cyclomatic-complexity": true,
+      "dot-location": true,
       "import-name": false,
       "import-spacing": true,
       "interface-over-type-literal": true,

@@ -1,5 +1,5 @@
 import {connection} from '@models/api/Connection'
-import {BackgroundContents, SharedContent as ISharedContent, SharedContentData as ISharedContentData} from '@models/SharedContent'
+import {BackgroundContents, SharedContent as ISharedContent} from '@models/SharedContent'
 import {diffMap, intersectionMap} from '@models/utils'
 import {default as participantsStore} from '@stores/participants/Participants'
 import {EventEmitter} from 'events'
@@ -106,7 +106,7 @@ export class SharedContents extends EventEmitter {
       if (c.isBackground()) {
         const same = bgs.find(t => c.url === t.url && _.isEqual(c.pose, t.pose))
         if (same) {
-          const pid = this.owner.get(same.id)
+          //  const pid = this.owner.get(same.id)
           if (same.id !== c.id && same.zorder <= c.zorder) {
             this.removeByLocal(c.id)
             rv = true
@@ -152,7 +152,7 @@ export class SharedContents extends EventEmitter {
     this.removeDuplicated()
     const newAll:ISharedContent[] = []
     this.participants.forEach((participant) => {
-      newAll.push(... participant.myContents.values())
+      newAll.push(...participant.myContents.values())
     })
     newAll.sort(contentComp)
     this.all = newAll

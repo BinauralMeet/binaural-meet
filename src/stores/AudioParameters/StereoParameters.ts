@@ -6,7 +6,6 @@ import {action, autorun, computed, observable} from 'mobx'
 
 const PERCENT = 100
 const REFDISTANCE_MAX = 12 * PARTICIPANT_SIZE  // max of no attenuation range
-const DEFAULT_HEARABLE_RANGE = 20
 
 // Doc of panner node parameters: https://developer.mozilla.org/en-US/docs/Web/API/PannerNode
 export class StereoParameters implements ConfigurableParams {

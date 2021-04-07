@@ -1,15 +1,21 @@
-import errorInfo from '@stores/ErrorInfo'
 import {participantsStore} from '@stores/participants'
 import {default as participants} from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
-import JitsiMeetJS, {JitisTrackError, JitsiLocalTrack, JitsiRemoteTrack,
+import JitsiMeetJS, {JitsiLocalTrack, JitsiRemoteTrack,
   JitsiTrack, JitsiValues, TMediaType} from 'lib-jitsi-meet'
 import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
-import {autorun, observable} from 'mobx'
-import {connection} from '.'
+import {observable} from 'mobx'
 import {ConferenceSync} from './ConferenceSync'
-import {connLog, trackLog, TRACKLOG} from './Connection'
+
+//  Log level and module log options
+export const JITSILOGLEVEL = 'warn'  // log level for lib-jitsi-meet {debug|log|warn|error}
+export const CONNECTIONLOG = false
+export const TRACKLOG = false        // show add, remove... of tracks
+export const trackLog = TRACKLOG ? console.log : (a:any) => {}
+export const connLog = CONNECTIONLOG ? console.log : (a:any) => {}
+export const connDebug = CONNECTIONLOG ? console.debug : (a:any) => {}
+
 
 // config.js
 declare const config:any             //  from ../../config.js included from index.html
@@ -27,9 +33,11 @@ export class Conference extends EventEmitter {
   public localId = ''
   sync = new ConferenceSync(this)
   @observable channelOpened = false
+  conferenceName = ''
 
-  public init(jc: JitsiMeetJS.JitsiConference) {
+  public init(jc: JitsiMeetJS.JitsiConference, cn: string) {
     this._jitsiConference = jc
+    this.conferenceName = cn
     this.registerJistiConferenceEvents()
     this.sync.bind()
     const jitsiConf = this._jitsiConference
@@ -304,8 +312,8 @@ export class Conference extends EventEmitter {
     setTimeout(contents.loadBackground.bind(contents), 2000)
 
     //  update ghost info
-    if (connection.conferenceName !== participants.ghostCandidates.room) {
-      participants.ghostCandidates = {room:connection.conferenceName, pids:[]}
+    if (this.conferenceName !== participants.ghostCandidates.room) {
+      participants.ghostCandidates = {room:this.conferenceName, pids:[]}
     }else {
       setTimeout(() => {
         participants.ghostCandidates.pids =

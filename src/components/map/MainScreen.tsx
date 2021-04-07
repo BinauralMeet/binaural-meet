@@ -4,7 +4,6 @@ import TraceablePeerConnection from 'lib-jitsi-meet/modules/RTC/TraceablePeerCon
 import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef, useState} from 'react'
-import {Property} from 'react/node_modules/csstype'
 
 declare const d:any                  //  from index.html
 
@@ -51,7 +50,7 @@ export const MainScreen: React.FC<MainScreenProps> = (props) => {
   interface DebugVideo{
     stream: MediaStream
     label: string
-    color: Property.Color
+    color: string
   }
   const [debugVideos, setDebugVideos] = useState<DebugVideo[]>()
   const member = useRef<any>({})

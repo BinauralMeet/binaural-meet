@@ -18,6 +18,7 @@ export function setAudioOutputDevice(audio: HTMLAudioElement, deviceId: string) 
 
 
 // NOTE Set default value will change nothing. Because value will be overwrite by store in ConnectedGroup
+/*
 const DEFAULT_PANNER_NODE_CONFIG: Partial<PannerNode> & {refDistance: number} = {
   panningModel: 'HRTF',
   distanceModel: 'inverse',
@@ -28,6 +29,7 @@ const DEFAULT_PANNER_NODE_CONFIG: Partial<PannerNode> & {refDistance: number} = 
   coneOuterAngle: 360,
   coneOuterGain: 0,
 }
+*/
 export const BROADCAST_DISTANCE = 100000
 
 export type PlayMode = 'Context' | 'Element' | 'Pause'

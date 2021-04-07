@@ -10,4 +10,6 @@ type ConnectionStatesType =
   typeof ConnectionStates.CONNECTING |
   typeof ConnectionStates.CONNECTED
 
-export {ConnectionStates, ConnectionStatesType}
+export { ConnectionStates }
+export type { ConnectionStatesType }
+

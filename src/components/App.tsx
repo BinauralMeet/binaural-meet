@@ -25,7 +25,6 @@ export const App: React.FC<{}> = () => {
     participants: participantsStore,
     contents: sharedContentsStore,
   }
-  const refWin = useRef(window)
   const refDiv = useRef<HTMLDivElement>(null)
   //  toucmove: prevent browser zoom by pinch
   window.addEventListener('touchmove', (ev) => {

@@ -7,7 +7,6 @@ import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import contents from '@stores/sharedContents/SharedContents'
 import {JitsiRemoteTrack, JitsiTrack} from 'lib-jitsi-meet'
-import _ from 'lodash'
 import {autorun, IReactionDisposer, observable} from 'mobx'
 import {RemoteTrackInfo, TrackInfo} from './priorityTypes'
 
@@ -160,7 +159,9 @@ export class PriorityCalculator {
         // tslint:disable-next-line: max-line-length
         //  priorityLog(`prioirty ${id} chagned v=${(rp.tracks.avatar as JitsiRemoteTrack)?.getSSRC()} a=${(rp.tracks.audio as JitsiRemoteTrack)?.getSSRC()}`)
         if (rp.tracks.audio || rp.tracks.avatar) {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const important = rp.physics.onStage || participants.directRemotes.has(rp.id)
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const moved = rp.pose.position
           this.updateSet.add(rp.id)
         }
@@ -172,6 +173,7 @@ export class PriorityCalculator {
         // tslint:disable-next-line: max-line-length
         //  priorityLog(`prioirty ${id} chagned v=${(rp.tracks.avatar as JitsiRemoteTrack)?.getSSRC()} a=${(rp.tracks.audio as JitsiRemoteTrack)?.getSSRC()}`)
         if (tracks.size) { //  update when number of the tracks changed
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const content = contents.find(id) //  or content changed.
           this.updateSet.add((tracks.values().next().value as JitsiRemoteTrack).getParticipantId())
         }
@@ -208,8 +210,8 @@ export class PriorityCalculator {
   private calcPriority() {
     //  list participants
     const numDisabled = [0, 0]  //  Does not include disabled (muted) tracks to the limits.
-    const recalculateList = Array.from(participants.remote.keys()).
-      filter(key => this.updateAll ? true : this.updateSet.has(key))
+    const recalculateList = Array.from(participants.remote.keys()).filter(
+      key => this.updateAll ? true : this.updateSet.has(key))
     recalculateList.forEach((id) => {
       const rp = participants.remote.get(id)
       if (rp) {
@@ -282,7 +284,7 @@ export class PriorityCalculator {
     const prioritizedSsrcLists = this.tracksToAccept.map((infos) => {
       const rv:number[] = []
       for (const info of infos) {
-        rv.push(... info.track.getSSRCs())
+        rv.push(...info.track.getSSRCs())
       }
 
       return rv

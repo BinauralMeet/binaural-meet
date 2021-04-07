@@ -191,11 +191,11 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   }
   const keycodesUse = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
     'KeyQ', 'KeyW', 'KeyE', 'KeyA', 'KeyS', 'KeyD'])
-  const unused = new KeyHandlerPlain(onKeyTimer, 33, keycodesUse, keycodesUse, () => (map.keyInputUsers.size === 0))
+  const unused = KeyHandlerPlain(onKeyTimer, 33, keycodesUse, keycodesUse, () => (map.keyInputUsers.size === 0))
 
   //  pointer drag
   const TIMER_INTERVAL = 33
-  const drag = new DragHandler<HTMLDivElement>(onDrag, 'draggableHandle',
+  const drag = DragHandler<HTMLDivElement>(onDrag, 'draggableHandle',
                                                onTimer, TIMER_INTERVAL, () => { setShowConfig(true) })
   useEffect(() => {
     drag.target.current?.focus({preventScroll:true})
@@ -239,7 +239,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   const ref = useRef<HTMLButtonElement>(null)
 
   return (
-    <div ref={drag.target} {...drag.bind()} {...moreControl}>
+    <div ref={drag.target} {...drag} {...moreControl}>
     <Participant {...props}
       onContextMenu={(ev) => {
         ev.preventDefault()

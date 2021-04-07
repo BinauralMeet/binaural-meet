@@ -5,7 +5,7 @@ import {SharedContent} from '@models/SharedContent'
 import {assert} from '@models/utils'
 import {SharedContents} from '@stores/sharedContents/SharedContents'
 import {JitsiLocalTrack, JitsiRemoteTrack, JitsiTrack} from 'lib-jitsi-meet'
-import _ from 'lodash'
+//  import _ from 'lodash'
 import {action, computed, observable} from 'mobx'
 
 export const CID_MAINSCREEN = 'mainScreen'
@@ -96,7 +96,7 @@ export class SharedContentTracks {
       //  add tracks to localMainConnection
       tracks.forEach(track => this.localMains.add(track))
       if (!this.localMainConnection) {
-        this.localMainConnection = new ConnectionForContent
+        this.localMainConnection = new ConnectionForContent()
         this.localMainConnection.init().then(() => {
           connection.conference.sync.sendMainScreenCarrier(true)
           tracks.forEach(track => this.localMainConnection!.addTrack(track))

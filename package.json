@@ -10,6 +10,7 @@
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
     "@types/jest": "^26.0.15",
+    "@types/jquery": "^3.5.5",
     "@types/node": "^12.0.0",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
@@ -20,7 +21,8 @@
     "git": "^0.1.5",
     "i18next": "^19.9.1",
     "i18next-browser-languagedetector": "^6.0.1",
-    "jquery": "*",
+    "jquery": "^3.6.0",
+    "lodash": "^4.17.21",
     "material-ui-dropzone": "^3.3.0",
     "mobx": "*",
     "mobx-react-lite": "^3.2.0",
@@ -76,6 +78,7 @@
     "@iconify-icons/fa-solid": "^1.1.1",
     "@iconify/icons-mdi": "^1.1.13",
     "@iconify/react": "^1.1.4",
+    "@types/lodash": "^4.14.168",
     "react-app-rewired": "^2.1.8"
   }
 }

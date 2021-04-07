@@ -1,5 +1,5 @@
 import {priorityCalculator} from '@models/middleware/trafficControl'
-import {assert, isChrome} from '@models/utils'
+import {assert} from '@models/utils'
 import errorInfo from '@stores/ErrorInfo'
 import {autorun} from 'mobx'
 import {NodeGroup, PlayMode, setAudioOutputDevice} from './NodeGroup'

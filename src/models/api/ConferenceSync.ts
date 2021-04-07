@@ -286,6 +286,7 @@ export class ConferenceSync{
       const cs = makeThemContents(cs_)
       contents.checkDuplicatedBackground(from, cs)
       contents.replaceRemoteContents(cs, from)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const remote = participants.remote.get(from)
       syncLog(`recv remote contents ${JSON.stringify(cs.map(c => c.id))} from ${from}.`, cs)
     })
@@ -295,6 +296,7 @@ export class ConferenceSync{
     }))
     //  request
     this.conference.on(MessageType.CONTENT_UPDATE_REQUEST, (from:string, c:ISharedContent) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const content = makeItContent(c)
       contents.updateByRemoteRequest(content)
     })

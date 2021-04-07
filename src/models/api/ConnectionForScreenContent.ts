@@ -5,6 +5,7 @@ import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'
 
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
+
 export const contentTrackCarrierName = '_contentTrackCarrier'
 
 export class ConnectionForContent extends EventEmitter {

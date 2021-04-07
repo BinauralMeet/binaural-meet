@@ -1,4 +1,3 @@
-import {assert} from '@models/utils'
 import {JitsiRemoteTrack} from 'lib-jitsi-meet'
 import {action, computed, observable} from 'mobx'
 import {LocalParticipant} from './LocalParticipant'

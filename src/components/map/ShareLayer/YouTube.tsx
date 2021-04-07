@@ -242,6 +242,7 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
       }
 
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [props.content.id],
   )
 

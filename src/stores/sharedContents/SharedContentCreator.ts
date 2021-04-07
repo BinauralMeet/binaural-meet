@@ -197,7 +197,7 @@ export function createContentOfImageUrl(url: string, map: MapData, offset?:[numb
       const pasted = createContent()
       pasted.type = 'img'
       pasted.url = url
-      const max = size[0] > size[1] ? size[0] : size [1]
+      const max = size[0] > size[1] ? size[0] : size[1]
       const scale = max > IMAGESIZE_LIMIT ? IMAGESIZE_LIMIT / max : 1
       pasted.size = [size[0] * scale, size[1] * scale]
       pasted.originalSize = [size[0], size[1]]
@@ -218,12 +218,12 @@ export function createContentOfImageUrl(url: string, map: MapData, offset?:[numb
 
 declare const gapi:any    //  google api from index.html
 let GoogleAuth:any        // Google Auth object.
-let isAuthorized = false
+//  let isAuthorized = false
 function updateSigninStatus(isSignedIn:boolean) {
   if (isSignedIn) {
-    isAuthorized = true
+    //  isAuthorized = true
   } else {
-    isAuthorized = false
+    //isAuthorized = false
   }
 }
 

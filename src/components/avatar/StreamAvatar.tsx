@@ -1,7 +1,5 @@
 import {makeStyles} from '@material-ui/core/styles'
-import {JitsiTrack} from 'lib-jitsi-meet'
-import React, {useCallback, useEffect, useRef} from 'react'
-import {Scale} from 'tone'
+import React, {useEffect, useRef} from 'react'
 
 const CENTER = 0.5
 const useStyles = makeStyles({

@@ -32,7 +32,7 @@ interface DragMemo<ET extends Element>{
   timerId: number
   state: DragState<ET>
 }
-
+/*
 export class DragHandler<ET extends Element>{  //  pointer drag
   onDrag: (state:DragState<ET>) => void
   onTimer?: (state:DragState<ET>) => boolean
@@ -41,92 +41,87 @@ export class DragHandler<ET extends Element>{  //  pointer drag
   handle?: string  //  class name of dragging handle
   target: React.RefObject<ET>
   memo: DragMemo<ET>
-
-  constructor(onDrag:(state:DragState<ET>) => void, handle?: string,
+*/
+export function DragHandler<ET extends Element>(onDrag:(state:DragState<ET>) => void, handle?: string,
               onTimer?:(state:DragState<ET>) => boolean, interval?: number,
               onContextMenu?:(ev: React.TouchEvent<ET>) => void) {
-    this.interval = interval
-    this.onDrag = onDrag
-    this.onTimer = onTimer
-    this.handle = handle
-    this.target = useRef<ET>(null)
-    this.onContextMenu = onContextMenu
-    this.memo = useRef<DragMemo<ET>>({state:{}} as DragMemo<ET>).current
-  }
-  timerFunc = () => {
-    if (!this.memo.state.dragging && !this.memo.timerAgain) {
-      clearInterval(this.memo.timerId)
-      this.memo.timerId = 0
-    }else if (this.onTimer) {
-      this.memo.timerAgain = this.onTimer(this.memo.state)
+  const target = useRef<ET>(null)
+  const memo = useRef<DragMemo<ET>>({state:{}} as DragMemo<ET>).current
+
+  const timerFunc = () => {
+    if (!memo.state.dragging && !memo.timerAgain) {
+      clearInterval(memo.timerId)
+      memo.timerId = 0
+    }else if (onTimer) {
+      memo.timerAgain = onTimer(memo.state)
     }
   }
 
   //  To prevent browser zoom, onTouchMove must call preventDefault() and need {passive:false}
-  onTouchMove(ev: Event) {
+  function onTouchMove(ev: Event) {
     ev.preventDefault()
     ev.stopPropagation()
   }
 
-  bind() {
-    useEffect(() => {
-      this.target.current?.addEventListener('touchmove', this.onTouchMove, {passive:false})
+  useEffect(() => {
+    const current = target.current
+    current?.addEventListener('touchmove', onTouchMove, {passive:false})
 
-      return () => {
-        this.target.current?.removeEventListener('touchmove', this.onTouchMove)
-      }
-    },        [this.target.current])
-    const bindObject = {
-      onMouseDown: (e: React.MouseEvent<ET>) => { e.stopPropagation() },
-      onTouchStart: (e: React.TouchEvent<ET>) => { e.stopPropagation() },
-      onPointerDown: (e: React.PointerEvent<ET>) => {
-        e.stopPropagation()
-        this.memo.state = {dragging:false, buttons:e.buttons, xy:[e.clientX, e.clientY],
-          start:[e.clientX, e.clientY], startTime:Date.now(), event:e}
-        if ((e.buttons & 1) && this.target.current &&
-          (!this.handle || checkClass(e.target as Element, this.target.current, this.handle))) {
-          (e.target as Element).setPointerCapture(e.pointerId)
-
-          if (!this.memo.timerId) {
-            this.memo.timerId = setInterval(this.timerFunc, this.interval)
-          }
-          this.memo.state.dragging = true
-        }
-        //  console.log(`onPointerDown: ${this.memo.state.dragging}`)
-      },
-      onPointerOut: (e: React.PointerEvent<ET>) => {
-        e.stopPropagation()
-        Object.assign(this.memo.state, {dragging:false, buttons:e.buttons, xy:[e.clientX, e.clientY], event:e})
-        //  console.log(`onPointerOut: ${this.memo.state.dragging}`)
-      },
-      onPointerUp: (e: React.PointerEvent<ET>) => {
-        bindObject.onPointerOut(e)
-      },
-      onTouchEnd:(e: React.TouchEvent<ET>) => {
-        e.stopPropagation()
-        const delta = normV(subV2(this.memo.state.xy, this.memo.state.start))
-        const deltaT = Date.now() - this.memo.state.startTime
-        if (delta < 5 && deltaT > 0.5 && this.onContextMenu) {
-          this.onContextMenu(e)
-        }
-      },
-      onPointerMove: (e: React.PointerEvent<ET>) => {
-        e.stopPropagation()
-        Object.assign(this.memo.state, {dragging:this.memo.state?.dragging ? true :false,
-          buttons:e.buttons, xy:[e.clientX, e.clientY], event:e})
-        //  console.log(`onPointerMove xy:${e.clientX},${e.clientY} buttons:${e.buttons} drag:${this.dragging ? 1 : 0}`)
-
-        if (this.memo.state.dragging) {
-          if ((e.buttons & 1)) {
-            this.onDrag(this.memo.state)
-          }else {
-            this.memo.state.dragging = false
-          }
-        }
-      },
+    return () => {
+      current?.removeEventListener('touchmove', onTouchMove)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },        [target.current])
+  const bindObject = {
+    target: target,
+    onMouseDown: (e: React.MouseEvent<ET>) => { e.stopPropagation() },
+    onTouchStart: (e: React.TouchEvent<ET>) => { e.stopPropagation() },
+    onPointerDown: (e: React.PointerEvent<ET>) => {
+      e.stopPropagation()
+      memo.state = {dragging:false, buttons:e.buttons, xy:[e.clientX, e.clientY],
+        start:[e.clientX, e.clientY], startTime:Date.now(), event:e}
+      if ((e.buttons & 1) && target.current &&
+        (!handle || checkClass(e.target as Element, target.current, handle))) {
+        (e.target as Element).setPointerCapture(e.pointerId)
 
-    return bindObject
+        if (!memo.timerId) {
+          memo.timerId = setInterval(timerFunc, interval)
+        }
+        memo.state.dragging = true
+      }
+      //  console.log(`onPointerDown: ${this.memo.state.dragging}`)
+    },
+    onPointerOut: (e: React.PointerEvent<ET>) => {
+      e.stopPropagation()
+      Object.assign(memo.state, {dragging:false, buttons:e.buttons, xy:[e.clientX, e.clientY], event:e})
+      //  console.log(`onPointerOut: ${this.memo.state.dragging}`)
+    },
+    onPointerUp: (e: React.PointerEvent<ET>) => {
+      bindObject.onPointerOut(e)
+    },
+    onTouchEnd:(e: React.TouchEvent<ET>) => {
+      e.stopPropagation()
+      const delta = normV(subV2(memo.state.xy, memo.state.start))
+      const deltaT = Date.now() - memo.state.startTime
+      if (delta < 5 && deltaT > 0.5 && onContextMenu) {
+        onContextMenu(e)
+      }
+    },
+    onPointerMove: (e: React.PointerEvent<ET>) => {
+      e.stopPropagation()
+      Object.assign(memo.state, {dragging:memo.state?.dragging ? true :false,
+        buttons:e.buttons, xy:[e.clientX, e.clientY], event:e})
+      //  console.log(`onPointerMove xy:${e.clientX},${e.clientY} buttons:${e.buttons} drag:${this.dragging ? 1 : 0}`)
+
+      if (memo.state.dragging) {
+        if ((e.buttons & 1)) {
+          onDrag(memo.state)
+        }else {
+          memo.state.dragging = false
+        }
+      }
+    },
   }
-}
 
+  return bindObject
+}

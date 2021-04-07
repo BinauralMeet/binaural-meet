@@ -1,4 +1,4 @@
-import {ParticipantBase as IParticipantBase} from '@models/participant'
+import {ParticipantBase as IParticipantBase} from '@models/Participant'
 import {Store} from '@stores/utils'
 
 export type ParentStoreBase = Store<IParticipantBase>

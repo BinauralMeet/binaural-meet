@@ -6,6 +6,7 @@ export function memoComponent<Prop extends {}>(
   ): React.FC<Prop> {
 
   return (props) => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     return useMemo(() => <Component { ...props } />, depAttr.map(attr => props[attr]))
   }
 }

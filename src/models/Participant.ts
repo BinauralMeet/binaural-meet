@@ -1,4 +1,4 @@
-import {JitsiLocalTrack, JitsiTrack} from 'lib-jitsi-meet'
+import {JitsiTrack} from 'lib-jitsi-meet'
 import {MapObject} from './MapObject'
 
 export const PARTICIPANT_SIZE = 60
