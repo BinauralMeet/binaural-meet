@@ -74,7 +74,7 @@ export const ConfigForm: React.FC<ConfigFormProps> = (props: ConfigFormProps) =>
     {t('asName')}: <input style={iStyle} type="text" {...name.args} /> <br />
     {t('asImageFile')}: &nbsp;
     {local.information.avatarSrc ?
-      <> <img src={local.information.avatarSrc} style={{height:'1.5em', verticalAlign:'middle'}} />
+      <> <img src={local.information.avatarSrc} style={{height:'1.5em', verticalAlign:'middle'}} alt="avatar"/>
       <input style={iStyle} type="submit"
         onClick={() => setSubmitType('clearAvatarSrc')} value="✕" /> &nbsp; </>
        : undefined}

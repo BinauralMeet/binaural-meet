@@ -14,7 +14,7 @@ export const MouseCursor: React.FC<MouseCursorProps> = (props:MouseCursorProps) 
   const participant = participants.find(props.participantId) as ParticipantBase
   const position = useObserver(() => participant.mouse.position)
   const name = useObserver(() => participant.information.name)
-  const [color, textColor] = participant.getColor()
+  const [color] = participant.getColor()
   if (!position) {
     return <div />
   }

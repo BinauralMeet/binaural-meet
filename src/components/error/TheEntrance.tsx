@@ -55,7 +55,8 @@ export const TheEntrance: React.FC<{}> = (props) => {
     </Button>
     <h2>Binaural Meet</h2>
     <p>
-      <img style={{float: 'right', width:'28em'}} src={i18n.language === 'ja' ? usageJa : usageEn} />
+      <img style={{float: 'right', width:'28em'}} src={i18n.language === 'ja' ? usageJa : usageEn}
+        alt="usage" />
       {t('aboutBM')}&nbsp;
     <a href="https://scrapbox.io/binaural-meet/Top_page">{t('BMmoreInfo')}</a>
     </p>

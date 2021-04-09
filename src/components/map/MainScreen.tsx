@@ -72,6 +72,10 @@ export const MainScreen: React.FC<MainScreenProps> = (props) => {
     () => {
       if (props.showAllTracks) {
         const INTERVAL = 1000
+        if (member.current?.interval){
+          clearInterval(member.current.interval)
+          member.current.interval = undefined
+        }
         member.current.interval = setInterval(() => {
           const tpc = d.tpc as TraceablePeerConnection
           if (!tpc || !tpc.peerconnection) { return }
@@ -140,7 +144,7 @@ export const MainScreen: React.FC<MainScreenProps> = (props) => {
         }
       }
     },
-    [],
+    [props.showAllTracks],
   )
 
   const videos = (props.showAllTracks && debugVideos) ? debugVideos.map((debugVideo, idx) =>

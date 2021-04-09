@@ -11,7 +11,7 @@ import MicOffIcon from '@material-ui/icons/MicOff'
 import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
 import {addV2, mulV2, normV, rotateVector2DByDegree, subV2} from '@models/utils'
 import {useObserver} from 'mobx-react-lite'
-import React, {forwardRef, useRef, useState} from 'react'
+import React, {forwardRef} from 'react'
 declare const config:any             //  from ../../config.js included from index.html
 
 interface StyleProps {
@@ -88,7 +88,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
     size: props.size,
   })
 
-  const [color, textColor, revColor] = participant ? participant.getColor() : ['white', 'black']
+  const [color, textColor] = participant ? participant.getColor() : ['white', 'black']
   const outerRadius = props.size / 2 + 2
   const isLocal = participants.isLocal(props.participantId)
   const AUDIOLEVELSCALE = props.size * SVG_RATIO * HALF

@@ -74,6 +74,7 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
   useEffect(() => {
     if (checkMouseOnBottom()) { member.touched = true }
     setShowFooter(mouseOnBottom || !member.touched)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   },        [mouseOnBottom, member.touched])
   function setShowFooter(show: boolean) {
     if (show) {
@@ -122,6 +123,7 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
     return () => {
       window.removeEventListener('keypress', onKeyPress)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   },        [])
 
 
@@ -145,7 +147,7 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
   const micMenuItems:JSX.Element[] = [<MenuItem  key = {'broadcast'} ><BroadcastControl /></MenuItem>]
   const speakerMenuItems:JSX.Element[] = []
   const videoMenuItems:JSX.Element[] = []
-  deviceInfos.map((info) => {
+  deviceInfos.forEach((info) => {
     if (info.kind === 'audioinput') {
       const broadcastControl = micMenuItems.pop() as JSX.Element
       micMenuItems.push(makeMenuItem(info, closeMicMenu))
@@ -270,7 +272,9 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
       </Popover>
 
     </Collapse>
-  </div >,             [mute.muteA, mute.muteS, mute.muteV, participants.local.physics.onStage,
+  </div >,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [mute.muteA, mute.muteS, mute.muteV, participants.local.physics.onStage,
     show, showAdmin, showShare, micMenuEl, micMenuItems, speakerMenuEl, speakerMenuItems,
     videoMenuEl, videoMenuItems])
 }

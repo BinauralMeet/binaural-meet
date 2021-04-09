@@ -64,6 +64,7 @@ export const CameraSelector: React.FC<CameraSelectorProps> = (props) => {
     return () => {
       window.removeEventListener('keypress', onKeyPress)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   },        [])
 
 

@@ -2,7 +2,6 @@ import {useStore as useParticipantsStore} from '@hooks/ParticipantsStore'
 import Container from '@material-ui/core/Container'
 import Grid from '@material-ui/core/Grid'
 import Popover from '@material-ui/core/Popover'
-import {makeStyles} from '@material-ui/core/styles'
 import Switch from '@material-ui/core/Switch'
 import HeadsetIcon from '@material-ui/icons/HeadsetMic'
 import SpeakerIcon from '@material-ui/icons/Speaker'
@@ -32,12 +31,6 @@ export const SoundLocalizationSetting: React.FC<{}> = () => {
 }
 SoundLocalizationSetting.displayName = 'SoundLocalizationSetting'
 
-const useStyles = makeStyles({
-  button:{
-    paddingTop:20,
-  },
-})
-
 
 export const StereoAudioSwitch: React.FC<{size?: number, iconSize:number}> = (props) => {
   const participants = useParticipantsStore()
@@ -49,7 +42,6 @@ export const StereoAudioSwitch: React.FC<{size?: number, iconSize:number}> = (pr
     participants.local.saveMediaSettingsToStorage(true)
   }
 
-  const classes = useStyles()
   const {t} = useTranslation()
 
   return <>

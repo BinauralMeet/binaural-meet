@@ -43,7 +43,7 @@ export const LeftBar: React.FC<Stores> = (stores) => {
         if (memo === undefined) {
           return [d, a]
         }
-        const [md, ma] = memo
+        const [md] = memo
 
         const MIN_D = 10
         const scaleChange = d > MIN_D ? d / md : d <  -MIN_D ? md / d : (1 + (d - md) / MIN_D)

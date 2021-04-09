@@ -65,17 +65,7 @@ export const StreamAvatar: React.FC<StreamAvatarProps> = (props: StreamAvatarPro
                   classes.videoLargerWidth, classes.videoLargerHeight)
       }
     },
-    [props.stream],
-  )
-
-  useEffect(
-    () => {
-      if (videoRef !== null && videoRef.current !== null) {
-        setStream(videoRef.current, props.stream,
-                  classes.videoLargerWidth, classes.videoLargerHeight)
-      }
-    },
-    [videoRef],
+    [videoRef, classes.videoLargerWidth, classes.videoLargerHeight, props.stream],
   )
 
   return <div className={classes.root} style={props.style}>

@@ -13,7 +13,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
     <RemoteTrackLimitControl key="remotelimitcontrol" />
     <br />
     <Button onClick={() => {
-      const connection = new ConnectionForContent
+      const connection = new ConnectionForContent()
       connection.init().then(() => {
         console.log('ConnectionForContent connected.')
       })

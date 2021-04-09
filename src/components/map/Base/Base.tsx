@@ -14,7 +14,6 @@ import ResizeObserver from 'react-resize-observer'
 import {useGesture} from 'react-use-gesture'
 
 export const MAP_SIZE = 5000
-const HALF = 0.5
 export const MAP_CENTER:[number, number] = [0, 0]
 
 
@@ -77,9 +76,6 @@ class BaseMember{
 export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   const mapStore = useMapStore()
   const matrix = useObserver(() => mapStore.matrix)
-  // changed only when event end, like drag end
-  const committedMatrix = useObserver(() => mapStore.committedMatrix)
-
   const container = useRef<HTMLDivElement>(null)
   const outer = useRef<HTMLDivElement>(null)
   function offset():[number, number] {
@@ -87,7 +83,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   }
   const participants = useStore()
   const thirdPersonView = useObserver(() => participants.local.thirdPersonView)
-  const memRef = useRef<BaseMember>(new BaseMember)
+  const memRef = useRef<BaseMember>(new BaseMember())
   const mem = memRef.current
 
   const center = transformPoint2D(matrix, participants.local.pose.position)
@@ -253,7 +249,8 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
     () => {
       onResizeOuter()
     },
-    [outer.current],
+    // eslint-disable-next-line  react-hooks/exhaustive-deps
+    [],
   )
 
   // Prevent browser's zoom
@@ -320,20 +317,22 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   )
   */
   //  update offset
-  function onResizeOuter() {
-    if (outer.current) {
-      let cur = outer.current as HTMLElement
-      let offsetLeft = 0
-      while (cur) {
-        offsetLeft += cur.offsetLeft
-        cur = cur.offsetParent as HTMLElement
+  const onResizeOuter = useRef(
+      () => {
+      if (outer.current) {
+        let cur = outer.current as HTMLElement
+        let offsetLeft = 0
+        while (cur) {
+          offsetLeft += cur.offsetLeft
+          cur = cur.offsetParent as HTMLElement
+        }
+        //  console.log(`sc:[${outer.current.clientWidth}, ${outer.current.clientHeight}] left:${offsetLeft}`)
+        mapStore.setScreenSize([outer.current.clientWidth, outer.current.clientHeight])
+        mapStore.setLeft(offsetLeft)
+        // mapStore.setOffset([outer.current.scrollLeft, outer.current.scrollTop])  //  when use scroll
       }
-      //  console.log(`sc:[${outer.current.clientWidth}, ${outer.current.clientHeight}] left:${offsetLeft}`)
-      mapStore.setScreenSize([outer.current.clientWidth, outer.current.clientHeight])
-      mapStore.setLeft(offsetLeft)
-      // mapStore.setOffset([outer.current.scrollLeft, outer.current.scrollTop])  //  when use scroll
     }
-  }
+  ).current
 
   const styleProps: StyleProps = {
     matrix,

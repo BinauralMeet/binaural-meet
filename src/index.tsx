@@ -12,8 +12,6 @@ import contents from '@stores/sharedContents/SharedContents'
 import {JitsiLocalTrack} from 'lib-jitsi-meet'
 import {when} from 'mobx'
 import { configure } from "mobx"
-import 'mobx-react-lite/batchingForReactDom'
-import React from 'react'
 import ReactDOM from 'react-dom'
 
 configure({

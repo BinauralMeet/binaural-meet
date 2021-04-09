@@ -1,5 +1,5 @@
 import TextField from '@material-ui/core/TextField'
-import React, {useEffect, useRef, useState} from 'react'
+import React, {useState} from 'react'
 import {DialogPageProps} from './DialogPage'
 import {Input} from './Input'
 

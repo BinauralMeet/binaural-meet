@@ -46,7 +46,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   const participant = participants.local
   assert(props.participantId === participant.id)
   const map = useMapStore()
-  const member = useRef<LocalParticipantMember>(new Object() as LocalParticipantMember).current
+  const member = useRef<LocalParticipantMember>({} as LocalParticipantMember).current
 
 
   const moveParticipant = (state: DragState<HTMLDivElement>) => {
@@ -191,7 +191,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   }
   const keycodesUse = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
     'KeyQ', 'KeyW', 'KeyE', 'KeyA', 'KeyS', 'KeyD'])
-  const unused = KeyHandlerPlain(onKeyTimer, 33, keycodesUse, keycodesUse, () => (map.keyInputUsers.size === 0))
+  KeyHandlerPlain(onKeyTimer, 33, keycodesUse, keycodesUse, () => (map.keyInputUsers.size === 0))
 
   //  pointer drag
   const TIMER_INTERVAL = 33
@@ -223,7 +223,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     position: participant.pose.position,
     size: props.size,
   }))
-  const [color, textColor, revColor] = participant ? participant.getColor() : ['white', 'black']
+  const [color] = participant ? participant.getColor() : ['white', 'black']
   const classes = useStyles(styleProps)
   const [showMore, setShowMore] = React.useState(false)
   const [showConfig, setShowConfig] = React.useState(false)

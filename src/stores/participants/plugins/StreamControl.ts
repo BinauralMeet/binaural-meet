@@ -1,7 +1,14 @@
-import {computed, observable} from 'mobx'
+import {ParticipantBase as IParticipantBase} from '@models/Participant'
+import {Store} from '@stores/utils'
+import {computed, makeObservable, observable} from 'mobx'
 import {ParticipantStorePlugin} from './utils'
 
 export class StreamControl extends ParticipantStorePlugin {
+  constructor(parent: Store<IParticipantBase>) {
+    super(parent)
+    makeObservable(this)
+  }
+
   @observable muteAudio = false
   @observable muteSpeaker = false
   @observable muteVideo = false

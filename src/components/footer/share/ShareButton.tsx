@@ -1,5 +1,4 @@
 import {acceleratorText2El} from '@components/utils/formatter'
-import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore as useContentsStore} from '@hooks/SharedContentsStore'
 import shareSquare from '@iconify-icons/fa-solid/share-square'
 import {Icon} from '@iconify/react'
@@ -26,7 +25,6 @@ export const ShareButton: React.FC<ShareButtonProps> = (props) => {
   const classes = useStyles()
   const store = useContentsStore()
   const sharing = useObserver(() => store.tracks.localMains.size + store.tracks.localContents.size)
-  const map = useMapStore()
   const {t} = useTranslation()
 
   return (

@@ -59,7 +59,7 @@ export const Background: React.FC<BackgroundProps> = (props) => {
 
   return (
     <div className={classes.img}>
-      <img className={classes.logo} src={jitsiIcon} />
+      <img className={classes.logo} src={jitsiIcon} alt="jitsi icon"/>
     </div>
   )
 }

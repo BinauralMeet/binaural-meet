@@ -2,7 +2,7 @@ import {acceleratorText2El} from '@components/utils/formatter'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemAvatar from '@material-ui/core/ListItemAvatar'
 import ListItemText from '@material-ui/core/ListItemText'
-import {assert, isSmartphone} from '@models/utils'
+import {isSmartphone} from '@models/utils'
 import React from 'react'
 
 interface ShareDialogItemProps {

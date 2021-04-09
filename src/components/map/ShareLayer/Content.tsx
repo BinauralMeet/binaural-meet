@@ -64,13 +64,14 @@ export const Content: React.FC<ContentProps> = (props:ContentProps) => {
 
   let rv
   if (props.content.type === 'img') {
-    rv = <img className={classes.img} src={props.content.url} />
+    rv = <img className={classes.img} src={props.content.url} alt={props.content.name}/>
   }else if (props.content.type === 'iframe') {
     rv = <div className={classes.div}
       onDoubleClick = {() => { if (!props.editing) { props.setEditing(true) } }}
       onPointerLeave = {() => { if (props.editing) { props.setEditing(false) } }}
     >
-      <iframe className={props.editing ? classes.iframeEdit : classes.iframe} src={props.content.url} />
+      <iframe className={props.editing ? classes.iframeEdit : classes.iframe}
+        src={props.content.url} key={props.content.name} title={props.content.name}/>
       </div>
       // hasevr  width of iframe is too wide but I could not find way to change. Below not work.
       // width={props.content.size[0] - 4} height={props.content.size[1] - 2}
