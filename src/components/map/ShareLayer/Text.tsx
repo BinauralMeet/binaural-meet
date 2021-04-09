@@ -51,7 +51,7 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
 
   const classes = useStyles()
   const url = useObserver(() => props.content.url)
-  const memberRef = React.useRef<TextMember>(new TextMember)
+  const memberRef = React.useRef<TextMember>(new TextMember())
   const member = memberRef.current
   const participants = useParticipants()
   const contents = useContents()
@@ -61,7 +61,7 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
     if (!props.editing) {
       ref.current?.scroll(newTexts.scroll[0], newTexts.scroll[1])
     }
-  },        [newTexts.scroll])
+  },        [newTexts.scroll, props.editing])
   const indices = new Set<number>()
   const length = member.text.messages.length
   newTexts.messages.forEach((newMessage) => {
@@ -112,16 +112,17 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
     }
 
     //  add link to URL strings
-    const urlRegExp = /https?:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+/
+    const urlRegExp = /https?:\/\/[-_.!~*'()a-zA-Z0-9;/?:@&=+$,%#]+/
     const textToShow:JSX.Element[] = []
     let regResult:RegExpExecArray | null
     let start = 0
-    while (regResult = urlRegExp.exec(text.message.slice(start))) {
+    while ((regResult = urlRegExp.exec(text.message.slice(start))) !== null) {
       const before = text.message.slice(start, start + regResult.index)
       if (before) {
         textToShow.push(<span key={start}>{before}</span>)
       }
-      textToShow.push(<a key={start + before.length} href={regResult[0]} target="_blank">{regResult[0]}</a>)
+      textToShow.push(<a key={start + before.length} href={regResult[0]} target="_blank" rel="noreferrer">
+        {regResult[0]}</a>)
       start += before.length + regResult[0].length
     }
     textToShow.push(<span key={start}>{text.message.slice(start)}</span>)

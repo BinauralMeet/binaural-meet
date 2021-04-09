@@ -49,13 +49,14 @@ class RndContentState{
 //  The RnDContent component
 export const TITLE_HEIGHT = 24
 export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => {
+  /*
   function rotateG2C(gv: [number, number]) {
     const lv = mapData.rotateFromWindow(gv)
     const cv = rotateVector2DByDegree(-pose.orientation, lv)
     //  console.log('rotateG2C called ori', pose.orientation, ' tran:', transform.rotation)
 
     return cv
-  }
+  }*/
   /*
   function rotateG2L(gv: [number, number]) {
     const lv = transform.rotateG2L(gv)
@@ -251,8 +252,9 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   }
   const classes = useStyles({props, pose, size, showTitle, pinned:props.content.pinned})
   //  console.log('render: TITLE_HEIGHT:', TITLE_HEIGHT)
+  const nodeRef = React.useRef(null)
   const theContent =
-    <div className={classes.rndContainer} {...gesture()}>
+    <div className={classes.rndContainer} ref={nodeRef} {...gesture()}>
       <div className={classes.titlePosition} {...gesture() /* title can be placed out of Rnd */}>
         <div className={classes.titleContainer}
             onMouseEnter = {() => { if (props.autoHideTitle) { setShowTitle(true) } }}
@@ -306,7 +308,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       }
     }>
       <Rnd className={classes.rndCls} enableResizing={isFixed ? resizeDisable : resizeEnable}
-        disableDragging = {isFixed} ref={rnd}
+        disableDragging={isFixed} ref={rnd}
         onResizeStart = { (evt)  => {
           evt.stopPropagation(); evt.preventDefault()
           setResizeBase(size)
@@ -326,7 +328,6 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
 const useStyles = makeStyles({
   container: (props: StyleProps) => {
     const mat = new DOMMatrix()
-    const size = [props.size[0], props.size[1]]
     mat.rotateSelf(0, 0, props.pose.orientation)
 
     return ({

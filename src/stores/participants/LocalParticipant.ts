@@ -1,7 +1,7 @@
 import {Pose2DMap} from '@models/MapObject'
 import {LocalParticipant as ILocalParticipant, Physics, TrackStates} from '@models/Participant'
 import {urlParameters} from '@models/url'
-import {action, computed, observable} from 'mobx'
+import {action, computed, makeObservable, observable} from 'mobx'
 import {Store} from '../utils'
 import {DevicePreference} from './localPlugins'
 import {ParticipantBase} from './ParticipantBase'
@@ -41,6 +41,7 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
   }
   constructor() {
     super()
+    makeObservable(this)
     this.loadInformationFromStorage()
     if (urlParameters.name) { this.information.name = urlParameters.name }
     this.useStereoAudio = urlParameters.headphone !== null ? true : false

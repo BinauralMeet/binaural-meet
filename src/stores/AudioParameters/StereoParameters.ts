@@ -2,7 +2,7 @@ import {BROADCAST_DISTANCE} from '@models/audio/NodeGroup'
 import {ConfigurableParams} from '@models/audio/StereoParameters'
 import {PARTICIPANT_SIZE} from '@models/Participant'
 import participants from '@stores/participants/Participants'
-import {action, autorun, computed, observable} from 'mobx'
+import {action, autorun, computed, makeObservable, observable} from 'mobx'
 
 const PERCENT = 100
 const REFDISTANCE_MAX = 12 * PARTICIPANT_SIZE  // max of no attenuation range
@@ -18,6 +18,10 @@ export class StereoParameters implements ConfigurableParams {
   @observable refDistance = PARTICIPANT_SIZE * 1.5
   @observable rolloffFactor = 38 // 36
   refDistanceNormal:number = this.refDistance
+
+  constructor(){
+    makeObservable(this)
+  }
 
   //  0 to 100, 0 has strongest attenuation
   @computed

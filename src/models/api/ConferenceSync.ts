@@ -9,7 +9,8 @@ import contents from '@stores/sharedContents/SharedContents'
 import JitsiMeetJS from 'lib-jitsi-meet'
 import _ from 'lodash'
 import {autorun, IReactionDisposer} from 'mobx'
-import {Conference, ConferenceEvents} from './Conference'
+import type {Conference} from './Conference'
+import {ConferenceEvents} from './Conference'
 import {contentTrackCarrierName} from './ConnectionForScreenContent'
 
 export const MessageType = {

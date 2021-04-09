@@ -4,11 +4,14 @@ import {
 } from '@models/Participant'
 import {MapObject} from '@stores/MapObject'
 import {JitsiTrack} from 'lib-jitsi-meet'
-import {action, computed, observable} from 'mobx'
+import {action, computed, makeObservable, observable} from 'mobx'
 import {getRandomColor, getRandomColorRGB, shallowObservable, Store} from '../utils'
 import {Plugins} from './plugins'
 
 export class TracksStore<T extends JitsiTrack> implements Tracks{
+  constructor(){
+    makeObservable(this)
+  }
   @observable.ref audio:T|undefined = undefined
   @observable audioLevel = 0
   @observable.ref avatar:T|undefined = undefined
@@ -43,6 +46,7 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
 
   constructor() {
     super()
+    makeObservable(this)
     this.plugins = new Plugins(this)
   }
 

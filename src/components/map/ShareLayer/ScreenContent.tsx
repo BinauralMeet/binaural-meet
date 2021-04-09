@@ -92,14 +92,12 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
   }
   useEffect(() => {
     setTrack()
-  },        [ref.current, member.current.locals, member.current.remotes])
+  },        [member.current.locals, member.current.remotes])
   useEffect(() => {
     const interval = setInterval(checkVideoSize, 333)   //  Notification of exact video size may take time.
 
     return () => clearInterval(interval)
-  },
-            [ref.current],
-  )
+  })
 
   return <video className = {classes.video} ref = {ref} />
 }

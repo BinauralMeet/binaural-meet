@@ -1,6 +1,7 @@
 import {App} from '@components/App'
 import {connection} from '@models/api'
 import '@models/audio'  // init audio manager (DO NOT delete)
+import {i18nInit} from '@models/locales'
 import '@models/middleware'
 import {urlParameters} from '@models/url'
 import {resolveAtEnd} from '@models/utils'
@@ -10,11 +11,15 @@ import participants from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
 import {JitsiLocalTrack} from 'lib-jitsi-meet'
 import {when} from 'mobx'
+import { configure } from "mobx"
 import 'mobx-react-lite/batchingForReactDom'
 import React from 'react'
 import ReactDOM from 'react-dom'
 
-import {i18nInit} from '@models/locales'
+configure({
+    enforceActions: "never",
+})
+
 
 i18nInit().then(main)
 
@@ -29,8 +34,10 @@ function onStart() {
 }
 
 function renderDOM() {
-  const root = document.querySelector('#root')
-  ReactDOM.render(<App />, root)
+  ReactDOM.render(
+      <App />,
+    document.getElementById('root')
+  )
 }
 
 let logStr = ''

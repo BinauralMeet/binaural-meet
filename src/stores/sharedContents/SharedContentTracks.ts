@@ -6,7 +6,7 @@ import {assert} from '@models/utils'
 import {SharedContents} from '@stores/sharedContents/SharedContents'
 import {JitsiLocalTrack, JitsiRemoteTrack, JitsiTrack} from 'lib-jitsi-meet'
 //  import _ from 'lodash'
-import {action, computed, observable} from 'mobx'
+import {action, computed, makeObservable, observable} from 'mobx'
 
 export const CID_MAINSCREEN = 'mainScreen'
 
@@ -15,6 +15,7 @@ const contentTrackLog = LOG_CONTENT_TRACK ? console.log : () => {}
 export class SharedContentTracks {
   private sharedContents:SharedContents
   constructor(sharedContents: SharedContents) {
+    makeObservable(this)
     this.sharedContents = sharedContents
   }
   //  Map<pid (of content carrier), cid / screen map>

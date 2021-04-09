@@ -146,7 +146,7 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
         endScroll()
       }
     }
-  },        [divScroll.current])
+  },        [contents.localParticipant.myContents, props.content.id])
 
   const vscroll = isPreviewScroll(mimeType)
 
@@ -156,7 +156,7 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
   >
     <div className={(props.editing || !vscroll) ? classes.divClip : classes.divScroll} ref={divScroll}
       onWheel = {ev => ev.ctrlKey || ev.stopPropagation() } >
-      <iframe src={url}
+      <iframe src={url} title={props.content.url}
         className={props.editing ? classes.iframeEdit : vscroll ? classes.iframeVScrool : classes.iframe}
       />
     </div>

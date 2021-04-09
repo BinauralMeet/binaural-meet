@@ -147,6 +147,7 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
         {passive:false},
       )
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   )
   const pastedContent = useObserver(() => sharedContents.pasted)

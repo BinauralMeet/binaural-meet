@@ -6,6 +6,7 @@ import JitsiMeetJS, {JitsiLocalTrack, JitsiRemoteTrack,
   JitsiTrack, JitsiValues, TMediaType} from 'lib-jitsi-meet'
 import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
 import {observable} from 'mobx'
+import {connection} from '.'
 import {ConferenceSync} from './ConferenceSync'
 
 //  Log level and module log options
@@ -33,11 +34,9 @@ export class Conference extends EventEmitter {
   public localId = ''
   sync = new ConferenceSync(this)
   @observable channelOpened = false
-  conferenceName = ''
 
-  public init(jc: JitsiMeetJS.JitsiConference, cn: string) {
+  public init(jc: JitsiMeetJS.JitsiConference) {
     this._jitsiConference = jc
-    this.conferenceName = cn
     this.registerJistiConferenceEvents()
     this.sync.bind()
     const jitsiConf = this._jitsiConference
@@ -312,8 +311,8 @@ export class Conference extends EventEmitter {
     setTimeout(contents.loadBackground.bind(contents), 2000)
 
     //  update ghost info
-    if (this.conferenceName !== participants.ghostCandidates.room) {
-      participants.ghostCandidates = {room:this.conferenceName, pids:[]}
+    if (connection.conferenceName !== participants.ghostCandidates.room) {
+      participants.ghostCandidates = {room:connection.conferenceName, pids:[]}
     }else {
       setTimeout(() => {
         participants.ghostCandidates.pids =

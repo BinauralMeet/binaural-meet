@@ -12,7 +12,6 @@ import {isSmartphone} from '@models/utils'
 import errorInfo from '@stores/ErrorInfo'
 import React, {useEffect, useRef, useState} from 'react'
 
-
 export const TheEntrance: React.FC<{}> = (props) => {
   const participants = useParticipants()
   const [name, setName] = useState(participants.local.information.name)

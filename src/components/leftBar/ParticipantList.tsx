@@ -1,6 +1,6 @@
 import {ImageAvatar} from '@components/avatar/ImageAvatar'
 import {Tooltip} from '@material-ui/core'
-import {connection} from '@models/api/Connection'
+import {connection} from '@models/api'
 import {MapData} from '@stores/Map'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'

@@ -1,5 +1,5 @@
 import {MAP_SIZE} from '@components/map/Base'
-import {connection} from '@models/api/Connection'
+import {connection} from '@models/api'
 import {ConnectionStates} from '@models/api/Constants'
 import {t} from '@models/locales'
 import {priorityCalculator} from '@models/middleware/trafficControl'
@@ -8,7 +8,7 @@ import {addV2, mulV2} from '@models/utils'
 import {createJitisLocalTracksFromStream} from '@models/utils/jitsiTrack'
 import map from '@stores/Map'
 import participants from '@stores/participants/Participants'
-import {action, autorun, computed, observable, when} from 'mobx'
+import {action, autorun, computed, makeObservable, observable, when} from 'mobx'
 
 export type ErrorType = '' | 'connection' | 'noMic' | 'micPermission' | 'channel' | 'enterance'
 
@@ -19,6 +19,7 @@ export class ErrorInfo {
   @observable title = ''
 
   constructor() {
+    makeObservable(this)
     if (urlParameters['testBot'] !== null) {
       this.clear()
     }

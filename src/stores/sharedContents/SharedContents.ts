@@ -1,10 +1,10 @@
-import {connection} from '@models/api/Connection'
+import {connection} from '@models/api'
 import {BackgroundContents, SharedContent as ISharedContent} from '@models/SharedContent'
 import {diffMap, intersectionMap} from '@models/utils'
 import {default as participantsStore} from '@stores/participants/Participants'
 import {EventEmitter} from 'events'
 import _ from 'lodash'
-import {action, autorun, computed, observable} from 'mobx'
+import {action, autorun, computed, makeObservable, observable} from 'mobx'
 import {createContent, disposeContent, extractContentDatas} from './SharedContentCreator'
 import {SharedContentTracks} from './SharedContentTracks'
 
@@ -17,6 +17,7 @@ function contentComp(a:ISharedContent, b:ISharedContent) {
 }
 export class ParticipantContents{
   constructor(pid: string) {
+    makeObservable(this)
     this.participantId = pid
   }
   contentIdCounter = 0
@@ -28,6 +29,7 @@ export class SharedContents extends EventEmitter {
   private localId = ''
   constructor() {
     super()
+    makeObservable(this)
     autorun(() => {
       //  sync localId to participantsStore
       const newLocalId = participantsStore.localId

@@ -1,11 +1,12 @@
 import {MapObject as IMapObject} from '@models/MapObject'
 import {
   addV2, extractRotation, radian2Degree, rotateVector2D, subV2, transformPoint2D} from '@models/utils'
-import {action, computed, observable} from 'mobx'
+import {action, computed, makeObservable, observable} from 'mobx'
 
 const HALF = 0.5
 export class MapData {
   constructor() {
+    makeObservable(this)
     this.loadMatrixFromStorage()
   }
 

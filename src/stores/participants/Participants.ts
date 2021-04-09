@@ -1,5 +1,5 @@
 import {JitsiRemoteTrack} from 'lib-jitsi-meet'
-import {action, computed, observable} from 'mobx'
+import {action, computed, makeObservable, observable} from 'mobx'
 import {LocalParticipant} from './LocalParticipant'
 import {RemoteParticipant} from './RemoteParticipant'
 interface GhostsInfo{
@@ -102,6 +102,7 @@ export class Participants {
     }
   }
   constructor() {
+    makeObservable(this)
     this.loadGhostsFromStorage()
   }
   @observable localGhosts: Set<string> = new Set()

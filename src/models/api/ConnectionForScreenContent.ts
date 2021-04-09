@@ -1,4 +1,4 @@
-import {connection} from '@models/api/Connection'
+import {connection} from '@models/api'
 import {assert} from '@models/utils'
 import {EventEmitter} from 'events'
 import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'

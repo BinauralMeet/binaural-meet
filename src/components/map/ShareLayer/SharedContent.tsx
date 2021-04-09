@@ -1,6 +1,4 @@
 import {Stores} from '@components/utils'
-import {useStore as useMapStore} from '@hooks/MapStore'
-import {useStore} from '@hooks/SharedContentsStore'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {contentLog} from '@stores/sharedContents/SharedContents'
 import React from 'react'
