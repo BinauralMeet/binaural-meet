@@ -1,27 +1,63 @@
 # Development Guide
 
-This document describes the technology stack of jitsi-party, and how they are used in practice.
+Binaurl Meet was bootstrapped with [create-react-app](https://github.com/facebook/create-react-app) and configured with [react-app-rewired](https://github.com/timarney/react-app-rewired#readme).
 
-Note: The examples mentioned below are all in `conference` project by default.
+## Available Scripts
 
+In the project directory, you can run:
+
+### `yarn start`
+
+Runs the app in the development mode.\
+Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+
+The page will reload if you make edits.\
+You will also see any lint errors in the console.
+
+### `yarn test`
+Launches the test runner in the interactive watch mode.\
+See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+
+Note: No test has created yet.
+
+### `yarn build`
+
+Builds the app for production to the `build` folder.\
+It correctly bundles React in production mode and optimizes the build for the best performance.
+
+The build is minified and the filenames include the hashes.\
+Your app is ready to be deployed!
+
+See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+
+### `yarn eject`
+
+**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+
+If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+
+Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you are on your own.
+
+You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldnft customize it when you are ready for it.
+
+## Learn More
+
+You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+
+To learn React, check out the [React documentation](https://reactjs.org/).
+
+
+
+
+# The technology stack of Binaural Meet 
 ## React Hooks
 
-React Hooks is used, but you can also use class since they are compatible with each other. React hooks makes it easier to [reuse logics](https://reactjs.org/docs/hooks-intro.html#its-hard-to-reuse-stateful-logic-between-components), but it is also a bit [slow](https://hackernoon.com/react-hooks-slower-than-hoc-ff105586036) comparing to traditional HOC with class.
-
-### Template
-
-One sample of how to use React Hooks to create component is `StreamAvatar`, you can find it in storybook: `avatar-video`.
+[React Hooks](https://reactjs.org/docs/hooks-intro.html) is used, 
 
 ## MobX
 
-MobX is used to manage the states. 
+[MobX](https://mobx.js.org/) is used to manage the states. 
 
-### Template
-
-`Participant Store` is one example of usage of MobX. You can find it in `@stores` folder.
-
-To use the store with React Hooks, more efforts are needed. In `@hooks` folder, you can find how the store is wrapped with React Context. And in storybook: `store-participants`, you can find how it is used in render participant information into cards.
-
-### Related docs
-
-You may also refer to this [doc](./PerformanceOptimizationPractice.md) to see how connect store directly to components optimize performance of React.
+## lib-jitsi-meet
+Slightly modified [Jitsi](https://jitsi.org/) is used as backbone.
+[lib-jitsi-meet](https://github.com/BinauralMeet/lib-jitsi-meet) is used as library for WebRTC. modified version of [JVB](https://github.com/BinauralMeet/jitsi-videobridge) is used as the SFU.
