@@ -203,7 +203,9 @@ export class Conference extends EventEmitter {
     })
     this._jitsiConference.on(CONF.PARTICIPANT_PROPERTY_CHANGED, (participant:JitsiParticipant, name: string,
                                                                  oldValue:any, value:any) => {
-      this.emit(name, participant.getId(), JSON.parse(value), oldValue)
+      if (name !== 'codecType'){
+        this.emit(name, participant.getId(), JSON.parse(value), oldValue)
+      }
     })
     this._jitsiConference.on(CONF.CONFERENCE_JOINED, () => {
       connLog('Joined to a conference room.')

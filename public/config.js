@@ -54,7 +54,7 @@ const config_binaural = {
     domain: 'binaural.me',
     muc: 'conference.binaural.me'
   },
-  serviceUrl: 'wss://binaural.me/xmpp-websocket',
+  serviceUrl: 'wss://binaural.me:443/xmpp-websocket',
   //  bosh: 'https://binaural.me/http-bind',
 }
 Object.assign(config_binaural, Object.assign(common_config, config_binaural))
@@ -65,7 +65,8 @@ const config_local = {
     muc: 'muc.meet.jitsi',
     focus: 'focus.meet.jitsi',
   },
-  bosh: 'https://localhost:8443/http-bind', // FIXME: use xep-0156 for that
+  serviceUrl: 'wss://localhost:8443/xmpp-websocket',
+  //bosh: 'https://localhost:8443/http-bind', // FIXME: use xep-0156 for that
 }
 Object.assign(config_local, Object.assign(common_config, config_local))
 
