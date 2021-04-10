@@ -14,7 +14,8 @@ import {ConfigForm} from './LocalConfig/ConfigForm'
 import {Participant, ParticipantProps} from './Participant'
 
 const AVATAR_SPEED_LIMIT = 50
-const MAP_SPEED_LIMIT = 200
+const MAP_SPEED_LIMIT = 600
+const MAP_SPEED_MIN = 100
 const HALF_DEGREE = 180
 const WHOLE_DEGREE = 360
 const HALF = 0.5
@@ -141,6 +142,8 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     const norm = Math.sqrt(diff[0] * diff[0] + diff[1] * diff[1])
     if (norm > MAP_SPEED_LIMIT) {
       diff = mulV2(MAP_SPEED_LIMIT / norm, diff) as [number, number]
+    }else if (norm < MAP_SPEED_MIN){
+      diff = mulV2(MAP_SPEED_MIN / norm, diff) as [number, number]
     }
     const SCROOL_SPEED = 0.1
     const mapMove = mulV2(SCROOL_SPEED, map.rotateFromWindow(diff) as [number, number])
@@ -162,6 +165,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
 
       return !changed
     }
+    member.scrollAgain = false
 
     return false
   }
@@ -177,7 +181,6 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   const onDrag = (state:DragState<HTMLDivElement>) => {
     //  console.log('participant onDrag')
     moveParticipant(state)
-    scrollMap()
   }
   const onKeyTimer = (keys:Set<string>) => {
     //   console.log('onKeyTimer()', keys)

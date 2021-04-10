@@ -5,7 +5,7 @@ import {isPortrait, isSmartphone} from '@models/utils'
 import mapStore from '@stores/Map'
 import participantsStore from '@stores/participants/Participants'
 import sharedContentsStore from '@stores/sharedContents/SharedContents'
-import {useObserver} from 'mobx-react-lite'
+import {Observer} from 'mobx-react-lite'
 import React, {Fragment, useRef} from 'react'
 import SplitPane from 'react-split-pane'
 import {Footer} from './footer/Footer'
@@ -18,7 +18,6 @@ import {styleCommon, styleForSplit} from './utils/styles'
 export const App: React.FC<{}> = () => {
   const clsSplit = styleForSplit()
   const classes = styleCommon()
-  const stream = useObserver(() => sharedContentsStore.tracks.mainStream)
   const DEBUG_VIDEO = false //  To see all local and remote tracks or not.
   const stores:Stores = {
     map: mapStore,
@@ -47,7 +46,9 @@ export const App: React.FC<{}> = () => {
           <LeftBar {...stores} />
           <Fragment>
             <MainScreen showAllTracks = {DEBUG_VIDEO} />
-            <Map transparent={stream !== undefined || DEBUG_VIDEO} {...stores} />
+            <Observer>{() => <Map transparent={sharedContentsStore.tracks.mainStream !== undefined
+             || DEBUG_VIDEO} {...stores} />
+            }</Observer>
             <Footer {...stores} height={(isSmartphone() && isPortrait()) ? 100 : undefined} />
           </Fragment>
         </SplitPane>

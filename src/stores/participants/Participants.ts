@@ -9,6 +9,11 @@ interface GhostsInfo{
 
 
 export class Participants {
+  constructor() {
+    makeObservable(this)
+    this.loadGhostsFromStorage()
+  }
+
   @observable.shallow readonly remote = new Map<string, RemoteParticipant>()
   local_ = observable.box(new LocalParticipant())
 
@@ -100,10 +105,6 @@ export class Participants {
         this.ghostCandidates = loaded
       }
     }
-  }
-  constructor() {
-    makeObservable(this)
-    this.loadGhostsFromStorage()
   }
   @observable localGhosts: Set<string> = new Set()
   //  all ghosts include remotes

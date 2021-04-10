@@ -49,6 +49,7 @@ export function KeyHandlerPlain(onTimer: KeyHandlerPlain_OnTimer, interval?:numb
   }
 
   const onKeyDown = (e: KeyboardEvent) => {
+    if (enabled && !enabled()) { return }
     if (!preventList || preventList?.has(e.code)) { e.preventDefault() }
     if (!stopList || stopList?.has(e.code)) { e.stopPropagation() }
     state.event = e
@@ -59,6 +60,7 @@ export function KeyHandlerPlain(onTimer: KeyHandlerPlain_OnTimer, interval?:numb
     }
   }
   const onKeyUp = (e: KeyboardEvent) => {
+    if (enabled && !enabled()) { return }
     if (!preventList || preventList?.has(e.code)) { e.preventDefault() }
     if (!stopList || stopList?.has(e.code)) { e.stopPropagation() }
     state.event = e

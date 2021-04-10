@@ -1,7 +1,7 @@
 import {useStore as usePsStore} from '@hooks/ParticipantsStore'
 import {memoComponent} from '@hooks/utils'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
-import {useObserver} from 'mobx-react-lite'
+import {Observer} from 'mobx-react-lite'
 import React from 'react'
 import {ComposedAvatar} from './ComposedAvatar'
 
@@ -15,23 +15,11 @@ const ConnectedAvatar: React.FC<ConnectedAvatarProps> = (props) => {
   const participant = participantsStore.find(props.participantId) as ParticipantBase
   const [color, textColor] = participant.getColor()
 
-  const {
-    information,
-    stream,
-    showVideo,
-    isLocal,
-  } = useObserver(() => {
-
-    return {
-      information: {...participant.information},
-      stream: participant.tracks.avatarStream,
-      showVideo: participant.plugins.streamControl.showVideo,
-      isLocal: participantsStore.isLocal(props.participantId),
-    }
-  })
-
-  return <ComposedAvatar information={information} stream={showVideo ? stream : undefined}
-     color={color} textColor={textColor} size={props.size} style={{pointerEvents:'none'}} mirror={isLocal} />
+  return <Observer>{() => <ComposedAvatar information={{...participant.information}}
+    stream={participant.plugins.streamControl.showVideo ? participant.tracks.avatarStream : undefined}
+     color={color} textColor={textColor} size={props.size} style={{pointerEvents:'none'}}
+     mirror={participantsStore.isLocal(props.participantId)} />
+    }</Observer>
 }
 
 export const MemoedAvatar = memoComponent(ConnectedAvatar, ['participantId', 'size'])

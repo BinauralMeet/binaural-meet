@@ -5,13 +5,16 @@ import MenuItem from '@material-ui/core/MenuItem'
 import {assert} from '@models/utils'
 import {createContentOfVideo} from '@stores/sharedContents/SharedContentCreator'
 import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'
-import {observable} from 'mobx'
+import {makeObservable, observable} from 'mobx'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect} from 'react'
 import {DialogPageProps} from './DialogPage'
 
 export class CameraSelectorMember{
   @observable.shallow videos: MediaDeviceInfo[] = []
+  constructor(){
+    makeObservable(this)
+  }
 }
 interface CameraSelectorProps extends DialogPageProps{
   cameras: CameraSelectorMember

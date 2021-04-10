@@ -26,6 +26,7 @@ export const TheEntrance: React.FC<{}> = (props) => {
   const onClose = (save: boolean) => {
     if (save) {
       participants.local.information.name = name
+      participants.local.saveInformationToStorage(true)
       urlParameters.room = room
       sessionStorage.setItem('room', room)
     }

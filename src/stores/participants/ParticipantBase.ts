@@ -37,17 +37,17 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
   physics = shallowObservable<Physics>(defaultPhysics)
   mouse = shallowObservable<Mouse>({position:[0, 0], show:false})
 
+  constructor() {
+    super()
+    makeObservable(this)
+    this.plugins = new Plugins(this)
+  }
+
   getColor() {
     return getRandomColor(this.information.name)
   }
   getColorRGB() {
     return getRandomColorRGB(this.information.name)
-  }
-
-  constructor() {
-    super()
-    makeObservable(this)
-    this.plugins = new Plugins(this)
   }
 
   @action.bound

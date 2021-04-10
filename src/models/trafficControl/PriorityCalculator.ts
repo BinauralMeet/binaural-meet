@@ -7,7 +7,7 @@ import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import contents from '@stores/sharedContents/SharedContents'
 import {JitsiRemoteTrack, JitsiTrack} from 'lib-jitsi-meet'
-import {autorun, IReactionDisposer, observable} from 'mobx'
+import {autorun, IReactionDisposer, makeObservable, observable} from 'mobx'
 import {RemoteTrackInfo, TrackInfo} from './priorityTypes'
 
 export const PRIORITYLOG = false
@@ -80,6 +80,7 @@ export class PriorityCalculator {
 
   constructor() {
     this.local = extractPropsFromLocalParticipant(participants.local)
+    makeObservable(this)
   }
 
   setLimits(limits:number[]):void {

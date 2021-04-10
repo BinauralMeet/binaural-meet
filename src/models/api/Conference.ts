@@ -5,7 +5,7 @@ import {EventEmitter} from 'events'
 import JitsiMeetJS, {JitsiLocalTrack, JitsiRemoteTrack,
   JitsiTrack, JitsiValues, TMediaType} from 'lib-jitsi-meet'
 import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
-import {observable} from 'mobx'
+import {makeObservable, observable} from 'mobx'
 import {connection} from '.'
 import {ConferenceSync} from './ConferenceSync'
 
@@ -34,6 +34,11 @@ export class Conference extends EventEmitter {
   public localId = ''
   sync = new ConferenceSync(this)
   @observable channelOpened = false
+
+  constructor(){
+    super()
+    makeObservable(this)
+  }
 
   public init(jc: JitsiMeetJS.JitsiConference) {
     this._jitsiConference = jc
