@@ -1,6 +1,7 @@
+import {BaseProps} from '@components/utils'
 import {makeStyles} from '@material-ui/core/styles'
 import _ from 'lodash'
-import {useObserver} from 'mobx-react-lite'
+import {Observer} from 'mobx-react-lite'
 import React from 'react'
 import {Stores} from '../../utils'
 import {PastedContent} from './PastedContent'
@@ -15,20 +16,30 @@ const useStyles = makeStyles({
 })
 
 
-export const ShareLayer = React.memo<Stores>(
+export const ShareLayer = React.memo<BaseProps>(
   (props) => {
     const classes = useStyles()
-    const contents = useObserver(() =>
-      props.contents.all.map(val =>
-        <SharedContent key={val.id} content={val} editing={props.contents.editingId === val.id} {...props} />))
 
     return  <div className={classes.slContainer} >
-      {contents}
+      <Observer>{
+        ()=>{
+          const all = Array.from(props.contents.all)
+          if (props.transparent) {
+            const firstIdx = all.findIndex(content => !content.isBackground())
+            all.splice(0, firstIdx !== -1 ? firstIdx : all.length)
+          }
+
+          return <>{
+            all.map(val =>
+              <SharedContent key={val.id} content={val} editing={props.contents.editingId === val.id} {...props} />)
+          }</>
+        }
+      }</Observer>
     <PastedContent />
     </div>
   },
   (prev, next) => {
-    return _.isEqual(prev.contents.all, next.contents.all)
+    return _.isEqual(prev.contents.all, next.contents.all) && prev.transparent === next.transparent
   },
 )
 ShareLayer.displayName = 'ShareLayer'
