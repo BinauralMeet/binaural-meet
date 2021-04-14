@@ -3,7 +3,6 @@ import {makeStyles} from '@material-ui/core/styles'
 import _ from 'lodash'
 import {Observer} from 'mobx-react-lite'
 import React from 'react'
-import {Stores} from '../../utils'
 import {PastedContent} from './PastedContent'
 import {SharedContent} from './SharedContent'
 

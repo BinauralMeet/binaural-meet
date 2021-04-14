@@ -1,6 +1,7 @@
 import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore as useContents} from '@hooks/SharedContentsStore'
 import {SharedContent, SharedContent as ISharedContent} from '@models/SharedContent'
+import { isSelfUrl } from '@models/utils'
 import {MapData} from '@stores/Map'
 import {createContent, createContentOfIframe, createContentOfImage, createContentOfImageUrl,
   createContentOfPdf, createContentOfText} from '@stores/sharedContents/SharedContentCreator'
@@ -65,7 +66,7 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
         if (str.indexOf('http://') === 0 || str.indexOf('https://') === 0) {
           const url = new URL(str)
           const ext = str.slice(-4)
-          if (url.host === window.location.host && url.pathname === window.location.pathname) {
+          if (isSelfUrl(url)) {
             //  Openning of self url makes infinite loop. So, create text instead.
             content = createContentOfText(str, map)
             content.name = '! recursive reference'

@@ -80,12 +80,12 @@ function importItems(ev: React.ChangeEvent<HTMLInputElement>, sharedContents: Sh
   }
 }
 
-interface EntranceProps extends DialogPageProps {
+interface ShareMenuProps extends DialogPageProps {
   cameras: CameraSelectorMember
 }
 
 
-export const Entrance: React.FC<EntranceProps> = (props) => {
+export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
   const {t} = useTranslation()
   const sharedContents = useContentsStore()
   const participants = useParticipantsStore()
@@ -258,4 +258,4 @@ export const Entrance: React.FC<EntranceProps> = (props) => {
     </List>
   )
 }
-Entrance.displayName = 'Entrance'
+ShareMenu.displayName = 'ShareMenu'

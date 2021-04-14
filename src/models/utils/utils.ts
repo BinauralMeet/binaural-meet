@@ -86,3 +86,7 @@ export function isPortrait() {
 
   return false
 }
+
+export function isSelfUrl(url: URL){
+  return (url.host === window.location.host && url.pathname === window.location.pathname)
+}

@@ -112,14 +112,14 @@ export class StereoManager {
         // AudioContext must be resumed (or created) after a user gesture on the page.
         const interval = setInterval(
           () => {
+            if (errorInfo.type) { return }
+            // console.log(`Audio context = ${this.audioContext.state}  element = ${this.audioElement.played}`)
             if (this.audioContext.state !== 'suspended') {
               //  console.log('AudioContext successfully resumed')
               clearInterval(interval)
             }
             this.audioContext.resume()
-            if (!errorInfo.type) {
-              this.audioElement.play()  //  play() must be delayed
-            }
+            this.audioElement.play()  //  play() must be delayed
           },
           1000,
         )

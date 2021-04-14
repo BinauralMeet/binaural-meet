@@ -3,7 +3,7 @@ import {useStore as useContents} from '@hooks/SharedContentsStore'
 import {Tooltip} from '@material-ui/core'
 import {makeStyles} from '@material-ui/core/styles'
 import {compTextMessage, TextMessages} from '@models/SharedContent'
-import {assert} from '@models/utils'
+import {assert, isSelfUrl} from '@models/utils'
 import {getRandomColorRGB, rgba} from '@stores/utils'
 import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
@@ -38,6 +38,28 @@ const useStyles = makeStyles({
 class TextMember{
   text: TextMessages = {messages:[], scroll:[0, 0]}
 }
+
+function makeLink(key:number, regResult: string[]){
+  //console.log('reg:', regResult)
+  let href='', target='', disp=''
+  if (regResult[1]) { disp=href=regResult[1]; target='_blank' }
+  else if (regResult[2]) {
+    href = regResult[2]
+    disp = regResult[6] ? regResult[6] : regResult[2]
+    target = regResult[3] ? '_self' : '_blank'
+  }
+  else {
+    disp = regResult[7]
+    href = regResult[11]
+    target = (regResult[9]||regResult[10]) ? '_self' : '_blank'
+  }
+  if (isSelfUrl(new URL(href))){
+    target = '_self'
+  }
+
+  return <a key={key} href={href} target={target} rel="noreferrer">{disp}</a>
+}
+
 
 export const Text: React.FC<ContentProps> = (props:ContentProps) => {
   assert(props.content.type === 'text')
@@ -112,7 +134,10 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
     }
 
     //  add link to URL strings
-    const urlRegExp = /https?:\/\/[-_.!~*'()a-zA-Z0-9;/?:@&=+$,%#]+/
+    const urlReg = 'https?:\\/\\/[-_.!~*\'()a-zA-Z0-9;/?:@&=+$,%#]+'
+    const urlRegExp = new RegExp(`(${urlReg})|` +
+      `\\[(${urlReg})(( *>)|( +move))?\\s*(\\S+)\\]` +
+      `|\\[(\\S+)((\\s*>)|(\\s+move)|\\s)\\s*(${urlReg})\\]`)
     const textToShow:JSX.Element[] = []
     let regResult:RegExpExecArray | null
     let start = 0
@@ -121,8 +146,7 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
       if (before) {
         textToShow.push(<span key={start}>{before}</span>)
       }
-      textToShow.push(<a key={start + before.length} href={regResult[0]} target="_blank" rel="noreferrer">
-        {regResult[0]}</a>)
+      textToShow.push(makeLink(start + before.length, regResult))
       start += before.length + regResult[0].length
     }
     textToShow.push(<span key={start}>{text.message.slice(start)}</span>)

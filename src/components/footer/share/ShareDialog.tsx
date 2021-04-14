@@ -9,8 +9,8 @@ import sharedContents from '@stores/sharedContents/SharedContents'
 import React, {useRef, useState} from 'react'
 import {CameraSelector} from './CameraSelector'
 import {CameraSelectorMember} from './CameraSelector'
-import {Entrance} from './Entrance'
 import {ImageInput} from './ImageInput'
+import {ShareMenu} from './Menu'
 import {Step} from './Step'
 import {TextInput} from './TextInput'
 
@@ -28,7 +28,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
   const cameras = useRef(new CameraSelectorMember())
 
   const map = useMapStore()
-  const [step, setStep] = useState<Step>('entrance')
+  const [step, setStep] = useState<Step>('menu')
 
   const wrappedSetStep = (step: Step) => {
     if (step === 'none') {
@@ -39,8 +39,8 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
   }
   function getPage(step: Step, setStep: (step: Step) => void): JSX.Element | undefined {
     switch (step) {
-      case 'entrance':
-        return <Entrance setStep={setStep} cameras={cameras.current} />
+      case 'menu':
+        return <ShareMenu setStep={setStep} cameras={cameras.current} />
       case 'text':
         return <TextInput
             setStep={setStep}
@@ -68,13 +68,13 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
   }
 
   //  console.debug(`step=${step}, pasteEnabled=${sharedContents.pasteEnabled}`)
-  sharedContents.pasteEnabled = step === 'none' || step === 'entrance'
+  sharedContents.pasteEnabled = step === 'none' || step === 'menu'
 
   const {t} = useTranslation()
   const stepTitle: {
     [key: string]: string,
   } = {
-    entrance: t('Create and Share'),
+    menu: t('Create and Share'),
     text: t('Share Text'),
     iframe: t('Share iframe'),
     image: t('Share image'),
@@ -84,7 +84,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
   const title = stepTitle[step]
   const page: JSX.Element | undefined = getPage(step, wrappedSetStep)
 
-  return  <Dialog open={open} onClose={onClose} onExited={() => setStep('entrance')} maxWidth="sm" fullWidth={true}
+  return  <Dialog open={open} onClose={onClose} onExited={() => setStep('menu')} maxWidth="sm" fullWidth={true}
       onPointerMove = {(ev) => {
         map.setMouse([ev.clientX, ev.clientY])
       }}
