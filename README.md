@@ -18,6 +18,6 @@ https://binaural.me/
 
 - [Development Guide](./docs/DevelopmentGuide.md)
 
-## Contact and commucation
+## Contact and communication
 
-- [Inivitaiton to Discord server](https://discord.gg/xEbz7XKguB) Pleage get user'role if you use Binaural Meet contrinuously.
+- [Invitation to Discord server](https://discord.gg/xEbz7XKguB) Please get user role if you use Binaural Meet continuously.
