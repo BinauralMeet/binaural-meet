@@ -7,6 +7,8 @@ For more info please visit [https://scrapbox.io/binaural-meet/](https://scrapbox
 
 https://binaural.me/
 
+If you plan a meet in the future, please reserve it by adding the schedule and the number of participants to [this calendar](https://calendar.google.com/calendar/u/6?cid=Y19vY3NpajMzM2RpbTkyZDNmZWhpa2tzcnVrMEBncm91cC5jYWxlbmRhci5nb29nbGUuY29t) 
+
 ### Server status
 
 - [Realtime report](https://binaural.me/grafana/d/xKnrkwfGz/binaural-meet-status?orgId=1&refresh=10s)
