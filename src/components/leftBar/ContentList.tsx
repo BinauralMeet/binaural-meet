@@ -1,9 +1,9 @@
 import {Tooltip} from '@material-ui/core'
 import {useTranslation} from '@models/locales'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
+import {getRandomColor, rgb2Color} from '@models/utils'
 import {MapData} from '@stores/Map'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
-import {getRandomColor} from '@stores/utils'
 import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
@@ -17,6 +17,8 @@ export const ContentLine: React.FC<TextLineStyle &
   const contentName = useObserver(() => props.content.name)
   const name = useObserver(() => props.content.ownerName)
   const colors = getRandomColor(name)
+  if (props.content.color.length){ colors[0] = rgb2Color(props.content.color) }
+  if (props.content.textColor.length){ colors[1] = rgb2Color(props.content.textColor) }
   const contentType = useObserver(() => props.content.type)
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
   const typeIcon = contentTypeIcons(contentType, props.fontSize)

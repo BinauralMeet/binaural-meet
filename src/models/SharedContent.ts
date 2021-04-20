@@ -6,6 +6,8 @@ export interface SharedContentData {
   zorder: number                  //  unix timestamp when shared or moved to top.
   name: string                    //  name or title of the content.
   ownerName: string               //  name of the initial owner
+  color:number[]                  //  color in the left var
+  textColor:number[]              //  textColor in the left var
   type: ContentType               //  content type ('img', etc)
   url: string                     //  url or text to share
   pose: Pose2DMap                 //  position and orientation
@@ -34,6 +36,8 @@ export interface BackgroundContents {
 export interface TextMessage {
   message: string, //  text to display
   name: string, //  The name of whom create this text
+  color:number[]        //  background color
+  textColor:number[]    //  textColor
   pid: string,  //  The pid of whom create this text
   time: number, //  Timestamp when this message created.
 }

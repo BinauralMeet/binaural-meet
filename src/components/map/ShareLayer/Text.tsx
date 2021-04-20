@@ -3,8 +3,8 @@ import {useStore as useContents} from '@hooks/SharedContentsStore'
 import {Tooltip} from '@material-ui/core'
 import {makeStyles} from '@material-ui/core/styles'
 import {compTextMessage, TextMessages} from '@models/SharedContent'
-import {assert, isSelfUrl} from '@models/utils'
-import {getRandomColorRGB, rgba} from '@stores/utils'
+import {assert, findTextColorRGB, isSelfUrl} from '@models/utils'
+import {getRandomColorRGB, rgba} from '@models/utils'
 import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
@@ -115,7 +115,10 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
     }
     if (last?.pid !== participants.localId) {
       member.text.messages.push({message:'', pid:participants.localId,
-        name:participants.local.information.name, time:Date.now()})
+        name:participants.local.information.name,
+        color: participants.local.information.color,
+        textColor: participants.local.information.textColor,
+        time:Date.now()})
     }
   }
 
@@ -124,8 +127,8 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
   const textToEdit = member.text.messages.find(message => message.pid === participants.localId)
   member.text.messages.reverse()
   const textElems = member.text.messages.map((text, idx) => {
-    const rgb = getRandomColorRGB(text.name)
-    const textColor = rgb[0] / 17 + rgb[1] / 17 + rgb[2] / 17 * 0.2 > 20 ? [0, 0, 0] : [255, 255, 255]
+    const rgb = text.color.length ? text.color : getRandomColorRGB(text.name)
+    const textColor = text.textColor.length ? text.textColor : findTextColorRGB(rgb)
     const textEditable = (props.editing && (text.pid === participants.localId || !participants.remote.has(text.pid)))
     const css = {
       color:rgba(textColor, 1),

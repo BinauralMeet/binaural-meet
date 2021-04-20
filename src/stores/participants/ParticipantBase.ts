@@ -2,10 +2,11 @@ import {
   defaultInformation, defaultPhysics,
   Information, Mouse, ParticipantBase as IParticipantBase, Physics, Tracks,
 } from '@models/Participant'
+import {findReverseColorRGB, findTextColorRGB, getRandomColorRGB, rgb2Color} from '@models/utils'
 import {MapObject} from '@stores/MapObject'
+import {shallowObservable, Store} from '@stores/utils'
 import {JitsiTrack} from 'lib-jitsi-meet'
 import {action, computed, makeObservable, observable} from 'mobx'
-import {getRandomColor, getRandomColorRGB, shallowObservable, Store} from '../utils'
 import {Plugins} from './plugins'
 
 export class TracksStore<T extends JitsiTrack> implements Tracks{
@@ -44,10 +45,34 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
   }
 
   getColor() {
-    return getRandomColor(this.information.name)
+    let color = this.information.color
+    if (!color.length) {
+      color = getRandomColorRGB(this.information.name)
+    }
+    let textColor = this.information.textColor
+    if (!textColor.length) {
+      textColor = findTextColorRGB(color)
+    }
+    const reverseRGB = findReverseColorRGB(color)
+    const colors = [rgb2Color(color), rgb2Color(textColor), rgb2Color(reverseRGB)]
+
+    return colors
   }
+
   getColorRGB() {
-    return getRandomColorRGB(this.information.name)
+    return this.information.color.length ? this.information.color : getRandomColorRGB(this.information.name)
+  }
+  getTextColorRGB() {
+    let textColor = this.information.textColor
+    if (!textColor.length) {
+      let color = this.information.color
+      if (!color.length) {
+        color = getRandomColorRGB(this.information.name)
+      }
+      textColor = findTextColorRGB(color)
+    }
+
+    return textColor
   }
 
   @action.bound

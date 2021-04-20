@@ -231,9 +231,12 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   const [showMore, setShowMore] = React.useState(false)
   const [showConfig, setShowConfig] = React.useState(false)
   const moreControl = moreButtonControl(setShowMore, member)
-  function closeConfig() {
-    setShowConfig(false)
-    map.keyInputUsers.delete('LocalParticipantConfig')
+  function closeConfig(ev:Object, reason:string) {
+    if (reason === 'enter' || reason==='backdropClick'){
+      setShowConfig(false)
+      participant.saveInformationToStorage(true)
+      map.keyInputUsers.delete('LocalParticipantConfig')
+    }
   }
   function openConfig() {
     setShowConfig(true)

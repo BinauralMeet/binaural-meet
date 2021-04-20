@@ -26,15 +26,19 @@ export interface Pose3DAudio {  // right hand cartesian coordinate system
 
 export interface Information {
   name: string
-  email?: string
-  md5Email?: string
-  avatarSrc?: string
+  email: string
+  md5Email: string
+  avatarSrc: string
+  color: number[]
+  textColor: number[]
 }
 export const defaultInformation:Information = {
   name: 'Anonymous',
   email: '',
   md5Email: '',
   avatarSrc: '',
+  color: [],
+  textColor: [],
 }
 export interface Tracks {
   audio: JitsiTrack | undefined

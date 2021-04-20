@@ -13,7 +13,7 @@ import {TextLineStyle} from './LeftBar'
 
 export const ParticipantLine: React.FC<TextLineStyle&{participant: ParticipantBase, map: MapData}> = (props) => {
   const info = useObserver(() => (Object.assign({}, props.participant.information)))
-  const colors = props.participant.getColor()
+  const colors = useObserver(() => props.participant.getColor())
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
 
   return <Tooltip title={props.participant.id} placement="right">

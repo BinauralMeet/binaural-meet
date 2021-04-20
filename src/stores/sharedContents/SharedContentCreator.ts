@@ -15,6 +15,8 @@ export const TEN_YEAR = 1000 * 60 * 60 * 24 * 365 * 10 / TIME_RESOLUTION_IN_MS
 export const defaultContent: ISharedContent = Object.assign({}, mapObjectDefaultValue, {
   name: '',
   ownerName: '',
+  color: [],
+  textColor: [],
   type: '' as ContentType,
   url: '',
   size: [0, 0] as [number, number],
@@ -82,6 +84,8 @@ export function makeThemContents(them: ISharedContent[]) {
 export class SharedContent implements ISharedContent {
   name!: string
   ownerName!: string
+  color!: number[]
+  textColor!: number[]
   type!: ContentType
   url!: string
   id!: string
@@ -105,6 +109,8 @@ export class SharedContent implements ISharedContent {
 export function createContent() {
   const content = new SharedContent()
   content.ownerName = participants.local.information.name
+  content.color = participants.local.information.color
+  content.textColor = participants.local.information.textColor
 
   return content
 }
@@ -165,6 +171,8 @@ export function createContentOfText(message: string, map: MapData) {
     message,
     pid: participants.localId,
     name: participants.local.information.name,
+    color: participants.local.information.color,
+    textColor: participants.local.information.textColor,
     time: Date.now(),
   }
   const texts: TextMessages = {messages:[textMessage], scroll:[0, 0]}
@@ -288,9 +296,9 @@ export function disposeContent(c: ISharedContent) {
   }
 }
 
-const extractData = extract<ISharedContentData>({ zorder: true, name: true, ownerName: true,
-  type: true, url: true, pose: true, size: true, originalSize: true,
-  pinned: true,
+const extractData = extract<ISharedContentData>({
+  zorder: true, name: true, ownerName: true, color: true, textColor:true,
+  type: true, url: true, pose: true, size: true, originalSize: true, pinned: true,
 })
 export function extractContentData(c:ISharedContent) {
   return extractData(c)
@@ -298,7 +306,8 @@ export function extractContentData(c:ISharedContent) {
 export function extractContentDatas(cs:ISharedContent[]) {
   return cs.map(extractContentData)
 }
-const extractDataAndId = extract<ISharedContentData&ISharedContentId>({ zorder: true, name: true, ownerName: true,
+const extractDataAndId = extract<ISharedContentData&ISharedContentId>({
+  zorder: true, name: true, ownerName: true, color: true, textColor:true,
   type: true, url: true, pose: true, size: true, originalSize: true,
   pinned: true, id: true,
 })
