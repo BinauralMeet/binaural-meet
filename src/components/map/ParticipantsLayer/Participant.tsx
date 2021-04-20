@@ -1,7 +1,5 @@
-import {Avatar, AvatarProps} from '@components/avatar'
+import {Avatar} from '@components/avatar'
 import {useStore as useMapStore} from '@hooks/MapStore'
-import {useStore} from '@hooks/ParticipantsStore'
-import {memoComponent} from '@hooks/utils'
 import megaphoneIcon from '@iconify/icons-mdi/megaphone'
 import {Icon} from '@iconify/react'
 import {Tooltip} from '@material-ui/core'
@@ -10,6 +8,8 @@ import HeadsetIcon from '@material-ui/icons/HeadsetMic'
 import MicOffIcon from '@material-ui/icons/MicOff'
 import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
 import {addV2, mulV2, normV, rotateVector2DByDegree, subV2} from '@models/utils'
+import {LocalParticipant} from '@stores/participants/LocalParticipant'
+import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import {useObserver} from 'mobx-react-lite'
 import React, {forwardRef} from 'react'
 declare const config:any             //  from ../../config.js included from index.html
@@ -62,26 +62,31 @@ const useStyles = makeStyles({
   }),
 })
 
-export interface ParticipantProps extends Required<AvatarProps>{
+export interface ParticipantProps{
+  participant: LocalParticipant | RemoteParticipant
+  size: number
   onContextMenu?:(ev:React.MouseEvent<HTMLDivElement, MouseEvent>) => void
 }
+export interface RawParticipantProps extends ParticipantProps{
+  isLocal: boolean
+}
 
-const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , ParticipantProps> = (props, ref) => {
+const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawParticipantProps> = (props, ref) => {
   const mapData = useMapStore()
-  const participants = useStore()
-  const participant = participants.find(props.participantId)
+//  const participants = useStore()
+  const participant = props.participant
   const participantProps = useObserver(() => ({
-    position: participant!.pose.position,
-    orientation: participant!.pose.orientation,
-    mousePosition: participant!.mouse.position,
+    position: participant.pose.position,
+    orientation: participant.pose.orientation,
+    mousePosition: participant.mouse.position,
   }))
   const name = useObserver(() => participant!.information.name)
   const audioLevel = useObserver(() => Math.pow(participant!.tracks.audioLevel, 0.5))
   // console.log(`audioLevel ${audioLevel}`)
-  const micMuted = useObserver(() => participant?.trackStates.micMuted)
-  const speakerMuted = useObserver(() => participant?.trackStates.speakerMuted)
-  const headphone = useObserver(() => participant?.trackStates.headphone)
-  const onStage = useObserver(() => participant?.physics.onStage)
+  const micMuted = useObserver(() => participant.trackStates.micMuted)
+  const speakerMuted = useObserver(() => participant.trackStates.speakerMuted)
+  const headphone = useObserver(() => participant.trackStates.headphone)
+  const onStage = useObserver(() => participant.physics.onStage)
 
   const classes = useStyles({
     ...participantProps,
@@ -90,7 +95,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , Participan
 
   const [color, textColor] = participant ? participant.getColor() : ['white', 'black']
   const outerRadius = props.size / 2 + 2
-  const isLocal = participants.isLocal(props.participantId)
+  const isLocal = props.isLocal
   const AUDIOLEVELSCALE = props.size * SVG_RATIO * HALF
   const svgCenter = SVG_RATIO * props.size * HALF
 
@@ -176,5 +181,14 @@ RawParticipant.displayName = 'RawParticipant'
 export const Participant = forwardRef(RawParticipant)
 Participant.displayName = 'Participant'
 
-export const MemoedParticipant = memoComponent(Participant, ['participantId', 'size'])
+export const MemoedParticipant = (props: RawParticipantProps) =>
+  React.useMemo(() => <Participant {...props} />,
+  //  eslint-disable-next-line react-hooks/exhaustive-deps
+  [props.size, props.participant.id,
+    props.participant.information.avatarSrc,
+    props.participant.information.color,
+    props.participant.information.email,
+    props.participant.information.name,
+    props.participant.information.textColor,
+  ])
 MemoedParticipant.displayName = 'MemorizedParticipant'

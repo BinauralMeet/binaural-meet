@@ -1,26 +1,19 @@
-import {useStore} from '@hooks/ParticipantsStore'
-import {memoComponent} from '@hooks/utils'
+import participants from '@stores/participants/Participants'
 import React from 'react'
 import {Participant, ParticipantProps} from './Participant'
 
-
-const RemoteParticipant: React.FC<ParticipantProps> = (props) => {
-  const participants = useStore()
-
-  const onClick = (ev:React.MouseEvent<HTMLDivElement>) => {
-    if (participants.directRemotes.has(props.participantId)) {
-      participants.directRemotes.delete(props.participantId)
-    }else {
-      participants.directRemotes.add(props.participantId)
-    }
+const onClick = (ev:React.MouseEvent<HTMLDivElement>, id:string) => {
+  if (participants.directRemotes.has(id)) {
+    participants.directRemotes.delete(id)
+  }else {
+    participants.directRemotes.add(id)
   }
+}
 
+export const RemoteParticipant: React.FC<ParticipantProps> = (props) => {
   return (
-    <div onClick = {onClick}>
-      <Participant {...props} />
+    <div onClick = {(ev)=>onClick(ev, props.participant.id)}>
+      <Participant {...props} isLocal={false}/>
     </div>
   )
 }
-
-export const MemoedRemoteParticipant = memoComponent(RemoteParticipant, ['participantId', 'size'])
-MemoedRemoteParticipant.displayName = 'MemoedRemoteParticipant'

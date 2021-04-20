@@ -1,7 +1,6 @@
 import {MoreButton, moreButtonControl, MoreButtonMember} from '@components/utils/MoreButton'
 import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore} from '@hooks/ParticipantsStore'
-import {memoComponent} from '@hooks/utils'
 import Popover from '@material-ui/core/Popover'
 import {makeStyles} from '@material-ui/core/styles'
 import {addV2, assert, mulV2, rotateVector2DByDegree, subV2, transformPoint2D, transfromAt} from '@models/utils'
@@ -45,7 +44,7 @@ interface LocalParticipantMember extends MoreButtonMember{
 const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   const participants = useStore()
   const participant = participants.local
-  assert(props.participantId === participant.id)
+  assert(props.participant.id === participant.id)
   const map = useMapStore()
   const member = useRef<LocalParticipantMember>({} as LocalParticipantMember).current
 
@@ -246,7 +245,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
 
   return (
     <div ref={drag.target} {...drag} {...moreControl}>
-    <Participant {...props}
+    <Participant {...props} isLocal={true}
       onContextMenu={(ev) => {
         ev.preventDefault()
         openConfig()
@@ -265,5 +264,14 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   )
 }
 
-export const MemoedLocalParticipant = memoComponent(LocalParticipant, ['participantId', 'size'])
-MemoedLocalParticipant.displayName = 'MemorizedLocalParticipant'
+export const MemoedLocalParticipant = (props: ParticipantProps) =>
+  React.useMemo(() => <LocalParticipant {...props} />,
+  //  eslint-disable-next-line react-hooks/exhaustive-deps
+  [props.size, props.participant.id,
+    props.participant.information.avatarSrc,
+    props.participant.information.color,
+    props.participant.information.email,
+    props.participant.information.name,
+    props.participant.information.textColor,
+  ])
+  MemoedLocalParticipant.displayName = 'MemorizedLocalParticipant'

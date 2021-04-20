@@ -36,8 +36,8 @@ export interface BackgroundContents {
 export interface TextMessage {
   message: string, //  text to display
   name: string, //  The name of whom create this text
-  color:number[]        //  background color
-  textColor:number[]    //  textColor
+  color?:number[]        //  background color
+  textColor?:number[]    //  textColor
   pid: string,  //  The pid of whom create this text
   time: number, //  Timestamp when this message created.
 }

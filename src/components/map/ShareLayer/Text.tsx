@@ -127,8 +127,8 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
   const textToEdit = member.text.messages.find(message => message.pid === participants.localId)
   member.text.messages.reverse()
   const textElems = member.text.messages.map((text, idx) => {
-    const rgb = text.color.length ? text.color : getRandomColorRGB(text.name)
-    const textColor = text.textColor.length ? text.textColor : findTextColorRGB(rgb)
+    const rgb = text.color?.length ? text.color : getRandomColorRGB(text.name)
+    const textColor = text.textColor?.length ? text.textColor : findTextColorRGB(rgb)
     const textEditable = (props.editing && (text.pid === participants.localId || !participants.remote.has(text.pid)))
     const css = {
       color:rgba(textColor, 1),

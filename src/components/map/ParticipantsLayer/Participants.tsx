@@ -6,7 +6,7 @@ import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {MemoedLocalParticipant as LocalParticipant} from './LocalParticipant'
 import {MouseCursor} from './MouseCursor'
-import {MemoedRemoteParticipant as RemoteParticipant} from './RemoteParticipant'
+import {RemoteParticipant} from './RemoteParticipant'
 interface LineProps {
   start: [number, number]
   end: [number, number]
@@ -37,8 +37,10 @@ export const ParticipantsLayer: React.FC<{}> = (props) => {
     return remote.perceptibility.visibility && remote.physics.located
   }))
   const localId = useObserver(() => store.localId)
-  const remoteElements = ids.map(id => <RemoteParticipant key={id} participantId={id} size={PARTICIPANT_SIZE} />)
-  const localElement = (<LocalParticipant key={'local'} participantId={localId} size={PARTICIPANT_SIZE} />)
+  const remoteElements = ids.map(id => <RemoteParticipant key={id}
+    participant={store.remote.get(id)!} size={PARTICIPANT_SIZE} />)
+  const localElement = (<LocalParticipant key={'local'}
+    participant={store.local} size={PARTICIPANT_SIZE} />)
   const lines = useObserver(
     () => Array.from(store.directRemotes).map((rid) => {
       const start = store.local.pose.position
