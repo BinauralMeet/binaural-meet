@@ -2,6 +2,17 @@
 
 Binaurl Meet was bootstrapped with [create-react-app](https://github.com/facebook/create-react-app) and configured with [react-app-rewired](https://github.com/timarney/react-app-rewired#readme).
 
+## Installation
+After cloning the repository including submodules from GitHub, you will need to run yarn commands as followings
+```
+cd binaural-meet
+yarn
+cd libs/lib-jitsi-meet
+yarn
+cd ../..
+yarn link-lib
+```
+
 ## Available Scripts
 
 In the project directory, you can run:
