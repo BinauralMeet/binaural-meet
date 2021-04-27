@@ -22,7 +22,13 @@ In the case of Windows environment. Following are recommended.
    1. Open "View" - "Command palette" and type "Terminal: Clear Selection" 
    2. Open "View" - "Command palette" and type "Terminal: Select Default Profile" and choose "Git Bash"
 4. Install yarn:  execute "npm install -g yarn"' in console
-5. Build libs and binaural-meet and link libs with the command below
+5. Set shell for yarn
+
+```bash
+yarn config set script-shell /usr/bin/bash
+```
+
+6. Build libs and binaural-meet and link libs with the command below
 
 ```bash
 cd binaural-meet
