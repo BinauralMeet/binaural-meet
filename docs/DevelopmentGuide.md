@@ -1,10 +1,30 @@
 # Development Guide
 
-Binaurl Meet was bootstrapped with [create-react-app](https://github.com/facebook/create-react-app) and configured with [react-app-rewired](https://github.com/timarney/react-app-rewired#readme).
+Binaural Meet was bootstrapped with [create-react-app](https://github.com/facebook/create-react-app) and configured with [react-app-rewired](https://github.com/timarney/react-app-rewired#readme).
 
 ## Installation
-After cloning the repository including submodules from GitHub, you will need to run yarn commands as followings
-```
+
+### Install tools
+
+In the case of Windows environment. Following are recommended.
+
+- NodeJS
+
+- VSCode
+- Git for Windows 
+- Tortoise Git (if you prefer) 
+
+### Get source tree and create environment
+
+1. Clone the repository including submodules from GitHub.
+2. Open the "binaural-meet" folder by VSCode.
+3. Start terminal in VSCode. If PowerShell is started, Please set it to use GitBash.
+   1. Open "View" - "Command palette" and type "Terminal: Clear Selection" 
+   2. Open "View" - "Command palette" and type "Terminal: Select Default Profile" and choose "Git Bash"
+4. Install yarn:  execute "npm install -g yarn"' in console
+5. Build libs and binaural-meet and link libs with the command below
+
+```bash
 cd binaural-meet
 yarn
 cd libs/lib-jitsi-meet
@@ -26,6 +46,7 @@ The page will reload if you make edits.\
 You will also see any lint errors in the console.
 
 ### `yarn test`
+
 Launches the test runner in the interactive watch mode.\
 See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
@@ -61,6 +82,7 @@ To learn React, check out the [React documentation](https://reactjs.org/).
 
 
 # The technology stack of Binaural Meet 
+
 ## React Hooks
 
 [React Hooks](https://reactjs.org/docs/hooks-intro.html) is used, 
@@ -70,5 +92,6 @@ To learn React, check out the [React documentation](https://reactjs.org/).
 [MobX](https://mobx.js.org/) is used to manage the states. 
 
 ## lib-jitsi-meet
+
 Slightly modified [Jitsi](https://jitsi.org/) is used as backbone.
 [lib-jitsi-meet](https://github.com/BinauralMeet/lib-jitsi-meet) is used as library for WebRTC. modified version of [JVB](https://github.com/BinauralMeet/jitsi-videobridge) is used as the SFU.
