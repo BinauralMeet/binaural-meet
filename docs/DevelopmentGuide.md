@@ -28,10 +28,9 @@ In the case of Windows environment. Following are recommended.
 yarn config set script-shell /usr/bin/bash
 ```
 
-6. Build libs and binaural-meet and link libs with the command below
+6. Build libs and binaural-meet and link libs with the command below at the "binaural-meet" folder.
 
 ```bash
-cd binaural-meet
 yarn
 cd libs/lib-jitsi-meet
 yarn
