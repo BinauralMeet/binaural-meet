@@ -37,6 +37,7 @@ const useStyles = makeStyles({
 
 class TextMember{
   text: TextMessages = {messages:[], scroll:[0, 0]}
+  isStatic = false
 }
 
 function makeLink(key:number, regResult: string[]){
@@ -92,13 +93,7 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
       member.text.messages.push(newMessage)
     }else {
       indices.add(index)
-//      if (newMessage.pid !== participants.localId) {
       member.text.messages[index] = newMessage
-//      }else {
-//        assert(member.text.messages[index].message === newMessage.message)
-        //  Changed by myself -> ignore the update.
-        //  console.error('Some one try to change my message.')
-//      }
     }
   })
   for (let i = length - 1; i >= 0; i -= 1) {
@@ -179,6 +174,28 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
         onBlur={(ev) => {
           member.text.messages = member.text.messages.filter(text => text.message.length)
           onUpdateTexts(member.text)
+        }}
+        //  Select text by static click
+        onPointerDown={()=>{ member.isStatic = true }}
+        onPointerMove={()=>{ member.isStatic = false }}
+        onPointerUp={(ev)=>{
+          if (!member.isStatic){ return }
+          const target = ev.target
+          if (!textEditable && target instanceof Node){
+            ev.preventDefault()
+            const selection = window.getSelection()
+            if (selection){
+              if (selection.rangeCount && selection.getRangeAt(0).toString()){
+                selection.removeAllRanges()
+              }else{
+                const range = document.createRange()
+                range.selectNode(target)
+                selection.removeAllRanges()
+                selection.addRange(range)
+                //console.log(`onDoubleClick tgt=${target} rng=${range.toString()}`, selection)
+              }
+            }
+          }
         }}
       >
         {props.editing ? text.message : textToShow}
