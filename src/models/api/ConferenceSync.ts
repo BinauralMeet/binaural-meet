@@ -55,6 +55,7 @@ export class ConferenceSync{
     this.conference = c
   }
 
+  //  Only for test (admin config dialog).
   sendTrackLimits(to:string, limits?:string[]) {
     this.conference.sendMessage(MessageType.PARTICIPANT_TRACKLIMITS, to ? to : '', limits ? limits :
                                 [participants.local.remoteVideoLimit, participants.local.remoteAudioLimit])

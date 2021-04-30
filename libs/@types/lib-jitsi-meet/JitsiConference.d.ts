@@ -9,6 +9,7 @@ import JitsiParticipant from "./JitsiParticipant";
 import { Transcriber } from "./modules";
 import TraceablePeerConnection from "./modules/RTC/TraceablePeerConnection";
 import RTC from "./modules/RTC/RTC";
+import ChatRoom from "./modules/xmpp/ChatRoom";
 
 declare interface JitsiValuesChildren {
   tagName:string
@@ -27,6 +28,7 @@ declare class JingleSessionPC{
 }
 declare class JitsiConference {
   rtc: RTC
+  room: ChatRoom
 
   constructor(options: any);
 
@@ -117,6 +119,7 @@ declare class JitsiConference {
   broadcastEndpointMessage(payload: Object): void;
 
   sendMessage(message: Object, to: string, sendThroughVideobridge: boolean): void;
+  sendTextMessage(msg: string): void;
   getProperty(key: string): any;
   isP2PActive(): boolean;
   getP2PConnectionState(): string | null;

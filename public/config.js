@@ -27,7 +27,7 @@ const rtcConfig = {
   },
 }
 const common_config = {
-  openBridgeChannel: 'datachannel', // One of true, 'datachannel'==='true', or 'websocket
+  openBridgeChannel: 'websocket', // One of true, 'datachannel'==='true', or 'websocket
   clientNode: 'http://jitsi.org/jitsimeet',
   disableSimulcast: true,
   channelLastN: -1,

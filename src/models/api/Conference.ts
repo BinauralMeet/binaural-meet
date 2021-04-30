@@ -28,6 +28,7 @@ export const ConferenceEvents = {
   USER_LEFT: 'left',
   REMOTE_TRACK_ADDED: 'remote_track_added',
   REMOTE_TRACK_REMOVED: 'remote_track_removed',
+  MESSAGE_RECEIVED: 'message_received',
 }
 export class Conference extends EventEmitter {
   public _jitsiConference?: JitsiMeetJS.JitsiConference
@@ -51,6 +52,7 @@ export class Conference extends EventEmitter {
     //  To access from debug console, add object d to the window.
     d.conference = this
     d.jc = this._jitsiConference
+    d.chatRoom = (jc as any).room
     d.showState = () => {
       console.log(`carrierMap: ${JSON.stringify(contents.tracks.carrierMap)}`)
       console.log(`contentCarriers: ${JSON.stringify(contents.tracks.contentCarriers)}`)
@@ -186,6 +188,10 @@ export class Conference extends EventEmitter {
     this._jitsiConference?.sendMessage(msg, to, jc?.rtc?._channel?.isOpen() ? true : false)
   }
 
+  sendChatMessage(msg:string){
+    this._jitsiConference?.sendTextMessage(msg)
+  }
+
   //  register event handlers
   private registerJistiConferenceEvents() {
     if (!this._jitsiConference) {
@@ -230,7 +236,6 @@ export class Conference extends EventEmitter {
         },         3000)
       }
     })
-
     this._jitsiConference.on(CONF.TRACK_REMOVED, (track: JitsiTrack) => {
       trackLog(`TRACK_REMOVED: ${track} type:${track.getType()} ${track.getUsageLabel()} tid:${track.getId()} msid:${track.getOriginalStream().id}`)
       if (track.isLocal()) {
@@ -264,6 +269,11 @@ export class Conference extends EventEmitter {
           participant?.tracks.setAudioLevel(0)
         }
       }
+    })
+
+    this._jitsiConference.on(JitsiMeetJS.events.conference.MESSAGE_RECEIVED,
+      (id:string, text:string, timeStamp:number) => {
+      this.emit(ConferenceEvents.MESSAGE_RECEIVED, id, text, timeStamp)
     })
   }
 
