@@ -1,3 +1,4 @@
+import {formatTimestamp} from '@components/utils'
 import {useStore as useParticipants} from '@hooks/ParticipantsStore'
 import {useStore as useContents} from '@hooks/SharedContentsStore'
 import {Tooltip} from '@material-ui/core'
@@ -148,15 +149,7 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
       start += before.length + regResult[0].length
     }
     textToShow.push(<span key={start}>{text.message.slice(start)}</span>)
-
-    //  make timestamp for tooltip
-    const textDate = new Date(text.time)
-    const now = new Date()
-    const year = now.getFullYear() !== textDate.getFullYear() ? textDate.getFullYear() : undefined
-    const month = year || now.getMonth() !== textDate.getMonth() ? textDate.getMonth() + 1 : undefined
-    const date = (year || month || now.getDate() !== textDate.getDate()) ? textDate.getDate() : undefined
-    const time = `${textDate.getHours()}:${textDate.getMinutes()}:${textDate.getSeconds()}`
-    const timestamp = `${year ? `${year}.` : ''}${month ? `${month}.` : ''}${date ? `${date} ` : ''}${time}`
+    const timestamp = formatTimestamp(text.time)    //  make formated timestamp for tooltip
 
     return <Tooltip key={idx} title={<React.Fragment>{text.name} <br /> {timestamp}</React.Fragment>}
       placement="left" arrow={true} suppressContentEditableWarning={true}>

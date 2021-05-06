@@ -16,11 +16,13 @@ const ConnectedAvatar: React.FC<ConnectedAvatarProps> = (props) => {
   //  console.log('ConnectedAvatar is rendered.')
 
   return <Observer>{() => {
-    const [color, textColor] = participant.getColor()
+    const colors = participant.getColor()
+    const {avatarSrc, name} = participant.information
+    const args = {colors, avatarSrc, name}
 
-    return <ComposedAvatar information={{...participant.information}}
+    return <ComposedAvatar {...args}
     stream={participant.plugins.streamControl.showVideo ? participant.tracks.avatarStream : undefined}
-      color={color} textColor={textColor} size={props.size} style={{pointerEvents:'none'}}
+      colors={colors} size={props.size} style={{pointerEvents:'none'}}
       mirror={props.isLocal}
     />
   }}</Observer>
@@ -32,7 +34,6 @@ export const MemoedAvatar = (props: AvatarProps) =>
   [props.size,
     props.participant.information.avatarSrc,
     props.participant.information.color,
-    props.participant.information.email,
     props.participant.information.name,
     props.participant.information.textColor,
   ])

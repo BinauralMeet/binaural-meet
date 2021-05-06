@@ -3,11 +3,11 @@ import {MapObject} from './MapObject'
 
 export const PARTICIPANT_SIZE = 60
 export interface ParticipantBase extends MapObject{
-  information: Information
   physics: Physics
   tracks: Tracks
   mouse: Mouse
   id: string
+  information: RemoteInformation|LocalInformation
 }
 
 export interface RemoteParticipant extends ParticipantBase {
@@ -16,6 +16,7 @@ export interface RemoteParticipant extends ParticipantBase {
 export type SoundLocalizationBase = 'avatar' | 'user'
 export interface LocalParticipant extends ParticipantBase {
   soundLocalizationBase: SoundLocalizationBase
+  information: LocalInformation
 }
 export type Participant = LocalParticipant | RemoteParticipant
 
@@ -24,18 +25,24 @@ export interface Pose3DAudio {  // right hand cartesian coordinate system
   orientation: [number, number, number],
 }
 
-export interface Information {
+export interface RemoteInformation {
   name: string
-  email: string
-  md5Email: string
   avatarSrc: string
   color: number[]
   textColor: number[]
 }
-export const defaultInformation:Information = {
+export interface LocalInformation extends RemoteInformation {
+  email: string
+}
+export const defaultInformation:LocalInformation = {
   name: 'Anonymous',
   email: '',
-  md5Email: '',
+  avatarSrc: '',
+  color: [],
+  textColor: [],
+}
+export const defaultRemoteInformation:RemoteInformation = {
+  name: '',
   avatarSrc: '',
   color: [],
   textColor: [],

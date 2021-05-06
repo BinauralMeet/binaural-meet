@@ -1,8 +1,11 @@
 import {Pose2DMap} from '@models/MapObject'
-import {LocalParticipant as ILocalParticipant, Physics, TrackStates} from '@models/Participant'
+import {LocalInformation, LocalParticipant as ILocalParticipant, Physics, RemoteInformation, TrackStates} from '@models/Participant'
 import {urlParameters} from '@models/url'
+import {checkImageUrl} from '@models/utils'
+import {shallowObservable, Store} from '@stores/utils'
+import md5 from 'md5'
 import {action, computed, makeObservable, observable} from 'mobx'
-import {Store} from '../utils'
+import {autorun} from 'mobx'
 import {DevicePreference} from './localPlugins'
 import {ParticipantBase} from './ParticipantBase'
 // config.js
@@ -31,6 +34,8 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
   @observable soundLocalizationBase = config.soundLocalizationBase ? config.soundLocalizationBase : 'user'
   @observable remoteVideoLimit = config.remoteVideoLimit || -1 as number
   @observable remoteAudioLimit = config.remoteAudioLimit || -1 as number
+  information = this.information as LocalInformation
+  informationToSend:RemoteInformation
   @action setThirdPersonView(tpv: boolean) { this.thirdPersonView = tpv }
   @computed get trackStates():TrackStates {
     return {
@@ -39,8 +44,13 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
       headphone: this.useStereoAudio,
     }
   }
+  get info():LocalInformation { return this.information as LocalInformation}
+
   constructor() {
-    super()
+    super(true)
+    const info:Partial<LocalInformation> = Object.assign({}, this.information)
+    delete info.email
+    this.informationToSend = shallowObservable<RemoteInformation>(info as RemoteInformation)
     makeObservable(this)
     this.loadInformationFromStorage()
     if (urlParameters.name) { this.information.name = urlParameters.name }
@@ -52,8 +62,29 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
     //  console.debug('URL muteCamera', urlParameters.muteCamera)
     this.loadMediaSettingsFromStorage()
     this.loadPhysicsFromStorage()
+    autorun(() => {
+      const gravatar = 'https://www.gravatar.com/avatar/'
+      let src = this.information.avatarSrc
+      if ((!src || src.includes(gravatar, 0)) && this.information.email){
+        const hash = md5(this.information.email.trim().toLowerCase())
+        src = `${gravatar}${hash}?d=404`
+      }
+      if (src){
+        checkImageUrl(src).then((src)=>{
+          this.information.avatarSrc = src
+        }).catch(()=>{
+          this.information.avatarSrc = ''
+        })
+      }
+    })
   }
 
+  //  send infomration to other participants
+  @action sendInformation(){
+    const info = Object.assign({}, this.information) as Partial<LocalInformation>
+    delete info.email
+    Object.assign(this.informationToSend, info)
+  }
   //  save and load participant's name etc.
   saveInformationToStorage(isLocalStorage:boolean) {
     let storage = sessionStorage

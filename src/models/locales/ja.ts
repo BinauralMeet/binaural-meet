@@ -58,5 +58,10 @@ export const jaTranslate = {
   slAvatar: 'アバターの向き',
   slUser: 'ユーザーの向き(上が前)',
   usage: '使い方',
+  cmJoined: 'が参加。',
+  cmLeft: 'が退出。',
+  cmNameChanged: '{{old}} が {{new}} に名前を変更。',
+  cmToAll: '全員へ',
+  cmSend: '送信 (CTRL+Enter)'
 }
 export type JaKeyList = keyof typeof jaTranslate

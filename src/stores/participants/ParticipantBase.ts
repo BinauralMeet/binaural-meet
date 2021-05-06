@@ -1,6 +1,7 @@
 import {
   defaultInformation, defaultPhysics,
-  Information, Mouse, ParticipantBase as IParticipantBase, Physics, Tracks,
+  defaultRemoteInformation,
+  LocalInformation, Mouse, ParticipantBase as IParticipantBase, Physics, RemoteInformation, Tracks,
 } from '@models/Participant'
 import {findReverseColorRGB, findTextColorRGB, getRandomColorRGB, rgb2Color} from '@models/utils'
 import {MapObject} from '@stores/MapObject'
@@ -32,16 +33,21 @@ export class TracksStore<T extends JitsiTrack> implements Tracks{
 
 export class ParticipantBase extends MapObject implements Store<IParticipantBase> {
   @observable id = ''
-  information = shallowObservable<Information>(defaultInformation)
   plugins: Plugins
   tracks = shallowObservable<TracksStore<JitsiTrack>>(new TracksStore<JitsiTrack>())
   physics = shallowObservable<Physics>(defaultPhysics)
   mouse = shallowObservable<Mouse>({position:[0, 0], show:false})
+  information: LocalInformation | RemoteInformation
 
-  constructor() {
+  constructor(isLocal=false) {
     super()
-    makeObservable(this)
     this.plugins = new Plugins(this)
+    if (isLocal){
+      this.information = shallowObservable<LocalInformation>(defaultInformation)
+    }else{
+      this.information = shallowObservable<RemoteInformation>(defaultRemoteInformation)
+    }
+    makeObservable(this)
   }
 
   getColor() {
@@ -75,11 +81,6 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
     return textColor
   }
 
-  @action.bound
-  setInformation(info: Information) {
-    Object.assign(this.information, info)
-    //  console.log('setInformation called')
-  }
   @action.bound
   setPhysics(physics: Partial<Physics>) {
     Object.assign(this.physics, physics)

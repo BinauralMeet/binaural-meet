@@ -3,7 +3,7 @@ import Box from '@material-ui/core/Box'
 import Button from '@material-ui/core/Button'
 import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
-import Popover from '@material-ui/core/Popover'
+import Popover, { PopoverProps } from '@material-ui/core/Popover'
 import TextField from '@material-ui/core/TextField'
 import {uploadToGyazo} from '@models/api/Gyazo'
 import {useTranslation} from '@models/locales'
@@ -13,8 +13,8 @@ import {Observer} from 'mobx-react-lite'
 import React, {useState} from 'react'
 import {SketchPicker} from 'react-color'
 
-export interface ConfigFormProps{
-  close: (ev: Object, reason:string) => void,
+export interface ConfigFormProps extends PopoverProps{
+  close: () => void,
 }
 
 const tfIStyle = {fontSize: isSmartphone() ? '2em' : '1em',
@@ -31,9 +31,18 @@ export const ConfigForm: React.FC<ConfigFormProps> = (props: ConfigFormProps) =>
   const [showTextColorPicker, setShowTextColorPicker] = useState(false)
   const {t} = useTranslation()
 
+  function closeConfig(ev:Object, reason:string) {
+    if (reason === 'enter' || reason==='backdropClick'){
+      local.sendInformation()
+      local.saveInformationToStorage(true)
+    }
+    props.close()
+  }
+
+
   const onKeyPress = (ev:React.KeyboardEvent) => {
     if (ev.key === 'Enter') {
-      props.close({}, 'enter')
+      closeConfig(ev, 'enter')
     }else if (ev.key === 'Esc' || ev.key === 'Escape') {
       local.loadInformationFromStorage()
     }
@@ -54,8 +63,10 @@ export const ConfigForm: React.FC<ConfigFormProps> = (props: ConfigFormProps) =>
 
   const colorButton = React.useRef<HTMLButtonElement>(null)
   const textColorButton = React.useRef<HTMLButtonElement>(null)
+  const popoverProps = Object.assign({}, props)
+  delete (popoverProps as Partial<ConfigFormProps>).close
 
-  return <>
+  return <Popover {...popoverProps} onClose={closeConfig}>
     <DialogTitle>
       <span  style={{fontSize: isSmartphone() ? '2.5em' : '1em'}}>
         {t('asTitle')}
@@ -111,10 +122,10 @@ export const ConfigForm: React.FC<ConfigFormProps> = (props: ConfigFormProps) =>
           <Box mt={3}>
             <div style={{fontSize:12}}>{t('asImage')}</div>
             <Box mt={-1} ml={2}>
-              <TextField label={t('asEmail')} multiline={false} value={local.information.email}
+              <TextField label={t('asEmail')} multiline={false} value={local.info.email}
                 style={{...tfDivStyle, marginTop:8}}
                 inputProps={{style: tfIStyle, autoFocus:true}} InputLabelProps={{style: tfLStyle}}
-                onChange={event => local.information.email = event.target.value}
+                onChange={event => local.info.email = event.target.value}
                 onKeyPress={onKeyPress} fullWidth={true}
               />
             <form key="information" onSubmit = {uploadAvatarSrc}
@@ -135,10 +146,12 @@ export const ConfigForm: React.FC<ConfigFormProps> = (props: ConfigFormProps) =>
       </Observer>
       <Box mt={4} mb={3}>
         <Button variant="contained" color="primary"
-          onClick={()=>{props.close({}, 'enter')}}>{t('asSave')}</Button>
+          onClick={()=>{
+            closeConfig({}, 'enter')
+          }}>{t('asSave')}</Button>
         <Button variant="contained" style={{marginLeft:15}} color="secondary"
           onClick={()=>{ local.loadInformationFromStorage()}}>{t('asCancel')}</Button>
       </Box>
     </DialogContent>
-  </>
+  </Popover>
 }

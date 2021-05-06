@@ -3,6 +3,7 @@ import SplitPane from 'react-split-pane'
 import {useGesture} from 'react-use-gesture'
 import {Stores} from '../utils'
 import {styleForSplit} from '../utils/styles'
+import {ChatInBar} from './Chat'
 import {ContentList} from './ContentList'
 import {ParticipantList} from './ParticipantList'
 
@@ -52,16 +53,6 @@ export const LeftBar: React.FC<Stores> = (stores) => {
 
         return [d, a]
       },
-      onWheel: ({movement, ctrlKey, event}) => {
-        if (ctrlKey) {
-        }else {
-          //  event?.preventDefault()
-          if (stores.map.keyInputUsers.size) { return }
-          const scaleChange = Math.pow(1.2, movement[1] / 1000)
-          setScale(limitScale(scale, scaleChange))
-          //  console.log(`Wheel: ${movement}  scale=${scale}`)
-        }
-      },
     },
     {
       eventOptions:{passive:false}, //  This prevents default zoom by browser when pinch.
@@ -71,10 +62,14 @@ export const LeftBar: React.FC<Stores> = (stores) => {
 
   return (
     <div {...bind()}>
-      <SplitPane split="horizontal" defaultSize="50%" resizerClassName = {classes.resizerHorizontal}
+      <SplitPane split="horizontal" defaultSize="80%" resizerClassName = {classes.resizerHorizontal}
         paneStyle = {{overflowY: 'auto', overflowX: 'hidden', width:'100%'}} >
-        <ParticipantList {...stores} {...textLineStyle} />
-        <ContentList {...stores}  {...textLineStyle} />
+        <SplitPane split="horizontal" defaultSize="50%" resizerClassName = {classes.resizerHorizontal}
+          paneStyle = {{overflowY: 'auto', overflowX: 'hidden', width:'100%'}} >
+          <ParticipantList {...stores} {...textLineStyle} />
+          <ContentList {...stores}  {...textLineStyle} />
+        </SplitPane >
+        <ChatInBar {...stores}  {...textLineStyle} />
       </SplitPane >
     </div>
   )

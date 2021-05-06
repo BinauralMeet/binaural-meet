@@ -59,5 +59,10 @@ export const enTranslate = {
   slAvatar: 'Avatar (avatar\'s direction)',
   slUser: 'User (top is front)',
   usage: 'How to use',
+  cmJoined: ' joined.',
+  cmLeft: ' Left.',
+  cmNameChanged: '{{old}} changed its name to {{new}}.',
+  cmToAll: 'To all',
+  cmSend: 'Send (CTRL+Enter)'
 }
 export type EnKeyList = keyof typeof enTranslate

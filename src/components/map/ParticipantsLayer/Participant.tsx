@@ -125,7 +125,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
     : undefined)
 
   return (
-    <div className={classes.root} onContextMenu={props.onContextMenu}>
+    <div className={classes.root + ' dragHandle'} onContextMenu={props.onContextMenu}>
       <div className={classes.pointerRotate}>
         <svg className={classes.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO} xmlns="http://www.w3.org/2000/svg">
           <circle r={outerRadius} cy={svgCenter} cx={svgCenter} stroke="none" fill={color} />
@@ -161,7 +161,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
           }
         </svg>
       </div>
-      <div className={[classes.avatar, 'draggableHandle'].join(' ')}
+      <div className={classes.avatar}
         style = {{transform: `rotate(${-mapData.rotation}deg)`}} >
         <Tooltip title={name}>
           <div>
@@ -187,7 +187,6 @@ export const MemoedParticipant = (props: RawParticipantProps) =>
   [props.size, props.participant.id,
     props.participant.information.avatarSrc,
     props.participant.information.color,
-    props.participant.information.email,
     props.participant.information.name,
     props.participant.information.textColor,
   ])

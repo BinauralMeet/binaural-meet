@@ -1,7 +1,9 @@
+import {StoreProvider as ChatProvider} from '@hooks/ChatStore'
 import {StoreProvider as MapProvider} from '@hooks/MapStore'
 import {StoreProvider as ParticipantsProvider} from '@hooks/ParticipantsStore'
 import {StoreProvider as ContentsProvider} from '@hooks/SharedContentsStore'
 import {isPortrait, isSmartphone} from '@models/utils'
+import chatStore from '@stores/Chat'
 import mapStore from '@stores/Map'
 import participantsStore from '@stores/participants/Participants'
 import sharedContentsStore from '@stores/sharedContents/SharedContents'
@@ -23,6 +25,7 @@ export const App: React.FC<{}> = () => {
     map: mapStore,
     participants: participantsStore,
     contents: sharedContentsStore,
+    chat: chatStore,
   }
   const refDiv = useRef<HTMLDivElement>(null)
   //  toucmove: prevent browser zoom by pinch
@@ -38,6 +41,7 @@ export const App: React.FC<{}> = () => {
 
   return (
     <ParticipantsProvider value={participantsStore}>
+    <ChatProvider value={chatStore}>
     <ContentsProvider value={sharedContentsStore}>
     <MapProvider value={mapStore}>
       <div ref={refDiv} className={classes.back}>
@@ -55,6 +59,7 @@ export const App: React.FC<{}> = () => {
       </div>
     </MapProvider>
     </ContentsProvider>
+    </ChatProvider>
     </ParticipantsProvider >
   )
 }

@@ -189,7 +189,8 @@ export class Conference extends EventEmitter {
   }
 
   sendChatMessage(msg:string){
-    this._jitsiConference?.sendTextMessage(msg)
+    const str = JSON.stringify({msg, ts:Date.now()})
+    this._jitsiConference?.sendTextMessage(str)
   }
 
   //  register event handlers
@@ -273,7 +274,7 @@ export class Conference extends EventEmitter {
 
     this._jitsiConference.on(JitsiMeetJS.events.conference.MESSAGE_RECEIVED,
       (id:string, text:string, timeStamp:number) => {
-      this.emit(ConferenceEvents.MESSAGE_RECEIVED, id, text, timeStamp)
+        this.emit(ConferenceEvents.MESSAGE_RECEIVED, id, text, timeStamp)
     })
   }
 

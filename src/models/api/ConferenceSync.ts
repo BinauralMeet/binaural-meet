@@ -1,8 +1,9 @@
 import {Pose2DMap} from '@models/MapObject'
 import {priorityCalculator} from '@models/middleware/trafficControl'
-import {Information, Mouse, Physics, TrackStates} from '@models/Participant'
+import {defaultRemoteInformation, Mouse, Physics, RemoteInformation, TrackStates} from '@models/Participant'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {urlParameters} from '@models/url'
+import chat, { ChatMessage } from '@stores/Chat'
 import participants from '@stores/participants/Participants'
 import {extractContentDataAndIds, makeItContent, makeThemContents} from '@stores/sharedContents/SharedContentCreator'
 import contents from '@stores/sharedContents/SharedContents'
@@ -116,6 +117,7 @@ export class ConferenceSync{
 
     //  left/join
     this.conference.on(ConferenceEvents.USER_LEFT, (id) => {
+      chat.participantLeft(id)
       participants.leave(id)
     })
     this.conference.on(ConferenceEvents.USER_JOINED, (id) => {
@@ -144,19 +146,40 @@ export class ConferenceSync{
       }
     })
 
+    //  chat
+    this.conference.on(ConferenceEvents.MESSAGE_RECEIVED,
+      (id: string, str: string) => {
+        const msg = JSON.parse(str) as {msg:string, ts:number}
+        console.log(`MESSAGE_RECEIVED id:${id}, text:${msg.msg}, ts:${msg.ts}`)
+        const from = participants.find(id)
+        if (from){
+          chat.addMessage(new ChatMessage(msg.msg, from.information.name, from.information.avatarSrc,
+             from.getColor(), msg.ts, 'text'))
+        }
+      }
+    )
+
     //  info
-    this.conference.on(PropertyType.PARTICIPANT_INFO, (from:string, info:Information) => {
+    this.conference.on(PropertyType.PARTICIPANT_INFO, (from:string, info:RemoteInformation) => {
       if (urlParameters.testBot !== null) { return }
 
       const remote = participants.remote.get(from)
       if (remote) {
+        const name = remote.information.name
         Object.assign(remote.information, info)
+        if (name !== remote.information.name){
+          if (name === defaultRemoteInformation.name){
+            chat.participantJoined(from)
+          }else{
+            chat.participantNameChanged(from, name)
+          }
+        }
       }
     })
-    const sendInfo = () => {
-      this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_INFO, {...participants.local.information})
-    }
-    this.disposers.push(autorun(sendInfo))
+    this.disposers.push(autorun(() => {
+      this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_INFO,
+        {...participants.local.informationToSend})
+    }))
 
     //  track states
     this.conference.on(PropertyType.PARTICIPANT_TRACKSTATES, (from:string, states:TrackStates) => {

@@ -1,7 +1,6 @@
 import {MoreButton, moreButtonControl, MoreButtonMember} from '@components/utils/MoreButton'
 import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore} from '@hooks/ParticipantsStore'
-import Popover from '@material-ui/core/Popover'
 import {makeStyles} from '@material-ui/core/styles'
 import {addV2, assert, mulV2, rotateVector2DByDegree, subV2, transformPoint2D, transfromAt} from '@models/utils'
 import {useObserver} from 'mobx-react-lite'
@@ -197,7 +196,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
 
   //  pointer drag
   const TIMER_INTERVAL = 33
-  const drag = DragHandler<HTMLDivElement>(onDrag, 'draggableHandle',
+  const drag = DragHandler<HTMLDivElement>(onDrag, 'dragHandle',
                                                onTimer, TIMER_INTERVAL, () => { setShowConfig(true) })
   useEffect(() => {
     drag.target.current?.focus({preventScroll:true})
@@ -230,12 +229,9 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   const [showMore, setShowMore] = React.useState(false)
   const [showConfig, setShowConfig] = React.useState(false)
   const moreControl = moreButtonControl(setShowMore, member)
-  function closeConfig(ev:Object, reason:string) {
-    if (reason === 'enter' || reason==='backdropClick'){
-      setShowConfig(false)
-      participant.saveInformationToStorage(true)
-      map.keyInputUsers.delete('LocalParticipantConfig')
-    }
+  function onClose() {
+    setShowConfig(false)
+    map.keyInputUsers.delete('LocalParticipantConfig')
   }
   function openConfig() {
     setShowConfig(true)
@@ -254,12 +250,10 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     <MoreButton show={showMore} className={classes.more} htmlColor={color} {...moreControl}
       buttonRef = {ref}
       onClickMore = {openConfig} />,
-    <Popover open={showConfig} onClose={closeConfig}
+    <ConfigForm open={showConfig} close={onClose}
       anchorEl={ref.current} anchorOrigin={{vertical:'top', horizontal:'left'}}
       anchorReference = "anchorEl"
-    >
-      <ConfigForm close={closeConfig} />
-    </Popover>
+    />
     </div>
   )
 }
@@ -270,7 +264,6 @@ export const MemoedLocalParticipant = (props: ParticipantProps) =>
   [props.size, props.participant.id,
     props.participant.information.avatarSrc,
     props.participant.information.color,
-    props.participant.information.email,
     props.participant.information.name,
     props.participant.information.textColor,
   ])

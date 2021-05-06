@@ -12,16 +12,18 @@ import {TextLineStyle} from './LeftBar'
 
 
 export const ParticipantLine: React.FC<TextLineStyle&{participant: ParticipantBase, map: MapData}> = (props) => {
-  const info = useObserver(() => (Object.assign({}, props.participant.information)))
+  const name = useObserver(() => (props.participant.information.name))
+  const avatarSrc = useObserver(() => (props.participant.information.avatarSrc))
   const colors = useObserver(() => props.participant.getColor())
+  const size = useObserver(() => props.lineHeight)
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
 
   return <Tooltip title={props.participant.id} placement="right">
     <div className={classes.outer} onClick={() => props.map.focusOn(props.participant)}>
-      <ImageAvatar information={info} color={colors[0]} textColor={colors[1]} size={props.lineHeight}
-        style={{flexShrink: 0, width:props.lineHeight, heihgt: props.lineHeight}} />
+      <ImageAvatar border={true} colors={colors} size={size * 1.05}
+        name={name} avatarSrc={avatarSrc} />
       <div className={classes.line} style={{backgroundColor:colors[0], color:colors[1], width:'100%'}}>
-        {info.name}
+        {name}
       </div>
     </div>
   </Tooltip>
@@ -37,7 +39,7 @@ export const RawParticipantList: React.FC<Stores&TextLineStyle&{localId: string,
     const pb = store.remote.get(b)
     let rv = pa!.information.name.localeCompare(pb!.information.name, undefined, {sensitivity: 'accent'})
     if (rv === 0) {
-      rv = (pa!.information.email || '').localeCompare(pb!.information.email || '', undefined, {sensitivity: 'accent'})
+      rv = (pa!.information.avatarSrc || '').localeCompare(pb!.information.avatarSrc || '', undefined, {sensitivity: 'accent'})
     }
 
     return rv

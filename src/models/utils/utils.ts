@@ -90,3 +90,14 @@ export function isPortrait() {
 export function isSelfUrl(url: URL){
   return (url.host === window.location.host && url.pathname === window.location.pathname)
 }
+
+export function checkImageUrl(url: string){
+  const img = new Image()
+  img.src = url
+  const promise = new Promise<string>((resolutionFunc, rejectionFunc) => {
+    img.onload = () => { resolutionFunc(url) }
+    img.onerror = () => { rejectionFunc('') }
+  })
+
+  return promise
+}
