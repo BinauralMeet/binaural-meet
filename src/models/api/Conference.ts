@@ -188,9 +188,9 @@ export class Conference extends EventEmitter {
     this._jitsiConference?.sendMessage(msg, to, jc?.rtc?._channel?.isOpen() ? true : false)
   }
 
-  sendChatMessage(msg:string){
+  sendChatMessage(msg:string, to=''){
     const str = JSON.stringify({msg, ts:Date.now()})
-    this._jitsiConference?.sendTextMessage(str)
+    this._jitsiConference?.sendMessage(str, to, false)
   }
 
   //  register event handlers

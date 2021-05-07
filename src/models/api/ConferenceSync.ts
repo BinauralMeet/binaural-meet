@@ -1,3 +1,4 @@
+import {t} from '@models/locales'
 import {Pose2DMap} from '@models/MapObject'
 import {priorityCalculator} from '@models/middleware/trafficControl'
 import {defaultRemoteInformation, Mouse, Physics, RemoteInformation, TrackStates} from '@models/Participant'
@@ -13,6 +14,7 @@ import {autorun, IReactionDisposer} from 'mobx'
 import type {Conference} from './Conference'
 import {ConferenceEvents} from './Conference'
 import {contentTrackCarrierName} from './ConnectionForScreenContent'
+import { notification } from './Notifcation'
 
 export const MessageType = {
   PARTICIPANT_POSE: 'm_pose',                   //  -> update presence once per 5 sec / message immediate value
@@ -21,6 +23,7 @@ export const MessageType = {
   DIRECT_REMOTES: 'direct_remotes',             //  -> message
   CONTENT_UPDATE_REQUEST: 'content_update',     //  -> message
   CONTENT_REMOVE_REQUEST: 'content_remove',     //  -> message
+  CALL_REMOTE: 'call_remote',                   //  -> message, to give notification to a remote user.
   FRAGMENT_HEAD: 'frag_head',
   FRAGMENT_CONTENT: 'frag_cont',
 }
@@ -97,7 +100,6 @@ export class ConferenceSync{
       }
     })
   }
-
   sendMyContents() {
     const cs = Array.from(contents.localParticipant.myContents.values())
     const contentsToSend = extractContentDataAndIds(cs)
@@ -105,7 +107,6 @@ export class ConferenceSync{
             contentsToSend)
     this.conference.setLocalParticipantProperty(PropertyType.MY_CONTENT, contentsToSend)
   }
-
 
   bind() {
     //  participant related -----------------------------------------------------------------------
@@ -153,11 +154,27 @@ export class ConferenceSync{
         console.log(`MESSAGE_RECEIVED id:${id}, text:${msg.msg}, ts:${msg.ts}`)
         const from = participants.find(id)
         if (from){
-          chat.addMessage(new ChatMessage(msg.msg, from.information.name, from.information.avatarSrc,
-             from.getColor(), msg.ts, 'text'))
+          chat.addMessage(new ChatMessage(msg.msg, from.id, from.information.name,
+            from.information.avatarSrc, from.getColor(), msg.ts, 'text'))
         }
       }
     )
+    //  call
+    this.conference.on(MessageType.CALL_REMOTE, (from:string) => {
+      const caller = participants.find(from)
+      if (caller){
+        chat.calledBy(caller)
+        notification(t('callBy', {caller: caller?.information.name}), {icon: './favicon.ico'})
+      }
+    })
+    this.disposers.push(autorun(() => {
+      participants.remote.forEach((remote)=>{
+        if (remote.called){
+          remote.called = false
+          this.conference.sendMessage(MessageType.CALL_REMOTE, remote.id, {})
+        }
+      })
+    }))
 
     //  info
     this.conference.on(PropertyType.PARTICIPANT_INFO, (from:string, info:RemoteInformation) => {

@@ -1,4 +1,5 @@
 import {connection} from '@models/api'
+import { getNotificationPermission } from '@models/api/Notifcation'
 import {manager as audioManager} from '@models/audio'
 import {urlParameters} from '@models/url'
 import participants from '@stores/participants/Participants'
@@ -26,8 +27,14 @@ autorun(() => {
     const track = connection.conference.getLocalMicTrack()
     if (track && track.getDeviceId() === did) { return }
     JitsiMeetJS.createLocalTracks({devices:['audio'], micDeviceId: did}).then(
-      (tracks: JitsiLocalTrack[]) => { connection.conference.setLocalMicTrack(tracks[0]) },
-    )
+      (tracks: JitsiLocalTrack[]) => {
+        connection.conference.setLocalMicTrack(tracks[0])
+      },
+    ).finally(()=>{
+      if (participants.local.plugins.streamControl.muteVideo){
+        getNotificationPermission()
+      }
+    })
   }
 })
 
@@ -63,7 +70,7 @@ autorun(() => {
   if (participants.localId && !muted && urlParameters.testBot === null) {
     const track = connection.conference.getLocalCameraTrack()
     if (track && track.getDeviceId() === did) { return }
-    createLocalCamera()
+    createLocalCamera().finally(getNotificationPermission)
   }else{
     if (DELETE_TRACK){
       connection.conference.setLocalCameraTrack(undefined).then(track => track?.dispose())

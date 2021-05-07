@@ -6,12 +6,19 @@ import TextField from '@material-ui/core/TextField'
 import SendIcon from '@material-ui/icons/Send'
 import {connection} from '@models/api/ConnectionDefs'
 import {useTranslation} from '@models/locales'
-import {ChatMessage} from '@stores/Chat'
+import {ChatMessage, ChatMessageType} from '@stores/Chat'
 import {Observer} from 'mobx-react-lite'
 import React from 'react'
 import {Stores} from '../utils'
 import {styleForList} from '../utils/styles'
 import {TextLineStyle} from './LeftBar'
+
+const colorMap: { [key in ChatMessageType]: string } = {
+  text: 'black',
+  call: 'red',
+  log: 'gray',
+}
+
 
 export const ChatLine: React.FC<Stores & TextLineStyle &
 {message: ChatMessage}> = (props) => {
@@ -22,11 +29,15 @@ export const ChatLine: React.FC<Stores & TextLineStyle &
     return <Tooltip title={<>{props.message.name}<br/>{timestamp}</>} placement="right">
       <div style={{wordWrap:'break-word', marginTop:2, fontSize:props.fontSize,
           backgroundColor:'#D0D0E0'}}>
-        <span style={{marginRight:'0.3em'}}>
+        <span style={{marginRight:'0.3em'}} onClick={()=>{
+          const from = props.participants.find(props.message.pid)
+          if (from) { props.map.focusOn(from) }
+        }}>
           <ImageAvatar name={props.message.name} colors={props.message.colors}
-            avatarSrc={props.message.avatarUrl} size={props.lineHeight} border={true}/>
+            avatarSrc={props.message.avatarUrl} size={props.lineHeight} border={true}
+          />
         </span>
-        <span style={{color:props.message.type==='log' ? 'gray' : 'black'}}>
+        <span style={{color:colorMap[props.message.type]}}>
           {props.message.text}
         </span>
     </div>

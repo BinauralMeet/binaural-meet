@@ -1,18 +1,22 @@
 import {t} from '@models/locales'
 import participants from '@stores/participants/Participants'
 import {action, makeObservable, observable} from 'mobx'
+import { LocalParticipant } from './participants/LocalParticipant'
+import { RemoteParticipant } from './participants/RemoteParticipant'
 
-export type ChatMessageType = 'text' | 'log'
+export type ChatMessageType = 'text' | 'log' | 'call'
 export class ChatMessage {
-  @observable type = 'text'
-  @observable text
-  @observable name
-  @observable avatarUrl
-  @observable timestamp
-  @observable colors
-  constructor(text:string, name:string, avatarUrl:string, colors:string[], timestamp: number, type:ChatMessageType) {
-    makeObservable(this)
+  type:ChatMessageType = 'text'
+  text
+  pid
+  name
+  avatarUrl
+  timestamp
+  colors
+  constructor(text:string, pid: string, name:string, avatarUrl:string,
+    colors:string[], timestamp: number, type:ChatMessageType) {
     this.text = text
+    this.pid = pid
     this.name = name
     this.avatarUrl = avatarUrl
     this.colors = colors
@@ -38,7 +42,7 @@ export class Chat {
   participantNameChanged(pid:string, oldName: string){
     const participant = participants.find(pid)
     if (participant){
-      const cm = new ChatMessage('', participant.information.name,
+      const cm = new ChatMessage('', participant.id, participant.information.name,
         participant.information.avatarSrc, participant.getColor(), Date.now(), 'log')
       cm.text = t('cmNameChanged', {old: oldName, new: cm.name})
       this.addMessage(cm)
@@ -47,20 +51,26 @@ export class Chat {
   participantJoined(pid: string){
     const participant = participants.find(pid)
     if (participant){
-      const cm = new ChatMessage('', participant.information.name,
+      const cm = new ChatMessage('', participant.id, participant.information.name,
         participant.information.avatarSrc, participant.getColor(), Date.now(), 'log')
-      cm.text = cm.name + t('cmJoined')
+      cm.text = t('cmJoined', {name:cm.name})
       this.addMessage(cm)
     }
   }
   participantLeft(pid: string){
     const participant = participants.find(pid)
     if (participant){
-      const cm = new ChatMessage('', participant.information.name,
+      const cm = new ChatMessage('', participant.id, participant.information.name,
         participant.information.avatarSrc, participant.getColor(), Date.now(), 'log')
-      cm.text = cm.name + t('cmLeft')
+      cm.text = t('cmLeft', {name:cm.name})
       this.addMessage(cm)
     }
+  }
+  calledBy(from: RemoteParticipant|LocalParticipant){
+    const cm = new ChatMessage('', from.id, from.information.name,
+    from.information.avatarSrc, from.getColor(), Date.now(), 'call')
+    cm.text = t('cmCall', {name:cm.name})
+    this.addMessage(cm)
   }
 }
 

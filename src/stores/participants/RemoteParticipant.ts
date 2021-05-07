@@ -1,5 +1,5 @@
 import {RemoteInformation, RemoteParticipant as IRemoteParticipant, TrackStates as ITrackStates} from '@models/Participant'
-import {makeObservable, observable} from 'mobx'
+import {action, makeObservable, observable} from 'mobx'
 import {Store} from '../utils'
 import {ParticipantBase} from './ParticipantBase'
 
@@ -14,10 +14,14 @@ class TrackStates implements Store<ITrackStates>{
 
 export class RemoteParticipant extends ParticipantBase implements Store<IRemoteParticipant> {
   information:RemoteInformation = this.information as RemoteInformation
+  @observable trackStates = new TrackStates()
+  @observable called = false
   constructor(id:string) {
     super()
     makeObservable(this)
     this.id = id
   }
-  @observable trackStates = new TrackStates()
+  @action call(){
+    this.called = true
+  }
 }

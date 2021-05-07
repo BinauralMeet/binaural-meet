@@ -1,6 +1,7 @@
 import {MoreButton, moreButtonControl, MoreButtonMember} from '@components/utils/MoreButton'
 import {makeStyles} from '@material-ui/core/styles'
 import participants from '@stores/participants/Participants'
+import {RemoteParticipant as RemoteParticipantStore} from '@stores/participants/RemoteParticipant'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {Participant, ParticipantProps} from './Participant'
@@ -63,7 +64,7 @@ export const RemoteParticipant: React.FC<ParticipantProps> = (props) => {
         ev.stopPropagation()
         openForm()
       }} />
-      <RemoteParticipantForm open={showForm} close={onClose} participant={props.participant}
+      <RemoteParticipantForm open={showForm} close={onClose} participant={props.participant as RemoteParticipantStore}
         anchorEl={buttonRef.current} anchorOrigin={{vertical:'top', horizontal:'left'}}
         anchorReference = "anchorEl"
       />

@@ -59,13 +59,15 @@ export const enTranslate = {
   slAvatar: 'Avatar (avatar\'s direction)',
   slUser: 'User (top is front)',
   usage: 'How to use',
-  cmJoined: ' joined.',
-  cmLeft: ' Left.',
+  cmJoined: '{{name}} joined.',
+  cmLeft: '{{name}} Left.',
   cmNameChanged: '{{old}} changed its name to {{new}}.',
+  cmCall: 'Called by {{name}}.',
   cmToAll: 'To all',
   cmSend: 'Send (CTRL+Enter)',
   rpCall: '呼び出す',
   rpConnectYarnPhone: '糸電話をつなぐ',
   rpCutYarnPhone: '糸電話を切る',
+  callBy: '{{caller}} call you.'
 }
 export type EnKeyList = keyof typeof enTranslate
