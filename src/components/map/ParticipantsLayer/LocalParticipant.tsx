@@ -8,7 +8,7 @@ import React, {useEffect, useRef} from 'react'
 import {DragHandler, DragState} from '../../utils/DragHandler'
 import {KeyHandlerPlain} from '../../utils/KeyHandler'
 import {MAP_SIZE} from '../Base/Base'
-import {ConfigForm} from './LocalConfig/ConfigForm'
+import {LocalParticipantForm} from './LocalParticipantForm'
 import {Participant, ParticipantProps} from './Participant'
 
 const AVATAR_SPEED_LIMIT = 50
@@ -249,8 +249,8 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     />
     <MoreButton show={showMore} className={classes.more} htmlColor={color} {...moreControl}
       buttonRef = {ref}
-      onClickMore = {openConfig} />,
-    <ConfigForm open={showConfig} close={onClose}
+      onClickMore = {openConfig} />
+    <LocalParticipantForm open={showConfig} close={onClose}
       anchorEl={ref.current} anchorOrigin={{vertical:'top', horizontal:'left'}}
       anchorReference = "anchorEl"
     />

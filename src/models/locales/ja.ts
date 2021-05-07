@@ -62,6 +62,9 @@ export const jaTranslate = {
   cmLeft: 'が退出。',
   cmNameChanged: '{{old}} が {{new}} に名前を変更。',
   cmToAll: '全員へ',
-  cmSend: '送信 (CTRL+Enter)'
+  cmSend: '送信 (CTRL+Enter)',
+  rpCall: '呼び出す',
+  rpConnectYarnPhone: '糸電話をつなぐ',
+  rpCutYarnPhone: '糸電話を切る',
 }
 export type JaKeyList = keyof typeof jaTranslate

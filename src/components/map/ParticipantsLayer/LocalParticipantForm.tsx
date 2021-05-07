@@ -13,7 +13,7 @@ import {Observer} from 'mobx-react-lite'
 import React, {useState} from 'react'
 import {SketchPicker} from 'react-color'
 
-export interface ConfigFormProps extends PopoverProps{
+export interface LocalParticipantFormProps extends PopoverProps{
   close: () => void,
 }
 
@@ -23,7 +23,7 @@ const tfDivStyle = {height: isSmartphone() ? '4em' : '3em'}
 const tfLStyle = {fontSize: isSmartphone() ? '1em' : '1em'}
 const iStyle = {fontSize: isSmartphone() ? '2.5rem' : '1rem'}
 
-export const ConfigForm: React.FC<ConfigFormProps> = (props: ConfigFormProps) => {
+export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props: LocalParticipantFormProps) => {
   const participants = useStore()
   const local = participants.local
   const [file, setFile] = useState<File|null>()
@@ -64,7 +64,7 @@ export const ConfigForm: React.FC<ConfigFormProps> = (props: ConfigFormProps) =>
   const colorButton = React.useRef<HTMLButtonElement>(null)
   const textColorButton = React.useRef<HTMLButtonElement>(null)
   const popoverProps = Object.assign({}, props)
-  delete (popoverProps as Partial<ConfigFormProps>).close
+  delete (popoverProps as Partial<LocalParticipantFormProps>).close
 
   return <Popover {...popoverProps} onClose={closeConfig}>
     <DialogTitle>

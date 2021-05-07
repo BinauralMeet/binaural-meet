@@ -63,6 +63,9 @@ export const enTranslate = {
   cmLeft: ' Left.',
   cmNameChanged: '{{old}} changed its name to {{new}}.',
   cmToAll: 'To all',
-  cmSend: 'Send (CTRL+Enter)'
+  cmSend: 'Send (CTRL+Enter)',
+  rpCall: '呼び出す',
+  rpConnectYarnPhone: '糸電話をつなぐ',
+  rpCutYarnPhone: '糸電話を切る',
 }
 export type EnKeyList = keyof typeof enTranslate

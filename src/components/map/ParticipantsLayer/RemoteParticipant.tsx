@@ -1,19 +1,72 @@
+import {MoreButton, moreButtonControl, MoreButtonMember} from '@components/utils/MoreButton'
+import {makeStyles} from '@material-ui/core/styles'
 import participants from '@stores/participants/Participants'
+import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {Participant, ParticipantProps} from './Participant'
+import {RemoteParticipantForm} from './RemoteParticipantForm'
 
-const onClick = (ev:React.MouseEvent<HTMLDivElement>, id:string) => {
-  if (participants.directRemotes.has(id)) {
-    participants.directRemotes.delete(id)
-  }else {
-    participants.directRemotes.add(id)
-  }
+interface RemoteParticipantMember extends MoreButtonMember{
+  timeout:NodeJS.Timeout|undefined
 }
 
+interface StyleProps {
+  position: [number, number],
+  size: number,
+}
+const useStyles = makeStyles({
+  more: (props: StyleProps) => ({
+    position: 'absolute',
+    width: props.size * 0.5 ,
+    height: props.size * 0.5,
+    left: props.position[0] + props.size * 0.4,
+    top: props.position[1] - props.size * 0.8,
+  }),
+})
+
 export const RemoteParticipant: React.FC<ParticipantProps> = (props) => {
+  const member = React.useRef<RemoteParticipantMember>({} as RemoteParticipantMember).current
+  const [showMore, setShowMore] = React.useState(false)
+  const moreControl = moreButtonControl(setShowMore, member)
+  const [showForm, setShowForm] = React.useState(false)
+  const [color] = props.participant.getColor()
+  const styleProps = useObserver(() => ({
+    position: props.participant.pose.position,
+    size: props.size,
+  }))
+  const classes = useStyles(styleProps)
+  function switchYarnPhone(ev:React.MouseEvent<HTMLDivElement>, id:string){
+    if (showForm){ return }
+    if (participants.directRemotes.has(id)) {
+      participants.directRemotes.delete(id)
+    }else {
+      participants.directRemotes.add(id)
+    }
+  }
+  function onClose() {
+    setShowForm(false)
+  }
+  function openForm() {
+    setShowForm(true)
+  }
+  const buttonRef=React.useRef<HTMLButtonElement>(null)
+
   return (
-    <div onClick = {(ev)=>onClick(ev, props.participant.id)}>
+    <div {...moreControl}
+      onClick = {(ev)=>switchYarnPhone(ev, props.participant.id)}
+      onContextMenu={(ev) => {ev.preventDefault(); openForm()}}
+    >
       <Participant {...props} isLocal={false}/>
+      <MoreButton show={showMore} className={classes.more} htmlColor={color} {...moreControl}
+      buttonRef={buttonRef}
+      onClickMore = {(ev)=>{
+        ev.stopPropagation()
+        openForm()
+      }} />
+      <RemoteParticipantForm open={showForm} close={onClose} participant={props.participant}
+        anchorEl={buttonRef.current} anchorOrigin={{vertical:'top', horizontal:'left'}}
+        anchorReference = "anchorEl"
+      />
     </div>
   )
 }
