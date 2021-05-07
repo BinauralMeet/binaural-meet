@@ -1,5 +1,5 @@
 import {connection} from '@models/api'
-import { getNotificationPermission } from '@models/api/Notifcation'
+import { getNotificationPermission } from '@models/api/Notification'
 import {manager as audioManager} from '@models/audio'
 import {urlParameters} from '@models/url'
 import participants from '@stores/participants/Participants'

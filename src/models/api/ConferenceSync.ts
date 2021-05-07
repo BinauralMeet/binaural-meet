@@ -14,7 +14,7 @@ import {autorun, IReactionDisposer} from 'mobx'
 import type {Conference} from './Conference'
 import {ConferenceEvents} from './Conference'
 import {contentTrackCarrierName} from './ConnectionForScreenContent'
-import { notification } from './Notifcation'
+import { notification } from './Notification'
 
 export const MessageType = {
   PARTICIPANT_POSE: 'm_pose',                   //  -> update presence once per 5 sec / message immediate value
