@@ -29,6 +29,7 @@ export const ConferenceEvents = {
   REMOTE_TRACK_ADDED: 'remote_track_added',
   REMOTE_TRACK_REMOVED: 'remote_track_removed',
   MESSAGE_RECEIVED: 'message_received',
+  PRIVATE_MESSAGE_RECEIVED: 'prev_message_received',
 }
 export class Conference extends EventEmitter {
   public _jitsiConference?: JitsiMeetJS.JitsiConference
@@ -188,11 +189,6 @@ export class Conference extends EventEmitter {
     this._jitsiConference?.sendMessage(msg, to, jc?.rtc?._channel?.isOpen() ? true : false)
   }
 
-  sendChatMessage(msg:string, to=''){
-    const str = JSON.stringify({msg, ts:Date.now()})
-    this._jitsiConference?.sendMessage(str, to, false)
-  }
-
   //  register event handlers
   private registerJistiConferenceEvents() {
     if (!this._jitsiConference) {
@@ -271,11 +267,17 @@ export class Conference extends EventEmitter {
         }
       }
     })
-
+/*
+    this._jitsiConference.on(JitsiMeetJS.events.conference.PRIVATE_MESSAGE_RECEIVED,
+      (id:string, text:string, timeStamp:number) => {
+        console.log('PRIVATE_MESSAGE_RECEIVED', id, text, timeStamp)
+        //  this.emit(ConferenceEvents.PRIVATE_MESSAGE_RECEIVED, id, text, timeStamp)
+    })
     this._jitsiConference.on(JitsiMeetJS.events.conference.MESSAGE_RECEIVED,
       (id:string, text:string, timeStamp:number) => {
-        this.emit(ConferenceEvents.MESSAGE_RECEIVED, id, text, timeStamp)
-    })
+        console.log('MESSAGE_RECEIVED', id, text, timeStamp)
+        //  this.emit(ConferenceEvents.MESSAGE_RECEIVED, id, text, timeStamp)
+    })  */
   }
 
   private video:undefined | HTMLVideoElement = undefined

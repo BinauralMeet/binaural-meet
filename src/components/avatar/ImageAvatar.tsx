@@ -60,11 +60,11 @@ const useStyles = makeStyles({
 })
 
 
-export const ImageAvatar: React.FC<ImageAvatarProps> = (props: ImageAvatarProps) => {
+export const RawImageAvatar: React.FC<ImageAvatarProps> = (props: ImageAvatarProps) => {
   const classes = useStyles(props)
 
   return <Observer>{()=>{
-    console.log(`render ImageAvatar src=${props.avatarSrc}`)
+    //console.log(`render ImageAvatar src=${props.avatarSrc}`)
 
     let initial = ''
     if (!props.avatarSrc){
@@ -82,4 +82,10 @@ export const ImageAvatar: React.FC<ImageAvatarProps> = (props: ImageAvatarProps)
     }
   }</Observer>
 }
+RawImageAvatar.displayName = 'RawImageAvatar'
+
+export const ImageAvatar = (props: ImageAvatarProps) =>
+  React.useMemo(() => <RawImageAvatar {...props} />,
+  //  eslint-disable-next-line react-hooks/exhaustive-deps
+  [props.avatarSrc, props.border, props.colors, props.name, props.size, props.style])
 ImageAvatar.displayName = 'ImageAvatar'

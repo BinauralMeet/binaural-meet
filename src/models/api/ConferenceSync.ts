@@ -1,10 +1,11 @@
 import {t} from '@models/locales'
 import {Pose2DMap} from '@models/MapObject'
 import {priorityCalculator} from '@models/middleware/trafficControl'
-import {defaultRemoteInformation, Mouse, Physics, RemoteInformation, TrackStates} from '@models/Participant'
+import {defaultRemoteInformation, Mouse, PARTICIPANT_SIZE, Physics, RemoteInformation, TrackStates} from '@models/Participant'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {urlParameters} from '@models/url'
-import chat, { ChatMessage } from '@stores/Chat'
+import {normV, subV2} from '@models/utils'
+import chat, { ChatMessage, ChatMessageToSend } from '@stores/Chat'
 import participants from '@stores/participants/Participants'
 import {extractContentDataAndIds, makeItContent, makeThemContents} from '@stores/sharedContents/SharedContentCreator'
 import contents from '@stores/sharedContents/SharedContents'
@@ -17,6 +18,7 @@ import {contentTrackCarrierName} from './ConnectionForScreenContent'
 import { notification } from './Notification'
 
 export const MessageType = {
+  CHAT_MESSAGE: 'm_chat',                       //  -> text chat message
   PARTICIPANT_POSE: 'm_pose',                   //  -> update presence once per 5 sec / message immediate value
   PARTICIPANT_MOUSE: 'm_mouse',                 //  -> message
   PARTICIPANT_TRACKLIMITS: 'm_track_limits',    //  -> message, basically does not sync
@@ -27,6 +29,7 @@ export const MessageType = {
   FRAGMENT_HEAD: 'frag_head',
   FRAGMENT_CONTENT: 'frag_cont',
 }
+
 export const PropertyType = {
   PARTICIPANT_INFO: 'p_info',                   //  -> presence
   PARTICIPANT_POSE: 'p_pose',                   //  -> update presence once per 5 sec / message immediate value
@@ -150,12 +153,22 @@ export class ConferenceSync{
     //  chat
     this.conference.on(ConferenceEvents.MESSAGE_RECEIVED,
       (id: string, str: string) => {
-        const msg = JSON.parse(str) as {msg:string, ts:number}
-        console.log(`MESSAGE_RECEIVED id:${id}, text:${msg.msg}, ts:${msg.ts}`)
+        const msg = JSON.parse(str) as {msg:string, ts:number, to:string}
+        //  console.log(`MESSAGE_RECEIVED id:${id}, text:${msg.msg}, ts:${msg.ts}`)
         const from = participants.find(id)
         if (from){
           chat.addMessage(new ChatMessage(msg.msg, from.id, from.information.name,
             from.information.avatarSrc, from.getColor(), msg.ts, 'text'))
+        }
+      }
+    )
+    this.conference.on(MessageType.CHAT_MESSAGE,
+      (pid: string, msg: ChatMessageToSend) => {
+        //  console.log(`PRIVATE_MESSAGE_RECEIVED id:${id}, text:${msg.msg}, ts:${msg.ts}`)
+        const from = participants.find(pid)
+        if (from){
+          chat.addMessage(new ChatMessage(msg.msg, from.id, from.information.name,
+            from.information.avatarSrc, from.getColor(), msg.ts, msg.to ? 'private':'text'))
         }
       }
     )
@@ -164,7 +177,7 @@ export class ConferenceSync{
       const caller = participants.find(from)
       if (caller){
         chat.calledBy(caller)
-        notification(t('callBy', {caller: caller?.information.name}), {icon: './favicon.ico'})
+        notification(t('noCalled', {name: caller?.information.name}), {icon: './favicon.ico'})
       }
     })
     this.disposers.push(autorun(() => {
@@ -216,10 +229,23 @@ export class ConferenceSync{
     //  pose
     const onPose = (from:string, pose:Pose2DMap) => {
       const remote = participants.remote.get(from)
+      const local = participants.local
       if (remote) {
         remote.pose.orientation = pose.orientation
         remote.pose.position = pose.position
         remote.physics.located = true
+        if (local.information.notifyNear || local.information.notifyTouch){
+          const distance = normV(subV2(remote.pose.position, local.pose.position))
+          const NEAR = PARTICIPANT_SIZE * 3
+          const TOUCH = PARTICIPANT_SIZE
+          if (remote.lastDistance > TOUCH &&  distance <= TOUCH
+            && local.information.notifyTouch){
+            notification(t('noTouched',{name: remote.information.name}), {icon: './favicon.ico'})
+          }else if (remote.lastDistance > NEAR && distance < NEAR && local.information.notifyNear){
+            notification(t('noNear', {name: remote.information.name}), {icon: './favicon.ico'})
+          }
+          remote.lastDistance = distance
+        }
       }
     }
     this.conference.on(MessageType.PARTICIPANT_POSE, onPose)

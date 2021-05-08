@@ -33,6 +33,9 @@ export interface RemoteInformation {
 }
 export interface LocalInformation extends RemoteInformation {
   email: string
+  notifyCall: boolean
+  notifyTouch: boolean
+  notifyNear: boolean
 }
 export const defaultInformation:LocalInformation = {
   name: 'Anonymous',
@@ -40,6 +43,9 @@ export const defaultInformation:LocalInformation = {
   avatarSrc: '',
   color: [],
   textColor: [],
+  notifyCall: true,
+  notifyTouch: true,
+  notifyNear: false,
 }
 export const defaultRemoteInformation:RemoteInformation = {
   name: '',

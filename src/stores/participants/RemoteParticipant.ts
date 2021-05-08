@@ -16,6 +16,7 @@ export class RemoteParticipant extends ParticipantBase implements Store<IRemoteP
   information:RemoteInformation = this.information as RemoteInformation
   @observable trackStates = new TrackStates()
   @observable called = false
+  lastDistance = 0
   constructor(id:string) {
     super()
     makeObservable(this)

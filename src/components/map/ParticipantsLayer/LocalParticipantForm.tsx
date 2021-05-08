@@ -1,8 +1,10 @@
 import {useStore} from '@hooks/ParticipantsStore'
 import Box from '@material-ui/core/Box'
 import Button from '@material-ui/core/Button'
+import Checkbox from '@material-ui/core/Checkbox'
 import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
+import FormControlLabel from '@material-ui/core/FormControlLabel'
 import Popover, { PopoverProps } from '@material-ui/core/Popover'
 import TextField from '@material-ui/core/TextField'
 import {uploadToGyazo} from '@models/api/Gyazo'
@@ -69,7 +71,7 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
   return <Popover {...popoverProps} onClose={closeConfig}>
     <DialogTitle>
       <span  style={{fontSize: isSmartphone() ? '2.5em' : '1em'}}>
-        {t('asTitle')}
+        {t('lsTitle')}
       </span>
     </DialogTitle>
     <DialogContent>
@@ -87,12 +89,12 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
             onKeyPress={onKeyPress} fullWidth={true}
           />
           <Box mt={3}>
-            <div style={{fontSize:12}}>{t('asColor')}</div>
+            <div style={{fontSize:12}}>{t('lsColor')}</div>
             <Box ml={2}>
               <Button variant="contained"
                 style={{backgroundColor:rgb2Color(rgb), color:textColor}}
                 onClick={()=>{setShowColorPicker(true)}} ref={colorButton}>
-                {t('asColorAvatar')}</Button>
+                {t('lsColorAvatar')}</Button>
               <Popover open={showColorPicker} onClose={()=>{setShowColorPicker(false)}}
                 anchorEl={colorButton.current} anchorOrigin={{vertical:'bottom', horizontal:'right'}}>
                 <SketchPicker color = {{r:rgb[0], g:rgb[1], b:rgb[2]}} disableAlpha
@@ -104,7 +106,7 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
               </Popover>
               <Button variant="contained" style={{color:rgb2Color(textRgb), backgroundColor:backColor, marginLeft:15}}
                 onClick={()=>{setShowTextColorPicker(true)}} ref={textColorButton}>
-                {t('asColorText')}</Button>
+                {t('lsColorText')}</Button>
               <Popover open={showTextColorPicker} anchorOrigin={{vertical:'bottom', horizontal:'right'}}
                 onClose={()=>{setShowTextColorPicker(false)}} anchorEl={textColorButton.current}>
                 <SketchPicker color = {{r:textRgb[0], g:textRgb[1], b:textRgb[2]}}
@@ -116,30 +118,47 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
               </Popover>
               <Button variant="contained" style={{marginLeft:15}}
                 onClick={()=>{local.information.color=[]; local.information.textColor=[]}} >
-                {t('asAutoColor')}</Button>
+                {t('lsAutoColor')}</Button>
             </Box>
           </Box>
           <Box mt={3}>
-            <div style={{fontSize:12}}>{t('asImage')}</div>
+            <div style={{fontSize:12}}>{t('lsImage')}</div>
             <Box mt={-1} ml={2}>
-              <TextField label={t('asEmail')} multiline={false} value={local.info.email}
+              <form key="information" onSubmit = {uploadAvatarSrc}
+                style={{lineHeight:'2em', fontSize: isSmartphone() ? '2.5em' : '1em'}}>
+                <div style={{fontSize:12, marginTop:8}}>{t('lsImageFile')}</div>
+                {local.information.avatarSrc ? <>
+                  <img src={local.information.avatarSrc} style={{height:'1.5em', verticalAlign:'middle'}} alt="avatar"/>
+                  <input style={iStyle} type="submit" onClick={clearAvatarSrc} value="✕" /> &nbsp;
+                </> : undefined}
+                <input style={iStyle} type="file" onChange={(ev) => {
+                  setFile(ev.target.files?.item(0))
+                }} />
+                <input style={iStyle} type="submit" value="Upload" />
+              </form>
+              <TextField label={t('lsEmail')} multiline={false} value={local.info.email}
                 style={{...tfDivStyle, marginTop:8}}
                 inputProps={{style: tfIStyle, autoFocus:true}} InputLabelProps={{style: tfLStyle}}
                 onChange={event => local.info.email = event.target.value}
                 onKeyPress={onKeyPress} fullWidth={true}
               />
-            <form key="information" onSubmit = {uploadAvatarSrc}
-              style={{lineHeight:'2em', fontSize: isSmartphone() ? '2.5em' : '1em'}}>
-              <div style={{fontSize:12, marginTop:8}}>{t('asImageFile')}</div>
-              {local.information.avatarSrc ? <>
-                <img src={local.information.avatarSrc} style={{height:'1.5em', verticalAlign:'middle'}} alt="avatar"/>
-                <input style={iStyle} type="submit" onClick={clearAvatarSrc} value="✕" /> &nbsp;
-              </> : undefined}
-              <input style={iStyle} type="file" onChange={(ev) => {
-                setFile(ev.target.files?.item(0))
-              }} />
-              <input style={iStyle} type="submit" value="Upload" />
-            </form>
+            </Box>
+          </Box>
+          <Box mt={3}>
+            <div style={{fontSize:12}}>{t('lsNotification')}</div>
+            <Box mt={-1} ml={2}>
+            <FormControlLabel control={
+              <Checkbox color="primary" checked={local.information.notifyCall}
+              onChange={(ev)=>{local.information.notifyCall = ev.target.checked}} />
+              } label={t('lsNotifyCall')} />
+            <FormControlLabel control={
+              <Checkbox color="primary" checked={local.information.notifyTouch}
+                onChange={(ev)=>{local.information.notifyTouch = ev.target.checked}} />
+              } label={t('lsNotifyTouch')} />
+            <FormControlLabel control={
+              <Checkbox color="primary" checked={local.information.notifyNear}
+                onChange={(ev)=>{local.information.notifyNear = ev.target.checked}} />
+              } label={t('lsNotifyNear')} />
             </Box>
           </Box>
         </>}}
@@ -148,9 +167,9 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
         <Button variant="contained" color="primary"
           onClick={()=>{
             closeConfig({}, 'enter')
-          }}>{t('asSave')}</Button>
+          }}>{t('lsSave')}</Button>
         <Button variant="contained" style={{marginLeft:15}} color="secondary"
-          onClick={()=>{ local.loadInformationFromStorage()}}>{t('asCancel')}</Button>
+          onClick={()=>{ local.loadInformationFromStorage()}}>{t('lsCancel')}</Button>
       </Box>
     </DialogContent>
   </Popover>

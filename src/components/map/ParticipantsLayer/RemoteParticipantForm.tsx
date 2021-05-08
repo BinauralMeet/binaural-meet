@@ -2,7 +2,8 @@ import Box from '@material-ui/core/Box'
 import Button from '@material-ui/core/Button'
 import DialogContent from '@material-ui/core/DialogContent'
 import Popover, { PopoverProps } from '@material-ui/core/Popover'
-import {useTranslation} from '@models/locales'
+import {t} from '@models/locales'
+import chat from '@stores/Chat'
 import participants from '@stores/participants/Participants'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import React from 'react'
@@ -13,7 +14,6 @@ export interface RemoteParticipantFormProps extends PopoverProps{
 }
 
 export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (props: RemoteParticipantFormProps) => {
-  const {t} = useTranslation()
 
   function closeConfig(ev:Object, reason:string) {
     if (reason === 'enter' || reason==='backdropClick'){
@@ -31,7 +31,7 @@ export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (prop
           onClick={()=>{
             closeConfig({}, 'enter')
             props.participant.call()
-          }}>{t('rpCall')}</Button>
+          }}>{t('rsCall')}</Button>
       </Box>
       <Box mb={2}>
       <Button variant="contained"
@@ -44,7 +44,15 @@ export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (prop
           closeConfig({}, 'enter')
         }}>
           {participants.directRemotes.has(props.participant.id) ?
-            t('rpCutYarnPhone') : t('rpConnectYarnPhone')}</Button>
+            t('rsCutYarnPhone') : t('rsConnectYarnPhone')}</Button>
+      </Box>
+      <Box mb={2}>
+      <Button variant="contained"
+        onClick={()=>{
+          chat.sendTo = props.participant.id
+          closeConfig({}, 'enter')
+        }}>
+          {t('rsChatTo', {name: props.participant.information.name})}</Button>
       </Box>
     </DialogContent>
   </Popover>

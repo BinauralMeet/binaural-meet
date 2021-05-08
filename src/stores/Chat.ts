@@ -4,7 +4,12 @@ import {action, makeObservable, observable} from 'mobx'
 import { LocalParticipant } from './participants/LocalParticipant'
 import { RemoteParticipant } from './participants/RemoteParticipant'
 
-export type ChatMessageType = 'text' | 'log' | 'call'
+export type ChatMessageType = 'text' | 'log' | 'call' | 'private'
+export interface ChatMessageToSend{
+  msg:string, //  message
+  ts:number,  //  timestamp
+  to:string   //  send to
+}
 export class ChatMessage {
   type:ChatMessageType = 'text'
   text
@@ -27,6 +32,7 @@ export class ChatMessage {
 
 export class Chat {
   @observable messages:ChatMessage[] = []
+  @observable sendTo = ''
 
   constructor() {
     makeObservable(this)
