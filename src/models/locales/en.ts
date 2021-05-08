@@ -53,6 +53,7 @@ export const enTranslate = {
   lsNotifyCall: 'Called',
   lsNotifyTouch: 'Touched',
   lsNotifyNear: 'Approached',
+  lsNotifyYarn: 'Yarn phone',
   rsCall: 'Call',
   lsNotification: 'Notification',
   rsConnectYarnPhone: 'Connect yarn phone',
@@ -78,5 +79,6 @@ export const enTranslate = {
   noCalled: '{{name}} called you.',
   noTouched: '{{name}} touched you.',
   noNear: '{{name}} approached you.',
+  noYarn: '{{name}} connected yarn.',
 }
 export type EnKeyList = keyof typeof enTranslate

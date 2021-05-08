@@ -316,11 +316,20 @@ export class ConferenceSync{
     }
     this.disposers.push(autorun(() => { sendPhysics() }))
 
-    //  direct remotes
+    //  Yarn phone
     this.conference.on(MessageType.DIRECT_REMOTES, (from:string, drArray:string[]) => {
+      //  console.log(`yarn from ${from} local:${participants.localId}`)
       const myself = drArray.find(id => id === participants.localId)
       if (myself) {
-        participants.directRemotes.add(from)
+        if (!participants.directRemotes.has(from)){
+          participants.directRemotes.add(from)
+          if (participants.local.information.notifyYarn){
+            const remote = participants.find(from)
+            if (remote){
+              notification(t('noYarn', {name: remote.information.name}), {icon: './favicon.ico'})
+            }
+          }
+        }
       }else {
         participants.directRemotes.delete(from)
       }

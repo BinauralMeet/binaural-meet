@@ -53,6 +53,7 @@ export const jaTranslate = {
   lsNotifyCall: '呼出',
   lsNotifyTouch: '接触',
   lsNotifyNear: '接近',
+  lsNotifyYarn: '糸電話',
   rsCall: '呼び出す',
   rsConnectYarnPhone: '糸電話をつなぐ',
   rsCutYarnPhone: '糸電話を切る',
@@ -77,5 +78,6 @@ export const jaTranslate = {
   noCalled: '{{name}}が呼びました。',
   noTouched: '{{name}}が触れました。',
   noNear: '{{name}}が近づきました。',
+  noYarn: '{{name}}が糸電話をつなぎました。',
 }
 export type JaKeyList = keyof typeof jaTranslate

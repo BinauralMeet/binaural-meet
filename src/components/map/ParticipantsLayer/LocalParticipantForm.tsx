@@ -159,6 +159,10 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
               <Checkbox color="primary" checked={local.information.notifyNear}
                 onChange={(ev)=>{local.information.notifyNear = ev.target.checked}} />
               } label={t('lsNotifyNear')} />
+            <FormControlLabel control={
+              <Checkbox color="primary" checked={local.information.notifyYarn}
+                onChange={(ev)=>{local.information.notifyYarn = ev.target.checked}} />
+              } label={t('lsNotifyYarn')} />
             </Box>
           </Box>
         </>}}
