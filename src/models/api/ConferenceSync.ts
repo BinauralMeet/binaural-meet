@@ -177,7 +177,9 @@ export class ConferenceSync{
       const caller = participants.find(from)
       if (caller){
         chat.calledBy(caller)
-        notification(t('noCalled', {name: caller?.information.name}), {icon: './favicon.ico'})
+        if (participants.local.information.notifyCall){
+          notification(t('noCalled', {name: caller?.information.name}), {icon: './favicon.ico'})
+        }
       }
     })
     this.disposers.push(autorun(() => {
