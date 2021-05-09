@@ -15,7 +15,8 @@ export const AfkDialog: React.FC<{}> = () => {
 
   return <ErrorDialogFrame onClose={onClose}>
     <DialogContent style={{fontSize: isSmartphone() ? '2em' : '1em'}}>
-      <Button color="primary" variant="contained" autoFocus={true} onKeyDown={onClose} onClick={onClose}>
+      <Button color="primary" variant="contained" style={{textTransform:'none'}} autoFocus={true}
+        onKeyDown={onClose} onClick={onClose}>
         {t('afkMessage')}
       </Button>
       </DialogContent>

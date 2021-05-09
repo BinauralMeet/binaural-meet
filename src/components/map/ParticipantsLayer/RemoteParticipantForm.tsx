@@ -27,14 +27,14 @@ export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (prop
   return <Popover {...popoverProps} onClose={closeConfig}>
     <DialogContent>
       <Box mb={2}>
-      <Button variant="contained"
+      <Button variant="contained" color="primary" style={{textTransform:'none'}}
           onClick={()=>{
             closeConfig({}, 'enter')
             props.participant.call()
           }}>{t('rsCall')}</Button>
       </Box>
       <Box mb={2}>
-      <Button variant="contained"
+      <Button variant="contained" color="primary" style={{textTransform:'none'}}
         onClick={()=>{
           if (participants.yarnPhones.has(props.participant.id)){
             participants.yarnPhones.delete(props.participant.id)
@@ -47,7 +47,7 @@ export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (prop
             t('rsCutYarnPhone') : t('rsConnectYarnPhone')}</Button>
       </Box>
       <Box mb={2}>
-      <Button variant="contained"
+      <Button variant="contained" color="primary" style={{textTransform:'none'}}
         onClick={()=>{
           chat.sendTo = props.participant.id
           closeConfig({}, 'enter')

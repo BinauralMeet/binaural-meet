@@ -31,7 +31,9 @@ export const ChatLine: React.FC<Stores & TextLineStyle &{message: ChatMessage}> 
     const timestamp = formatTimestamp(props.message.timestamp)    //  make formated timestamp for tooltip
 
     return <Tooltip title={
-      props.message.type==='private' ? <>{t('cmPrivate', {name:props.message.name})}<br/>{timestamp}</>
+      props.message.type==='private' ?
+      <>{t(props.message.pid===props.participants.localId ? 'cmPrivateTo' : 'cmPrivateFrom',
+        {name:props.message.name})}<br/>{timestamp}</>
         : <>{props.message.name}<br/>{timestamp}</>
       } placement="right">
       <div style={{wordWrap:'break-word', marginTop:2, fontSize, backgroundColor:'#D0D0E0'}}>
@@ -56,8 +58,11 @@ function sendMessage(text: string, sendTo: string, props: Stores){
   connection.conference.sendMessage(MessageType.CHAT_MESSAGE, sendTo, msg)
   if (sendTo) {
     const local = props.participants.local
-    const info = local.information
-    chat.addMessage(new ChatMessage(text, local.id, info.name, info.avatarSrc, local.getColor(), Date.now(), 'private'))
+    const remote = props.participants.remote.get(sendTo)
+    if (remote){
+      chat.addMessage(new ChatMessage(text, local.id, remote.information.name,
+        local.information.avatarSrc, local.getColor(), Date.now(), 'private'))
+    }
   }
 }
 
