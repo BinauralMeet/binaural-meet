@@ -18,7 +18,7 @@ function extractParticipantTrackInfo(participant: RemoteParticipant, track:Jitsi
   return {
     track: track as JitsiRemoteTrack,
     onStage : track.isAudioTrack() &&
-      (participant.physics.onStage || participants.directRemotes.has(participant.id)),
+      (participant.physics.onStage || participants.yarnPhones.has(participant.id)),
     pose: {
       ...participant.pose,
     },
@@ -161,7 +161,7 @@ export class PriorityCalculator {
         //  priorityLog(`prioirty ${id} chagned v=${(rp.tracks.avatar as JitsiRemoteTrack)?.getSSRC()} a=${(rp.tracks.audio as JitsiRemoteTrack)?.getSSRC()}`)
         if (rp.tracks.audio || rp.tracks.avatar) {
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const important = rp.physics.onStage || participants.directRemotes.has(rp.id)
+          const important = rp.physics.onStage || participants.yarnPhones.has(rp.id)
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const moved = rp.pose.position
           this.updateSet.add(rp.id)

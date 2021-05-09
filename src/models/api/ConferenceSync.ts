@@ -22,10 +22,11 @@ export const MessageType = {
   PARTICIPANT_POSE: 'm_pose',                   //  -> update presence once per 5 sec / message immediate value
   PARTICIPANT_MOUSE: 'm_mouse',                 //  -> message
   PARTICIPANT_TRACKLIMITS: 'm_track_limits',    //  -> message, basically does not sync
-  DIRECT_REMOTES: 'direct_remotes',             //  -> message
+  YARN_PHONE: 'YARN_PHONE',             //  -> message
   CONTENT_UPDATE_REQUEST: 'content_update',     //  -> message
   CONTENT_REMOVE_REQUEST: 'content_remove',     //  -> message
   CALL_REMOTE: 'call_remote',                   //  -> message, to give notification to a remote user.
+  AFK_CHANGED: 'afk_changed',                   //
   FRAGMENT_HEAD: 'frag_head',
   FRAGMENT_CONTENT: 'frag_cont',
 }
@@ -151,17 +152,6 @@ export class ConferenceSync{
     })
 
     //  chat
-    this.conference.on(ConferenceEvents.MESSAGE_RECEIVED,
-      (id: string, str: string) => {
-        const msg = JSON.parse(str) as {msg:string, ts:number, to:string}
-        //  console.log(`MESSAGE_RECEIVED id:${id}, text:${msg.msg}, ts:${msg.ts}`)
-        const from = participants.find(id)
-        if (from){
-          chat.addMessage(new ChatMessage(msg.msg, from.id, from.information.name,
-            from.information.avatarSrc, from.getColor(), msg.ts, 'text'))
-        }
-      }
-    )
     this.conference.on(MessageType.CHAT_MESSAGE,
       (pid: string, msg: ChatMessageToSend) => {
         //  console.log(`PRIVATE_MESSAGE_RECEIVED id:${id}, text:${msg.msg}, ts:${msg.ts}`)
@@ -189,6 +179,15 @@ export class ConferenceSync{
           this.conference.sendMessage(MessageType.CALL_REMOTE, remote.id, {})
         }
       })
+    }))
+
+    //  afk
+    this.conference.on(MessageType.AFK_CHANGED, (from:string, afk: boolean) => {
+      const remote = participants.find(from)
+      if (remote){ remote.awayFromKeyboard = afk }
+    })
+    this.disposers.push(autorun(() => {
+      this.conference.sendMessage(MessageType.AFK_CHANGED, '', participants.local.awayFromKeyboard)
     }))
 
     //  info
@@ -317,12 +316,12 @@ export class ConferenceSync{
     this.disposers.push(autorun(() => { sendPhysics() }))
 
     //  Yarn phone
-    this.conference.on(MessageType.DIRECT_REMOTES, (from:string, drArray:string[]) => {
+    this.conference.on(MessageType.YARN_PHONE, (from:string, drArray:string[]) => {
       //  console.log(`yarn from ${from} local:${participants.localId}`)
       const myself = drArray.find(id => id === participants.localId)
       if (myself) {
-        if (!participants.directRemotes.has(from)){
-          participants.directRemotes.add(from)
+        if (!participants.yarnPhones.has(from)){
+          participants.yarnPhones.add(from)
           if (participants.local.information.notifyYarn){
             const remote = participants.find(from)
             if (remote){
@@ -331,15 +330,15 @@ export class ConferenceSync{
           }
         }
       }else {
-        participants.directRemotes.delete(from)
+        participants.yarnPhones.delete(from)
       }
     })
-    const sendDirectRemotes = () => {
+    const sendYarnPhones = () => {
       if (this.conference.channelOpened) {
-        this.conference.sendMessage(MessageType.DIRECT_REMOTES, '', Array.from(participants.directRemotes))
+        this.conference.sendMessage(MessageType.YARN_PHONE, '', Array.from(participants.yarnPhones))
       }
     }
-    this.disposers.push(autorun(() => { sendDirectRemotes() }))
+    this.disposers.push(autorun(() => { sendYarnPhones() }))
 
     //  ghost pids
     this.conference.on(PropertyType.GHOSTS, (from:string, ghosts:string[]) => {

@@ -22,7 +22,7 @@ const Line: React.FC<LineProps> = (props) => {
 
   return <svg xmlns="http://www.w3.org/2000/svg" style={{position:'absolute', left, top, width, height, pointerEvents:'stroke'}}
     viewBox={`0, 0, ${width}, ${height}`}
-    onClick = {() => { props.participants.directRemotes.delete(props.remote) }}
+    onClick = {() => { props.participants.yarnPhones.delete(props.remote) }}
     >
     <line x1={props.start[0] - left} y1={props.start[1] - top}
       x2={props.end[0] - left} y2={props.end[1] - top} stroke="black" />
@@ -42,7 +42,7 @@ export const ParticipantsLayer: React.FC<{}> = (props) => {
   const localElement = (<LocalParticipant key={'local'}
     participant={store.local} size={PARTICIPANT_SIZE} />)
   const lines = useObserver(
-    () => Array.from(store.directRemotes).map((rid) => {
+    () => Array.from(store.yarnPhones).map((rid) => {
       const start = store.local.pose.position
       const remote = store.remote.get(rid)
       if (!remote) { return undefined }

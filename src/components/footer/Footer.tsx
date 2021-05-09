@@ -15,6 +15,7 @@ import VideoOffIcon from '@material-ui/icons/VideocamOff'
 import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
 import SpeakerOnIcon from '@material-ui/icons/VolumeUp'
 import {useTranslation} from '@models/locales'
+import errorInfo from '@stores/ErrorInfo'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import {AdminConfigForm} from './adminConfig/AdminConfigForm'
@@ -115,6 +116,11 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
         if (e.code === 'KeyC') {  //  Create share dialog
           setShowFooter(true)
           setShowShare(true)
+        }
+        if (e.code === 'KeyL') {  //  Leave from keyboard
+          participants.local.awayFromKeyboard = true
+          errorInfo.title = t('afkTitle')
+          errorInfo.type = 'afk'
         }
       }
     }

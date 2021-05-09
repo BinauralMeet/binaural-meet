@@ -36,14 +36,14 @@ export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (prop
       <Box mb={2}>
       <Button variant="contained"
         onClick={()=>{
-          if (participants.directRemotes.has(props.participant.id)){
-            participants.directRemotes.delete(props.participant.id)
+          if (participants.yarnPhones.has(props.participant.id)){
+            participants.yarnPhones.delete(props.participant.id)
           }else{
-            participants.directRemotes.add(props.participant.id)
+            participants.yarnPhones.add(props.participant.id)
           }
           closeConfig({}, 'enter')
         }}>
-          {participants.directRemotes.has(props.participant.id) ?
+          {participants.yarnPhones.has(props.participant.id) ?
             t('rsCutYarnPhone') : t('rsConnectYarnPhone')}</Button>
       </Box>
       <Box mb={2}>

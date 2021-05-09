@@ -4,28 +4,39 @@ import DialogTitle from '@material-ui/core/DialogTitle'
 import errorInfo, {ErrorType} from '@stores/ErrorInfo'
 import {Observer} from 'mobx-react-lite'
 import React from 'react'
+import {AfkDialog} from './AfkDialog'
 import {TheEntrance} from './TheEntrance'
 
-export const pages = new Map<ErrorType, JSX.Element>()
-pages.set('enterance', <TheEntrance />)
+export const dialogs = new Map<ErrorType, JSX.Element>()
+dialogs.set('enterance', <TheEntrance />)
+dialogs.set('afk', <AfkDialog />)
+
+export const ErrorDialogFrame: React.FC<{onClose:(event:{}, reason:string)=>void}> = (props) => {
+  return <Dialog {...props} open={errorInfo.type !== ''} onClose={props.onClose}
+  maxWidth="md" fullWidth={false} >
+  {errorInfo.title ?
+    <DialogTitle id="simple-dialog-title">{errorInfo.title}</DialogTitle>
+    : undefined }
+  {props.children}
+</Dialog>
+}
+
 
 export const ErrorDialog: React.FC<{}> = (props) => {
-//  const title =
-//  const message = useLocalObservable(() => errorInfo.message)
-//  const open = useLocalObservable(() => errorInfo.type !== '')
-  let page = <DialogContent>
-    <Observer>{()=><> {errorInfo.message} </>}</Observer>
-  </DialogContent>
-  if (pages.has(errorInfo.type)) {
-    page = <Observer>{() => <> {pages.get(errorInfo.type)!} </>}</Observer>
-  }
-
   return <Observer>{
-    () => <Dialog open={errorInfo.type !== ''} onClose={ () => { errorInfo.clear() }}
-      maxWidth="md" fullWidth={false} >
-      {errorInfo.title ? <DialogTitle id="simple-dialog-title">{errorInfo.title}</DialogTitle> : undefined }
-      {page}
-    </Dialog>
+    () => {
+      if (errorInfo.type){
+        if (dialogs.has(errorInfo.type)) {
+          return dialogs.get(errorInfo.type)!
+        }else{
+          return <ErrorDialogFrame onClose={()=>{errorInfo.clear()} }>
+            <DialogContent>{errorInfo.message}</DialogContent>
+            </ErrorDialogFrame>
+        }
+      }
+
+      return <></>
+    }
   }</Observer>
 }
 ErrorDialog.displayName = 'ErrorDialog'

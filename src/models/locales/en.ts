@@ -80,5 +80,7 @@ export const enTranslate = {
   noTouched: '{{name}} touched you.',
   noNear: '{{name}} approached you.',
   noYarn: '{{name}} connected yarn.',
+  afkTitle: 'In away from keyboard mode',
+  afkMessage: 'Hit any key or click mouse to return.',
 }
 export type EnKeyList = keyof typeof enTranslate

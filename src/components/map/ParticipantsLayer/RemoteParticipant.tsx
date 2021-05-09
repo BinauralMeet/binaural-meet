@@ -38,10 +38,10 @@ export const RemoteParticipant: React.FC<ParticipantProps> = (props) => {
   const classes = useStyles(styleProps)
   function switchYarnPhone(ev:React.MouseEvent<HTMLDivElement>, id:string){
     if (showForm){ return }
-    if (participants.directRemotes.has(id)) {
-      participants.directRemotes.delete(id)
+    if (participants.yarnPhones.has(id)) {
+      participants.yarnPhones.delete(id)
     }else {
-      participants.directRemotes.add(id)
+      participants.yarnPhones.add(id)
     }
   }
   function onClose() {

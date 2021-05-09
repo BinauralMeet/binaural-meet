@@ -8,6 +8,7 @@ export interface ParticipantBase extends MapObject{
   mouse: Mouse
   id: string
   information: RemoteInformation|LocalInformation
+  awayFromKeyboard: boolean
 }
 
 export interface RemoteParticipant extends ParticipantBase {

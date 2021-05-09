@@ -4,20 +4,21 @@ import {manager as audioManager} from '@models/audio'
 import {urlParameters} from '@models/url'
 import participants from '@stores/participants/Participants'
 import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'
-import {autorun, reaction} from 'mobx'
+import {autorun} from 'mobx'
 
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
 
-//  Mute reaction for audio
-reaction(() => participants.local.plugins.streamControl.muteAudio,
-         (muteAudio) => {
-           const track = participants.local.tracks.audio as JitsiLocalTrack
-           if (track) { muteAudio ? track.mute() : track.unmute() }
-           if (muteAudio) {
-             participants.local.tracks.audioLevel = 0
-           }
-         },
+//  Mute reaction for mic
+autorun(() => {
+          const muteAudio = participants.local.plugins.streamControl.muteAudio
+           || participants.local.awayFromKeyboard
+          const track = participants.local.tracks.audio as JitsiLocalTrack
+          if (track) { muteAudio ? track.mute() : track.unmute() }
+          if (muteAudio) {
+            participants.local.tracks.audioLevel = 0
+          }
+        },
 )
 
 //  microphone or audio input device update
@@ -67,6 +68,7 @@ const DELETE_TRACK = true
 autorun(() => {
   const did = participants.local.devicePreference.videoInputDevice
   const muted = participants.local.plugins.streamControl.muteVideo
+    || participants.local.awayFromKeyboard
   if (participants.localId && !muted && urlParameters.testBot === null) {
     const track = connection.conference.getLocalCameraTrack()
     if (track && track.getDeviceId() === did) { return }

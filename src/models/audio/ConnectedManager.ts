@@ -27,8 +27,8 @@ export class ConnectedManager {
     autorun(this.onScreenContentsChange)
     autorun(
       () => {
-        this.manager.switchPlayMode(participants.local.useStereoAudio ? 'Context' : 'Element',
-                                    participants.local.plugins.streamControl.muteSpeaker)
+        const muteSpeaker = participants.local.plugins.streamControl.muteSpeaker || participants.local.awayFromKeyboard
+        this.manager.switchPlayMode(participants.local.useStereoAudio ? 'Context' : 'Element', muteSpeaker)
       },
     )
   }

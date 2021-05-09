@@ -5,7 +5,7 @@ import {
 } from '@models/Participant'
 import {findReverseColorRGB, findTextColorRGB, getRandomColorRGB, rgb2Color} from '@models/utils'
 import {MapObject} from '@stores/MapObject'
-import {shallowObservable, Store} from '@stores/utils'
+import {Store} from '@stores/utils'
 import {JitsiTrack} from 'lib-jitsi-meet'
 import {action, computed, makeObservable, observable} from 'mobx'
 import {Plugins} from './plugins'
@@ -33,21 +33,22 @@ export class TracksStore<T extends JitsiTrack> implements Tracks{
 
 export class ParticipantBase extends MapObject implements Store<IParticipantBase> {
   @observable id = ''
+  @observable.shallow tracks = new TracksStore<JitsiTrack>()
+  @observable.shallow physics = defaultPhysics
+  @observable.shallow mouse:Mouse = {position:[0, 0], show:false}
+  @observable awayFromKeyboard = false
+  @observable.shallow information: LocalInformation | RemoteInformation
   plugins: Plugins
-  tracks = shallowObservable<TracksStore<JitsiTrack>>(new TracksStore<JitsiTrack>())
-  physics = shallowObservable<Physics>(defaultPhysics)
-  mouse = shallowObservable<Mouse>({position:[0, 0], show:false})
-  information: LocalInformation | RemoteInformation
 
   constructor(isLocal=false) {
     super()
+    makeObservable(this)
     this.plugins = new Plugins(this)
     if (isLocal){
-      this.information = shallowObservable<LocalInformation>(defaultInformation)
+      this.information = defaultInformation
     }else{
-      this.information = shallowObservable<RemoteInformation>(defaultRemoteInformation)
+      this.information = defaultRemoteInformation
     }
-    makeObservable(this)
   }
 
   getColor() {

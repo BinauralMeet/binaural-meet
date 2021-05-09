@@ -23,7 +23,7 @@ function getRelativePoseFromObject(localPose: Pose2DMap, participant: RemotePart
       }
     })
   }
-  if (participant && participants.directRemotes.has(participant.id)) {
+  if (participant && participants.yarnPhones.has(participant.id)) {
     //  This remote participant is directly connected to local participant
     const diff = subV2(remotePose.position, localPose.position)
     const dist = normV(diff)

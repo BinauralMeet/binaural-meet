@@ -79,5 +79,7 @@ export const jaTranslate = {
   noTouched: '{{name}}が触れました。',
   noNear: '{{name}}が近づきました。',
   noYarn: '{{name}}が糸電話をつなぎました。',
+  afkTitle: '離席中モード',
+  afkMessage: 'キーかマウスクリックで戻ります。',
 }
 export type JaKeyList = keyof typeof jaTranslate

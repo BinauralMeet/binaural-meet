@@ -10,7 +10,7 @@ import map from '@stores/Map'
 import participants from '@stores/participants/Participants'
 import {action, autorun, computed, makeObservable, observable, when} from 'mobx'
 
-export type ErrorType = '' | 'connection' | 'noMic' | 'micPermission' | 'channel' | 'enterance'
+export type ErrorType = '' | 'connection' | 'noMic' | 'micPermission' | 'channel' | 'enterance' | 'afk'
 
 export class ErrorInfo {
   @observable message = ''

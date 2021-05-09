@@ -79,6 +79,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
     position: participant.pose.position,
     orientation: participant.pose.orientation,
     mousePosition: participant.mouse.position,
+    awayFromKeyboard: participant.awayFromKeyboard,
   }))
   const name = useObserver(() => participant!.information.name)
   const audioLevel = useObserver(() => Math.pow(participant!.tracks.audioLevel, 0.5))
@@ -149,14 +150,18 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
                 cx={svgCenter + eyeOffsets[0][0]} fill={color} />
               <circle r={0.35 * outerRadius} cy={svgCenter + eyeOffsets[1][1]}
                 cx={svgCenter + eyeOffsets[1][0]} fill={color} />
-              <circle r={0.25 * outerRadius} cy={svgCenter + eyeOffsets[0][1]}
-                cx={svgCenter + eyeOffsets[0][0]} fill="white" />
-              <circle r={0.25 * outerRadius} cy={svgCenter + eyeOffsets[1][1]}
-                cx={svgCenter + eyeOffsets[1][0]} fill="white" />
-              <circle r={0.14 * outerRadius} cy={svgCenter + eyeOffsets[0][1] + eyeballs[0][1]}
-                cx={svgCenter + eyeOffsets[0][0] +  eyeballs[0][0]} fill="black" />
-              <circle r={0.14 * outerRadius} cy={svgCenter + eyeOffsets[1][1] + eyeballs[1][1]}
-                cx={svgCenter + eyeOffsets[1][0] +  eyeballs[1][0]} fill="black" />
+              {participantProps.awayFromKeyboard === true ?
+                undefined
+              :<>
+                <circle r={0.25 * outerRadius} cy={svgCenter + eyeOffsets[0][1]}
+                  cx={svgCenter + eyeOffsets[0][0]} fill="white" />
+                <circle r={0.25 * outerRadius} cy={svgCenter + eyeOffsets[1][1]}
+                  cx={svgCenter + eyeOffsets[1][0]} fill="white" />
+                <circle r={0.14 * outerRadius} cy={svgCenter + eyeOffsets[0][1] + eyeballs[0][1]}
+                  cx={svgCenter + eyeOffsets[0][0] +  eyeballs[0][0]} fill="black" />
+                <circle r={0.14 * outerRadius} cy={svgCenter + eyeOffsets[1][1] + eyeballs[1][1]}
+                  cx={svgCenter + eyeOffsets[1][0] +  eyeballs[1][0]} fill="black" />
+              </>}
             </g>
           }
         </svg>
