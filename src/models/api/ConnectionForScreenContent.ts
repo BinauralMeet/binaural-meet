@@ -18,14 +18,14 @@ export class ConnectionForContent extends EventEmitter {
       this.initJitsiConnection().then(() => {
         if (this.jitsiConnection) {
           this.jitsiConference = this.jitsiConnection.initJitsiConference(connection.conferenceName, config)
-          this.jitsiConference.setDisplayName(contentTrackCarrierName)
-          this.jitsiConference.join('')
-          this.jitsiConference.setSenderVideoConstraint(1080)
           this.jitsiConference.on(JitsiMeetJS.events.conference.CONFERENCE_JOINED, () => {
             this.localId = this.jitsiConference!.myUserId()
             this.jitsiConference?.setPerceptibles([[], []])
             resolve('')
           })
+          this.jitsiConference.setDisplayName(contentTrackCarrierName)
+          this.jitsiConference.join('')
+          this.jitsiConference.setSenderVideoConstraint(1080)
         }else {
           reject('No connection has been established.')
         }
@@ -76,10 +76,24 @@ export class ConnectionForContent extends EventEmitter {
   }
 
   public disconnect(): Promise < any > {
-    if (this.jitsiConnection) {
-      return this.jitsiConnection?.disconnect()
-    }
+    const rv = new Promise((resolve, reject)=>{
+      if (this.jitsiConnection) {
+        if (this.jitsiConference){
+          this.jitsiConference.leave().then(()=>{
+            this.jitsiConnection?.disconnect().then(() => {
+              resolve('')
+            })
+          })
+        }else{
+          this.jitsiConnection?.disconnect().then(() => {
+            resolve('')
+          })
+        }
+      }else{
+        reject('No connection has been established.')
+      }
+    })
 
-    return Promise.reject('No connection has been established.')
+    return rv
   }
 }

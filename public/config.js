@@ -22,7 +22,7 @@ const rtcConfig = {
   screenOptions:{
     desktopSharingFrameRate:{
       min:  0.3,
-      max:  3,
+      max:  30,
     },
   },
 }

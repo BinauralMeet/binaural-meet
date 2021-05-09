@@ -28,8 +28,8 @@ export const ConferenceEvents = {
   USER_LEFT: 'left',
   REMOTE_TRACK_ADDED: 'remote_track_added',
   REMOTE_TRACK_REMOVED: 'remote_track_removed',
-  MESSAGE_RECEIVED: 'message_received',
-  PRIVATE_MESSAGE_RECEIVED: 'prev_message_received',
+//  MESSAGE_RECEIVED: 'message_received',
+//  PRIVATE_MESSAGE_RECEIVED: 'prev_message_received',
 }
 export class Conference extends EventEmitter {
   public _jitsiConference?: JitsiMeetJS.JitsiConference
