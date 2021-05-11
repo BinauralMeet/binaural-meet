@@ -30,6 +30,12 @@ export class ErrorInfo {
         map.keyInputUsers.delete('errorDialog')
       }
     })
+    autorun(() => {
+      if (participants.local.awayFromKeyboard){
+        this.title = t('afkTitle')
+        this.type = 'afk'
+    }
+    })
   }
 
   //  media devices
@@ -60,6 +66,9 @@ export class ErrorInfo {
     }
   }
   @action clear() {
+    if (this.type === 'afk'){
+      participants.local.awayFromKeyboard = false
+    }
     this.type = ''
     this.title = ''
     this.message = ''

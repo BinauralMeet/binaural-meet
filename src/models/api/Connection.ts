@@ -28,8 +28,8 @@ global.jQuery = jquery
 
 const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
   useIPv6: false,
-  disableSimulcast: false,
-  enableWindowOnErrorHandler: false,
+  disableSimulcast: true,
+  enableWindowOnErrorHandler: true,
   enableAnalyticsLogging: false,
   disableThiredPartyRequests: false,
   disableAudioLevels: false,

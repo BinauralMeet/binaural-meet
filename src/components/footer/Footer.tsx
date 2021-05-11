@@ -15,7 +15,6 @@ import VideoOffIcon from '@material-ui/icons/VideocamOff'
 import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
 import SpeakerOnIcon from '@material-ui/icons/VolumeUp'
 import {useTranslation} from '@models/locales'
-import errorInfo from '@stores/ErrorInfo'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import {AdminConfigForm} from './adminConfig/AdminConfigForm'
@@ -107,7 +106,8 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
 
   //  keyboard shortcut
   useEffect(() => {
-    const onKeyPress = (e: KeyboardEvent) => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      //  console.log(`onKeyDown: code: ${e.code}`)
       if (props.map.keyInputUsers.size === 0) {
         if (e.code === 'KeyM') {  //  mute/unmute audio
           participants.local.plugins.streamControl.muteAudio = !participants.local.plugins.streamControl.muteAudio
@@ -116,18 +116,18 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
         if (e.code === 'KeyC') {  //  Create share dialog
           setShowFooter(true)
           setShowShare(true)
+          e.preventDefault()
+          e.stopPropagation()
         }
-        if (e.code === 'KeyL') {  //  Leave from keyboard
+        if (e.code === 'KeyL' || e.code === 'Escape') {  //  Leave from keyboard
           participants.local.awayFromKeyboard = true
-          errorInfo.title = t('afkTitle')
-          errorInfo.type = 'afk'
         }
       }
     }
-    window.addEventListener('keypress', onKeyPress)
+    window.addEventListener('keydown', onKeyDown)
 
     return () => {
-      window.removeEventListener('keypress', onKeyPress)
+      window.removeEventListener('keydown', onKeyDown)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },        [])

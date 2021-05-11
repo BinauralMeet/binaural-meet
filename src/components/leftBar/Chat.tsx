@@ -16,14 +16,15 @@ import {TextLineStyle} from './LeftBar'
 
 const colorMap: { [key in ChatMessageType]: string } = {
   text: 'black',
-  call: 'red',
+  called: 'red',
+  callTo: 'black',
   log: 'black',
   private: 'purple',
 }
 
 
 export const ChatLine: React.FC<Stores & TextLineStyle &{message: ChatMessage}> = (props) => {
-  const scale = props.message.type === 'log' ? 0.6 : 1
+  const scale = props.message.type === 'log' || props.message.type === 'callTo' ? 0.6 : 1
   const lineHeight = props.lineHeight * scale
   const fontSize = props.fontSize * scale
 

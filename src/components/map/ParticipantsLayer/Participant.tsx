@@ -9,6 +9,7 @@ import MicOffIcon from '@material-ui/icons/MicOff'
 import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
 import {addV2, mulV2, normV, rotateVector2DByDegree, subV2} from '@models/utils'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
+import {Participants} from '@stores/participants/Participants'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import {useObserver} from 'mobx-react-lite'
 import React, {forwardRef} from 'react'
@@ -64,6 +65,7 @@ const useStyles = makeStyles({
 
 export interface ParticipantProps{
   participant: LocalParticipant | RemoteParticipant
+  participants: Participants
   size: number
   onContextMenu?:(ev:React.MouseEvent<HTMLDivElement, MouseEvent>) => void
 }
@@ -114,6 +116,18 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
   })
   const eyeballs = eyeballsGlobal.map(g => addV2([0, -0.04 * outerRadius],
                                                  rotateVector2DByDegree(-participantProps.orientation, g)))
+  function onClickEye(ev: React.MouseEvent | React.TouchEvent | React.PointerEvent){
+    if (props.participant.id === props.participants.localId){
+      ev.stopPropagation()
+      ev.preventDefault()
+      props.participants.local.awayFromKeyboard = true
+    }
+  }
+  const eyeClick = {
+    onMouseDown: onClickEye,
+    onTouchStart: onClickEye,
+    onPointerDown: onClickEye,
+  }
 
   const audioMeterSteps = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
   const audioMeter = audioMeterSteps.map(step => audioLevel > step ?
@@ -146,20 +160,20 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
               {isLocal ?
                 <circle r={outerRadius} cy={svgCenter} cx={svgCenter} fill="none" stroke={textColor} />
                 : undefined}
-              <circle r={0.35 * outerRadius} cy={svgCenter + eyeOffsets[0][1]}
+              <circle {...eyeClick} r={0.35 * outerRadius} cy={svgCenter + eyeOffsets[0][1]}
                 cx={svgCenter + eyeOffsets[0][0]} fill={color} />
-              <circle r={0.35 * outerRadius} cy={svgCenter + eyeOffsets[1][1]}
+              <circle {...eyeClick} r={0.35 * outerRadius} cy={svgCenter + eyeOffsets[1][1]}
                 cx={svgCenter + eyeOffsets[1][0]} fill={color} />
               {participantProps.awayFromKeyboard === true ?
                 undefined
               :<>
-                <circle r={0.25 * outerRadius} cy={svgCenter + eyeOffsets[0][1]}
+                <circle {...eyeClick} r={0.25 * outerRadius} cy={svgCenter + eyeOffsets[0][1]}
                   cx={svgCenter + eyeOffsets[0][0]} fill="white" />
-                <circle r={0.25 * outerRadius} cy={svgCenter + eyeOffsets[1][1]}
+                <circle {...eyeClick} r={0.25 * outerRadius} cy={svgCenter + eyeOffsets[1][1]}
                   cx={svgCenter + eyeOffsets[1][0]} fill="white" />
-                <circle r={0.14 * outerRadius} cy={svgCenter + eyeOffsets[0][1] + eyeballs[0][1]}
+                <circle {...eyeClick} r={0.14 * outerRadius} cy={svgCenter + eyeOffsets[0][1] + eyeballs[0][1]}
                   cx={svgCenter + eyeOffsets[0][0] +  eyeballs[0][0]} fill="black" />
-                <circle r={0.14 * outerRadius} cy={svgCenter + eyeOffsets[1][1] + eyeballs[1][1]}
+                <circle {...eyeClick} r={0.14 * outerRadius} cy={svgCenter + eyeOffsets[1][1] + eyeballs[1][1]}
                   cx={svgCenter + eyeOffsets[1][0] +  eyeballs[1][0]} fill="black" />
               </>}
             </g>

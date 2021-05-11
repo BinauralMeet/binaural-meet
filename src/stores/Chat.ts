@@ -4,7 +4,7 @@ import {action, makeObservable, observable} from 'mobx'
 import { LocalParticipant } from './participants/LocalParticipant'
 import { RemoteParticipant } from './participants/RemoteParticipant'
 
-export type ChatMessageType = 'text' | 'log' | 'call' | 'private'
+export type ChatMessageType = 'text' | 'log' | 'called' | 'callTo' | 'private'
 export interface ChatMessageToSend{
   msg:string, //  message
   ts:number,  //  timestamp
@@ -74,8 +74,14 @@ export class Chat {
   }
   calledBy(from: RemoteParticipant|LocalParticipant){
     const cm = new ChatMessage('', from.id, from.information.name,
-    from.information.avatarSrc, from.getColor(), Date.now(), 'call')
-    cm.text = t('cmCall', {name:cm.name})
+    from.information.avatarSrc, from.getColor(), Date.now(), 'called')
+    cm.text = t('cmCallBy', {name:cm.name})
+    this.addMessage(cm)
+  }
+  callTo(to: RemoteParticipant|LocalParticipant){
+    const cm = new ChatMessage('', to.id, to.information.name,
+    to.information.avatarSrc, to.getColor(), Date.now(), 'callTo')
+    cm.text = t('cmCallTo', {name:cm.name})
     this.addMessage(cm)
   }
 }

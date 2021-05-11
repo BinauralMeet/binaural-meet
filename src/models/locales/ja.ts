@@ -70,7 +70,8 @@ export const jaTranslate = {
   cmJoined: '{{name}}が参加。',
   cmLeft: '{{name}}が退出。',
   cmNameChanged: '{{old}} が {{new}} に名前を変更。',
-  cmCall: '{{name}}が呼びました。',
+  cmCallBy: '{{name}}があなたを呼びました。',
+  cmCallTo: 'あなたが{{name}}を呼びました。',
   cmToAll: '全員へ',
   cmToName: '{{name}}へ',
   cmSend: '送信 (CTRL+Enter)',
@@ -80,7 +81,7 @@ export const jaTranslate = {
   noTouched: '{{name}}が触れました。',
   noNear: '{{name}}が近づきました。',
   noYarn: '{{name}}が糸電話をつなぎました。',
-  afkTitle: '離席中モード',
+  afkTitle: '離席中モード (L / Esc)',
   afkMessage: 'キーかマウスクリックで戻ります。',
 }
 export type JaKeyList = keyof typeof jaTranslate

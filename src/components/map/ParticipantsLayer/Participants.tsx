@@ -37,9 +37,9 @@ export const ParticipantsLayer: React.FC<{}> = (props) => {
     return remote.perceptibility.visibility && remote.physics.located
   }))
   const localId = useObserver(() => store.localId)
-  const remoteElements = ids.map(id => <RemoteParticipant key={id}
+  const remoteElements = ids.map(id => <RemoteParticipant key={id} participants={store}
     participant={store.remote.get(id)!} size={PARTICIPANT_SIZE} />)
-  const localElement = (<LocalParticipant key={'local'}
+  const localElement = (<LocalParticipant key={'local'} participants={store}
     participant={store.local} size={PARTICIPANT_SIZE} />)
   const lines = useObserver(
     () => Array.from(store.yarnPhones).map((rid) => {

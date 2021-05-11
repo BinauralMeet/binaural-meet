@@ -177,6 +177,7 @@ export class ConferenceSync{
         if (remote.called){
           remote.called = false
           this.conference.sendMessage(MessageType.CALL_REMOTE, remote.id, {})
+          chat.callTo(remote)
         }
       })
     }))
@@ -210,6 +211,9 @@ export class ConferenceSync{
     this.disposers.push(autorun(() => {
       this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_INFO,
         {...participants.local.informationToSend})
+        let name = participants.local.information.name
+        while(name.slice(0,1) === '_'){ name = name.slice(1) }
+      this.conference._jitsiConference?.setDisplayName(name)
     }))
 
     //  track states

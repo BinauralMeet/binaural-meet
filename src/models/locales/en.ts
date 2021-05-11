@@ -71,7 +71,8 @@ export const enTranslate = {
   cmJoined: '{{name}} joined.',
   cmLeft: '{{name}} Left.',
   cmNameChanged: '{{old}} changed its name to {{new}}.',
-  cmCall: 'Called by {{name}}.',
+  cmCallBy: '{{name}} called you.',
+  cmCallTo: 'You called {{name}}.',
   cmToAll: 'To all',
   cmToName: 'To {{name}}',
   cmSend: 'Send (CTRL+Enter)',
@@ -81,7 +82,7 @@ export const enTranslate = {
   noTouched: '{{name}} touched you.',
   noNear: '{{name}} approached you.',
   noYarn: '{{name}} connected yarn.',
-  afkTitle: 'In away from keyboard mode',
+  afkTitle: 'In away from keyboard mode (L / Esc)',
   afkMessage: 'Hit any key or click mouse to return.',
 }
 export type EnKeyList = keyof typeof enTranslate

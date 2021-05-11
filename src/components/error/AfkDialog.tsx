@@ -3,13 +3,22 @@ import DialogContent from '@material-ui/core/DialogContent'
 import {t} from '@models/locales'
 import {isSmartphone} from '@models/utils'
 import errorInfo from '@stores/ErrorInfo'
-import participants from '@stores/participants/Participants'
-import React from 'react'
+import map from '@stores/Map'
+import React, { useEffect } from 'react'
 import {ErrorDialogFrame} from './ErrorDialog'
 
 export const AfkDialog: React.FC<{}> = () => {
-  const onClose = () => {
-    participants.local.awayFromKeyboard = false
+  useEffect(()=>{
+    map.keyInputUsers.add('AfkDialog')
+  })
+  const onClose = (ev:{}) => {
+    map.keyInputUsers.delete('AfkDialog')
+    const evKey = ev as React.KeyboardEvent
+    if (evKey.code){
+      //  console.log(`onClose code=${evKey.code}`)
+      evKey.preventDefault()
+      evKey.stopPropagation()
+    }
     errorInfo.clear()
   }
 
