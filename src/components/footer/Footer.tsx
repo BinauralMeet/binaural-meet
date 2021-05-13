@@ -109,18 +109,20 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
     const onKeyDown = (e: KeyboardEvent) => {
       //  console.log(`onKeyDown: code: ${e.code}`)
       if (props.map.keyInputUsers.size === 0) {
-        if (e.code === 'KeyM') {  //  mute/unmute audio
-          participants.local.plugins.streamControl.muteAudio = !participants.local.plugins.streamControl.muteAudio
-          setShowFooter(true)
-        }
-        if (e.code === 'KeyC') {  //  Create share dialog
-          setShowFooter(true)
-          setShowShare(true)
-          e.preventDefault()
-          e.stopPropagation()
-        }
-        if (e.code === 'KeyL' || e.code === 'Escape') {  //  Leave from keyboard
-          participants.local.awayFromKeyboard = true
+        if (!e.ctrlKey && !e.metaKey && !e.altKey){
+          if (e.code === 'KeyM') {  //  mute/unmute audio
+            participants.local.plugins.streamControl.muteAudio = !participants.local.plugins.streamControl.muteAudio
+            setShowFooter(true)
+          }
+          if (e.code === 'KeyC') {  //  Create share dialog
+            setShowFooter(true)
+            setShowShare(true)
+            e.preventDefault()
+            e.stopPropagation()
+          }
+          if (e.code === 'KeyL' || e.code === 'Escape') {  //  Leave from keyboard
+            participants.local.awayFromKeyboard = true
+          }
         }
       }
     }
