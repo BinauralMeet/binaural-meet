@@ -38,6 +38,8 @@ export const enTranslate = {
   emNoMic: 'Please check if your PC has a microphone. Binaural Meet requires it.',
   etNoChannel: 'No data channel',
   emNoChannel: 'Please check firewall setting. Binaural Meet connect to https (443) port and port 10000-10010.',
+  emAllGone: 'All other participants are gone. My network would have trouble. Will reload automatically.',
+  emInDeadlist: 'Other participants detected too much Other participants detected too much delay. Will reload soon. Please fix the network.',
   imageDropzoneText:'Drag and drop images here or click',
   lsTitle:'Avatar and notification setting',
   lsName: 'Name',

@@ -2,17 +2,13 @@ import {JitsiRemoteTrack} from 'lib-jitsi-meet'
 import {action, computed, makeObservable, observable} from 'mobx'
 import {LocalParticipant} from './LocalParticipant'
 import {RemoteParticipant} from './RemoteParticipant'
-interface GhostsInfo{
-  room:string,
-  pids:[string, number][],
-}
-
 
 export class Participants {
   constructor() {
     makeObservable(this)
-    this.loadGhostsFromStorage()
   }
+
+  deadRemotes: Set<string> = new Set()
 
   @observable.shallow readonly remote = new Map<string, RemoteParticipant>()
   local_ = observable.box(new LocalParticipant())
@@ -89,26 +85,6 @@ export class Participants {
   isLocal(participantId: string) {
     return participantId === this.localId
   }
-
-  //  local ghosts pids, or pid before reload.
-  ghostCandidates:GhostsInfo = {room:'', pids:[]}
-  //  save and load ghost pids
-  saveGhostsToStorage() {
-    sessionStorage.setItem('ghosts', JSON.stringify(this.ghostCandidates))
-  }
-  @action loadGhostsFromStorage() {
-    const str = sessionStorage.getItem('ghosts')
-    if (str) {
-      const loaded = JSON.parse(str) as GhostsInfo
-      const now = Date.now()
-      if (loaded.pids.find(pid => pid[1] > now - 10 * 1000)) {
-        this.ghostCandidates = loaded
-      }
-    }
-  }
-  @observable localGhosts: Set<string> = new Set()
-  //  all ghosts include remotes
-  @observable ghosts: Set<string> = new Set()
 }
 
 const participants = new Participants()

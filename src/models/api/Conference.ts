@@ -6,17 +6,17 @@ import JitsiMeetJS, {JitsiLocalTrack, JitsiRemoteTrack,
   JitsiTrack, JitsiValues, TMediaType} from 'lib-jitsi-meet'
 import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
 import {makeObservable, observable} from 'mobx'
-import {connection} from '.'
 import {ConferenceSync} from './ConferenceSync'
 
 //  Log level and module log options
 export const JITSILOGLEVEL = 'warn'  // log level for lib-jitsi-meet {debug|log|warn|error}
 export const CONNECTIONLOG = false
 export const TRACKLOG = false        // show add, remove... of tracks
+export const EVENTLOG = false
 export const trackLog = TRACKLOG ? console.log : (a:any) => {}
 export const connLog = CONNECTIONLOG ? console.log : (a:any) => {}
 export const connDebug = CONNECTIONLOG ? console.debug : (a:any) => {}
-
+export const eventLog = EVENTLOG ? console.log : (a:any) => {}
 
 // config.js
 declare const config:any             //  from ../../config.js included from index.html
@@ -34,6 +34,7 @@ export const ConferenceEvents = {
 export class Conference extends EventEmitter {
   public _jitsiConference?: JitsiMeetJS.JitsiConference
   public localId = ''
+  public joinTime = 0
   sync = new ConferenceSync(this)
   @observable channelOpened = false
 
@@ -49,6 +50,7 @@ export class Conference extends EventEmitter {
     const jitsiConf = this._jitsiConference
     jitsiConf.join('')
     jitsiConf.setSenderVideoConstraint(1080)
+    this.joinTime = Date.now()
 
     //  To access from debug console, add object d to the window.
     d.conference = this
@@ -184,9 +186,10 @@ export class Conference extends EventEmitter {
   }
 
   sendMessage(type:string, to:string, value:any) {
-    const msg = {type, value}
     const jc = this._jitsiConference as any
-    this._jitsiConference?.sendMessage(msg, to, jc?.rtc?._channel?.isOpen() ? true : false)
+    const viaBridge = jc?.rtc?._channel?.isOpen() ? true : false
+    const msg = viaBridge ? {type, value} : JSON.stringify({type, value})
+    this._jitsiConference?.sendMessage(msg, to, viaBridge)
   }
 
   //  register event handlers
@@ -197,7 +200,7 @@ export class Conference extends EventEmitter {
       return
     }
     this._jitsiConference.on(CONF.ENDPOINT_MESSAGE_RECEIVED, (participant:JitsiParticipant, msg:any) => {
-      //  console.log(`ENDPOINT_MESSAGE_RECEIVED from ${participant.getId()}`, msg)
+      eventLog(`ENDPOINT_MESSAGE_RECEIVED from ${participant.getId()}`, msg)
       if (msg.values) {
         this.emit(msg.type, participant.getId(), msg.values)
       }else {
@@ -206,6 +209,7 @@ export class Conference extends EventEmitter {
     })
     this._jitsiConference.on(CONF.PARTICIPANT_PROPERTY_CHANGED, (participant:JitsiParticipant, name: string,
                                                                  oldValue:any, value:any) => {
+      eventLog(`PARTICIPANT_PROPERTY_CHANGED from ${participant.getId()} prop:${name} old,new:`, oldValue, value)
       if (name !== 'codecType'){
         this.emit(name, participant.getId(), JSON.parse(value), oldValue)
       }
@@ -267,17 +271,17 @@ export class Conference extends EventEmitter {
         }
       }
     })
-/*
+
     this._jitsiConference.on(JitsiMeetJS.events.conference.PRIVATE_MESSAGE_RECEIVED,
       (id:string, text:string, timeStamp:number) => {
-        console.log('PRIVATE_MESSAGE_RECEIVED', id, text, timeStamp)
+        eventLog('PRIVATE_MESSAGE_RECEIVED', id, text, timeStamp)
         //  this.emit(ConferenceEvents.PRIVATE_MESSAGE_RECEIVED, id, text, timeStamp)
     })
     this._jitsiConference.on(JitsiMeetJS.events.conference.MESSAGE_RECEIVED,
       (id:string, text:string, timeStamp:number) => {
-        console.log('MESSAGE_RECEIVED', id, text, timeStamp)
+        eventLog('MESSAGE_RECEIVED', id, text, timeStamp)
         //  this.emit(ConferenceEvents.MESSAGE_RECEIVED, id, text, timeStamp)
-    })  */
+    })
   }
 
   private video:undefined | HTMLVideoElement = undefined
@@ -329,18 +333,6 @@ export class Conference extends EventEmitter {
     }
     //  load background after 2secs
     setTimeout(contents.loadBackground.bind(contents), 2000)
-
-    //  update ghost info
-    if (connection.conferenceName !== participants.ghostCandidates.room) {
-      participants.ghostCandidates = {room:connection.conferenceName, pids:[]}
-    }else {
-      setTimeout(() => {
-        participants.ghostCandidates.pids =
-          participants.ghostCandidates.pids.filter(pid => participants.remote.has(pid[0]))
-        participants.localGhosts = new Set(participants.ghostCandidates.pids.map(pid => pid[0]))
-        this.sync.addGhosts(Array.from(participants.localGhosts))
-      },         1 * 1000)
-    }
   }
 
   private onLocalTrackAdded(track: JitsiLocalTrack) {

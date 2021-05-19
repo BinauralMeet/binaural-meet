@@ -43,14 +43,6 @@ function connectConference() {
   window.addEventListener('beforeunload', (ev) => {
     logStr = `${logStr}beforeunload called. ${Date()} `
     localStorage.setItem('log', logStr)
-    //  save my pid as ghost candidate.
-    const idx = participants.ghostCandidates.pids.findIndex(pid => pid[0] === participants.localId)
-    if (idx >= 0) {
-      participants.ghostCandidates.pids[idx] = [participants.localId, Date.now()]
-    }else {
-      participants.ghostCandidates.pids.push([participants.localId, Date.now()])
-    }
-    participants.saveGhostsToStorage()
 
     //  prevent leaving from and reloading browser, when the user shares screen(s).
     if (!errorInfo.type &&

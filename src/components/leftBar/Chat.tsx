@@ -57,13 +57,16 @@ export const ChatLine: React.FC<Stores & TextLineStyle &{message: ChatMessage}> 
 function sendMessage(text: string, sendTo: string, props: Stores){
   const msg:ChatMessageToSend = {msg:text, ts: Date.now(), to: sendTo}
   connection.conference.sendMessage(MessageType.CHAT_MESSAGE, sendTo, msg)
+  const local = props.participants.local
   if (sendTo) {
-    const local = props.participants.local
     const remote = props.participants.remote.get(sendTo)
     if (remote){
       chat.addMessage(new ChatMessage(text, local.id, remote.information.name,
         local.information.avatarSrc, local.getColor(), Date.now(), 'private'))
     }
+  }else{
+    chat.addMessage(new ChatMessage(text, local.id, local.information.name,
+      local.information.avatarSrc, local.getColor(), Date.now(), 'text'))
   }
 }
 

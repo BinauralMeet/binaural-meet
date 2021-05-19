@@ -37,6 +37,8 @@ export const jaTranslate = {
   emNoMic: 'Binaural Meetにはマイクが必要です。パソコンにマイクがついていることを確認してください。',
   etNoChannel: 'データ通信ができません',
   emNoChannel: 'ファイアウォールの設定を確認してください。Binaural Meet は https(443番)と10000-10010番のポートに接続します。',
+  emAllGone: '他の参加者すべてから切断されました。おそらく自分のネットワークの問題です。自動で再起動します。',
+  emInDeadlist: '他の参加者が大きな遅延を検出しました。ネットワークを修正してください。すぐにリロードします。',
   imageDropzoneText:'画像をドラッグ＆ドロップするか、クリックしてください',
   lsTitle:'アバターと通知の設定',
   lsColor:'色',
