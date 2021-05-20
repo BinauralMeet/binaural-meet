@@ -2,12 +2,10 @@ import {t} from '@models/locales'
 import {Pose2DMap} from '@models/MapObject'
 import {priorityCalculator} from '@models/middleware/trafficControl'
 import {defaultRemoteInformation, Mouse, PARTICIPANT_SIZE, Physics, RemoteInformation, TrackStates} from '@models/Participant'
-import {RemoteParticipant} from '@models/Participant'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {urlParameters} from '@models/url'
 import {normV, subV2} from '@models/utils'
 import chat, { ChatMessage, ChatMessageToSend } from '@stores/Chat'
-import errorInfo from '@stores/ErrorInfo'
 import participants from '@stores/participants/Participants'
 import {extractContentDataAndIds, makeItContent, makeThemContents} from '@stores/sharedContents/SharedContentCreator'
 import contents from '@stores/sharedContents/SharedContents'
@@ -40,12 +38,10 @@ export const PropertyType = {
   PARTICIPANT_TRACKSTATES: 'p_trackstates',     //  -> presence
   MAIN_SCREEN_CARRIER: 'main_screen_carrier',   //  -> presence
   MY_CONTENT: 'my_content',                     //  -> presence
-  DEAD_REMOTES: 'dead',                         //  -> dead remote participant ids
 }
 
 //const FRAGMENTING_LENGTH = 200    //  For sctp
 const FRAGMENTING_LENGTH = 9000000  //  For websocket never flagmenting
-const KEEPALIVE_TIMEOUT = 6000
 
 interface FragmentedMessageHead{
   type: string
@@ -65,40 +61,7 @@ export class ConferenceSync{
 
   constructor(c:Conference) {
     this.conference = c
-    setInterval(()=>{ this.checkRemoteAlive() }, 1000)
-  }
-
-  private deadCount = 0
-  private checkRemoteAlive(){
-    const now = Date.now()
-    const deadRemotes:RemoteParticipant[] = []
-    let numLongerThanHalf = 0
-    participants.remote.forEach((remote)=>{
-      const duration = now - remote.updateTime
-      if (duration > KEEPALIVE_TIMEOUT){  //  if no update more than 3 sec
-        deadRemotes.push(remote)
-        numLongerThanHalf += 1
-      }else if (duration > KEEPALIVE_TIMEOUT/2){
-        numLongerThanHalf += 1
-      }
-    })
-    const fromJoin = now - this.conference.joinTime
-    if (fromJoin > KEEPALIVE_TIMEOUT*2 && numLongerThanHalf >= 2 &&
-      numLongerThanHalf === participants.remote.size) { //  may be my network is wrong
-      errorInfo.type = 'connection'
-      errorInfo.message = t('emAllGone')
-      if (this.deadCount > 2){
-        window.location.reload()
-      }
-      this.deadCount ++
-    }else{  //  may be deadrmeotes are wrong
-      this.deadCount = 0
-      for(const remote of deadRemotes){
-        this.onParticipantLeft(remote.id)
-      }
-      deadRemotes.forEach(r => participants.deadRemotes.add(r.id))
-      this.conference.setLocalParticipantProperty(PropertyType.DEAD_REMOTES, Array.from(participants.deadRemotes))
-    }
+    //  setInterval(()=>{ this.checkRemoteAlive() }, 1000)
   }
 
   //  Only for test (admin config dialog).
@@ -135,28 +98,6 @@ export class ConferenceSync{
 
   bind() {
     //  participant related -----------------------------------------------------------------------
-    //  alive
-    this.conference.on(PropertyType.DEAD_REMOTES, (from: string, deads: string[]) => {
-      let updated = false
-      deads.forEach((rid) => {
-        if (!participants.deadRemotes.has(rid)){
-          if (participants.localId === rid){  //  I'm dead
-            errorInfo.type = 'connection'
-            errorInfo.message = t('emInDeadlist')
-            setTimeout(()=>{window.location.reload()}, 6 * 1000)
-          }else{
-            this.onParticipantLeft(rid)
-          }
-          participants.deadRemotes.add(rid)
-          updated = true
-        }
-      })
-      if (updated){
-        this.conference.setLocalParticipantProperty(
-          PropertyType.DEAD_REMOTES, Array.from(participants.deadRemotes))
-      }
-    })
-
     //  track limit
     this.conference.on(MessageType.PARTICIPANT_TRACKLIMITS, (from:string, limits:string[]) => {
       participants.local.remoteVideoLimit = limits[0]
@@ -171,9 +112,7 @@ export class ConferenceSync{
       if (this.conference._jitsiConference?.getParticipantById(id).getDisplayName() === contentTrackCarrierName) {
         //  do nothing
       }else {
-        if (!participants.deadRemotes.has(id)){
-          participants.join(id)
-        }
+        participants.join(id)
       }
     })
 
@@ -283,7 +222,6 @@ export class ConferenceSync{
         remote.pose.orientation = pose.orientation
         remote.pose.position = pose.position
         remote.physics.located = true
-        remote.updateTime = Date.now()
         if (local.information.notifyNear || local.information.notifyTouch){
           const distance = normV(subV2(remote.pose.position, local.pose.position))
           const NEAR = PARTICIPANT_SIZE * 3
@@ -300,7 +238,6 @@ export class ConferenceSync{
     }
     this.conference.on(MessageType.PARTICIPANT_POSE, onPose)
     this.conference.on(PropertyType.PARTICIPANT_POSE, onPose)
-    let updateTime = 0
     let updateTimeForProperty = 0
     let poseWait = 0
 
@@ -309,11 +246,6 @@ export class ConferenceSync{
     this.disposers.push(autorun(() => {
       const pose = {...participants.local.pose}
 
-      const now = Date.now()
-      if (now - updateTimeForProperty > 10 * 1000) {  //  update every 10 sec
-        this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_POSE, pose)
-        updateTimeForProperty = now
-      }
       const newWait = calcWait()
       if (newWait !== poseWait) {
         poseWait = newWait
@@ -326,19 +258,16 @@ export class ConferenceSync{
 
       if (this.conference.channelOpened) {
         sendPoseMessage(pose)
-        updateTime = Date.now()
       }
     }))
     setInterval(()=>{
-      if (this.conference.channelOpened) {
-        const now = Date.now()
-        //  broadcast pose every 3 seconds even no change.
-        if ((now - updateTime) > KEEPALIVE_TIMEOUT/3 && (now - updateTimeForProperty) > KEEPALIVE_TIMEOUT/3){
-          sendPoseMessage(participants.local.pose)
-          updateTime = now
-        }
+      const now = Date.now()
+      if (now - updateTimeForProperty > 10 * 1000) {  //  update every 10 sec
+        this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_POSE, participants.local.pose)
+        updateTimeForProperty = now
       }
-    }, 1000)  //  check every 1 second
+    }, 10 * 1000)
+
     // mouse
     this.conference.on(MessageType.PARTICIPANT_MOUSE, (from:string, mouse:Mouse) => {
       if (urlParameters.testBot !== null) { return }
@@ -414,14 +343,12 @@ export class ConferenceSync{
     //  my contents
     //  Send my content to remote to refresh.
     this.conference.on(PropertyType.MY_CONTENT, (from:string, cs_:ISharedContent[]) => {
-      if (!participants.deadRemotes.has(from)){
-        const cs = makeThemContents(cs_)
-        contents.checkDuplicatedBackground(from, cs)
-        contents.replaceRemoteContents(cs, from)
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const remote = participants.remote.get(from)
-        syncLog(`recv remote contents ${JSON.stringify(cs.map(c => c.id))} from ${from}.`, cs)
-      }
+      const cs = makeThemContents(cs_)
+      contents.checkDuplicatedBackground(from, cs)
+      contents.replaceRemoteContents(cs, from)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const remote = participants.remote.get(from)
+      syncLog(`recv remote contents ${JSON.stringify(cs.map(c => c.id))} from ${from}.`, cs)
     })
     this.disposers.push(autorun(() => {
       const cs = extractContentDataAndIds(Array.from(contents.localParticipant.myContents.values()))

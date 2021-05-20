@@ -8,8 +8,6 @@ export class Participants {
     makeObservable(this)
   }
 
-  deadRemotes: Set<string> = new Set()
-
   @observable.shallow readonly remote = new Map<string, RemoteParticipant>()
   local_ = observable.box(new LocalParticipant())
 

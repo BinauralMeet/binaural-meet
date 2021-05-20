@@ -12,7 +12,6 @@ export interface ParticipantBase extends MapObject{
 }
 
 export interface RemoteParticipant extends ParticipantBase {
-  updateTime:number
 }
 
 export type SoundLocalizationBase = 'avatar' | 'user'
