@@ -1,3 +1,4 @@
+import whiteboard24Regular from '@iconify-icons/fluent/whiteboard-24-regular'
 import GoogleDriveIcon from '@iconify/icons-mdi/google-drive'
 import {Icon} from '@iconify/react'
 import {makeStyles} from '@material-ui/core/styles'
@@ -22,6 +23,7 @@ export function contentTypeIcons(type: ContentType, size = 12) {
     youtube: <YouTubeIcon style={{fontSize:size}} />,
     screen: <ScreenShareIcon style={{fontSize:size}} />,
     gdrive: <span style={{width:size, height:size}}><Icon icon={GoogleDriveIcon} height={size} /></span>,
+    whiteboard: <span style={{width:size, height:size}}><Icon icon={whiteboard24Regular} height={size} /></span>,
     camera: <CameraAltIcon style={{fontSize:size}} />,
     '': undefined,
   }
@@ -65,12 +67,13 @@ export const Content: React.FC<ContentProps> = (props:ContentProps) => {
   let rv
   if (props.content.type === 'img') {
     rv = <img className={classes.img} src={props.content.url} alt={props.content.name}/>
-  }else if (props.content.type === 'iframe') {
+  }else if (props.content.type === 'iframe' || props.content.type === 'whiteboard') {
     rv = <div className={classes.div}
       onDoubleClick = {() => { if (!props.editing) { props.setEditing(true) } }}
       onPointerLeave = {() => { if (props.editing) { props.setEditing(false) } }}
     >
       <iframe className={props.editing ? classes.iframeEdit : classes.iframe}
+        style={props.content.type==='whiteboard'?{backgroundColor:'white'}:{}}
         src={props.content.url} key={props.content.name} title={props.content.name}/>
       </div>
       // hasevr  width of iframe is too wide but I could not find way to change. Below not work.
@@ -84,7 +87,7 @@ export const Content: React.FC<ContentProps> = (props:ContentProps) => {
   }else if (props.content.type === 'screen' || props.content.type === 'camera') {
     rv = <ScreenContent {...props} />
   }else {
-    rv = <div>Unknow type:{props.content.type} for {props.content.url}</div>
+    rv = <div>Unknown type:{props.content.type} for {props.content.url}</div>
   }
 
   return rv

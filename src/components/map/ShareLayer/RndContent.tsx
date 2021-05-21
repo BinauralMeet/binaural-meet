@@ -1,7 +1,9 @@
 import {useStore as useContents} from '@hooks/SharedContentsStore'
+import clipboardCopy from '@iconify-icons/heroicons-outline/clipboard-copy'
 import pinIcon from '@iconify/icons-mdi/pin'
 import pinOffIcon from '@iconify/icons-mdi/pin-off'
 import {Icon} from '@iconify/react'
+import {Tooltip} from '@material-ui/core'
 import {makeStyles} from '@material-ui/core/styles'
 import {CreateCSSProperties} from '@material-ui/core/styles/withStyles'
 import DoneIcon from '@material-ui/icons/CheckCircle'
@@ -10,11 +12,12 @@ import EditIcon from '@material-ui/icons/Edit'
 import FlipToBackIcon from '@material-ui/icons/FlipToBack'
 import FlipToFrontIcon from '@material-ui/icons/FlipToFront'
 import WallpaperIcon from '@material-ui/icons/Wallpaper'
+import { t } from '@models/locales'
 import {Pose2DMap} from '@models/MapObject'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {addV2, extractScaleX, extractScaleY, mulV, rotateVector2DByDegree, subV2} from '@models/utils'
 import mapData from '@stores/Map'
-import {TEN_YEAR} from '@stores/sharedContents/SharedContentCreator'
+import {copyContentToClipboard, TEN_YEAR} from '@stores/sharedContents/SharedContentCreator'
 import _ from 'lodash'
 import React, {useLayoutEffect, useRef, useState} from 'react'
 import {Rnd} from 'react-rnd'
@@ -252,9 +255,9 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   }
   const classes = useStyles({props, pose, size, showTitle, pinned:props.content.pinned})
   //  console.log('render: TITLE_HEIGHT:', TITLE_HEIGHT)
-  const nodeRef = React.useRef(null)
+  const contentRef = React.useRef<HTMLDivElement>(null)
   const theContent =
-    <div className={classes.rndContainer} ref={nodeRef} {...gesture()}>
+    <div className={classes.rndContainer} {...gesture()}>
       <div className={classes.titlePosition} {...gesture() /* title can be placed out of Rnd */}>
         <div className={classes.titleContainer}
             onMouseEnter = {() => { if (props.autoHideTitle) { setShowTitle(true) } }}
@@ -269,31 +272,81 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
               }
             }}
             >
+          <Tooltip placement="top" title={props.content.pinned ? t('btUnpin') : t('btPin')} >
           <div className={classes.pin} onClick={onClickPin} onTouchStart={stop}>
             {contentTypeIcons(props.content.type, TITLE_HEIGHT)}
             <Icon icon={props.content.pinned ? pinIcon : pinOffIcon} height={TITLE_HEIGHT} />
-          </div>
-          <div className={classes.edit} onClick={onClickEdit} onTouchStart={stop}>
+          </div></Tooltip>
+          <Tooltip placement="top" title={props.editing ? t('btEndEdit') : t('btEdit')} >
+            <div className={classes.edit} onClick={onClickEdit} onTouchStart={stop}>
              {
               props.editing ? <DoneIcon style={{fontSize:TITLE_HEIGHT}} />
                 : <EditIcon style={{fontSize:TITLE_HEIGHT}} />}
-          </div>
+            </div>
+          </Tooltip>
           {props.content.pinned ? undefined :
-            <div className={classes.titleButton} onClick={onClickMoveToTop}
-              onTouchStart={stop}><FlipToFrontIcon /></div>}
+            <Tooltip placement="top" title={t('btMoveTop')} >
+              <div className={classes.titleButton} onClick={onClickMoveToTop}
+                onTouchStart={stop}><FlipToFrontIcon /></div></Tooltip>}
           {props.content.pinned ? undefined :
-            <div className={classes.titleButton} onClick={onClickMoveToBottom}
-              onTouchStart={stop}><FlipToBackIcon /></div>}
+            <Tooltip placement="top" title={t('btMoveBottom')} >
+              <div className={classes.titleButton} onClick={onClickMoveToBottom}
+                onTouchStart={stop}><FlipToBackIcon /></div></Tooltip>}
+
           {(props.content.pinned || props.content.type !== 'img' || props.content.zorder < TEN_YEAR) ? undefined :
             <div className={classes.titleButton} onClick={onClickWallpaper}
-              onTouchStart={stop}><WallpaperIcon /></div>}
+              onTouchStart={stop}>
+                <Tooltip placement="top" title={t('btWallpaper')}>
+                  <WallpaperIcon />
+                </Tooltip>
+              </div>}
+          <Tooltip placement="top" title={t('btCopyToClipboard')} >
+            <div className={classes.titleButton} onClick={(evt: MouseOrTouch)=>{
+                evt.stopPropagation()
+                evt.preventDefault()
+                /*
+                if (props.content.type === 'text'){
+                  if (contentRef.current){
+                    html2canvas(contentRef.current).then((canvas) => {
+                      canvas.toBlob((blob)=>{
+                        if (blob){
+                          createContentOfImage(blob, map).then((content)=>{
+                            sharedContents.shareContent(content)
+                          })
+                        }
+                      })
+                      const temp = document.createElement<"img">('img')
+                      temp.style.position = 'fixed'
+                      temp.style.left = '0' //'-100%'
+                      temp.src = canvas.toDataURL()
+                      temp.onload = ()=>{
+                        document.body.appendChild(temp)
+                        var r = document.createRange()
+                        r.setStartBefore(temp)
+                        r.setEndAfter(temp)
+                        r.selectNode(temp)
+                        var sel = window.getSelection()
+                        sel?.addRange(r)
+                        const res = document.execCommand('copy')
+                        console.log('copy res', res)
+                        document.body.removeChild(temp)
+                      }
+                    })
+                  }
+                }*/
+                copyContentToClipboard(props.content)
+              }}
+              onTouchStart={stop}>
+                <Icon icon={clipboardCopy} style={{fontSize: '1.5rem'}}/>
+            </div>
+          </Tooltip>
           <div className={classes.note} onClick={onClickShare} onTouchStart={stop}>Share</div>
           {props.content.pinned ? undefined :
-             <div className={classes.close} onClick={onClickClose} onTouchStart={stop}>
-               <CloseRoundedIcon /></div>}
+            <div className={classes.close} onClick={onClickClose} onTouchStart={stop}>
+              <CloseRoundedIcon /></div>}
         </div>
       </div>
-      <div className={classes.content} >
+      <div className={classes.content} ref={contentRef}>
         <Content content={props.content} onUpdate={props.onUpdate} editing= {props.editing} setEditing={setEditing} />
       </div>
     </div>
@@ -323,6 +376,15 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       </Rnd>
     </div >
   )
+}
+
+const buttonStyle = {
+  '&:hover': {
+    backgroundColor: 'rosybrown',
+  },
+  '&:active': {
+    backgroundColor: 'firebrick',
+  },
 }
 
 const useStyles = makeStyles({
@@ -382,9 +444,7 @@ const useStyles = makeStyles({
       visibility: props.props.onShare ? 'visible' : 'hidden',
       whiteSpace: 'pre',
       borderRadius: '0.5em 0 0 0',
-      '&:hover': {
-        backgroundColor: 'firebrick',
-      },
+      ...buttonStyle,
     } : {
       visibility: 'hidden',
     }),
@@ -395,9 +455,7 @@ const useStyles = makeStyles({
       whiteSpace: 'pre',
       borderRadius: '0.5em 0 0 0',
       cursor: 'default',
-      '&:hover': {
-        backgroundColor: 'firebrick',
-      },
+      ...buttonStyle,
     } : {display:'none'}
   ),
   titleButton: (props:StyleProps) => (
@@ -406,9 +464,7 @@ const useStyles = makeStyles({
       height: TITLE_HEIGHT,
       whiteSpace: 'pre',
       cursor: 'default',
-      '&:hover': {
-        backgroundColor: 'firebrick',
-      },
+      ...buttonStyle,
     } : {display:'none'}
   ),
   edit: (props:StyleProps) => (
@@ -417,9 +473,7 @@ const useStyles = makeStyles({
       height: TITLE_HEIGHT,
       whiteSpace: 'pre',
       cursor: 'default',
-      '&:hover': {
-        backgroundColor: 'firebrick',
-      },
+      ...buttonStyle,
     } : {display:'none'}
   ),
   type: (props: StyleProps) => ({
@@ -435,9 +489,7 @@ const useStyles = makeStyles({
     height: TITLE_HEIGHT,
     borderRadius: '0 0.5em 0 0',
     cursor: 'default',
-    '&:hover': {
-      backgroundColor: 'firebrick',
-    },
+    ...buttonStyle,
   }),
 })
 

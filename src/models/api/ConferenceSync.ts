@@ -41,7 +41,8 @@ export const PropertyType = {
 }
 
 //const FRAGMENTING_LENGTH = 200    //  For sctp
-const FRAGMENTING_LENGTH = 9000000  //  For websocket never flagmenting
+//const FRAGMENTING_LENGTH = 9000000  //  For websocket never flagmenting
+const FRAGMENTING_LENGTH = 512 //  For websocket never flagmenting
 
 interface FragmentedMessageHead{
   type: string
@@ -260,13 +261,15 @@ export class ConferenceSync{
         sendPoseMessage(pose)
       }
     }))
-    setInterval(()=>{
+    const setPoseProperty = () => {
       const now = Date.now()
-      if (now - updateTimeForProperty > 10 * 1000) {  //  update every 10 sec
+      if (now - updateTimeForProperty > 5 * 1000) {  //  update every 10 sec
         this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_POSE, participants.local.pose)
         updateTimeForProperty = now
       }
-    }, 10 * 1000)
+    }
+    setPoseProperty()
+    setInterval(setPoseProperty, 2.5 * 1000)
 
     // mouse
     this.conference.on(MessageType.PARTICIPANT_MOUSE, (from:string, mouse:Mouse) => {

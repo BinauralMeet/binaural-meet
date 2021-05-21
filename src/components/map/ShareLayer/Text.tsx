@@ -211,15 +211,11 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
 
   const INTERVAL = 200
   const handleScroll = _.debounce((ev:React.UIEvent<HTMLDivElement, UIEvent>) => {
-/*    const newTexts:TextMessages = {
-      messages: member.text.messages,
-      scroll:[ref.current ? ref.current.scrollLeft : 0, ref.current ? ref.current.scrollTop : 0],
-    }*/
     if (ref.current) {
       member.text.scroll = [ref.current.scrollLeft, ref.current.scrollTop]
+      onUpdateTexts(member.text)
     }
-    onUpdateTexts(Object.assign({}, member.text))
-  },                              INTERVAL)
+  }, INTERVAL)
 
   return  <div ref={ref} className = {props.editing ? classes.textEdit : classes.text}
     onWheel = {ev => ev.ctrlKey || ev.stopPropagation() }

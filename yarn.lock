@@ -1307,6 +1307,16 @@
   resolved "https://registry.yarnpkg.com/@iconify-icons/fa/-/fa-1.1.0.tgz#062b4f180ba9a4622bcd61434961fbe004b33118"
   integrity sha512-yywRO6E5p+G5hHq4S8HoWQ8Tfz42pYNreYx8+ZWwJBrICk1dcfn7b+Oo8lzG+vmmku+ye6J8MDSP/F0QLB6xbg==
 
+"@iconify-icons/fluent@^1.1.14":
+  version "1.1.14"
+  resolved "https://registry.yarnpkg.com/@iconify-icons/fluent/-/fluent-1.1.14.tgz#c192bfd2e1ff7937b999b247072845c7ed958e40"
+  integrity sha512-AiPq8oVGuzquGimzFGlBCzwIZtMA/D39lwIQcIV27PAVMmvwcbmaFKp2cbbO6ehNbJtrrP0bBA7BNebHc+VHVA==
+
+"@iconify-icons/heroicons-outline@^1.1.2":
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/@iconify-icons/heroicons-outline/-/heroicons-outline-1.1.2.tgz#fb446b576872f5b3f640420801cce58997c9639c"
+  integrity sha512-NgbxSdjkWOdU4oIlxEbwu3P44BQZHiXcxNek/1empVDPprzOHQsBxXtZorh6GvLlz1p4lKyzAhBsN79bh7iNsw==
+
 "@iconify/icons-mdi@^1.1.13":
   version "1.1.13"
   resolved "https://registry.yarnpkg.com/@iconify/icons-mdi/-/icons-mdi-1.1.13.tgz#5cf40310f28e538ea3c155499c3d72e2d40081a7"

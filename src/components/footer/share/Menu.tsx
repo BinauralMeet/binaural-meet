@@ -2,6 +2,7 @@ import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore as useParticipantsStore} from '@hooks/ParticipantsStore'
 import {useStore as useContentsStore} from '@hooks/SharedContentsStore'
 import bxWindowClose from '@iconify-icons/bx/bx-window-close'
+import whiteboard24Regular from '@iconify-icons/fluent/whiteboard-24-regular'
 import cursorDefaultOutline from '@iconify/icons-mdi/cursor-default-outline'
 import {Icon} from '@iconify/react'
 import Divider from '@material-ui/core/Divider'
@@ -15,10 +16,11 @@ import UploadIcon from '@material-ui/icons/Publish'
 import ScreenShareIcon from '@material-ui/icons/ScreenShare'
 import StopScreenShareIcon from '@material-ui/icons/StopScreenShare'
 import SubjectIcon from '@material-ui/icons/Subject'
+import {connection} from '@models/api/ConnectionDefs'
 import {useTranslation} from '@models/locales'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {assert} from '@models/utils'
-import {createContent, createContentOfText, createContentOfVideo} from '@stores/sharedContents/SharedContentCreator'
+import {createContent, createContentOfIframe, createContentOfText, createContentOfVideo} from '@stores/sharedContents/SharedContentCreator'
 import {SharedContents} from '@stores/sharedContents/SharedContents'
 import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'
 import {isArray} from 'lodash'
@@ -124,6 +126,17 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
     sharedContents.shareContent(tc)
     sharedContents.editingId = tc.id
   }
+  const createWhiteboard = () => {
+    setStep('none')
+    let rand = new Uint32Array(4)
+    rand = window.crypto.getRandomValues(rand)
+    let randStr = ''
+    rand.forEach(i => randStr += i.toString(16))
+    const tc = createContentOfIframe(
+      `https://wbo.ophir.dev/boards/BinauralMeet_${connection.conferenceName}_${randStr}`, map)
+    sharedContents.shareContent(tc)
+    sharedContents.editingId = tc.id
+  }
   const createScreen = () => {
     startCapture().then((tracks) => {
       if (tracks.length) {
@@ -174,6 +187,9 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
         }else if (e.code === 'KeyG') {  //  download
           e.preventDefault()
           setStep('image')
+        }else if (e.code === 'KeyW') {  //  download
+          e.preventDefault()
+          createWhiteboard()
         }else if (e.code === 'KeyB') {  //  download
           screenAsBackgrouond()
         }else if (e.code === 'KeyS') {  //  download
@@ -182,7 +198,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
           startMouse()
         }else if (e.code === 'KeyC') {
           setStep('camera')
-        }else if (e.code === 'KeyW') {
+        }else if (e.code === 'KeyL') {
           closeAllScreens()
         }
       }
@@ -223,6 +239,10 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
       <ShareDialogItem
         key="shareImage" text={t('shareImage')} icon={<ImageIcon />} onClick={() => setStep('image')}
       />
+      <ShareDialogItem
+        key="shareWhiteboard" text={t('shareWhiteboard')} icon={<Icon icon={whiteboard24Regular} style={{fontSize:'1.5rem'}} />}
+         onClick={createWhiteboard}
+      />
       <Divider />
       <ShareDialogItem key="shareCamera" text={t('shareCamera')} icon={<CameraAltIcon />}
         onClick={() => setStep('camera')}
@@ -248,7 +268,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
           /> : undefined}
       <ShareDialogItem
         key="shareMouse"
-        icon={<Icon icon={cursorDefaultOutline} />}
+        icon={<Icon icon={cursorDefaultOutline} style={{fontSize:'1.5rem'}}/>}
         text={showMouse ?  t('stopMouse') : t('shareMouse')}
         onClick={() => {
           participants.local.mouse.show = !showMouse

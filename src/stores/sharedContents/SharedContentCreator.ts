@@ -25,7 +25,8 @@ export const defaultContent: ISharedContent = Object.assign({}, mapObjectDefault
   zorder: 0,
   pinned: false,
   isEditable() {
-    return this.type === 'text' || this.type === 'iframe' || this.type === 'gdrive'
+    return this.type === 'text' || this.type === 'iframe' ||
+      this.type === 'whiteboard' || this.type === 'gdrive'
   },
   isBackground() {
     return this.zorder < TEN_YEAR
@@ -150,6 +151,15 @@ export function createContentOfIframe(urlStr: string, map: MapData) {
     const IFRAME_HEIGHT = 800
     pasted.size[0] = IFRAME_WIDTH
     pasted.size[1] = IFRAME_HEIGHT
+  }else if (url.hostname === 'wbo.ophir.dev'){  //  whiteboard
+    pasted.type = 'whiteboard'
+    pasted.url = urlStr
+    pasted.pose.position[0] = map.mouseOnMap[0]
+    pasted.pose.position[1] = map.mouseOnMap[1]
+    const IFRAME_WIDTH = 600
+    const IFRAME_HEIGHT = 700
+    pasted.size[0] = IFRAME_WIDTH
+    pasted.size[1] = IFRAME_HEIGHT
   }else {  //  generic iframe
     pasted.type = 'iframe'
     pasted.url = urlStr
@@ -187,7 +197,7 @@ export function createContentOfText(message: string, map: MapData) {
 
   return pasted
 }
-export function createContentOfImage(imageFile: File, map: MapData, offset?:[number, number]): Promise<SharedContent> {
+export function createContentOfImage(imageFile: Blob, map: MapData, offset?:[number, number]): Promise<SharedContent> {
   const promise = new Promise<SharedContent>((resolutionFunc, rejectionFunc) => {
     uploadToGyazo(imageFile).then((url) => {
       createContentOfImageUrl(url, map, offset).then(resolutionFunc)
@@ -316,4 +326,43 @@ export function extractContentDataAndId(c: ISharedContent) {
 }
 export function extractContentDataAndIds(cs: ISharedContent[]) {
   return cs.map(extractDataAndId)
+}
+
+
+function execCopy(str: string){
+  const temp = document.createElement('textarea')
+  temp.value = str
+  temp.selectionStart = 0
+  temp.selectionEnd = temp.value.length
+  const s = temp.style
+  s.position = 'fixed'
+  s.left = '-100%'
+
+  document.body.appendChild(temp)
+  temp.focus()
+  const result = document.execCommand('copy')
+  temp.blur()
+  document.body.removeChild(temp)
+
+  return result
+}
+
+export function copyContentToClipboard(c: ISharedContent){
+  if (c.type === 'text'){
+    const tms = JSON.parse(c.url) as TextMessages
+    const text = tms.messages.length ?
+      tms.messages.map(m => m.message).reduce((prev, cur) => prev ? (prev + '\n') : '' + cur) : ''
+    execCopy(text)
+  }else if (c.type === 'youtube'){
+    const array = c.url.split('&')
+    const paramUrl = array.filter(s => {
+      const key = s.split('=')[0]
+
+      return key === 'v' || key === 'list' }
+    )
+    const param = paramUrl.length ? paramUrl.reduce((pre, cur) => (pre ? pre + '&' : '') + cur) : ''
+    execCopy(`https://www.youtube.com/watch?${param}`)
+  }else{
+    execCopy(c.url)
+  }
 }

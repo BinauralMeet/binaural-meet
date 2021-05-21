@@ -103,6 +103,7 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
       })
     }
   }
+  //  console.log(`Name:${props.content.name} mime: ${mimeType}`)
   const classes = useStyles(props)
   const url = `https://drive.google.com/file/d/${fileId}/preview`
 

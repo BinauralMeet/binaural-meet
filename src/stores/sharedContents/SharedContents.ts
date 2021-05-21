@@ -59,6 +59,7 @@ export class SharedContents extends EventEmitter {
   @observable.shallow all: ISharedContent[] = []
   //  contents by owner
   participants: Map < string, ParticipantContents > = new Map<string, ParticipantContents>()
+  pendToRemoves: Map < string, ParticipantContents > = new Map<string, ParticipantContents>()
   getParticipant(pid: string) {
     //  prepare participantContents
     let participant = this.participants.get(pid)
@@ -154,6 +155,9 @@ export class SharedContents extends EventEmitter {
     this.removeDuplicated()
     const newAll:ISharedContent[] = []
     this.participants.forEach((participant) => {
+      newAll.push(...participant.myContents.values())
+    })
+    this.pendToRemoves.forEach((participant) => {
       newAll.push(...participant.myContents.values())
     })
     newAll.sort(contentComp)
@@ -324,6 +328,8 @@ export class SharedContents extends EventEmitter {
       console.error('A remote tries to updates local contents.')
     }
     cs.forEach((c) => {
+      this.pendToRemoves.forEach(pc => pc.myContents.delete(c.id))        //  check pendToRemoves
+
       const remote = this.getParticipant(pid)
       contentLog(`updateContents for participant:${pid}`)
       contentDebug(` update ${c.id} by ${c}`)
@@ -344,6 +350,9 @@ export class SharedContents extends EventEmitter {
       if (c.type === 'screen' || c.type === 'camera') {
         this.tracks.onUpdateContent(c)
       }
+    })
+    this.pendToRemoves.forEach(pc => {
+      if (pc.myContents.size === 0){ this.pendToRemoves.delete(pc.participantId) }
     })
     this.updateAll()
   }
@@ -393,20 +402,24 @@ export class SharedContents extends EventEmitter {
         contentLog('remove:', pidLeave, ' current:', JSON.stringify(allPids))
         contentLog('local contents sz:', this.localParticipant.myContents.size,
                    ' json:', JSON.stringify(Array.from(this.localParticipant.myContents.keys())))
+        this.removeParticipant(participantLeave)
       }else {
         contentLog('Next is remote')
+        this.pendToRemoveParticipant(participantLeave)
       }
-      this.removeParticipant(pidLeave)
       this.updateAll()
     }
   }
 
-  private removeParticipant(pid:string) {
-    const participant = this.participants.get(pid)
-    if (participant) {
-      this.participants.delete(pid)
-      //  myContents will move to another participant and owner will be overwrite. So, no change on owner.
-    }
+  private pendToRemoveParticipant(pc: ParticipantContents){
+    const remove = Array.from(pc.myContents.values()).filter(c => c.type === 'camera' || c.type ==='screen')
+    remove.forEach(c => pc.myContents.delete(c.id))
+    this.pendToRemoves.set(pc.participantId, pc)
+    this.removeParticipant(pc)
+  }
+
+  private removeParticipant(pc: ParticipantContents) {
+    this.participants.delete(pc.participantId)
   }
 
   // create a new unique content id
