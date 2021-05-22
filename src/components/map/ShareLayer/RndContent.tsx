@@ -1,4 +1,3 @@
-import {useStore as useContents} from '@hooks/SharedContentsStore'
 import clipboardCopy from '@iconify-icons/heroicons-outline/clipboard-copy'
 import pinIcon from '@iconify/icons-mdi/pin'
 import pinOffIcon from '@iconify/icons-mdi/pin-off'
@@ -12,24 +11,24 @@ import EditIcon from '@material-ui/icons/Edit'
 import FlipToBackIcon from '@material-ui/icons/FlipToBack'
 import FlipToFrontIcon from '@material-ui/icons/FlipToFront'
 import WallpaperIcon from '@material-ui/icons/Wallpaper'
-import { t } from '@models/locales'
+import {t} from '@models/locales'
 import {Pose2DMap} from '@models/MapObject'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {addV2, extractScaleX, extractScaleY, mulV, rotateVector2DByDegree, subV2} from '@models/utils'
 import mapData from '@stores/Map'
 import {copyContentToClipboard, TEN_YEAR} from '@stores/sharedContents/SharedContentCreator'
 import _ from 'lodash'
+import {useObserver} from 'mobx-react-lite'
 import React, {useLayoutEffect, useRef, useState} from 'react'
 import {Rnd} from 'react-rnd'
 import {useGesture} from 'react-use-gesture'
-import {Content, contentTypeIcons} from './Content'
+import {Content, contentTypeIcons, editButtonTip} from './Content'
+import {SharedContentProps} from './SharedContent'
 
 export type MouseOrTouch = React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>
-interface RndContentProps {
-  content: ISharedContent
+interface RndContentProps extends SharedContentProps {
   hideAll ?: boolean
   autoHideTitle ?: boolean
-  editing: boolean
   onShare ?: (evt: MouseOrTouch) => void
   onClose ?: (evt: MouseOrTouch) => void
   onUpdate ?: (newContent: ISharedContent) => void
@@ -80,14 +79,9 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   const [resizeBasePos, setResizeBasePos] = useState(pose.position)    //  position when resize start
   const rnd = useRef<Rnd>(null)                         //  ref to rnd to update position and size
   const [showTitle, setShowTitle] = useState(!props.autoHideTitle || !props.content.pinned)
-  const contents = useContents()
-  function setEditing(flag: boolean) {
-    if (flag) {
-      contents.editingId = props.content.id
-    }else if (contents.editingId === props.content.id) {
-      contents.editingId = ''
-    }
-  }
+  const contents = props.contents
+  const editing = useObserver(() => contents.editing === props.content.id)
+  function setEditing(flag: boolean) { contents.setEditing(flag ? props.content.id : '') }
   const state = useRef<RndContentState>(new RndContentState())
 
   if (!_.isEqual(props.content.size, state.current.lastSize)) {
@@ -124,6 +118,11 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     evt.preventDefault()
     props.onClose?.call(null, evt)
   }
+  function onClickEdit(evt: MouseOrTouch) {
+    evt.stopPropagation()
+    evt.preventDefault()
+    setEditing(!editing)
+  }
   function onClickMoveToTop(evt: MouseOrTouch) {
     evt.stopPropagation()
     evt.preventDefault()
@@ -144,11 +143,6 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     props.content.moveToBackground()
     const newContent = Object.assign({}, props.content)
     props.onUpdate?.call(null, newContent)
-  }
-  function onClickEdit(evt: MouseOrTouch) {
-    evt.stopPropagation()
-    evt.preventDefault()
-    setEditing(!props.editing)
   }
   function onClickPin(evt: MouseOrTouch) {
     evt.stopPropagation()
@@ -205,7 +199,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     }
   }
 
-  const isFixed = (props.autoHideTitle && props.content.pinned) || props.editing
+  const isFixed = (props.autoHideTitle && props.content.pinned)
   const gesture = useGesture({
     onDrag: ({down, delta, event, xy, buttons}) => {
       // console.log('onDragTitle:', delta)
@@ -261,7 +255,8 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       <div className={classes.titlePosition} {...gesture() /* title can be placed out of Rnd */}>
         <div className={classes.titleContainer}
             onMouseEnter = {() => { if (props.autoHideTitle) { setShowTitle(true) } }}
-            onMouseLeave = {() => { if (props.autoHideTitle && props.content.pinned) { setShowTitle(false) } }}
+            onMouseLeave = {() => {
+              if (props.autoHideTitle && !editing && props.content.pinned) { setShowTitle(false) } }}
             onTouchStart = {() => {
               if (props.autoHideTitle) {
                 if (!showTitle) {
@@ -277,10 +272,10 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
             {contentTypeIcons(props.content.type, TITLE_HEIGHT)}
             <Icon icon={props.content.pinned ? pinIcon : pinOffIcon} height={TITLE_HEIGHT} />
           </div></Tooltip>
-          <Tooltip placement="top" title={props.editing ? t('btEndEdit') : t('btEdit')} >
+          <Tooltip placement="top" title={editButtonTip(editing, props.content)} >
             <div className={classes.edit} onClick={onClickEdit} onTouchStart={stop}>
              {
-              props.editing ? <DoneIcon style={{fontSize:TITLE_HEIGHT}} />
+              editing ? <DoneIcon style={{fontSize:TITLE_HEIGHT}} />
                 : <EditIcon style={{fontSize:TITLE_HEIGHT}} />}
             </div>
           </Tooltip>
@@ -347,7 +342,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
         </div>
       </div>
       <div className={classes.content} ref={contentRef}>
-        <Content content={props.content} onUpdate={props.onUpdate} editing= {props.editing} setEditing={setEditing} />
+        <Content {...props}/>
       </div>
     </div>
   //  console.log('Rnd rendered.')

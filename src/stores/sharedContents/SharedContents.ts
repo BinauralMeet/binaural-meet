@@ -51,7 +51,21 @@ export class SharedContents extends EventEmitter {
   tracks = new SharedContentTracks(this)
 
   @observable pasteEnabled = true
-  @observable editingId = ''
+
+  //  the user editing content
+  @observable editing = ''
+  @action setEditing(id: string){
+    if (id !== this.editing && this.beforeChangeEditing){
+      this.beforeChangeEditing(this.editing, id)
+    }
+    this.editing = id
+  }
+  private beforeChangeEditing?: (cur:string, next:string) => void = undefined
+  public setBeforeChangeEditing(callback?: (cur:string, next:string)=>void, id?:string){
+    if (!id || id === this.editing){
+      this.beforeChangeEditing = callback
+    }
+  }
 
   // -----------------------------------------------------------------
   //  Contents

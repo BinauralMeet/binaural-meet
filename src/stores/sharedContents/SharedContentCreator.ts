@@ -362,7 +362,82 @@ export function copyContentToClipboard(c: ISharedContent){
     )
     const param = paramUrl.length ? paramUrl.reduce((pre, cur) => (pre ? pre + '&' : '') + cur) : ''
     execCopy(`https://www.youtube.com/watch?${param}`)
+  }else if (c.type === 'gdrive'){
+    const params = getParamsFromUrl(c.url)
+    const url = getGDriveUrl(true, params)
+    execCopy(url)
   }else{
     execCopy(c.url)
   }
+}
+
+export function isGDrivePreviewScrollable(mimeType?: string) {
+  if (!mimeType){ return true }
+
+  return !(
+    mimeType === 'application/vnd.google-apps.presentation'
+    || mimeType === 'application/vnd.google-apps.spreadsheet'
+    || mimeType.slice(0, 5) === 'image'
+    || mimeType.slice(0, 5) === 'video'
+    || mimeType.slice(0, 5) === 'audio'
+  )
+}
+export function getGDriveUrl(editing: boolean, params: Map<string, string>){
+  const fileId = params.get('id')
+  let mimeType = params.get('mimeType')
+  mimeType = mimeType ? mimeType : ''
+  const comp = 'application/vnd.google-apps.'
+
+  let url = `https://drive.google.com/file/d/${fileId}/preview`
+  if (editing && mimeType.substr(0, comp.length) === comp){
+    let app = mimeType.substr(comp.length)
+    if (app !== 'failed'){
+      if (app === 'spreadsheet'){ app = 'spreadsheets' }
+      url = `https://docs.google.com/${app}/d/${fileId}/edit`
+    }
+  }
+
+  return url
+}
+export function getParamsFromUrl(url: string){
+  const start = url.indexOf('?')
+  const paramStr = start >= 0 ? url.substr(start) : url
+  const params = new Map(paramStr.split('&').map(str => str.split('=') as [string, string]))
+
+  return params
+}
+export function getStringFromParams(params: Map<string, string>){
+  let url = ''
+  params.forEach((val, key) => {
+    url = `${url}${url ? '&' : ''}${key}=${val}`
+  })
+
+  return url
+}
+export function getInformationOfGDriveContent(fileId: string){
+  //  console.log('GAPI try to get mimeType')
+  const API_KEY = 'AIzaSyCE4B2cKycH0fVmBznwfr1ynnNf2qNEU9M'
+  const rv = new Promise<{name:string, mimeType:string}>((resolve, reject)=>{
+    if (gapi){
+      gapi.client.setApiKey(API_KEY)
+      gapi.client.load('drive', 'v3', () => {
+        gapi.client.drive.files.get({
+          fileId,
+          fields:'mimeType,name',
+        })
+        .then((result:any) => {
+          const body = JSON.parse(result.body)
+          //  console.log(`GAPI mimeType:${body.mimeType}  name:${body.name}`)
+          resolve({mimeType:body.mimeType, name: body.name})
+        }).catch((reason:any) => {
+          console.debug('GAPI error', reason)
+          reject(reason)
+        })
+      })
+    }else{
+      reject('gapi is not loaded')
+    }
+  })
+
+  return rv
 }

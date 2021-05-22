@@ -1,5 +1,4 @@
-import {useStore as useMapStore} from '@hooks/MapStore'
-import {useStore as useContents} from '@hooks/SharedContentsStore'
+import {Stores} from '@components/utils'
 import {SharedContent, SharedContent as ISharedContent} from '@models/SharedContent'
 import { isSelfUrl } from '@models/utils'
 import {MapData} from '@stores/Map'
@@ -11,12 +10,11 @@ import {useObserver} from 'mobx-react-lite'
 import React, {useEffect} from 'react'
 import {MouseOrTouch, RndContent} from './RndContent'
 
-export interface PastedContentProps{
-  content?:ISharedContent
+export interface PastedContentProps extends Stores{
 }
 
 export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentProps) => {
-  const map = useMapStore()
+  const map = props.map
   //  Pasted handler. It prevents paste to dialog.
   function onPaste(evt: ClipboardEvent) {
     //  console.log(`onPaste called enabled:${sharedContents.pasteEnabled}`)
@@ -152,12 +150,10 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
     [],
   )
   const pastedContent = useObserver(() => sharedContents.pasted)
-  const contents = useContents()
   //  console.log('Pasted contents rendered.')
 
   return (
-    <RndContent content={pastedContent} hideAll={pastedContent.type === ''}
-      editing={props.content?.id === contents.editingId}
+    <RndContent {...props} hideAll={pastedContent.type === ''} content={pastedContent}
       onShare = {(evt: MouseOrTouch) => { onShare() }}
       onClose = {(evt: MouseOrTouch) => {
         sharedContents.setPasted(createContent())

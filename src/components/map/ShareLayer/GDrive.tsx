@@ -1,12 +1,12 @@
 import {useStore} from '@hooks/SharedContentsStore'
 import {makeStyles} from '@material-ui/core/styles'
 import {assert} from '@models/utils'
+import {getGDriveUrl, getInformationOfGDriveContent, getParamsFromUrl,
+  getStringFromParams, isGDrivePreviewScrollable} from '@stores/sharedContents/SharedContentCreator'
 import _ from 'lodash'
-import React, {useEffect, useRef, useState} from 'react'
+import {useObserver} from 'mobx-react-lite'
+import React, {useEffect, useRef} from 'react'
 import {ContentProps} from './Content'
-
-declare const gapi:any     //  google api from index.html
-
 
 const useStyles = makeStyles({
   iframe: {
@@ -45,20 +45,8 @@ interface Member{
   scrolling: boolean
 }
 
-function isPreviewScroll(mimeType: string) {
-  return !(
-    mimeType === 'application/vnd.google-apps.presentation'
-    || mimeType === 'application/vnd.google-apps.spreadsheet'
-    || mimeType.slice(0, 5) === 'image'
-    || mimeType.slice(0, 5) === 'video'
-    || mimeType.slice(0, 5) === 'audio'
-  )
-}
 function updateUrl(member: Member) {
-  let url = ''
-  member.params.forEach((val, key) => {
-    url = `${url}${url ? '&' : ''}${key}=${val}`
-  })
+  const url = getStringFromParams(member.params)
 
   if (url !== member.props.content.url && member.props.onUpdate) {
     const newContent = Object.assign({}, member.props.content)
@@ -69,48 +57,33 @@ function updateUrl(member: Member) {
 
 export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
   assert(props.content.type === 'gdrive')
-  const params = new Map(props.content.url.split('&').map(str => str.split('=') as [string, string]))
-  const fileId = params.get('id')
-  const [mimeType, setMimeType] = useState('')
   const divScroll = useRef<HTMLDivElement>(null)
   const contents = useStore()
-  const member = useRef<Member>({props, params, scrolling:false})
-  member.current.props = props
-  member.current.params = params
-  if (!mimeType) {
-    //  console.log('GAPI try to get mimeType')
-    const API_KEY = 'AIzaSyCE4B2cKycH0fVmBznwfr1ynnNf2qNEU9M'
-    if (gapi) {
-      gapi.client.setApiKey(API_KEY)
-      gapi.client.load('drive', 'v3', () => {
-        gapi.client.drive.files.get({
-          fileId,
-          fields:'mimeType,name',
-        })
-        .then((result:any) => {
-          const body = JSON.parse(result.body)
-          //  console.log(`GAPI mimeType:${body.mimeType}  name:${body.name}`)
-          setMimeType(body.mimeType)
-          if (body.name && props.content.name !== body.name && props.onUpdate) {
-            props.content.name = body.name
-            const newContent = Object.assign({}, props.content)
-            props.onUpdate(newContent)
-          }
-        }).catch((reason:any) => {
-          console.debug('GAPI error', reason)
-          setMimeType('application/vnd.google-apps.failed')
-        })
-      })
-    }
+  const params = getParamsFromUrl(props.content.url)
+  const fileId = params.get('id')
+  const mimeType = params.get('mimeType')
+  const memberRef = useRef<Member>({props, params, scrolling:false})
+  const member = memberRef.current
+  member.props = props
+  member.params = params
+  if (!mimeType && fileId) {
+    getInformationOfGDriveContent(fileId).then((res)=>{
+      if ((res.name && props.content.name !== res.name) || res.mimeType){
+        member.params.set('mimeType', res.mimeType)
+        if (res.name){ props.content.name = res.name }
+        updateUrl(member)
+      }
+    })
   }
   //  console.log(`Name:${props.content.name} mime: ${mimeType}`)
   const classes = useStyles(props)
-  const url = `https://drive.google.com/file/d/${fileId}/preview`
+  const editing = useObserver(() => props.contents.editing === props.content.id)
+  const url = getGDriveUrl(editing, member.params)
 
   //  scroll to given 'top' param
   useEffect(() => {
-    const top = Number(member.current.params.get('top'))
-    if (!member.current.scrolling && divScroll.current
+    const top = Number(member.params.get('top'))
+    if (!editing && !member.scrolling && divScroll.current
       && !isNaN(top) && top !== divScroll.current.scrollTop) {
       const onscroll = divScroll.current.onscroll
       divScroll.current.onscroll = () => {}
@@ -123,11 +96,11 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
   //  Set onscroll handler setting 'top' param
   useEffect(() => {
     function doSendScroll() {
-      const top = Number(member.current.params.get('top'))
+      const top = Number(member.params.get('top'))
       if (divScroll.current && divScroll.current.scrollTop !== top) {
         //  console.log(`doSendScrool top=${divScroll.current.scrollTop}`)
-        member.current.params.set('top', divScroll.current.scrollTop.toString())
-        updateUrl(member.current)
+        member.params.set('top', divScroll.current.scrollTop.toString())
+        updateUrl(member)
       }
     }
     if (divScroll.current) {
@@ -136,29 +109,29 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
       const sendScroll = mine ? _.throttle(() => setTimeout(doSendScroll, INTERVAL), INTERVAL)
         : _.debounce(doSendScroll, INTERVAL)
       const endScroll = _.debounce(() => {
-        member.current.scrolling = false
+        member.scrolling = false
         //  console.log(`scrolling: ${member.current.scrolling}`)
       },                           INTERVAL)
 
       divScroll.current.onscroll = () => {
-        member.current.scrolling = true
+        member.scrolling = true
         //  console.log(`scrolling: ${member.current.scrolling}`)
         sendScroll()
         endScroll()
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   },        [contents.localParticipant.myContents, props.content.id])
 
-  const vscroll = isPreviewScroll(mimeType)
+  const vscroll = isGDrivePreviewScrollable(mimeType)
 
   return <div className={classes.divClip}
-    onDoubleClick = {() => { if (!props.editing) { props.setEditing(true) } }}
-    onPointerLeave = {() => { if (props.editing) { props.setEditing(false) } }}
+    onDoubleClick = {() => { if (!editing) { props.contents.setEditing(props.content.id) } }}
   >
-    <div className={(props.editing || !vscroll) ? classes.divClip : classes.divScroll} ref={divScroll}
+    <div className={(editing || !vscroll) ? classes.divClip : classes.divScroll} ref={divScroll}
       onWheel = {ev => ev.ctrlKey || ev.stopPropagation() } >
       <iframe src={url} title={props.content.url}
-        className={props.editing ? classes.iframeEdit : vscroll ? classes.iframeVScrool : classes.iframe}
+        className={editing ? classes.iframeEdit : vscroll ? classes.iframeVScrool : classes.iframe}
       />
     </div>
   </div>

@@ -65,13 +65,6 @@ function makeLink(key:number, regResult: string[]){
 
 export const Text: React.FC<ContentProps> = (props:ContentProps) => {
   assert(props.content.type === 'text')
-  function onUpdateTexts(newTexts: TextMessages) {
-    const newUrl = JSON.stringify(newTexts)
-    if (props.content.url !== newUrl && props.onUpdate) {
-      props.content.url = newUrl
-      props.onUpdate(Object.assign({}, props.content))
-    }
-  }
 
   const classes = useStyles()
   const url = useObserver(() => props.content.url)
@@ -81,31 +74,52 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
   const contents = useContents()
   const ref = useRef<HTMLDivElement>(null)
   const newTexts = JSON.parse(url) as TextMessages
+  const refEdit = useRef<HTMLDivElement>(null)
+  const editing = useObserver(() => props.contents.editing === props.content.id)
+  if (editing){
+    props.contents.setBeforeChangeEditing((cur, next) => {
+      if (cur === props.content.id && next === ''){
+        member.text.messages = member.text.messages.filter(text => text.message.length)
+        onUpdateTexts(member.text)
+        props.contents.setBeforeChangeEditing()
+      }
+    })
+  }
   useEffect(() => {
-    if (!props.editing) {
+    if (!editing) {
       ref.current?.scroll(newTexts.scroll[0], newTexts.scroll[1])
     }
-  },        [newTexts.scroll, props.editing])
+  },        [newTexts.scroll, editing])
+
+  //  Update (send) the content if needed
+  function onUpdateTexts(newTexts: TextMessages) {
+    const newUrl = JSON.stringify(newTexts)
+    if (props.content.url !== newUrl && props.onUpdate) {
+      props.content.url = newUrl
+      props.onUpdate(Object.assign({}, props.content))
+    }
+  }
+
+  //  Update remote messages
   const indices = new Set<number>()
-  const length = member.text.messages.length
   newTexts.messages.forEach((newMessage) => {
     const index = member.text.messages.findIndex(msg => msg.pid === newMessage.pid && msg.time === newMessage.time)
     if (index === -1) {
-      member.text.messages.push(newMessage)
-    }else {
+      indices.add(member.text.messages.length)
+      member.text.messages.push(newMessage)       //  Add new messages
+    }else if (newMessage.pid !== props.participants.localId){
       indices.add(index)
-      member.text.messages[index] = newMessage
+      member.text.messages[index] = newMessage  //  Update remote messages
     }
   })
-  for (let i = length - 1; i >= 0; i -= 1) {
-    if (!indices.has(i)) {
-      member.text.messages.splice(i, 1)
-    }
-  }
+  //  remove removed messages
+  member.text.messages = member.text.messages.filter((msg, idx) =>
+    msg.pid === props.participants.localId || indices.has(idx))
   member.text.messages.sort(compTextMessage)
 
-  if (props.editing) {
-    const last = member.text.messages.pop()
+  if (editing) {
+  //  Make a new message to edit if needed.
+  const last = member.text.messages.pop()
     if (last) {
       member.text.messages.push(last)
     }
@@ -118,14 +132,15 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
     }
   }
 
-  const refEdit = useRef<HTMLDivElement>(null)
+  //  Find the message to edit, my last message.
   member.text.messages.reverse()
   const textToEdit = member.text.messages.find(message => message.pid === participants.localId)
   member.text.messages.reverse()
+  //  Makeing JSX element to show
   const textElems = member.text.messages.map((text, idx) => {
     const rgb = text.color?.length ? text.color : getRandomColorRGB(text.name)
     const textColor = text.textColor?.length ? text.textColor : findTextColorRGB(rgb)
-    const textEditable = (props.editing && (text.pid === participants.localId || !participants.remote.has(text.pid)))
+    const textEditable = (editing && (text.pid === participants.localId || !participants.remote.has(text.pid)))
     const css = {
       color:rgba(textColor, 1),
       backgroundColor:rgba(rgb, 0.5),
@@ -159,12 +174,12 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
         } }
         onKeyDown={(ev) => {
           if (ev.key === 'Escape' || ev.key === 'Esc') {
-            member.text.messages = member.text.messages.filter(text => text.message.length)
-            onUpdateTexts(member.text)
-            contents.editingId = ''
+            ev.stopPropagation()
+            ev.preventDefault()
+            contents.setEditing('')
           }
         }}
-        onBlur={(ev) => {
+        onBlur={() => { //  Update the content when user changes the message to edit.
           member.text.messages = member.text.messages.filter(text => text.message.length)
           onUpdateTexts(member.text)
         }}
@@ -191,12 +206,12 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
           }
         }}
       >
-        {props.editing ? text.message : textToShow}
+        {editing ? text.message : textToShow}
       </div>
     </Tooltip>
   })
   useEffect(() => {
-    if (props.editing && refEdit.current) {
+    if (editing && refEdit.current) {
       const children = refEdit.current?.parentElement?.children
       if (document.activeElement) {
         for (let i = 0; i < (children ? children.length : 0); i += 1) {
@@ -217,15 +232,11 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
     }
   }, INTERVAL)
 
-  return  <div ref={ref} className = {props.editing ? classes.textEdit : classes.text}
+  return  <div ref={ref} className = {editing ? classes.textEdit : classes.text}
     onWheel = {ev => ev.ctrlKey || ev.stopPropagation() }
-    onScroll = {(ev) => { if (!props.editing) {  handleScroll(ev) } }}
-    onDoubleClick = {() => { if (!props.editing) { props.setEditing(true) } }}
-    onPointerLeave = {() => {
-      props.setEditing(false)
-      member.text.messages = member.text.messages.filter(text => text.message.length)
-      onUpdateTexts(member.text)
-    }}>
+    onScroll = {(ev) => { if (!editing) {  handleScroll(ev) } }}
+    onDoubleClick = {() => { if (!editing) { contents.setEditing(props.content.id) } }}
+    >
     {textElems}
   </div>
 }

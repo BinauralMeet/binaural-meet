@@ -202,7 +202,8 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
   const iconSize = props.height ? props.height * 0.7 : 36
   const {t} = useTranslation()
 
-  return React.useMemo(() => <div ref={containerRef} className={classes.container}>
+  return React.useMemo(() =>
+  <div ref={containerRef} className={classes.container} onClickCapture={()=>{props.contents.setEditing('')}}>
     <Collapse in={show}>
       <StereoAudioSwitch size={fabSize} iconSize={iconSize} />
       <FabMain size={fabSize} color={mute.muteS ? 'primary' : 'secondary' }

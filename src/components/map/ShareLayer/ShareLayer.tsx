@@ -30,11 +30,11 @@ export const ShareLayer = React.memo<BaseProps>(
 
           return <>{
             all.map(val =>
-              <SharedContent key={val.id} content={val} editing={props.contents.editingId === val.id} {...props} />)
+              <SharedContent key={val.id} content={val} {...props} />)
           }</>
         }
       }</Observer>
-    <PastedContent />
+    <PastedContent {...props} />
     </div>
   },
   (prev, next) => {

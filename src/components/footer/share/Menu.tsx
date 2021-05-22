@@ -124,7 +124,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
     setStep('none')
     const tc = createContentOfText('', map)
     sharedContents.shareContent(tc)
-    sharedContents.editingId = tc.id
+    sharedContents.setEditing(tc.id)
   }
   const createWhiteboard = () => {
     setStep('none')
@@ -135,7 +135,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
     const tc = createContentOfIframe(
       `https://wbo.ophir.dev/boards/BinauralMeet_${connection.conferenceName}_${randStr}`, map)
     sharedContents.shareContent(tc)
-    sharedContents.editingId = tc.id
+    sharedContents.setEditing(tc.id)
   }
   const createScreen = () => {
     startCapture().then((tracks) => {

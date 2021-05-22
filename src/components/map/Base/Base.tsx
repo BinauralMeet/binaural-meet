@@ -120,7 +120,6 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   const bind = useGesture(
     {
       onDragStart: ({buttons}) => {
-        if (mapStore.keyInputUsers.size) { return }
         document.body.focus()
         mem.dragging = true
         mem.mouseDown = true
@@ -149,7 +148,6 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         }
       },
       onDrag: ({down, delta, xy, buttons}) => {
-        if (mapStore.keyInputUsers.size) { return }
         if (delta[0] || delta[1]) { mem.mouseDown = false }
         if (mem.dragging && down && outer.current) {
           if (!thirdPersonView && buttons === MOUSE_RIGHT) {  // right mouse drag - rotate map
@@ -177,6 +175,9 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         }
       },
       onDragEnd: () => {
+        if (mem.mouseDown){
+          props.contents.setEditing('')
+        }
         mapStore.setCommittedMatrix(matrix)
         mem.dragging = false
         mem.mouseDown = false
@@ -214,7 +215,6 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       onWheel: ({movement, ctrlKey, event}) => {
         //  event?.preventDefault()
 
-        if (mapStore.keyInputUsers.size) { return }
         if (false) {  // false:alwas zoom (or ctrlKey: scroll and zoom)
           // scroll wheel - translate map
           const diff = mulV2(0.2, rotateVector2D(matrix.inverse(), movement))

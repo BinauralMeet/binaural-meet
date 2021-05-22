@@ -1,3 +1,4 @@
+import {Stores} from '@components/utils'
 import whiteboard24Regular from '@iconify-icons/fluent/whiteboard-24-regular'
 import GoogleDriveIcon from '@iconify/icons-mdi/google-drive'
 import {Icon} from '@iconify/react'
@@ -8,7 +9,9 @@ import PhotoIcon from '@material-ui/icons/Photo'
 import ScreenShareIcon from '@material-ui/icons/ScreenShare'
 import SubjectIcon from '@material-ui/icons/Subject'
 import YouTubeIcon from '@material-ui/icons/YouTube'
+import {t} from '@models/locales'
 import {ContentType, SharedContent as ISharedContent} from '@models/SharedContent'
+import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {GDrive} from './GDrive'
 import {ScreenContent} from './ScreenContent'
@@ -30,6 +33,20 @@ export function contentTypeIcons(type: ContentType, size = 12) {
 
   return icons[type]
 }
+export function editButtonTip(editing: boolean, c: ISharedContent){
+  if (c.type === 'whiteboard'){
+    return editing ? t('btEndEditWhiteboard') : t('btEditWhiteboard')
+  }else if (c.type === 'gdrive'){
+    return editing ? t('btEndEditGDrive') : t('btEditGDrive')
+  }else if (c.type === 'iframe'){
+    return editing ? t('btEndEditIframe') : t('btEditIframe')
+  }else if (c.type === 'text'){
+    return editing ? t('btEndEditText') : t('btEditText')
+  }
+
+  return ''
+}
+
 
 const useStyles = makeStyles({
   img: {
@@ -55,24 +72,25 @@ const useStyles = makeStyles({
     height: '100%',
   },
 })
-export interface ContentProps{
+export interface ContentProps extends Stores{
   content:ISharedContent
   onUpdate?: (newContent: ISharedContent) => void
-  editing: boolean
-  setEditing: (editing:boolean) => void
 }
 export const Content: React.FC<ContentProps> = (props:ContentProps) => {
   const classes = useStyles()
+  const editing = useObserver(() => props.contents.editing === props.content.id)
+  function setEditing(flag:boolean){
+    props.contents.setEditing(flag ? props.content.id : '')
+  }
 
   let rv
   if (props.content.type === 'img') {
     rv = <img className={classes.img} src={props.content.url} alt={props.content.name}/>
   }else if (props.content.type === 'iframe' || props.content.type === 'whiteboard') {
     rv = <div className={classes.div}
-      onDoubleClick = {() => { if (!props.editing) { props.setEditing(true) } }}
-      onPointerLeave = {() => { if (props.editing) { props.setEditing(false) } }}
+      onDoubleClick = {() => { if (!editing) { setEditing(true) } }}
     >
-      <iframe className={props.editing ? classes.iframeEdit : classes.iframe}
+      <iframe className={editing ? classes.iframeEdit : classes.iframe}
         style={props.content.type==='whiteboard'?{backgroundColor:'white'}:{}}
         src={props.content.url} key={props.content.name} title={props.content.name}/>
       </div>
