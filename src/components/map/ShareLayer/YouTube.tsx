@@ -2,6 +2,7 @@ import {makeStyles} from '@material-ui/core/styles'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {assert, shallowEqualsForMap} from '@models/utils'
 import {contentLog} from '@stores/sharedContents/SharedContents'
+import { useObserver } from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import YouTubePlayer from 'yt-player'
 import {ContentProps} from './Content'
@@ -24,13 +25,14 @@ type YTParam = YTState | 'rate' | 'index' | 'list' | 'v'
 
 class YTMember{
   player?:YouTubePlayer
-  prohibitUntil:YTState | '' | 'playingTwice' = ''
+  prohibitUntil:YTState | '' | 'playingTwice' | 'forever' = ''
   pauseIntervalTimer = 0
   lastCurrentTimePaused = 0
   playTimeout:NodeJS.Timeout|null = null
   pauseTimeout:NodeJS.Timeout|null = null
   params: Map<YTParam, string|undefined> = new Map()
   content?: ISharedContent
+  editing = false
   onUpdate: (newContent: ISharedContent) => void = ()=>{}
 }
 
@@ -158,8 +160,7 @@ function ytUpdateState(newState: string, time:number, member: YTMember) {
 
 function ytPauseInterval(member: YTMember) {
   const state = member.player?.getState()
-//  if (member.params.has('paused')) {
-  if (state === 'paused' && member.params.has('paused')) {
+  if (!member.editing &&  state === 'paused' && member.params.has('paused')) {
     const currentTime = Number(member.player?.getCurrentTime())
     const TOLERANCE = 0.1
     //  contentLog(`YT ytPauseInterval cur:${currentTime}, last:${member.lastCurrentTimePaused}`)
@@ -195,9 +196,18 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
   member.content = props.content
   if (props.onUpdate){ member.onUpdate = props.onUpdate }
 
+  //  Editing (No sync) ?
+  const editing = useObserver(() => props.contents.editing === props.content.id)
+  if (editing){
+    member.prohibitUntil = 'forever'
+  }else{
+    member.prohibitUntil = ''
+  }
+
   //  Check params and reflect them
   const newParams = paramStr2map(props.content.url)
-  if (!shallowEqualsForMap(member.params, newParams)) {
+  if (!editing && (member.editing || !shallowEqualsForMap(member.params, newParams))) {
+    member.editing = editing
     member.params = newParams
     if (member.player) {
       member.player.setPlaybackRate(Number(member.params.get('rate')))
@@ -209,6 +219,8 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
         ytSeekAndPause(Number(member.params.get('paused')), member)
       }
     }
+  }else{
+    member.editing = editing
   }
 
   //  Create player when the component is created.
@@ -224,10 +236,12 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
           if (member.params.has('rate')){
             player.setPlaybackRate(Number(member.params.get('rate')))
           }
-          if (member.params.has('playing')) {
-            ytSeekAndPlay(Number(member.params.get('playing')), Number(member.params.get('index')), member)
-          }else if (member.params.has('paused')) {
-            ytSeekAndPause(Number(member.params.get('paused')), member)
+          if (!member.editing){
+            if (member.params.has('playing')) {
+              ytSeekAndPlay(Number(member.params.get('playing')), Number(member.params.get('index')), member)
+            }else if (member.params.has('paused')) {
+              ytSeekAndPause(Number(member.params.get('paused')), member)
+            }
           }
 
           /*

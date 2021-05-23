@@ -26,7 +26,7 @@ export const defaultContent: ISharedContent = Object.assign({}, mapObjectDefault
   pinned: false,
   isEditable() {
     return this.type === 'text' || this.type === 'iframe' ||
-      this.type === 'whiteboard' || this.type === 'gdrive'
+      this.type === 'whiteboard' || this.type === 'gdrive' || this.type === 'youtube'
   },
   isBackground() {
     return this.zorder < TEN_YEAR

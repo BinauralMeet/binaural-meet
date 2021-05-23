@@ -38,6 +38,8 @@ export function editButtonTip(editing: boolean, c: ISharedContent){
     return editing ? t('btEndEditWhiteboard') : t('btEditWhiteboard')
   }else if (c.type === 'gdrive'){
     return editing ? t('btEndEditGDrive') : t('btEditGDrive')
+  }else if (c.type === 'youtube'){
+    return editing ? t('btEndEditYoutube') : t('btEditYoutube')
   }else if (c.type === 'iframe'){
     return editing ? t('btEndEditIframe') : t('btEditIframe')
   }else if (c.type === 'text'){
