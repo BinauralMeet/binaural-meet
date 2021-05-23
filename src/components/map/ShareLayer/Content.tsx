@@ -78,7 +78,7 @@ export interface ContentProps extends Stores{
   content:ISharedContent
   onUpdate?: (newContent: ISharedContent) => void
 }
-export const Content: React.FC<ContentProps> = (props:ContentProps) => {
+export const RawContent: React.FC<ContentProps> = (props:ContentProps) => {
   const classes = useStyles()
   const editing = useObserver(() => props.contents.editing === props.content.id)
   function setEditing(flag:boolean){
@@ -112,3 +112,9 @@ export const Content: React.FC<ContentProps> = (props:ContentProps) => {
 
   return rv
 }
+
+export const Content = (props: ContentProps) =>
+  React.useMemo(() => <RawContent {...props} />,
+  //  eslint-disable-next-line react-hooks/exhaustive-deps
+  [props.content.url, props.content.id, props.contents.editing === props.content.id])
+Content.displayName = 'Content'
