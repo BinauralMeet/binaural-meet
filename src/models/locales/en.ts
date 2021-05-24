@@ -1,9 +1,10 @@
 export const enTranslate = {
-  aboutBM: 'A video chat with a 2D map, where you will hear others\' voices based on the location.'
+  enAbout: 'A video chat with a 2D map, where you will hear others\' voices based on the location.'
     + ' It holds multiple conversations in a venue parallelly, and you may walk around between them.'
     + ' Sharing screens, cameras, texts, images, YouTube, and documents on google drive are supported.'
     + ' You may drop or paste on the map.',
-  BMmoreInfo: '... more info',
+  enTopPageUrl: 'https://scrapbox.io/binaural-meet/Top_page',
+  enMoreInfo: '... more info',
   YourName: 'Your name',
   Venue: 'Venue',
   EnterTheVenue: 'Enter the venue',

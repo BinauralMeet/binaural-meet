@@ -56,8 +56,8 @@ export const TheEntrance: React.FC<{}> = (props) => {
       <p>
         <img style={{float: 'right', width:'28em'}} src={i18n.language === 'ja' ? usageJa : usageEn}
           alt="usage" />
-        {t('aboutBM')}&nbsp;
-      <a href="https://scrapbox.io/binaural-meet/Top_page">{t('BMmoreInfo')}</a>
+        {t('enAbout')}&nbsp;
+      <a href={t('enTopPageUrl')}>{t('enMoreInfo')}</a>
       </p>
       <br />
       <TextField label={t('YourName')} multiline={false} value={name} style={tfDivStyle}
