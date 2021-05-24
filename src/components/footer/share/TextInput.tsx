@@ -7,6 +7,7 @@ interface TextInputProps extends DialogPageProps{
   onFinishInput: (text: string) => void
   textLabel?: string
   defaultValue?: string
+  multiline?: boolean
 }
 
 export const TextInput: React.FC<TextInputProps> = (props) => {
@@ -18,9 +19,15 @@ export const TextInput: React.FC<TextInputProps> = (props) => {
   } = props
   const [value, setValue] = useState<string>(defaultValue === undefined ? '' : defaultValue)
   const field = (
-    <TextField  label={textLabel} multiline={true} value={value}
+    <TextField  label={textLabel} multiline={props.multiline} value={value}
         onChange={event => setValue(event.target.value)}
         fullWidth={true} inputProps={{autoFocus:true}}
+        onKeyPress={(ev)=>{
+          if (!props.multiline && ev.key === 'Enter'){
+            onFinishInput(value)
+            setStep('none')
+          }
+        }}
     />
   )
 

@@ -49,6 +49,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
               //  console.debug(`share text: ${value}`)
             }}
             textLabel = "Text"
+            multiline = {true}
           />
       case 'iframe':
         return <TextInput
@@ -57,6 +58,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
               sharedContents.shareContent(createContentOfIframe(value, map))
             }}
             textLabel = "URL"
+            multiline = {false}
           />
       case 'image':
         return <ImageInput setStep={setStep} />
