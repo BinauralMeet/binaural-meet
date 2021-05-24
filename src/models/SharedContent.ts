@@ -26,6 +26,7 @@ export interface SharedContentMethods{
   moveToBackground(): void        //  change zorder to far below the bottom.
 }
 export interface SharedContent extends MapObject, SharedContentData, SharedContentId, SharedContentMethods {
+  zIndex?: number
 }
 
 export interface BackgroundContents {

@@ -12,9 +12,6 @@ export const CONTENTLOG = false      // show manipulations and sharing of conten
 export const contentLog = CONTENTLOG ? console.log : (a:any) => {}
 export const contentDebug = CONTENTLOG ? console.debug : (a:any) => {}
 
-function contentComp(a:ISharedContent, b:ISharedContent) {
-  return a.zorder - b.zorder
-}
 export class ParticipantContents{
   constructor(pid: string) {
     makeObservable(this)
@@ -174,11 +171,9 @@ export class SharedContents extends EventEmitter {
     this.pendToRemoves.forEach((participant) => {
       newAll.push(...participant.myContents.values())
     })
-    newAll.sort(contentComp)
     this.all = newAll
 
     this.saveBackground()
-
     //  console.log('update all len=', this.all.length, ' all=', JSON.stringify(this.all))
   }
   background = ''

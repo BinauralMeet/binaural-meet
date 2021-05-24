@@ -35,13 +35,13 @@ export const defaultContent: ISharedContent = Object.assign({}, mapObjectDefault
     this.zorder = Math.floor(Date.now() / TIME_RESOLUTION_IN_MS)
   },
   moveToBottom() {
-    const bottom = sharedContents.all.find(c => c.zorder > TEN_YEAR)
-    if (!bottom) {
+    const bottom = sharedContents.all.reduce((prev, cur) => cur.zorder > TEN_YEAR ?
+      (cur.zorder < prev.zorder ? cur : prev) : prev)
+    if (bottom && bottom.zorder > TEN_YEAR) {
+      this.zorder = bottom.zorder - 1
+    }else{
       this.moveToTop()
-
-      return
     }
-    this.zorder = bottom.zorder - 1
   },
   moveToBackground() {
     if (this.isBackground()) { return }
@@ -440,4 +440,8 @@ export function getInformationOfGDriveContent(fileId: string){
   })
 
   return rv
+}
+
+export function isContentEditingUseKeyinput(c: SharedContent){
+  return c.type === 'text'
 }

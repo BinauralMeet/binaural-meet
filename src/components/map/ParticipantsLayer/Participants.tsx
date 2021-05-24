@@ -60,8 +60,9 @@ export const ParticipantsLayer: React.FC<{}> = (props) => {
 
   if (urlParameters.testBot !== null) { return <div /> }
 
+  //  zIndex is needed to show the participants over the share layer.
   return(
-    <div>
+    <div style={{position:'absolute', zIndex:0x7FFF}}>
       {lines}
       {remoteElements}
       {localElement}

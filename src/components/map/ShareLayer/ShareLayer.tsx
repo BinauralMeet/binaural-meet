@@ -1,5 +1,6 @@
 import {BaseProps} from '@components/utils'
 import {makeStyles} from '@material-ui/core/styles'
+import {SharedContent as ISharedContent} from '@models/SharedContent'
 import _ from 'lodash'
 import {Observer} from 'mobx-react-lite'
 import React from 'react'
@@ -14,6 +15,9 @@ const useStyles = makeStyles({
   },
 })
 
+function zorderComp(a:ISharedContent, b:ISharedContent) {
+  return a.zorder - b.zorder
+}
 
 export const ShareLayer = React.memo<BaseProps>(
   (props) => {
@@ -27,6 +31,8 @@ export const ShareLayer = React.memo<BaseProps>(
             const firstIdx = all.findIndex(content => !content.isBackground())
             all.splice(0, firstIdx !== -1 ? firstIdx : all.length)
           }
+          const sorted = Array.from(all).sort(zorderComp)
+          sorted.forEach((c, idx) => {c.zIndex = idx+1})
 
           return <>{
             all.map(val =>

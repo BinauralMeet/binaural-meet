@@ -349,7 +349,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
 
 
   return (
-    <div className={classes.container} onContextMenu={
+    <div className={classes.container} style={{zIndex:props.content.zIndex}} onContextMenu={
       (evt) => {
         evt.stopPropagation()
         evt.preventDefault()
@@ -392,6 +392,7 @@ const useStyles = makeStyles({
       width:0,
       height:0,
       transform: mat.toString(),
+      position: 'absolute',
     })
   },
   rndCls: (props: StyleProps) => ({
