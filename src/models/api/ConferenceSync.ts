@@ -347,7 +347,7 @@ export class ConferenceSync{
     //  Send my content to remote to refresh.
     this.conference.on(PropertyType.MY_CONTENT, (from:string, cs_:ISharedContent[]) => {
       const cs = makeThemContents(cs_)
-      contents.checkDuplicatedBackground(from, cs)
+      contents.checkDuplicatedWallpaper(from, cs)
       contents.replaceRemoteContents(cs, from)
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const remote = participants.remote.get(from)

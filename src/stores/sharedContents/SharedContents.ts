@@ -1,5 +1,5 @@
 import {connection} from '@models/api'
-import {BackgroundContents, SharedContent as ISharedContent} from '@models/SharedContent'
+import {SharedContent as ISharedContent, WallpaperStore} from '@models/SharedContent'
 import {diffMap, intersectionMap} from '@models/utils'
 import {default as participantsStore} from '@stores/participants/Participants'
 import {EventEmitter} from 'events'
@@ -11,6 +11,11 @@ import {SharedContentTracks} from './SharedContentTracks'
 export const CONTENTLOG = false      // show manipulations and sharing of content
 export const contentLog = CONTENTLOG ? console.log : (a:any) => {}
 export const contentDebug = CONTENTLOG ? console.debug : (a:any) => {}
+
+function zorderComp(a:ISharedContent, b:ISharedContent) {
+  return a.zorder - b.zorder
+}
+
 
 export class ParticipantContents{
   constructor(pid: string) {
@@ -68,6 +73,7 @@ export class SharedContents extends EventEmitter {
   //  Contents
   //  All shared contents in Z order. Observed by component.
   @observable.shallow all: ISharedContent[] = []
+  @observable.shallow sorted: ISharedContent[] = []
   //  contents by owner
   participants: Map < string, ParticipantContents > = new Map<string, ParticipantContents>()
   pendToRemoves: Map < string, ParticipantContents > = new Map<string, ParticipantContents>()
@@ -114,17 +120,17 @@ export class SharedContents extends EventEmitter {
     return undefined
   }
 
-  removeSameBackground(bgs: ISharedContent[]) {
+  removeSameWallpaper(bgs: ISharedContent[]) {
     let rv = false
     this.localParticipant.myContents.forEach((c) => {
-      if (c.isBackground()) {
+      if (c.isWallpaper()) {
         const same = bgs.find(t => c.url === t.url && _.isEqual(c.pose, t.pose))
         if (same) {
           //  const pid = this.owner.get(same.id)
           if (same.id !== c.id && same.zorder <= c.zorder) {
             this.removeByLocal(c.id)
             rv = true
-            console.warn(`My background id:${c.id} url:${c.url} removed.`)
+            console.warn(`My wallpapers id:${c.id} url:${c.url} removed.`)
           }
         }
       }
@@ -133,14 +139,14 @@ export class SharedContents extends EventEmitter {
     return rv
   }
 
-  checkDuplicatedBackground(pid: string, cs: ISharedContent[]) {
-    const targets = cs.filter(c => c.isBackground())
+  checkDuplicatedWallpaper(pid: string, cs: ISharedContent[]) {
+    const targets = cs.filter(c => c.isWallpaper())
     this.localParticipant.myContents.forEach((c) => {
-      if (c.isBackground()) {
+      if (c.isWallpaper()) {
         const same = targets.find(t => c.url === t.url && _.isEqual(c.pose, t.pose))
         if (same && same.zorder <= c.zorder) {
           this.removeByLocal(c.id)
-          console.warn(`My background id:${c.id} url:${c.url} removed.`)
+          console.warn(`My wallpapers id:${c.id} url:${c.url} removed.`)
         }
       }
     })
@@ -171,61 +177,67 @@ export class SharedContents extends EventEmitter {
     this.pendToRemoves.forEach((participant) => {
       newAll.push(...participant.myContents.values())
     })
-    this.all = newAll
+    const newSorted = Array.from(newAll).sort(zorderComp)
+    newSorted.forEach((c, idx) => {c.zIndex = idx+1})
 
-    this.saveBackground()
+    //  update observed values
+    this.all = newAll
+    this.sorted = newSorted
+
+    this.saveWallpaper()
     //  console.log('update all len=', this.all.length, ' all=', JSON.stringify(this.all))
   }
-  background = ''
-  private getBackground() {
-    let nBackground = this.all.findIndex(c => !c.isBackground())
-    if (nBackground < 0) { nBackground = this.all.length }
 
-    return this.all.slice(0, nBackground)
+  //  wallpaper contents
+  wallpapers = ''
+  private getWallpaper() {
+    let nWallpapers = this.sorted.findIndex(c => !c.isWallpaper())
+    if (nWallpapers < 0) { nWallpapers = this.sorted.length }
+
+    return this.sorted.slice(0, nWallpapers)
   }
-  private saveBackground() {
+  private oldWallPapers: ISharedContent[] = []
+  private saveWallpaper() {
     if (!this.localId) { return }
-    if (!this.background) {
-      this.loadBackground()
+    if (!this.wallpapers) {
+      this.loadWallpaper()
     }
-    let cs_ = this.getBackground()
-    if (this.removeSameBackground(cs_)) { cs_ = this.getBackground() }
-    const strcs = JSON.stringify(cs_)
-    if (this.background !== strcs) {
-      this.background = strcs
-      const cs = extractContentDatas(cs_)
-      const backgroundContents:BackgroundContents = {room:connection.conferenceName, contents:cs}
-      const oldStr = localStorage.getItem('background')
-      let bcs:BackgroundContents[] = []
-      if (oldStr) { bcs = JSON.parse(oldStr) as BackgroundContents[] }
-      const idx = bcs.findIndex(bc => bc.room === backgroundContents.room)
-      idx === -1 ? bcs.push(backgroundContents) : bcs[idx] = backgroundContents
-      localStorage.setItem('background', JSON.stringify(bcs))
+    let newWallPapers = this.getWallpaper()
+    if (this.oldWallPapers.find((c, idx) => c !== newWallPapers[idx])){
+      if (this.removeSameWallpaper(newWallPapers)) { newWallPapers = this.getWallpaper() }
+      const newStore:WallpaperStore = {room:connection.conferenceName, contents:extractContentDatas(newWallPapers)}
+      const oldStr = localStorage.getItem('wallpapers')
+      let wpStores:WallpaperStore[] = []
+      if (oldStr) { wpStores = JSON.parse(oldStr) as WallpaperStore[] }
+      const idx = wpStores.findIndex(wps => wps.room ===  newStore.room)
+      idx === -1 ? wpStores.push(newStore) : wpStores[idx] = newStore
+      localStorage.setItem('wallpapers', JSON.stringify(wpStores))
+
     }
   }
-  loadBackground() {
-    if (this.background) { return }         //  already loaded
-    const curBg = this.getBackground()
-    if (curBg.length) {                     //  already exist
-      this.background = JSON.stringify(curBg)
+  loadWallpaper() {
+    if (this.wallpapers) { return }         //  already loaded
+    const curWp = this.getWallpaper()
+    if (curWp.length) {                     //  already exist
+      this.wallpapers = JSON.stringify(curWp)
 
       return
     }
 
-    //  load background from local storage
-    const str = localStorage.getItem('background')
+    //  load wallpapers from local storage
+    const str = localStorage.getItem('wallpapers')
     if (!str) {
-      this.background = JSON.stringify([])
+      this.wallpapers = JSON.stringify([])
     }else {
-      const bcs = JSON.parse(str) as BackgroundContents[]
-      const loaded = bcs.find(bc => bc.room === connection.conferenceName)
+      const wpStores = JSON.parse(str) as WallpaperStore[]
+      const loaded = wpStores.find(store => store.room === connection.conferenceName)
       if (loaded) {
-        loaded.contents.forEach((l) => {
+        loaded.contents.forEach((lc) => {
           const newContent = createContent()
-          Object.assign(newContent, l)
+          Object.assign(newContent, lc)
           this.addLocalContent(newContent)
         })
-        this.background = JSON.stringify(this.getBackground())
+        this.wallpapers = JSON.stringify(this.getWallpaper())
       }
     }
   }

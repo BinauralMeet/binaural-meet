@@ -20,7 +20,7 @@ import {connection} from '@models/api/ConnectionDefs'
 import {useTranslation} from '@models/locales'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {assert} from '@models/utils'
-import {createContent, createContentOfIframe, createContentOfText, createContentOfVideo} from '@stores/sharedContents/SharedContentCreator'
+import {createContent, createContentOfIframe, createContentOfText, createContentOfVideo, extractContentData, extractContentDatas} from '@stores/sharedContents/SharedContentCreator'
 import {SharedContents} from '@stores/sharedContents/SharedContents'
 import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'
 import {isArray} from 'lodash'
@@ -48,7 +48,7 @@ async function startCapture(displayMediaOptions: any = {}) {
 }
 
 function downloadItems(contents:SharedContents) {
-  const content = JSON.stringify(contents.all)
+  const content = JSON.stringify(extractContentDatas(contents.all))
   const blob = new Blob([content], {type: 'text/plain'})
 
   const a = document.createElement('a')
@@ -70,12 +70,11 @@ function importItems(ev: React.ChangeEvent<HTMLInputElement>, sharedContents: Sh
       const items = JSON.parse(text)
       if (isArray(items)) {
         items.forEach((item) => {
-          const content = item as ISharedContent
+          const content = extractContentData(item as ISharedContent)
           if (content.type === 'screen' || content.type === 'camera') { return }
           const newContent = createContent()
-          delete (content as any).id
           Object.assign(newContent, content)
-          sharedContents.shareContent(newContent)
+          sharedContents.addLocalContent(newContent)
         })
       }
     })

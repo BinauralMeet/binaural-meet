@@ -140,7 +140,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   function onClickWallpaper(evt: MouseOrTouch) {
     evt.stopPropagation()
     evt.preventDefault()
-    props.content.moveToBackground()
+    props.content.makeItWallpaper()
     const newContent = Object.assign({}, props.content)
     props.onUpdate?.call(null, newContent)
   }

@@ -5,7 +5,7 @@ import {getRandomColor, rgb2Color} from '@models/utils'
 import {MapData} from '@stores/Map'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import _ from 'lodash'
-import {useObserver} from 'mobx-react-lite'
+import {Observer} from 'mobx-react-lite'
 import React from 'react'
 import {contentTypeIcons} from '../map/ShareLayer/Content'
 import {Stores} from '../utils'
@@ -14,21 +14,21 @@ import {TextLineStyle} from './LeftBar'
 
 export const ContentLine: React.FC<TextLineStyle &
 {participant: ParticipantBase, content: ISharedContent, map: MapData}> = (props) => {
-  const contentName = useObserver(() => props.content.name)
-  const name = useObserver(() => props.content.ownerName)
-  const colors = getRandomColor(name)
-  if (props.content.color?.length){ colors[0] = rgb2Color(props.content.color) }
-  if (props.content.textColor?.length){ colors[1] = rgb2Color(props.content.textColor) }
-  const contentType = useObserver(() => props.content.type)
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
-  const typeIcon = contentTypeIcons(contentType, props.fontSize)
 
-  return <Tooltip title={name} placement="right">
-    <div className={classes.line} style={{backgroundColor:colors[0], color:colors[1]}}
-      onClick={() => props.map.focusOn(props.content)}>
-        {typeIcon}{contentName}
-    </div>
-  </Tooltip>
+  return <Observer>{()=> {
+    const typeIcon = contentTypeIcons(props.content.type, props.fontSize)
+    const colors = getRandomColor(props.content.ownerName)
+    if (props.content.color?.length){ colors[0] = rgb2Color(props.content.color) }
+    if (props.content.textColor?.length){ colors[1] = rgb2Color(props.content.textColor) }
+
+    return <Tooltip title={props.content.ownerName} placement="right">
+      <div className={classes.line} style={{backgroundColor:colors[0], color:colors[1]}}
+        onClick={() => props.map.focusOn(props.content)}>
+          {typeIcon}{props.content.name}
+      </div>
+    </Tooltip>}
+  }</Observer>
 }
 
 export const RawContentList: React.FC<Stores&TextLineStyle&{all: ISharedContent[]}>  = (props) => {
@@ -55,12 +55,13 @@ RawContentList.displayName = 'RawContentList'
 
 export const ContentList = React.memo<Stores&TextLineStyle>(
   (props) => {
-    const all = useObserver(() => props.contents.all)
-
-    return <RawContentList {...props} all = {all} />
+    return <Observer>{ () => {
+      return <RawContentList {...props} all = {props.contents.sorted} />
+    }
+    }</Observer>
   },
   (prev, next) => {
-    return _.isEqual(prev.contents.all.map(c => c.id), next.contents.all.map(c => c.id))
+    return _.isEqual(prev.contents.sorted.map(c => c.id), next.contents.sorted.map(c => c.id))
       && prev.fontSize === next.fontSize && prev.lineHeight === next.lineHeight
   },
 )

@@ -28,30 +28,29 @@ export const defaultContent: ISharedContent = Object.assign({}, mapObjectDefault
     return this.type === 'text' || this.type === 'iframe' ||
       this.type === 'whiteboard' || this.type === 'gdrive' || this.type === 'youtube'
   },
-  isBackground() {
+  isWallpaper() {
     return this.zorder < TEN_YEAR
   },
   moveToTop() {
     this.zorder = Math.floor(Date.now() / TIME_RESOLUTION_IN_MS)
   },
   moveToBottom() {
-    const bottom = sharedContents.all.reduce((prev, cur) => cur.zorder > TEN_YEAR ?
-      (cur.zorder < prev.zorder ? cur : prev) : prev)
-    if (bottom && bottom.zorder > TEN_YEAR) {
-      this.zorder = bottom.zorder - 1
-    }else{
+    const bottom = sharedContents.sorted.find(c => c.zorder > TEN_YEAR)
+    if (!bottom) {
       this.moveToTop()
+    }else{
+      this.zorder = bottom.zorder - 1
     }
   },
-  moveToBackground() {
-    if (this.isBackground()) { return }
+  makeItWallpaper() {
+    if (this.isWallpaper()) { return }
     this.zorder = TEN_YEAR - (Math.floor(Date.now() / TIME_RESOLUTION_IN_MS) - this.zorder)
   },
 })
 
 function addContentFunctions(c: ISharedContent) {
   c.isEditable = defaultContent.isEditable
-  c.isBackground = defaultContent.isBackground
+  c.isWallpaper = defaultContent.isWallpaper
   c.moveToTop = defaultContent.moveToTop
   c.moveToBottom = defaultContent.moveToBottom
   c.moveToBottom = defaultContent.moveToBottom
@@ -97,10 +96,10 @@ export class SharedContent implements ISharedContent {
   originalSize!:[number, number]
   perceptibility!: Perceptibility
   isEditable!: () => boolean
-  isBackground!: () => boolean
+  isWallpaper!: () => boolean
   moveToTop!: () => void
   moveToBottom!: () => void
-  moveToBackground!: () => void
+  makeItWallpaper!: () => void
   constructor() {
     Object.assign(this, _.cloneDeep(defaultContent))
     addContentFunctions(this)

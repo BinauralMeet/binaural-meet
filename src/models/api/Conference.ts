@@ -331,8 +331,8 @@ export class Conference extends EventEmitter {
         participants.local.devicePreference[prop] = ''
       }
     }
-    //  load background after 2secs
-    setTimeout(contents.loadBackground.bind(contents), 2000)
+    //  load wallpapers after 2secs
+    setTimeout(contents.loadWallpaper.bind(contents), 2000)
   }
 
   private onLocalTrackAdded(track: JitsiLocalTrack) {

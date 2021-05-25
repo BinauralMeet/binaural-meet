@@ -20,16 +20,16 @@ export interface SharedContentId{
 }
 export interface SharedContentMethods{
   isEditable(): boolean           //  editable or not
-  isBackground(): boolean         //  background or not
+  isWallpaper(): boolean          //  wallpaper or not
   moveToTop(): void               //  change zorder to the top.
   moveToBottom(): void            //  change zorder to the bottom.
-  moveToBackground(): void        //  change zorder to far below the bottom.
+  makeItWallpaper(): void        //  change zorder to far below the bottom.
 }
 export interface SharedContent extends MapObject, SharedContentData, SharedContentId, SharedContentMethods {
   zIndex?: number
 }
 
-export interface BackgroundContents {
+export interface WallpaperStore {
   room: string
   contents: SharedContentData[]
 }

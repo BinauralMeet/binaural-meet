@@ -116,5 +116,6 @@ export const RawContent: React.FC<ContentProps> = (props:ContentProps) => {
 export const Content = (props: ContentProps) =>
   React.useMemo(() => <RawContent {...props} />,
   //  eslint-disable-next-line react-hooks/exhaustive-deps
-  [props.content.url, props.content.id, props.contents.editing === props.content.id])
+  [props.content.url, props.content.id, props.content.type, props.contents.editing === props.content.id,
+   props.content.pose])
 Content.displayName = 'Content'
