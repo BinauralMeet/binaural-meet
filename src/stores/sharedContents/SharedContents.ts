@@ -203,16 +203,19 @@ export class SharedContents extends EventEmitter {
       this.loadWallpaper()
     }
     let newWallPapers = this.getWallpaper()
-    if (this.oldWallPapers.find((c, idx) => c !== newWallPapers[idx])){
+    if (newWallPapers.find((c, idx) => c !== this.oldWallPapers[idx])
+     || newWallPapers.length !== this.oldWallPapers.length){
+       this.oldWallPapers = newWallPapers //  save old one to compare next time.
+      //  check dupulicated wall papers.
       if (this.removeSameWallpaper(newWallPapers)) { newWallPapers = this.getWallpaper() }
+      //  update wallpapers in localStorage
       const newStore:WallpaperStore = {room:connection.conferenceName, contents:extractContentDatas(newWallPapers)}
-      const oldStr = localStorage.getItem('wallpapers')
       let wpStores:WallpaperStore[] = []
+      const oldStr = localStorage.getItem('wallpapers')
       if (oldStr) { wpStores = JSON.parse(oldStr) as WallpaperStore[] }
       const idx = wpStores.findIndex(wps => wps.room ===  newStore.room)
       idx === -1 ? wpStores.push(newStore) : wpStores[idx] = newStore
       localStorage.setItem('wallpapers', JSON.stringify(wpStores))
-
     }
   }
   loadWallpaper() {
