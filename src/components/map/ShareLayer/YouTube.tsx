@@ -31,9 +31,13 @@ class YTMember{
   playTimeout:NodeJS.Timeout|null = null
   pauseTimeout:NodeJS.Timeout|null = null
   params: Map<YTParam, string|undefined> = new Map()
-  content?: ISharedContent
+  content: ISharedContent
   editing = false
-  onUpdate: (newContent: ISharedContent) => void = ()=>{}
+  updateAndSend: (c: ISharedContent) => void
+  constructor(props: ContentProps){
+    this.content = props.content
+    this.updateAndSend = props.updateAndSend
+  }
 }
 
 export function paramArray2map(paramArray: string[]):Map<YTParam, string|undefined> {
@@ -151,10 +155,8 @@ function ytUpdateState(newState: string, time:number, member: YTMember) {
   newParams.set('rate', String(member.player?.getPlaybackRate()))
   const idx = member.player?.getPlaylistIndex()
   newParams.set('index', String(idx ? idx : -1))
-  const newContent = Object.assign({}, member.content)
-  newContent.url = paramMap2Str(newParams)
-
-  member.onUpdate(newContent)
+  member.content.url = paramMap2Str(newParams)
+  member.updateAndSend(member.content)
   contentLog(`YT sent member ${newState}`, newParams)
 }
 
@@ -169,7 +171,7 @@ function ytPauseInterval(member: YTMember) {
       member.params.set('paused', String(currentTime))
       const newContent = Object.assign({}, member.content)
       newContent.url = paramMap2Str(member.params)
-      member.onUpdate(newContent)
+      member.updateAndSend(newContent)
       contentLog(`YT sent current time of paused state time:${currentTime}`, member.params)
     }
   }else {
@@ -191,10 +193,8 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
   assert(props.content.type === 'youtube')
 
   const classes = useStyles()
-  const memberRef = useRef<YTMember>(new YTMember())
+  const memberRef = useRef<YTMember>(new YTMember(props))
   const member = memberRef.current
-  member.content = props.content
-  if (props.onUpdate){ member.onUpdate = props.onUpdate }
 
   //  Editing (No sync) ?
   const editing = useObserver(() => props.contents.editing === props.content.id)

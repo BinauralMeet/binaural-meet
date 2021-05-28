@@ -24,43 +24,13 @@ export const defaultContent: ISharedContent = Object.assign({}, mapObjectDefault
   id: '',
   zorder: 0,
   pinned: false,
-  isEditable() {
-    return this.type === 'text' || this.type === 'iframe' ||
-      this.type === 'whiteboard' || this.type === 'gdrive' || this.type === 'youtube'
-  },
-  isWallpaper() {
-    return this.zorder < TEN_YEAR
-  },
-  moveToTop() {
-    this.zorder = Math.floor(Date.now() / TIME_RESOLUTION_IN_MS)
-  },
-  moveToBottom() {
-    const bottom = sharedContents.sorted.find(c => c.zorder > TEN_YEAR)
-    if (!bottom) {
-      this.moveToTop()
-    }else{
-      this.zorder = bottom.zorder - 1
-    }
-  },
-  makeItWallpaper() {
-    if (this.isWallpaper()) { return }
-    this.zorder = TEN_YEAR - (Math.floor(Date.now() / TIME_RESOLUTION_IN_MS) - this.zorder)
-  },
 })
 
-function addContentFunctions(c: ISharedContent) {
-  c.isEditable = defaultContent.isEditable
-  c.isWallpaper = defaultContent.isWallpaper
-  c.moveToTop = defaultContent.moveToTop
-  c.moveToBottom = defaultContent.moveToBottom
-  c.moveToBottom = defaultContent.moveToBottom
-}
 ///  Add perceptibility and function to object obtained by JSON.parse()
 export function jsonToContents(json: string, perceptibility = defaultPerceptibility) {
   const cs = JSON.parse(json)
   for (const c of cs) {
     c.perceptibility = Object.assign({}, defaultPerceptibility)
-    addContentFunctions(c)
   }
 
   return cs as ISharedContent[]
@@ -69,7 +39,6 @@ export function jsonToContents(json: string, perceptibility = defaultPerceptibil
 export function makeItContent(it: ISharedContentData) {
   const sc = it as ISharedContent
   sc.perceptibility = Object.assign({}, defaultPerceptibility)
-  addContentFunctions(sc)
 
   return sc
 }
@@ -95,14 +64,8 @@ export class SharedContent implements ISharedContent {
   size!: [number, number]
   originalSize!:[number, number]
   perceptibility!: Perceptibility
-  isEditable!: () => boolean
-  isWallpaper!: () => boolean
-  moveToTop!: () => void
-  moveToBottom!: () => void
-  makeItWallpaper!: () => void
   constructor() {
     Object.assign(this, _.cloneDeep(defaultContent))
-    addContentFunctions(this)
   }
 }
 
@@ -111,6 +74,7 @@ export function createContent() {
   content.ownerName = participants.local.information.name
   content.color = participants.local.information.color
   content.textColor = participants.local.information.textColor
+  content.zorder = Date.now()
 
   return content
 }
@@ -441,6 +405,63 @@ export function getInformationOfGDriveContent(fileId: string){
   return rv
 }
 
-export function isContentEditingUseKeyinput(c: SharedContent){
+//  Does content use keyinput during editing or not.
+export function doseContentEditingUseKeyinput(c: SharedContent){
   return c.type === 'text'
+}
+//  can this type of content be a wall paper or not
+export function canContentBeAWallpaper(c: SharedContent){
+  return c.type !== 'camera' && c.type !== 'screen'
+}
+//  editable or not
+export function isContentEditable(c: SharedContent) {
+  return c.type === 'text' || c.type === 'iframe' ||
+    c.type === 'whiteboard' || c.type === 'gdrive' || c.type === 'youtube'
+}
+//  wallpaper or not
+export function isContentWallpaper(c: ISharedContent) {
+  return c.zorder <= TEN_YEAR
+}
+//  change zorder to the top.
+export function moveContentToTop(c: SharedContent) {
+  if (isContentWallpaper(c)){
+    let top = sharedContents.sorted.findIndex(c => c.zorder > TEN_YEAR)
+    if (top < 0){ top = sharedContents.sorted.length }
+    top -= 1
+    if (top >= 0){
+      const order = sharedContents.sorted[top].zorder + 1
+      c.zorder = order <= TEN_YEAR ? order : TEN_YEAR
+    }
+  }else{
+    c.zorder = Math.floor(Date.now() / TIME_RESOLUTION_IN_MS)
+  }
+}
+//  change zorder to the bottom.
+export function moveContentToBottom(c: SharedContent) {
+  if (isContentWallpaper(c)){
+    const bottom = sharedContents.sorted[0]
+    if (bottom !== c) {
+      c.zorder = bottom.zorder - 1
+    }
+  }else{
+    const bottom = sharedContents.sorted.find(c => c.zorder > TEN_YEAR)
+    if (!bottom) {
+      moveContentToTop(c)
+    }else{
+      c.zorder = bottom.zorder - 1
+    }
+  }
+}
+//  change zorder to far below the bottom.
+export function makeContentWallpaper(c: SharedContent, flag: boolean) {
+  //if (isContentWallpaper(c)) { return }
+  if (flag){
+    let zorder = TEN_YEAR - (Math.floor(Date.now() / TIME_RESOLUTION_IN_MS) - c.zorder)
+    if (zorder < 0){
+      zorder = c.zorder % TEN_YEAR
+    }
+    c.zorder = zorder
+  }else{
+    c.zorder = c.zorder + TEN_YEAR
+  }
 }

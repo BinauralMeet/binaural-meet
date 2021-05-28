@@ -159,7 +159,10 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
         sharedContents.setPasted(createContent())
         evt.stopPropagation()
       }}
-      onUpdate = {(nc: ISharedContent) => {
+      updateAndSend = {(nc: ISharedContent) => {
+        sharedContents.setPasted(nc)
+      }}
+      updateOnly = {(nc: ISharedContent) => {
         sharedContents.setPasted(nc)
       }}
     />

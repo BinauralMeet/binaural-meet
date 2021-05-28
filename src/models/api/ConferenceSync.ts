@@ -89,6 +89,7 @@ export class ConferenceSync{
       this.conference.setLocalParticipantProperty(PropertyType.MAIN_SCREEN_CARRIER, {carrierId, enabled})
     }
   }
+  //  send myContents of local to remote participants.
   sendMyContents() {
     const cs = Array.from(contents.localParticipant.myContents.values())
     const contentsToSend = extractContentDataAndIds(cs)
@@ -353,10 +354,6 @@ export class ConferenceSync{
       const remote = participants.remote.get(from)
       syncLog(`recv remote contents ${JSON.stringify(cs.map(c => c.id))} from ${from}.`, cs)
     })
-    this.disposers.push(autorun(() => {
-      const cs = extractContentDataAndIds(Array.from(contents.localParticipant.myContents.values()))
-      this.conference.setLocalParticipantProperty(PropertyType.MY_CONTENT, cs)
-    }))
     //  request
     this.conference.on(MessageType.CONTENT_UPDATE_REQUEST, (from:string, c:ISharedContent) => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars

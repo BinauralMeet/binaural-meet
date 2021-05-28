@@ -35,15 +35,15 @@ export function contentTypeIcons(type: ContentType, size = 12) {
 }
 export function editButtonTip(editing: boolean, c: ISharedContent){
   if (c.type === 'whiteboard'){
-    return editing ? t('btEndEditWhiteboard') : t('btEditWhiteboard')
+    return editing ? t('ctEndEditWhiteboard') : t('ctEditWhiteboard')
   }else if (c.type === 'gdrive'){
-    return editing ? t('btEndEditGDrive') : t('btEditGDrive')
+    return editing ? t('ctEndEditGDrive') : t('ctEditGDrive')
   }else if (c.type === 'youtube'){
-    return editing ? t('btEndEditYoutube') : t('btEditYoutube')
+    return editing ? t('ctEndEditYoutube') : t('ctEditYoutube')
   }else if (c.type === 'iframe'){
-    return editing ? t('btEndEditIframe') : t('btEditIframe')
+    return editing ? t('ctEndEditIframe') : t('ctEditIframe')
   }else if (c.type === 'text'){
-    return editing ? t('btEndEditText') : t('btEditText')
+    return editing ? t('ctEndEditText') : t('ctEditText')
   }
 
   return ''
@@ -76,7 +76,7 @@ const useStyles = makeStyles({
 })
 export interface ContentProps extends Stores{
   content:ISharedContent
-  onUpdate?: (newContent: ISharedContent) => void
+  updateAndSend: (c: ISharedContent) => void
 }
 export const RawContent: React.FC<ContentProps> = (props:ContentProps) => {
   const classes = useStyles()

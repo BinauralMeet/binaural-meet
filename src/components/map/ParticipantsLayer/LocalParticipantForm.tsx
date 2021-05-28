@@ -92,7 +92,7 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
             <div style={{fontSize:12}}>{t('lsColor')}</div>
             <Box ml={2}>
               <Button variant="contained"
-                style={{backgroundColor:rgb2Color(rgb), color:textColor}}
+                style={{backgroundColor:rgb2Color(rgb), color:textColor, textTransform:'none'}}
                 onClick={()=>{setShowColorPicker(true)}} ref={colorButton}>
                 {t('lsColorAvatar')}</Button>
               <Popover open={showColorPicker} onClose={()=>{setShowColorPicker(false)}}
@@ -104,7 +104,8 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
                   }}
                   />
               </Popover>
-              <Button variant="contained" style={{color:rgb2Color(textRgb), backgroundColor:backColor, marginLeft:15}}
+              <Button variant="contained"
+                style={{color:rgb2Color(textRgb), backgroundColor:backColor, marginLeft:15, textTransform:'none'}}
                 onClick={()=>{setShowTextColorPicker(true)}} ref={textColorButton}>
                 {t('lsColorText')}</Button>
               <Popover open={showTextColorPicker} anchorOrigin={{vertical:'bottom', horizontal:'right'}}
@@ -116,7 +117,7 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
                   }}
                 />
               </Popover>
-              <Button variant="contained" style={{marginLeft:15}}
+              <Button variant="contained" style={{marginLeft:15, textTransform:'none'}}
                 onClick={()=>{local.information.color=[]; local.information.textColor=[]}} >
                 {t('lsAutoColor')}</Button>
             </Box>
@@ -168,12 +169,12 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
         </>}}
       </Observer>
       <Box mt={4} mb={3}>
-        <Button variant="contained" color="primary"
+        <Button variant="contained" color="primary" style={{textTransform:'none'}}
           onClick={()=>{
             closeConfig({}, 'enter')
-          }}>{t('lsSave')}</Button>
-        <Button variant="contained" style={{marginLeft:15}} color="secondary"
-          onClick={()=>{ local.loadInformationFromStorage()}}>{t('lsCancel')}</Button>
+          }}>{t('btSave')}</Button>
+        <Button variant="contained" color="secondary" style={{marginLeft:15, textTransform:'none'}}
+          onClick={()=>{ local.loadInformationFromStorage()}}>{t('btCancel')}</Button>
       </Box>
     </DialogContent>
   </Popover>

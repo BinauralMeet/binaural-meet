@@ -1,5 +1,6 @@
 import {BaseProps} from '@components/utils'
 import {makeStyles} from '@material-ui/core/styles'
+import {isContentWallpaper} from '@stores/sharedContents/SharedContentCreator'
 import _ from 'lodash'
 import {Observer} from 'mobx-react-lite'
 import React from 'react'
@@ -22,7 +23,7 @@ export const ShareLayer = React.memo<BaseProps>(
       <Observer>{
         ()=>{
           const all = Array.from(props.contents.all)
-          const filtered = props.transparent ? all.filter(c => !c.isWallpaper()) : all
+          const filtered = props.transparent ? all.filter(c => !isContentWallpaper(c)) : all
 
           return <>{
             filtered.map(val =>

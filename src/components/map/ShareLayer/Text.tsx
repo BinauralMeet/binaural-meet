@@ -94,9 +94,9 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
   //  Update (send) the content if needed
   function onUpdateTexts(newTexts: TextMessages) {
     const newUrl = JSON.stringify(newTexts)
-    if (props.content.url !== newUrl && props.onUpdate) {
+    if (props.content.url !== newUrl && props.updateAndSend) {
       props.content.url = newUrl
-      props.onUpdate(Object.assign({}, props.content))
+      props.updateAndSend(props.content)
     }
   }
 

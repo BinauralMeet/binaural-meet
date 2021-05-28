@@ -84,8 +84,7 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
             (member.current.content.originalSize[0] ? member.current.content.originalSize[0] : newSize[0])
           member.current.content.originalSize = newSize
           member.current.content.size = mulV2(scale, newSize)
-          const newContent = Object.assign({}, member.current.content)
-          props.onUpdate?.call(null, newContent)
+          props.updateAndSend(member.current.content)
         }
       }
     }

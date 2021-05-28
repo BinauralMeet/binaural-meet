@@ -5,7 +5,7 @@ import {default as participantsStore} from '@stores/participants/Participants'
 import {EventEmitter} from 'events'
 import _ from 'lodash'
 import {action, autorun, computed, makeObservable, observable} from 'mobx'
-import {createContent, disposeContent, extractContentDatas} from './SharedContentCreator'
+import {createContent, disposeContent, extractContentDatas, isContentWallpaper, moveContentToTop} from './SharedContentCreator'
 import {SharedContentTracks} from './SharedContentTracks'
 
 export const CONTENTLOG = false      // show manipulations and sharing of content
@@ -100,7 +100,7 @@ export class SharedContents extends EventEmitter {
   }
   //  share content
   @action shareContent(content:ISharedContent) {
-    content.moveToTop()
+    moveContentToTop(content)
     this.addLocalContent(content)
   }
 
@@ -123,7 +123,7 @@ export class SharedContents extends EventEmitter {
   removeSameWallpaper(bgs: ISharedContent[]) {
     let rv = false
     this.localParticipant.myContents.forEach((c) => {
-      if (c.isWallpaper()) {
+      if (isContentWallpaper(c)) {
         const same = bgs.find(t => c.url === t.url && _.isEqual(c.pose, t.pose))
         if (same) {
           //  const pid = this.owner.get(same.id)
@@ -140,9 +140,9 @@ export class SharedContents extends EventEmitter {
   }
 
   checkDuplicatedWallpaper(pid: string, cs: ISharedContent[]) {
-    const targets = cs.filter(c => c.isWallpaper())
+    const targets = cs.filter(isContentWallpaper)
     this.localParticipant.myContents.forEach((c) => {
-      if (c.isWallpaper()) {
+      if (isContentWallpaper(c)) {
         const same = targets.find(t => c.url === t.url && _.isEqual(c.pose, t.pose))
         if (same && same.zorder <= c.zorder) {
           this.removeByLocal(c.id)
@@ -191,7 +191,7 @@ export class SharedContents extends EventEmitter {
   //  wallpaper contents
   wallpapers = ''
   private getWallpaper() {
-    let nWallpapers = this.sorted.findIndex(c => !c.isWallpaper())
+    let nWallpapers = this.sorted.findIndex((c) => !isContentWallpaper(c))
     if (nWallpapers < 0) { nWallpapers = this.sorted.length }
 
     return this.sorted.slice(0, nWallpapers)
@@ -257,6 +257,7 @@ export class SharedContents extends EventEmitter {
     this.owner.set(c.id, participantsStore.localId)
     //  console.log('addLocalConent', c)
     this.updateAll()
+    connection.conference.sync.sendMyContents()
   }
 
   private checkAndGetContent(cid: string, callBy?:string) {
@@ -273,20 +274,23 @@ export class SharedContents extends EventEmitter {
 
     return {pid, pc:undefined}
   }
+  //  Temporaly update local only no sync with other participant.
+  //  This makes non-detectable inconsistency and must call updateByLocal() soon later.
+  updateLocalOnly(newContent: ISharedContent){
+    const pc = this.checkAndGetContent(newContent.id, 'updateByLocal').pc
+    if (pc) {
+      pc.myContents.set(newContent.id, newContent)
+      this.updateAll()
+    }
+  }
   //  updated by local user
   updateByLocal(newContent: ISharedContent) {
     const {pid, pc} = this.checkAndGetContent(newContent.id, 'updateByLocal')
     if (pc) {
       if (pid === this.localId) {
-        if (pc.myContents.has(newContent.id)) {
-          if (this.owner.get(newContent.id) !== pid) {
-            console.error(`updateByLocal: content owner not matched for ${newContent.id} owner=${this.owner.get(newContent.id)} pid=${pid}.`)
-          }
-        }else {
-          this.owner.set(newContent.id, participantsStore.localId)
-        }
         pc.myContents.set(newContent.id, newContent)
         this.updateAll()
+        connection.conference.sync.sendMyContents()
       }else if (pid) {
         connection.conference.sync.sendContentUpdateRequest(pid, newContent)
       }
@@ -303,6 +307,7 @@ export class SharedContents extends EventEmitter {
           pc.myContents.delete(cid)
           this.owner.delete(cid)
           this.updateAll()
+          connection.conference.sync.sendMyContents()
         }else {
           console.log(`Failed to find myContent ${cid} to remove.`)
         }
@@ -410,6 +415,7 @@ export class SharedContents extends EventEmitter {
       const idx = allPids.findIndex(cur => cur > pidLeave)
       const next = allPids[idx >= 0 ? idx : 0]
       contentLog('next = ', next)
+      let updated = false
       if (next === this.localId) {
         contentLog('Next is me')
         participantLeave.myContents.forEach((c, cid) => {
@@ -420,6 +426,7 @@ export class SharedContents extends EventEmitter {
           }else {
             this.localParticipant.myContents.set(cid, c)
             this.owner.set(cid, this.localId)
+            updated = true
             contentLog('set owner for cid=', cid, ' pid=', this.localId)
           }
         })
@@ -432,6 +439,9 @@ export class SharedContents extends EventEmitter {
         this.pendToRemoveParticipant(participantLeave)
       }
       this.updateAll()
+      if (updated){
+        connection.conference.sync.sendMyContents()
+      }
     }
   }
 

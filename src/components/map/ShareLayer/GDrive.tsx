@@ -48,10 +48,9 @@ interface Member{
 function updateUrl(member: Member) {
   const url = getStringFromParams(member.params)
 
-  if (url !== member.props.content.url && member.props.onUpdate) {
-    const newContent = Object.assign({}, member.props.content)
-    newContent.url = url
-    member.props.onUpdate(newContent)
+  if (url !== member.props.content.url && member.props.updateAndSend) {
+    member.props.content.url = url
+    member.props.updateAndSend(member.props.content)
   }
 }
 

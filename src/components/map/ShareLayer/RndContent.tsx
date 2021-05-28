@@ -10,13 +10,13 @@ import CloseRoundedIcon from '@material-ui/icons/CloseRounded'
 import EditIcon from '@material-ui/icons/Edit'
 import FlipToBackIcon from '@material-ui/icons/FlipToBack'
 import FlipToFrontIcon from '@material-ui/icons/FlipToFront'
-import WallpaperIcon from '@material-ui/icons/Wallpaper'
+import MoreHorizIcon from '@material-ui/icons/MoreHoriz'
 import {t} from '@models/locales'
 import {Pose2DMap} from '@models/MapObject'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {addV2, extractScaleX, extractScaleY, mulV, rotateVector2DByDegree, subV2} from '@models/utils'
 import mapData from '@stores/Map'
-import {copyContentToClipboard, TEN_YEAR} from '@stores/sharedContents/SharedContentCreator'
+import {copyContentToClipboard, isContentEditable, moveContentToBottom, moveContentToTop} from '@stores/sharedContents/SharedContentCreator'
 import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
 import React, {useLayoutEffect, useRef, useState} from 'react'
@@ -24,14 +24,17 @@ import {Rnd} from 'react-rnd'
 import {useGesture} from 'react-use-gesture'
 import {Content, contentTypeIcons, editButtonTip} from './Content'
 import {SharedContentProps} from './SharedContent'
+import {SharedContentForm} from './SharedContentForm'
+
 
 export type MouseOrTouch = React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>
-interface RndContentProps extends SharedContentProps {
+export interface RndContentProps extends SharedContentProps {
   hideAll ?: boolean
   autoHideTitle ?: boolean
   onShare ?: (evt: MouseOrTouch) => void
-  onClose ?: (evt: MouseOrTouch) => void
-  onUpdate ?: (newContent: ISharedContent) => void
+  onClose: (evt: MouseOrTouch) => void
+  updateAndSend: (c: ISharedContent) => void
+  updateOnly: (c: ISharedContent) => void
 }
 interface StyleProps{
   props: RndContentProps,
@@ -79,6 +82,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   const [resizeBasePos, setResizeBasePos] = useState(pose.position)    //  position when resize start
   const rnd = useRef<Rnd>(null)                         //  ref to rnd to update position and size
   const [showTitle, setShowTitle] = useState(!props.autoHideTitle || !props.content.pinned)
+  const [showForm, setShowForm] = useState(false)
   const contents = props.contents
   const editing = useObserver(() => contents.editing === props.content.id)
   function setEditing(flag: boolean) { contents.setEditing(flag ? props.content.id : '') }
@@ -126,30 +130,37 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   function onClickMoveToTop(evt: MouseOrTouch) {
     evt.stopPropagation()
     evt.preventDefault()
-    props.content.moveToTop()
-    const newContent = Object.assign({}, props.content)
-    props.onUpdate?.call(null, newContent)
+    moveContentToTop(props.content)
+    props.updateAndSend(props.content)
   }
   function onClickMoveToBottom(evt: MouseOrTouch) {
     evt.stopPropagation()
     evt.preventDefault()
-    props.content.moveToBottom()
-    const newContent = Object.assign({}, props.content)
-    props.onUpdate?.call(null, newContent)
-  }
-  function onClickWallpaper(evt: MouseOrTouch) {
-    evt.stopPropagation()
-    evt.preventDefault()
-    props.content.makeItWallpaper()
-    const newContent = Object.assign({}, props.content)
-    props.onUpdate?.call(null, newContent)
+    moveContentToBottom(props.content)
+    props.updateAndSend(props.content)
   }
   function onClickPin(evt: MouseOrTouch) {
     evt.stopPropagation()
     evt.preventDefault()
-    updateHandler(!props.content.pinned)
+    props.content.pinned = !props.content.pinned
+    props.updateAndSend(props.content)
   }
-  function updateHandler(pinned?:boolean) {
+  function onClickCopy(evt: MouseOrTouch){
+    evt.stopPropagation()
+    evt.preventDefault()
+    copyContentToClipboard(props.content)
+  }
+  function onClickMore(evt: MouseOrTouch){
+    evt.stopPropagation()
+    evt.preventDefault()
+    props.map.keyInputUsers.add('contentForm')
+    setShowForm(true)
+  }
+  function onCloseForm(){
+    setShowForm(false)
+    props.map.keyInputUsers.delete('contentForm')
+  }
+  function updateHandler() {
     let bChange = false
     if (! _.isEqual(pose, props.content.pose)) {
       bChange = true
@@ -157,17 +168,10 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     if (! _.isEqual(size, props.content.size)) {
       bChange = true
     }
-    if (pinned !== undefined &&  pinned !== props.content.pinned) {
-      bChange = true
-    }
     if (bChange) {
-      const newContent = Object.assign({}, props.content)
-      newContent.size = size
-      newContent.pose = pose
-      if (pinned !== undefined) {
-        newContent.pinned = pinned
-      }
-      props.onUpdate?.call(null, newContent)
+      props.content.size = size
+      props.content.pose = pose
+      props.updateAndSend(props.content)
     }
   }
   //  drag for title area
@@ -250,6 +254,8 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   const classes = useStyles({props, pose, size, showTitle, pinned:props.content.pinned})
   //  console.log('render: TITLE_HEIGHT:', TITLE_HEIGHT)
   const contentRef = React.useRef<HTMLDivElement>(null)
+  const formRef = React.useRef<HTMLDivElement>(null)
+
   const theContent =
     <div className={classes.rndContainer} {...gesture()}>
       <div className={classes.titlePosition} {...gesture() /* title can be placed out of Rnd */}>
@@ -267,7 +273,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
               }
             }}
             >
-          <Tooltip placement="top" title={props.content.pinned ? t('btUnpin') : t('btPin')} >
+          <Tooltip placement="top" title={props.content.pinned ? t('ctUnpin') : t('ctPin')} >
           <div className={classes.pin} onClick={onClickPin} onTouchStart={stop}>
             {contentTypeIcons(props.content.type, TITLE_HEIGHT)}
             <Icon icon={props.content.pinned ? pinIcon : pinOffIcon} height={TITLE_HEIGHT} />
@@ -280,61 +286,35 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
             </div>
           </Tooltip>
           {props.content.pinned ? undefined :
-            <Tooltip placement="top" title={t('btMoveTop')} >
+            <Tooltip placement="top" title={t('ctMoveTop')} >
               <div className={classes.titleButton} onClick={onClickMoveToTop}
                 onTouchStart={stop}><FlipToFrontIcon /></div></Tooltip>}
           {props.content.pinned ? undefined :
-            <Tooltip placement="top" title={t('btMoveBottom')} >
+            <Tooltip placement="top" title={t('ctMoveBottom')} >
               <div className={classes.titleButton} onClick={onClickMoveToBottom}
                 onTouchStart={stop}><FlipToBackIcon /></div></Tooltip>}
 
-          {(props.content.pinned || props.content.type !== 'img' || props.content.zorder < TEN_YEAR) ? undefined :
+          {/*(props.content.pinned || !canContentBeAWallpaper(props.content)) ? undefined :
             <div className={classes.titleButton} onClick={onClickWallpaper}
               onTouchStart={stop}>
-                <Tooltip placement="top" title={t('btWallpaper')}>
-                  <WallpaperIcon />
+                <Tooltip placement="top" title={isContentWallpaper(props.content) ?
+                  t('ctUnWallpaper') : t('ctWallpaper')}>
+                  <div><WallpaperIcon />{isContentWallpaper(props.content) ?
+                    <CloseRoundedIcon style={{marginLeft:'-1em'}} /> : undefined }</div>
                 </Tooltip>
-              </div>}
-          <Tooltip placement="top" title={t('btCopyToClipboard')} >
-            <div className={classes.titleButton} onClick={(evt: MouseOrTouch)=>{
-                evt.stopPropagation()
-                evt.preventDefault()
-                /*
-                if (props.content.type === 'text'){
-                  if (contentRef.current){
-                    html2canvas(contentRef.current).then((canvas) => {
-                      canvas.toBlob((blob)=>{
-                        if (blob){
-                          createContentOfImage(blob, map).then((content)=>{
-                            sharedContents.shareContent(content)
-                          })
-                        }
-                      })
-                      const temp = document.createElement<"img">('img')
-                      temp.style.position = 'fixed'
-                      temp.style.left = '0' //'-100%'
-                      temp.src = canvas.toDataURL()
-                      temp.onload = ()=>{
-                        document.body.appendChild(temp)
-                        var r = document.createRange()
-                        r.setStartBefore(temp)
-                        r.setEndAfter(temp)
-                        r.selectNode(temp)
-                        var sel = window.getSelection()
-                        sel?.addRange(r)
-                        const res = document.execCommand('copy')
-                        console.log('copy res', res)
-                        document.body.removeChild(temp)
-                      }
-                    })
-                  }
-                }*/
-                copyContentToClipboard(props.content)
-              }}
+                  </div> */}
+          <Tooltip placement="top" title={t('ctCopyToClipboard')} >
+            <div className={classes.titleButton} onClick={onClickCopy}
               onTouchStart={stop}>
-                <Icon icon={clipboardCopy} style={{fontSize: '1.5rem'}}/>
+                <Icon icon={clipboardCopy} height={TITLE_HEIGHT}/>
             </div>
           </Tooltip>
+          <div className={classes.titleButton} onClick={onClickMore} onTouchStart={stop} ref={formRef}>
+              <MoreHorizIcon />
+          </div>
+          <SharedContentForm open={showForm} {...props} close={onCloseForm}
+            anchorEl={contentRef.current} anchorOrigin={{vertical:'top', horizontal:'right'}}
+          />
           <div className={classes.note} onClick={onClickShare} onTouchStart={stop}>Share</div>
           {props.content.pinned ? undefined :
             <div className={classes.close} onClick={onClickClose} onTouchStart={stop}>
@@ -465,7 +445,7 @@ const useStyles = makeStyles({
   ),
   edit: (props:StyleProps) => (
     props.showTitle ? {
-      display: (props.props.onShare || !props.props.content.isEditable()) ? 'none' : 'block',
+      display: (props.props.onShare || !isContentEditable(props.props.content)) ? 'none' : 'block',
       height: TITLE_HEIGHT,
       whiteSpace: 'pre',
       cursor: 'default',

@@ -1,6 +1,6 @@
 import {Stores} from '@components/utils'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {isContentEditingUseKeyinput} from '@stores/sharedContents/SharedContentCreator'
+import {doseContentEditingUseKeyinput} from '@stores/sharedContents/SharedContentCreator'
 import {contentLog} from '@stores/sharedContents/SharedContents'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
@@ -14,7 +14,7 @@ export const SharedContent: React.FC<SharedContentProps> = (props:SharedContentP
   const map = props.map
   const store = props.contents
   const editing = useObserver(() => props.contents.editing === props.content.id)
-  if (isContentEditingUseKeyinput(props.content)){
+  if (doseContentEditingUseKeyinput(props.content)){
     if (editing) {
       map.keyInputUsers.add(props.content.id)
     }else {
@@ -34,9 +34,14 @@ export const SharedContent: React.FC<SharedContentProps> = (props:SharedContentP
           }
         }
       }
-      onUpdate={
-        (newContent: ISharedContent) => {
-          store.updateByLocal(newContent)
+      updateAndSend={
+        (c: ISharedContent) => {
+          store.updateByLocal(Object.assign({}, c))
+        }
+      }
+      updateOnly={
+        (c: ISharedContent) => {
+          store.updateLocalOnly(Object.assign({}, c))
         }
       }
     />
