@@ -36,7 +36,7 @@ export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: Partic
       </div>
     </Tooltip>
     {props.participant.id === props.participants.localId ?
-      <LocalParticipantForm {...props} open={showForm} close={()=>{
+      <LocalParticipantForm map={props.map} open={showForm} close={()=>{
         setShowForm(false)
         props.map.keyInputUsers.delete('participantList')
       }} anchorEl={ref.current} anchorOrigin={{vertical:'top', horizontal:'right'}} /> :

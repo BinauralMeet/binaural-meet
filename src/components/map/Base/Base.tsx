@@ -195,7 +195,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
 
         const MIN_D = 10
         let scale = d > MIN_D ? d / md : d <  -MIN_D ? md / d : (1 + (d - md) / MIN_D)
-        //  console.log(`Pinch: da:${[d, a]} origin:${origin}  memo:${memo}  scale:${scale}`)
+        //console.log(`Pinch: da:${[d, a]} origin:${origin}  memo:${memo}  scale:${scale}`)
 
         scale = limitScale(extractScaleX(matrix), scale)
 
@@ -225,6 +225,8 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
           //  CTRL+weel - zoom map
           let scale = Math.pow(1.2, movement[1] / 1000)
           scale = limitScale(extractScaleX(matrix), scale)
+          if (scale === 1){ return }
+
           //  console.log(`Wheel: ${movement}  scale=${scale}`)
           const newMatrix = matrix.scale(scale, scale, 1, ...transformPoint2D(matrix.inverse(), mapStore.mouse))
           mapStore.setMatrix(newMatrix)

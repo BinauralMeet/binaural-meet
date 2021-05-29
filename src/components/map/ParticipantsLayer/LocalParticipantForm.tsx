@@ -67,8 +67,7 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
 
   const colorButton = React.useRef<HTMLButtonElement>(null)
   const textColorButton = React.useRef<HTMLButtonElement>(null)
-  const popoverProps = Object.assign({}, props)
-  delete (popoverProps as Partial<LocalParticipantFormProps>).close
+  const {close, ...popoverProps} = props
 
   return <Popover {...popoverProps} onClose={closeConfig}>
     <DialogTitle>
