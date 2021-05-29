@@ -8,6 +8,7 @@ import HeadsetIcon from '@material-ui/icons/HeadsetMic'
 import MicOffIcon from '@material-ui/icons/MicOff'
 import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
 import {addV2, mulV2, normV, rotateVector2DByDegree, subV2} from '@models/utils'
+import {MapData} from '@stores/Map'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {Participants} from '@stores/participants/Participants'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
@@ -68,6 +69,7 @@ export interface ParticipantProps{
   participants: Participants
   size: number
   onContextMenu?:(ev:React.MouseEvent<HTMLDivElement, MouseEvent>) => void
+  map: MapData
 }
 export interface RawParticipantProps extends ParticipantProps{
   isLocal: boolean

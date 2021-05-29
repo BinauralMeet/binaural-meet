@@ -15,7 +15,6 @@ import {t} from '@models/locales'
 import {Pose2DMap} from '@models/MapObject'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {addV2, extractScaleX, extractScaleY, mulV, rotateVector2DByDegree, subV2} from '@models/utils'
-import mapData from '@stores/Map'
 import {copyContentToClipboard, isContentEditable, moveContentToBottom, moveContentToTop} from '@stores/sharedContents/SharedContentCreator'
 import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
@@ -26,6 +25,7 @@ import {Content, contentTypeIcons, editButtonTip} from './Content'
 import {SharedContentProps} from './SharedContent'
 import {SharedContentForm} from './SharedContentForm'
 
+const MOUSE_RIGHT = 2
 
 export type MouseOrTouch = React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>
 export interface RndContentProps extends SharedContentProps {
@@ -43,10 +43,10 @@ interface StyleProps{
   showTitle: boolean,
   pinned: boolean,
 }
-
 class RndContentState{
   lastSize: [number, number] = [0, 0]
   lastPose: Pose2DMap = {orientation:0, position:[0, 0]}
+  buttons = 0
 }
 
 
@@ -99,12 +99,12 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
 
   useLayoutEffect(  //  reflect pose etc. to rnd size
     () => {
-      if (rnd.current) { rnd.current.resizable.orientation = pose.orientation + mapData.rotation }
+      if (rnd.current) { rnd.current.resizable.orientation = pose.orientation + props.map.rotation }
       const titleHeight = showTitle ? TITLE_HEIGHT : 0
       rnd.current?.updatePosition({x:pose.position[0], y:pose.position[1] - titleHeight})
       rnd.current?.updateSize({width:size[0], height:size[1] + titleHeight})
     },
-    [pose, size, showTitle],
+    [pose, size, showTitle, props.map.rotation],
   )
 
   //  handlers
@@ -113,46 +113,38 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     ev.preventDefault()
   }
   function onClickShare(evt: MouseOrTouch) {
-    evt.stopPropagation()
-    evt.preventDefault()
+    stop(evt)
     props.onShare?.call(null, evt)
   }
   function onClickClose(evt: MouseOrTouch) {
-    evt.stopPropagation()
-    evt.preventDefault()
+    stop(evt)
     props.onClose?.call(null, evt)
   }
   function onClickEdit(evt: MouseOrTouch) {
-    evt.stopPropagation()
-    evt.preventDefault()
+    stop(evt)
     setEditing(!editing)
   }
   function onClickMoveToTop(evt: MouseOrTouch) {
-    evt.stopPropagation()
-    evt.preventDefault()
+    stop(evt)
     moveContentToTop(props.content)
     props.updateAndSend(props.content)
   }
   function onClickMoveToBottom(evt: MouseOrTouch) {
-    evt.stopPropagation()
-    evt.preventDefault()
+    stop(evt)
     moveContentToBottom(props.content)
     props.updateAndSend(props.content)
   }
   function onClickPin(evt: MouseOrTouch) {
-    evt.stopPropagation()
-    evt.preventDefault()
+    stop(evt)
     props.content.pinned = !props.content.pinned
     props.updateAndSend(props.content)
   }
   function onClickCopy(evt: MouseOrTouch){
-    evt.stopPropagation()
-    evt.preventDefault()
+    stop(evt)
     copyContentToClipboard(props.content)
   }
   function onClickMore(evt: MouseOrTouch){
-    evt.stopPropagation()
-    evt.preventDefault()
+    stop(evt)
     props.map.keyInputUsers.add('contentForm')
     setShowForm(true)
   }
@@ -177,7 +169,6 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   //  drag for title area
   const [preciseOrientation, setPreciseOrientation] = useState(pose.orientation)
   function dragHandler(delta:[number, number], buttons:number, event:any) {
-    const MOUSE_RIGHT = 2
     const ROTATION_IN_DEGREE = 360
     const ROTATION_STEP = 15
     if (buttons === MOUSE_RIGHT) {
@@ -196,7 +187,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       pose.orientation = newOri
       setPose(Object.assign({}, pose))
     }else {
-      const lv = mapData.rotateFromWindow(delta)
+      const lv = props.map.rotateFromWindow(delta)
       const cv = rotateVector2DByDegree(-pose.orientation, lv)
       pose.position = addV2(pose.position, cv)
       setPose(Object.assign({}, pose))
@@ -207,7 +198,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   const gesture = useGesture({
     onDrag: ({down, delta, event, xy, buttons}) => {
       // console.log('onDragTitle:', delta)
-      if (isFixed) { return }
+      if (isFixed || props.map.keyInputUsers.size) { return }
       event?.stopPropagation()
       if (down) {
         //  event?.preventDefault()
@@ -216,11 +207,28 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
         updateHandler()
       }
     },
-  },
-  )
+    onDragStart: ({delta, buttons}) => {   // to detect click
+      //  console.log(`dragStart delta=${delta}  buttons=${buttons}`)
+      state.current.buttons = buttons
+    },
+    onDragEnd: ({delta, buttons}) => {
+      //  console.log(`dragEnd delta=${delta}  buttons=${buttons}`)
+      if (!props.map.keyInputUsers.size && state.current.buttons === MOUSE_RIGHT){ //  right click
+        setShowForm(true)
+        props.map.keyInputUsers.add('contentForm')
+      }
+      state.current.buttons = 0
+    },
+    onPointerUp: (arg) => { arg.stopPropagation() },
+    onPointerDown: (arg) => { arg.stopPropagation() },
+    onMouseUp: (arg) => { arg.stopPropagation() },
+    onMouseDown: (arg) => { arg.stopPropagation() },
+    onTouchStart: (arg) => { arg.stopPropagation() },
+    onTouchEnd: (arg) => { arg.stopPropagation() },
+  })
   function onResize(evt:MouseEvent | TouchEvent, dir: any, elem:HTMLDivElement, delta:any, pos:any) {
     evt.stopPropagation(); evt.preventDefault()
-    const scale = (extractScaleX(mapData.matrix) + extractScaleY(mapData.matrix)) / 2
+    const scale = (extractScaleX(props.map.matrix) + extractScaleY(props.map.matrix)) / 2
     const cd:[number, number] = [delta.width / scale, delta.height / scale]
     // console.log('resize dir:', dir, ' delta:', delta, ' d:', d, ' pos:', pos)
     if (dir === 'left' || dir === 'right') {
@@ -271,6 +279,10 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
                   setShowTitle(false)
                 }
               }
+            }}
+            onContextMenu = {() => {
+              setShowForm(true)
+              props.map.keyInputUsers.add('contentForm')
             }}
             >
           <Tooltip placement="top" title={props.content.pinned ? t('ctUnpin') : t('ctPin')} >
@@ -336,7 +348,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       }
     }>
       <Rnd className={classes.rndCls} enableResizing={isFixed ? resizeDisable : resizeEnable}
-        disableDragging={isFixed} ref={rnd}
+        disableDragging={isFixed || props.map.keyInputUsers.size > 0} ref={rnd}
         onResizeStart = { (evt)  => {
           evt.stopPropagation(); evt.preventDefault()
           setResizeBase(size)

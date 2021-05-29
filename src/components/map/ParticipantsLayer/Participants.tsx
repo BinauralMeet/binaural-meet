@@ -1,6 +1,7 @@
 import {useStore} from '@hooks/ParticipantsStore'
 import {PARTICIPANT_SIZE} from '@models/Participant'
 import {urlParameters} from '@models/url'
+import {MapData} from '@stores/Map'
 import {Participants} from '@stores/participants/Participants'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
@@ -29,7 +30,7 @@ const Line: React.FC<LineProps> = (props) => {
   </svg>
 }
 
-export const ParticipantsLayer: React.FC<{}> = (props) => {
+export const ParticipantsLayer: React.FC<{map:MapData}> = (props) => {
   const store = useStore()
   const ids = useObserver(() => Array.from(store.remote.keys()).filter((id) => {
     const remote = store.find(id)!
@@ -37,9 +38,9 @@ export const ParticipantsLayer: React.FC<{}> = (props) => {
     return remote.perceptibility.visibility && remote.physics.located
   }))
   const localId = useObserver(() => store.localId)
-  const remoteElements = ids.map(id => <RemoteParticipant key={id} participants={store}
+  const remoteElements = ids.map(id => <RemoteParticipant map={props.map} key={id} participants={store}
     participant={store.remote.get(id)!} size={PARTICIPANT_SIZE} />)
-  const localElement = (<LocalParticipant key={'local'} participants={store}
+  const localElement = (<LocalParticipant map={props.map} key={'local'} participants={store}
     participant={store.local} size={PARTICIPANT_SIZE} />)
   const lines = useObserver(
     () => Array.from(store.yarnPhones).map((rid) => {

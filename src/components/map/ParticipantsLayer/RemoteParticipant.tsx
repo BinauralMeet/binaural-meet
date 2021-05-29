@@ -64,7 +64,8 @@ export const RemoteParticipant: React.FC<ParticipantProps> = (props) => {
         ev.stopPropagation()
         openForm()
       }} />
-      <RemoteParticipantForm open={showForm} close={onClose} participant={props.participant as RemoteParticipantStore}
+      <RemoteParticipantForm open={showForm} close={onClose} map={props.map}
+        participant={props.participant as RemoteParticipantStore}
         anchorEl={buttonRef.current} anchorOrigin={{vertical:'top', horizontal:'left'}}
         anchorReference = "anchorEl"
       />

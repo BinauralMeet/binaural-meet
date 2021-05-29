@@ -168,7 +168,8 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
 
     return <Tooltip key={idx} title={<React.Fragment>{text.name} <br /> {timestamp}</React.Fragment>}
       placement="left" arrow={true} suppressContentEditableWarning={true}>
-      <div style={css} contentEditable = {textEditable} ref={text === textToEdit ? refEdit : undefined}
+      <div style={css} contentEditable = {textEditable}
+        ref={text === textToEdit ? refEdit : undefined}
         onInput={(ev) => {
           text.message = ev.currentTarget.innerText
         } }

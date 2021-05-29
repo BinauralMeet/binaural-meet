@@ -1,8 +1,9 @@
+import {sharedContentHandler} from '@components/map/ShareLayer/SharedContent'
+import {SharedContentForm} from '@components/map/ShareLayer/SharedContentForm'
 import {Tooltip} from '@material-ui/core'
 import {useTranslation} from '@models/locales'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {getRandomColor, rgb2Color} from '@models/utils'
-import {MapData} from '@stores/Map'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import _ from 'lodash'
 import {Observer} from 'mobx-react-lite'
@@ -12,9 +13,11 @@ import {Stores} from '../utils'
 import {styleForList} from '../utils/styles'
 import {TextLineStyle} from './LeftBar'
 
-export const ContentLine: React.FC<TextLineStyle &
-{participant: ParticipantBase, content: ISharedContent, map: MapData}> = (props) => {
+export const ContentLine: React.FC<TextLineStyle & Stores &
+{participant: ParticipantBase, content: ISharedContent}> = (props) => {
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
+  const [showForm, setShowForm] = React.useState(false)
+  const ref = React.useRef<HTMLDivElement>(null)
 
   return <Observer>{()=> {
     const typeIcon = contentTypeIcons(props.content.type, props.fontSize)
@@ -22,13 +25,27 @@ export const ContentLine: React.FC<TextLineStyle &
     if (props.content.color?.length){ colors[0] = rgb2Color(props.content.color) }
     if (props.content.textColor?.length){ colors[1] = rgb2Color(props.content.textColor) }
 
-    return <Tooltip title={props.content.ownerName} placement="right">
-      <div className={classes.line} style={{backgroundColor:colors[0], color:colors[1]}}
-        onClick={() => props.map.focusOn(props.content)}>
+    return <>
+      <Tooltip title={props.content.ownerName} placement="right">
+        <div className={classes.line} style={{backgroundColor:colors[0], color:colors[1]}} ref={ref}
+          onClick={() => props.map.focusOn(props.content)}
+          onContextMenu={() => {
+            setShowForm(true)
+            props.map.keyInputUsers.add('participantList')
+          }}
+        >
           {typeIcon}{props.content.name}
-      </div>
-    </Tooltip>}
-  }</Observer>
+        </div>
+      </Tooltip>
+      <SharedContentForm {...props} {...sharedContentHandler(props)} open={showForm}
+        close={()=>{
+          setShowForm(false)
+          props.map.keyInputUsers.delete('participantList')
+        }}
+        anchorEl={ref.current} anchorOrigin={{vertical:'top', horizontal:'right'}}
+      />
+    </>
+  }}</Observer>
 }
 
 export const RawContentList: React.FC<Stores&TextLineStyle&{all: ISharedContent[]}>  = (props) => {

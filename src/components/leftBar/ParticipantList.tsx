@@ -1,7 +1,8 @@
 import {ImageAvatar} from '@components/avatar/ImageAvatar'
+import {LocalParticipantForm} from '@components/map/ParticipantsLayer/LocalParticipantForm'
+import {RemoteParticipantForm} from '@components/map/ParticipantsLayer/RemoteParticipantForm'
 import {Tooltip} from '@material-ui/core'
 import {connection} from '@models/api'
-import {MapData} from '@stores/Map'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import {useObserver} from 'mobx-react-lite'
@@ -10,23 +11,42 @@ import {Stores} from '../utils'
 import {styleForList} from '../utils/styles'
 import {TextLineStyle} from './LeftBar'
 
-
-export const ParticipantLine: React.FC<TextLineStyle&{participant: ParticipantBase, map: MapData}> = (props) => {
+export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: ParticipantBase}> = (props) => {
   const name = useObserver(() => (props.participant.information.name))
   const avatarSrc = useObserver(() => (props.participant.information.avatarSrc))
   const colors = useObserver(() => props.participant.getColor())
   const size = useObserver(() => props.lineHeight)
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
+  const [showForm, setShowForm] = React.useState(false)
+  const ref = React.useRef<HTMLDivElement>(null)
 
-  return <Tooltip title={props.participant.id} placement="right">
-    <div className={classes.outer} onClick={() => props.map.focusOn(props.participant)}>
-      <ImageAvatar border={true} colors={colors} size={size * 1.05}
-        name={name} avatarSrc={avatarSrc} />
-      <div className={classes.line} style={{backgroundColor:colors[0], color:colors[1], width:'100%'}}>
-        {name}
+  return <>
+    <Tooltip title={props.participant.id} placement="right">
+      <div className={classes.outer} ref={ref}
+        onClick={(ev) => { props.map.focusOn(props.participant) }}
+        onContextMenu={() => {
+          setShowForm(true)
+          props.map.keyInputUsers.add('participantList')
+        }}>
+        <ImageAvatar border={true} colors={colors} size={size * 1.05}
+          name={name} avatarSrc={avatarSrc} />
+        <div className={classes.line} style={{backgroundColor:colors[0], color:colors[1], width:'100%'}}>
+          {name}
+        </div>
       </div>
-    </div>
-  </Tooltip>
+    </Tooltip>
+    {props.participant.id === props.participants.localId ?
+      <LocalParticipantForm {...props} open={showForm} close={()=>{
+        setShowForm(false)
+        props.map.keyInputUsers.delete('participantList')
+      }} anchorEl={ref.current} anchorOrigin={{vertical:'top', horizontal:'right'}} /> :
+      <RemoteParticipantForm {...props} open={showForm} close={()=>{
+        setShowForm(false)
+        props.map.keyInputUsers.delete('participantList')
+      }} participant={props.participant as RemoteParticipant}
+        anchorEl={ref.current} anchorOrigin={{vertical:'top', horizontal:'right'}} />
+    }
+  </>
 }
 
 export const RawParticipantList: React.FC<Stores&TextLineStyle&{localId: string, remoteIds: string[]}> = (props) => {

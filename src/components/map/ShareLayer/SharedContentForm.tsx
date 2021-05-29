@@ -19,6 +19,7 @@ import EditIcon from '@material-ui/icons/Edit'
 import FlipToBackIcon from '@material-ui/icons/FlipToBack'
 import FlipToFrontIcon from '@material-ui/icons/FlipToFront'
 import {t} from '@models/locales'
+import { Pose2DMap } from '@models/MapObject'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {canContentBeAWallpaper, copyContentToClipboard, isContentEditable, isContentWallpaper, makeContentWallpaper,
    moveContentToBottom, moveContentToTop} from '@stores/sharedContents/SharedContentCreator'
@@ -37,12 +38,18 @@ export interface SharedContentFormProps extends RndContentProps, PopoverPropsNoO
 type ContentType = JSX.Element | string
 
 function Row(left1: ContentType, left2: ContentType, center: ContentType, right2: ContentType, right1: ContentType){
+  const cellstyle = {
+    margin:0,
+    padding:2,
+    border:'none',
+  }
+
   return <TableRow>
-    <TableCell>{left1}</TableCell>
-    <TableCell>{left2}</TableCell>
-    <TableCell>{center}</TableCell>
-    <TableCell>{right2}</TableCell>
-    <TableCell>{right1}</TableCell>
+    <TableCell align="right" style={cellstyle}>{left1}</TableCell>
+    <TableCell align="right" style={cellstyle}>{left2}</TableCell>
+    <TableCell style={cellstyle}>{center}</TableCell>
+    <TableCell style={cellstyle}>{right2}</TableCell>
+    <TableCell style={cellstyle}>{right1}</TableCell>
   </TableRow>
 }
 
@@ -51,6 +58,7 @@ class SharedContentFormMember{
   pinned!: boolean
   editing!: string
   name!: string
+  pose!: Pose2DMap
   constructor(props: SharedContentFormProps){
     this.save(props)
   }
@@ -58,12 +66,14 @@ class SharedContentFormMember{
     this.zorder = props.content.zorder
     this.pinned = props.content.pinned
     this.name = props.content.name
+    this.pose = props.content.pose
     this.editing = props.contents.editing
   }
   restore(props: SharedContentFormProps){
     props.content.zorder = this.zorder
     props.content.pinned = this.pinned
     props.content.name = this.name
+    props.content.pose = this.pose
     props.contents.setEditing(this.editing)
   }
 }
@@ -105,7 +115,7 @@ export const SharedContentForm: React.FC<SharedContentFormProps> = (props: Share
         />
         </td></tr></table>
         <Box mt={2} mb={2}>
-        <Button variant="contained" style={{textTransform:'none'}}
+          <Button variant="contained" style={{textTransform:'none'}}
             onClick={()=>{
               moveContentToTop(props.content)
               props.updateOnly(props.content)
@@ -115,12 +125,18 @@ export const SharedContentForm: React.FC<SharedContentFormProps> = (props: Share
               moveContentToBottom(props.content)
               props.updateOnly(props.content)
             }}><FlipToBackIcon />&nbsp; {t('ctMoveBottom')}</Button> &nbsp;
+        </Box>
+        <Box mt={2} mb={2}>
           <Button variant="contained" style={{textTransform:'none'}}
             onClick={()=>{
               copyContentToClipboard(props.content)
-            }}><Icon icon={clipboardCopy} height={TITLE_HEIGHT}/>&nbsp; {t('ctCopyToClipboard')}</Button>
+            }}><Icon icon={clipboardCopy} height={TITLE_HEIGHT}/>&nbsp; {t('ctCopyToClipboard')}</Button> &nbsp;
+          <Button variant="contained" style={{textTransform:'none'}}
+            onClick={()=>{
+              props.map.focusOn(props.content)
+            }}>{t('ctFocus')}</Button>
         </Box>
-        <Table size="small">{[
+        <Table size="small" >{[
           Row(t('ctUnpin'),<Icon icon={pinOffIcon} height={TITLE_HEIGHT} />,
             <Switch color="primary" checked={props.content.pinned} onChange={(ev, checked)=>{
               props.content.pinned = checked

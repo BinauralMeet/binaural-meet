@@ -83,6 +83,7 @@ export const enTranslate = {
   ctDelete: 'Delete',
   ctClose: 'Close',
   ctName: 'Titile',
+  ctFocus: 'Show it in the center',
   upload: 'Upload',
   Save: 'Save',
   Clear: 'Clear',

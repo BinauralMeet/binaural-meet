@@ -11,12 +11,14 @@ import {uploadToGyazo} from '@models/api/Gyazo'
 import {useTranslation} from '@models/locales'
 import {isDarkColor, rgb2Color} from '@models/utils'
 import {isSmartphone} from '@models/utils/utils'
+import {MapData} from '@stores/Map'
 import {Observer} from 'mobx-react-lite'
 import React, {useState} from 'react'
 import {SketchPicker} from 'react-color'
 
 export interface LocalParticipantFormProps extends PopoverProps{
   close: () => void,
+  map: MapData
 }
 
 const tfIStyle = {fontSize: isSmartphone() ? '2em' : '1em',
@@ -175,6 +177,10 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
           }}>{t('btSave')}</Button>
         <Button variant="contained" color="secondary" style={{marginLeft:15, textTransform:'none'}}
           onClick={()=>{ local.loadInformationFromStorage()}}>{t('btCancel')}</Button>
+        <Button variant="contained" style={{marginLeft:15, textTransform:'none'}}
+          onClick={()=>{
+            props.map.focusOn(local)
+          }}>{t('ctFocus')}</Button>
       </Box>
     </DialogContent>
   </Popover>
