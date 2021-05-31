@@ -219,12 +219,12 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       }
       state.current.buttons = 0
     },
-    onPointerUp: (arg) => { arg.stopPropagation() },
-    onPointerDown: (arg) => { arg.stopPropagation() },
-    onMouseUp: (arg) => { arg.stopPropagation() },
-    onMouseDown: (arg) => { arg.stopPropagation() },
-    onTouchStart: (arg) => { arg.stopPropagation() },
-    onTouchEnd: (arg) => { arg.stopPropagation() },
+    onPointerUp: (arg) => { if(editing) {arg.stopPropagation()} },
+    onPointerDown: (arg) => { if(editing) {arg.stopPropagation()} },
+    onMouseUp: (arg) => { if(editing) {arg.stopPropagation()} },
+    onMouseDown: (arg) => { if(editing) {arg.stopPropagation()} },
+    onTouchStart: (arg) => { if(editing) {arg.stopPropagation() }},
+    onTouchEnd: (arg) => { if(editing) {arg.stopPropagation()} },
   })
   function onResize(evt:MouseEvent | TouchEvent, dir: any, elem:HTMLDivElement, delta:any, pos:any) {
     evt.stopPropagation(); evt.preventDefault()
