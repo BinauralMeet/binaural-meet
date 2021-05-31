@@ -149,7 +149,7 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
       },
       onDrag: ({down, delta, xy, buttons}) => {
         if (delta[0] || delta[1]) { mem.mouseDown = false }
-        if (mapStore.keyInputUsers.size) { return }
+        //  if (mapStore.keyInputUsers.size) { return }
         if (mem.dragging && down && outer.current) {
           if (!thirdPersonView && buttons === MOUSE_RIGHT) {  // right mouse drag - rotate map
             const center = transformPoint2D(matrix, participants.local.pose.position)
