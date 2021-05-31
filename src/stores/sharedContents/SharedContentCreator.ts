@@ -99,10 +99,8 @@ export function createContentOfIframe(urlStr: string, map: MapData) {
     pasted.type = 'youtube'
     pasted.pose.position[0] = map.mouseOnMap[0]
     pasted.pose.position[1] = map.mouseOnMap[1]
-    const YT_WIDTH = 640
-    const YT_HEIGHT = 380
-    pasted.size[0] = YT_WIDTH
-    pasted.size[1] = YT_HEIGHT
+    pasted.size[0] = 640
+    pasted.size[1] = 380
   }else if (url.hostname === 'drive.google.com' || url.hostname === 'docs.google.com') {  //  google drive
     pasted.type = 'gdrive'
     const fileIdStart = url.pathname.slice(url.pathname.indexOf('/d/') + 3)
@@ -110,28 +108,30 @@ export function createContentOfIframe(urlStr: string, map: MapData) {
     pasted.url = `id=${fileId}`
     pasted.pose.position[0] = map.mouseOnMap[0]
     pasted.pose.position[1] = map.mouseOnMap[1]
-    const IFRAME_WIDTH = 600
-    const IFRAME_HEIGHT = 800
-    pasted.size[0] = IFRAME_WIDTH
-    pasted.size[1] = IFRAME_HEIGHT
+    pasted.size[0] = 600
+    pasted.size[1] = 800
   }else if (url.hostname === 'wbo.ophir.dev'){  //  whiteboard
     pasted.type = 'whiteboard'
     pasted.url = urlStr
     pasted.pose.position[0] = map.mouseOnMap[0]
     pasted.pose.position[1] = map.mouseOnMap[1]
-    const IFRAME_WIDTH = 600
-    const IFRAME_HEIGHT = 700
-    pasted.size[0] = IFRAME_WIDTH
-    pasted.size[1] = IFRAME_HEIGHT
+    pasted.size[0] = 600
+    pasted.size[1] = 700
+  }else if (url.pathname.substring(url.pathname.length-4) === '.pdf' ||
+    url.pathname.substring(url.pathname.length-4) === '.PDF' ){  //  pdf
+      pasted.type = 'pdf'
+      pasted.url = urlStr
+      pasted.pose.position[0] = map.mouseOnMap[0]
+      pasted.pose.position[1] = map.mouseOnMap[1]
+      pasted.size[0] = 600
+      pasted.size[1] = 700
   }else {  //  generic iframe
     pasted.type = 'iframe'
     pasted.url = urlStr
     pasted.pose.position[0] = map.mouseOnMap[0]
     pasted.pose.position[1] = map.mouseOnMap[1]
-    const IFRAME_WIDTH = 600
-    const IFRAME_HEIGHT = 800
-    pasted.size[0] = IFRAME_WIDTH
-    pasted.size[1] = IFRAME_HEIGHT
+    pasted.size[0] = 600
+    pasted.size[1] = 800
   }
   contentLog(`${pasted.type} created url = ${pasted.url}`)
 
@@ -352,15 +352,22 @@ export function getGDriveUrl(editing: boolean, params: Map<string, string>){
   const comp = 'application/vnd.google-apps.'
 
   let url = `https://drive.google.com/file/d/${fileId}/preview`
-  if (editing && mimeType.substr(0, comp.length) === comp){
-    let app = mimeType.substr(comp.length)
-    if (app !== 'failed'){
-      if (app === 'spreadsheet'){ app = 'spreadsheets' }
-      url = `https://docs.google.com/${app}/d/${fileId}/edit`
+  if (editing){
+    if (mimeType.substr(0, comp.length) === comp){
+      let app = mimeType.substr(comp.length)
+      if (app !== 'failed'){
+        if (app === 'spreadsheet'){ app = 'spreadsheets' }
+        url = `https://docs.google.com/${app}/d/${fileId}/edit`
+      }
     }
   }
 
   return url
+}
+export function getBeforeParamsOfUrl(url: string){
+  const start = url.indexOf('?')
+
+  return start < 0 ? url : url.substring(0, start)
 }
 export function getParamsFromUrl(url: string){
   const start = url.indexOf('?')

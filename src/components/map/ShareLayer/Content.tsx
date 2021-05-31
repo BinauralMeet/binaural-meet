@@ -1,5 +1,6 @@
 import {Stores} from '@components/utils'
 import whiteboard24Regular from '@iconify-icons/fluent/whiteboard-24-regular'
+import filePdfBox from '@iconify/icons-mdi/file-pdf-box'
 import GoogleDriveIcon from '@iconify/icons-mdi/google-drive'
 import {Icon} from '@iconify/react'
 import {makeStyles} from '@material-ui/core/styles'
@@ -14,6 +15,7 @@ import {ContentType, SharedContent as ISharedContent} from '@models/SharedConten
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {GDrive} from './GDrive'
+import {PDF} from './PDF'
 import {ScreenContent} from './ScreenContent'
 import {Text} from './Text'
 import {YouTube} from './YouTube'
@@ -28,6 +30,7 @@ export function contentTypeIcons(type: ContentType, size = 12) {
     gdrive: <span style={{width:size, height:size}}><Icon icon={GoogleDriveIcon} height={size} /></span>,
     whiteboard: <span style={{width:size, height:size}}><Icon icon={whiteboard24Regular} height={size} /></span>,
     camera: <CameraAltIcon style={{fontSize:size}} />,
+    pdf : <span style={{width:size, height:size}}><Icon icon={filePdfBox} height={size} /></span>,
     '': undefined,
   }
 
@@ -102,6 +105,8 @@ export const RawContent: React.FC<ContentProps> = (props:ContentProps) => {
     rv = <YouTube {...props} />
   }else if (props.content.type === 'gdrive') {
     rv = <GDrive {...props} />
+  }else if (props.content.type === 'pdf') {
+    rv = <PDF {...props} />
   }else if (props.content.type === 'text') {
     rv = <Text {...props} />
   }else if (props.content.type === 'screen' || props.content.type === 'camera') {

@@ -109,5 +109,6 @@ export const enTranslate = {
   noYarn: '{{name}} connected yarn.',
   afkTitle: 'In away from keyboard mode (L / Esc)',
   afkMessage: 'Hit any key or click mouse to return.',
+  gdFailed: 'The file in Google Drive could not be accessed.\r\nChange the file-sharing settings so that everyone on the Internet can see it.',
 }
 export type EnKeyList = keyof typeof enTranslate

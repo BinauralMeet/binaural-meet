@@ -1,6 +1,7 @@
 import {MapObject, Pose2DMap} from './MapObject'
 
-export type ContentType = 'img' | 'text' | 'youtube' | 'iframe' | 'screen' | 'camera' | 'gdrive' | 'whiteboard' | ''
+export type ContentType = 'img' | 'text' | 'pdf' | 'youtube' | 'iframe' | 'screen' | 'camera' |
+  'gdrive' | 'whiteboard' | ''
 
 export interface SharedContentData {
   zorder: number                  //  unix timestamp when shared or moved to top.

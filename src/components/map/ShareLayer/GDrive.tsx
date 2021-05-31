@@ -1,5 +1,6 @@
 import {useStore} from '@hooks/SharedContentsStore'
 import {makeStyles} from '@material-ui/core/styles'
+import {t} from '@models/locales'
 import {assert} from '@models/utils'
 import {getGDriveUrl, getInformationOfGDriveContent, getParamsFromUrl,
   getStringFromParams, isGDrivePreviewScrollable} from '@stores/sharedContents/SharedContentCreator'
@@ -36,6 +37,12 @@ const useStyles = makeStyles({
     width: '100%',
     height: '100%',
     overflow: 'hidden',
+  },
+  divError:{
+    width: '100%',
+    height: '100%',
+    overflow: 'hidden',
+    backgroundColor: 'white',
   },
 })
 
@@ -124,14 +131,22 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
 
   const vscroll = isGDrivePreviewScrollable(mimeType)
 
-  return <div className={classes.divClip}
+  return <div className={mimeType ? classes.divClip : classes.divError}
     onDoubleClick = {() => { if (!editing) { props.contents.setEditing(props.content.id) } }}
   >
-    <div className={(editing || !vscroll) ? classes.divClip : classes.divScroll} ref={divScroll}
-      onWheel = {ev => ev.ctrlKey || ev.stopPropagation() } >
+    {mimeType ?
+      <div className={(editing || !vscroll) ? classes.divClip : classes.divScroll} ref={divScroll}
+        onWheel = {ev => ev.ctrlKey || ev.stopPropagation() } >
+        <iframe src={url} title={props.content.url}
+          className={editing ? classes.iframeEdit : vscroll ? classes.iframeVScrool : classes.iframe}
+        />
+    </div> :
+    !editing ? <div style={{margin:'1em', whiteSpace:'pre-wrap'}}>{t('gdFailed')}</div> :
+      <div className={classes.divClip} onWheel = {ev => ev.ctrlKey || ev.stopPropagation() } >
       <iframe src={url} title={props.content.url}
-        className={editing ? classes.iframeEdit : vscroll ? classes.iframeVScrool : classes.iframe}
+        className={classes.iframeEdit}
       />
-    </div>
+      </div>
+    }
   </div>
 }

@@ -106,5 +106,6 @@ export const jaTranslate = {
   noYarn: '{{name}}が糸電話をつなぎました。',
   afkTitle: '離席中モード (L / Esc)',
   afkMessage: 'キーかマウスクリックで戻ります。',
+  gdFailed: 'Google Driveのファイルにアクセスできませんでした。\r\nファイルを共有設定を変え、インターネット上の全員が閲覧できるようにしてください。',
 }
 export type JaKeyList = keyof typeof jaTranslate
