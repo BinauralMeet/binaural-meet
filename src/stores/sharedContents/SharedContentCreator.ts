@@ -3,6 +3,7 @@ import {defaultPerceptibility,  Perceptibility, Pose2DMap} from '@models/MapObje
 import {ContentType, SharedContent as ISharedContent,
   SharedContentData as ISharedContentData, SharedContentId as ISharedContentId, TextMessages} from '@models/SharedContent'
 import {extract} from '@models/utils'
+import { getMimeType } from '@models/utils'
 import {MapData} from '@stores/Map'
 import {defaultValue as mapObjectDefaultValue} from '@stores/MapObject'
 import {JitsiLocalTrack} from 'lib-jitsi-meet'
@@ -79,63 +80,81 @@ export function createContent() {
   return content
 }
 
+function makeItPdf(pasted:ISharedContent, urlStr: string, map:MapData){
+  pasted.type = 'pdf'
+  pasted.url = urlStr
+  pasted.pose.position[0] = map.mouseOnMap[0]
+  pasted.pose.position[1] = map.mouseOnMap[1]
+  pasted.size[0] = 500
+  pasted.size[1] = pasted.size[0] * 1.41421356
+}
+
 export function createContentOfIframe(urlStr: string, map: MapData) {
-  const pasted = createContent()
-  const url = new URL(urlStr)
-  if (url.hostname === 'youtu.be' || url.hostname === 'youtube.com' || url.hostname === 'www.youtube.com') {
-    const paramStrs = url.search.slice(1).split('&')
-    const params = new Map<string, string>(paramStrs.map(str => str.split('=') as [string, string]))
-    if (url.hostname === 'youtu.be') {
-      params.set('v', url.pathname.slice(1))
-    }
-    pasted.url = ''
-    for (const param of params) {
-      if (pasted.url === '') {
-        pasted.url = `${param[0]}=${param[1]}`
-      }else {
-        pasted.url = `${pasted.url}&${param[0]}=${param[1]}`
+  return new Promise<ISharedContent>((resolve, reject) => {
+    const pasted = createContent()
+    const url = new URL(urlStr)
+    if (url.hostname === 'youtu.be' || url.hostname === 'youtube.com' || url.hostname === 'www.youtube.com') {
+      const paramStrs = url.search.slice(1).split('&')
+      const params = new Map<string, string>(paramStrs.map(str => str.split('=') as [string, string]))
+      if (url.hostname === 'youtu.be') {
+        params.set('v', url.pathname.slice(1))
       }
-    }
-    pasted.type = 'youtube'
-    pasted.pose.position[0] = map.mouseOnMap[0]
-    pasted.pose.position[1] = map.mouseOnMap[1]
-    pasted.size[0] = 640
-    pasted.size[1] = 380
-  }else if (url.hostname === 'drive.google.com' || url.hostname === 'docs.google.com') {  //  google drive
-    pasted.type = 'gdrive'
-    const fileIdStart = url.pathname.slice(url.pathname.indexOf('/d/') + 3)
-    const fileId = fileIdStart.slice(0, fileIdStart.indexOf('/'))
-    pasted.url = `id=${fileId}`
-    pasted.pose.position[0] = map.mouseOnMap[0]
-    pasted.pose.position[1] = map.mouseOnMap[1]
-    pasted.size[0] = 600
-    pasted.size[1] = 800
-  }else if (url.hostname === 'wbo.ophir.dev'){  //  whiteboard
-    pasted.type = 'whiteboard'
-    pasted.url = urlStr
-    pasted.pose.position[0] = map.mouseOnMap[0]
-    pasted.pose.position[1] = map.mouseOnMap[1]
-    pasted.size[0] = 600
-    pasted.size[1] = 700
-  }else if (url.pathname.substring(url.pathname.length-4) === '.pdf' ||
-    url.pathname.substring(url.pathname.length-4) === '.PDF' ){  //  pdf
-      pasted.type = 'pdf'
+      pasted.url = ''
+      for (const param of params) {
+        if (pasted.url === '') {
+          pasted.url = `${param[0]}=${param[1]}`
+        }else {
+          pasted.url = `${pasted.url}&${param[0]}=${param[1]}`
+        }
+      }
+      pasted.type = 'youtube'
+      pasted.pose.position[0] = map.mouseOnMap[0]
+      pasted.pose.position[1] = map.mouseOnMap[1]
+      pasted.size[0] = 640
+      pasted.size[1] = 380
+    }else if (url.hostname === 'drive.google.com' || url.hostname === 'docs.google.com') {  //  google drive
+      pasted.type = 'gdrive'
+      const fileIdStart = url.pathname.slice(url.pathname.indexOf('/d/') + 3)
+      const fileId = fileIdStart.slice(0, fileIdStart.indexOf('/'))
+      pasted.url = `id=${fileId}`
+      pasted.pose.position[0] = map.mouseOnMap[0]
+      pasted.pose.position[1] = map.mouseOnMap[1]
+      pasted.size[0] = 600
+      pasted.size[1] = 800
+    }else if (url.hostname === 'wbo.ophir.dev'){  //  whiteboard
+      pasted.type = 'whiteboard'
       pasted.url = urlStr
       pasted.pose.position[0] = map.mouseOnMap[0]
       pasted.pose.position[1] = map.mouseOnMap[1]
       pasted.size[0] = 600
       pasted.size[1] = 700
-  }else {  //  generic iframe
-    pasted.type = 'iframe'
-    pasted.url = urlStr
-    pasted.pose.position[0] = map.mouseOnMap[0]
-    pasted.pose.position[1] = map.mouseOnMap[1]
-    pasted.size[0] = 600
-    pasted.size[1] = 800
-  }
-  contentLog(`${pasted.type} created url = ${pasted.url}`)
-
-  return pasted
+    }else if (url.pathname.substring(url.pathname.length-4) === '.pdf' ||
+      url.pathname.substring(url.pathname.length-4) === '.PDF' ){  //  pdf
+      makeItPdf(pasted, urlStr, map)
+    }else {  //  generic iframe
+      //  get mime type first
+      getMimeType(`http://cors.binaural.me:8080/${urlStr}`).then((type)=>{
+        if (type==='application/pdf'){
+          makeItPdf(pasted, urlStr, map)
+          resolve(pasted)
+        }
+      }).finally(()=>{
+        if (!pasted.type){
+          pasted.type = 'iframe'
+          pasted.url = urlStr
+          pasted.pose.position[0] = map.mouseOnMap[0]
+          pasted.pose.position[1] = map.mouseOnMap[1]
+          pasted.size[0] = 600
+          pasted.size[1] = 800
+          resolve(pasted)
+        }
+      })
+    }
+    if (pasted.type){
+      resolve(pasted)
+      contentLog(`${pasted.type} created url = ${pasted.url}`)
+    }
+})
 }
 export function createContentOfText(message: string, map: MapData) {
   const pasted = createContent()
@@ -414,7 +433,7 @@ export function getInformationOfGDriveContent(fileId: string){
 
 //  Does content use keyinput during editing or not.
 export function doseContentEditingUseKeyinput(c: SharedContent){
-  return c.type === 'text'
+  return c.type === 'text' || c.type === 'pdf'
 }
 //  can this type of content be a wall paper or not
 export function canContentBeAWallpaper(c: SharedContent){
@@ -422,7 +441,7 @@ export function canContentBeAWallpaper(c: SharedContent){
 }
 //  editable or not
 export function isContentEditable(c: SharedContent) {
-  return c.type === 'text' || c.type === 'iframe' ||
+  return c.type === 'text' || c.type === 'iframe' || c.type === 'pdf' ||
     c.type === 'whiteboard' || c.type === 'gdrive' || c.type === 'youtube'
 }
 //  wallpaper or not

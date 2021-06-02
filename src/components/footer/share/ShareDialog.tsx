@@ -55,7 +55,9 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
         return <TextInput
             setStep={setStep}
             onFinishInput={(value) => {
-              sharedContents.shareContent(createContentOfIframe(value, map))
+              createContentOfIframe(value, map).then((c) => {
+                sharedContents.shareContent(c)
+              })
             }}
             textLabel = "URL"
             multiline = {false}

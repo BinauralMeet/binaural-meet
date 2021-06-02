@@ -27,7 +27,7 @@ import {SharedContentForm} from './SharedContentForm'
 
 const MOUSE_RIGHT = 2
 
-export type MouseOrTouch = React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>
+export type MouseOrTouch = React.MouseEvent | React.TouchEvent
 export interface RndContentProps extends SharedContentProps {
   hideAll ?: boolean
   autoHideTitle ?: boolean
@@ -396,11 +396,6 @@ const useStyles = makeStyles({
     width:'100%',
     height:'100%',
   }),
-  content: (props: StyleProps) => ({
-    width: props.size[0],
-    height: props.size[1],
-    userDrag: 'none',
-  }),
   titlePosition: (props:StyleProps) => (
     props.showTitle ?
     {}
@@ -427,6 +422,14 @@ const useStyles = makeStyles({
 
     return rv
   },
+  content: (props: StyleProps) => ({
+    position: 'absolute',
+    top: props.showTitle ? TITLE_HEIGHT : 0,
+    left: 0,
+    width: props.size[0],
+    height: props.size[1],
+    userDrag: 'none',
+  }),
   note: (props:StyleProps) => (
     props.showTitle ? {
       visibility: props.props.onShare ? 'visible' : 'hidden',

@@ -131,10 +131,11 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
     rand = window.crypto.getRandomValues(rand)
     let randStr = ''
     rand.forEach(i => randStr += i.toString(16))
-    const tc = createContentOfIframe(
-      `https://wbo.ophir.dev/boards/BinauralMeet_${connection.conferenceName}_${randStr}`, map)
-    sharedContents.shareContent(tc)
-    sharedContents.setEditing(tc.id)
+    createContentOfIframe(
+      `https://wbo.ophir.dev/boards/BinauralMeet_${connection.conferenceName}_${randStr}`, map).then((c) => {
+      sharedContents.shareContent(c)
+       sharedContents.setEditing(c.id)
+    })
   }
   const createScreen = () => {
     startCapture().then((tracks) => {

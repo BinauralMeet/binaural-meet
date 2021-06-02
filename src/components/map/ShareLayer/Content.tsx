@@ -80,6 +80,7 @@ const useStyles = makeStyles({
 export interface ContentProps extends Stores{
   content:ISharedContent
   updateAndSend: (c: ISharedContent) => void
+  updateOnly: (c:ISharedContent) => void
 }
 export const RawContent: React.FC<ContentProps> = (props:ContentProps) => {
   const classes = useStyles()
@@ -122,5 +123,5 @@ export const Content = (props: ContentProps) =>
   React.useMemo(() => <RawContent {...props} />,
   //  eslint-disable-next-line react-hooks/exhaustive-deps
   [props.content.url, props.content.id, props.content.type, props.contents.editing === props.content.id,
-   props.content.pose])
+   props.content.pose, props.content.size, props.content.originalSize])
 Content.displayName = 'Content'

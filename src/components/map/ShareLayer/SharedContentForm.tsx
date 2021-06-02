@@ -165,8 +165,8 @@ export const SharedContentForm: React.FC<SharedContentFormProps> = (props: Share
               props.updateOnly(props.content)
             }}>{t('btCancel')}</Button>
           <Button variant="contained" color="secondary" style={{textTransform:'none', marginLeft:60}}
-            onClick={()=>{
-              props.close()
+            onClick={(ev)=>{
+              props.onClose(ev)
             }}><CloseRoundedIcon /> &nbsp; {t('ctDelete')}</Button> &nbsp;&nbsp;
         </Box>
       </DialogContent>}
