@@ -1,3 +1,4 @@
+import {getProxiedUrl} from '@models/api/CORS'
 import {getImageSize, uploadToGyazo} from '@models/api/Gyazo'
 import {defaultPerceptibility,  Perceptibility, Pose2DMap} from '@models/MapObject'
 import {ContentType, SharedContent as ISharedContent,
@@ -133,7 +134,7 @@ export function createContentOfIframe(urlStr: string, map: MapData) {
       makeItPdf(pasted, urlStr, map)
     }else {  //  generic iframe
       //  get mime type first
-      getMimeType(`http://cors.binaural.me:8080/${urlStr}`).then((type)=>{
+      getMimeType(getProxiedUrl(urlStr)).then((type)=>{
         if (type==='application/pdf'){
           makeItPdf(pasted, urlStr, map)
           resolve(pasted)

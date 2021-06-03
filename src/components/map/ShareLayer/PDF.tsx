@@ -2,6 +2,7 @@ import {Collapse, Grid, TextField} from '@material-ui/core'
 import IconButton from '@material-ui/core/IconButton'
 import NavigateBeforeIcon from '@material-ui/icons/NavigateBefore'
 import NavigateNextIcon from '@material-ui/icons/NavigateNext'
+import {getProxiedUrl} from '@models/api/CORS'
 import {assert} from '@models/utils'
 import {makeObservable, observable} from 'mobx'
 import {Observer, useObserver} from 'mobx-react-lite'
@@ -147,7 +148,7 @@ class Member{
         resolve(this.document)
       }else{
         const task = getDocument({
-          url: `http://cors.binaural.me:8080/${this.mainUrl}`,
+          url: getProxiedUrl(this.mainUrl),
           cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.7.570/cmaps/',
           cMapPacked: true,
         })
