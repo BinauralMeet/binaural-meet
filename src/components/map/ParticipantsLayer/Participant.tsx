@@ -199,11 +199,11 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
 }
 RawParticipant.displayName = 'RawParticipant'
 
-export const Participant = forwardRef(RawParticipant)
-Participant.displayName = 'Participant'
+//export const Participant = forwardRef(RawParticipant)
+//Participant.displayName = 'Participant'
 
-export const MemoedParticipant = (props: RawParticipantProps) =>
-  React.useMemo(() => <Participant {...props} />,
+export const Participant = (props: RawParticipantProps) =>
+  React.useMemo(() => <RawParticipant {...props} />,
   //  eslint-disable-next-line react-hooks/exhaustive-deps
   [props.size, props.participant.id,
     props.participant.information.avatarSrc,
@@ -211,4 +211,4 @@ export const MemoedParticipant = (props: RawParticipantProps) =>
     props.participant.information.name,
     props.participant.information.textColor,
   ])
-MemoedParticipant.displayName = 'MemorizedParticipant'
+Participant.displayName = 'MemorizedParticipant'

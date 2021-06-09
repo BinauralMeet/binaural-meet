@@ -21,6 +21,7 @@ import {useObserver} from 'mobx-react-lite'
 import React, {useLayoutEffect, useRef, useState} from 'react'
 import {Rnd} from 'react-rnd'
 import {useGesture} from 'react-use-gesture'
+import { FullGestureState, UserHandlersPartial } from 'react-use-gesture/dist/types'
 import {Content, contentTypeIcons, editButtonTip} from './Content'
 import {SharedContentProps} from './SharedContent'
 import {SharedContentForm} from './SharedContentForm'
@@ -93,10 +94,10 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     setSize(props.content.size)
   }
   if (!_.isEqual(props.content.pose, state.current.lastPose)) {
+    //  setPose(props.content.pose)
     setPose(props.content.pose)
     state.current.lastPose = _.cloneDeep(props.content.pose)
   }
-
   useLayoutEffect(  //  reflect pose etc. to rnd size
     () => {
       if (rnd.current) { rnd.current.resizable.orientation = pose.orientation + props.map.rotation }
@@ -106,7 +107,6 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     },
     [pose, size, showTitle, props.map.rotation],
   )
-
   //  handlers
   function stop(ev:MouseOrTouch|React.PointerEvent) {
     ev.stopPropagation()
@@ -195,10 +195,10 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   }
 
   const isFixed = (props.autoHideTitle && props.content.pinned)
-  const gesture = useGesture({
+  const handlerForTitle:UserHandlersPartial = {
     onDrag: ({down, delta, event, xy, buttons}) => {
-      // console.log('onDragTitle:', delta)
-      if (isFixed || props.map.keyInputUsers.size) { return }
+      //  console.log('onDragTitle:', delta)
+      if (isFixed) { return }
       event?.stopPropagation()
       if (down) {
         //  event?.preventDefault()
@@ -225,7 +225,16 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     onMouseDown: (arg) => { if(editing) {arg.stopPropagation()} },
     onTouchStart: (arg) => { if(editing) {arg.stopPropagation() }},
     onTouchEnd: (arg) => { if(editing) {arg.stopPropagation()} },
-  })
+  }
+  const handlerForContent:UserHandlersPartial = Object.assign({}, handlerForTitle)
+  handlerForContent.onDrag = (args: FullGestureState<'drag'>) => {
+    // console.log('onDragTitle:', delta)
+    if (isFixed || props.map.keyInputUsers.size) { return }
+    handlerForTitle.onDrag?.call(this, args)
+  }
+
+  const gestureForContent = useGesture(handlerForContent)
+  const gestureForTitle = useGesture(handlerForTitle)
   function onResize(evt:MouseEvent | TouchEvent, dir: any, elem:HTMLDivElement, delta:any, pos:any) {
     evt.stopPropagation(); evt.preventDefault()
     const scale = (extractScaleX(props.map.matrix) + extractScaleY(props.map.matrix)) / 2
@@ -265,8 +274,8 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   const formRef = React.useRef<HTMLDivElement>(null)
 
   const theContent =
-    <div className={classes.rndContainer} {...gesture()}>
-      <div className={classes.titlePosition} {...gesture() /* title can be placed out of Rnd */}>
+    <div className={classes.rndContainer} {...gestureForContent()}>
+      <div className={classes.titlePosition} {...gestureForTitle() /* title can be placed out of Rnd */}>
         <div className={classes.titleContainer}
             onMouseEnter = {() => { if (props.autoHideTitle) { setShowTitle(true) } }}
             onMouseLeave = {() => {
@@ -348,7 +357,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       }
     }>
       <Rnd className={classes.rndCls} enableResizing={isFixed ? resizeDisable : resizeEnable}
-        disableDragging={isFixed || props.map.keyInputUsers.size > 0} ref={rnd}
+        disableDragging={isFixed} ref={rnd}
         onResizeStart = { (evt)  => {
           evt.stopPropagation(); evt.preventDefault()
           setResizeBase(size)

@@ -51,7 +51,7 @@ class Member{
 }
 
 export const Footer: React.FC<Stores&{height?:number}> = (props) => {
-  //  show and hide
+  //  showor not
   const [show, setShow] = React.useState<boolean>(true)
   const [showAdmin, setShowAdmin] = React.useState<boolean>(false)
   const [showShare, setShowShareRaw] = React.useState<boolean>(false)
@@ -67,6 +67,25 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
   const memberRef = useRef<Member>(new Member())
   const member = memberRef.current
   const containerRef = useRef<HTMLDivElement>(null)
+  const adminButton = useRef<HTMLDivElement>(null)
+  //  observers
+  const participants = props.participants
+  const mute = useObserver(() => ({
+    muteA: participants.local.plugins.streamControl.muteAudio,  //  mic
+    muteS: participants.local.plugins.streamControl.muteSpeaker,  //  speaker
+    muteV: participants.local.plugins.streamControl.muteVideo,  //  camera
+    onStage: participants.local.physics.onStage
+  }))
+  //  Fab state and menu
+  const [deviceInfos, setDeviceInfos] = React.useState<MediaDeviceInfo[]>([])
+  const [micMenuEl, setMicMenuEl] = React.useState<Element|null>(null)
+  const [speakerMenuEl, setSpeakerMenuEl] = React.useState<Element|null>(null)
+  const [videoMenuEl, setVideoMenuEl] = React.useState<Element|null>(null)
+
+  const {t} = useTranslation()
+  const classes = useStyles()
+
+  //  Footer collapse conrtrol
   function checkMouseOnBottom() {
     return props.map.screenSize[1] - (props.map.mouse[1] - props.map.offset[1]) < 90
   }
@@ -93,16 +112,6 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
       }
     }
   }
-
-  //  Stores, observers and states
-  const participants = props.participants
-  const mute = useObserver(() => ({
-    muteA: participants.local.plugins.streamControl.muteAudio,  //  mic
-    muteS: participants.local.plugins.streamControl.muteSpeaker,  //  speaker
-    muteV: participants.local.plugins.streamControl.muteVideo,  //  camera
-  }))
-  const [micMenuEl, setMicMenuEl] = React.useState<Element|null>(null)
-  const [deviceInfos, setDeviceInfos] = React.useState<MediaDeviceInfo[]>([])
 
   //  keyboard shortcut
   useEffect(() => {
@@ -134,157 +143,155 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },        [])
 
+  //  render footer
+  return React.useMemo(() => {
+    //  Create menu list for device selection
+    function makeMenuItem(info: MediaDeviceInfo, close:(did:string) => void):JSX.Element {
+      let selected = false
+      if (info.kind === 'audioinput') {
+        selected = info.deviceId === participants.local.devicePreference.audioInputDevice
+      }else if (info.kind === 'audiooutput') {
+        selected = info.deviceId === participants.local.devicePreference.audioOutputDevice
+      }else if (info.kind === 'videoinput') {
+        selected = info.deviceId === participants.local.devicePreference.videoInputDevice
+      }
 
-  //  Fab state and menu
-  const classes = useStyles()
-  function makeMenuItem(info: MediaDeviceInfo, close:(did:string) => void):JSX.Element {
-    let selected = false
-    if (info.kind === 'audioinput') {
-      selected = info.deviceId === participants.local.devicePreference.audioInputDevice
-    }else if (info.kind === 'audiooutput') {
-      selected = info.deviceId === participants.local.devicePreference.audioOutputDevice
-    }else if (info.kind === 'videoinput') {
-      selected = info.deviceId === participants.local.devicePreference.videoInputDevice
+      return <MenuItem key={info.deviceId}
+        onClick={() => { close(info.deviceId) }}
+        > { (selected ? '✔\u00A0' : '\u2003') + info.label }</MenuItem>  //  \u00A0: NBSP, u2003: EM space.
     }
 
-    return <MenuItem key={info.deviceId}
-      onClick={() => { close(info.deviceId) }}
-      > { (selected ? '✔\u00A0' : '\u2003') + info.label }</MenuItem>  //  \u00A0: NBSP, u2003: EM space.
-  }
+    const micMenuItems:JSX.Element[] = [<MenuItem  key = {'broadcast'} ><BroadcastControl /></MenuItem>]
+    const speakerMenuItems:JSX.Element[] = []
+    const videoMenuItems:JSX.Element[] = []
+    deviceInfos.forEach((info) => {
+      if (info.kind === 'audioinput') {
+        const broadcastControl = micMenuItems.pop() as JSX.Element
+        micMenuItems.push(makeMenuItem(info, closeMicMenu))
+        micMenuItems.push(broadcastControl)
+      }
+      if (info.kind === 'audiooutput') {
+        speakerMenuItems.push(makeMenuItem(info, closeSpeakerMenu))
+      }
+      if (info.kind === 'videoinput') {
+        videoMenuItems.push(makeMenuItem(info, closeVideoMenu))
+      }
+    })
+    function closeMicMenu(did:string) {
+      if (did) {
+        participants.local.devicePreference.audioInputDevice = did
+        participants.local.saveMediaSettingsToStorage(true)
+      }
+      setMicMenuEl(null)
+    }
+    function closeSpeakerMenu(did:string) {
+      if (did) {
+        participants.local.devicePreference.audioOutputDevice = did
+        participants.local.saveMediaSettingsToStorage(true)
+      }
+      setSpeakerMenuEl(null)
+    }
+    function closeVideoMenu(did:string) {
+      if (did) {
+        participants.local.devicePreference.videoInputDevice = did
+        participants.local.saveMediaSettingsToStorage(true)
+      }
+      setVideoMenuEl(null)
+    }
 
-  const micMenuItems:JSX.Element[] = [<MenuItem  key = {'broadcast'} ><BroadcastControl /></MenuItem>]
-  const speakerMenuItems:JSX.Element[] = []
-  const videoMenuItems:JSX.Element[] = []
-  deviceInfos.forEach((info) => {
-    if (info.kind === 'audioinput') {
-      const broadcastControl = micMenuItems.pop() as JSX.Element
-      micMenuItems.push(makeMenuItem(info, closeMicMenu))
-      micMenuItems.push(broadcastControl)
+    //  Device list update when the user clicks to show the menu
+    const fabSize = props.height
+    const iconSize = props.height ? props.height * 0.7 : 36
+    function updateDevices(ev:React.PointerEvent | React.MouseEvent | React.TouchEvent) {
+      navigator.mediaDevices.enumerateDevices()
+      .then(setDeviceInfos)
+      .catch(() => { console.log('Device enumeration error') })
     }
-    if (info.kind === 'audiooutput') {
-      speakerMenuItems.push(makeMenuItem(info, closeSpeakerMenu))
-    }
-    if (info.kind === 'videoinput') {
-      videoMenuItems.push(makeMenuItem(info, closeVideoMenu))
-    }
-  })
-  function closeMicMenu(did:string) {
-    if (did) {
-      participants.local.devicePreference.audioInputDevice = did
-      participants.local.saveMediaSettingsToStorage(true)
-    }
-    setMicMenuEl(null)
-  }
-  const [speakerMenuEl, setSpeakerMenuEl] = React.useState<Element|null>(null)
-  function closeSpeakerMenu(did:string) {
-    if (did) {
-      participants.local.devicePreference.audioOutputDevice = did
-      participants.local.saveMediaSettingsToStorage(true)
-    }
-    setSpeakerMenuEl(null)
-  }
-  const [videoMenuEl, setVideoMenuEl] = React.useState<Element|null>(null)
-  function closeVideoMenu(did:string) {
-    if (did) {
-      participants.local.devicePreference.videoInputDevice = did
-      participants.local.saveMediaSettingsToStorage(true)
-    }
-    setVideoMenuEl(null)
-  }
-  function updateDevices(ev:React.PointerEvent | React.MouseEvent | React.TouchEvent) {
-    navigator.mediaDevices.enumerateDevices()
-    .then(setDeviceInfos)
-    .catch(() => { console.log('Device enumeration error') })
-  }
 
-  const adminButton = useRef<HTMLDivElement>(null)
-  const fabSize = props.height
-  const iconSize = props.height ? props.height * 0.7 : 36
-  const {t} = useTranslation()
+    return <div ref={containerRef} className={classes.container} onClickCapture={()=>{props.contents.setEditing('')}}>
+      <Collapse in={show}>
+        <StereoAudioSwitch size={fabSize} iconSize={iconSize} />
+        <FabMain size={fabSize} color={mute.muteS ? 'primary' : 'secondary' }
+          aria-label="speaker" onClick={() => {
+            participants.local.plugins.streamControl.muteSpeaker = !mute.muteS
+            if (participants.local.plugins.streamControl.muteSpeaker) {
+              participants.local.plugins.streamControl.muteAudio = true
+            }
+            participants.local.saveMediaSettingsToStorage(true)
+          }}
+          onClickMore = { (ev) => {
+            updateDevices(ev)
+            setSpeakerMenuEl(ev.currentTarget)
+          }}
+          >
+          {mute.muteS ? <SpeakerOffIcon style={{width:iconSize, height:iconSize}} />
+            : <SpeakerOnIcon style={{width:iconSize, height:iconSize}} /> }
+        </FabMain>
+        <Menu anchorEl={speakerMenuEl} keepMounted={true}
+          open={Boolean(speakerMenuEl)} onClose={() => { closeSpeakerMenu('') }}>
+          {speakerMenuItems}
+        </Menu>
 
-  return React.useMemo(() =>
-  <div ref={containerRef} className={classes.container} onClickCapture={()=>{props.contents.setEditing('')}}>
-    <Collapse in={show}>
-      <StereoAudioSwitch size={fabSize} iconSize={iconSize} />
-      <FabMain size={fabSize} color={mute.muteS ? 'primary' : 'secondary' }
-        aria-label="speaker" onClick={() => {
-          participants.local.plugins.streamControl.muteSpeaker = !mute.muteS
-          if (participants.local.plugins.streamControl.muteSpeaker) {
-            participants.local.plugins.streamControl.muteAudio = true
-          }
-          participants.local.saveMediaSettingsToStorage(true)
-        }}
-        onClickMore = { (ev) => {
-          updateDevices(ev)
-          setSpeakerMenuEl(ev.currentTarget)
-        }}
+        <FabWithTooltip size={fabSize} color={mute.muteA ? 'primary' : 'secondary' } aria-label="mic"
+          title = {acceleratorText2El(t('ttMicMute'))}
+          onClick = { () => {
+            participants.local.plugins.streamControl.muteAudio = !mute.muteA
+            if (!participants.local.plugins.streamControl.muteAudio) {
+              participants.local.plugins.streamControl.muteSpeaker = false
+            }
+            participants.local.saveMediaSettingsToStorage(true)
+          }}
+          onClickMore = { (ev) => {
+            updateDevices(ev)
+            setMicMenuEl(ev.currentTarget)
+          } }
+          >
+          {mute.muteA ? <MicOffIcon style={{width:iconSize, height:iconSize}} /> :
+            mute.onStage ?
+              <Icon icon={megaphoneIcon} style={{width:iconSize, height:iconSize}} color="gold" />
+              : <MicIcon style={{width:iconSize, height:iconSize}} /> }
+        </FabWithTooltip>
+        <Menu anchorEl={micMenuEl} keepMounted={true}
+          open={Boolean(micMenuEl)} onClose={() => { closeMicMenu('') }}>
+          {micMenuItems}
+        </Menu>
+
+        <FabMain size={fabSize} color={mute.muteV ? 'primary' : 'secondary'} aria-label="camera"
+          onClick = { () => {
+            participants.local.plugins.streamControl.muteVideo = !mute.muteV
+            participants.local.saveMediaSettingsToStorage(true)
+          }}
+          onClickMore = { (ev) => {
+            updateDevices(ev)
+            setVideoMenuEl(ev.currentTarget)
+          } }
         >
-        {mute.muteS ? <SpeakerOffIcon style={{width:iconSize, height:iconSize}} />
-          : <SpeakerOnIcon style={{width:iconSize, height:iconSize}} /> }
-      </FabMain>
-      <Menu anchorEl={speakerMenuEl} keepMounted={true}
-        open={Boolean(speakerMenuEl)} onClose={() => { closeSpeakerMenu('') }}>
-        {speakerMenuItems}
-      </Menu>
+          {mute.muteV ? <VideoOffIcon style={{width:iconSize, height:iconSize}} />
+            : <VideoIcon style={{width:iconSize, height:iconSize}} /> }
+        </FabMain>
+        <Menu anchorEl={videoMenuEl} keepMounted={true}
+          open={Boolean(videoMenuEl)} onClose={() => { closeVideoMenu('') }}>
+          {videoMenuItems}
+        </Menu>
 
-      <FabWithTooltip size={fabSize} color={mute.muteA ? 'primary' : 'secondary' } aria-label="mic"
-        title = {acceleratorText2El(t('ttMicMute'))}
-        onClick = { () => {
-          participants.local.plugins.streamControl.muteAudio = !mute.muteA
-          if (!participants.local.plugins.streamControl.muteAudio) {
-            participants.local.plugins.streamControl.muteSpeaker = false
-          }
-          participants.local.saveMediaSettingsToStorage(true)
-        }}
-        onClickMore = { (ev) => {
-          updateDevices(ev)
-          setMicMenuEl(ev.currentTarget)
-        } }
-        >
-        {mute.muteA ? <MicOffIcon style={{width:iconSize, height:iconSize}} /> :
-          participants.local.physics.onStage ?
-            <Icon icon={megaphoneIcon} style={{width:iconSize, height:iconSize}} color="gold" />
-            : <MicIcon style={{width:iconSize, height:iconSize}} /> }
-      </FabWithTooltip>
-      <Menu anchorEl={micMenuEl} keepMounted={true}
-        open={Boolean(micMenuEl)} onClose={() => { closeMicMenu('') }}>
-        {micMenuItems}
-      </Menu>
+        <ShareButton size={fabSize} iconSize={iconSize} showDialog={showShare} setShowDialog={setShowShare} />
 
-      <FabMain size={fabSize} color={mute.muteV ? 'primary' : 'secondary'} aria-label="camera"
-        onClick = { () => {
-          participants.local.plugins.streamControl.muteVideo = !mute.muteV
-          participants.local.saveMediaSettingsToStorage(true)
-        }}
-        onClickMore = { (ev) => {
-          updateDevices(ev)
-          setVideoMenuEl(ev.currentTarget)
-        } }
-      >
-        {mute.muteV ? <VideoOffIcon style={{width:iconSize, height:iconSize}} />
-          : <VideoIcon style={{width:iconSize, height:iconSize}} /> }
-      </FabMain>
-      <Menu anchorEl={videoMenuEl} keepMounted={true}
-        open={Boolean(videoMenuEl)} onClose={() => { closeVideoMenu('') }}>
-        {videoMenuItems}
-      </Menu>
+        <ErrorDialog />
 
-      <ShareButton size={fabSize} iconSize={iconSize} showDialog={showShare} setShowDialog={setShowShare} />
+        <div className={classes.left} ref={adminButton} onClick = { () => setShowAdmin(true) } />
+        <Popover open={showAdmin} onClose={() => setShowAdmin(false)}
+          anchorEl={adminButton.current} anchorOrigin={{vertical:'top', horizontal:'left'}}
+          anchorReference = "anchorEl" >
+          <AdminConfigForm close={ () => setShowAdmin(false) } />
+        </Popover>
 
-      <ErrorDialog />
-
-      <div className={classes.left} ref={adminButton} onClick = { () => setShowAdmin(true) } />
-      <Popover open={showAdmin} onClose={() => setShowAdmin(false)}
-        anchorEl={adminButton.current} anchorOrigin={{vertical:'top', horizontal:'left'}}
-        anchorReference = "anchorEl" >
-        <AdminConfigForm close={ () => setShowAdmin(false) } />
-      </Popover>
-
-    </Collapse>
-  </div >,
+      </Collapse>
+    </div >
+  },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [mute.muteA, mute.muteS, mute.muteV, participants.local.physics.onStage,
-    show, showAdmin, showShare, micMenuEl, micMenuItems, speakerMenuEl, speakerMenuItems,
-    videoMenuEl, videoMenuItems])
+    [mute.muteA, mute.muteS, mute.muteV, mute.onStage,
+    show, showAdmin, showShare, micMenuEl, speakerMenuEl, videoMenuEl, deviceInfos]
+
+    )
 }
 Footer.displayName = 'Footer'
