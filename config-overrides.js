@@ -6,6 +6,7 @@ module.exports = override(
         '@babel/plugin-proposal-class-properties',
         '@babel/plugin-proposal-export-namespace-from',
         '@babel/plugin-proposal-optional-chaining',
+        '@babel/plugin-proposal-nullish-coalescing-operator',
     ),
     addWebpackAlias({
         '@components': path.resolve(__dirname, './src/components'),

@@ -22,7 +22,7 @@ export const trackLog = TRACKLOG ? console.log : (a:any) => {}
 export const connLog = CONNECTIONLOG ? console.log : (a:any) => {}
 export const connDebug = CONNECTIONLOG ? console.debug : (a:any) => {}
 
-declare var global: any
+declare const global: any
 global.$ = jquery
 global.jQuery = jquery
 
@@ -110,6 +110,19 @@ const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
   private onStateChanged(state: ConnectionStatesType) {
     this.state = state
     connDebug(`ConnctionStateChanged: Current Connection State: ${state}`)
+
+    if (state === ConnectionStates.DISCONNECTED){
+      //  Try to connect again.
+      this.conference._jitsiConference?.leave().then(()=>{
+        console.log('Disconnected but succeed in leaving... strange ... try to join again.')
+      }).catch(()=>{
+        console.log('Disconnected and failed to leave.... try to join again')
+      }).finally(()=>{
+        this.init().then(()=>{
+          this.joinConference(this.conferenceName)
+        })
+      })
+    }
     if (this._store) {
       this._store.changeState(this.state)
     }

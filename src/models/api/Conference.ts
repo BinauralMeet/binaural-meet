@@ -188,8 +188,13 @@ export class Conference extends EventEmitter {
   sendMessage(type:string, to:string, value:any) {
     const jc = this._jitsiConference as any
     const viaBridge = jc?.rtc?._channel?.isOpen() ? true : false
-    const msg = viaBridge ? {type, value} : JSON.stringify({type, value})
-    this._jitsiConference?.sendMessage(msg, to, viaBridge)
+    const connected = jc?.chatRoom?.connection.connected
+    if (viaBridge || connected){
+      const msg = viaBridge ? {type, value} : JSON.stringify({type, value})
+      this._jitsiConference?.sendMessage(msg, to, viaBridge)
+    }else{
+      //  console.log('Conference.sendMessage() failed: Not connected.')
+    }
   }
 
   //  register event handlers

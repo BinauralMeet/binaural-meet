@@ -13,7 +13,7 @@ import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {Participants} from '@stores/participants/Participants'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import {useObserver} from 'mobx-react-lite'
-import React, {forwardRef} from 'react'
+import React from 'react'
 declare const config:any             //  from ../../config.js included from index.html
 
 interface StyleProps {
