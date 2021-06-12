@@ -2,8 +2,10 @@ import {StoreProvider as ChatProvider} from '@hooks/ChatStore'
 import {StoreProvider as MapProvider} from '@hooks/MapStore'
 import {StoreProvider as ParticipantsProvider} from '@hooks/ParticipantsStore'
 import {StoreProvider as ContentsProvider} from '@hooks/SharedContentsStore'
+import {t} from '@models/locales'
 import {isPortrait, isSmartphone} from '@models/utils'
 import chatStore from '@stores/Chat'
+import errorInfo from '@stores/ErrorInfo'
 import mapStore from '@stores/Map'
 import participantsStore from '@stores/participants/Participants'
 import sharedContentsStore from '@stores/sharedContents/SharedContents'
@@ -38,6 +40,18 @@ export const App: React.FC<{}> = () => {
   window.addEventListener('contextmenu', (ev) => {
     ev.preventDefault()
   },                      {passive: false, capture: false})
+
+  //  Global error handler
+  window.onerror = (message, source, lineno, colno, error) => {
+    if (error?.message === 'Ping timeout' && message === null && source === null && lineno === null && colno === null){
+      errorInfo.type = 'connection'
+      errorInfo.title = t('etConnection')
+      errorInfo.message = t('emConnection')
+    }else{
+      console.error(message, source, lineno, colno, error)
+    }
+  }
+
 
   return (
     <ParticipantsProvider value={participantsStore}>

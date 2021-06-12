@@ -51,6 +51,7 @@ declare class JitsiTrack extends EventEmitter {
     videoType: string,
   );
   videoType?: string
+  disposed: boolean
   getType: () => 'video' | 'audio'
   isAudioTrack: () => boolean
   isWebRTCTrackMuted: () => boolean

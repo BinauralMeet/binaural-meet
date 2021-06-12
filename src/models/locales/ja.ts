@@ -41,6 +41,8 @@ export const jaTranslate = {
   emNeverShow: 'このセッションでは表示しない',
   etNoChannel: 'データ通信ができません',
   emNoChannel: 'ファイアウォールの設定を確認してください。Binaural Meet は https(443番)と8801-8810番のポートに接続します。',
+  etRetry: '再接続中',
+  emRetry: '接続が切れたので、再接続を試みています。インターネット接続を確認してください。',
   imageDropzoneText:'画像をドラッグ＆ドロップするか、クリックしてください',
   lsTitle:'アバターと通知の設定',
   lsColor:'色',

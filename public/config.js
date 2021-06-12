@@ -37,6 +37,11 @@ const common_config = {
           disableH264: true,
           useStunTurn: true, // use XEP-0215 to fetch STUN and TURN servers for the P2P connection
   },
+  xmppPing: {
+    interval: 2000,
+    timeout: 3000
+  },
+//  enableWebsocketResume: false,
   testing: {
     octo: {
       probability: 1

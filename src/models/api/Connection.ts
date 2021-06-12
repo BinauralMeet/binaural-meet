@@ -1,5 +1,8 @@
 // import a global variant $ for lib-jitsi-meet
+import {t} from '@models/locales'
 import {ConnectionInfo} from '@stores/ConnectionInfo'
+import errorInfo from '@stores/ErrorInfo'
+import participants from '@stores/participants/Participants'
 import {EventEmitter} from 'events'
 import jquery from 'jquery'
 import JitsiMeetJS from 'lib-jitsi-meet'
@@ -109,10 +112,19 @@ const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
 
   private onStateChanged(state: ConnectionStatesType) {
     this.state = state
-    connDebug(`ConnctionStateChanged: Current Connection State: ${state}`)
+    console.log(`ConnctionStateChanged: Current Connection State: ${state}`)
 
     if (state === ConnectionStates.DISCONNECTED){
+      errorInfo.type = 'retry'
+      errorInfo.title = t('etRetry')
+      errorInfo.message = t('emRetry')
       //  Try to connect again.
+      const localCamera = this.conference.getLocalCameraTrack()
+      const micMute = participants.local.plugins.streamControl.muteAudio
+      participants.local.plugins.streamControl.muteAudio = true
+      const cameraMute = participants.local.plugins.streamControl.muteVideo
+      participants.local.plugins.streamControl.muteVideo = true
+
       this.conference._jitsiConference?.leave().then(()=>{
         console.log('Disconnected but succeed in leaving... strange ... try to join again.')
       }).catch(()=>{
@@ -120,6 +132,22 @@ const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
       }).finally(()=>{
         this.init().then(()=>{
           this.joinConference(this.conferenceName)
+          function restore(){
+            if (!localCamera || localCamera.disposed){
+              participants.local.plugins.streamControl.muteAudio = micMute
+              participants.local.plugins.streamControl.muteVideo = cameraMute
+            }else{
+              setTimeout(restore, 100)
+            }
+          }
+          restore()
+
+        /*
+          const mic = this.conference.getLocalMicTrack()
+          if (mic) { this.conference.setLocalMicTrack(mic) }
+          const camera = this.conference.getLocalCameraTrack()
+          if (camera) { this.conference.setLocalCameraTrack(camera) }*/
+          errorInfo.type = ''
         })
       })
     }
