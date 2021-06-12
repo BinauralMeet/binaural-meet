@@ -17,6 +17,10 @@ export class ErrorInfo {
   @computed get fatal() { return !this.type }
   @observable type:ErrorType = 'enterance'
   @observable title = ''
+  @observable supressedTypes:Set<ErrorType> = new Set()
+  show(){
+    return this.type!=='' && !this.supressedTypes.has(this.type)
+  }
 
   constructor() {
     makeObservable(this)
@@ -24,7 +28,7 @@ export class ErrorInfo {
       this.clear()
     }
     autorun(() => {
-      if (this.type) {
+      if (this.show()) {
         map.keyInputUsers.add('errorDialog')
       }else {
         map.keyInputUsers.delete('errorDialog')
