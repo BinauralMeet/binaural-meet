@@ -456,6 +456,12 @@ export class SharedContents extends EventEmitter {
     this.participants.delete(pc.participantId)
   }
 
+  clearAllRemotes(){
+    const remotes = Array.from(this.participants.keys()).filter(key => key !== this.localId)
+    remotes.forEach(pid=>this.participants.delete(pid))
+    this.tracks.clearConnection()
+  }
+
   // create a new unique content id
   getUniqueId() {
     const pid = participantsStore.localId

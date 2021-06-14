@@ -83,6 +83,15 @@ export class PriorityCalculator {
     makeObservable(this)
   }
 
+  clear(){
+    this.disable()
+    this.updateAll = true
+    this.updateSet.clear()
+    this.priorityMaps.forEach(m => m.clear())
+    this.lastPriority=[[],[]]
+    this.tracksToAccept = [[],[]]
+  }
+
   setLimits(limits:number[]):void {
     this.limits[0] = limits[0]
     this.limits[1] = limits[1]
@@ -222,9 +231,9 @@ export class PriorityCalculator {
             trackInfo.priority = this.calcPriorityValue(this.local, trackInfo)
             this.priorityMaps[idx].set(rp.id, trackInfo)
             if (idx === 0) {
-              if (rp.plugins.streamControl.muteVideo) { numDisabled[idx] += 1 }
+              if (rp.muteVideo) { numDisabled[idx] += 1 }
             }else {
-              if (rp.plugins.streamControl.muteAudio) { numDisabled[idx] += 1 }
+              if (rp.muteAudio) { numDisabled[idx] += 1 }
             }
           }
         })

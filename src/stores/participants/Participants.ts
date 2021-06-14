@@ -43,6 +43,11 @@ export class Participants {
     this.remote.delete(participantId)
   }
 
+  @action leaveAll(){
+    this.remote.clear()
+    this.setLocalId('')
+  }
+
   find(participantId: string): LocalParticipant | RemoteParticipant | undefined {
     if (participantId === this.localId) {
 

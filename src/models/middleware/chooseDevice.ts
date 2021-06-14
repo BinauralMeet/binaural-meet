@@ -9,35 +9,86 @@ import {autorun} from 'mobx'
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
 
-//  Mute reaction for mic
-autorun(() => {
-          const muteAudio = participants.local.plugins.streamControl.muteAudio
-           || participants.local.awayFromKeyboard
-          const track = participants.local.tracks.audio as JitsiLocalTrack
-          if (track) { muteAudio ? track.mute() : track.unmute() }
-          if (muteAudio) {
-            participants.local.tracks.audioLevel = 0
-          }
-        },
-)
-
-//  microphone or audio input device update
-autorun(() => {
-  const did = participants.local.devicePreference.audioInputDevice
-  if (participants.localId && urlParameters.testBot === null) {
-    const track = connection.conference.getLocalMicTrack()
-    if (track && track.getDeviceId() === did) { return }
+//  mic device selection
+export function createLocalMic() {
+  const promise = new Promise<JitsiLocalTrack>((resolutionFunc, rejectionFunc) => {
+    const did = participants.local.devicePreference.audioInputDevice
     JitsiMeetJS.createLocalTracks({devices:['audio'], micDeviceId: did}).then(
       (tracks: JitsiLocalTrack[]) => {
         connection.conference.setLocalMicTrack(tracks[0])
+        resolutionFunc(tracks[0])
       },
-    ).finally(()=>{
-      if (participants.local.plugins.streamControl.muteVideo){
-        getNotificationPermission()
-      }
-    })
+    ).catch(rejectionFunc)
+  })
+
+  return promise
+}
+
+//  Mute reaction for mic
+/*
+const DELETE_MIC_TRACK = false
+if (DELETE_MIC_TRACK){
+  autorun(() => {
+    const did = participants.local.devicePreference.audioInputDevice
+    const muted = participants.local.muteAudio|| participants.local.awayFromKeyboard
+    if (participants.localId && !muted && urlParameters.testBot === null) {
+      const track = connection.conference.getLocalMicTrack()
+      if (track && track.getDeviceId() === did) { return }
+      createLocalMic().finally(getNotificationPermission)
+    }else{
+      connection.conference.setLocalMicTrack(undefined).then(track => track?.dispose())
+    }
+    if (participants.local.muteAudio) {
+      participants.local.tracks.audioLevel = 0
+    }
+  })
+}else{
+  autorun(() => {
+    const muteAudio = participants.local.muteAudio
+     || participants.local.awayFromKeyboard
+    const track = participants.local.tracks.audio as JitsiLocalTrack
+    if (track) { muteAudio ? track.mute() : track.unmute() }
+    if (muteAudio) {
+      participants.local.tracks.audioLevel = 0
+    }
+  })
+}
+*/
+//  mic mute and audio input device selection
+const DELETE_MIC_TRACK = true
+autorun(() => {
+  const did = participants.local.devicePreference.audioInputDevice
+  const muted = participants.local.muteAudio || participants.local.awayFromKeyboard
+  if (participants.localId && !muted && urlParameters.testBot === null) {
+    const track = connection.conference.getLocalMicTrack()
+    if (track && track.getDeviceId() === did) { return }
+    createLocalMic().finally(getNotificationPermission)
+  }else{
+    if (DELETE_MIC_TRACK){
+      connection.conference.setLocalMicTrack(undefined).then(track => {
+        track?.dispose()
+        participants.local.tracks.audioLevel = 0
+      })
+    } else {
+      const track = connection.conference.getLocalMicTrack()
+      if (track) { connection.conference.removeTrack(track) }
+      participants.local.tracks.audioLevel = 0
+    }
   }
 })
+
+/*
+//  microphone or audio input device update
+autorun(() => {
+  const did = participants.local.devicePreference.audioInputDevice
+  const muted = participants.local.muteAudio
+  if (participants.localId && !muted && urlParameters.testBot === null) {
+    const track = connection.conference.getLocalMicTrack()
+    if (track && track.getDeviceId() === did) { return }
+    createLocalMic().finally(getNotificationPermission)
+  }
+})
+*/
 
 //  headphone or audio output device update
 autorun(() => {
@@ -67,7 +118,7 @@ export function createLocalCamera() {
 const DELETE_TRACK = true
 autorun(() => {
   const did = participants.local.devicePreference.videoInputDevice
-  const muted = participants.local.plugins.streamControl.muteVideo
+  const muted = participants.local.muteVideo
     || participants.local.awayFromKeyboard
   if (participants.localId && !muted && urlParameters.testBot === null) {
     const track = connection.conference.getLocalCameraTrack()

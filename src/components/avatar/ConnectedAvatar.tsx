@@ -21,7 +21,7 @@ const ConnectedAvatar: React.FC<ConnectedAvatarProps> = (props) => {
     const args = {colors, avatarSrc, name}
 
     return <ComposedAvatar {...args}
-    stream={participant.plugins.streamControl.showVideo ? participant.tracks.avatarStream : undefined}
+    stream={participant.showVideo ? participant.tracks.avatarStream : undefined}
       colors={colors} size={props.size} style={{pointerEvents:'none'}}
       mirror={props.isLocal}
     />

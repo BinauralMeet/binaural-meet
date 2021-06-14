@@ -44,12 +44,12 @@ export class Conference extends EventEmitter {
   }
 
   public init(jc: JitsiMeetJS.JitsiConference) {
+    //  register event handlers and join
     this._jitsiConference = jc
     this.registerJistiConferenceEvents()
     this.sync.bind()
-    const jitsiConf = this._jitsiConference
-    jitsiConf.join('')
-    jitsiConf.setSenderVideoConstraint(1080)
+    this._jitsiConference.join('')
+    this._jitsiConference.setSenderVideoConstraint(1080)
     this.joinTime = Date.now()
 
     //  To access from debug console, add object d to the window.
@@ -66,6 +66,7 @@ export class Conference extends EventEmitter {
   //  Commmands for local tracks --------------------------------------------
   private localMicTrack?: JitsiLocalTrack
   private localCameraTrack?: JitsiLocalTrack
+/*
   public setLocalMicTrack(track: JitsiLocalTrack) {
     function doSetLocalMicTrack(conf:Conference, track:JitsiLocalTrack) {
       conf.localMicTrack = track
@@ -79,11 +80,47 @@ export class Conference extends EventEmitter {
     }else {
       doSetLocalMicTrack(this, track)
     }
+  }*/
+  private doSetLocalMicTrack(track:JitsiLocalTrack) {
+    this.localMicTrack = track
+    this.localMicTrack.videoType = 'mic'
+    this._jitsiConference?.addTrack(this.localMicTrack)
   }
-  private doSetLocalCameraTrack(conf:Conference, track:JitsiLocalTrack) {
-    conf.localCameraTrack = track
-    conf.localCameraTrack.videoType = 'camera'
-    conf._jitsiConference?.addTrack(conf.localCameraTrack)
+  public setLocalMicTrack(track: JitsiLocalTrack|undefined){
+    const promise = new Promise<JitsiLocalTrack|undefined>((resolveFunc, rejectionFunc) => {
+      if (track) {
+        if (this.localMicTrack) {
+          const prev = this.localMicTrack
+          this._jitsiConference?.removeTrack(this.localMicTrack).then(() => {
+            this.doSetLocalMicTrack(track)
+            resolveFunc(prev)
+          })
+        }else {
+          this.doSetLocalMicTrack(track)
+          resolveFunc(undefined)
+        }
+      }else {
+        if (this.localMicTrack) {
+          this._jitsiConference?.removeTrack(this.localMicTrack).then(() => {
+            const prev = this.localMicTrack
+            this.localMicTrack = undefined
+            resolveFunc(prev)
+          })
+        }else {
+          resolveFunc(undefined)
+        }
+      }
+    })
+
+    return promise
+
+  }
+
+
+  private doSetLocalCameraTrack(track:JitsiLocalTrack) {
+    this.localCameraTrack = track
+    this.localCameraTrack.videoType = 'camera'
+    this._jitsiConference?.addTrack(this.localCameraTrack)
   }
   public setLocalCameraTrack(track: JitsiLocalTrack|undefined) {
     const promise = new Promise<JitsiLocalTrack|undefined>((resolveFunc, rejectionFunc) => {
@@ -92,11 +129,11 @@ export class Conference extends EventEmitter {
         if (this.localCameraTrack) {
           const prev = this.localCameraTrack
           this._jitsiConference?.removeTrack(this.localCameraTrack).then(() => {
-            this.doSetLocalCameraTrack(this, track)
+            this.doSetLocalCameraTrack(track)
             resolveFunc(prev)
           })
         }else {
-          this.doSetLocalCameraTrack(this, track)
+          this.doSetLocalCameraTrack(track)
           resolveFunc(undefined)
         }
       }else {
@@ -262,14 +299,14 @@ export class Conference extends EventEmitter {
       const remoteTrack = track as JitsiRemoteTrack
       const target = participants.find(remoteTrack.getParticipantId())
       if (target && remoteTrack.isVideoTrack()) {
-        target.plugins.streamControl.muteVideo = remoteTrack.isMuted()
+        target.muteVideo = remoteTrack.isMuted()
       }
     })
 
     this._jitsiConference.on(JitsiMeetJS.events.conference.TRACK_AUDIO_LEVEL_CHANGED, (id:string, level:number) => {
       const participant = participantsStore.find(id)
       if (participant) {
-        if (! (participant === participantsStore.local && participant.plugins.streamControl.muteAudio)) {
+        if (! (participant === participantsStore.local && participant.muteAudio)) {
           participant?.tracks.setAudioLevel(level)
         }else {
           participant?.tracks.setAudioLevel(0)
@@ -343,12 +380,12 @@ export class Conference extends EventEmitter {
   private onLocalTrackAdded(track: JitsiLocalTrack) {
     const local = participants.local
     if (track.isAudioTrack()) {
-      if (local.plugins.streamControl.muteAudio) { track.mute() }
+      if (local.muteAudio) { track.mute() }
       else { track.unmute() }
       local.tracks.audio = track
     } else {
       local.tracks.avatar = track
-      if (local.plugins.streamControl.muteVideo) { this.removeTrack(track) }
+      if (local.muteVideo) { this.removeTrack(track) }
     }
   }
   private onLocalTrackRemoved(track: JitsiLocalTrack) {

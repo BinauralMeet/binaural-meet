@@ -71,9 +71,9 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
   //  observers
   const participants = props.participants
   const mute = useObserver(() => ({
-    muteA: participants.local.plugins.streamControl.muteAudio,  //  mic
-    muteS: participants.local.plugins.streamControl.muteSpeaker,  //  speaker
-    muteV: participants.local.plugins.streamControl.muteVideo,  //  camera
+    muteA: participants.local.muteAudio,  //  mic
+    muteS: participants.local.muteSpeaker,  //  speaker
+    muteV: participants.local.muteVideo,  //  camera
     onStage: participants.local.physics.onStage
   }))
   //  Fab state and menu
@@ -120,7 +120,7 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
       if (props.map.keyInputUsers.size === 0) {
         if (!e.ctrlKey && !e.metaKey && !e.altKey){
           if (e.code === 'KeyM') {  //  mute/unmute audio
-            participants.local.plugins.streamControl.muteAudio = !participants.local.plugins.streamControl.muteAudio
+            participants.local.muteAudio = !participants.local.muteAudio
             setShowFooter(true)
           }
           if (e.code === 'KeyC') {  //  Create share dialog
@@ -213,9 +213,9 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
         <StereoAudioSwitch size={fabSize} iconSize={iconSize} />
         <FabMain size={fabSize} color={mute.muteS ? 'primary' : 'secondary' }
           aria-label="speaker" onClick={() => {
-            participants.local.plugins.streamControl.muteSpeaker = !mute.muteS
-            if (participants.local.plugins.streamControl.muteSpeaker) {
-              participants.local.plugins.streamControl.muteAudio = true
+            participants.local.muteSpeaker = !mute.muteS
+            if (participants.local.muteSpeaker) {
+              participants.local.muteAudio = true
             }
             participants.local.saveMediaSettingsToStorage(true)
           }}
@@ -235,9 +235,9 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
         <FabWithTooltip size={fabSize} color={mute.muteA ? 'primary' : 'secondary' } aria-label="mic"
           title = {acceleratorText2El(t('ttMicMute'))}
           onClick = { () => {
-            participants.local.plugins.streamControl.muteAudio = !mute.muteA
-            if (!participants.local.plugins.streamControl.muteAudio) {
-              participants.local.plugins.streamControl.muteSpeaker = false
+            participants.local.muteAudio = !mute.muteA
+            if (!participants.local.muteAudio) {
+              participants.local.muteSpeaker = false
             }
             participants.local.saveMediaSettingsToStorage(true)
           }}
@@ -258,7 +258,7 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
 
         <FabMain size={fabSize} color={mute.muteV ? 'primary' : 'secondary'} aria-label="camera"
           onClick = { () => {
-            participants.local.plugins.streamControl.muteVideo = !mute.muteV
+            participants.local.muteVideo = !mute.muteV
             participants.local.saveMediaSettingsToStorage(true)
           }}
           onClickMore = { (ev) => {

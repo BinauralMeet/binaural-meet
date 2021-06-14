@@ -82,11 +82,17 @@ export class ConnectionForContent extends EventEmitter {
           this.jitsiConference.leave().then(()=>{
             this.jitsiConnection?.disconnect().then(() => {
               resolve('')
+            }).catch(reason=>{
+              console.log(`ConnForCont: Fail to disconnect by ${reason}. I'm:${this.localId}`)
             })
+          }).catch(reason => {
+            console.log(`ConnForCont: Fail to leave by ${reason}. I'm:${this.localId}`)
           })
         }else{
           this.jitsiConnection?.disconnect().then(() => {
             resolve('')
+          }).catch(reason => {
+            console.log(`ConnForCont no conf: Fail to disconnect by ${reason}. I'm:${this.localId}`)
           })
         }
       }else{

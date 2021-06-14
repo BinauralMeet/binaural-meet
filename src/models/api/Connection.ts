@@ -1,15 +1,20 @@
-// import a global variant $ for lib-jitsi-meet
 import {t} from '@models/locales'
+import {priorityCalculator} from '@models/middleware/trafficControl'
 import {ConnectionInfo} from '@stores/ConnectionInfo'
 import errorInfo from '@stores/ErrorInfo'
 import participants from '@stores/participants/Participants'
+import contents from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
+//import {stringify} from 'flatted'
 import jquery from 'jquery'
 import JitsiMeetJS from 'lib-jitsi-meet'
-//  import * as TPC from 'lib-jitsi-meet/modules/RTC/TPCUtils'
 import {Store} from '../../stores/utils'
 import {Conference} from './Conference'
 import {ConnectionStates, ConnectionStatesType} from './Constants'
+
+//  import * as TPC from 'lib-jitsi-meet/modules/RTC/TPCUtils'
+// import a global variant $ for lib-jitsi-meet
+
 
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
@@ -109,48 +114,60 @@ const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
 
     return Promise.reject('No connection has been established.')
   }
+  reconnect(){
+    errorInfo.type = 'retry'
+    errorInfo.title = t('etRetry')
+    errorInfo.message = t('emRetry')
+    //  Clear old information
+    const localCamera = this.conference.getLocalCameraTrack()
+    const micMute = participants.local.muteAudio
+    participants.local.muteAudio = true
+    const cameraMute = participants.local.muteVideo
+    participants.local.muteVideo = true
+
+    participants.leaveAll()
+    contents.clearAllRemotes()
+    priorityCalculator.clear()
+    //console.log(`participants.remote: ${stringify(Array.from(participants.remote.keys()))}`)
+    //console.log(`participants.local: ${stringify(participants.local)}`)
+    //console.log(`priority: ${stringify(priorityCalculator)}`)
+
+    //  Try to connect again.
+    this.conference._jitsiConference?.leave().then(()=>{
+      console.log('Disconnected but succeed in leaving... strange ... try to join again.')
+    }).catch(()=>{
+      console.log('Disconnected and failed to leave... try to join again')
+    }).finally(()=>{
+      this.init().then(()=>{
+        this.joinConference(this.conferenceName)
+        function restoreLocalTracks(){
+          if (!localCamera || localCamera.disposed){
+            participants.local.muteAudio = micMute
+            participants.local.muteVideo = cameraMute
+          }else{
+            setTimeout(restoreLocalTracks, 100)
+          }
+        }
+        restoreLocalTracks()
+        function restoreContentTracks(){
+          if (participants.localId){
+            contents.tracks.restoreLocalCarriers()
+          }else{
+            setTimeout(restoreContentTracks, 100)
+          }
+        }
+        restoreContentTracks()
+
+        errorInfo.clear()
+      })
+    })
+  }
 
   private onStateChanged(state: ConnectionStatesType) {
     this.state = state
     console.log(`ConnctionStateChanged: Current Connection State: ${state}`)
 
-    if (state === ConnectionStates.DISCONNECTED){
-      errorInfo.type = 'retry'
-      errorInfo.title = t('etRetry')
-      errorInfo.message = t('emRetry')
-      //  Try to connect again.
-      const localCamera = this.conference.getLocalCameraTrack()
-      const micMute = participants.local.plugins.streamControl.muteAudio
-      participants.local.plugins.streamControl.muteAudio = true
-      const cameraMute = participants.local.plugins.streamControl.muteVideo
-      participants.local.plugins.streamControl.muteVideo = true
-
-      this.conference._jitsiConference?.leave().then(()=>{
-        console.log('Disconnected but succeed in leaving... strange ... try to join again.')
-      }).catch(()=>{
-        console.log('Disconnected and failed to leave.... try to join again')
-      }).finally(()=>{
-        this.init().then(()=>{
-          this.joinConference(this.conferenceName)
-          function restore(){
-            if (!localCamera || localCamera.disposed){
-              participants.local.plugins.streamControl.muteAudio = micMute
-              participants.local.plugins.streamControl.muteVideo = cameraMute
-            }else{
-              setTimeout(restore, 100)
-            }
-          }
-          restore()
-
-        /*
-          const mic = this.conference.getLocalMicTrack()
-          if (mic) { this.conference.setLocalMicTrack(mic) }
-          const camera = this.conference.getLocalCameraTrack()
-          if (camera) { this.conference.setLocalCameraTrack(camera) }*/
-          errorInfo.type = ''
-        })
-      })
-    }
+    if (state === ConnectionStates.DISCONNECTED){ this.reconnect() }
     if (this._store) {
       this._store.changeState(this.state)
     }

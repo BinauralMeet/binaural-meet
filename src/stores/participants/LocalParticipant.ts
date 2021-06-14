@@ -34,13 +34,17 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
   @observable soundLocalizationBase = config.soundLocalizationBase ? config.soundLocalizationBase : 'user'
   @observable remoteVideoLimit = config.remoteVideoLimit || -1 as number
   @observable remoteAudioLimit = config.remoteAudioLimit || -1 as number
+  @observable audioInputDevice:string|undefined = undefined
+  @observable videoInputDevice:string|undefined = undefined
+  @observable audioOutputDevice:string|undefined = undefined
+
   information = this.information as LocalInformation
   informationToSend:RemoteInformation
   @action setThirdPersonView(tpv: boolean) { this.thirdPersonView = tpv }
   @computed get trackStates():TrackStates {
     return {
-      micMuted: this.plugins.streamControl.muteAudio,
-      speakerMuted: this.plugins.streamControl.muteSpeaker,
+      micMuted: this.muteAudio,
+      speakerMuted: this.muteSpeaker,
       headphone: this.useStereoAudio,
     }
   }
@@ -56,9 +60,9 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
     if (urlParameters.name) { this.information.name = urlParameters.name }
     this.useStereoAudio = urlParameters.headphone !== null ? true : false
     //  console.debug('URL headphone', urlParameters.headphone)
-    this.plugins.streamControl.muteAudio = urlParameters.muteMic !== null ? true : false
+    this.muteAudio = urlParameters.muteMic !== null ? true : false
     //  console.debug('URL muteMic', urlParameters.muteMic)
-    this.plugins.streamControl.muteVideo = urlParameters.muteCamera !== null ? true : false
+    this.muteVideo = urlParameters.muteCamera !== null ? true : false
     //  console.debug('URL muteCamera', urlParameters.muteCamera)
     this.loadMediaSettingsFromStorage()
     this.loadPhysicsFromStorage()
@@ -111,9 +115,9 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
     if (isLocalStorage) { storage = localStorage }
     const muteStatus:MediaSettings = {
       stream:{
-        muteVideo: this.plugins.streamControl.muteVideo,
-        muteAudio: this.plugins.streamControl.muteAudio,
-        muteSpeaker: this.plugins.streamControl.muteSpeaker,
+        muteVideo: this.muteVideo,
+        muteAudio: this.muteAudio,
+        muteSpeaker: this.muteSpeaker,
       },
       device:this.devicePreference,
       headphone: this.useStereoAudio,
@@ -131,7 +135,7 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
     const settingInStr = storage.getItem('localParticipantStreamControl')
     if (settingInStr) {
       const setting = JSON.parse(settingInStr) as MediaSettings
-      Object.assign(this.plugins.streamControl, setting.stream)
+      Object.assign(this, setting.stream)
       Object.assign(this.devicePreference, setting.device)
       this.useStereoAudio = setting.headphone
       this.soundLocalizationBase = setting.soundLocalizationBase

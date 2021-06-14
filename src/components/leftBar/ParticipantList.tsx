@@ -19,6 +19,7 @@ export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: Partic
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
   const [showForm, setShowForm] = React.useState(false)
   const ref = React.useRef<HTMLDivElement>(null)
+  //  console.log(`PColor pid:${props.participant.id} colors:${colors}`, props.participant)
 
   return <>
     <Tooltip title={props.participant.id} placement="right">

@@ -8,7 +8,6 @@ import {MapObject} from '@stores/MapObject'
 import {Store} from '@stores/utils'
 import {JitsiTrack} from 'lib-jitsi-meet'
 import {action, computed, makeObservable, observable} from 'mobx'
-import {Plugins} from './plugins'
 
 export class TracksStore<T extends JitsiTrack> implements Tracks{
   constructor(){
@@ -38,12 +37,21 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
   @observable.shallow mouse:Mouse = {position:[0, 0], show:false}
   @observable awayFromKeyboard = false
   @observable.shallow information: LocalInformation | RemoteInformation
-  plugins: Plugins
+  @observable muteAudio = false
+  @observable muteSpeaker = false
+  @observable muteVideo = false
+  // determines whether the audio would be rendered
+  @computed get showAudio () {
+    return !this.muteAudio && this.perceptibility.audibility
+  }
+  // determines whether the video would be rendered
+  @computed get showVideo () {
+    return !this.muteVideo && this.perceptibility.coreContentVisibility
+  }
 
   constructor(isLocal=false) {
     super()
     makeObservable(this)
-    this.plugins = new Plugins(this)
     if (isLocal){
       this.information = defaultInformation
     }else{

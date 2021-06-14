@@ -38,8 +38,8 @@ const common_config = {
           useStunTurn: true, // use XEP-0215 to fetch STUN and TURN servers for the P2P connection
   },
   xmppPing: {
-    interval: 2000,
-    timeout: 3000
+    interval: 1000,
+    timeout: 5000
   },
 //  enableWebsocketResume: false,
   testing: {
