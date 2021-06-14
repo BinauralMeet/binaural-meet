@@ -89,7 +89,7 @@ export class ErrorInfo {
     }
   }
   @action checkMic() {
-    if (!connection.conference.getLocalMicTrack()) {
+    if (!participants.local.muteAudio && !connection.conference.getLocalMicTrack()) {
       if (this.audioInputs.length) {
         this.type = 'micPermission'
         this.title = t('etMicPermission')
@@ -103,6 +103,9 @@ export class ErrorInfo {
       }
       setTimeout(this.checkMic.bind(this),   5 * 1000)
     }else {
+      if (participants.local.muteAudio){
+        setTimeout(this.checkMic.bind(this),   5 * 1000)
+      }
       this.clear()
       this.checkRemote()
     }
