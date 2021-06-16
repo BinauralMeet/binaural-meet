@@ -10,6 +10,7 @@ import React from 'react'
 import {Stores} from '../utils'
 import {styleForList} from '../utils/styles'
 import {TextLineStyle} from './LeftBar'
+import { StatusDialog } from './StatusDialog'
 
 export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: ParticipantBase}> = (props) => {
   const name = useObserver(() => (props.participant.information.name))
@@ -51,11 +52,11 @@ export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: Partic
 }
 
 export const RawParticipantList: React.FC<Stores&TextLineStyle&{localId: string, remoteIds: string[]}> = (props) => {
+  const [showStat, setShowStat] = React.useState(false)
   const store = props.participants
   const classes = styleForList({height: props.lineHeight, fontSize: props.fontSize})
-  const localId = props.localId
-  const ids = props.remoteIds
-  ids.sort((a, b) => {
+  const {localId, remoteIds, lineHeight, fontSize, ...statusProps} = props
+  remoteIds.sort((a, b) => {
     const pa = store.remote.get(a)
     const pb = store.remote.get(b)
     let rv = pa!.information.name.localeCompare(pb!.information.name, undefined, {sensitivity: 'accent'})
@@ -65,13 +66,18 @@ export const RawParticipantList: React.FC<Stores&TextLineStyle&{localId: string,
 
     return rv
   })
-  const remoteElements = ids.map(id =>
+  const remoteElements = remoteIds.map(id =>
     <ParticipantLine key={id} participant={store.remote.get(id) as RemoteParticipant} {...props} />)
   const localElement = (<ParticipantLine key={localId} participant={store.local} {...props} />)
+  const ref = React.useRef<HTMLDivElement>(null)
 
   return (
     <div className={classes.container} >
-      <div className={classes.title}>{(store.remote.size + 1).toString()} in {connection.conferenceName}</div>
+      <div className={classes.title} ref={ref}
+        onClick={()=>{setShowStat(true)}}
+      >{(store.remote.size + 1).toString()} in {connection.conferenceName}</div>
+      <StatusDialog open={showStat}
+        close={()=>{setShowStat(false)}} {...statusProps} anchorEl={ref.current}/>
       {localElement}{remoteElements}
     </div>
   )

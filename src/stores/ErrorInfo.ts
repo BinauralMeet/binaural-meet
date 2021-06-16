@@ -112,6 +112,20 @@ export class ErrorInfo {
   }
   checkRemote() {
     if (participants.remote.size > 0) {
+      /*
+      //console.log(stringify(connection.conference))
+      //console.log(stringify(d.chatRoom.xmpp.connection.jingle.sessions))
+      for(const sid in d.chatRoom.xmpp.connection.jingle.sessions){
+        const sess = d.chatRoom.xmpp.connection.jingle.sessions[sid]
+        const pc = sess.peerconnection.peerconnection as RTCPeerConnection
+        console.log(pc)
+        console.log('currentLocal:', pc.currentLocalDescription?.sdp)
+        console.log('currentRemote:', pc.currentRemoteDescription?.sdp)
+
+        //console.log(pc.remoteDescription?.sdp)
+      }
+      */
+
       setTimeout(this.checkChannel.bind(this), 3 * 1000)
     }else {
       setTimeout(this.checkRemote.bind(this), 1 * 1000)
