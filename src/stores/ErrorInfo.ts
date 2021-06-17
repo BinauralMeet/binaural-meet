@@ -3,6 +3,7 @@ import {connection} from '@models/api'
 import {ConnectionStates} from '@models/api/Constants'
 import {t} from '@models/locales'
 import {priorityCalculator} from '@models/middleware/trafficControl'
+import { defaultInformation } from '@models/Participant'
 import {urlParameters} from '@models/url'
 import {addV2, mulV2} from '@models/utils'
 import {createJitisLocalTracksFromStream} from '@models/utils/jitsiTrack'
@@ -185,7 +186,9 @@ export class ErrorInfo {
     setInterval(draw, 1000 / 20)
     const chars = '01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijlkmnopqrstuvwxyz'
     const randChar = () =>  chars.substr(Math.floor(Math.random() * chars.length), 1)
+    participants.local.information = defaultInformation
     participants.local.information.name = `testBot ${randChar()}${randChar()}${randChar()}`
+    participants.local.sendInformation()
     participants.local.pose.position = center as [number, number]
     //  participants.local.remoteAudioLimit = 2
     //  participants.local.remoteVideoLimit = 1
@@ -195,11 +198,11 @@ export class ErrorInfo {
     }
     const win = window as any
     if (win.requestIdleCallback) {
-      const moveTask = () => {  //  onIdle, wait 500ms and run move()
+      const moveTask = () => {  //  onIdle, wait 50ms and run move()
         setTimeout(() => {
           move()
           win.requestIdleCallback(moveTask)
-        },         500)
+        },         50)
       }
       moveTask()
     }else {
