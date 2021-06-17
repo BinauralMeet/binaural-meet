@@ -243,7 +243,7 @@ export class ConferenceSync{
     let updateTimeForProperty = 0
     let poseWait = 0
 
-    const calcWait = () => Math.ceil(Math.max((participants.remote.size / 5) * 20, 20))
+    const calcWait = () => Math.ceil(Math.max((participants.remote.size / 3) * 33, 33))
     let sendPoseMessage: (pose:Pose2DMap) => void = ()=>{}
     this.disposers.push(autorun(() => {
       const pose = {...participants.local.pose}
@@ -256,6 +256,7 @@ export class ConferenceSync{
             this.conference.sendMessage(MessageType.PARTICIPANT_POSE, '', pose)
           }
         },                           poseWait)  //  30fps
+        //  console.log(`poseWait = ${poseWait}`)
       }
 
       if (this.conference.channelOpened) {
@@ -264,7 +265,8 @@ export class ConferenceSync{
     }))
     const setPoseProperty = () => {
       const now = Date.now()
-      if (now - updateTimeForProperty > 5 * 1000) {  //  update every 10 sec
+      const period = calcWait() * 30 //  (33ms(1 remote) to 1000ms(100 remotes)) * 30
+      if (now - updateTimeForProperty > period) {  //  update period
         this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_POSE, participants.local.pose)
         updateTimeForProperty = now
       }
@@ -279,7 +281,7 @@ export class ConferenceSync{
       if (remote) { Object.assign(remote.mouse, mouse) }
     })
     let wait = 0
-    let sendMouseMessage: (mouse:Mouse) => void
+    let sendMouseMessage = (mouse:Mouse) => {}
     const sendMouse = (to: string) => {
       const newWait = calcWait()
       if (wait !== newWait) {
