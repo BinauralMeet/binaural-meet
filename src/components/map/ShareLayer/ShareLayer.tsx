@@ -9,7 +9,6 @@ import {SharedContent} from './SharedContent'
 
 const useStyles = makeStyles({
   slContainer:{
-    backgroundColor: 'rgba(255,0,0,0.2)',
     userDrag: 'none',
     userSelect: 'none',
   },

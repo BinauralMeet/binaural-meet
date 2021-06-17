@@ -95,7 +95,7 @@ export const ChatInBar: React.FC<Stores&TextLineStyle>  = (props) => {
         const nameTo = props.chat.sendTo ? props.participants?.find(props.chat.sendTo)?.information?.name : undefined
 
         return <TextField label={nameTo ? t('cmToName', {name: nameTo}) : t('cmToAll')} multiline={true} value={text}
-          style={{width:'100%'}} size={props.lineHeight > 20 ? 'medium' : 'small'}
+          style={{width:'100%', userSelect:'none'}} size={props.lineHeight > 20 ? 'medium' : 'small'}
           onFocus={()=>{props.map.keyInputUsers.add('chat')}}
           onBlur={()=>{props.map.keyInputUsers.delete('chat')}}
           onKeyDown={(ev)=>{

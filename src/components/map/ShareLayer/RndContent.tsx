@@ -11,6 +11,7 @@ import EditIcon from '@material-ui/icons/Edit'
 import FlipToBackIcon from '@material-ui/icons/FlipToBack'
 import FlipToFrontIcon from '@material-ui/icons/FlipToFront'
 import MoreHorizIcon from '@material-ui/icons/MoreHoriz'
+import settings from '@models/api/Settings'
 import {t} from '@models/locales'
 import {Pose2DMap} from '@models/MapObject'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
@@ -398,8 +399,9 @@ const useStyles = makeStyles({
   },
   rndCls: (props: StyleProps) => ({
     borderRadius: props.showTitle ? '0.5em 0.5em 0 0' : '0 0 0 0',
-    backgroundColor: 'rgba(200,200,200,0.5)',
-    boxShadow: '0.2em 0.2em 0.2em 0.2em rgba(0,0,0,0.4)',
+    backgroundColor: settings.useTransparent ? 'rgba(200,200,200,0.5)' : 'rgba(200,200,200,1)',
+    boxShadow: settings.useTransparent ? '0.2em 0.2em 0.2em 0.2em rgba(0,0,0,0.4)' :
+       '0.2em 0.2em 0.2em 0.2em rgba(100,100,100,1)',
   }),
   rndContainer: (props: StyleProps) => ({
     width:'100%',

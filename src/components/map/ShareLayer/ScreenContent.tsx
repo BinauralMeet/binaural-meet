@@ -42,6 +42,7 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
   }
 
   function setTrack() {
+    assert(member.current.locals.length===0 || member.current.remotes.length===0)
     if (ref.current) {
       const ms = new MediaStream()
       member.current.locals.forEach((track) => {
@@ -66,9 +67,10 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
       }
     }
   }
-  const simulcastRatios = [0.25, 0.5, 0.75, 4.0 / 3, 2, 4]
+  //  const simulcastRatios = [0.25, 0.5, 0.75, 4.0 / 3, 2, 4]
+  const simulcastRatios:number[] = []
   function checkVideoSize() {
-    if (ref.current) {
+    if (member.current.locals.length && ref.current) {
       const tracks = ref.current.srcObject instanceof MediaStream && ref.current.srcObject.getTracks()
       if (tracks && tracks.length) {
         const video = tracks.find(track => track.kind === 'video')

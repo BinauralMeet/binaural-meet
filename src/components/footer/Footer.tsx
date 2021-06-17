@@ -28,7 +28,6 @@ const useStyles = makeStyles({
     position: 'absolute',
     width: '100%',
     bottom: 0,
-    //  backgroundColor: 'rgba(255,0,0,0.3)',
     padding: 8,
     outline: 'none',
     pointerEvents: 'none',
@@ -41,7 +40,6 @@ const useStyles = makeStyles({
     height:15,
     pointerEvents: 'auto',
     backgroundColor:'transparent',
-//    backgroundColor:'rgba(0,0,0,0.5)',
   },
 })
 

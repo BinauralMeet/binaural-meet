@@ -15,9 +15,11 @@ class Remote{
   port = 0
   protocol = ''
 }
-class Status{
-  nSessions = 0
+class Session{
   remotes: Remote[] = []
+}
+class Status{
+  sessions: Session[] = []
   open = false
   update = false
 }
@@ -32,29 +34,32 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
     const chatRoom = connection.conference._jitsiConference?.room
     if (status.open && chatRoom){
       const sessions = chatRoom.xmpp?.connection?.jingle?.sessions
-      status.nSessions = 0
+      const nSessions = Object.keys(sessions).length
+      status.sessions.splice(nSessions)
+      while (status.sessions.length < nSessions){ status.sessions.push(new Session()) }
       for(const id in sessions){
-        status.nSessions += 1
-        const sess = sessions[id]
-        const pc = sess?.peerconnection?.peerconnection as RTCPeerConnection
-        pc.getStats().then((stats) => {
-          const pairs: any[] = []
-          stats.forEach((v, k) => {
-            if (v.type === 'candidate-pair' && (v.bytesReceived > 0 || v.bytesSent > 0)) {
-              pairs.push(v)
-            }
+        const pc = sessions[id]?.peerconnection?.peerconnection as RTCPeerConnection
+        if (pc){
+          pc.getStats().then((stats) => {
+            const pairs: any[] = []
+            stats.forEach((v, k) => {
+              if (v.type === 'candidate-pair' && (v.bytesReceived > 0 || v.bytesSent > 0)) {
+                pairs.push(v)
+              }
+            })
+            const remoteCandidateIds = pairs.map(p => p.remoteCandidateId)
+            const sess = status.sessions[status.sessions.length-1]
+            sess.remotes=[]
+            remoteCandidateIds.forEach(id => {
+              const remote = new Remote()
+              const v = stats.get(id)
+              remote.address = v.address
+              remote.port = v.port
+              remote.protocol = v.protocol
+              sess.remotes.push(remote)
+            })
           })
-          const remoteCandidateIds = pairs.map(p => p.remoteCandidateId)
-          status.remotes=[]
-          remoteCandidateIds.forEach(id => {
-            const remote = new Remote()
-            const v = stats.get(id)
-            remote.address = v.address
-            remote.port = v.port
-            remote.protocol = v.protocol
-            status.remotes.push(remote)
-          })
-        })
+        }
       }
       setUpdate(status.update ? false : true)
     }
@@ -70,8 +75,10 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
     </DialogTitle>
     <DialogContent>
       <div style={{overflowY:'auto'}}>
-        {`${status.nSessions} sessions`}<br />
-        Bridge: {status.remotes.map((r,k) => <span key={k.toString()}>{r.address} {r.port}/{r.protocol}<br /></span>)}
+        {`${status.sessions.length} sessions`}<br />
+        {status.sessions.map((sess, idx) => <div key={idx}>
+          Bridge: {sess.remotes.map((r,k) => <span key={k.toString()}>{r.address} {r.port}/{r.protocol}<br /></span>)}
+        </div>)}
       </div>
     </DialogContent>
   </Popover>

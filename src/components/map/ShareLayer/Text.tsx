@@ -3,6 +3,7 @@ import {useStore as useParticipants} from '@hooks/ParticipantsStore'
 import {useStore as useContents} from '@hooks/SharedContentsStore'
 import {Tooltip} from '@material-ui/core'
 import {makeStyles} from '@material-ui/core/styles'
+import settings from '@models/api/Settings'
 import {compTextMessage, TextMessages} from '@models/SharedContent'
 import {assert, findTextColorRGB, isSelfUrl} from '@models/utils'
 import {getRandomColorRGB, rgba} from '@models/utils'
@@ -142,8 +143,8 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
     const textColor = text.textColor?.length ? text.textColor : findTextColorRGB(rgb)
     const textEditable = (editing && (text.pid === participants.localId || !participants.remote.has(text.pid)))
     const css = {
-      color:rgba(textColor, 1),
-      backgroundColor:rgba(rgb, 0.5),
+      color: rgba(textColor, 1),
+      backgroundColor:settings.useTransparent ? rgba(rgb, 0.5) : rgba(rgb, 1),
       padding:'0.1em',
     }
 
