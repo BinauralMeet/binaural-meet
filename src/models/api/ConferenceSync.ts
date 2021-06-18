@@ -19,8 +19,8 @@ import { notification } from './Notification'
 
 export const MessageType = {
   CHAT_MESSAGE: 'm_chat',                       //  -> text chat message
-  PARTICIPANT_POSE: 'm_pose',                   //  -> update presence once per 5 sec / message immediate value
-  PARTICIPANT_MOUSE: 'm_mouse',                 //  -> message
+  PARTICIPANT_POSE: 'mp',                       //  -> update presence once per 5 sec / message immediate value
+  PARTICIPANT_MOUSE: 'mm',                      //  -> message
   PARTICIPANT_TRACKLIMITS: 'm_track_limits',    //  -> message, basically does not sync
   YARN_PHONE: 'YARN_PHONE',             //  -> message
   CONTENT_UPDATE_REQUEST: 'content_update',     //  -> message
@@ -217,7 +217,10 @@ export class ConferenceSync{
     this.disposers.push(autorun(sendTrackStates))
 
     //  pose
-    const onPose = (from:string, pose:Pose2DMap) => {
+    const onPose = (from:string, poseStr:string) => {
+      const poseArray = poseStr.split(',')
+      const pose = {position:[Number(poseArray[0]), Number(poseArray[1])] as [number, number],
+        orientation:Number(poseArray[2])}
       const remote = participants.remote.get(from)
       const local = participants.local
       if (remote) {
@@ -238,44 +241,61 @@ export class ConferenceSync{
         }
       }
     }
-    this.conference.on(MessageType.PARTICIPANT_POSE, onPose)
-    this.conference.on(PropertyType.PARTICIPANT_POSE, onPose)
+    this.conference.on(MessageType.PARTICIPANT_POSE, (from:string, str:string)=>{
+      console.log(`MessageType.PARTICIPANT_POSE ${str}`)
+      onPose(from, str)
+    })
+    this.conference.on(PropertyType.PARTICIPANT_POSE, (from:string, str:string)=>{
+      console.log(`PropertyType.PARTICIPANT_POSE ${str}`)
+      onPose(from, str)
+    })
     let updateTimeForProperty = 0
     let poseWait = 0
 
     const calcWait = () => Math.ceil(Math.max((participants.remote.size / 3) * 33, 33))
-    let sendPoseMessage: (pose:Pose2DMap) => void = ()=>{}
-    this.disposers.push(autorun(() => {
-      const pose = {...participants.local.pose}
+    function round(n:number){ return Math.round(n*100) / 100 }
+    function pose2Str(pose:Pose2DMap){ return `${round(pose.position[0])},${round(pose.position[1])},${round(pose.orientation)}`}
 
+    let sendPoseMessage: (poseStr:string) => void = ()=>{}
+    let lastPoseStr=''
+    this.disposers.push(autorun(() => {
       const newWait = calcWait()
       if (newWait !== poseWait) {
         poseWait = newWait
-        sendPoseMessage = _.throttle((pose:Pose2DMap) => {
+        sendPoseMessage = _.throttle((poseStr:string) => {
           if (this.conference.channelOpened){
-            this.conference.sendMessage(MessageType.PARTICIPANT_POSE, '', pose)
+            this.conference.sendMessage(MessageType.PARTICIPANT_POSE, '', poseStr)
           }
         },                           poseWait)  //  30fps
         //  console.log(`poseWait = ${poseWait}`)
       }
 
-      if (this.conference.channelOpened) {
-        sendPoseMessage(pose)
+      const poseStr = pose2Str(participants.local.pose)
+      if (this.conference.channelOpened && lastPoseStr !== poseStr) {
+        sendPoseMessage(poseStr)
+        lastPoseStr = poseStr
       }
     }))
+    let lastPoseStrProprty = ''
     const setPoseProperty = () => {
       const now = Date.now()
       const period = calcWait() * 30 //  (33ms(1 remote) to 1000ms(100 remotes)) * 30
       if (now - updateTimeForProperty > period) {  //  update period
-        this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_POSE, participants.local.pose)
-        updateTimeForProperty = now
+        const poseStr = pose2Str(participants.local.pose)
+        if (lastPoseStrProprty !== poseStr){
+          this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_POSE, poseStr)
+          updateTimeForProperty = now
+          lastPoseStrProprty = poseStr
+        }
       }
     }
     setPoseProperty()
     setInterval(setPoseProperty, 2.5 * 1000)
 
     // mouse
-    this.conference.on(MessageType.PARTICIPANT_MOUSE, (from:string, mouse:Mouse) => {
+    this.conference.on(MessageType.PARTICIPANT_MOUSE, (from:string, mouseStr:string) => {
+      const mouseArray = mouseStr.split(',')
+      const mouse:Mouse = {position:[Number(mouseArray[0]),Number(mouseArray[1])], show: mouseArray[2] ? true : false}
       if (urlParameters.testBot !== null) { return }
       const remote = participants.remote.get(from)
       if (remote) { Object.assign(remote.mouse, mouse) }
@@ -287,7 +307,8 @@ export class ConferenceSync{
       if (wait !== newWait) {
         wait = newWait
         sendMouseMessage = _.throttle((mouse: Mouse) => {
-          this.conference.sendMessage(MessageType.PARTICIPANT_MOUSE, '', mouse)
+          this.conference.sendMessage(MessageType.PARTICIPANT_MOUSE, '',
+            `${mouse.position[0]},${mouse.position[1]},${mouse.show?'t':''}`)
         },                            wait)
       }
       if (this.conference.channelOpened) {

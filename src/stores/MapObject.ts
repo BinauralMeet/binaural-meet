@@ -1,6 +1,7 @@
 import {MAP_CENTER} from '@components/map/Base'
 import {MapObject as IMapObject, Perceptibility, Pose2DMap} from '@models/MapObject'
 import _ from 'lodash'
+import { makeObservable, observable} from 'mobx'
 import {shallowObservable, Store} from './utils'
 
 export const defaultValue: IMapObject = {
@@ -16,13 +17,14 @@ export const defaultValue: IMapObject = {
 }
 
 export class MapObject implements Store<IMapObject> {
-  pose: (Pose2DMap)
+  @observable pose: (Pose2DMap)
   // perceptibility is influenced by distance, determines whether the participant would be rendered or not
-  perceptibility: Perceptibility
+  @observable perceptibility: Perceptibility
 
   constructor() {
-    this.pose = shallowObservable(_.cloneDeep(defaultValue.pose))
-    this.perceptibility = shallowObservable(defaultValue.perceptibility)
+    this.pose = _.cloneDeep(defaultValue.pose)
+    this.perceptibility = defaultValue.perceptibility
+    makeObservable(this)
   }
 
   static fromPlain(obj: IMapObject) {

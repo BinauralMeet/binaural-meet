@@ -5,7 +5,7 @@ import {default as participantsStore} from '@stores/participants/Participants'
 import {EventEmitter} from 'events'
 import _ from 'lodash'
 import {action, autorun, computed, makeObservable, observable} from 'mobx'
-import {createContent, disposeContent, extractContentDatas, isContentWallpaper, moveContentToTop} from './SharedContentCreator'
+import {createContent, extractContentDatas, isContentWallpaper, moveContentToTop} from './SharedContentCreator'
 import {SharedContentTracks} from './SharedContentTracks'
 
 export const CONTENTLOG = false      // show manipulations and sharing of content
@@ -15,7 +15,6 @@ export const contentDebug = CONTENTLOG ? console.debug : (a:any) => {}
 function zorderComp(a:ISharedContent, b:ISharedContent) {
   return a.zorder - b.zorder
 }
-
 
 export class ParticipantContents{
   constructor(pid: string) {
@@ -158,7 +157,7 @@ export class SharedContents extends EventEmitter {
       if (remote.participantId > this.localParticipant.participantId) {
         const com = intersectionMap(remote.myContents, this.localParticipant.myContents)
         com.forEach((c, cid) => {
-          disposeContent(c)
+          this.disposeContent(c)
           this.localParticipant.myContents.delete(cid)
         })
         changed = changed || com.size !== 0
@@ -303,7 +302,7 @@ export class SharedContents extends EventEmitter {
       if (pid === this.localId) {
         const toRemove = pc.myContents.get(cid)
         if (toRemove) {
-          disposeContent(toRemove)
+          this.disposeContent(toRemove)
           pc.myContents.delete(cid)
           this.owner.delete(cid)
           this.updateAll()
@@ -394,7 +393,7 @@ export class SharedContents extends EventEmitter {
     cids.forEach((cid) => {
       const c = pc.myContents.get(cid)
       if (c) {
-        disposeContent(c)
+        this.disposeContent(c)
         pc.myContents.delete(cid)
         this.owner.delete(cid)
       }else {
@@ -422,7 +421,7 @@ export class SharedContents extends EventEmitter {
           if (c.type === 'screen' || c.type === 'camera') {
             this.owner.delete(cid)
             participantLeave.myContents.delete(cid)
-            disposeContent(c)
+            this.disposeContent(c)
           }else {
             this.localParticipant.myContents.set(cid, c)
             this.owner.set(cid, this.localId)
@@ -481,6 +480,20 @@ export class SharedContents extends EventEmitter {
     console.error('Error in getUniqueId()')
 
     return ''
+  }
+
+  disposeContent(c: ISharedContent) {
+    if (c.id === this.editing){
+      this.setEditing('')
+    }
+    if (c.type === 'screen' || c.type === 'camera') {
+      const pid = this.owner.get(c.id)
+      if (pid === this.localId) {
+        this.tracks.clearLocalContent(c.id)
+      }else {
+        this.tracks.clearRemoteContent(c.id)
+      }
+    }
   }
 }
 

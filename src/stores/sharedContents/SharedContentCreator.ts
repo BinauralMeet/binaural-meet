@@ -278,17 +278,6 @@ export function createContentOfVideo(tracks: JitsiLocalTrack[], map: MapData, ty
   return pasted
 }
 
-export function disposeContent(c: ISharedContent) {
-  if (c.type === 'screen' || c.type === 'camera') {
-    const pid = sharedContents.owner.get(c.id)
-    if (pid === participants.localId) {
-      sharedContents.tracks.clearLocalContent(c.id)
-    }else {
-      sharedContents.tracks.clearRemoteContent(c.id)
-    }
-  }
-}
-
 const extractData = extract<ISharedContentData>({
   zorder: true, name: true, ownerName: true, color: true, textColor:true,
   type: true, url: true, pose: true, size: true, originalSize: true, pinned: true,

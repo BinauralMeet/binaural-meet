@@ -13,10 +13,12 @@ export const JITSILOGLEVEL = 'warn'  // log level for lib-jitsi-meet {debug|log|
 export const CONNECTIONLOG = false
 export const TRACKLOG = false        // show add, remove... of tracks
 export const EVENTLOG = false
+export const SENDLOG = false
 export const trackLog = TRACKLOG ? console.log : (a:any) => {}
 export const connLog = CONNECTIONLOG ? console.log : (a:any) => {}
 export const connDebug = CONNECTIONLOG ? console.debug : (a:any) => {}
 export const eventLog = EVENTLOG ? console.log : (a:any) => {}
+export const sendLog = SENDLOG ? console.log : (a:any) => {}
 
 // config.js
 declare const config:any             //  from ../../config.js included from index.html
@@ -161,6 +163,7 @@ export class Conference extends EventEmitter {
   //  Jitsi API Calls ----------------------------------------
   //  generic send command
   public sendCommand(name: string, values: JitsiValues) {
+    sendLog(`SEND sendCommand ${name} ${JSON.stringify(values)}`)
     this._jitsiConference?.sendCommand(name, values)
   }
   public removeCommand(name: string) {
@@ -170,6 +173,7 @@ export class Conference extends EventEmitter {
     this._jitsiConference?.addCommandListener(name, handler)
   }
   public setLocalParticipantProperty(name: string, value:Object) {
+    sendLog(`SEND setLocalParticipantProperty ${name} ${JSON.stringify(value)}`)
     this._jitsiConference?.setLocalParticipantProperty(name, JSON.stringify(value))
   }
   public getLocalParticipantProperty(name: string): any {
@@ -183,6 +187,7 @@ export class Conference extends EventEmitter {
 
   //  send Perceptibles API added by hasevr
   public setPerceptibles(perceptibles:[number[], number[]]) {
+    sendLog(`SEND setPerceptibles ${perceptibles[0].length} ${perceptibles[1].length}`)
     if (this._jitsiConference?.setPerceptibles) {
       this._jitsiConference.setPerceptibles(perceptibles)
     }
@@ -226,6 +231,8 @@ export class Conference extends EventEmitter {
     const jc = this._jitsiConference as any
     const viaBridge = jc?.rtc?._channel?.isOpen() ? true : false
     const connected = jc?.chatRoom?.connection.connected
+    sendLog(`SEND sendMessage type:${type} to:${to} val:${JSON.stringify(value)}`)
+
     if (viaBridge || connected){
       const msg = viaBridge ? {type, value} : JSON.stringify({type, value})
       this._jitsiConference?.sendMessage(msg, to, viaBridge)
