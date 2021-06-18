@@ -17,7 +17,6 @@ import {Pose2DMap} from '@models/MapObject'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {addV2, extractScaleX, extractScaleY, mulV, rotateVector2DByDegree, subV2} from '@models/utils'
 import {copyContentToClipboard, isContentEditable, moveContentToBottom, moveContentToTop} from '@stores/sharedContents/SharedContentCreator'
-import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useLayoutEffect, useRef, useState} from 'react'
 import {Rnd} from 'react-rnd'
@@ -162,17 +161,10 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     props.map.keyInputUsers.delete('contentForm')
   }
   function updateHandler() {
-    let bChange = false
-    if (! _.isEqual(pose, props.content.pose)) {
-      bChange = true
-    }
-    if (! _.isEqual(size, props.content.size)) {
-      bChange = true
-    }
-    if (bChange) {
-      props.content.size = size
-      props.content.pose = pose
-      //console.log(`updateAndSend ${JSON.stringify(props.content.pose.position)}`)
+    if (JSON.stringify(pose) !== JSON.stringify(props.content.pose) ||
+      JSON.stringify(size) !== JSON.stringify(props.content.size)) {
+      props.content.size = {...size} //  Must be new object to compare the pose or size object.
+      props.content.pose = {...pose} //  Must be new object to compare the pose or size object.
       props.updateAndSend(props.content)
     }
   }

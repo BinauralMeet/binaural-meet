@@ -1,6 +1,7 @@
 import {makeStyles} from '@material-ui/core/styles'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {assert, shallowEqualsForMap} from '@models/utils'
+import { defaultContent } from '@stores/sharedContents/SharedContentCreator'
 import {contentLog} from '@stores/sharedContents/SharedContents'
 import { useObserver } from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
@@ -31,10 +32,11 @@ class YTMember{
   playTimeout:NodeJS.Timeout|null = null
   pauseTimeout:NodeJS.Timeout|null = null
   params: Map<YTParam, string|undefined> = new Map()
-  content: ISharedContent
+  content: ISharedContent = defaultContent
   editing = false
-  updateAndSend: (c: ISharedContent) => void
-  constructor(props: ContentProps){
+  updateAndSend: (c: ISharedContent) => void = ()=>{}
+
+  setProps(props:ContentProps){
     this.content = props.content
     this.updateAndSend = props.updateAndSend
   }
@@ -193,8 +195,9 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
   assert(props.content.type === 'youtube')
 
   const classes = useStyles()
-  const memberRef = useRef<YTMember>(new YTMember(props))
+  const memberRef = useRef<YTMember>(new YTMember())
   const member = memberRef.current
+  member.setProps(props)
 
   //  Editing (No sync) ?
   const editing = useObserver(() => props.contents.editing === props.content.id)
