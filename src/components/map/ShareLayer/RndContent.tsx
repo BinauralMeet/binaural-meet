@@ -19,7 +19,7 @@ import {addV2, extractScaleX, extractScaleY, mulV, rotateVector2DByDegree, subV2
 import {copyContentToClipboard, isContentEditable, moveContentToBottom, moveContentToTop} from '@stores/sharedContents/SharedContentCreator'
 import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
-import React, {useLayoutEffect, useRef, useState} from 'react'
+import React, {useEffect, useLayoutEffect, useRef, useState} from 'react'
 import {Rnd} from 'react-rnd'
 import {useGesture} from 'react-use-gesture'
 import { FullGestureState, UserHandlersPartial } from 'react-use-gesture/dist/types'
@@ -45,10 +45,9 @@ interface StyleProps{
   showTitle: boolean,
   pinned: boolean,
 }
-class RndContentState{
-  lastSize: [number, number] = [0, 0]
-  lastPose: Pose2DMap = {orientation:0, position:[0, 0]}
+class RndContentMember{
   buttons = 0
+  dragCanceled = false
 }
 
 
@@ -82,32 +81,41 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   const [size, setSize] = useState(props.content.size)  //  size of content
   const [resizeBase, setResizeBase] = useState(size)    //  size when resize start
   const [resizeBasePos, setResizeBasePos] = useState(pose.position)    //  position when resize start
-  const rnd = useRef<Rnd>(null)                         //  ref to rnd to update position and size
   const [showTitle, setShowTitle] = useState(!props.autoHideTitle || !props.content.pinned)
   const [showForm, setShowForm] = useState(false)
+  const [preciseOrientation, setPreciseOrientation] = useState(pose.orientation)
+  const rnd = useRef<Rnd>(null)                         //  ref to rnd to update position and size
   const contents = props.contents
   const editing = useObserver(() => contents.editing === props.content.id)
   function setEditing(flag: boolean) { contents.setEditing(flag ? props.content.id : '') }
-  const state = useRef<RndContentState>(new RndContentState())
+  const memberRef = useRef<RndContentMember>(new RndContentMember())
+  const member = memberRef.current
 
-  if (!_.isEqual(props.content.size, state.current.lastSize)) {
-    Object.assign(state.current.lastSize, props.content.size)
-    setSize(props.content.size)
-  }
-  if (!_.isEqual(props.content.pose, state.current.lastPose)) {
-    //  setPose(props.content.pose)
-    setPose(props.content.pose)
-    state.current.lastPose = _.cloneDeep(props.content.pose)
+  useEffect(  //  update pose
+    ()=> {
+      member.dragCanceled = true
+      setSize(props.content.size)
+      member.dragCanceled = true
+      setPose(props.content.pose)
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [props.content],
+  )
+
+  function setPoseAndSizeToRnd(){
+    if (rnd.current) { rnd.current.resizable.orientation = pose.orientation + props.map.rotation }
+    const titleHeight = showTitle ? TITLE_HEIGHT : 0
+    rnd.current?.updatePosition({x:pose.position[0], y:pose.position[1] - titleHeight})
+    rnd.current?.updateSize({width:size[0], height:size[1] + titleHeight})
   }
   useLayoutEffect(  //  reflect pose etc. to rnd size
     () => {
-      if (rnd.current) { rnd.current.resizable.orientation = pose.orientation + props.map.rotation }
-      const titleHeight = showTitle ? TITLE_HEIGHT : 0
-      rnd.current?.updatePosition({x:pose.position[0], y:pose.position[1] - titleHeight})
-      rnd.current?.updateSize({width:size[0], height:size[1] + titleHeight})
+      setPoseAndSizeToRnd()
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [pose, size, showTitle, props.map.rotation],
   )
+
   //  handlers
   function stop(ev:MouseOrTouch|React.PointerEvent) {
     ev.stopPropagation()
@@ -164,12 +172,14 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     if (bChange) {
       props.content.size = size
       props.content.pose = pose
+      //console.log(`updateAndSend ${JSON.stringify(props.content.pose.position)}`)
       props.updateAndSend(props.content)
     }
   }
+
   //  drag for title area
-  const [preciseOrientation, setPreciseOrientation] = useState(pose.orientation)
   function dragHandler(delta:[number, number], buttons:number, event:any) {
+    if (member.dragCanceled){ return }
     const ROTATION_IN_DEGREE = 360
     const ROTATION_STEP = 15
     if (buttons === MOUSE_RIGHT) {
@@ -205,20 +215,22 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
         //  event?.preventDefault()
         dragHandler(delta, buttons, event)
       }else {
-        updateHandler()
+        if (!member.dragCanceled){ updateHandler() }
+        member.dragCanceled = false
       }
     },
     onDragStart: ({delta, buttons}) => {   // to detect click
       //  console.log(`dragStart delta=${delta}  buttons=${buttons}`)
-      state.current.buttons = buttons
+      member.buttons = buttons
+      member.dragCanceled = false
     },
     onDragEnd: ({delta, buttons}) => {
       //  console.log(`dragEnd delta=${delta}  buttons=${buttons}`)
-      if (!props.map.keyInputUsers.size && state.current.buttons === MOUSE_RIGHT){ //  right click
+      if (!props.map.keyInputUsers.size && member.buttons === MOUSE_RIGHT){ //  right click
         setShowForm(true)
         props.map.keyInputUsers.add('contentForm')
       }
-      state.current.buttons = 0
+      member.buttons = 0
     },
     onPointerUp: (arg) => { if(editing) {arg.stopPropagation()} },
     onPointerDown: (arg) => { if(editing) {arg.stopPropagation()} },
@@ -234,10 +246,25 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     handlerForTitle.onDrag?.call(this, args)
   }
 
-  const gestureForContent = useGesture(handlerForContent)
-  const gestureForTitle = useGesture(handlerForTitle)
+  function onResizeStart(evt:React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>){
+    member.dragCanceled = false
+    evt.stopPropagation(); evt.preventDefault()
+    setResizeBase(size)
+    setResizeBasePos(pose.position)
+  }
+  function onResizeStop(){
+    if (!member.dragCanceled){ updateHandler() }
+    member.dragCanceled = false
+  }
   function onResize(evt:MouseEvent | TouchEvent, dir: any, elem:HTMLDivElement, delta:any, pos:any) {
     evt.stopPropagation(); evt.preventDefault()
+    //  console.log(`dragcancel:${member.dragCanceled}`)
+    if (member.dragCanceled) {
+      setPoseAndSizeToRnd()
+
+      return
+    }
+
     const scale = (extractScaleX(props.map.matrix) + extractScaleY(props.map.matrix)) / 2
     const cd:[number, number] = [delta.width / scale, delta.height / scale]
     // console.log('resize dir:', dir, ' delta:', delta, ' d:', d, ' pos:', pos)
@@ -260,6 +287,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     if (posChange) {
       pose.position = addV2(resizeBasePos, deltaPos)
       setPose(Object.assign({}, pose))
+      //console.log(`setPose ${pose.position}`)
     }
     const newSize = addV2(resizeBase, cd)
     if (props.content.originalSize[0]) {
@@ -269,11 +297,14 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     }
     setSize(newSize)
   }
+
+
   const classes = useStyles({props, pose, size, showTitle, pinned:props.content.pinned})
   //  console.log('render: TITLE_HEIGHT:', TITLE_HEIGHT)
   const contentRef = React.useRef<HTMLDivElement>(null)
   const formRef = React.useRef<HTMLDivElement>(null)
-
+  const gestureForContent = useGesture(handlerForContent)
+  const gestureForTitle = useGesture(handlerForTitle)
   const theContent =
     <div className={classes.rndContainer} {...gestureForContent()}>
       <div className={classes.titlePosition} {...gestureForTitle() /* title can be placed out of Rnd */}>
@@ -359,15 +390,9 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     }>
       <Rnd className={classes.rndCls} enableResizing={isFixed ? resizeDisable : resizeEnable}
         disableDragging={isFixed} ref={rnd}
-        onResizeStart = { (evt)  => {
-          evt.stopPropagation(); evt.preventDefault()
-          setResizeBase(size)
-          setResizeBasePos(pose.position)
-        } }
+        onResizeStart = {onResizeStart}
         onResize = {onResize}
-        onResizeStop = { (e, dir, elem, delta, pos) => {
-          updateHandler()
-        } }
+        onResizeStop = {onResizeStop}
       >
         {theContent}
       </Rnd>
