@@ -43,6 +43,7 @@ interface StyleProps{
   size: [number, number],
   showTitle: boolean,
   pinned: boolean,
+  dragging: boolean
 }
 class RndContentMember{
   buttons = 0
@@ -83,6 +84,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   const [showTitle, setShowTitle] = useState(!props.autoHideTitle || !props.content.pinned)
   const [showForm, setShowForm] = useState(false)
   const [preciseOrientation, setPreciseOrientation] = useState(pose.orientation)
+  const [dragging, setDragging] = useState(false)
   const rnd = useRef<Rnd>(null)                         //  ref to rnd to update position and size
   const contents = props.contents
   const editing = useObserver(() => contents.editing === props.content.id)
@@ -211,13 +213,21 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
         member.dragCanceled = false
       }
     },
-    onDragStart: ({delta, buttons}) => {   // to detect click
+    onDragStart: ({event, currentTarget, delta, buttons}) => {   // to detect click
       //  console.log(`dragStart delta=${delta}  buttons=${buttons}`)
+      setDragging(true)
       member.buttons = buttons
       member.dragCanceled = false
+      if (currentTarget instanceof Element && event instanceof PointerEvent){
+        currentTarget.setPointerCapture(event?.pointerId)
+      }
     },
-    onDragEnd: ({delta, buttons}) => {
+    onDragEnd: ({event, currentTarget, delta, buttons}) => {
       //  console.log(`dragEnd delta=${delta}  buttons=${buttons}`)
+      setDragging(false)
+      if (currentTarget instanceof Element && event instanceof PointerEvent){
+        currentTarget.releasePointerCapture(event?.pointerId)
+      }
       if (!props.map.keyInputUsers.size && member.buttons === MOUSE_RIGHT){ //  right click
         setShowForm(true)
         props.map.keyInputUsers.add('contentForm')
@@ -291,7 +301,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   }
 
 
-  const classes = useStyles({props, pose, size, showTitle, pinned:props.content.pinned})
+  const classes = useStyles({props, pose, size, showTitle, pinned:props.content.pinned, dragging})
   //  console.log('render: TITLE_HEIGHT:', TITLE_HEIGHT)
   const contentRef = React.useRef<HTMLDivElement>(null)
   const formRef = React.useRef<HTMLDivElement>(null)
@@ -457,6 +467,7 @@ const useStyles = makeStyles({
     width: props.size[0],
     height: props.size[1],
     userDrag: 'none',
+    pointerEvents: props.dragging ? 'none' : 'auto'
   }),
   note: (props:StyleProps) => (
     props.showTitle ? {
