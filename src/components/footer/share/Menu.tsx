@@ -1,3 +1,4 @@
+import {Stores} from '@components/utils'
 import {useStore as useMapStore} from '@hooks/MapStore'
 import {useStore as useParticipantsStore} from '@hooks/ParticipantsStore'
 import {useStore as useContentsStore} from '@hooks/SharedContentsStore'
@@ -6,7 +7,11 @@ import whiteboard24Regular from '@iconify-icons/fluent/whiteboard-24-regular'
 import cursorDefaultOutline from '@iconify/icons-mdi/cursor-default-outline'
 import {Icon} from '@iconify/react'
 import Divider from '@material-ui/core/Divider'
+import FormControl from '@material-ui/core/FormControl'
+import FormControlLabel from '@material-ui/core/FormControlLabel'
 import List from '@material-ui/core/List'
+import Radio from '@material-ui/core/Radio'
+import RadioGroup from '@material-ui/core/RadioGroup'
 import CameraAltIcon from '@material-ui/icons/CameraAlt'
 import DownloadIcon from '@material-ui/icons/GetApp'
 import HttpIcon from '@material-ui/icons/Http'
@@ -16,35 +21,32 @@ import UploadIcon from '@material-ui/icons/Publish'
 import ScreenShareIcon from '@material-ui/icons/ScreenShare'
 import StopScreenShareIcon from '@material-ui/icons/StopScreenShare'
 import SubjectIcon from '@material-ui/icons/Subject'
+import {initOptions} from '@models/api/Connection'
 import {connection} from '@models/api/ConnectionDefs'
 import {useTranslation} from '@models/locales'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {assert} from '@models/utils'
-import {createContent, createContentOfIframe, createContentOfText, createContentOfVideo, extractContentData, extractContentDatas} from '@stores/sharedContents/SharedContentCreator'
+import {createContent, createContentOfIframe, createContentOfText,
+  createContentOfVideo, extractContentData, extractContentDatas} from '@stores/sharedContents/SharedContentCreator'
 import {SharedContents} from '@stores/sharedContents/SharedContents'
 import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'
 import {isArray} from 'lodash'
-import {useObserver} from 'mobx-react-lite'
+import {Observer, useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import {CameraSelectorMember} from './CameraSelector'
 import {DialogPageProps} from './DialogPage'
 import {ShareDialogItem} from './SharedDialogItem'
 import {Step} from './Step'
 
-async function startCapture(displayMediaOptions: any = {}) {
-  let captureTracks = null
-
-  try {
-    // @ts-ignore FIXME: https://github.com/microsoft/TypeScript/issues/33232
-    captureTracks = await JitsiMeetJS.createLocalTracks({devices:['desktop'], ...config.rtc.screenOptions})
-    //  captureStream = await navigator.mediaDevices.getDisplayMedia(displayMediaOptions)
-  } catch (err) {
-    console.error(`Share screen error: ${err}`)
-    throw err
-
-  }
-
-  return captureTracks as JitsiLocalTrack[]
+function startCapture(props:Stores) {
+  return new Promise<JitsiLocalTrack[]>((resolve, reject) => {
+    initOptions.desktopSharingFrameRate.max = props.contents.screenFps
+    JitsiMeetJS.createLocalTracks({devices:['desktop']}).then(capturedTracks => {
+      resolve(capturedTracks)
+    }).catch(reason => {
+      console.warn(`Share screen error: ${reason}`)
+    })
+  })
 }
 
 function downloadItems(contents:SharedContents) {
@@ -66,7 +68,6 @@ function importItems(ev: React.ChangeEvent<HTMLInputElement>, sharedContents: Sh
   const files = ev.currentTarget?.files
   if (files && files.length) {
     files[0].text().then((text) => {
-      //  console.log('import:', text)
       const items = JSON.parse(text)
       if (isArray(items)) {
         items.forEach((item) => {
@@ -81,7 +82,7 @@ function importItems(ev: React.ChangeEvent<HTMLInputElement>, sharedContents: Sh
   }
 }
 
-interface ShareMenuProps extends DialogPageProps {
+interface ShareMenuProps extends DialogPageProps, Stores {
   cameras: CameraSelectorMember
 }
 
@@ -101,7 +102,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
     navigator.mediaDevices.enumerateDevices().then((infos) => {
       props.cameras.videos = infos.filter(info => info.kind === 'videoinput')
     })
-    .catch(() => { console.log('Device enumeration error') })
+    .catch(() => { console.warn('Device enumeration error') })
   }
   function setStep(step: Step) {
     if (step === 'camera'){
@@ -138,7 +139,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
     })
   }
   const createScreen = () => {
-    startCapture().then((tracks) => {
+    startCapture(props).then((tracks) => {
       if (tracks.length) {
         const content = createContentOfVideo(tracks, map, 'screen')
         sharedContents.shareContent(content)
@@ -161,7 +162,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
     if (sharing.main) {
       sharedContents.tracks.clearLocalMains()
     } else {
-      startCapture().then((tracks) => {
+      startCapture(props).then((tracks) => {
         if (tracks.length) {
           sharedContents.tracks.addLocalMains(tracks)
         }
@@ -257,8 +258,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
         key="shareScreenContent"
         icon={<OpenInBrowserIcon />}
         text={t('shareScreenContent')}
-        onClick={createScreen}
-      />
+        onClick={createScreen} />
       {sharedContents.tracks.localContents.size ?
         <ShareDialogItem
           key = "stopScreen"
@@ -266,6 +266,24 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
           text={t('stopScreen')}
           onClick={closeAllScreens}
           /> : undefined}
+      <ShareDialogItem key="fps" icon={<></>} text={t('frameRateSetting')} onClick={()=>{}}>
+        <FormControl component="fieldset">
+          <Observer>{
+            ()=> <RadioGroup row aria-label="screen-fps" name="FPS" value={props.contents.screenFps}
+              onChange={(ev)=>{
+                props.contents.setScreenFps(Number(ev.target.value))
+              }}>
+              <FormControlLabel value={1} control={<Radio />} label="1" />
+              <FormControlLabel value={5} control={<Radio />} label="5" />
+              <FormControlLabel value={15} control={<Radio />} label="15" />
+              <FormControlLabel value={30} control={<Radio />} label="30" />
+              <FormControlLabel value={60} control={<Radio />}
+                label={<span>60&nbsp;&nbsp;&nbsp;&nbsp;{t('fps')}</span>} />
+            </RadioGroup>
+          }</Observer>
+        </FormControl>
+      </ShareDialogItem>
+      <Divider />
       <ShareDialogItem
         key="shareMouse"
         icon={<Icon icon={cursorDefaultOutline} style={{fontSize:'1.5rem'}}/>}

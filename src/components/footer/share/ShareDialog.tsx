@@ -1,3 +1,4 @@
+import {Stores} from '@components/utils'
 import {useStore as useMapStore} from '@hooks/MapStore'
 import Dialog from '@material-ui/core/Dialog'
 import DialogContent from '@material-ui/core/DialogContent'
@@ -14,7 +15,7 @@ import {ShareMenu} from './Menu'
 import {Step} from './Step'
 import {TextInput} from './TextInput'
 
-interface ShareDialogProps {
+interface ShareDialogProps extends Stores{
   open: boolean
   onClose: () => void
 }
@@ -40,7 +41,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
   function getPage(step: Step, setStep: (step: Step) => void): JSX.Element | undefined {
     switch (step) {
       case 'menu':
-        return <ShareMenu setStep={setStep} cameras={cameras.current} />
+        return <ShareMenu {...props} setStep={setStep} cameras={cameras.current} />
       case 'text':
         return <TextInput
             setStep={setStep}

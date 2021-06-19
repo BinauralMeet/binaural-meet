@@ -25,6 +25,8 @@ export const enTranslate = {
   stopScreenBackground:'Stop _background screen',
   shareScreenContent:'_Screen in a window',
   stopScreen:'C_lose all screen and camera windows',
+  frameRateSetting: 'Frame rate:',
+  fps: 'fps',
   shareMouse:'_Mouse cursor',
   stopMouse: 'Stop sharing _Mouse cursor',
   ttCreateAndshare: '_Create and share',

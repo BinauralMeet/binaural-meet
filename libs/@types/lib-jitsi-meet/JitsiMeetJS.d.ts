@@ -70,6 +70,10 @@ export interface IJitsiMeetJSOptions {
   disableRtx?: boolean;
   disableH264?: boolean;
   preferH264?: boolean;
+  desktopSharingFrameRate:{
+    min:  number,
+    max:  number,
+  },
 }
 
 export interface JitsiTrackOptions {

@@ -27,6 +27,7 @@ export const ShareDialogItem: React.FC<ShareDialogItemProps> = (props) => {
       <ListItemText style={{fontSize: isSmartphone() ? '2.5em' : '1em'}}>
         {textEl}
       </ListItemText>
+      {props.children}
     </ListItem>
   )
 }

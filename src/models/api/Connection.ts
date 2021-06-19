@@ -34,7 +34,7 @@ declare const global: any
 global.$ = jquery
 global.jQuery = jquery
 
-const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
+export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
   useIPv6: false,
   disableSimulcast: true,
   enableWindowOnErrorHandler: true,
@@ -57,6 +57,8 @@ const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
 
   // Whether desktop sharing should be disabled on Firefox.
   desktopSharingFirefoxDisabled: false,
+
+  desktopSharingFrameRate: {min: 0.3, max: 30}  //  override by config.js
 }
 
 
@@ -73,6 +75,8 @@ const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
   }
 
   public init(): Promise<string> {
+    Object.assign(initOptions, config.rtc.screenOptions)
+
     return new Promise<string>((resolve, reject) => {
       JitsiMeetJS.init(initOptions)
       JitsiMeetJS.setLogLevel(JITSILOGLEVEL)

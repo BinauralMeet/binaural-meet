@@ -272,7 +272,8 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
           {videoMenuItems}
         </Menu>
 
-        <ShareButton size={fabSize} iconSize={iconSize} showDialog={showShare} setShowDialog={setShowShare} />
+        <ShareButton {...props} size={fabSize} iconSize={iconSize} showDialog={showShare}
+          setShowDialog={setShowShare} />
 
         <ErrorDialog />
 

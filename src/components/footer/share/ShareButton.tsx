@@ -1,3 +1,4 @@
+import {Stores} from '@components/utils'
 import {acceleratorText2El} from '@components/utils/formatter'
 import {useStore as useContentsStore} from '@hooks/SharedContentsStore'
 import shareSquare from '@iconify-icons/fa-solid/share-square'
@@ -15,7 +16,7 @@ const useStyles = makeStyles({
     display: 'inline-block',
   },
 })
-interface ShareButtonProps{
+interface ShareButtonProps extends Stores{
   showDialog:boolean
   setShowDialog(flag: boolean):void
   size?: number
@@ -34,7 +35,7 @@ export const ShareButton: React.FC<ShareButtonProps> = (props) => {
         aria-label="share" onClick={() => props.setShowDialog(true)}>
         <Icon icon={shareSquare} style={{width:props.iconSize, height:props.iconSize}} />
       </FabWithTooltip>
-      <ShareDialog open={props.showDialog} onClose={() => props.setShowDialog(false)} />
+      <ShareDialog {...props} open={props.showDialog} onClose={() => props.setShowDialog(false)} />
     </div>
   )
 }

@@ -48,6 +48,11 @@ export class SharedContents extends EventEmitter {
       this.localId = newLocalId
       contentLog(`Set new local id ${this.localId}`)
     })
+    const fps = localStorage.getItem('screenFps')
+    if (fps){ this.screenFps = JSON.parse(fps) }
+    autorun(() => {
+      localStorage.setItem('screenFps', JSON.stringify(this.screenFps))
+    })
   }
   tracks = new SharedContentTracks(this)
 
@@ -495,6 +500,10 @@ export class SharedContents extends EventEmitter {
       }
     }
   }
+
+  //  screen fps setting
+  @observable screenFps = 30
+  @action setScreenFps(fps: number){ this.screenFps = fps }
 }
 
 const contents = new SharedContents()
