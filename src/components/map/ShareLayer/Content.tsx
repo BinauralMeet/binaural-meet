@@ -65,12 +65,12 @@ const useStyles = makeStyles({
     width: '100%',
     height: '100%',
     pointerEvents: 'none',
-    border: '2px gray solid',
+    border: 'none',
   },
   iframeEdit: {
     width: '100%',
     height: '100%',
-    border: '2px yellow solid',
+    border: 'none',
   },
   div:{
     width: '100%',
@@ -93,15 +93,11 @@ export const RawContent: React.FC<ContentProps> = (props:ContentProps) => {
   if (props.content.type === 'img') {
     rv = <img className={classes.img} src={props.content.url} alt={props.content.name}/>
   }else if (props.content.type === 'iframe' || props.content.type === 'whiteboard') {
-    rv = <div className={classes.div}
-      onDoubleClick = {() => { if (!editing) { setEditing(true) } }}
-    >
+    rv = <div className={classes.div}>
       <iframe className={editing ? classes.iframeEdit : classes.iframe}
         style={props.content.type==='whiteboard'?{backgroundColor:'white'}:{}}
         src={props.content.url} key={props.content.name} title={props.content.name}/>
       </div>
-      // hasevr  width of iframe is too wide but I could not find way to change. Below not work.
-      // width={props.content.size[0] - 4} height={props.content.size[1] - 2}
   }else if (props.content.type === 'youtube') {
     rv = <YouTube {...props} />
   }else if (props.content.type === 'gdrive') {

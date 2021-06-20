@@ -14,12 +14,10 @@ const useStyles = makeStyles({
     width: '100%',
     height: '100%',
     pointerEvents: 'none',
-    border: '2px gray solid',
   },
   iframeEdit: {
     width: '100%',
     height: '100%',
-    border: '2px yellow solid',
   },
   iframeVScrool: (props: ContentProps) => ({
     width:props.content.size[0] + 13 + 10,
@@ -131,9 +129,7 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
 
   const vscroll = isGDrivePreviewScrollable(mimeType)
 
-  return <div className={mimeType ? classes.divClip : classes.divError}
-    onDoubleClick = {() => { if (!editing) { props.contents.setEditing(props.content.id) } }}
-  >
+  return <div className={mimeType ? classes.divClip : classes.divError} >
     {mimeType ?
       <div className={(editing || !vscroll) ? classes.divClip : classes.divScroll} ref={divScroll}
         onWheel = {ev => ev.ctrlKey || ev.stopPropagation() } >

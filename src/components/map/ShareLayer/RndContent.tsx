@@ -44,6 +44,7 @@ interface StyleProps{
   showTitle: boolean,
   pinned: boolean,
   dragging: boolean
+  editing: boolean
 }
 class RndContentMember{
   buttons = 0
@@ -201,6 +202,12 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
 
   const isFixed = (props.autoHideTitle && props.content.pinned)
   const handlerForTitle:UserHandlersPartial = {
+    onDoubleClick: (evt)=>{
+      if (isContentEditable(props.content)){
+        stop(evt)
+        setEditing(!editing)
+      }
+    },
     onDrag: ({down, delta, event, xy, buttons}) => {
       //  console.log('onDragTitle:', delta)
       if (isFixed) { return }
@@ -301,7 +308,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   }
 
 
-  const classes = useStyles({props, pose, size, showTitle, pinned:props.content.pinned, dragging})
+  const classes = useStyles({props, pose, size, showTitle, pinned:props.content.pinned, dragging, editing})
   //  console.log('render: TITLE_HEIGHT:', TITLE_HEIGHT)
   const contentRef = React.useRef<HTMLDivElement>(null)
   const formRef = React.useRef<HTMLDivElement>(null)
@@ -411,6 +418,8 @@ const buttonStyle = {
   },
 }
 
+const BORDER_WIDTH = 3
+
 const useStyles = makeStyles({
   container: (props: StyleProps) => {
     const mat = new DOMMatrix()
@@ -462,12 +471,16 @@ const useStyles = makeStyles({
   },
   content: (props: StyleProps) => ({
     position: 'absolute',
-    top: props.showTitle ? TITLE_HEIGHT : 0,
-    left: 0,
+    top: (props.showTitle ? TITLE_HEIGHT : 0) - (props.editing ? BORDER_WIDTH : 0),
+    left: props.editing ? -BORDER_WIDTH : 0,
     width: props.size[0],
     height: props.size[1],
     userDrag: 'none',
-    pointerEvents: props.dragging ? 'none' : 'auto'
+    pointerEvents: props.dragging ? 'none' : 'auto',
+    borderWidth: BORDER_WIDTH,
+    borderColor: 'yellow',
+    borderStyle: props.editing ? 'solid' : 'none',
+    cursor: props.editing ? 'default' : undefined,
   }),
   note: (props:StyleProps) => (
     props.showTitle ? {
