@@ -1,6 +1,5 @@
 import {formatTimestamp} from '@components/utils'
 import {useStore as useParticipants} from '@hooks/ParticipantsStore'
-import {useStore as useContents} from '@hooks/SharedContentsStore'
 import {Tooltip} from '@material-ui/core'
 import {makeStyles} from '@material-ui/core/styles'
 import {CSSProperties} from '@material-ui/styles'
@@ -172,7 +171,6 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
   const memberRef = React.useRef<TextMember>(new TextMember())
   const member = memberRef.current
   const participants = useParticipants()
-  const contents = useContents()
   const ref = useRef<HTMLDivElement>(null)
   const newTexts = JSON.parse(url) as TextMessages
   const refEdit = useRef<HTMLDivElement>(null)

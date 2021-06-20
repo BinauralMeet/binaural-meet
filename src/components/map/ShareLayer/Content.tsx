@@ -85,9 +85,6 @@ export interface ContentProps extends Stores{
 export const RawContent: React.FC<ContentProps> = (props:ContentProps) => {
   const classes = useStyles()
   const editing = useObserver(() => props.contents.editing === props.content.id)
-  function setEditing(flag:boolean){
-    props.contents.setEditing(flag ? props.content.id : '')
-  }
 
   let rv
   if (props.content.type === 'img') {
