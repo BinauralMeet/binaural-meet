@@ -11,12 +11,12 @@ import map from '@stores/Map'
 import participants from '@stores/participants/Participants'
 import {action, autorun, computed, makeObservable, observable, when} from 'mobx'
 
-export type ErrorType = '' | 'connection' | 'retry' | 'noMic' | 'micPermission' | 'channel' | 'enterance' | 'afk'
+export type ErrorType = '' | 'connection' | 'retry' | 'noMic' | 'micPermission' | 'channel' | 'entrance' | 'afk'
 
 export class ErrorInfo {
   @observable message = ''
   @computed get fatal() { return !this.type }
-  @observable type:ErrorType = 'enterance'
+  @observable type:ErrorType = 'entrance'
   @observable title = ''
   @observable supressedTypes:Set<ErrorType> = new Set()
   show(){
@@ -39,7 +39,7 @@ export class ErrorInfo {
       if (participants.local.awayFromKeyboard){
         this.title = t('afkTitle')
         this.type = 'afk'
-    }
+      }
     })
   }
 
@@ -61,6 +61,10 @@ export class ErrorInfo {
   }
   /// check errors after try to start the connection to the XMPP server.
   @action connectionStart() {
+    if (urlParameters.skipEntrance !== null){
+      this.type = ''
+      participants.local.sendInformation()
+    }
     this.enumerateDevices()
     if (urlParameters.testBot === null)  {
       when(() => this.type === '', () => {
@@ -146,6 +150,8 @@ export class ErrorInfo {
       this.checkRemote()
     }
   }
+
+  //  testBot
   canvas: HTMLCanvasElement|undefined = undefined
   oscillator: OscillatorNode|undefined = undefined
   startTestBot () {

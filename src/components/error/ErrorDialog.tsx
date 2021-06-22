@@ -12,7 +12,7 @@ import {TheEntrance} from './TheEntrance'
 
 
 export const dialogs = new Map<ErrorType, JSX.Element>()
-dialogs.set('enterance', <TheEntrance />)
+dialogs.set('entrance', <TheEntrance />)
 dialogs.set('afk', <AfkDialog />)
 
 export const ErrorDialogFrame: React.FC<{onClose:(event:{}, reason:string)=>void}> = (props) => {

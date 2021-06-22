@@ -65,6 +65,9 @@ export const TextEdit: React.FC<TextEditProps> = (props:TextEditProps) => {
           ev.stopPropagation()
           ev.preventDefault()
           props.text.message = text
+          if (props.div){
+            onUpdateTexts(props.member.messages, props.div, props)
+          }
           props.contents.setEditing('')
         }
       }}
