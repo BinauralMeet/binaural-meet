@@ -58,7 +58,7 @@ function connectConference() {
     urlParameters.rooms = '_ haselab test testbot'
   }
   if (urlParameters.rooms){
-    const roomNames = urlParameters.rooms.split(' ')
+    const roomNames = urlParameters.rooms.split(/ |\//)
     roomNames.forEach(roomName => {
       const connection = new Connection()
       connection.init().then(() => {
