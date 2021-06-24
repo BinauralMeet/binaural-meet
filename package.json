@@ -1,5 +1,5 @@
 {
-  "name": "binaural-meet",
+  "name": "bm-room-info",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -58,6 +58,7 @@
     "link-typing-lib-jitsi-meet": "cd libs/@types/lib-jitsi-meet; yarn link; cd ../../../; yarn link @types/lib-jitsi-meet",
     "link-lib": "yarn run link-lib-jitsi-meet;yarn run link-typing-lib-jitsi-meet"
   },
+  "homepage" : "https://binaural.me/roomInfo",
   "eslintConfig": {
     "extends": [
       "react-app",

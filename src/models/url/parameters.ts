@@ -6,7 +6,7 @@ interface Params {
 }
 
 export function decodeGetParams(url: string): Params {
-  const urlObj = new URL(url)
+  const urlObj = new URL(decodeURI(url))
   const props = ['rooms', 'connect', 'ui']
 
   const res: Params = props.reduce(
