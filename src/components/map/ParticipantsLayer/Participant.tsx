@@ -86,7 +86,8 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
     awayFromKeyboard: participant.awayFromKeyboard,
   }))
   const name = useObserver(() => participant!.information.name)
-  const audioLevel = useObserver(() => Math.pow(participant!.tracks.audioLevel, 0.5))
+  const audioLevel = useObserver(() =>
+    participant!.trackStates.micMuted ? 0 : Math.pow(participant!.tracks.audioLevel, 0.5))
   // console.log(`audioLevel ${audioLevel}`)
   const micMuted = useObserver(() => participant.trackStates.micMuted)
   const speakerMuted = useObserver(() => participant.trackStates.speakerMuted)

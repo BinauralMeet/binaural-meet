@@ -411,7 +411,7 @@ export class ConferenceSync{
       }
     })
   }
-  clear() {
+  unbind() {
     this.disposers.forEach(d => d())
   }
 

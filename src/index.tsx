@@ -7,11 +7,9 @@ import {urlParameters} from '@models/url'
 import {resolveAtEnd} from '@models/utils'
 import errorInfo from '@stores/ErrorInfo'
 import '@stores/index'  // init store (DO NOT delete)
-import participants from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
-import {JitsiLocalTrack} from 'lib-jitsi-meet'
 import {when} from 'mobx'
-import { configure } from "mobx"
+import {configure} from "mobx"
 import ReactDOM from 'react-dom'
 
 configure({
@@ -55,17 +53,7 @@ function connectConference() {
 
       return ev.returnValue
     }
-
-    if (participants.local.tracks.audio) {
-      connection.conference.removeTrack(participants.local.tracks.audio as JitsiLocalTrack)
-    }
-    if (participants.local.tracks.avatar) {
-      connection.conference.removeTrack(participants.local.tracks.avatar as JitsiLocalTrack)
-    }
-    connection.conference._jitsiConference?.leave().then((arg) => {
-      logStr += `leave (${arg}). `
-      localStorage.setItem('log', logStr)
-    })
+    connection.leaveConference()
     connection.disconnect().then((arg) => {
       logStr += `Diconnected (${arg}). `
       localStorage.setItem('log', logStr)

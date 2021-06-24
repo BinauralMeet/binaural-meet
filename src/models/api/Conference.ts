@@ -65,6 +65,29 @@ export class Conference extends EventEmitter {
     }
   }
 
+  public uninit(){
+    if (participants.local.tracks.audio) {
+      this.removeTrack(participants.local.tracks.audio as JitsiLocalTrack)
+    }
+    if (participants.local.tracks.avatar) {
+      this.removeTrack(participants.local.tracks.avatar as JitsiLocalTrack)
+    }
+    this.sync.unbind()
+
+    return new Promise((resolve, reject) => {
+      this._jitsiConference?.leave().then((arg) => {
+        let logStr = localStorage.getItem('log') ?? ''
+        logStr += `leave (${arg}). `
+        localStorage.setItem('log', logStr)
+        resolve(arg)
+      }).catch((reason)=>{
+        reject(reason)
+      }).finally(()=>{
+        this._jitsiConference = undefined
+      })
+    })
+  }
+
   //  Commmands for local tracks --------------------------------------------
   private localMicTrack?: JitsiLocalTrack
   private localCameraTrack?: JitsiLocalTrack
