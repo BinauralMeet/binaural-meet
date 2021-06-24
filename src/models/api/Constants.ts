@@ -1,11 +1,8 @@
-
 const ConnectionStates = {
   DISCONNECTED: 'disconnected',
   CONNECTING: 'connecting',
   CONNECTED: 'connected',
 }
-export const contentTrackCarrierName = '_contentTrackCarrier'
-export const roomInfoPeeperName = '_roomInfoPeeper'
 
 type ConnectionStatesType =
   typeof ConnectionStates.DISCONNECTED |
@@ -15,3 +12,5 @@ type ConnectionStatesType =
 export { ConnectionStates }
 export type { ConnectionStatesType }
 
+export const contentTrackCarrierName = '_contentTrackCarrier'
+export const roomInfoPeeperName = '_roomInfoPeeper'

@@ -1,5 +1,5 @@
+import {MAP_CENTER} from '@components/Constants'
 import {MapObject as IMapObject, Perceptibility, Pose2DMap} from '@models/MapObject'
-import {MAP_CENTER} from '@models/MapObject'
 import _ from 'lodash'
 import { makeObservable, observable} from 'mobx'
 import {shallowObservable, Store} from './utils'

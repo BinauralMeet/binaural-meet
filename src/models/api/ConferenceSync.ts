@@ -1,12 +1,11 @@
-import { RemoteInformation } from '@models/Participant'
+import {contentTrackCarrierName, roomInfoPeeperName} from '@models/api/Constants'
+import {RemoteInformation} from '@models/Participant'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {urlParameters} from '@models/url'
 import {makeThemContents} from '@stores/sharedContents/SharedContentCreator'
 import JitsiMeetJS from 'lib-jitsi-meet'
 import {IReactionDisposer} from 'mobx'
 import type {Conference} from './Conference'
 import {ConferenceEvents} from './Conference'
-import {contentTrackCarrierName} from './ConnectionForScreenContent'
 
 export const MessageType = {
   CHAT_MESSAGE: 'm_chat',                       //  -> text chat message
@@ -72,7 +71,8 @@ export class ConferenceSync{
       this.onParticipantLeft(id)
     })
     this.conference.on(ConferenceEvents.USER_JOINED, (id) => {
-      if (this.conference._jitsiConference?.getParticipantById(id).getDisplayName() === contentTrackCarrierName) {
+      const name = this.conference._jitsiConference?.getParticipantById(id).getDisplayName()
+      if (name === contentTrackCarrierName || name === roomInfoPeeperName) {
         //  do nothing
       }else {
         this.conference.room!.participants.join(id)
@@ -122,7 +122,7 @@ export class ConferenceSync{
       }
     })
   }
-  clear() {
+  unbind() {
     this.disposers.forEach(d => d())
   }
 

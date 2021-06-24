@@ -1,4 +1,4 @@
-import {contentTypeIcons} from '@components/map/shareLayer/Content'
+import {contentTypeIcons} from '@components/map/ShareLayer/Content'
 import {Tooltip} from '@material-ui/core'
 import {useTranslation} from '@models/locales'
 import {SharedContent as ISharedContent} from '@models/SharedContent'

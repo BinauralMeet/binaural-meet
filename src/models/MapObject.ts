@@ -1,6 +1,3 @@
-export const MAP_SIZE = 5000
-export const MAP_CENTER:[number, number] = [0, 0]
-
 export interface Pose2DMap {
   position: [number, number]
   orientation: number

@@ -1,4 +1,4 @@
-import {roomInfoSnifferName} from '@models/Constant'
+import {roomInfoPeeperName} from '@models/api/Constants'
 import {participantsStore} from '@stores/participants'
 import {default as participants} from '@stores/participants/Participants'
 import {Room} from '@stores/Room'
@@ -48,10 +48,27 @@ export class Conference extends EventEmitter {
     this._jitsiConference = jc
     this.registerJistiConferenceEvents()
     this.sync.bind()
-    this._jitsiConference.setDisplayName(roomInfoSnifferName)
+    this._jitsiConference.setDisplayName(roomInfoPeeperName)
     this._jitsiConference.join('')
     this._jitsiConference.setSenderVideoConstraint(1080)
     this.joinTime = Date.now()
+  }
+
+  public uninit(){
+    this.sync.unbind()
+
+    return new Promise((resolve, reject) => {
+      this._jitsiConference?.leave().then((arg) => {
+        let logStr = localStorage.getItem('log') ?? ''
+        logStr += `leave (${arg}). `
+        localStorage.setItem('log', logStr)
+        resolve(arg)
+      }).catch((reason)=>{
+        reject(reason)
+      }).finally(()=>{
+        this._jitsiConference = undefined
+      })
+    })
   }
 
   //  Jitsi API Calls ----------------------------------------

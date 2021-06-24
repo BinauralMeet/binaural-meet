@@ -97,6 +97,9 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
     }
     throw new Error('No connection has been established.')
   }
+  public leaveConference(){
+    return this.conference.uninit()
+  }
 
   public disconnect(): Promise < any > {
     if (this._jitsiConnection) {
@@ -114,7 +117,7 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
     this.conference?.room?.contents?.clearAllRemotes()
 
     //  Try to connect again.
-    this.conference._jitsiConference?.leave().then(()=>{
+    this.leaveConference().then(()=>{
       console.log('Disconnected but succeed in leaving... strange ... try to join again.')
     }).catch(()=>{
       console.log('Disconnected and failed to leave... try to join again')
