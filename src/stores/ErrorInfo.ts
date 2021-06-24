@@ -1,4 +1,4 @@
-import {MAP_SIZE} from '@components/map/Base'
+import {MAP_SIZE} from '@components/Constants'
 import {connection} from '@models/api'
 import {ConnectionStates} from '@models/api/Constants'
 import {t} from '@models/locales'

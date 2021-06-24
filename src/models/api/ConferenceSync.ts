@@ -1,3 +1,4 @@
+import {contentTrackCarrierName, roomInfoPeeperName} from '@models/api/Constants'
 import {t} from '@models/locales'
 import {Pose2DMap} from '@models/MapObject'
 import {priorityCalculator} from '@models/middleware/trafficControl'
@@ -14,7 +15,6 @@ import _ from 'lodash'
 import {autorun, IReactionDisposer} from 'mobx'
 import type {Conference} from './Conference'
 import {ConferenceEvents} from './Conference'
-import {contentTrackCarrierName} from './ConnectionForScreenContent'
 import { notification } from './Notification'
 
 export const MessageType = {
@@ -111,7 +111,8 @@ export class ConferenceSync{
       this.onParticipantLeft(id)
     })
     this.conference.on(ConferenceEvents.USER_JOINED, (id) => {
-      if (this.conference._jitsiConference?.getParticipantById(id).getDisplayName() === contentTrackCarrierName) {
+      const name = this.conference._jitsiConference?.getParticipantById(id).getDisplayName()
+      if (name === contentTrackCarrierName || name === roomInfoPeeperName) {
         //  do nothing
       }else {
         participants.join(id)

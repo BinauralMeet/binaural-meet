@@ -1,4 +1,5 @@
 import {connection} from '@models/api'
+import {contentTrackCarrierName} from '@models/api/Constants'
 import {assert} from '@models/utils'
 import {EventEmitter} from 'events'
 import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'
@@ -6,7 +7,6 @@ import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
 
-export const contentTrackCarrierName = '_contentTrackCarrier'
 
 export class ConnectionForContent extends EventEmitter {
   private jitsiConnection?: JitsiMeetJS.JitsiConnection

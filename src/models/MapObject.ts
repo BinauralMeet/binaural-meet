@@ -1,4 +1,3 @@
-
 export interface Pose2DMap {
   position: [number, number]
   orientation: number

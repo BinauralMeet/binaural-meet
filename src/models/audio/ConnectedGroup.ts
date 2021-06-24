@@ -1,4 +1,4 @@
-import {MAP_SIZE} from '@components/map/Base'
+import {MAP_SIZE} from '@components/Constants'
 import {Pose2DMap} from '@models/MapObject'
 import {LocalParticipant, PARTICIPANT_SIZE, RemoteParticipant} from '@models/Participant'
 import {SharedContent} from '@models/SharedContent'

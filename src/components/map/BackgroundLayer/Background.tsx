@@ -1,4 +1,4 @@
-import {MAP_SIZE} from '@components/map/Base'
+import {MAP_SIZE} from '@components/Constants'
 import jitsiIcon from '@images/jitsi/Poweredby_Jitsi_logo_white_04_2020_white.png'
 import {makeStyles} from '@material-ui/core/styles'
 import React from 'react'

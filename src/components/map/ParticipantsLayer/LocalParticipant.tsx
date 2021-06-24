@@ -1,3 +1,4 @@
+import {MAP_SIZE} from '@components/Constants'
 import {MoreButton, moreButtonControl, MoreButtonMember} from '@components/utils/MoreButton'
 import {useStore} from '@hooks/ParticipantsStore'
 import {makeStyles} from '@material-ui/core/styles'
@@ -6,7 +7,6 @@ import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import {DragHandler, DragState} from '../../utils/DragHandler'
 import {KeyHandlerPlain} from '../../utils/KeyHandler'
-import {MAP_SIZE} from '../Base/Base'
 import {LocalParticipantForm} from './LocalParticipantForm'
 import {Participant, ParticipantProps} from './Participant'
 

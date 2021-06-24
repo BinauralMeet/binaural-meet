@@ -13,10 +13,6 @@ import React, {useEffect, useRef} from 'react'
 import ResizeObserver from 'react-resize-observer'
 import {useGesture} from 'react-use-gesture'
 
-export const MAP_SIZE = 5000
-export const MAP_CENTER:[number, number] = [0, 0]
-
-
 //  utility
 function limitScale(currentScale: number, scale: number): number {
   const targetScale = currentScale * scale
