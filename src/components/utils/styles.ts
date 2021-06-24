@@ -54,7 +54,7 @@ export const styleForList = makeStyles({
     width:'100%',
   },
   title: (props: ListLineProps) => ({
-    fontSize: props.fontSize * 0.8,
+    fontSize: props.fontSize,
     justifyContent: 'start',
     justifyItems: 'start',
     alignItems: 'center',

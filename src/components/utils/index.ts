@@ -1,18 +1,3 @@
-import {Chat} from '@stores/Chat'
-import {MapData} from '@stores/Map'
-import {Participants} from '@stores/participants/Participants'
-import {SharedContents} from '@stores/sharedContents/SharedContents'
-export interface Stores {
-  map: MapData
-  participants: Participants
-  contents: SharedContents
-  chat: Chat
-}
-
-export interface BaseProps extends Stores {
-  transparent?: boolean
-}
-
 export function formatTimestamp(stamp: number){
   const textDate = new Date(stamp)
   const now = new Date()

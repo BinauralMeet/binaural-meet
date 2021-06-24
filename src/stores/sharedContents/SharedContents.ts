@@ -1,12 +1,8 @@
-import {connection} from '@models/api'
-import {SharedContent as ISharedContent, WallpaperStore} from '@models/SharedContent'
-import {diffMap, intersectionMap} from '@models/utils'
+import {SharedContent as ISharedContent} from '@models/SharedContent'
+import {diffMap} from '@models/utils'
 import {default as participantsStore} from '@stores/participants/Participants'
 import {EventEmitter} from 'events'
-import _ from 'lodash'
 import {action, autorun, computed, makeObservable, observable} from 'mobx'
-import {createContent, extractContentDatas, isContentWallpaper, moveContentToTop} from './SharedContentCreator'
-import {SharedContentTracks} from './SharedContentTracks'
 
 export const CONTENTLOG = false      // show manipulations and sharing of content
 export const contentLog = CONTENTLOG ? console.log : (a:any) => {}
@@ -54,7 +50,6 @@ export class SharedContents extends EventEmitter {
       localStorage.setItem('screenFps', JSON.stringify(this.screenFps))
     })
   }
-  tracks = new SharedContentTracks(this)
 
   @observable pasteEnabled = true
 
@@ -92,22 +87,6 @@ export class SharedContents extends EventEmitter {
     return participant
   }
 
-  //  pasted content
-  @observable.ref pasted:ISharedContent = createContent()
-  @action setPasted(c:ISharedContent) {
-    console.log('setPasted:', c)
-    this.pasted = c
-  }
-  @action sharePasted() {
-    this.shareContent(this.pasted)
-    this.pasted = createContent()
-  }
-  //  share content
-  @action shareContent(content:ISharedContent) {
-    moveContentToTop(content)
-    this.addLocalContent(content)
-  }
-
   @computed get localParticipant(): ParticipantContents {
     return this.getParticipant(this.localId)
   }
@@ -124,56 +103,7 @@ export class SharedContents extends EventEmitter {
     return undefined
   }
 
-  removeSameWallpaper(bgs: ISharedContent[]) {
-    let rv = false
-    this.localParticipant.myContents.forEach((c) => {
-      if (isContentWallpaper(c)) {
-        const same = bgs.find(t => c.url === t.url && _.isEqual(c.pose, t.pose))
-        if (same) {
-          //  const pid = this.owner.get(same.id)
-          if (same.id !== c.id && same.zorder <= c.zorder) {
-            this.removeByLocal(c.id)
-            rv = true
-            console.warn(`My wallpapers id:${c.id} url:${c.url} removed.`)
-          }
-        }
-      }
-    })
-
-    return rv
-  }
-
-  checkDuplicatedWallpaper(pid: string, cs: ISharedContent[]) {
-    const targets = cs.filter(isContentWallpaper)
-    this.localParticipant.myContents.forEach((c) => {
-      if (isContentWallpaper(c)) {
-        const same = targets.find(t => c.url === t.url && _.isEqual(c.pose, t.pose))
-        if (same && same.zorder <= c.zorder) {
-          this.removeByLocal(c.id)
-          console.warn(`My wallpapers id:${c.id} url:${c.url} removed.`)
-        }
-      }
-    })
-  }
-
-  private removeDuplicated() {
-    let changed = false
-    this.participants.forEach((remote) => {
-      if (remote.participantId > this.localParticipant.participantId) {
-        const com = intersectionMap(remote.myContents, this.localParticipant.myContents)
-        com.forEach((c, cid) => {
-          this.disposeContent(c)
-          this.localParticipant.myContents.delete(cid)
-        })
-        changed = changed || com.size !== 0
-      }
-    })
-    if (changed) {
-      connection.conference.sync.sendMyContents()
-    }
-  }
   private updateAll() {
-    this.removeDuplicated()
     const newAll:ISharedContent[] = []
     this.participants.forEach((participant) => {
       newAll.push(...participant.myContents.values())
@@ -188,80 +118,7 @@ export class SharedContents extends EventEmitter {
     this.all = newAll
     this.sorted = newSorted
 
-    this.saveWallpaper()
     //  console.log('update all len=', this.all.length, ' all=', JSON.stringify(this.all))
-  }
-
-  //  wallpaper contents
-  wallpapers = ''
-  private getWallpaper() {
-    let nWallpapers = this.sorted.findIndex((c) => !isContentWallpaper(c))
-    if (nWallpapers < 0) { nWallpapers = this.sorted.length }
-
-    return this.sorted.slice(0, nWallpapers)
-  }
-  private oldWallPapers: ISharedContent[] = []
-  private saveWallpaper() {
-    if (!this.localId) { return }
-    if (!this.wallpapers) {
-      this.loadWallpaper()
-    }
-    let newWallPapers = this.getWallpaper()
-    if (newWallPapers.find((c, idx) => c !== this.oldWallPapers[idx])
-     || newWallPapers.length !== this.oldWallPapers.length){
-       this.oldWallPapers = newWallPapers //  save old one to compare next time.
-      //  check dupulicated wall papers.
-      if (this.removeSameWallpaper(newWallPapers)) { newWallPapers = this.getWallpaper() }
-      //  update wallpapers in localStorage
-      const newStore:WallpaperStore = {room:connection.conferenceName, contents:extractContentDatas(newWallPapers)}
-      let wpStores:WallpaperStore[] = []
-      const oldStr = localStorage.getItem('wallpapers')
-      if (oldStr) { wpStores = JSON.parse(oldStr) as WallpaperStore[] }
-      const idx = wpStores.findIndex(wps => wps.room ===  newStore.room)
-      idx === -1 ? wpStores.push(newStore) : wpStores[idx] = newStore
-      localStorage.setItem('wallpapers', JSON.stringify(wpStores))
-    }
-  }
-  loadWallpaper() {
-    if (this.wallpapers) { return }         //  already loaded
-    const curWp = this.getWallpaper()
-    if (curWp.length) {                     //  already exist
-      this.wallpapers = JSON.stringify(curWp)
-
-      return
-    }
-
-    //  load wallpapers from local storage
-    const str = localStorage.getItem('wallpapers')
-    if (!str) {
-      this.wallpapers = JSON.stringify([])
-    }else {
-      const wpStores = JSON.parse(str) as WallpaperStore[]
-      const loaded = wpStores.find(store => store.room === connection.conferenceName)
-      if (loaded) {
-        loaded.contents.forEach((lc) => {
-          const newContent = createContent()
-          Object.assign(newContent, lc)
-          this.addLocalContent(newContent)
-        })
-        this.wallpapers = JSON.stringify(this.getWallpaper())
-      }
-    }
-  }
-
-  //  add
-  addLocalContent(c:ISharedContent) {
-    if (!participantsStore.localId) {
-      console.error('addLocalContant() failed. Invalid Participant ID.')
-
-      return
-    }
-    if (!c.id) { c.id = this.getUniqueId() }
-    this.localParticipant.myContents.set(c.id, c)
-    this.owner.set(c.id, participantsStore.localId)
-    //  console.log('addLocalConent', c)
-    this.updateAll()
-    connection.conference.sync.sendMyContents()
   }
 
   private checkAndGetContent(cid: string, callBy?:string) {
@@ -287,63 +144,10 @@ export class SharedContents extends EventEmitter {
       this.updateAll()
     }
   }
-  //  updated by local user
-  updateByLocal(newContent: ISharedContent) {
-    const {pid, pc} = this.checkAndGetContent(newContent.id, 'updateByLocal')
-    if (pc) {
-      if (pid === this.localId) {
-        pc.myContents.set(newContent.id, newContent)
-        this.updateAll()
-        connection.conference.sync.sendMyContents()
-      }else if (pid) {
-        connection.conference.sync.sendContentUpdateRequest(pid, newContent)
-      }
-    }
-  }
-  //  removed by local user
-  removeByLocal(cid: string) {
-    const {pid, pc} = this.checkAndGetContent(cid, 'removeByLocal')
-    if (pc) {
-      if (pid === this.localId) {
-        const toRemove = pc.myContents.get(cid)
-        if (toRemove) {
-          this.disposeContent(toRemove)
-          pc.myContents.delete(cid)
-          this.owner.delete(cid)
-          this.updateAll()
-          connection.conference.sync.sendMyContents()
-        }else {
-          console.log(`Failed to find myContent ${cid} to remove.`)
-        }
-      }else if (pid) {
-        connection.conference.sync.sendContentRemoveRequest(pid, cid)
-      }
-    }
-  }
-  //  Update request from remote.
-  updateByRemoteRequest(c: ISharedContent) {
-    const pid = this.owner.get(c.id)
-    if (pid === this.localId) {
-      this.updateByLocal(c)
-    }else {
-      console.error(`This update request is for ${pid} and not for me.`)
-    }
-  }
-  //  Remove request from remote.
-  removeByRemoteRequest(cid: string) {
-    const {pid, pc} = this.checkAndGetContent(cid, 'removeByRemoteRequest')
-    if (pc) {
-      if (pid === this.localId) {
-        this.removeByLocal(cid)
-      }else {
-        console.error('remote try to remove my content')
-      }
-    }
-  }
 
   //  replace remote contents of an remote user by remote.
   replaceRemoteContents(cs: ISharedContent[], pid:string) {
-    if (pid === contents.localId) {
+    if (pid === this.localId) {
       console.error('A remote tries to replace local contents.')
     }
     this.updateRemoteContents(cs, pid)
@@ -357,7 +161,7 @@ export class SharedContents extends EventEmitter {
 
   //  Update remote contents by remote.
   updateRemoteContents(cs: ISharedContent[], pid:string) {
-    if (pid === contents.localId) {
+    if (pid === this.localId) {
       console.error('A remote tries to updates local contents.')
     }
     cs.forEach((c) => {
@@ -379,10 +183,6 @@ export class SharedContents extends EventEmitter {
       }
       //  set content
       remote.myContents.set(c.id, c)
-      //  update track in cases of track based contents.
-      if (c.type === 'screen' || c.type === 'camera') {
-        this.tracks.onUpdateContent(c)
-      }
     })
     this.pendToRemoves.forEach(pc => {
       if (pc.myContents.size === 0){ this.pendToRemoves.delete(pc.participantId) }
@@ -391,7 +191,7 @@ export class SharedContents extends EventEmitter {
   }
   //  Remove remote contents by remote.
   removeRemoteContents(cids: string[], pid:string) {
-    if (pid === contents.localId) {
+    if (pid === this.localId) {
       console.error('Remote removes local contents.')
     }
     const pc = this.getParticipant(pid)
@@ -408,44 +208,12 @@ export class SharedContents extends EventEmitter {
     this.updateAll()
   }
 
-  //  If I'm the next, obtain the contents
   onParticipantLeft(pidLeave:string) {
     contentLog('onParticipantLeft called with pid = ', pidLeave)
     const participantLeave = this.participants.get(pidLeave)
     if (participantLeave) {
-      const allPids = Array.from(participantsStore.remote.keys())
-      allPids.push(this.localId)
-      allPids.sort()
-      const idx = allPids.findIndex(cur => cur > pidLeave)
-      const next = allPids[idx >= 0 ? idx : 0]
-      contentLog('next = ', next)
-      let updated = false
-      if (next === this.localId) {
-        contentLog('Next is me')
-        participantLeave.myContents.forEach((c, cid) => {
-          if (c.type === 'screen' || c.type === 'camera') {
-            this.owner.delete(cid)
-            participantLeave.myContents.delete(cid)
-            this.disposeContent(c)
-          }else {
-            this.localParticipant.myContents.set(cid, c)
-            this.owner.set(cid, this.localId)
-            updated = true
-            contentLog('set owner for cid=', cid, ' pid=', this.localId)
-          }
-        })
-        contentLog('remove:', pidLeave, ' current:', JSON.stringify(allPids))
-        contentLog('local contents sz:', this.localParticipant.myContents.size,
-                   ' json:', JSON.stringify(Array.from(this.localParticipant.myContents.keys())))
-        this.removeParticipant(participantLeave)
-      }else {
-        contentLog('Next is remote')
-        this.pendToRemoveParticipant(participantLeave)
-      }
+      this.pendToRemoveParticipant(participantLeave)
       this.updateAll()
-      if (updated){
-        connection.conference.sync.sendMyContents()
-      }
     }
   }
 
@@ -463,7 +231,6 @@ export class SharedContents extends EventEmitter {
   clearAllRemotes(){
     const remotes = Array.from(this.participants.keys()).filter(key => key !== this.localId)
     remotes.forEach(pid=>this.participants.delete(pid))
-    this.tracks.clearConnection()
   }
 
   // create a new unique content id
@@ -491,22 +258,9 @@ export class SharedContents extends EventEmitter {
     if (c.id === this.editing){
       this.setEditing('')
     }
-    if (c.type === 'screen' || c.type === 'camera') {
-      const pid = this.owner.get(c.id)
-      if (pid === this.localId) {
-        this.tracks.clearLocalContent(c.id)
-      }else {
-        this.tracks.clearRemoteContent(c.id)
-      }
-    }
   }
 
   //  screen fps setting
   @observable screenFps = 30
   @action setScreenFps(fps: number){ this.screenFps = fps }
 }
-
-const contents = new SharedContents()
-declare const d:any
-d.contents = contents
-export default contents

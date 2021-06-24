@@ -1,80 +1,65 @@
-import {StoreProvider as ChatProvider} from '@hooks/ChatStore'
-import {StoreProvider as MapProvider} from '@hooks/MapStore'
-import {StoreProvider as ParticipantsProvider} from '@hooks/ParticipantsStore'
-import {StoreProvider as ContentsProvider} from '@hooks/SharedContentsStore'
-import {t} from '@models/locales'
-import {isPortrait, isSmartphone} from '@models/utils'
-import chatStore from '@stores/Chat'
-import errorInfo from '@stores/ErrorInfo'
-import mapStore from '@stores/Map'
-import participantsStore from '@stores/participants/Participants'
-import sharedContentsStore from '@stores/sharedContents/SharedContents'
+import rooms from '@stores/Rooms'
 import {Observer} from 'mobx-react-lite'
-import React, {Fragment, useRef} from 'react'
+import React, {CSSProperties, useEffect} from 'react'
 import SplitPane from 'react-split-pane'
-import {Footer} from './footer/Footer'
-import {LeftBar} from './leftBar/LeftBar'
-import {MainScreen} from './map/MainScreen'
-import {Map} from './map/map'
-import {Stores} from './utils'
-import {styleCommon, styleForSplit} from './utils/styles'
+import { brotliDecompress } from 'zlib'
+import {ContentList} from './leftBar/ContentList'
+import {ParticipantList} from './leftBar/ParticipantList'
+import {styleForSplit} from './utils/styles'
+
 
 export const App: React.FC<{}> = () => {
-  const clsSplit = styleForSplit()
-  const classes = styleCommon()
-  const DEBUG_VIDEO = false //  To see all local and remote tracks or not.
-  const stores:Stores = {
-    map: mapStore,
-    participants: participantsStore,
-    contents: sharedContentsStore,
-    chat: chatStore,
-  }
-  const refDiv = useRef<HTMLDivElement>(null)
-  //  toucmove: prevent browser zoom by pinch
-  window.addEventListener('touchmove', (ev) => {
-    //  if (ev.touches.length > 1) {
-    ev.preventDefault()
-    //  }
-  },                      {passive: false, capture: false})
-  //  contextmenu: prevent to show context menu with right mouse click
-  window.addEventListener('contextmenu', (ev) => {
-    ev.preventDefault()
-  },                      {passive: false, capture: false})
+  useEffect(()=>{
+    //  toucmove: prevent browser zoom by pinch
+    window.addEventListener('touchmove', (ev) => {
+      //  if (ev.touches.length > 1) {
+      ev.preventDefault()
+      //  }
+    },                      {passive: false, capture: false})
+    //  contextmenu: prevent to show context menu with right mouse click
+    window.addEventListener('contextmenu', (ev) => {
+      ev.preventDefault()
+    },                      {passive: false, capture: false})
 
-  //  Global error handler
-  window.onerror = (message, source, lineno, colno, error) => {
-    if (error?.message === 'Ping timeout' && message === null && source === null && lineno === null && colno === null){
-      errorInfo.type = 'connection'
-      errorInfo.title = t('etConnection')
-      errorInfo.message = t('emConnection')
-    }else{
+    //  Global error handler
+    window.onerror = (message, source, lineno, colno, error) => {
       console.error(message, source, lineno, colno, error)
     }
+  }, [])
+  const classes = styleForSplit()
+  const textLineHeight = {
+    lineHeight:20,
+    fontSize:16,
   }
 
+  const roomDivStyle:CSSProperties = {
+    width:'20%',
+    overflowX:'hidden',
+    borderWidth:'0 2px 0 0',
+    borderStyle: 'solid',
+    borderColor: 'black',
+  }
 
-  return (
-    <ParticipantsProvider value={participantsStore}>
-    <ChatProvider value={chatStore}>
-    <ContentsProvider value={sharedContentsStore}>
-    <MapProvider value={mapStore}>
-      <div ref={refDiv} className={classes.back}>
-        <SplitPane className={classes.fill} split="vertical" resizerClassName={clsSplit.resizerVertical}
-          minSize={0} defaultSize="7em">
-          <LeftBar {...stores} />
-          <Fragment>
-            <MainScreen showAllTracks = {DEBUG_VIDEO} />
-            <Observer>{() => <Map transparent={sharedContentsStore.tracks.mainStream !== undefined
-             || DEBUG_VIDEO} {...stores} />
-            }</Observer>
-            <Footer {...stores} height={(isSmartphone() && isPortrait()) ? 100 : undefined} />
-          </Fragment>
-        </SplitPane>
-      </div>
-    </MapProvider>
-    </ContentsProvider>
-    </ChatProvider>
-    </ParticipantsProvider >
-  )
+  return <div style={{position:'absolute', top:0, width:'100%', height:'100%',
+    backgroundColor:'whitesmoke'}}>
+    <Observer>{()=>{
+      const roomArray = Array.from(rooms.rooms.values())
+
+      return <SplitPane split="horizontal" defaultSize="50%"
+        resizerClassName = {classes.resizerHorizontal}
+        paneStyle = {{overflowY: 'auto', overflowX: 'hidden', width:'100%'}} >
+        <div style={{display:'flex', width:'100%', height:'100%'}}>
+          {roomArray.map(room => <div style={roomDivStyle}>
+            <ParticipantList room={room} key={room.name} {...textLineHeight} />
+          </div>)}
+        </div>
+        <div style={{display:'flex', width:'100%', height:'100%'}}>
+          {roomArray.map(room => <div style={roomDivStyle}>
+            <ContentList room={room} key={room.name} {...textLineHeight} />
+          </div>)}
+        </div>
+      </SplitPane>
+    }}</Observer>
+  </div>
 }
 App.displayName = 'App'

@@ -16,7 +16,6 @@ export interface RemoteParticipant extends ParticipantBase {
 
 export type SoundLocalizationBase = 'avatar' | 'user'
 export interface LocalParticipant extends ParticipantBase {
-  soundLocalizationBase: SoundLocalizationBase
   information: LocalInformation
 }
 export type Participant = LocalParticipant | RemoteParticipant

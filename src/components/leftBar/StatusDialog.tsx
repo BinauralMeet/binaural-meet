@@ -1,13 +1,13 @@
 import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
 import Popover, { PopoverProps } from '@material-ui/core/Popover'
-import { connection } from '@models/api'
+import {Room} from '@stores/Room'
 import React from 'react'
 import {useEffect, useState} from 'react'
-import {Stores} from '../utils'
 
-export interface StatusDialogProps extends PopoverProps, Stores{
-  close: () => void,
+export interface StatusDialogProps extends PopoverProps{
+  close: () => void
+  room: Room
 }
 
 class Remote{
@@ -31,7 +31,7 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
   status.update = update
 
   function updateStatus(){
-    const chatRoom = connection.conference._jitsiConference?.room
+    const chatRoom = props.room.connection!.conference._jitsiConference?.room
     if (status.open && chatRoom){
       const sessions = chatRoom.xmpp?.connection?.jingle?.sessions
       const nSessions = Object.keys(sessions).length
@@ -64,8 +64,10 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
       setUpdate(status.update ? false : true)
     }
   }
+
   useEffect(() => {
     setInterval(updateStatus, 1000)
+    //  eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   const {close, ...popoverProps} = props
 

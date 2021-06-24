@@ -1,1 +1,0 @@
-export {ParticipantsLayer} from './Participants'

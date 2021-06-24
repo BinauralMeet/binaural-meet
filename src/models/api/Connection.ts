@@ -1,14 +1,8 @@
-import {t} from '@models/locales'
-import {priorityCalculator} from '@models/middleware/trafficControl'
-import {ConnectionInfo} from '@stores/ConnectionInfo'
-import errorInfo from '@stores/ErrorInfo'
-import participants from '@stores/participants/Participants'
-import contents from '@stores/sharedContents/SharedContents'
+import {Room} from '@stores/Room'
 import {EventEmitter} from 'events'
 //import {stringify} from 'flatted'
 import jquery from 'jquery'
 import JitsiMeetJS from 'lib-jitsi-meet'
-import {Store} from '../../stores/utils'
 import {Conference} from './Conference'
 import {ConnectionStates, ConnectionStatesType} from './Constants'
 
@@ -64,15 +58,10 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
 
  export class Connection extends EventEmitter {
   private _jitsiConnection?: JitsiMeetJS.JitsiConnection
-  private _store: Store<ConnectionInfo> | undefined
   public conference = new Conference()
   public version = '0.0.1'
   public conferenceName = ''
   public state = ConnectionStates.DISCONNECTED
-
-  public set Store(store: Store<ConnectionInfo>) {
-    this._store = store
-  }
 
   public init(): Promise<string> {
     Object.assign(initOptions, config.rtc.screenOptions)
@@ -98,11 +87,11 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
     })
   }
 
-  public joinConference(conferenceName: string) {
+  public joinConference(room: Room) {
     if (this._jitsiConnection) {
-      this.conferenceName = conferenceName
-      const jitsiConference = this._jitsiConnection.initJitsiConference(conferenceName, config)
-      this.conference.init(jitsiConference)
+      this.conferenceName = room.name
+      const jitsiConference = this._jitsiConnection.initJitsiConference(room.name, config)
+      this.conference.init(jitsiConference, room)
 
       return
     }
@@ -119,22 +108,10 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
     return Promise.reject('No connection has been established.')
   }
   reconnect(){
-    errorInfo.type = 'retry'
-    errorInfo.title = t('etRetry')
-    errorInfo.message = t('emRetry')
-    //  Clear old information
-    const localCamera = this.conference.getLocalCameraTrack()
-    const micMute = participants.local.muteAudio
-    participants.local.muteAudio = true
-    const cameraMute = participants.local.muteVideo
-    participants.local.muteVideo = true
+    if (!this.conference.room) { return }
 
-    participants.leaveAll()
-    contents.clearAllRemotes()
-    priorityCalculator.clear()
-    //console.log(`participants.remote: ${stringify(Array.from(participants.remote.keys()))}`)
-    //console.log(`participants.local: ${stringify(participants.local)}`)
-    //console.log(`priority: ${stringify(priorityCalculator)}`)
+    this.conference?.room?.participants?.leaveAll()
+    this.conference?.room?.contents?.clearAllRemotes()
 
     //  Try to connect again.
     this.conference._jitsiConference?.leave().then(()=>{
@@ -143,26 +120,7 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
       console.log('Disconnected and failed to leave... try to join again')
     }).finally(()=>{
       this.init().then(()=>{
-        this.joinConference(this.conferenceName)
-        function restoreLocalTracks(){
-          if (!localCamera || localCamera.disposed){
-            participants.local.muteAudio = micMute
-            participants.local.muteVideo = cameraMute
-          }else{
-            setTimeout(restoreLocalTracks, 100)
-          }
-        }
-        restoreLocalTracks()
-        function restoreContentTracks(){
-          if (participants.localId){
-            contents.tracks.restoreLocalCarriers()
-          }else{
-            setTimeout(restoreContentTracks, 100)
-          }
-        }
-        restoreContentTracks()
-
-        errorInfo.clear()
+        this.joinConference(this.conference.room!)
       })
     })
   }
@@ -170,10 +128,6 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
   private onStateChanged(state: ConnectionStatesType) {
     this.state = state
     console.log(`ConnctionStateChanged: Current Connection State: ${state}`)
-
     if (state === ConnectionStates.DISCONNECTED){ this.reconnect() }
-    if (this._store) {
-      this._store.changeState(this.state)
-    }
   }
 }

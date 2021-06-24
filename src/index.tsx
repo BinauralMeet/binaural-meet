@@ -1,23 +1,19 @@
 import {App} from '@components/App'
-import {connection} from '@models/api'
-import '@models/audio'  // init audio manager (DO NOT delete)
+import {Connection, connections} from '@models/api'
 import {i18nInit} from '@models/locales'
-import '@models/middleware'
 import {urlParameters} from '@models/url'
 import {resolveAtEnd} from '@models/utils'
-import errorInfo from '@stores/ErrorInfo'
 import '@stores/index'  // init store (DO NOT delete)
-import participants from '@stores/participants/Participants'
-import contents from '@stores/sharedContents/SharedContents'
-import {JitsiLocalTrack} from 'lib-jitsi-meet'
-import {when} from 'mobx'
-import { configure } from "mobx"
+import { RemoteParticipant } from '@stores/participants/RemoteParticipant'
+import {Room} from '@stores/Room'
+import rooms from '@stores/Rooms'
+import {configure} from 'mobx'
 import ReactDOM from 'react-dom'
 
 configure({
     enforceActions: "never",
 })
-
+declare const d:any                  //  from index.html
 
 i18nInit().then(main)
 
@@ -44,44 +40,45 @@ function connectConference() {
     logStr = `${logStr}beforeunload called. ${Date()} `
     localStorage.setItem('log', logStr)
 
-    //  prevent leaving from and reloading browser, when the user shares screen(s).
-    if (!errorInfo.type &&
-      (contents.tracks.localMains.size || contents.tracks.localContents.size)) {
-      logStr += 'Ask user. '
-      ev.preventDefault()
-      ev.stopImmediatePropagation()
-      ev.returnValue = ''
-      localStorage.setItem('log', logStr)
-
-      return ev.returnValue
-    }
-
-    if (participants.local.tracks.audio) {
-      connection.conference.removeTrack(participants.local.tracks.audio as JitsiLocalTrack)
-    }
-    if (participants.local.tracks.avatar) {
-      connection.conference.removeTrack(participants.local.tracks.avatar as JitsiLocalTrack)
-    }
-    connection.conference._jitsiConference?.leave().then((arg) => {
-      logStr += `leave (${arg}). `
-      localStorage.setItem('log', logStr)
-    })
-    connection.disconnect().then((arg) => {
-      logStr += `Diconnected (${arg}). `
-      localStorage.setItem('log', logStr)
-    }).catch((reason) => {
-      logStr += `Failed to diconnected (${reason}). `
-      localStorage.setItem('log', logStr)
+    connections.forEach(connection => {
+      connection.conference._jitsiConference?.leave().then((arg) => {
+        logStr += `leave (${arg}). `
+        localStorage.setItem('log', logStr)
+      })
+      connection.disconnect().then((arg) => {
+        logStr += `Diconnected (${arg}). `
+        localStorage.setItem('log', logStr)
+      }).catch((reason) => {
+        logStr += `Failed to diconnected (${reason}). `
+        localStorage.setItem('log', logStr)
+      })
     })
   })
-
-  errorInfo.connectionStart()
-  connection.init().then(
-    () => {
-      when(() => errorInfo.type === '', () => {
-        const conferenceName = urlParameters.room || '_'
-        connection.joinConference(conferenceName)
+  if (!urlParameters.rooms){
+    urlParameters.rooms = '_ haselab test testbot'
+  }
+  if (urlParameters.rooms){
+    const roomNames = urlParameters.rooms.split(' ')
+    roomNames.forEach(roomName => {
+      const connection = new Connection()
+      connection.init().then(() => {
+        const conferenceName = roomName || '_'
+        const room = new Room(connection, conferenceName)
+        rooms.rooms.add(room)
+        connection.joinConference(room)
       })
-    },
-  )
+      connections.push(connection)
+    })
+  }
+  d.connections = connections
+  d.rooms = () => Array.from(rooms.rooms.values())
+  d.remotes = () => {
+    const rs = Array.from(rooms.rooms.values())
+    const rv:RemoteParticipant[][] = []
+    rs.forEach(room => {
+      rv.push(Array.from(room.participants.remote.values()))
+    })
+
+    return rv
+  }
 }

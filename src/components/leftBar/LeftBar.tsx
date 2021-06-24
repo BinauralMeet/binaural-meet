@@ -1,9 +1,7 @@
+import { Room } from '@stores/Room'
 import React, {useState} from 'react'
 import SplitPane from 'react-split-pane'
-import {useGesture} from 'react-use-gesture'
-import {Stores} from '../utils'
 import {styleForSplit} from '../utils/styles'
-import {ChatInBar} from './Chat'
 import {ContentList} from './ContentList'
 import {ParticipantList} from './ParticipantList'
 
@@ -27,8 +25,11 @@ function limitScale(currentScale: number, scale: number): number {
   return targetScale
 }
 const textLineStyle = Object.assign({}, defaultTextLineHeight)
+export interface ListBarProps{
+  room: Room
+}
 
-export const LeftBar: React.FC<Stores> = (stores) => {
+export const LeftBar: React.FC<ListBarProps> = (props: ListBarProps) => {
   const classes = styleForSplit()
   const [scale, doSetScale] = useState<number>(1)
   const setScale = (scale:number) => {
@@ -38,43 +39,13 @@ export const LeftBar: React.FC<Stores> = (stores) => {
     doSetScale(scale)
   }
 
-  const bind = useGesture(
-    {
-      onClickCapture: ()=>{
-        stores.contents.setEditing('')
-      },
-      onPinch: ({da: [d, a], origin, event, memo}) => {
-        if (memo === undefined) {
-          return [d, a]
-        }
-        const [md] = memo
-
-        const MIN_D = 10
-        const scaleChange = d > MIN_D ? d / md : d <  -MIN_D ? md / d : (1 + (d - md) / MIN_D)
-        setScale(limitScale(scale, scaleChange))
-        //  console.log(`Pinch: da:${[d, a]} origin:${origin}  memo:${memo}  scale:${scale}`)
-
-        return [d, a]
-      },
-    },
-    {
-      eventOptions:{passive:false}, //  This prevents default zoom by browser when pinch.
-    },
-  )
-
 
   return (
-    <div {...bind()}>
-      <SplitPane split="horizontal" defaultSize="80%" resizerClassName = {classes.resizerHorizontal}
-        paneStyle = {{overflowY: 'auto', overflowX: 'hidden', width:'100%'}} >
-        <SplitPane split="horizontal" defaultSize="50%" resizerClassName = {classes.resizerHorizontal}
-          paneStyle = {{overflowY: 'auto', overflowX: 'hidden', width:'100%'}} >
-          <ParticipantList {...stores} {...textLineStyle} />
-          <ContentList {...stores}  {...textLineStyle} />
-        </SplitPane >
-        <ChatInBar {...stores}  {...textLineStyle} />
-      </SplitPane >
-    </div>
+    <SplitPane split="horizontal" defaultSize="50%" resizerClassName = {classes.resizerHorizontal}
+      paneStyle = {{overflowY: 'auto', overflowX: 'hidden', width:'20%'}} >
+      <ParticipantList {...props} {...textLineStyle} />
+      <ContentList {...props}  {...textLineStyle} />
+    </SplitPane >
   )
 }
 LeftBar.displayName = 'LeftBar'
