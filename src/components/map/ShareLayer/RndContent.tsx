@@ -166,7 +166,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   function updateHandler() {
     if (JSON.stringify(pose) !== JSON.stringify(props.content.pose) ||
       JSON.stringify(size) !== JSON.stringify(props.content.size)) {
-      props.content.size = {...size} //  Must be new object to compare the pose or size object.
+      props.content.size = [...size] //  Must be new object to compare the pose or size object.
       props.content.pose = {...pose} //  Must be new object to compare the pose or size object.
       props.updateAndSend(props.content)
     }

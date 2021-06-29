@@ -368,8 +368,7 @@ export class ConferenceSync{
         contents.tracks.onMainScreenCarrier(carrierId, enabled)
       }
     })
-    //  my contents
-    //  Send my content to remote to refresh.
+    //  Receive remote contents.
     this.conference.on(PropertyType.MY_CONTENT, (from:string, cs_:ISharedContent[]) => {
       const cs = makeThemContents(cs_)
       contents.checkDuplicatedWallpaper(from, cs)
