@@ -308,7 +308,7 @@ export class PriorityCalculator {
   // lower value means higher priority
   private calcPriorityValue(local: TrackInfo, remote: RemoteTrackInfo): number {
     if (remote.onStage) { return 0 }
-    const delta = remote.size.map((sz, idx) => {
+    const delta = Array.from(remote.size).map((sz, idx) => {
       let diff = remote.pose.position[idx] - local.pose.position[idx]
       if (diff < 0) {
         diff += sz
