@@ -25,6 +25,7 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
   assert(props.content.type === 'screen' || props.content.type === 'camera')
   const classes = useStyles()
   const ref = useRef<HTMLVideoElement>(null)
+  const [muted, setMuted] = React.useState(false)
   const member = useRef<ScreenContentMember>({} as ScreenContentMember)
   member.current = {
     locals: useObserver<JitsiLocalTrack[]>(() =>
@@ -53,6 +54,8 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
       member.current.remotes.forEach((track) => {
         if (track.getType() !== 'audio') { //  Remote audio is played by ConnectedMananger
           ms.addTrack(track.getTrack())
+          track.getTrack().onmute = () => setMuted(true)
+          track.getTrack().onunmute = () => setMuted(false)
         }
       })
 
@@ -100,5 +103,5 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
     return () => clearInterval(interval)
   })
 
-  return <video className = {classes.video} ref = {ref} />
+  return <video className={classes.video} style={{opacity: muted ? 0.8 : 1}} ref={ref} />
 }
