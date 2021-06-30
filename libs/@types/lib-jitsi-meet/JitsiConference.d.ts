@@ -11,6 +11,16 @@ import TraceablePeerConnection from "./modules/RTC/TraceablePeerConnection";
 import RTC from "./modules/RTC/RTC";
 import ChatRoom from "./modules/xmpp/ChatRoom";
 
+export declare interface VideoConstraints {
+  lastN?: number
+  selectedEndpoints?: string[]
+  onStageEndpoints?: string[]
+  defaultConstraints?: {maxHeight: number}
+  constraints?:{
+    [name: string]: {maxHeight: number}
+  }
+}
+
 declare interface JitsiValuesChildren {
   tagName:string
   value:string
@@ -81,6 +91,8 @@ declare class JitsiConference {
   getLastN(): number;
   setLastN(lastN: number): void;
   setSenderVideoConstraint(height: number):void;
+  setReceiverConstraints(videoConstraints: VideoConstraints):void;
+
   setPerceptibles(perceptibles: [string[], string[]]): void;
   getParticipants(): JitsiParticipant[];
   getParticipantCount(countHidden: boolean): number;

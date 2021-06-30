@@ -208,6 +208,10 @@ export class Conference extends EventEmitter {
     this._jitsiConference?.setSenderVideoConstraint(height)
   }
 
+  public setReceiverConstraints(videoConstraints: JitsiMeetJS.VideoConstraints){
+    this._jitsiConference?.setReceiverConstraints(videoConstraints)
+  }
+
   //  send Perceptibles API added by hasevr
   public setPerceptibles(perceptibles:[string[], string[]]) {
     sendLog(`SEND setPerceptibles ${perceptibles[0].length} ${perceptibles[1].length}`)

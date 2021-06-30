@@ -2,6 +2,7 @@ import {connection} from '@models/api'
 import {PriorityCalculator, priorityLog} from '@models/trafficControl/PriorityCalculator'
 import {connectionInfo} from '@stores/index'
 import {participantsStore} from '@stores/participants'
+import JitsiMeetJS from 'lib-jitsi-meet'
 import _ from 'lodash'
 import {autorun} from 'mobx'
 
@@ -39,6 +40,10 @@ const memoedUpdater = (() => {
     const res = priorityCalculator.update()
     if (!_.isEqual(res, memo)) {
       // Send res to Jitsi bridge
+      const videoConstraints:JitsiMeetJS.VideoConstraints = {
+        onStageEndpoints: res[0]
+      }
+      connection.conference.setReceiverConstraints(videoConstraints)
       connection.conference.setPerceptibles(res)
       priorityLog('setPerceptibles:', res)
       console.log(`setPerceptibles:${JSON.stringify(res)}`)
