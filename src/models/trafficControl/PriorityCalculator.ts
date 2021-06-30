@@ -70,7 +70,7 @@ export class PriorityCalculator {
 
   // priority cache
   private readonly priorityMaps = [new Map<string, RemoteTrackInfo>(), new Map<string, RemoteTrackInfo>()]
-  private lastPriority: [number[], number[]] = [[], []] //  video ssrcs, audio ssrcs
+  private lastPriority: [string[], string[]] = [[], []] //  video endpoint ids, audio endpoint ids
 
   // list of observable track info lists
   @observable tracksToAccept:[RemoteTrackInfo[], RemoteTrackInfo[]] = [[], []]
@@ -166,8 +166,6 @@ export class PriorityCalculator {
 
     const onAddParticipant = (rp: RemoteParticipant) => {
       remoteDiposers.set(rp.id, autorun(() => {
-        // tslint:disable-next-line: max-line-length
-        //  priorityLog(`prioirty ${id} chagned v=${(rp.tracks.avatar as JitsiRemoteTrack)?.getSSRC()} a=${(rp.tracks.audio as JitsiRemoteTrack)?.getSSRC()}`)
         if (rp.tracks.audio || rp.tracks.avatar) {
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const important = rp.physics.onStage || participants.yarnPhones.has(rp.id)
@@ -203,7 +201,7 @@ export class PriorityCalculator {
   }
 
   // returns same reference when no updates
-  update(): [number[], number[]] {
+  update(): [string[], string[]] {
     if (!this.haveUpdates) {
       return this.lastPriority
     }
@@ -291,16 +289,16 @@ export class PriorityCalculator {
     this.tracksToAccept = prioritizedTrackInfoLists
 
     //  ssrcs must be sent to JVB.
-    const prioritizedSsrcLists = this.tracksToAccept.map((infos) => {
-      const rv:number[] = []
+    const prioritizedEidLists = this.tracksToAccept.map((infos) => {
+      const rv:string[] = []
       for (const info of infos) {
-        rv.push(...info.track.getSSRCs())
+        rv.push(info.track.getParticipantId())
       }
 
       return rv
-    }) as [number[], number[]]
+    }) as [string[], string[]]
 
-    this.lastPriority = prioritizedSsrcLists
+    this.lastPriority = prioritizedEidLists
 
     return this.lastPriority
   }

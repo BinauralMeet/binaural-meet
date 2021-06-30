@@ -209,7 +209,7 @@ export class Conference extends EventEmitter {
   }
 
   //  send Perceptibles API added by hasevr
-  public setPerceptibles(perceptibles:[number[], number[]]) {
+  public setPerceptibles(perceptibles:[string[], string[]]) {
     sendLog(`SEND setPerceptibles ${perceptibles[0].length} ${perceptibles[1].length}`)
     if (this._jitsiConference?.setPerceptibles) {
       this._jitsiConference.setPerceptibles(perceptibles)

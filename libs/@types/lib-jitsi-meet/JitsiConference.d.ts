@@ -81,7 +81,7 @@ declare class JitsiConference {
   getLastN(): number;
   setLastN(lastN: number): void;
   setSenderVideoConstraint(height: number):void;
-  setPerceptibles(perceptibles: [number[], number[]]): void;
+  setPerceptibles(perceptibles: [string[], string[]]): void;
   getParticipants(): JitsiParticipant[];
   getParticipantCount(countHidden: boolean): number;
   getParticipantById(id: string): JitsiParticipant;
