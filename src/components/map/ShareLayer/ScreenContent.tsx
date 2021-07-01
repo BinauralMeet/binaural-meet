@@ -103,5 +103,5 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
     return () => clearInterval(interval)
   })
 
-  return <video className={classes.video} style={{opacity: muted ? 0.8 : 1}} ref={ref} />
+  return <video className={classes.video} style={muted ? {filter: 'brightness(80%) sepia(25%)'} : {}} ref={ref} />
 }
