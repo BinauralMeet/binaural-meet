@@ -54,8 +54,12 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
       member.current.remotes.forEach((track) => {
         if (track.getType() !== 'audio') { //  Remote audio is played by ConnectedMananger
           ms.addTrack(track.getTrack())
-          track.getTrack().onmute = () => setMuted(true)
-          track.getTrack().onunmute = () => setMuted(false)
+          const onMuteLater = _.debounce(()=>{setMuted(true)}, 3000)
+          track.getTrack().onmute = onMuteLater
+          track.getTrack().onunmute = () => {
+            onMuteLater.cancel()
+            setMuted(false)
+          }
         }
       })
 
