@@ -38,8 +38,24 @@ interface TextEditProps extends TextDivProps{
   css: React.CSSProperties
 }
 
+function sendText(text: string, props: TextEditProps){
+  //  console.log(`send text ${text}`)
+  props.text.message = text
+  props.member.messages = props.member.messages.filter(text => text.message.length)
+  if (props.div){
+    onUpdateTexts(props.member.messages, props.div, props)
+  }
+}
+
+
 export const TextEdit: React.FC<TextEditProps> = (props:TextEditProps) => {
   const [text, setText] = React.useState(props.text.message)
+  const [lastUpdate, setLastUpdate] = React.useState(0)
+  const sendTextLaterRef = useRef<any>(undefined)
+  useEffect(() => {
+    sendTextLaterRef.current = _.throttle(sendText, 1000, {leading: false})
+  }, [])
+  const sendTextLater = sendTextLaterRef.current
 
   return <Observer>{() =>
   <div style={{...props.css, position:'relative', margin:0, border:0, padding:0, backgroundColor:'none'}}>
@@ -52,22 +68,20 @@ export const TextEdit: React.FC<TextEditProps> = (props:TextEditProps) => {
     }}
       onChange={(ev) => {
         setText(ev.currentTarget.value)
-      }}
-      onBlur={() => {
-        props.text.message = text
-        props.member.messages = props.member.messages.filter(text => text.message.length)
-        if (props.div){
-          onUpdateTexts(props.member.messages, props.div, props)
+        if (sendTextLater){
+          sendTextLater(ev.currentTarget.value, props)
         }
-    }}
+      }}
+      onBlur={()=>{
+        if (sendTextLater){ sendTextLater.cancel() }
+        sendText(text, props)
+      }}
       onKeyDown={(ev) => {
         if (ev.key === 'Escape' || ev.key === 'Esc') {
           ev.stopPropagation()
           ev.preventDefault()
-          props.text.message = text
-          if (props.div){
-            onUpdateTexts(props.member.messages, props.div, props)
-          }
+          if (sendTextLater){ sendTextLater.cancel() }
+          sendText(text, props)
           props.contents.setEditing('')
         }
       }}
