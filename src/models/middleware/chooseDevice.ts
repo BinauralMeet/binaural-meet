@@ -13,7 +13,8 @@ declare const config:any                  //  from ../../config.js included from
 export function createLocalMic() {
   const promise = new Promise<JitsiLocalTrack>((resolutionFunc, rejectionFunc) => {
     const did = participants.local.devicePreference.audioInputDevice
-    JitsiMeetJS.createLocalTracks({devices:['audio'], micDeviceId: did}).then(
+    JitsiMeetJS.createLocalTracks({devices:['audio'],
+      constraints: config.rtc.audioConstraints, micDeviceId: did}).then(
       (tracks: JitsiLocalTrack[]) => {
         connection.conference.setLocalMicTrack(tracks[0])
         resolutionFunc(tracks[0])

@@ -19,6 +19,9 @@ const rtcConfig = {
       },
     },
   },
+  audioConstraints:{
+    //audio: {echoCancellationType: 'system'}
+  },
   screenOptions:{
     desktopSharingFrameRate:{
       min:  0.3,

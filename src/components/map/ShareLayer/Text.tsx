@@ -50,7 +50,6 @@ function sendText(text: string, props: TextEditProps){
 
 export const TextEdit: React.FC<TextEditProps> = (props:TextEditProps) => {
   const [text, setText] = React.useState(props.text.message)
-  const [lastUpdate, setLastUpdate] = React.useState(0)
   const sendTextLaterRef = useRef<any>(undefined)
   useEffect(() => {
     sendTextLaterRef.current = _.throttle(sendText, 1000, {leading: false})

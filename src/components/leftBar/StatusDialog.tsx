@@ -3,7 +3,7 @@ import DialogTitle from '@material-ui/core/DialogTitle'
 import Popover, { PopoverProps } from '@material-ui/core/Popover'
 import { connection } from '@models/api'
 import React from 'react'
-import {useEffect, useState} from 'react'
+import {useState} from 'react'
 import {Stores} from '../utils'
 
 export interface StatusDialogProps extends PopoverProps, Stores{
@@ -22,6 +22,7 @@ class Status{
   sessions: Session[] = []
   open = false
   update = false
+  interval: NodeJS.Timeout|undefined = undefined
 }
 const status = new Status()
 
@@ -64,9 +65,18 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
       setUpdate(status.update ? false : true)
     }
   }
-  useEffect(() => {
-    setInterval(updateStatus, 1000)
-  }, [])
+  if (props.open){
+    if (!status.interval){
+      status.interval = setInterval(updateStatus, 100)
+      console.log('setInterval')
+    }
+  }else{
+    if (status.interval){
+      clearInterval(status.interval)
+      status.interval = undefined
+      console.log('clearInterval')
+    }
+  }
   const {close, ...popoverProps} = props
 
   return <Popover {...popoverProps} onClose={()=>props.close()}>
