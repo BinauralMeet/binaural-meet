@@ -25,6 +25,7 @@ function extractParticipantTrackInfo(participant: RemoteParticipant, track:Jitsi
     size: [0, 0],
     offset: 0,
     priority : 0,
+    muted: track.isAudioTrack() ? participant.muteAudio : participant.muteVideo
   }
 }
 function extractContentTrackInfo(content: SharedContent, track:JitsiTrack): RemoteTrackInfo {
@@ -37,6 +38,7 @@ function extractContentTrackInfo(content: SharedContent, track:JitsiTrack): Remo
     size: content.size,
     offset: -PARTICIPANT_SIZE * 10,
     priority : 0,
+    muted: false,
   }
 }
 function extractMainTrackInfo(mainTrack:JitsiRemoteTrack): RemoteTrackInfo {
@@ -47,6 +49,7 @@ function extractMainTrackInfo(mainTrack:JitsiRemoteTrack): RemoteTrackInfo {
     size: [0, 0],
     offset: -PARTICIPANT_SIZE * 100,
     priority : 0,
+    muted: false,
   }
 }
 
@@ -217,7 +220,6 @@ export class PriorityCalculator {
 
   private calcPriority() {
     //  list participants
-    const numDisabled = [0, 0]  //  Does not include disabled (muted) tracks to the limits.
     const recalculateList = Array.from(participants.remote.keys()).filter(
       key => this.updateAll ? true : this.updateSet.has(key))
     recalculateList.forEach((id) => {
@@ -228,11 +230,6 @@ export class PriorityCalculator {
             const trackInfo = extractParticipantTrackInfo(rp, track)
             trackInfo.priority = this.calcPriorityValue(this.local, trackInfo)
             this.priorityMaps[idx].set(rp.id, trackInfo)
-            if (idx === 0) {
-              if (rp.muteVideo) { numDisabled[idx] += 1 }
-            }else {
-              if (rp.muteAudio) { numDisabled[idx] += 1 }
-            }
           }
         })
       }
@@ -278,27 +275,18 @@ export class PriorityCalculator {
         }
       })
     }
-    //  limit numbers of tracks
-    const limits = addV2(this.limits, numDisabled)  //  ignore (not count) disabled (muted) tracks.
-    prioritizedTrackInfoLists.forEach((list, idx) => {
-      if (this.limits[idx] >= 0 && list.length > limits[idx]) {
-        list.splice(limits[idx])
-      }
+    const newLists:[RemoteTrackInfo[], RemoteTrackInfo[]] = [[], []]
+    prioritizedTrackInfoLists.forEach((trackInfos, idx) => {
+      newLists[idx] = trackInfos.filter(info => !info.muted)
+      newLists[idx].splice(this.limits[idx])
     })
+
     //  done
-    this.tracksToAccept = prioritizedTrackInfoLists
+    this.tracksToAccept = newLists
 
-    //  ssrcs must be sent to JVB.
-    const prioritizedEidLists = this.tracksToAccept.map((infos) => {
-      const rv:string[] = []
-      for (const info of infos) {
-        rv.push(info.track.getParticipantId())
-      }
-
-      return rv
-    }) as [string[], string[]]
-
-    this.lastPriority = prioritizedEidLists
+    //  end point ids must be sent to JVB.
+    const prioritizedEidLists = this.tracksToAccept.map(infos => infos.map(info => info.track.getParticipantId()))
+    this.lastPriority = prioritizedEidLists as [string[], string[]]
 
     return this.lastPriority
   }

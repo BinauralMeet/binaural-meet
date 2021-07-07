@@ -11,6 +11,7 @@ export interface RemoteTrackInfo extends TrackInfo {
   size: [number, number],
   offset: number,
   priority: number,
+  muted: boolean,
 }
 
 type Id = number
