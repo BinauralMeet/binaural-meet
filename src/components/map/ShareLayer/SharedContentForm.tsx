@@ -10,6 +10,7 @@ import DialogContent from '@material-ui/core/DialogContent'
 import Popover, { PopoverProps } from '@material-ui/core/Popover'
 import Switch from '@material-ui/core/Switch'
 import Table from '@material-ui/core/Table'
+import TableBody from '@material-ui/core/TableBody'
 import TableCell from '@material-ui/core/TableCell'
 import TableRow from '@material-ui/core/TableRow'
 import TextField from '@material-ui/core/TextField'
@@ -24,7 +25,7 @@ import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {canContentBeAWallpaper, copyContentToClipboard, isContentEditable, isContentWallpaper, makeContentWallpaper,
    moveContentToBottom, moveContentToTop} from '@stores/sharedContents/SharedContentCreator'
 import {Observer} from 'mobx-react-lite'
-import React from 'react'
+import React, {Fragment} from 'react'
 import {contentTypeIcons, editButtonTip} from './Content'
 import {RndContentProps, TITLE_HEIGHT} from './RndContent'
 
@@ -37,14 +38,15 @@ export interface SharedContentFormProps extends RndContentProps, PopoverPropsNoO
 
 type ContentType = JSX.Element | string
 
-function Row(left1: ContentType, left2: ContentType, center: ContentType, right2: ContentType, right1: ContentType){
+function Row(left1: ContentType, left2: ContentType, center: ContentType,
+  right2: ContentType, right1: ContentType, key?: string|number){
   const cellstyle = {
     margin:0,
     padding:2,
     border:'none',
   }
 
-  return <TableRow>
+  return <TableRow key={key}>
     <TableCell align="right" style={cellstyle}>{left1}</TableCell>
     <TableCell align="right" style={cellstyle}>{left2}</TableCell>
     <TableCell style={cellstyle}>{center}</TableCell>
@@ -93,7 +95,8 @@ export const SharedContentForm: React.FC<SharedContentFormProps> = (props: Share
     }
   }
 
-  const extractPopoverProps = ({onClose, ...reminder}: SharedContentFormProps) => reminder
+  const extractPopoverProps = ({onClose, autoHideTitle, updateAndSend, updateOnly, close, ...reminder}
+    : SharedContentFormProps) => reminder
     const popoverProps:PopoverPropsNoOnClose = extractPopoverProps(props)
 
   return <Popover onClose={closeForm} {...popoverProps} onMouseDown={(ev)=>{
@@ -101,7 +104,7 @@ export const SharedContentForm: React.FC<SharedContentFormProps> = (props: Share
   }}>
     <Observer>{()=>
       <DialogContent>
-        <table><tr><td>
+        <table><tbody><tr><td>
        {contentTypeIcons(props.content.type, TITLE_HEIGHT)}
        </td><td>
         <TextField label={t('ctName')} multiline={false} value={props.content.name} inputProps={{autoFocus:true}}
@@ -113,7 +116,7 @@ export const SharedContentForm: React.FC<SharedContentFormProps> = (props: Share
           }}
           onKeyPress={onKeyPress} fullWidth={true}
         />
-        </td></tr></table>
+        </td></tr></tbody></table>
         <Box mt={2} mb={2}>
           <Button variant="contained" style={{textTransform:'none'}}
             onClick={()=>{
@@ -136,24 +139,24 @@ export const SharedContentForm: React.FC<SharedContentFormProps> = (props: Share
               props.map.focusOn(props.content)
             }}>{t('ctFocus')}</Button>
         </Box>
-        <Table size="small" >{[
+        <Table size="small" ><TableBody>{[
           Row(t('ctUnpin'),<Icon icon={pinOffIcon} height={TITLE_HEIGHT} />,
             <Switch color="primary" checked={props.content.pinned} onChange={(ev, checked)=>{
               props.content.pinned = checked
               props.updateOnly(props.content)
-            }}/>, <Icon icon={pinIcon} height={TITLE_HEIGHT} />, t('ctPin')),
-          <> {isContentEditable(props.content) ?
+            }}/>, <Icon icon={pinIcon} height={TITLE_HEIGHT} />, t('ctPin'), 'pin'),
+          <Fragment key="edit">{isContentEditable(props.content) ?
             Row(editButtonTip(true, props.content),<DoneIcon />,
             <Switch color="primary" checked={props.content.id === props.contents.editing} onChange={(ev, checked)=>{
               props.contents.setEditing(checked ? props.content.id : '')
-            }}/>, <EditIcon />, editButtonTip(false, props.content)) : undefined} </>,
-          <> {canContentBeAWallpaper(props.content) ?
+            }}/>, <EditIcon />, editButtonTip(false, props.content)) : undefined}</Fragment>,
+          <Fragment key="wall">{canContentBeAWallpaper(props.content) ?
             Row(t('ctUnWallpaper'), <Icon icon={imageLine} height={TITLE_HEIGHT}/>,
             <Switch color="primary" checked={isContentWallpaper(props.content)} onChange={(ev, checked)=>{
               makeContentWallpaper(props.content, checked)
               props.updateOnly(props.content)
-            }}/>, <Icon icon={imageOutlineBadged} height={TITLE_HEIGHT}/>, t('ctWallpaper')) : undefined} </>,
-        ]}</Table>
+            }}/>, <Icon icon={imageOutlineBadged} height={TITLE_HEIGHT}/>, t('ctWallpaper')) : undefined}</Fragment>,
+        ]}</TableBody></Table>
         <Box mt={2} mb={2}>
           <Button variant="contained" color="primary" style={{textTransform:'none'}}
             onClick={()=>{

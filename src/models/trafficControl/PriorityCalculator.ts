@@ -1,7 +1,6 @@
 import {PARTICIPANT_SIZE} from '@models/Participant'
 import {SharedContent} from '@models/SharedContent'
 import {diffMap} from '@models/utils'
-import {addV2} from '@models/utils'
 import {participantsStore as participants} from '@stores/participants'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'

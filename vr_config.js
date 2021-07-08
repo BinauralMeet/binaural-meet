@@ -59,11 +59,11 @@ const common_config = {
 
 const config_binaural = {
   hosts: {
-    domain: 'ac.binaural.me',
-    muc: 'conference.ac.binaural.me'
+    domain: 'vr.binaural.me',
+    muc: 'conference.vr.binaural.me'
   },
-  serviceUrl: 'wss://ac.binaural.me:443/xmpp-websocket',
-  //  bosh: 'https://ac.binaural.me/http-bind',
+  serviceUrl: 'wss://vr.binaural.me:443/xmpp-websocket',
+  //  bosh: 'https://vr.binaural.me/http-bind',
 }
 Object.assign(config_binaural, Object.assign(common_config, config_binaural))
 

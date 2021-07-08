@@ -18,6 +18,7 @@ export const ContentLine: React.FC<TextLineStyle & Stores &
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
   const [showForm, setShowForm] = React.useState(false)
   const ref = React.useRef<HTMLDivElement>(null)
+  const {lineHeight, ...contentProps} = props
 
   return <Observer>{()=> {
     const typeIcon = contentTypeIcons(props.content.type, props.fontSize)
@@ -31,16 +32,16 @@ export const ContentLine: React.FC<TextLineStyle & Stores &
           onClick={() => props.map.focusOn(props.content)}
           onContextMenu={() => {
             setShowForm(true)
-            props.map.keyInputUsers.add('participantList')
+            props.map.keyInputUsers.add('contentForm')
           }}
         >
           {typeIcon}{props.content.name}
         </div>
       </Tooltip>
-      <SharedContentForm {...props} {...sharedContentHandler(props)} open={showForm}
+      <SharedContentForm {...contentProps} {...sharedContentHandler(props)} open={showForm}
         close={()=>{
           setShowForm(false)
-          props.map.keyInputUsers.delete('participantList')
+          props.map.keyInputUsers.delete('contentForm')
         }}
         anchorEl={ref.current} anchorOrigin={{vertical:'top', horizontal:'right'}}
       />

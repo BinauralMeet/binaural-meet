@@ -17,6 +17,7 @@ const useStyles = makeStyles({
 export const ShareLayer = React.memo<BaseProps>(
   (props) => {
     const classes = useStyles()
+    const {transparent, ...contentProps} = props
 
     return  <div className={classes.slContainer} >
       <Observer>{
@@ -26,11 +27,11 @@ export const ShareLayer = React.memo<BaseProps>(
 
           return <>{
             filtered.map(val =>
-              <SharedContent key={val.id} content={val} {...props} />)
+              <SharedContent key={val.id} content={val} {...contentProps} />)
           }</>
         }
       }</Observer>
-    <PastedContent {...props} />
+    <PastedContent {...contentProps} />
     </div>
   },
   (prev, next) => {

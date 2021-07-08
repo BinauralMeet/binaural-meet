@@ -15,6 +15,7 @@ export const sharedContentHandler = (props: Stores&{content:ISharedContent}) => 
       contentLog('RndContent onClose for ', props.content.id)
       evt.stopPropagation()
       props.map.keyInputUsers.delete(props.content.id)
+      props.map.keyInputUsers.delete('contentForm')
       const pid = props.contents.owner.get(props.content.id)
       if (pid) {
         props.contents.removeByLocal(props.content.id)
