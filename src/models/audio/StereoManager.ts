@@ -90,7 +90,7 @@ export class StereoManager {
     if (this.playMode === 'Pause') {
       //  this occurs only once when valid playMode has been set
       autorun(() => {
-        const accepts = new Set(priorityCalculator.tracksToAccept[1].map(info => info.track.getParticipantId()))
+        const accepts = new Set(priorityCalculator.tracksToAccept[1].map(info => info.endpointId))
         for (const id in this.nodes) {
           if (accepts.has(id)) {
             this.nodes[id].setPlayMode(this.playMode)

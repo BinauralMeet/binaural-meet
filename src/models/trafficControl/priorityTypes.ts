@@ -7,7 +7,7 @@ export interface TrackInfo {
 }
 
 export interface RemoteTrackInfo extends TrackInfo {
-  track: JitsiRemoteTrack,
+  endpointId: string,
   size: [number, number],
   offset: number,
   priority: number,

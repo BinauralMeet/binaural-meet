@@ -17,6 +17,7 @@ import {Pose2DMap} from '@models/MapObject'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {addV2, extractScaleX, extractScaleY, mulV, rotateVector2DByDegree, subV2} from '@models/utils'
 import {copyContentToClipboard, isContentEditable, moveContentToBottom, moveContentToTop} from '@stores/sharedContents/SharedContentCreator'
+import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useLayoutEffect, useRef, useState} from 'react'
 import {Rnd} from 'react-rnd'
@@ -96,9 +97,12 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   useEffect(  //  update pose
     ()=> {
       member.dragCanceled = true
-      setSize(props.content.size)
-      member.dragCanceled = true
-      setPose(props.content.pose)
+      if (!_.isEqual(size, props.content.size)) {
+        setSize(_.cloneDeep(props.content.size))
+      }
+      if (!_.isEqual(pose, props.content.pose)) {
+        setPose(_.cloneDeep(props.content.pose))
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [props.content],
@@ -215,9 +219,6 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       if (down) {
         //  event?.preventDefault()
         dragHandler(delta, buttons, event)
-      }else {
-        if (!member.dragCanceled){ updateHandler() }
-        member.dragCanceled = false
       }
     },
     onDragStart: ({event, currentTarget, delta, buttons}) => {   // to detect click
@@ -232,6 +233,9 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     onDragEnd: ({event, currentTarget, delta, buttons}) => {
       //  console.log(`dragEnd delta=${delta}  buttons=${buttons}`)
       setDragging(false)
+      if (!member.dragCanceled){ updateHandler() }
+      member.dragCanceled = false
+
       if (currentTarget instanceof Element && event instanceof PointerEvent){
         currentTarget.releasePointerCapture(event?.pointerId)
       }

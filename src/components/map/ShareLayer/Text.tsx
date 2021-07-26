@@ -14,6 +14,7 @@ import {ContentProps} from './Content'
 class TextMember{
   messages: TextMessage[] = []
   isStatic = false
+  abortScroll = false
 }
 //  Update (send) the content if needed
 function onUpdateTexts(messages: TextMessage[], div:HTMLDivElement, props: ContentProps) {
@@ -183,8 +184,8 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
   const memberRef = React.useRef<TextMember>(new TextMember())
   const member = memberRef.current
   const classes = useStyles()
-  const url = useObserver(() => props.content.url)
   const ref = useRef<HTMLDivElement>(null)
+  const url = props.content.url
   const newTexts = JSON.parse(url) as TextMessages
   //const refEdit = useRef<HTMLDivElement>(null)
   const editing = useObserver(() => props.contents.editing === props.content.id)
@@ -200,10 +201,13 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
     })
   }
   useEffect(() => {
-    if (!editing) {
-      ref.current?.scroll(newTexts.scroll[0], newTexts.scroll[1])
+    if (!editing && ref.current) {
+      if (ref.current.scrollLeft!==newTexts.scroll[0] || ref.current.scrollTop!==newTexts.scroll[1]){
+        member.abortScroll = true
+        ref.current?.scroll(newTexts.scroll[0], newTexts.scroll[1])
+      }
     }
-  },        [newTexts.scroll, editing])
+  },        [newTexts.scroll[0], newTexts.scroll[1], editing])
 
   //  Update remote messages
   const indices = new Set<number>()
@@ -236,6 +240,7 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
         time:Date.now()})
     }
   }
+
   //  Find the message to focus to edit, i.e. my last message.
   member.messages.reverse()
   const focusToEdit = member.messages.find(message => message.pid === props.participants.localId)
@@ -272,8 +277,13 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
   })
   const INTERVAL = 200
   const handleScroll = _.debounce((ev:React.UIEvent<HTMLDivElement, UIEvent>) => {
-    if (ref.current) {
-      onUpdateTexts(member.messages, ref.current, props)
+    if (ref.current){
+      if (member.abortScroll) {
+        member.abortScroll = false
+      }else{
+        //	console.log('sendScroll')
+        onUpdateTexts(member.messages, ref.current, props)
+      }
     }
   }, INTERVAL)
 

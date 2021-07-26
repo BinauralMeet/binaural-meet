@@ -177,8 +177,11 @@ export class ErrorInfo {
       this.oscillator?.frequency.setValueAtTime(440 + counter % 440, ctxA.currentTime) // 440HzはA4(4番目のラ)
       //  update camera image
       const colors = ['green', 'blue']
-      if (priorityCalculator.tracksToAccept[0][0]?.track.getTrack()?.muted) { colors[0] = 'yellow' }
-      if (priorityCalculator.tracksToAccept[1][0]?.track.getTrack()?.muted) { colors[1] = 'red' }
+      const nearest = participants.remote.get(priorityCalculator.tracksToAccept[0][0]?.endpointId)
+      if (nearest && !nearest?.tracks.avatarOk) { colors[0] = 'yellow' }
+      if (nearest && nearest?.tracks.audio?.getTrack().muted) { colors[1] = 'red' }
+      //if (priorityCalculator.tracksToAccept[0][0]?.track.getTrack()?.muted) { colors[0] = 'yellow' }
+      //if (priorityCalculator.tracksToAccept[1][0]?.track.getTrack()?.muted) { colors[1] = 'red' }
       ctx.fillStyle = colors[0]
       ctx.beginPath()
       ctx.ellipse(width * 0.63, height * 0.33, width * 0.1, height * 0.4, counter / 20, 0, Math.PI * 2)

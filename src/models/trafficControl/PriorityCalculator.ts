@@ -13,9 +13,9 @@ export const PRIORITYLOG = false
 export const priorityLog = PRIORITYLOG ? console.log : (a:any) => {}
 export const priorityDebug = PRIORITYLOG ? console.debug : (a:any) => {}
 
-function extractParticipantTrackInfo(participant: RemoteParticipant, track:JitsiTrack): RemoteTrackInfo {
+function extractParticipantTrackInfo(participant: RemoteParticipant, track: JitsiTrack): RemoteTrackInfo {
   return {
-    track: track as JitsiRemoteTrack,
+    endpointId: participant.id,
     onStage : track.isAudioTrack() &&
       (participant.physics.onStage || participants.yarnPhones.has(participant.id)),
     pose: {
@@ -29,7 +29,7 @@ function extractParticipantTrackInfo(participant: RemoteParticipant, track:Jitsi
 }
 function extractContentTrackInfo(content: SharedContent, track:JitsiTrack): RemoteTrackInfo {
   return {
-    track: track as JitsiRemoteTrack,
+    endpointId: (track as JitsiRemoteTrack).getParticipantId(),
     onStage : false,
     pose: {
       ...content.pose,
@@ -42,7 +42,7 @@ function extractContentTrackInfo(content: SharedContent, track:JitsiTrack): Remo
 }
 function extractMainTrackInfo(mainTrack:JitsiRemoteTrack): RemoteTrackInfo {
   return {
-    track: mainTrack,
+    endpointId: mainTrack.getParticipantId(),
     onStage : true,
     pose: {position:[0, 0], orientation: 0},
     size: [0, 0],
@@ -275,16 +275,19 @@ export class PriorityCalculator {
       })
     }
     const newLists:[RemoteTrackInfo[], RemoteTrackInfo[]] = [[], []]
-    prioritizedTrackInfoLists.forEach((trackInfos, idx) => {
-      newLists[idx] = trackInfos.filter(info => !info.muted)
-      newLists[idx].splice(this.limits[idx])
-    })
+    //  video
+    newLists[0] = prioritizedTrackInfoLists[0].filter(info => !info.muted)
+    newLists[0].splice(this.limits[0])
+    //  audio : list all
+    newLists[1] = prioritizedTrackInfoLists[1]
+    const nMuted = prioritizedTrackInfoLists[1].filter(info => info.muted).length
+    newLists[1].splice(Math.min(this.limits[0] + nMuted, newLists[1].length))
 
     //  done
     this.tracksToAccept = newLists
 
     //  end point ids must be sent to JVB.
-    const prioritizedEidLists = this.tracksToAccept.map(infos => infos.map(info => info.track.getParticipantId()))
+    const prioritizedEidLists = this.tracksToAccept.map(infos => infos.map(info => info.endpointId))
     this.lastPriority = prioritizedEidLists as [string[], string[]]
 
     return this.lastPriority

@@ -42,7 +42,7 @@ const common_config = {
   },
   xmppPing: {
     interval: 1000,
-    timeout: 5000
+    timeout: 10000  //  if too short, cut off when another heavy web app starts.
   },
 //  enableWebsocketResume: false,
   testing: {
@@ -53,7 +53,7 @@ const common_config = {
   },
   rtc:rtcConfig,
   remoteVideoLimit:10,
-  remoteAudioLimit:15,
+  remoteAudioLimit:20,
   thirdPersonView: true,
 }
 

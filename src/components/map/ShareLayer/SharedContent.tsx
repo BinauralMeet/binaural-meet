@@ -22,6 +22,7 @@ export const sharedContentHandler = (props: Stores&{content:ISharedContent}) => 
       }
     },
     updateAndSend:(c: ISharedContent) => {
+      //	console.log('updateByLocal(send content)')
       props.contents.updateByLocal(Object.assign({}, c))
     },
     updateOnly:(c: ISharedContent) => {
