@@ -246,10 +246,6 @@ export class ConferenceSync{
       //  console.log(`MessageType.PARTICIPANT_POSE ${str}`)
       onPose(from, str)
     })
-    this.conference.on(PropertyType.PARTICIPANT_POSE, (from:string, str:string)=>{
-      //  console.log(`PropertyType.PARTICIPANT_POSE ${str}`)
-      onPose(from, str)
-    })
     let updateTimeForProperty = 0
     let poseWait = 0
 

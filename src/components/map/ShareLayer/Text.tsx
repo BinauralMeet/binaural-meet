@@ -207,6 +207,7 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
         ref.current?.scroll(newTexts.scroll[0], newTexts.scroll[1])
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   },        [newTexts.scroll[0], newTexts.scroll[1], editing])
 
   //  Update remote messages
