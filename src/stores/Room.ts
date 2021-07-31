@@ -7,7 +7,7 @@ export class Room {
   participants = new Participants()
   contents = new SharedContents()
   connection?:Connection = undefined
-  constructor (connection:Connection, name: string){
+  constructor (name: string, connection?:Connection){
     this.connection = connection
     this.name = name
   }

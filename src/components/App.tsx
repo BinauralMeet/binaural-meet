@@ -43,18 +43,19 @@ export const App: React.FC<{}> = () => {
     backgroundColor:'whitesmoke'}}>
     <Observer>{()=>{
       const roomArray = Array.from(rooms.rooms.values())
+      roomArray.sort((a, b) => a.name.localeCompare(b.name))
 
       return <SplitPane split="horizontal" defaultSize="50%"
         resizerClassName = {classes.resizerHorizontal}
         paneStyle = {{overflowY: 'auto', overflowX: 'hidden', width:'100%'}} >
         <div style={{display:'flex', width:'100%', height:'100%'}}>
-          {roomArray.map(room => <div style={roomDivStyle}>
-            <ParticipantList room={room} key={room.name} {...textLineHeight} />
+          {roomArray.map(room => <div key={room.name} style={roomDivStyle}>
+            <ParticipantList room={room} {...textLineHeight} />
           </div>)}
         </div>
         <div style={{display:'flex', width:'100%', height:'100%'}}>
-          {roomArray.map(room => <div style={roomDivStyle}>
-            <ContentList room={room} key={room.name} {...textLineHeight} />
+          {roomArray.map(room => <div key={room.name} style={roomDivStyle}>
+            <ContentList room={room} {...textLineHeight} />
           </div>)}
         </div>
       </SplitPane>

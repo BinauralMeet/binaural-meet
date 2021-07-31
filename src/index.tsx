@@ -1,5 +1,6 @@
 import {App} from '@components/App'
 import {Connection, connections} from '@models/api'
+import roomInfoServer from '@models/api/roomInfoServer'
 import {i18nInit} from '@models/locales'
 import {urlParameters} from '@models/url'
 import {resolveAtEnd} from '@models/utils'
@@ -18,9 +19,20 @@ declare const d:any                  //  from index.html
 i18nInit().then(main)
 
 function main() {
+  //  for debug
+  //urlParameters.role = 'sender'
+
   const startPromise = resolveAtEnd(onStart)()
   startPromise.then(resolveAtEnd(renderDOM))
-  startPromise.then(resolveAtEnd(connectConference))
+  if (urlParameters.role === 'sender'){
+    if (roomInfoServer.ws?.readyState === WebSocket.OPEN){
+      startPromise.then(resolveAtEnd(connectConference))
+    }else{
+      roomInfoServer.onopen = ()=>{
+        startPromise.then(resolveAtEnd(connectConference))
+      }
+    }
+  }
 }
 
 function onStart() {
@@ -63,8 +75,8 @@ function connectConference() {
       const connection = new Connection()
       connection.init().then(() => {
         const conferenceName = roomName || '_'
-        const room = new Room(connection, conferenceName)
-        rooms.rooms.add(room)
+        const room = new Room(conferenceName, connection)
+        rooms.rooms.set(room.name, room)
         connection.joinConference(room)
       })
       connections.push(connection)

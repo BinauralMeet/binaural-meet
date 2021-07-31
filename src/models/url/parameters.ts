@@ -1,13 +1,13 @@
 interface Params {
   [key: string]: string | null
-  rooms: string | null               // conference room names
-  connect: string | null
+  rooms: string | null                // conference room names
+  role: string | null                 // 'sender' or 'receiver' (default)
   ui: string | null
 }
 
 export function decodeGetParams(url: string): Params {
   const urlObj = new URL(decodeURI(url))
-  const props = ['rooms', 'connect', 'ui']
+  const props = ['rooms', 'role', 'ui']
 
   const res: Params = props.reduce(
     (pre, prop) => {

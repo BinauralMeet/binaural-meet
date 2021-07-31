@@ -31,7 +31,7 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
   status.update = update
 
   function updateStatus(){
-    const chatRoom = props.room.connection!.conference._jitsiConference?.room
+    const chatRoom = props.room.connection?.conference._jitsiConference?.room
     if (status.open && chatRoom){
       const sessions = chatRoom.xmpp?.connection?.jingle?.sessions
       const nSessions = Object.keys(sessions).length

@@ -61,6 +61,8 @@ const config_binaural = {
   },
   serviceUrl: 'wss://binaural.me:443/xmpp-websocket',
   //  bosh: 'https://binaural.me/http-bind',
+  roomInfoServer: 'wss://binaural.me:8443',
+  //roomInfoServer: 'ws://localhost:7010',
 }
 Object.assign(config_binaural, Object.assign(common_config, config_binaural))
 
@@ -72,6 +74,7 @@ const config_local = {
   },
   serviceUrl: 'wss://localhost:8443/xmpp-websocket',
   //bosh: 'https://localhost:8443/http-bind', // FIXME: use xep-0156 for that
+  roomInfoServer: 'ws://localhost:7010',
 }
 Object.assign(config_local, Object.assign(common_config, config_local))
 

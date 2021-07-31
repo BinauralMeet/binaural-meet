@@ -6,6 +6,7 @@ import JitsiMeetJS from 'lib-jitsi-meet'
 import {IReactionDisposer} from 'mobx'
 import type {Conference} from './Conference'
 import {ConferenceEvents} from './Conference'
+import roomInfoServer from './roomInfoServer'
 
 export const MessageType = {
   CHAT_MESSAGE: 'm_chat',                       //  -> text chat message
@@ -76,6 +77,7 @@ export class ConferenceSync{
         //  do nothing
       }else {
         this.conference.room!.participants.join(id)
+        roomInfoServer.addParticipant(this.conference.room!.name, id)
       }
     })
 
@@ -84,6 +86,7 @@ export class ConferenceSync{
       const remote = this.conference.room!.participants.remote.get(from)
       if (remote) {
         Object.assign(remote.information, info)
+        roomInfoServer?.updateParticipant(this.conference.room!.name, remote)
       }
     })
 
@@ -96,6 +99,7 @@ export class ConferenceSync{
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const remote = this.conference.room!.participants.remote.get(from)
       syncLog(`recv remote contents ${JSON.stringify(cs.map(c => c.id))} from ${from}.`, cs)
+      roomInfoServer?.updateContents(this.conference.room!.name, cs, from)
     })
 
     //  Get data channel state
@@ -142,5 +146,6 @@ export class ConferenceSync{
   private onParticipantLeft(id: string){
     this.conference.room!.contents.onParticipantLeft(id)
     this.conference.room!.participants.leave(id)
+    roomInfoServer?.removeParticipant(this.conference.room!.name, id)
   }
 }

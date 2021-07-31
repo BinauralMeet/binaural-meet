@@ -53,7 +53,7 @@ export const RawParticipantList:
     <div className={classes.container} >
       <div className={classes.title} ref={ref}>
         <span onClick={()=>{setShowStat(true)}}>{(store.remote.size).toString()} in </span>
-        <a href={`https://binaural.me/?room=${props.room.name}`}>
+        <a href={`/?room=${props.room.name}`}>
           {props.room.name}</a>
       </div>
       <StatusDialog open={showStat}
