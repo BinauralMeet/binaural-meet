@@ -64,7 +64,8 @@ const config_binaural = {
   },
   serviceUrl: 'wss://binaural.me:443/xmpp-websocket',
   //  bosh: 'https://binaural.me/http-bind',
-  roomInfoServer: 'wss://binaural.me:8443',
+  //  bmRelayServer: 'wss://binaural.me:8443',
+  roomInfoServer: 'wss://binaural.me:7443',
 }
 Object.assign(config_binaural, Object.assign(common_config, config_binaural))
 

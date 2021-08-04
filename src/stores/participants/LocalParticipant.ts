@@ -11,7 +11,7 @@ import {ParticipantBase} from './ParticipantBase'
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
 
-interface MediaSettings {
+export interface MediaSettings {
   stream:{
     muteVideo: boolean,
     muteAudio: boolean,
@@ -127,7 +127,7 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
     storage.setItem('localParticipantStreamControl', JSON.stringify(muteStatus))
   }
   @action.bound
-  loadMediaSettingsFromStorage() {
+  loadMediaSettingsFromStorage(rv?: MediaSettings) {
     let storage = localStorage
     if (sessionStorage.getItem('localParticipantStreamControl')) {
       storage = sessionStorage
@@ -135,10 +135,14 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
     const settingInStr = storage.getItem('localParticipantStreamControl')
     if (settingInStr) {
       const setting = JSON.parse(settingInStr) as MediaSettings
-      Object.assign(this, setting.stream)
-      Object.assign(this.devicePreference, setting.device)
-      this.useStereoAudio = setting.headphone
-      this.soundLocalizationBase = setting.soundLocalizationBase
+      if (rv){
+        Object.assign(rv, setting)
+      }else{
+        Object.assign(this, setting.stream)
+        Object.assign(this.devicePreference, setting.device)
+        this.useStereoAudio = setting.headphone
+        this.soundLocalizationBase = setting.soundLocalizationBase
+      }
     }
   }
 

@@ -6,7 +6,7 @@ import JitsiMeetJS, {JitsiLocalTrack, JitsiRemoteTrack,
   JitsiTrack, JitsiValues, TMediaType} from 'lib-jitsi-meet'
 import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
 import {makeObservable, observable} from 'mobx'
-import {ConferenceSync} from './ConferenceSync'
+import {ConferenceSync, MessageType} from './ConferenceSync'
 
 //  Log level and module log options
 export const JITSILOGLEVEL = 'warn'  // log level for lib-jitsi-meet {debug|log|warn|error}
@@ -33,6 +33,14 @@ export const ConferenceEvents = {
 //  MESSAGE_RECEIVED: 'message_received',
 //  PRIVATE_MESSAGE_RECEIVED: 'prev_message_received',
 }
+export interface BMMessage {
+  t: string,  //  type
+  r: string,  //  room id
+  p: string,  //  source pid
+  d: string,  //  distination pid
+  v: string,  //  JSON value
+}
+
 export class Conference extends EventEmitter {
   public _jitsiConference?: JitsiMeetJS.JitsiConference
   public localId = ''
@@ -66,6 +74,9 @@ export class Conference extends EventEmitter {
   }
 
   public uninit(){
+    if (config.bmRelayServer){
+      this.sendMessage(MessageType.PARTICIPANT_LEFT, '', undefined)
+    }
     if (participants.local.tracks.audio) {
       this.removeTrack(participants.local.tracks.audio as JitsiLocalTrack)
     }
@@ -254,17 +265,55 @@ export class Conference extends EventEmitter {
     }
   }
 
-  sendMessage(type:string, to:string, value:any) {
-    const jc = this._jitsiConference as any
-    const viaBridge = jc?.rtc?._channel?.isOpen() ? true : false
-    const connected = jc?.chatRoom?.connection.connected
-    sendLog(`SEND sendMessage type:${type} to:${to} val:${JSON.stringify(value)}`)
+  bmRelaySocket:WebSocket|undefined = undefined
 
-    if (viaBridge || connected){
-      const msg = viaBridge ? {type, value} : JSON.stringify({type, value})
-      this._jitsiConference?.sendMessage(msg, to, viaBridge)
+  sendMessage(type:string, to:string, value:any) {
+    const roomName = this._jitsiConference?.getName()
+    if (config.bmRelayServer && roomName && participants.localId){
+      const msg:BMMessage = {t:type, r:roomName, p: participants.localId,
+        d:to, v:JSON.stringify(value)}
+      if (!this.bmRelaySocket){
+        this.bmRelaySocket = new WebSocket(config.bmRelayServer)
+        this.bmRelaySocket.addEventListener('error', ()=> {
+          console.error(`Failed to open ${config.bmRelayServer}`)
+          config.bmRelayServer = ''
+          this.sendMessage(type, to, value)
+        })
+        this.bmRelaySocket.addEventListener('message', (ev: MessageEvent<any>)=> {
+          console.log(`ws:`, ev)
+          if (typeof ev.data === 'string') {
+            const msgs = JSON.parse(ev.data) as BMMessage[]
+            console.log(`Len:${msgs.length}: ${ev.data}`)
+            this.sync.onBmMessage(msgs)
+          }
+        })
+      }
+      if (this.bmRelaySocket.readyState !== WebSocket.OPEN){
+        this.bmRelaySocket.addEventListener('open', ()=> {
+          const waitAndSend = ()=>{
+            if(this.bmRelaySocket?.readyState !== WebSocket.OPEN){
+              setTimeout(waitAndSend, 100)
+            }else{
+              this.bmRelaySocket?.send(JSON.stringify(msg))
+            }
+          }
+          waitAndSend()
+        })
+      }else{
+        this.bmRelaySocket.send(JSON.stringify(msg))
+      }
     }else{
-      //  console.log('Conference.sendMessage() failed: Not connected.')
+      const jc = this._jitsiConference as any
+      const viaBridge = jc?.rtc?._channel?.isOpen() ? true : false
+      const connected = jc?.chatRoom?.connection.connected
+      sendLog(`SEND sendMessage type:${type} to:${to} val:${JSON.stringify(value)}`)
+
+      if (viaBridge || connected){
+        const msg = viaBridge ? {type, value} : JSON.stringify({type, value})
+        this._jitsiConference?.sendMessage(msg, to, viaBridge)
+      }else{
+        //  console.log('Conference.sendMessage() failed: Not connected.')
+      }
     }
   }
 
@@ -410,6 +459,10 @@ export class Conference extends EventEmitter {
     }
     //  load wallpapers after 2secs
     setTimeout(contents.loadWallpaper.bind(contents), 2000)
+    //  request remote info
+    if (config.bmRelayServer){
+      this.sendMessage(MessageType.REQUEST, '', undefined)
+    }
   }
 
   private onLocalTrackAdded(track: JitsiLocalTrack) {

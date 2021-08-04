@@ -339,10 +339,12 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
               props.map.keyInputUsers.add('contentForm')
             }}
             >
+          <div className={classes.type}>
+            {contentTypeIcons(props.content.type, TITLE_HEIGHT, TITLE_HEIGHT*1.1)}
+          </div>
           <Tooltip placement="top" title={props.content.pinned ? t('ctUnpin') : t('ctPin')} >
           <div className={classes.pin} onClick={onClickPin} onTouchStart={stop}>
-            {contentTypeIcons(props.content.type, TITLE_HEIGHT)}
-            <Icon icon={props.content.pinned ? pinIcon : pinOffIcon} height={TITLE_HEIGHT} />
+            <Icon icon={props.content.pinned ? pinIcon : pinOffIcon} height={TITLE_HEIGHT} width={TITLE_HEIGHT*1.1} />
           </div></Tooltip>
           <Tooltip placement="top" title={editButtonTip(editing, props.content)} >
             <div className={classes.edit} onClick={onClickEdit} onTouchStart={stop}>
@@ -500,7 +502,6 @@ const useStyles = makeStyles({
       display: props.props.onShare ? 'none' : 'block',
       height: TITLE_HEIGHT,
       whiteSpace: 'pre',
-      borderRadius: '0.5em 0 0 0',
       cursor: 'default',
       ...buttonStyle,
     } : {display:'none'}

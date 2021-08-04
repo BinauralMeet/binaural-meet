@@ -15,6 +15,7 @@ class TextMember{
   messages: TextMessage[] = []
   isStatic = false
   abortScroll = false
+  editing = false
 }
 //  Update (send) the content if needed
 function onUpdateTexts(messages: TextMessage[], div:HTMLDivElement, props: ContentProps) {
@@ -42,9 +43,9 @@ interface TextEditProps extends TextDivProps{
 function sendText(text: string, props: TextEditProps){
   //  console.log(`send text ${text}`)
   props.text.message = text
-  props.member.messages = props.member.messages.filter(text => text.message.length)
+  const messagesToSend = props.member.messages.filter(text => text.message.length)
   if (props.div){
-    onUpdateTexts(props.member.messages, props.div, props)
+    onUpdateTexts(messagesToSend, props.div, props)
   }
 }
 
@@ -227,6 +228,7 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
     msg.pid === props.participants.localId || indices.has(idx))
   member.messages.sort(compTextMessage)
 
+  let focusToEdit:undefined|TextMessage = undefined
   if (editing) {
     //  Make a new message to edit if needed.
     const last = member.messages.pop()
@@ -240,12 +242,12 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
         textColor: props.participants.local.information.textColor,
         time:Date.now()})
     }
+    if (!member.editing) {  //  Find the message to focus to edit, i.e. my last message.
+      member.messages.reverse()
+      focusToEdit = member.messages.find(message => message.pid === props.participants.localId)
+      member.messages.reverse()
+    }
   }
-
-  //  Find the message to focus to edit, i.e. my last message.
-  member.messages.reverse()
-  const focusToEdit = member.messages.find(message => message.pid === props.participants.localId)
-  member.messages.reverse()
 
   //  Makeing text (JSX element) to show
   const textDivs = member.messages.map((text, idx) => {
@@ -273,8 +275,7 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
     }
 
     return <TextDiv {...props} key={idx} text={text} div={ref.current} textToShow={textToShow}
-      autoFocus = {text === focusToEdit}
-      member={member} textEditing={textEditing} />
+      member={member} textEditing={textEditing} autoFocus = {text === focusToEdit} />
   })
   const INTERVAL = 200
   const handleScroll = _.debounce((ev:React.UIEvent<HTMLDivElement, UIEvent>) => {
@@ -287,6 +288,7 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
       }
     }
   }, INTERVAL)
+  member.editing = editing
 
   return  <div ref={ref} className = {editing ? classes.textEdit : classes.text}
     onWheel = {ev => ev.ctrlKey || ev.stopPropagation() }
