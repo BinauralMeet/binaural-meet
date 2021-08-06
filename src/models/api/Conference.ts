@@ -12,7 +12,7 @@ import {ConferenceSync} from './ConferenceSync'
 export const JITSILOGLEVEL = 'warn'  // log level for lib-jitsi-meet {debug|log|warn|error}
 export const CONNECTIONLOG = false
 export const TRACKLOG = false        // show add, remove... of tracks
-export const EVENTLOG = true
+export const EVENTLOG = false
 export const SENDLOG = false
 export const trackLog = TRACKLOG ? console.log : (a:any) => {}
 export const connLog = CONNECTIONLOG ? console.log : (a:any) => {}

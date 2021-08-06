@@ -66,22 +66,16 @@ function connectConference() {
       })
     })
   })
-  if (!urlParameters.rooms){
-    urlParameters.rooms = '_ haselab test testbot'
-  }
-  if (urlParameters.rooms){
-    const roomNames = urlParameters.rooms.split(/ |\//)
-    roomNames.forEach(roomName => {
-      const connection = new Connection()
-      connection.init().then(() => {
-        const conferenceName = roomName || '_'
-        const room = new Room(conferenceName, connection)
-        rooms.rooms.set(room.name, room)
-        connection.joinConference(room)
-      })
-      connections.push(connection)
+  roomInfoServer.roomNames.forEach(roomName => {
+    const connection = new Connection()
+    connection.init().then(() => {
+      const conferenceName = roomName || '_'
+      const room = new Room(conferenceName, connection)
+      rooms.rooms.set(room.name, room)
+      connection.joinConference(room)
     })
-  }
+    connections.push(connection)
+  })
   d.connections = connections
   d.rooms = () => Array.from(rooms.rooms.values())
   d.remotes = () => {

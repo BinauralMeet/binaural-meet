@@ -9,6 +9,13 @@ import {Message, MessageType, RoomInfo} from './Message'
 declare const config:any                  //  from ../../config.js included from index.html
 
 export class RoomInfoServer{
+  get roomNames():string[]{
+    if (!urlParameters.rooms){
+      urlParameters.rooms = '_ haselab test testbot'
+    }
+
+    return urlParameters.rooms.split(/ |\//)
+  }
   ws: WebSocket|undefined
   onopen: ((ws: WebSocket)=>void)|undefined = undefined
   constructor(url: string){
@@ -25,6 +32,8 @@ export class RoomInfoServer{
       if (this.onopen){ this.onopen(this.ws!) }
       if (urlParameters.role === 'sender'){
         this.send(MessageType.CLEAR, '', '', null)
+        console.log(this.roomNames)
+        this.send(MessageType.ROOMS_TO_SHOW, '', '', Array.from(this.roomNames))
       }else{
         this.send(MessageType.REQUEST, '', '', null)
       }
