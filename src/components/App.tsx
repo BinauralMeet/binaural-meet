@@ -50,6 +50,8 @@ export const App: React.FC<{}> = () => {
     }else{
       console.error(message, source, lineno, colno, error)
     }
+
+    return true
   }
 
 

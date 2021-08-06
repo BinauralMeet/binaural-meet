@@ -1,14 +1,17 @@
+import { TextField } from '@material-ui/core'
 import Box from '@material-ui/core/Box'
 import Button from '@material-ui/core/Button'
 import DialogContent from '@material-ui/core/DialogContent'
+import DialogTitle from '@material-ui/core/DialogTitle'
 import Popover, { PopoverProps } from '@material-ui/core/Popover'
+import {connection} from '@models/api'
 import {t} from '@models/locales'
 import chat from '@stores/Chat'
 import {MapData} from '@stores/Map'
 import participants from '@stores/participants/Participants'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
+import roomInfo from '@stores/RoomInfo'
 import React from 'react'
-import DialogTitle from '@material-ui/core/DialogTitle'
 
 export interface RemoteParticipantFormProps extends PopoverProps{
   close: () => void,
@@ -16,8 +19,14 @@ export interface RemoteParticipantFormProps extends PopoverProps{
   map: MapData
 }
 
-export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (props: RemoteParticipantFormProps) => {
 
+export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (props: RemoteParticipantFormProps) => {
+  const [kick, setKick] = React.useState<string>('')
+  function onKeyPress(ev:React.KeyboardEvent){
+    if (ev.key === 'Enter' && kick === 'kick') {
+      connection.conference.kickParticipant(props.participant.id)
+    }
+  }
   function closeConfig(ev:Object, reason:string) {
     if (reason === 'enter' || reason==='backdropClick'){
     }
@@ -66,6 +75,14 @@ export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (prop
         props.map.focusOn(props.participant)
       }}>{t('ctFocus')}</Button>
       </Box>
+      { roomInfo.passMatched &&
+        <Box mb={2}>
+          To kick this user type 'kick' and enter.
+          <TextField label="kick" type="text"
+            value={kick} onChange={(ev)=>{setKick(ev.currentTarget.value)}} onKeyPress={onKeyPress}
+          />
+        </Box>
+      }
     </DialogContent>
   </Popover>
 }

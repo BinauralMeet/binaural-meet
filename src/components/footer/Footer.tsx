@@ -10,6 +10,7 @@ import Popover from '@material-ui/core/Popover'
 import {makeStyles} from '@material-ui/core/styles'
 import MicIcon from '@material-ui/icons/Mic'
 import MicOffIcon from '@material-ui/icons/MicOff'
+import SettingsIcon from '@material-ui/icons/Settings'
 import VideoIcon from '@material-ui/icons/Videocam'
 import VideoOffIcon from '@material-ui/icons/VideocamOff'
 import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
@@ -28,17 +29,16 @@ const useStyles = makeStyles({
     position: 'absolute',
     width: '100%',
     bottom: 0,
-    padding: 8,
+    padding: 0,
     outline: 'none',
     pointerEvents: 'none',
   },
-  left:{
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    width:30,
-    height:15,
-    pointerEvents: 'auto',
+  root:{width:'100%'},
+  wrapper:{width:'100%'},
+  wrapperInner:{width:'100%', display:'flex', alignItems:'flex-end'},
+  right:{
+    marginLeft: 'auto',
+    pointerEvents: 'none',
     backgroundColor:'transparent',
   },
 })
@@ -206,8 +206,17 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
       .catch(() => { console.log('Device enumeration error') })
     }
 
+    function openAdmin(){
+      props.map.keyInputUsers.add('adminForm')
+      setShowAdmin(true)
+    }
+    function closeAdmin(){
+      props.map.keyInputUsers.delete('adminForm')
+      setShowAdmin(false)
+    }
+
     return <div ref={containerRef} className={classes.container} onClickCapture={()=>{props.contents.setEditing('')}}>
-      <Collapse in={show}>
+      <Collapse in={show} classes={classes}>
         <StereoAudioSwitch size={fabSize} iconSize={iconSize} />
         <FabMain size={fabSize} color={mute.muteS ? 'primary' : 'secondary' }
           aria-label="speaker" onClick={() => {
@@ -277,13 +286,15 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
 
         <ErrorDialog />
 
-        <div className={classes.left} ref={adminButton} onClick = { () => setShowAdmin(true) } />
-        <Popover open={showAdmin} onClose={() => setShowAdmin(false)}
+        <FabMain size={fabSize} onClick={openAdmin}
+          style={{marginLeft:'auto', marginRight:10, opacity:0.1}}>
+          <SettingsIcon style={{width:iconSize, height:iconSize}} />
+        </FabMain>
+        <Popover open={showAdmin} onClose={closeAdmin}
           anchorEl={adminButton.current} anchorOrigin={{vertical:'top', horizontal:'left'}}
           anchorReference = "anchorEl" >
-          <AdminConfigForm close={ () => setShowAdmin(false) } />
+          <AdminConfigForm close={closeAdmin} />
         </Popover>
-
       </Collapse>
     </div >
   },

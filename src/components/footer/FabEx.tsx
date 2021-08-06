@@ -7,7 +7,11 @@ import React, {useRef, useState} from 'react'
 const useStyles = makeStyles((theme) => {
   return ({
     container: {
-      margin: theme.spacing(2),
+      display:'inline-block',
+      marginLeft: theme.spacing(2),
+      marginRight: theme.spacing(2),
+      marginTop: theme.spacing(1),
+      marginBottom: theme.spacing(1),
       pointerEvents: 'auto',
     },
   })
@@ -21,6 +25,7 @@ interface MyFabProps{
   iconColor?: IconColor
   htmlColor?: string
   className?: string
+  style?: React.CSSProperties
   title?: string | React.ReactElement,
   size?: number,
 }
@@ -32,7 +37,8 @@ export const FabMain: React.FC<MyFabProps> = (props) => {
   const memberRef = useRef<MoreButtonMember>({timeout:undefined})
   const member = memberRef.current
 
-  return <span className={classes.container + (props.className ? ` ${props.className}` : '')}
+  return <div className={classes.container + (props.className ? ` ${props.className}` : '')}
+    style={props.style}
     {...moreButtonControl(setShowMore, member)}
   >
     <Fab style={{height:props.size, width:props.size}}
@@ -48,7 +54,7 @@ export const FabMain: React.FC<MyFabProps> = (props) => {
     show={showMore} color={props.color} htmlColor={props.htmlColor} iconColor={props.iconColor}
     onClickMore = {props.onClickMore}
     /> : undefined}
-  </span>
+  </div>
 }
 
 export const FabWithTooltip: React.FC<MyFabProps> = (props) => {

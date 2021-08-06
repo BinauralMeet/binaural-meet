@@ -1,10 +1,10 @@
 import {useStore} from '@hooks/ParticipantsStore'
 import Button from '@material-ui/core/Button'
-import Container from '@material-ui/core/Container'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
 import Grid from '@material-ui/core/Grid'
 import Slider from '@material-ui/core/Slider'
 import {connection} from '@models/api'
+import roomInfo from '@stores/RoomInfo'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 
@@ -33,24 +33,23 @@ export const RemoteTrackLimitControl: React.FC<{}> = () => {
       local.remoteAudioLimit = v === MAX ? -1 : v
     } } />
 
-  return <><Container>
-    <FormControlLabel
-      control={videoSlider}
-      label="Max remote videos"
-    />
-  </Container>
-  <Container>
+  return <>
+  <FormControlLabel
+    control={videoSlider}
+    label="Remote video limit"
+  />
   <FormControlLabel
       control={audioSlider}
-      label="Max remote audios"
-    />
-  </Container>
-  <Container>
-  <Button variant="contained"
+      label="Remote audio limit"
+  /><br />
+  <Button variant="contained" color={roomInfo.passMatched ? 'primary' : 'default'}
+      disabled={!roomInfo.passMatched}
       onClick = { () => {
-        connection.conference.sync.sendTrackLimits('', [local.remoteVideoLimit, local.remoteAudioLimit])
+        if (roomInfo.passMatched){
+          connection.conference.sync.sendTrackLimits('', [local.remoteVideoLimit, local.remoteAudioLimit])
+        }
       }}
   >Sync limits</Button>
-  </Container></>
+  </>
 }
 RemoteTrackLimitControl.displayName = 'RemoteTrackLimitControl'

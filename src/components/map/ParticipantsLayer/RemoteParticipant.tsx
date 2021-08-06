@@ -45,9 +45,11 @@ export const RemoteParticipant: React.FC<ParticipantProps> = (props) => {
     }
   }
   function onClose() {
+    props.map.keyInputUsers.delete('remoteForm')
     setShowForm(false)
   }
   function openForm() {
+    props.map.keyInputUsers.add('remoteForm')
     setShowForm(true)
   }
   const buttonRef=React.useRef<HTMLButtonElement>(null)

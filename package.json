@@ -50,7 +50,8 @@
     "yt-player": "https://github.com/BinauralMeet/yt-player.git"
   },
   "scripts": {
-    "start": "HTTPS=true react-app-rewired start",
+    "start": "react-app-rewired start",
+    "starthttps": "HTTPS=true react-app-rewired start",
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
     "eject": "react-scripts eject",

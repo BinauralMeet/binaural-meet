@@ -1,3 +1,6 @@
+import {connectRoomInfoServer, RoomInfoServer} from '@models/api/RoomInfoServer'
+import { KickTime } from '@models/KickTime'
+import errorInfo from '@stores/ErrorInfo'
 import {participantsStore} from '@stores/participants'
 import {default as participants} from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
@@ -7,6 +10,7 @@ import JitsiMeetJS, {JitsiLocalTrack, JitsiRemoteTrack,
 import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
 import {makeObservable, observable} from 'mobx'
 import {ConferenceSync, MessageType} from './ConferenceSync'
+import { MessageType as RoomInfoMT } from './RoomInfoMessage'
 
 //  Log level and module log options
 export const JITSILOGLEVEL = 'warn'  // log level for lib-jitsi-meet {debug|log|warn|error}
@@ -53,7 +57,32 @@ export class Conference extends EventEmitter {
     makeObservable(this)
   }
 
+  roomInfoServer?: RoomInfoServer
+  setRoomProp(name:string, value:string){
+    const roomName = this._jitsiConference?.getName()
+    if (roomName && this.roomInfoServer){
+      this.roomInfoServer.send(RoomInfoMT.ROOM_PROP, roomName, participants.localId, [name, value])
+    }
+  }
+
   public init(jc: JitsiMeetJS.JitsiConference) {
+    //  check last kicked time
+    const roomName = jc.getName()
+    if (roomName){
+      const str = window.localStorage.getItem('kickTimes')
+      if (str){
+        const kickTimes = JSON.parse(str) as KickTime[]
+        const found = kickTimes.find(kt => kt.room === roomName)
+        if (found){
+          const diff = Date.now() - found.time
+          const KICK_WAIT_MIN = 15  //  Can not login KICK_WAIT_MIN minutes once kicked.
+          if (diff < KICK_WAIT_MIN * 60 * 1000){
+            window.location.reload()
+          }
+        }
+      }
+    }
+
     //  register event handlers and join
     this._jitsiConference = jc
     this.registerJistiConferenceEvents()
@@ -71,6 +100,8 @@ export class Conference extends EventEmitter {
       console.log(`contentCarriers: ${JSON.stringify(contents.tracks.contentCarriers)}`)
       console.log(`remoteMains: ${JSON.stringify(contents.tracks.remoteMains.keys())}`)
     }
+
+    this.roomInfoServer = connectRoomInfoServer(jc.getName())
   }
 
   public uninit(){
@@ -213,7 +244,9 @@ export class Conference extends EventEmitter {
   public getLocalParticipantProperty(name: string): any {
     return this._jitsiConference?.getLocalParticipantProperty(name)
   }
-
+  public kickParticipant(pid: string){
+    this._jitsiConference?.kickParticipant(pid)
+  }
   //
   public setSenderVideoConstraint(height: number) {
     this._jitsiConference?.setSenderVideoConstraint(height)
@@ -408,8 +441,33 @@ export class Conference extends EventEmitter {
         eventLog('MESSAGE_RECEIVED', id, text, timeStamp)
         //  this.emit(ConferenceEvents.MESSAGE_RECEIVED, id, text, timeStamp)
     })
-  }
 
+    //  kicked
+    this._jitsiConference.on(JitsiMeetJS.events.conference.KICKED,
+      (actorParticipant:JitsiParticipant, reason:string)=>{
+        errorInfo.message = reason
+        errorInfo.type = 'kicked'
+        const str = window.localStorage.getItem('kickTimes')
+        let found:KickTime|undefined = undefined
+        let kickTimes:KickTime[] = []
+        const roomName = this._jitsiConference?.getName()
+        if (roomName){
+          if (str){
+            kickTimes = JSON.parse(str) as KickTime[]
+            found = kickTimes.find(kt => kt.room === roomName)
+          }
+          if (!found){
+            found = {room:roomName, time:0}
+            kickTimes.push(found)
+          }
+          found.time = Date.now()
+          window.localStorage.setItem('kickTimes', JSON.stringify(kickTimes))
+        }
+        setTimeout(()=>{
+          window.location.reload()
+        }, 10000)
+    })
+  }
   private video:undefined | HTMLVideoElement = undefined
   private canvas:undefined | HTMLCanvasElement = undefined
   private cameraTrackConverter(track: JitsiLocalTrack) {
