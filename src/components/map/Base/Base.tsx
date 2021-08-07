@@ -256,8 +256,18 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   useEffect(
     () => {
       function handler(event:WheelEvent) {
+        //  console.log(event)
         if (event.ctrlKey) {
-          event.preventDefault()
+          if (window.visualViewport && window.visualViewport.scale > 1){
+            if (event.deltaY < 0){
+              event.preventDefault()
+              //  console.log('prevent', event.deltaY)
+            }else{
+              //  console.log('through', event.deltaY)
+            }
+          }else{
+            event.preventDefault()
+          }
           //  console.log('CTRL + mouse wheel = zoom prevented.', event)
         }
       }
