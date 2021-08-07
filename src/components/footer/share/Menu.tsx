@@ -133,7 +133,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
     let randStr = ''
     rand.forEach(i => randStr += i.toString(16))
     createContentOfIframe(
-      `https://wbo.ophir.dev/boards/BinauralMeet_${connection.conferenceName}_${randStr}`, map).then((c) => {
+      `https://wbo.ophir.dev/boards/BinauralMeet_${connection.conference.name}_${randStr}`, map).then((c) => {
       sharedContents.shareContent(c)
        sharedContents.setEditing(c.id)
     })

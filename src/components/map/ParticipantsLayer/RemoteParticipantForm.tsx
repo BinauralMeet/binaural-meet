@@ -5,12 +5,14 @@ import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
 import Popover, { PopoverProps } from '@material-ui/core/Popover'
 import {connection} from '@models/api'
+import {MessageType} from '@models/api/ConferenceSync'
 import {t} from '@models/locales'
 import chat from '@stores/Chat'
 import {MapData} from '@stores/Map'
 import participants from '@stores/participants/Participants'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import roomInfo from '@stores/RoomInfo'
+import contents from '@stores/sharedContents/SharedContents'
 import React from 'react'
 
 export interface RemoteParticipantFormProps extends PopoverProps{
@@ -19,12 +21,21 @@ export interface RemoteParticipantFormProps extends PopoverProps{
   map: MapData
 }
 
-
 export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (props: RemoteParticipantFormProps) => {
   const [kick, setKick] = React.useState<string>('')
-  function onKeyPress(ev:React.KeyboardEvent){
+  const [clear, setClear] = React.useState<string>('')
+  function onKeyPressKick(ev:React.KeyboardEvent){
     if (ev.key === 'Enter' && kick === 'kick') {
       connection.conference.kickParticipant(props.participant.id)
+      setTimeout(()=>{connection.conference.sendMessage(MessageType.KICK, props.participant.id, 'Kicked by administrator.')}, 5000)
+      props.close()
+    }
+  }
+  function onKeyPressClear(ev:React.KeyboardEvent){
+    if (ev.key === 'Enter' && clear === 'clear') {
+      const participant = contents.participants.get(props.participant.id)
+      participant?.myContents.forEach(c => contents.removeByLocal(c.id))
+      props.close()
     }
   }
   function closeConfig(ev:Object, reason:string) {
@@ -75,13 +86,20 @@ export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (prop
         props.map.focusOn(props.participant)
       }}>{t('ctFocus')}</Button>
       </Box>
-      { roomInfo.passMatched &&
-        <Box mb={2}>
-          To kick this user type 'kick' and enter.
-          <TextField label="kick" type="text"
-            value={kick} onChange={(ev)=>{setKick(ev.currentTarget.value)}} onKeyPress={onKeyPress}
-          />
-        </Box>
+      { roomInfo.passMatched && <>
+          <Box mb={2}>
+            To kick this user type 'kick' and enter. &thinsp;
+            <TextField label="kick" type="text" style={{marginTop:-22}}
+              value={kick} onChange={(ev)=>{setKick(ev.currentTarget.value)}} onKeyPress={onKeyPressKick}
+            />
+          </Box>
+          <Box mb={2}>
+            Clear this user's contents.&thinsp;
+            <TextField label="clear" type="text" style={{marginTop:-22}}
+              value={clear} onChange={(ev)=>{setClear(ev.currentTarget.value)}} onKeyPress={onKeyPressClear}
+            />
+         </Box>
+        </>
       }
     </DialogContent>
   </Popover>

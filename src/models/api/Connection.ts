@@ -67,7 +67,6 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
   private _store: Store<ConnectionInfo> | undefined
   public conference = new Conference()
   public version = '0.0.1'
-  public conferenceName = ''
   public state = ConnectionStates.DISCONNECTED
 
   public set Store(store: Store<ConnectionInfo>) {
@@ -100,9 +99,9 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
 
   public joinConference(conferenceName: string) {
     if (this._jitsiConnection) {
-      this.conferenceName = conferenceName
-      const jitsiConference = this._jitsiConnection.initJitsiConference(conferenceName, config)
-      this.conference.init(jitsiConference)
+      this.conference.init(conferenceName, () => {
+        return this._jitsiConnection?.initJitsiConference(conferenceName, config)
+      })
 
       return
     }
@@ -146,7 +145,7 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
       console.log('Disconnected and failed to leave... try to join again')
     }).finally(()=>{
       this.init().then(()=>{
-        this.joinConference(this.conferenceName)
+        this.joinConference(this.conference.name)
         function restoreLocalTracks(){
           if (!localCamera || localCamera.disposed){
             participants.local.muteAudio = micMute
@@ -172,7 +171,7 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
 
   private onStateChanged(state: ConnectionStatesType) {
     this.state = state
-    console.log(`ConnctionStateChanged: Current Connection State: ${state}`)
+    //  console.log(`ConnctionStateChanged: Current Connection State: ${state}`)
 
     if (state === ConnectionStates.DISCONNECTED){ this.reconnect() }
     if (this._store) {

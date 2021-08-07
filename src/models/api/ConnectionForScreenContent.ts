@@ -17,7 +17,7 @@ export class ConnectionForContent extends EventEmitter {
     return new Promise<string>((resolve, reject) => {
       this.initJitsiConnection().then(() => {
         if (this.jitsiConnection) {
-          this.jitsiConference = this.jitsiConnection.initJitsiConference(connection.conferenceName, config)
+          this.jitsiConference = this.jitsiConnection.initJitsiConference(connection.conference.name, config)
           this.jitsiConference.on(JitsiMeetJS.events.conference.CONFERENCE_JOINED, () => {
             this.localId = this.jitsiConference!.myUserId()
             this.jitsiConference?.setPerceptibles([[], []])

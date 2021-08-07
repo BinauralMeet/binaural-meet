@@ -75,7 +75,7 @@ export const RawParticipantList: React.FC<Stores&TextLineStyle&{localId: string,
     <div className={classes.container} >
       <div className={classes.title} ref={ref}
         onClick={()=>{setShowStat(true)}}
-      >{(store.remote.size + 1).toString()} in {connection.conferenceName}</div>
+      >{(store.remote.size + 1).toString()} in {connection.conference.name}</div>
       <StatusDialog open={showStat}
         close={()=>{setShowStat(false)}} {...statusProps} anchorEl={ref.current}/>
       {localElement}{remoteElements}

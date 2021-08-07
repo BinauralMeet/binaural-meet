@@ -28,6 +28,7 @@ interface MyFabProps{
   style?: React.CSSProperties
   title?: string | React.ReactElement,
   size?: number,
+  divRef?: React.RefObject<HTMLDivElement>
 }
 
 
@@ -38,7 +39,7 @@ export const FabMain: React.FC<MyFabProps> = (props) => {
   const member = memberRef.current
 
   return <div className={classes.container + (props.className ? ` ${props.className}` : '')}
-    style={props.style}
+    style={props.style} ref={props.divRef}
     {...moreButtonControl(setShowMore, member)}
   >
     <Fab style={{height:props.size, width:props.size}}

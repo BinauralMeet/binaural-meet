@@ -1,6 +1,5 @@
 import {connectRoomInfoServer, RoomInfoServer} from '@models/api/RoomInfoServer'
 import { KickTime } from '@models/KickTime'
-import errorInfo from '@stores/ErrorInfo'
 import {participantsStore} from '@stores/participants'
 import {default as participants} from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
@@ -47,6 +46,7 @@ export interface BMMessage {
 
 export class Conference extends EventEmitter {
   public _jitsiConference?: JitsiMeetJS.JitsiConference
+  public name=''
   public localId = ''
   public joinTime = 0
   sync = new ConferenceSync(this)
@@ -65,43 +65,45 @@ export class Conference extends EventEmitter {
     }
   }
 
-  public init(jc: JitsiMeetJS.JitsiConference) {
+  public init(name:string, createJitsiConference:()=>JitsiMeetJS.JitsiConference|undefined){
     //  check last kicked time
-    const roomName = jc.getName()
-    if (roomName){
+    if (name){
       const str = window.localStorage.getItem('kickTimes')
       if (str){
         const kickTimes = JSON.parse(str) as KickTime[]
-        const found = kickTimes.find(kt => kt.room === roomName)
+        const found = kickTimes.find(kt => kt.room === name)
         if (found){
           const diff = Date.now() - found.time
           const KICK_WAIT_MIN = 15  //  Can not login KICK_WAIT_MIN minutes once kicked.
           if (diff < KICK_WAIT_MIN * 60 * 1000){
             window.location.reload()
+
+            return
           }
         }
       }
     }
 
     //  register event handlers and join
-    this._jitsiConference = jc
+    this.name = name
+    this._jitsiConference = createJitsiConference()
     this.registerJistiConferenceEvents()
     this.sync.bind()
-    this._jitsiConference.join('')
-    this._jitsiConference.setSenderVideoConstraint(1080)
+    this._jitsiConference?.join('')
+    this._jitsiConference?.setSenderVideoConstraint(1080)
     this.joinTime = Date.now()
 
     //  To access from debug console, add object d to the window.
     d.conference = this
     d.jc = this._jitsiConference
-    d.chatRoom = (jc as any).room
+    d.chatRoom = (this._jitsiConference as any).room
     d.showState = () => {
       console.log(`carrierMap: ${JSON.stringify(contents.tracks.carrierMap)}`)
       console.log(`contentCarriers: ${JSON.stringify(contents.tracks.contentCarriers)}`)
       console.log(`remoteMains: ${JSON.stringify(contents.tracks.remoteMains.keys())}`)
     }
 
-    this.roomInfoServer = connectRoomInfoServer(jc.getName())
+    this.roomInfoServer = connectRoomInfoServer(this.name)
   }
 
   public uninit(){
@@ -301,9 +303,8 @@ export class Conference extends EventEmitter {
   bmRelaySocket:WebSocket|undefined = undefined
 
   sendMessage(type:string, to:string, value:any) {
-    const roomName = this._jitsiConference?.getName()
-    if (config.bmRelayServer && roomName && participants.localId){
-      const msg:BMMessage = {t:type, r:roomName, p: participants.localId,
+    if (config.bmRelayServer && this.name && participants.localId){
+      const msg:BMMessage = {t:type, r:this.name, p: participants.localId,
         d:to, v:JSON.stringify(value)}
       if (!this.bmRelaySocket){
         this.bmRelaySocket = new WebSocket(config.bmRelayServer)
@@ -444,29 +445,7 @@ export class Conference extends EventEmitter {
 
     //  kicked
     this._jitsiConference.on(JitsiMeetJS.events.conference.KICKED,
-      (actorParticipant:JitsiParticipant, reason:string)=>{
-        errorInfo.message = reason
-        errorInfo.type = 'kicked'
-        const str = window.localStorage.getItem('kickTimes')
-        let found:KickTime|undefined = undefined
-        let kickTimes:KickTime[] = []
-        const roomName = this._jitsiConference?.getName()
-        if (roomName){
-          if (str){
-            kickTimes = JSON.parse(str) as KickTime[]
-            found = kickTimes.find(kt => kt.room === roomName)
-          }
-          if (!found){
-            found = {room:roomName, time:0}
-            kickTimes.push(found)
-          }
-          found.time = Date.now()
-          window.localStorage.setItem('kickTimes', JSON.stringify(kickTimes))
-        }
-        setTimeout(()=>{
-          window.location.reload()
-        }, 10000)
-    })
+      (p:JitsiParticipant, r:string)=>{this.sync.onKicked(p.getId(),r)})
   }
   private video:undefined | HTMLVideoElement = undefined
   private canvas:undefined | HTMLCanvasElement = undefined

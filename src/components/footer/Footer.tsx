@@ -33,14 +33,8 @@ const useStyles = makeStyles({
     outline: 'none',
     pointerEvents: 'none',
   },
-  root:{width:'100%'},
   wrapper:{width:'100%'},
   wrapperInner:{width:'100%', display:'flex', alignItems:'flex-end'},
-  right:{
-    marginLeft: 'auto',
-    pointerEvents: 'none',
-    backgroundColor:'transparent',
-  },
 })
 
 class Member{
@@ -286,7 +280,7 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
 
         <ErrorDialog />
 
-        <FabMain size={fabSize} onClick={openAdmin}
+        <FabMain size={fabSize} onClick={openAdmin} divRef={adminButton}
           style={{marginLeft:'auto', marginRight:10, opacity:0.1}}>
           <SettingsIcon style={{width:iconSize, height:iconSize}} />
         </FabMain>

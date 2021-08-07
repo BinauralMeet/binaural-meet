@@ -43,7 +43,7 @@ export const RemoteTrackLimitControl: React.FC<{}> = () => {
       label="Remote audio limit"
   /><br />
   <Button variant="contained" color={roomInfo.passMatched ? 'primary' : 'default'}
-      disabled={!roomInfo.passMatched}
+      style={{textTransform:'none'}} disabled={!roomInfo.passMatched}
       onClick = { () => {
         if (roomInfo.passMatched){
           connection.conference.sync.sendTrackLimits('', [local.remoteVideoLimit, local.remoteAudioLimit])

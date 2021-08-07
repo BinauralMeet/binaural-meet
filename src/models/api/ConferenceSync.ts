@@ -1,4 +1,5 @@
 import {contentTrackCarrierName, roomInfoPeeperName} from '@models/api/Constants'
+import { KickTime } from '@models/KickTime'
 import {t} from '@models/locales'
 import {Pose2DMap} from '@models/MapObject'
 import {priorityCalculator} from '@models/middleware/trafficControl'
@@ -7,6 +8,7 @@ import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {urlParameters} from '@models/url'
 import {normV, subV2} from '@models/utils'
 import chat, { ChatMessage, ChatMessageToSend } from '@stores/Chat'
+import errorInfo from '@stores/ErrorInfo'
 import {MediaSettings} from '@stores/participants/LocalParticipant'
 import participants from '@stores/participants/Participants'
 import {extractContentDataAndIds, makeItContent, makeThemContents} from '@stores/sharedContents/SharedContentCreator'
@@ -17,6 +19,7 @@ import {autorun, IReactionDisposer} from 'mobx'
 import type {BMMessage, Conference} from './Conference'
 import {ConferenceEvents} from './Conference'
 import { notification } from './Notification'
+
 // config.js
 declare const config:any             //  from ../../config.js included from index.html
 
@@ -37,6 +40,7 @@ export const MessageType = {
   MUTE_VIDEO: 'm_mute_video',                   //  ask to mute video
   MUTE_AUDIO: 'm_mute_audio',                   //  ask to mute audio
   RELOAD_BROWSER: 'm_reload',                   //  ask to reload browser
+  KICK: 'm_kick',
 }
 
 export const PropertyType = {
@@ -145,6 +149,29 @@ export class ConferenceSync{
     const remote = participants.find(from)
     if (remote){ remote.awayFromKeyboard = afk }
   }
+  public onKicked(pid:string, reason:string){
+    errorInfo.message = `Kicked by ${participants.remote.get(pid)?.information.name}. ${reason}`
+    errorInfo.type = 'kicked'
+    const str = window.localStorage.getItem('kickTimes')
+    let found:KickTime|undefined = undefined
+    let kickTimes:KickTime[] = []
+    if (this.conference.name){
+      if (str){
+        kickTimes = JSON.parse(str) as KickTime[]
+        found = kickTimes.find(kt => kt.room === this.conference.name)
+      }
+      if (!found){
+        found = {room:this.conference.name, time:0}
+        kickTimes.push(found)
+      }
+      found.time = Date.now()
+      window.localStorage.setItem('kickTimes', JSON.stringify(kickTimes))
+    }
+    setTimeout(()=>{
+      window.location.reload()
+    }, 10000)
+  }
+
   private onParticipantInfo(from:string, info:RemoteInformation){
     if (urlParameters.testBot !== null) { return }
 
@@ -309,6 +336,11 @@ export class ConferenceSync{
         }
       })
     }))
+    //  kick
+    this.conference.on(MessageType.KICK, (pid:string, reason:string)=>{
+      this.conference._jitsiConference?.room.leave()
+      this.onKicked(pid, reason)
+    })
 
     //  afk
     this.conference.on(MessageType.AFK_CHANGED, this.onAfkChanged)
