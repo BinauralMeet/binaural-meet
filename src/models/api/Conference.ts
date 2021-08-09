@@ -1,5 +1,6 @@
 import {connectRoomInfoServer, RoomInfoServer} from '@models/api/RoomInfoServer'
 import { KickTime } from '@models/KickTime'
+import loadController from '@models/trafficControl/loadController'
 import {participantsStore} from '@stores/participants'
 import {default as participants} from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
@@ -50,14 +51,31 @@ export class Conference extends EventEmitter {
   public localId = ''
   public joinTime = 0
   sync = new ConferenceSync(this)
-  @observable channelOpened = false
+  @observable channelOpened = false     //  is JVB message channel open ?
+  roomInfoServer?: RoomInfoServer       //  room info server for the room properties.
+  bmRelaySocket:WebSocket|undefined = undefined //  Socket for message passing via separate relay server
+  receivePeriod = 50                    //  period to receive message from relay server
 
   constructor(){
     super()
     makeObservable(this)
+    setInterval(this.loadControl.bind(this), 500)
   }
 
-  roomInfoServer?: RoomInfoServer
+  lastPeriod = -1
+  private loadControl(){
+    if (this.bmRelaySocket?.readyState === WebSocket.OPEN) {
+      //  period should be 50 to 5000 ms
+      const target = 0.5
+      const period = (1 + Math.round(Math.max(0, (loadController.averagedLoad - target)/(1 - target)) * 9)) * 50
+      if (this.lastPeriod !== period){
+        this.sendMessage(MessageType.SET_PERIOD, '', period)
+      }
+      this.lastPeriod = period
+      //  console.log(`SET_PERIOD ${period}`)
+    }
+  }
+
   setRoomProp(name:string, value:string){
     const roomName = this._jitsiConference?.getName()
     if (roomName && this.roomInfoServer){
@@ -300,24 +318,43 @@ export class Conference extends EventEmitter {
     }
   }
 
-  bmRelaySocket:WebSocket|undefined = undefined
-
   sendMessage(type:string, to:string, value:any) {
-    if (config.bmRelayServer && this.name && participants.localId){
+    if (config.bmRelayServer){
+      this.sendMessageViaRelay(type, to, value)
+    }else{
+      this.sendMessageViaJitsi(type, to, value)
+    }
+  }
+  sendMessageViaJitsi(type:string, to:string, value:any) {
+    const jc = this._jitsiConference as any
+    const viaBridge = jc?.rtc?._channel?.isOpen() ? true : false
+    const connected = jc?.chatRoom?.connection.connected
+    sendLog(`SEND sendMessage type:${type} to:${to} val:${JSON.stringify(value)}`)
+
+    if (viaBridge || connected){
+      const msg = viaBridge ? {type, value} : JSON.stringify({type, value})
+      this._jitsiConference?.sendMessage(msg, to, viaBridge)
+    }else{
+      if (participants.remote.size){
+        console.log('Conference.sendMessageViaJitsi() failed: Not connected.')
+      }
+    }
+  }
+  sendMessageViaRelay(type:string, to:string, value:any) {
+    if (this.name && participants.localId){
       const msg:BMMessage = {t:type, r:this.name, p: participants.localId,
         d:to, v:JSON.stringify(value)}
       if (!this.bmRelaySocket){
         this.bmRelaySocket = new WebSocket(config.bmRelayServer)
         this.bmRelaySocket.addEventListener('error', ()=> {
           console.error(`Failed to open ${config.bmRelayServer}`)
-          config.bmRelayServer = ''
-          this.sendMessage(type, to, value)
+          this.sendMessageViaJitsi(type, to, value)
         })
         this.bmRelaySocket.addEventListener('message', (ev: MessageEvent<any>)=> {
-          console.log(`ws:`, ev)
+          //  console.log(`ws:`, ev)
           if (typeof ev.data === 'string') {
             const msgs = JSON.parse(ev.data) as BMMessage[]
-            console.log(`Len:${msgs.length}: ${ev.data}`)
+            //  console.log(`Len:${msgs.length}: ${ev.data}`)
             this.sync.onBmMessage(msgs)
           }
         })
@@ -335,18 +372,6 @@ export class Conference extends EventEmitter {
         })
       }else{
         this.bmRelaySocket.send(JSON.stringify(msg))
-      }
-    }else{
-      const jc = this._jitsiConference as any
-      const viaBridge = jc?.rtc?._channel?.isOpen() ? true : false
-      const connected = jc?.chatRoom?.connection.connected
-      sendLog(`SEND sendMessage type:${type} to:${to} val:${JSON.stringify(value)}`)
-
-      if (viaBridge || connected){
-        const msg = viaBridge ? {type, value} : JSON.stringify({type, value})
-        this._jitsiConference?.sendMessage(msg, to, viaBridge)
-      }else{
-        //  console.log('Conference.sendMessage() failed: Not connected.')
       }
     }
   }

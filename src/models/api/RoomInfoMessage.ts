@@ -51,6 +51,7 @@ export const MessageType = {
   UPDATE_CONTENTS: 'update_c',
   ALL_INFOS: 'all_i',           //  server send when requrested.
   CLEAR: 'clear',               //  clear server's info.
+  SET_PERIOD: 'set_period',     //  set the period to receive messages.
 
   REQUEST_ROOM_PROPS: 'req_room_props',
   ROOM_PROPS: 'room_props',

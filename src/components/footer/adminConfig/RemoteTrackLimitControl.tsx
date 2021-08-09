@@ -4,6 +4,7 @@ import FormControlLabel from '@material-ui/core/FormControlLabel'
 import Grid from '@material-ui/core/Grid'
 import Slider from '@material-ui/core/Slider'
 import {connection} from '@models/api'
+import {t} from '@models/locales'
 import roomInfo from '@stores/RoomInfo'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
@@ -36,11 +37,11 @@ export const RemoteTrackLimitControl: React.FC<{}> = () => {
   return <>
   <FormControlLabel
     control={videoSlider}
-    label="Remote video limit"
+    label={t('videoLimit')}
   />
   <FormControlLabel
-      control={audioSlider}
-      label="Remote audio limit"
+    control={audioSlider}
+    label={t('audioLimit')}
   /><br />
   <Button variant="contained" color={roomInfo.passMatched ? 'primary' : 'default'}
       style={{textTransform:'none'}} disabled={!roomInfo.passMatched}

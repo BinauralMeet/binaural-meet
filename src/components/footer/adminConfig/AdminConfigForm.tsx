@@ -1,8 +1,12 @@
 import Box from '@material-ui/core/Box'
 import Button from '@material-ui/core/Button'
+//import FormControlLabel from '@material-ui/core/FormControlLabel'
+//import Grid from '@material-ui/core/Grid'
+//import Slider from '@material-ui/core/Slider'
 import TextField from '@material-ui/core/TextField'
 import {connection} from '@models/api'
 import {MessageType} from '@models/api/ConferenceSync'
+//import {t} from '@models/locales'
 import roomInfo from '@stores/RoomInfo'
 import contents from '@stores/sharedContents/SharedContents'
 import { Observer } from 'mobx-react-lite'
@@ -26,6 +30,9 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
   const [clearName, setClearName] = React.useState('')
 
   return <Observer>{()=><Box m={2}>
+    <Box m={2}>
+      <RemoteTrackLimitControl key="remotelimitcontrol" />
+    </Box>
     <Box mt={2} mb={2}>
       <TextField autoFocus label="Admin password" type="password" style={{marginTop:-12}}
         value={roomInfo?.password} onChange={(ev)=>{ roomInfo.password=ev.currentTarget.value}}
@@ -48,9 +55,6 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
             connection.conference.setRoomProp('password', roomInfo.newPassword)
           }
         }}> Update password </Button>&emsp;
-    </Box>
-    <Box m={2} mt={3} >
-      <RemoteTrackLimitControl key="remotelimitcontrol" />
     </Box>
     <Box mt={2}>
       <Button variant="contained" color={btnColor()} style={{textTransform:'none'}}

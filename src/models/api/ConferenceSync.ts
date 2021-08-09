@@ -24,23 +24,31 @@ import { notification } from './Notification'
 declare const config:any             //  from ../../config.js included from index.html
 
 export const MessageType = {
+  //  common instant messages
   CHAT_MESSAGE: 'm_chat',                       //  -> text chat message
-  PARTICIPANT_POSE: 'mp',                       //  -> update presence once per 5 sec / message immediate value
-  PARTICIPANT_MOUSE: 'mm',                      //  -> message
   PARTICIPANT_TRACKLIMITS: 'm_track_limits',    //  -> message, basically does not sync
-  YARN_PHONE: 'YARN_PHONE',             //  -> message
+  YARN_PHONE: 'YARN_PHONE',                     //  -> message
+  CALL_REMOTE: 'call_remote',                   //  -> message, to give notification to a remote user.
   CONTENT_UPDATE_REQUEST: 'content_update',     //  -> message
   CONTENT_REMOVE_REQUEST: 'content_remove',     //  -> message
-  CALL_REMOTE: 'call_remote',                   //  -> message, to give notification to a remote user.
-  AFK_CHANGED: 'afk_changed',                   //
-  FRAGMENT_HEAD: 'frag_head',
-  FRAGMENT_CONTENT: 'frag_cont',
-  REQUEST: 'request',
-  PARTICIPANT_LEFT: 'm_participant_left',       //  -> remove info
   MUTE_VIDEO: 'm_mute_video',                   //  ask to mute video
   MUTE_AUDIO: 'm_mute_audio',                   //  ask to mute audio
   RELOAD_BROWSER: 'm_reload',                   //  ask to reload browser
   KICK: 'm_kick',
+
+  //  common messages possibly stored in the server (PropertyType is also used as type of message stored)
+  PARTICIPANT_POSE: 'mp',                       //  -> update presence once per 5 sec / message immediate value
+  PARTICIPANT_MOUSE: 'mm',                      //  -> message
+  AFK_CHANGED: 'afk_changed',                   //
+
+  //  For message fragmentation for SCTP
+  FRAGMENT_HEAD: 'frag_head',
+  FRAGMENT_CONTENT: 'frag_cont',
+
+  //  messages only for bmRelayServer
+  PARTICIPANT_LEFT: 'm_participant_left',       //  remove infos of the participant
+  REQUEST: 'request',                           //  request for all info
+  SET_PERIOD: 'set_period',                     //  set period to send message to me.
 }
 
 export const PropertyType = {
@@ -523,7 +531,11 @@ export class ConferenceSync{
       count += 1
     }
   }
+  lastMessageTime = Date.now()
   onBmMessage(msgs: BMMessage[]){
+    const diff = Date.now() - this.lastMessageTime
+    this.lastMessageTime = Date.now()
+    console.log(`Receive ${msgs.length} relayed messages. period:${diff}`)
     for(const msg of msgs){
       switch(msg.t){
         case MessageType.AFK_CHANGED: this.onAfkChanged(msg.p, JSON.parse(msg.v)); break
