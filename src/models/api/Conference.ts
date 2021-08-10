@@ -59,7 +59,6 @@ export class Conference extends EventEmitter {
   constructor(){
     super()
     makeObservable(this)
-    setInterval(this.loadControl.bind(this), 500)
   }
 
   lastPeriod = -1
@@ -356,6 +355,7 @@ export class Conference extends EventEmitter {
             const msgs = JSON.parse(ev.data) as BMMessage[]
             //  console.log(`Len:${msgs.length}: ${ev.data}`)
             this.sync.onBmMessage(msgs)
+            this.loadControl()
           }
         })
       }
