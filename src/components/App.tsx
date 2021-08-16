@@ -42,6 +42,7 @@ export const App: React.FC<{}> = () => {
   },                      {passive: false, capture: false})
 
   //  Global error handler
+  /*
   window.onerror = (message, source, lineno, colno, error) => {
     if (error?.message === 'Ping timeout' && message === null && source === null && lineno === null && colno === null){
       errorInfo.type = 'connection'
@@ -52,7 +53,7 @@ export const App: React.FC<{}> = () => {
     }
 
     return true
-  }
+  }*/
 
 
   return (

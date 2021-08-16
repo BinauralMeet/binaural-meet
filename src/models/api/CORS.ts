@@ -1,4 +1,6 @@
-export const CORS_PROXY_URL = 'https://binaural.me/cors_proxy/'
+// config.js
+declare const config:any             //  from ../../config.js included from index.html
+export const CORS_PROXY_URL = config.corsProxyUrl || 'https://binaural.me/cors_proxy/'
 
 export function getProxiedUrl(url:string){
   const heads = ['http://', 'https://']

@@ -76,6 +76,10 @@ interface FragmentedMessage{
 const SYNC_LOG = false
 const syncLog = SYNC_LOG ? console.log : () => {}
 
+function round(n:number){ return Math.round(n*100) / 100 }
+function pose2Str(pose:Pose2DMap){ return `${round(pose.position[0])},${round(pose.position[1])},${round(pose.orientation)}`}
+function mouse2Str(mouse: Mouse){ return `${mouse.position[0]},${mouse.position[1]},${mouse.show?'t':''}` }
+
 export class ConferenceSync{
   conference: Conference
   disposers: IReactionDisposer[] = []
@@ -83,6 +87,53 @@ export class ConferenceSync{
   constructor(c:Conference) {
     this.conference = c
     //  setInterval(()=>{ this.checkRemoteAlive() }, 1000)
+  }
+  sendAllAboutMe(){
+    this.sendPoseMessageNow()
+    this.sendMouseMessageNow()
+    this.sendParticipantInfoMessage()
+    this.sendPhysics()
+    this.sendTrackStates()
+    if (contents.tracks.localMainConnection?.localId){ this.sendMainScreenCarrier(true) }
+    this.sendMyContents()
+    this.sendAfkChanged()
+  }
+  //
+  sendPoseMessageNow(){
+    if (this.conference.channelOpened){
+      const poseStr = pose2Str(participants.local.pose)
+      this.conference.sendMessage(MessageType.PARTICIPANT_POSE, '', poseStr)
+    }
+  }
+  sendMouseMessageNow(){
+    if (this.conference.channelOpened){
+      const mouseStr = mouse2Str(participants.local.mouse)
+      this.conference.sendMessage(MessageType.PARTICIPANT_MOUSE, '', mouseStr)
+    }
+  }
+  sendParticipantInfoMessage(){
+    this.conference.sendMessage(PropertyType.PARTICIPANT_INFO, '', {...participants.local.informationToSend})
+  }
+  sendPhysics(){
+    if (config.bmRelayServer){
+      this.conference.sendMessage(PropertyType.PARTICIPANT_PHYSICS, '', {...participants.local.physics})
+    }else{
+      if (this.conference.channelOpened) {
+        this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_PHYSICS, {...participants.local.physics})
+      }
+    }
+  }
+  sendTrackStates() {
+    if (config.bmRelayServer){
+      this.conference.sendMessage(PropertyType.PARTICIPANT_TRACKSTATES, '',
+        {...participants.local.trackStates})
+    }else{
+      this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_TRACKSTATES,
+                                                {...participants.local.trackStates})
+    }
+  }
+  sendAfkChanged(){
+    this.conference.sendMessage(MessageType.AFK_CHANGED, '', participants.local.awayFromKeyboard)
   }
 
   //  Only for test (admin config dialog).
@@ -335,150 +386,21 @@ export class ConferenceSync{
     this.conference.on(MessageType.CHAT_MESSAGE, this.onChatMessage)
     //  call
     this.conference.on(MessageType.CALL_REMOTE, this.onCallRemote)
-    this.disposers.push(autorun(() => {
-      participants.remote.forEach((remote)=>{
-        if (remote.called){
-          remote.called = false
-          this.conference.sendMessage(MessageType.CALL_REMOTE, remote.id, {})
-          chat.callTo(remote)
-        }
-      })
-    }))
     //  kick
     this.conference.on(MessageType.KICK, (pid:string, reason:string)=>{
       this.conference._jitsiConference?.room.leave()
       this.onKicked(pid, reason)
     })
-
-    //  afk
     this.conference.on(MessageType.AFK_CHANGED, this.onAfkChanged)
-    this.disposers.push(autorun(() => {
-      this.conference.sendMessage(MessageType.AFK_CHANGED, '', participants.local.awayFromKeyboard)
-    }))
-
-    //  info
     this.conference.on(PropertyType.PARTICIPANT_INFO, this.onParticipantInfo)
-    this.disposers.push(autorun(() => {
-      if (config.bmRelayServer){
-        this.conference.sendMessage(PropertyType.PARTICIPANT_INFO, '', {...participants.local.informationToSend})
-      }else{
-        this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_INFO,
-          {...participants.local.informationToSend})
-      }
-      let name = participants.local.information.name
-      while(name.slice(0,1) === '_'){ name = name.slice(1) }
-      this.conference._jitsiConference?.setDisplayName(name)
-    }))
-
-    //  track states
     this.conference.on(PropertyType.PARTICIPANT_TRACKSTATES, this.onParticipantTrackState)
-    const sendTrackStates = () => {
-      if (config.bmRelayServer){
-        this.conference.sendMessage(PropertyType.PARTICIPANT_TRACKSTATES, '',
-          {...participants.local.trackStates})
-      }else{
-        this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_TRACKSTATES,
-                                                  {...participants.local.trackStates})
-      }
-    }
-    this.disposers.push(autorun(sendTrackStates))
-
-    //  pose
     this.conference.on(MessageType.PARTICIPANT_POSE, this.onParticipantPose)
     this.conference.on(PropertyType.PARTICIPANT_POSE, this.onParticipantPose)
-    let updateTimeForProperty = 0
-    let poseWait = 0
-
-    const calcWait = () => Math.ceil(Math.max((participants.remote.size / 3) * 33, 33))
-    function round(n:number){ return Math.round(n*100) / 100 }
-    function pose2Str(pose:Pose2DMap){ return `${round(pose.position[0])},${round(pose.position[1])},${round(pose.orientation)}`}
-
-    let sendPoseMessage: (poseStr:string) => void = ()=>{}
-    let lastPoseStr=''
-    this.disposers.push(autorun(() => {
-      const newWait = calcWait()
-      if (newWait !== poseWait) {
-        poseWait = newWait
-        sendPoseMessage = _.throttle((poseStr:string) => {
-          if (this.conference.channelOpened){
-            this.conference.sendMessage(MessageType.PARTICIPANT_POSE, '', poseStr)
-          }
-        },                           poseWait)  //  30fps
-        //  console.log(`poseWait = ${poseWait}`)
-      }
-
-      const poseStr = pose2Str(participants.local.pose)
-      if (this.conference.channelOpened && lastPoseStr !== poseStr) {
-        sendPoseMessage(poseStr)
-        lastPoseStr = poseStr
-      }
-    }))
-
-    if (!config.bmRelayServer) {
-      let lastPoseStrProprty = ''
-      const setPoseProperty = () => {
-        const now = Date.now()
-        const period = calcWait() * 30 //  (33ms(1 remote) to 1000ms(100 remotes)) * 30
-        if (now - updateTimeForProperty > period) {  //  update period
-          const poseStr = pose2Str(participants.local.pose)
-          if (lastPoseStrProprty !== poseStr){
-            this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_POSE, poseStr)
-            updateTimeForProperty = now
-            lastPoseStrProprty = poseStr
-          }
-        }
-      }
-      setPoseProperty()
-      setInterval(setPoseProperty, 2.5 * 1000)
-    }
-
-    // mouse
     this.conference.on(MessageType.PARTICIPANT_MOUSE, this.onParticipantMouse)
-    let wait = 0
-    let sendMouseMessage = (mouse:Mouse) => {}
-    const sendMouse = (to: string) => {
-      const newWait = calcWait()
-      if (wait !== newWait) {
-        wait = newWait
-        sendMouseMessage = _.throttle((mouse: Mouse) => {
-          this.conference.sendMessage(MessageType.PARTICIPANT_MOUSE, '',
-            `${mouse.position[0]},${mouse.position[1]},${mouse.show?'t':''}`)
-        },                            wait)
-      }
-      if (this.conference.channelOpened) {
-        sendMouseMessage({...participants.local.mouse})
-      }
-    }
-    this.disposers.push(autorun(() => { sendMouse('') }))
-
-
-    // physics
     this.conference.on(PropertyType.PARTICIPANT_PHYSICS, this.onParticipantPhysics)
-    const sendPhysics = () => {
-      if (config.bmRelayServer){
-        this.conference.sendMessage(PropertyType.PARTICIPANT_PHYSICS, '', {...participants.local.physics})
-      }else{
-        if (this.conference.channelOpened) {
-          this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_PHYSICS, {...participants.local.physics})
-        }
-      }
-    }
-    this.disposers.push(autorun(() => { sendPhysics() }))
-
-    //  Yarn phone
     this.conference.on(MessageType.YARN_PHONE, this.onYarnPhone)
-    const sendYarnPhones = () => {
-      if (this.conference.channelOpened) {
-        this.conference.sendMessage(MessageType.YARN_PHONE, '', Array.from(participants.yarnPhones))
-      }
-    }
-    this.disposers.push(autorun(() => { sendYarnPhones() }))
-
-    //  mute video
     this.conference.on(MessageType.MUTE_VIDEO, this.onMuteVideo)
-    //  mute audio
     this.conference.on(MessageType.MUTE_AUDIO, this.onMuteAudio)
-    //  reload browser
     this.conference.on(MessageType.RELOAD_BROWSER, this.onReloadBrower)
 
     // contents related ---------------------------------------------------------------
@@ -514,9 +436,104 @@ export class ConferenceSync{
       }
     })
   }
-  unbind() {
+  observeStart(){
+    this.disposers.push(autorun(() => {
+      participants.remote.forEach((remote)=>{
+        if (remote.called){
+          remote.called = false
+          this.conference.sendMessage(MessageType.CALL_REMOTE, remote.id, {})
+          chat.callTo(remote)
+        }
+      })
+    }))
+    this.disposers.push(autorun(() => {
+      this.sendAfkChanged()
+    }))
+    this.disposers.push(autorun(() => {
+      if (config.bmRelayServer){
+        this.sendParticipantInfoMessage()
+      }else{
+        this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_INFO,
+          {...participants.local.informationToSend})
+      }
+      let name = participants.local.information.name
+      while(name.slice(0,1) === '_'){ name = name.slice(1) }
+      this.conference._jitsiConference?.setDisplayName(name)
+    }))
+    this.disposers.push(autorun(this.sendTrackStates.bind(this)))
+    const calcWait = () => this.conference.bmRelaySocket?.readyState === WebSocket.OPEN
+      ? Math.ceil(Math.max((participants.remote.size / 15) * 33, 33))
+      : Math.ceil(Math.max((participants.remote.size / 3) * 33, 33))
+    let sendPoseMessage: (poseStr:string) => void = ()=>{}
+    let poseWait = 0
+    let lastPoseStr=''
+    this.disposers.push(autorun(() => {
+      const newWait = calcWait()
+      if (newWait !== poseWait) {
+        poseWait = newWait
+        sendPoseMessage = _.throttle((poseStr:string) => {
+          if (this.conference.channelOpened){
+            this.conference.sendMessage(MessageType.PARTICIPANT_POSE, '', poseStr)
+          }
+        },                           poseWait)  //  30fps
+        //  console.log(`poseWait = ${poseWait}`)
+      }
+
+      const poseStr = pose2Str(participants.local.pose)
+      if (this.conference.channelOpened && lastPoseStr !== poseStr) {
+        sendPoseMessage(poseStr)
+        lastPoseStr = poseStr
+      }
+    }))
+    let updateTimeForProperty = 0
+
+    if (!config.bmRelayServer) {
+      let lastPoseStrProprty = ''
+      const setPoseProperty = () => {
+        const now = Date.now()
+        const period = calcWait() * 30 //  (33ms(1 remote) to 1000ms(100 remotes)) * 30
+        if (now - updateTimeForProperty > period) {  //  update period
+          const poseStr = pose2Str(participants.local.pose)
+          if (lastPoseStrProprty !== poseStr){
+            this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_POSE, poseStr)
+            updateTimeForProperty = now
+            lastPoseStrProprty = poseStr
+          }
+        }
+      }
+      setPoseProperty()
+      setInterval(setPoseProperty, 2.5 * 1000)
+    }
+
+    let wait = 0
+    let sendMouseMessage = (mouse:Mouse) => {}
+    const sendMouse = (to: string) => {
+      const newWait = calcWait()
+      if (wait !== newWait) {
+        wait = newWait
+        sendMouseMessage = _.throttle((mouse: Mouse) => {
+          this.conference.sendMessage(MessageType.PARTICIPANT_MOUSE, '', mouse2Str(mouse))
+        },                            wait)
+      }
+      if (this.conference.channelOpened) {
+        sendMouseMessage({...participants.local.mouse})
+      }
+    }
+    this.disposers.push(autorun(() => { sendMouse('') }))
+
+    this.disposers.push(autorun(() => { this.sendPhysics() }))
+
+    const sendYarnPhones = () => {
+      if (this.conference.channelOpened) {
+        this.conference.sendMessage(MessageType.YARN_PHONE, '', Array.from(participants.yarnPhones))
+      }
+    }
+    this.disposers.push(autorun(() => { sendYarnPhones() }))
+  }
+  observeEnd() {
     this.disposers.forEach(d => d())
   }
+
 
   //  Utilities
   private fragmentedMessages:FragmentedMessage[] = []
@@ -535,7 +552,7 @@ export class ConferenceSync{
   onBmMessage(msgs: BMMessage[]){
     const diff = Date.now() - this.lastMessageTime
     this.lastMessageTime = Date.now()
-    console.log(`Receive ${msgs.length} relayed messages. period:${diff}`)
+    //  console.log(`Receive ${msgs.length} relayed messages. period:${diff}`)
     for(const msg of msgs){
       switch(msg.t){
         case MessageType.AFK_CHANGED: this.onAfkChanged(msg.p, JSON.parse(msg.v)); break

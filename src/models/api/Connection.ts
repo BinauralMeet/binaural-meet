@@ -143,6 +143,7 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
       console.log('Disconnected but succeed in leaving... strange ... try to join again.')
     }).catch(()=>{
       console.log('Disconnected and failed to leave... try to join again')
+      this.conference.bmRelaySocket?.close()
     }).finally(()=>{
       this.init().then(()=>{
         this.joinConference(this.conference.name)
