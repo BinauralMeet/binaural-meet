@@ -2,6 +2,7 @@ import {App} from '@components/App'
 import {Connection, connections} from '@models/api'
 import roomInfoServer from '@models/api/roomInfoServer'
 import {i18nInit} from '@models/locales'
+import loadController from '@models/trafficControl/loadController'
 import {urlParameters} from '@models/url'
 import {resolveAtEnd} from '@models/utils'
 import '@stores/index'  // init store (DO NOT delete)
@@ -87,4 +88,5 @@ function connectConference() {
 
     return rv
   }
+  console.log(loadController.lastIdleCall)
 }

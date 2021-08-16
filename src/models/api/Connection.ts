@@ -60,7 +60,6 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
   private _jitsiConnection?: JitsiMeetJS.JitsiConnection
   public conference = new Conference()
   public version = '0.0.1'
-  public conferenceName = ''
   public state = ConnectionStates.DISCONNECTED
 
   public init(): Promise<string> {
@@ -89,11 +88,13 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
 
   public joinConference(room: Room) {
     if (this._jitsiConnection) {
-      this.conferenceName = room.name
-      const jitsiConference = this._jitsiConnection.initJitsiConference(room.name, config)
-      this.conference.init(jitsiConference, room)
-
-      return
+      this.conference.init(conferenceName, () => {
+		this.conferenceName = room.name
+        return this._jitsiConnection?.initJitsiConference(room.name, config)
+        this.conference.init(jitsiConference, room)
+      })
+      
+return
     }
     throw new Error('No connection has been established.')
   }
@@ -130,7 +131,7 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
 
   private onStateChanged(state: ConnectionStatesType) {
     this.state = state
-    console.log(`ConnctionStateChanged: Current Connection State: ${state}`)
+    //  console.log(`ConnctionStateChanged: Current Connection State: ${state}`)
     if (state === ConnectionStates.DISCONNECTED){ this.reconnect() }
   }
 }

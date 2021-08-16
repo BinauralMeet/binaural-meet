@@ -43,7 +43,7 @@ export const enTranslate = {
   emClose: 'Close',
   emNeverShow: 'Never show this in this session',
   etNoChannel: 'No data channel',
-  emNoChannel: 'Please check firewall setting. Binaural Meet connect to https (443) port and port 8801-8810.',
+  emNoChannel: 'Please check firewall setting. Binaural Meet connect to https (port 443/TCP) and port 8801-8810/UDP or 80/TCP.',
   etRetry: 'Reconnecting',
   emRetry: 'The connection had been cut off and trying to reconnect. Please check internet connection.',
   imageDropzoneText:'Drag and drop images here or click',
@@ -116,5 +116,7 @@ export const enTranslate = {
   afkTitle: 'In away from keyboard mode (L / Esc)',
   afkMessage: 'Hit any key or click mouse to return.',
   gdFailed: 'The file in Google Drive could not be accessed.\r\nChange the file-sharing settings so that everyone on the Internet can see it.',
+  videoLimit: 'Limit on the number of video streams',
+  audioLimit: 'Limit on the number of audio streams',
 }
 export type EnKeyList = keyof typeof enTranslate

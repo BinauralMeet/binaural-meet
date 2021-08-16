@@ -19,6 +19,9 @@ const rtcConfig = {
       },
     },
   },
+  audioConstraints:{
+    //audio: {echoCancellationType: 'system'}
+  },
   screenOptions:{
     desktopSharingFrameRate:{
       min:  0.3,
@@ -39,7 +42,7 @@ const common_config = {
   },
   xmppPing: {
     interval: 1000,
-    timeout: 5000
+    timeout: 10000  //  if too short, cut off when another heavy web app starts.
   },
 //  enableWebsocketResume: false,
   testing: {
@@ -50,7 +53,7 @@ const common_config = {
   },
   rtc:rtcConfig,
   remoteVideoLimit:10,
-  remoteAudioLimit:15,
+  remoteAudioLimit:20,
   thirdPersonView: true,
 }
 
@@ -61,10 +64,10 @@ const config_binaural = {
   },
   serviceUrl: 'wss://binaural.me:443/xmpp-websocket',
   //  bosh: 'https://binaural.me/http-bind',
-  roomInfoServer: 'wss://binaural.me:7443',
   bmRelayServer: 'wss://binaural.me:8443',
-  //roomInfoServer: 'ws://localhost:7443',
+  roomInfoServer: 'wss://binaural.me:7443',
   //bmRelayServer: 'ws://localhost:8443',
+  //roomInfoServer: 'ws://localhost:7443',
 }
 Object.assign(config_binaural, Object.assign(common_config, config_binaural))
 

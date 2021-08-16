@@ -42,7 +42,7 @@ export const jaTranslate = {
   emClose: '閉じる',
   emNeverShow: 'このセッションでは表示しない',
   etNoChannel: 'データ通信ができません',
-  emNoChannel: 'ファイアウォールの設定を確認してください。Binaural Meet は https(443番)と8801-8810番のポートに接続します。',
+  emNoChannel: 'ファイアウォールの設定を確認してください。Binaural Meet は https(443番)と、8801-8810番か80番のポートに接続します。',
   etRetry: '再接続中',
   emRetry: '接続が切れたので、再接続を試みています。インターネット接続を確認してください。',
   imageDropzoneText:'画像をドラッグ＆ドロップするか、クリックしてください',
@@ -113,5 +113,7 @@ export const jaTranslate = {
   afkTitle: '離席中モード (L / Esc)',
   afkMessage: 'キーかマウスクリックで戻ります。',
   gdFailed: 'Google Driveのファイルにアクセスできませんでした。\r\nファイルを共有設定を変え、インターネット上の全員が閲覧できるようにしてください。',
+  videoLimit: '映像ストリーム数の上限',
+  audioLimit: '音声ストリーム数の上限',
 }
 export type JaKeyList = keyof typeof jaTranslate

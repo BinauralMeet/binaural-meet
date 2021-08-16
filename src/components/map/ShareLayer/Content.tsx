@@ -10,17 +10,18 @@ import SubjectIcon from '@material-ui/icons/Subject'
 import YouTubeIcon from '@material-ui/icons/YouTube'
 import {ContentType} from '@models/SharedContent'
 
-export function contentTypeIcons(type: ContentType, size = 12) {
+export function contentTypeIcons(type: ContentType, size = 12, width = -1) {
+  if (width < 0) { width = size }
   const icons = {
-    img: <PhotoIcon style={{fontSize:size}} />,
-    text:<SubjectIcon style={{fontSize:size}} />,
-    iframe: <HttpIcon style={{fontSize:size}} />,
-    youtube: <YouTubeIcon style={{fontSize:size}} />,
-    screen: <ScreenShareIcon style={{fontSize:size}} />,
-    gdrive: <span style={{width:size, height:size}}><Icon icon={GoogleDriveIcon} height={size} /></span>,
-    whiteboard: <span style={{width:size, height:size}}><Icon icon={whiteboard24Regular} height={size} /></span>,
-    camera: <CameraAltIcon style={{fontSize:size}} />,
-    pdf : <span style={{width:size, height:size}}><Icon icon={filePdfBox} height={size} /></span>,
+    img: <PhotoIcon style={{fontSize:size, width}} />,
+    text:<SubjectIcon style={{fontSize:size, width}} />,
+    iframe: <HttpIcon style={{fontSize:size, width}} />,
+    youtube: <YouTubeIcon style={{fontSize:size, width}} />,
+    screen: <ScreenShareIcon style={{fontSize:size, width}} />,
+    gdrive: <span style={{width, height:size}}><Icon icon={GoogleDriveIcon} height={size} /></span>,
+    whiteboard: <span style={{width, height:size}}><Icon icon={whiteboard24Regular} height={size} /></span>,
+    camera: <CameraAltIcon style={{fontSize:size, width}} />,
+    pdf : <span style={{width, height:size}}><Icon icon={filePdfBox} height={size} /></span>,
     '': undefined,
   }
 

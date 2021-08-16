@@ -3,7 +3,7 @@ import DialogTitle from '@material-ui/core/DialogTitle'
 import Popover, { PopoverProps } from '@material-ui/core/Popover'
 import {Room} from '@stores/Room'
 import React from 'react'
-import {useEffect, useState} from 'react'
+import {useState} from 'react'
 
 export interface StatusDialogProps extends PopoverProps{
   close: () => void
@@ -22,6 +22,7 @@ class Status{
   sessions: Session[] = []
   open = false
   update = false
+  interval: NodeJS.Timeout|undefined = undefined
 }
 const status = new Status()
 
