@@ -177,7 +177,8 @@ export class ErrorInfo {
       this.oscillator?.frequency.setValueAtTime(440 + counter % 440, ctxA.currentTime) // 440HzはA4(4番目のラ)
       //  update camera image
       const colors = ['green', 'blue']
-      const nearest = participants.remote.get(priorityCalculator.tracksToAccept[0][0]?.endpointId)
+      const nearest = priorityCalculator.tracksToAccept[0].length ?
+        participants.remote.get(priorityCalculator.tracksToAccept[0][0].endpointId) : undefined
       if (nearest && !nearest?.tracks.avatarOk) { colors[0] = 'yellow' }
       if (nearest && nearest?.tracks.audio?.getTrack().muted) { colors[1] = 'red' }
       //if (priorityCalculator.tracksToAccept[0][0]?.track.getTrack()?.muted) { colors[0] = 'yellow' }
@@ -204,6 +205,19 @@ export class ErrorInfo {
 
     const move = () => {
       participants.local.pose.position = addV2(center, mulV2(100, [Math.cos(counter / 60), Math.sin(counter / 60)]))
+      //  Reload when not connected.
+      //  This does not work well: It causes unnecessary reload because WebSocket can often be reconnected.
+      /*
+      if (urlParameters.testBot !== null &&
+          connection.conference._jitsiConference?.room &&
+          !connection.conference._jitsiConference?.room.connected){
+        setTimeout(()=>{
+          if (!connection.conference._jitsiConference?.room.connected){
+            window.location.reload()  //  testBot will reload when channel is closed.
+          }
+        }, 20 * 1000)
+      }
+      */
     }
     const win = window as any
     if (win.requestIdleCallback) {

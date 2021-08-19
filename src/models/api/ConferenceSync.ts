@@ -287,8 +287,6 @@ export class ConferenceSync{
     if (remote) { Object.assign(remote.mouse, mouse) }
   }
   private onParticipantPhysics(from:string, physics:Physics){
-    if (urlParameters.testBot !== null) { return }
-
     const remote = participants.remote.get(from)
     if (remote) {
       remote.physics.onStage = physics.onStage
@@ -550,7 +548,6 @@ export class ConferenceSync{
   }
   lastMessageTime = Date.now()
   onBmMessage(msgs: BMMessage[]){
-    const diff = Date.now() - this.lastMessageTime
     this.lastMessageTime = Date.now()
     //  console.log(`Receive ${msgs.length} relayed messages. period:${diff}`)
     for(const msg of msgs){

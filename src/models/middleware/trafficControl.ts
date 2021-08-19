@@ -5,8 +5,10 @@ import {participantsStore} from '@stores/participants'
 import JitsiMeetJS from 'lib-jitsi-meet'
 import _ from 'lodash'
 import {autorun} from 'mobx'
+declare const d:any                  //  from index.html
 
 export const priorityCalculator = new PriorityCalculator()
+d.priorityCalculator = priorityCalculator
 
 const recalculateInterval = 1000
 let intervalHandle: number | undefined = undefined

@@ -3,6 +3,7 @@ import {StoreProvider as MapProvider} from '@hooks/MapStore'
 import {StoreProvider as ParticipantsProvider} from '@hooks/ParticipantsStore'
 import {StoreProvider as ContentsProvider} from '@hooks/SharedContentsStore'
 import {t} from '@models/locales'
+import { urlParameters } from '@models/url'
 import {isPortrait, isSmartphone} from '@models/utils'
 import chatStore from '@stores/Chat'
 import errorInfo from '@stores/ErrorInfo'
@@ -42,18 +43,21 @@ export const App: React.FC<{}> = () => {
   },                      {passive: false, capture: false})
 
   //  Global error handler
-  /*
   window.onerror = (message, source, lineno, colno, error) => {
-    if (error?.message === 'Ping timeout' && message === null && source === null && lineno === null && colno === null){
+    if ((error?.message === 'Ping timeout' || error?.message === 'Strophe: Websocket error [object Event]')
+     && message === null && source === null && lineno === null && colno === null){
       errorInfo.type = 'connection'
       errorInfo.title = t('etConnection')
       errorInfo.message = t('emConnection')
+      if (urlParameters.testBot !== null){  //  testBot
+        window.location.reload()  //  testBot will reload when connection is cutted off.
+      }
     }else{
-      console.error(message, source, lineno, colno, error)
+      console.warn(`Global handler: ${message}`, source, lineno, colno, error)
     }
 
     return true
-  }*/
+  }
 
 
   return (
