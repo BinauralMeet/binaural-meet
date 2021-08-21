@@ -124,19 +124,16 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
     errorInfo.type = 'retry'
     errorInfo.title = t('etRetry')
     errorInfo.message = t('emRetry')
-    //  Clear old information
+
+    /*  // if not reload, this block is needed
     const localCamera = this.conference.getLocalCameraTrack()
     const micMute = participants.local.muteAudio
-    participants.local.muteAudio = true
     const cameraMute = participants.local.muteVideo
-    participants.local.muteVideo = true
+    //  */
 
     participants.leaveAll()
     contents.clearAllRemotes()
     priorityCalculator.clear()
-    //console.log(`participants.remote: ${stringify(Array.from(participants.remote.keys()))}`)
-    //console.log(`participants.local: ${stringify(participants.local)}`)
-    //console.log(`priority: ${stringify(priorityCalculator)}`)
 
     //  Try to connect again.
     this.leaveConference().then(()=>{
@@ -145,6 +142,9 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
       console.log('Disconnected and failed to leave... try to join again')
       this.conference.bmRelaySocket?.close()
     }).finally(()=>{
+      ///*  // reload or
+      window.location.reload()
+      /*/ // init again
       this.init().then(()=>{
         this.joinConference(this.conference.name)
         function restoreLocalTracks(){
@@ -167,14 +167,20 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
 
         errorInfo.clear()
       })
+    //  */
     })
   }
 
   private onStateChanged(state: ConnectionStatesType) {
+      console.log(`ConnctionStateChanged: ${this.state} => ${state}`)
+    if (this.state !== state && state === ConnectionStates.DISCONNECTED){
+      setTimeout(()=>{
+        this._jitsiConnection!.disconnect().finally(()=>{
+          setTimeout(this.reconnect.bind(this), 1000)
+        })
+      }, 1000)
+    }
     this.state = state
-    //  console.log(`ConnctionStateChanged: Current Connection State: ${state}`)
-
-    if (state === ConnectionStates.DISCONNECTED){ this.reconnect() }
     if (this._store) {
       this._store.changeState(this.state)
     }

@@ -109,10 +109,13 @@ export class NodeGroup {
             () => {
               if (!errorInfo.type) {
                 this?.audioElement?.play().then(() => {
+                  //  console.warn(`Succeed to play in NodeGroup`)
                   if (this.interval) {
                     clearInterval(this.interval)
                     this.interval = undefined
                   }
+                }).catch(reason => {
+                  //  console.warn(`Failed to play in NodeGroup reason:${reason}`)
                 })
               }
             },

@@ -3,7 +3,6 @@ import {connection} from '@models/api'
 import '@models/audio'  // init audio manager (DO NOT delete)
 import {i18nInit} from '@models/locales'
 import '@models/middleware'
-import loadController from '@models/trafficControl/loadController'
 import {urlParameters} from '@models/url'
 import {resolveAtEnd} from '@models/utils'
 import errorInfo from '@stores/ErrorInfo'
@@ -73,5 +72,4 @@ function connectConference() {
       })
     },
   )
-  console.log(loadController.lastIdleCall)
 }

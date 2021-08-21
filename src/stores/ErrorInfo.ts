@@ -61,7 +61,10 @@ export class ErrorInfo {
   }
   /// check errors after try to start the connection to the XMPP server.
   @action connectionStart() {
-    if (urlParameters.skipEntrance !== null){
+    //  even when reload, user interaction is needed to play sound.
+    //  const nav = window?.performance?.getEntriesByType('navigation')[0] as any
+    //  console.log(nav)
+    if (urlParameters.skipEntrance !== null/* || nav.type === 'reload'*/  ){
       this.type = ''
       participants.local.sendInformation()
     }

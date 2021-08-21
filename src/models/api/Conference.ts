@@ -127,10 +127,14 @@ export class Conference extends EventEmitter {
       this.sendMessage(MessageType.PARTICIPANT_LEFT, '', undefined)
     }
     if (participants.local.tracks.audio) {
-      this.removeTrack(participants.local.tracks.audio as JitsiLocalTrack)
+      this.removeTrack(participants.local.tracks.audio as JitsiLocalTrack)?.then(()=>{
+        participants.local.tracks.audio?.dispose()
+      })
     }
     if (participants.local.tracks.avatar) {
-      this.removeTrack(participants.local.tracks.avatar as JitsiLocalTrack)
+      this.removeTrack(participants.local.tracks.avatar as JitsiLocalTrack)?.then(()=>{
+        participants.local.tracks.avatar?.dispose()
+      })
     }
     this.sync.observeEnd()
 
@@ -210,7 +214,7 @@ export class Conference extends EventEmitter {
   public setLocalCameraTrack(track: JitsiLocalTrack|undefined) {
     const promise = new Promise<JitsiLocalTrack|undefined>((resolveFunc, rejectionFunc) => {
       if (track) {
-        this.cameraTrackConverter(track)
+        //  this.cameraTrackConverter(track)
         if (this.localCameraTrack) {
           const prev = this.localCameraTrack
           this._jitsiConference?.removeTrack(this.localCameraTrack).then(() => {
@@ -389,7 +393,7 @@ export class Conference extends EventEmitter {
         })
       }
     }else{
-      console.error(`Relay Socket: Not connected yet room:${this.name} id:${participants.localId}.`)
+      console.warn(`Relay Socket: Not connected. room:${this.name} id:${participants.localId}.`)
     }
   }
 
@@ -489,6 +493,7 @@ export class Conference extends EventEmitter {
     this._jitsiConference.on(JitsiMeetJS.events.conference.KICKED,
       (p:JitsiParticipant, r:string)=>{this.sync.onKicked(p.getId(),r)})
   }
+  /*
   private video:undefined | HTMLVideoElement = undefined
   private canvas:undefined | HTMLCanvasElement = undefined
   private cameraTrackConverter(track: JitsiLocalTrack) {
@@ -526,6 +531,7 @@ export class Conference extends EventEmitter {
       (track as any).track = stream.getVideoTracks()[0]
     }
   }
+  */
   private onConferenceJoined() {
     //  set localId
     this.localId = this._jitsiConference!.myUserId()
@@ -576,7 +582,7 @@ export class Conference extends EventEmitter {
     }
   }
   public removeTrack(track: JitsiLocalTrack) {
-    this._jitsiConference?.removeTrack(track)
+    return this._jitsiConference?.removeTrack(track)
   }
   public removeTracks(tracks: JitsiLocalTrack[]) {
     tracks.forEach(track =>  this._jitsiConference?.removeTrack(track))
