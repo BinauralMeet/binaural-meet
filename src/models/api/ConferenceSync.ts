@@ -11,7 +11,7 @@ import chat, { ChatMessage, ChatMessageToSend } from '@stores/Chat'
 import errorInfo from '@stores/ErrorInfo'
 import {MediaSettings} from '@stores/participants/LocalParticipant'
 import participants from '@stores/participants/Participants'
-import {extractContentDataAndIds, makeItContent, makeThemContents} from '@stores/sharedContents/SharedContentCreator'
+import {extractContentDataAndIds, makeThemContents} from '@stores/sharedContents/SharedContentCreator'
 import contents from '@stores/sharedContents/SharedContents'
 import JitsiMeetJS from 'lib-jitsi-meet'
 import _ from 'lodash'
@@ -29,12 +29,14 @@ export const MessageType = {
   PARTICIPANT_TRACKLIMITS: 'm_track_limits',    //  -> message, basically does not sync
   YARN_PHONE: 'YARN_PHONE',                     //  -> message
   CALL_REMOTE: 'call_remote',                   //  -> message, to give notification to a remote user.
-  CONTENT_UPDATE_REQUEST: 'content_update',     //  -> message
-  CONTENT_REMOVE_REQUEST: 'content_remove',     //  -> message
   MUTE_VIDEO: 'm_mute_video',                   //  ask to mute video
   MUTE_AUDIO: 'm_mute_audio',                   //  ask to mute audio
   RELOAD_BROWSER: 'm_reload',                   //  ask to reload browser
   KICK: 'm_kick',
+  //  instant but accumulating message
+  CONTENT_UPDATE_REQUEST: 'content_update',     //  -> message
+  CONTENT_REMOVE_REQUEST: 'content_remove',     //  -> message
+  LEFT_CONTENT_REMOVE_REQUEST: 'left_content_remove',     //  -> message
 
   //  common messages possibly stored in the server (PropertyType is also used as type of message stored)
   PARTICIPANT_POSE: 'mp',                       //  -> update presence once per 5 sec / message immediate value
@@ -142,16 +144,20 @@ export class ConferenceSync{
                                 [participants.local.remoteVideoLimit, participants.local.remoteAudioLimit])
   }
   //  Send content update request to pid
-  sendContentUpdateRequest(pid: string, updated: ISharedContent) {
-    if (updated.url.length > FRAGMENTING_LENGTH) {
+  sendContentUpdateRequest(pid: string, updated: ISharedContent[]) {
+    if (!this.conference.bmRelaySocket &&
+      updated.map(c=>c.url.length).reduce((prev, cur) => prev+cur) > FRAGMENTING_LENGTH) {
       this.sendFragmentedMessage(MessageType.CONTENT_UPDATE_REQUEST, pid, updated)
     }else {
       this.conference.sendMessage(MessageType.CONTENT_UPDATE_REQUEST, pid, updated)
     }
   }
   //  Send content remove request to pid
-  sendContentRemoveRequest(pid: string, removed: string) {
+  sendContentRemoveRequest(pid: string, removed: string[]) {
     this.conference.sendMessage(MessageType.CONTENT_REMOVE_REQUEST, pid, removed)
+  }
+  sendLeftContentRemoveRequest(removed: string[]) {
+    this.conference.sendMessage(MessageType.LEFT_CONTENT_REMOVE_REQUEST, '', removed)
   }
   //  send main screen carrir
   sendMainScreenCarrier(enabled: boolean) {
@@ -337,13 +343,17 @@ export class ConferenceSync{
     const remote = participants.remote.get(from)
     syncLog(`recv remote contents ${JSON.stringify(cs.map(c => c.id))} from ${from}.`, cs)
   }
-  private onContentUpdateRequest(from:string, c:ISharedContent){
+  private onContentUpdateRequest(from:string, cds:ISharedContent[]){
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const content = makeItContent(c)
-    contents.updateByRemoteRequest(content)
+    const cs = makeThemContents(cds)
+    contents.updateByRemoteRequest(cs)
   }
-  private onContentRemoveRequest(from:string, cid:string){
-    contents.removeByRemoteRequest(cid)
+  private onContentRemoveRequest(from:string, cids:string[]){
+    contents.removeByRemoteRequest(cids)
+  }
+  private onLeftContentRemoveRequest(from:string, cids:string[]){
+    console.log(`onLeftContentRemoveRequest for ${cids} from ${from}.`)
+    contents.removeLeftContentByRemoteRequest(cids)
   }
 
   bind() {
@@ -409,6 +419,7 @@ export class ConferenceSync{
     //  request
     this.conference.on(MessageType.CONTENT_UPDATE_REQUEST, this.onContentUpdateRequest)
     this.conference.on(MessageType.CONTENT_REMOVE_REQUEST, this.onContentRemoveRequest)
+    this.conference.on(MessageType.LEFT_CONTENT_REMOVE_REQUEST, this.onLeftContentRemoveRequest)
 
     //  Get data channel state
     this.conference._jitsiConference?.addEventListener(JitsiMeetJS.events.conference.DATA_CHANNEL_OPENED, () => {
@@ -556,6 +567,7 @@ export class ConferenceSync{
         case MessageType.CALL_REMOTE: this.onCallRemote(msg.p); break
         case MessageType.CHAT_MESSAGE: this.onChatMessage(msg.p, JSON.parse(msg.v)); break
         case MessageType.CONTENT_REMOVE_REQUEST: this.onContentRemoveRequest(msg.p, JSON.parse(msg.v)); break
+        case MessageType.LEFT_CONTENT_REMOVE_REQUEST: this.onLeftContentRemoveRequest(msg.p, JSON.parse(msg.v)); break
         case MessageType.CONTENT_UPDATE_REQUEST: this.onContentUpdateRequest(msg.p, JSON.parse(msg.v)); break
         case MessageType.PARTICIPANT_MOUSE: this.onParticipantMouse(msg.p, JSON.parse(msg.v)); break
         case MessageType.PARTICIPANT_POSE: this.onParticipantPose(msg.p, JSON.parse(msg.v)); break

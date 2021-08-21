@@ -264,6 +264,51 @@ export class SharedContents extends EventEmitter {
     connection.conference.sync.sendMyContents()
   }
 
+  takeContentsFromDead(pc: ParticipantContents, cidTake?: string){
+    //  console.log(`Take ${cidTake} from pid:${pc.participantId}`)
+    let updated = false
+    pc.myContents.forEach((c, cid) => {
+      if (cidTake && cidTake !== cid) { return }
+      if (c.type === 'screen' || c.type === 'camera') {
+        pc.myContents.delete(cid)
+        this.owner.delete(cid)
+        this.disposeContent(c)
+      }else {
+        this.localParticipant.myContents.set(cid, c)
+        pc.myContents.delete(cid)
+        this.owner.set(cid, this.localId)
+        updated = true
+        contentLog('set owner for cid=', cid, ' pid=', this.localId)
+      }
+    })
+    if (pc.myContents.size === 0){
+      this.participants.delete(pc.participantId)
+      this.pendToRemoves.delete(pc.participantId)
+    }
+
+    return updated
+  }
+
+  private getOrTakeContent(cid: string, callBy?:string) {
+    const pid = this.owner.get(cid)
+    if (pid) {
+      const pc = pid ? this.participants.get(pid) : undefined
+      if (pc) {
+        return {pid, pc, take:false}  //  get content
+      }else{
+        const pc = this.pendToRemoves.get(pid)
+        if (pc){
+          if (this.takeContentsFromDead(pc, cid)){
+            return {pid: this.localId, pc: this.participants.get(this.localId), take:true}
+          }
+        }
+      }
+    }
+    console.error(`${callBy}: No owner for cid=${cid}`)
+
+    return {pid, pc:undefined, take:false}
+  }
+
   private checkAndGetContent(cid: string, callBy?:string) {
     const pid = this.owner.get(cid)
     if (pid) {
@@ -278,6 +323,7 @@ export class SharedContents extends EventEmitter {
 
     return {pid, pc:undefined}
   }
+
   //  Temporaly update local only no sync with other participant.
   //  This makes non-detectable inconsistency and must call updateByLocal() soon later.
   updateLocalOnly(newContent: ISharedContent){
@@ -289,55 +335,95 @@ export class SharedContents extends EventEmitter {
   }
   //  updated by local user
   updateByLocal(newContent: ISharedContent) {
-    const {pid, pc} = this.checkAndGetContent(newContent.id, 'updateByLocal')
+    const {pid, pc} = this.getOrTakeContent(newContent.id, 'updateByLocal')
     if (pc) {
       if (pid === this.localId) {
         pc.myContents.set(newContent.id, newContent)
         this.updateAll()
         connection.conference.sync.sendMyContents()
       }else if (pid) {
-        connection.conference.sync.sendContentUpdateRequest(pid, newContent)
+        connection.conference.sync.sendContentUpdateRequest(pid, [newContent])
       }
     }
   }
+
   //  removed by local user
   removeByLocal(cid: string) {
-    const {pid, pc} = this.checkAndGetContent(cid, 'removeByLocal')
+    const {pid, pc, take} = this.getOrTakeContent(cid, 'removeByLocal')
+    //console.log(`remove by local pid:${pid} take;${take} cid:${cid}.`)
     if (pc) {
+      if (take){
+        //  if take the content from pendToRemoves, remove from pendToRemove in remotes.
+        console.log(`sendLeftContentRemoveRequest of ${cid}.`)
+        connection.conference.sync.sendLeftContentRemoveRequest([cid])
+      }
+
+      //  remove the content
       if (pid === this.localId) {
-        const toRemove = pc.myContents.get(cid)
-        if (toRemove) {
-          this.disposeContent(toRemove)
-          pc.myContents.delete(cid)
-          this.owner.delete(cid)
-          this.updateAll()
-          connection.conference.sync.sendMyContents()
-        }else {
-          console.log(`Failed to find myContent ${cid} to remove.`)
-        }
+        this.removeMyContent(cid)
+        connection.conference.sync.sendMyContents()
       }else if (pid) {
-        connection.conference.sync.sendContentRemoveRequest(pid, cid)
+        connection.conference.sync.sendContentRemoveRequest(pid, [cid])
       }
     }
   }
   //  Update request from remote.
-  updateByRemoteRequest(c: ISharedContent) {
-    const pid = this.owner.get(c.id)
-    if (pid === this.localId) {
-      this.updateByLocal(c)
-    }else {
-      console.error(`This update request is for ${pid} and not for me.`)
+  updateByRemoteRequest(cs: ISharedContent[]) {
+    const local = this.getParticipant(this.localId)
+    for (const c of cs) {
+      const pid = this.owner.get(c.id)
+      if (pid === this.localId) {
+        local.myContents.set(c.id, c)
+      }else {
+        console.error(`Update request of ${c.id} is for ${pid} and not for me.`)
+      }
     }
+    this.updateAll()
+    connection.conference.sync.sendMyContents()
   }
   //  Remove request from remote.
-  removeByRemoteRequest(cid: string) {
-    const {pid, pc} = this.checkAndGetContent(cid, 'removeByRemoteRequest')
-    if (pc) {
-      if (pid === this.localId) {
-        this.removeByLocal(cid)
-      }else {
-        console.error('remote try to remove my content')
+  removeByRemoteRequest(cids: string[]) {
+    for (const cid of cids){
+      const {pid, pc} = this.checkAndGetContent(cid, 'removeByRemoteRequest')
+      if (pc) {
+        if (pid === this.localId) {
+          this.removeMyContent(cid)
+        }else {
+          console.error('remote try to remove my content')
+        }
       }
+    }
+    connection.conference.sync.sendMyContents()
+  }
+  removeLeftContentByRemoteRequest(cids: string[]) {
+    for (const cid of cids){
+      const pid = this.owner.get(cid)
+      if (pid){
+        let pc = this.pendToRemoves.get(pid)
+        if (!pc) { pc = this.participants.get(pid) }
+        if (pc){
+          pc.myContents.delete(cid)
+          this.owner.delete(cid)
+          if (pc.myContents.size === 0){
+            this.participants.delete(pid)
+            this.pendToRemoves.delete(pid)
+          }
+        }
+      }
+    }
+  }
+  //  remove my content
+  private removeMyContent(cid:string){
+    const local = this.getParticipant(this.localId)
+    const toRemove = local.myContents.get(cid)
+    if (toRemove) {
+      this.disposeContent(toRemove)
+      local.myContents.delete(cid)
+      this.owner.delete(cid)
+      this.updateAll()
+      connection.conference.sync.sendMyContents()
+    }else {
+      console.log(`I don't have ${cid} to remove.`)
     }
   }
 
@@ -356,7 +442,7 @@ export class SharedContents extends EventEmitter {
   }
 
   //  Update remote contents by remote.
-  updateRemoteContents(cs: ISharedContent[], pid:string) {
+  private updateRemoteContents(cs: ISharedContent[], pid:string) {
     if (pid === contents.localId) {
       console.error('A remote tries to updates local contents.')
     }
@@ -390,7 +476,7 @@ export class SharedContents extends EventEmitter {
     this.updateAll()
   }
   //  Remove remote contents by remote.
-  removeRemoteContents(cids: string[], pid:string) {
+  private removeRemoteContents(cids: string[], pid:string) {
     if (pid === contents.localId) {
       console.error('Remote removes local contents.')
     }
@@ -422,23 +508,11 @@ export class SharedContents extends EventEmitter {
       let updated = false
       if (next === this.localId) {
         contentLog('Next is me')
-        participantLeave.myContents.forEach((c, cid) => {
-          if (c.type === 'screen' || c.type === 'camera') {
-            this.owner.delete(cid)
-            participantLeave.myContents.delete(cid)
-            this.disposeContent(c)
-          }else {
-            this.localParticipant.myContents.set(cid, c)
-            this.owner.set(cid, this.localId)
-            updated = true
-            contentLog('set owner for cid=', cid, ' pid=', this.localId)
-          }
-        })
+        updated = this.takeContentsFromDead(participantLeave) || updated
         contentLog('remove:', pidLeave, ' current:', JSON.stringify(allPids))
         contentLog('local contents sz:', this.localParticipant.myContents.size,
                    ' json:', JSON.stringify(Array.from(this.localParticipant.myContents.keys())))
-        this.removeParticipant(participantLeave)
-      }else {
+      } else {
         contentLog('Next is remote')
         this.pendToRemoveParticipant(participantLeave)
       }
@@ -450,13 +524,12 @@ export class SharedContents extends EventEmitter {
   }
 
   private pendToRemoveParticipant(pc: ParticipantContents){
-    const remove = Array.from(pc.myContents.values()).filter(c => c.type === 'camera' || c.type ==='screen')
-    remove.forEach(c => pc.myContents.delete(c.id))
+    const removes = Array.from(pc.myContents.values()).filter(c => c.type === 'camera' || c.type ==='screen')
+    removes.forEach(c => {
+      pc.myContents.delete(c.id)
+      this.owner.delete(c.id)
+    })
     this.pendToRemoves.set(pc.participantId, pc)
-    this.removeParticipant(pc)
-  }
-
-  private removeParticipant(pc: ParticipantContents) {
     this.participants.delete(pc.participantId)
   }
 
@@ -464,6 +537,24 @@ export class SharedContents extends EventEmitter {
     const remotes = Array.from(this.participants.keys()).filter(key => key !== this.localId)
     remotes.forEach(pid=>this.participants.delete(pid))
     this.tracks.clearConnection()
+  }
+
+  removeAllContents(){
+    this.participants.forEach((pc, pid) => {
+      if (pid !== this.localId){
+        const cs = Array.from(pc.myContents.values())
+        connection.conference.sync.sendContentRemoveRequest(pid, cs.map(c => c.id))
+      }
+    })
+    this.pendToRemoves.forEach(pc => {
+      const cs = Array.from(pc.myContents.values())
+      connection.conference.sync.sendLeftContentRemoveRequest(cs.map(c => c.id))
+    })
+    this.owner.clear()
+    this.participants.clear()
+    this.pendToRemoves.clear()
+    connection.conference.sync.sendMyContents()
+    this.updateAll()
   }
 
   // create a new unique content id

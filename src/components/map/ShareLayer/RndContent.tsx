@@ -254,8 +254,8 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   }
   const handlerForContent:UserHandlersPartial = Object.assign({}, handlerForTitle)
   handlerForContent.onDrag = (args: FullGestureState<'drag'>) => {
-    // console.log('onDragTitle:', delta)
-    if (isFixed || props.map.keyInputUsers.size) { return }
+    //  console.log('onDragBody:', args.delta)
+    if (isFixed || props.map.keyInputUsers.has(props.content.id)) { return }
     handlerForTitle.onDrag?.call(this, args)
   }
 

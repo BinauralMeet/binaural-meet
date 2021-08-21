@@ -78,9 +78,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
       <Button variant="contained" color={btnColor()} style={{textTransform:'none'}}
         disabled={!roomInfo.passMatched} onClick={() => {
         if (roomInfo.passMatched) {
-          contents.all.forEach(c => {
-            contents.removeByLocal(c.id)
-          })
+          contents.removeAllContents()
         }
       }}> Remove all Contents </Button>&emsp;
       <Button variant="contained" color={btnColor()} style={{textTransform:'none'}}

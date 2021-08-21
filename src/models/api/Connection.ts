@@ -172,7 +172,7 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
   }
 
   private onStateChanged(state: ConnectionStatesType) {
-      console.log(`ConnctionStateChanged: ${this.state} => ${state}`)
+    //  console.log(`ConnctionStateChanged: ${this.state} => ${state}`)
     if (this.state !== state && state === ConnectionStates.DISCONNECTED){
       setTimeout(()=>{
         this._jitsiConnection!.disconnect().finally(()=>{
