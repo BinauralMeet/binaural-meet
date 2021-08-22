@@ -114,7 +114,9 @@ export class ErrorInfo {
       if (participants.local.muteAudio){
         setTimeout(this.checkMic.bind(this),   5 * 1000)
       }
-      this.clear()
+      if (this.type === 'noMic' || this.type === 'micPermission'){
+        this.clear()
+      }
       this.checkRemote()
     }
   }

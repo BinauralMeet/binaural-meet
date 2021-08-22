@@ -27,27 +27,35 @@ export const ErrorDialogFrame: React.FC<{onClose:(event:{}, reason:string)=>void
 
 
 export const ErrorDialog: React.FC<{}> = (props) => {
+  function close(){
+    if (errorInfo.type !== 'retry'){
+      errorInfo.clear()
+    }
+  }
+
   return <Observer>{
     () => {
       if (errorInfo.type){
         if (dialogs.has(errorInfo.type)) {
           return dialogs.get(errorInfo.type)!
         }else{
-          return <ErrorDialogFrame onClose={()=>{errorInfo.clear()} }>
+          return <ErrorDialogFrame onClose={() => { close() }}>
             <DialogContent>{errorInfo.message}</DialogContent>
-            <Box mt={2} mb={2} ml={4}>
-            <Button variant="contained" color="primary" style={{textTransform:'none'}}
-              onClick={() => {errorInfo.clear()}} >
-              {t('emClose')}
-            </Button>&nbsp;
-            <Button variant="contained" color="secondary" style={{textTransform:'none'}}
-              onClick={() => {
-                errorInfo.supressedTypes.add(errorInfo.type)
-                errorInfo.clear()
-              }}>
-              {t('emNeverShow')}
-            </Button>
-            </Box>
+            {errorInfo.type !== 'retry' ?
+              <Box mt={2} mb={2} ml={4}>
+              <Button variant="contained" color="primary" style={{textTransform:'none'}}
+                onClick={() => { close() }} >
+                {t('emClose')}
+              </Button>&nbsp;
+              <Button variant="contained" color="secondary" style={{textTransform:'none'}}
+                onClick={() => {
+                  errorInfo.supressedTypes.add(errorInfo.type)
+                  close()
+                }}>
+                {t('emNeverShow')}
+              </Button>
+              </Box>
+            : undefined}
           </ErrorDialogFrame>
         }
       }

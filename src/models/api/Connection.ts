@@ -143,7 +143,10 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
       this.conference.bmRelaySocket?.close()
     }).finally(()=>{
       ///*  // reload or
-      window.location.reload()
+
+      //  Ask reload to user or auto reload ?
+      //  window.location.reload()
+
       /*/ // init again
       this.init().then(()=>{
         this.joinConference(this.conference.name)
