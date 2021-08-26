@@ -62,7 +62,11 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
   getColor() {
     let color = this.information.color
     if (!color.length) {
-      color = getRandomColorRGB(this.information.name)
+      if (this.information.name.length){
+        color = getRandomColorRGB(this.information.name)
+      }else{
+        color = [0xD0, 0xD0, 0xE0]
+      }
     }
     let textColor = this.information.textColor
     if (!textColor.length) {
