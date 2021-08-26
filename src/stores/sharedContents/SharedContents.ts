@@ -121,6 +121,51 @@ export class SharedContents extends EventEmitter {
     //  console.log('update all len=', this.all.length, ' all=', JSON.stringify(this.all))
   }
 
+  takeContentsFromDead(pc: ParticipantContents, cidTake?: string){
+    //  console.log(`Take ${cidTake} from pid:${pc.participantId}`)
+    let updated = false
+    pc.myContents.forEach((c, cid) => {
+      if (cidTake && cidTake !== cid) { return }
+      if (c.type === 'screen' || c.type === 'camera') {
+        pc.myContents.delete(cid)
+        this.owner.delete(cid)
+        this.disposeContent(c)
+      }else {
+        this.localParticipant.myContents.set(cid, c)
+        pc.myContents.delete(cid)
+        this.owner.set(cid, this.localId)
+        updated = true
+        contentLog('set owner for cid=', cid, ' pid=', this.localId)
+      }
+    })
+    if (pc.myContents.size === 0){
+      this.participants.delete(pc.participantId)
+      this.pendToRemoves.delete(pc.participantId)
+    }
+
+    return updated
+  }
+
+  private getOrTakeContent(cid: string, callBy?:string) {
+    const pid = this.owner.get(cid)
+    if (pid) {
+      const pc = this.participants.get(pid)
+      if (pc) {
+        return {pid, pc, take:false}  //  get content
+      }else{
+        const pc = this.pendToRemoves.get(pid)
+        if (pc){
+          if (this.takeContentsFromDead(pc, cid)){
+            return {pid: this.localId, pc: this.participants.get(this.localId), take:true}
+          }
+        }
+      }
+    }
+    console.error(`${callBy}: No owner for cid=${cid}`)
+
+    return {pid, pc:undefined, take:false}
+  }
+
   private checkAndGetContent(cid: string, callBy?:string) {
     const pid = this.owner.get(cid)
     if (pid) {
@@ -135,6 +180,7 @@ export class SharedContents extends EventEmitter {
 
     return {pid, pc:undefined}
   }
+
   //  Temporaly update local only no sync with other participant.
   //  This makes non-detectable inconsistency and must call updateByLocal() soon later.
   updateLocalOnly(newContent: ISharedContent){
@@ -142,6 +188,23 @@ export class SharedContents extends EventEmitter {
     if (pc) {
       pc.myContents.set(newContent.id, newContent)
       this.updateAll()
+    }
+  }
+  removeLeftContentByRemoteRequest(cids: string[]) {
+    for (const cid of cids){
+      const pid = this.owner.get(cid)
+      if (pid){
+        let pc = this.pendToRemoves.get(pid)
+        if (!pc) { pc = this.participants.get(pid) }
+        if (pc){
+          pc.myContents.delete(cid)
+          this.owner.delete(cid)
+          if (pc.myContents.size === 0){
+            this.participants.delete(pid)
+            this.pendToRemoves.delete(pid)
+          }
+        }
+      }
     }
   }
 
@@ -160,7 +223,7 @@ export class SharedContents extends EventEmitter {
   }
 
   //  Update remote contents by remote.
-  updateRemoteContents(cs: ISharedContent[], pid:string) {
+  private updateRemoteContents(cs: ISharedContent[], pid:string) {
     if (pid === this.localId) {
       console.error('A remote tries to updates local contents.')
     }
@@ -190,7 +253,7 @@ export class SharedContents extends EventEmitter {
     this.updateAll()
   }
   //  Remove remote contents by remote.
-  removeRemoteContents(cids: string[], pid:string) {
+  private removeRemoteContents(cids: string[], pid:string) {
     if (pid === this.localId) {
       console.error('Remote removes local contents.')
     }
@@ -212,19 +275,33 @@ export class SharedContents extends EventEmitter {
     contentLog('onParticipantLeft called with pid = ', pidLeave)
     const participantLeave = this.participants.get(pidLeave)
     if (participantLeave) {
-      this.pendToRemoveParticipant(participantLeave)
+      const allPids = Array.from(participantsStore.remote.keys())
+      allPids.push(this.localId)
+      allPids.sort()
+      const idx = allPids.findIndex(cur => cur > pidLeave)
+      const next = allPids[idx >= 0 ? idx : 0]
+      contentLog('next = ', next)
+      if (next === this.localId) {
+        contentLog('Next is me')
+        this.takeContentsFromDead(participantLeave)
+        contentLog('remove:', pidLeave, ' current:', JSON.stringify(allPids))
+        contentLog('local contents sz:', this.localParticipant.myContents.size,
+                   ' json:', JSON.stringify(Array.from(this.localParticipant.myContents.keys())))
+      } else {
+        contentLog('Next is remote')
+        this.pendToRemoveParticipant(participantLeave)
+      }
       this.updateAll()
     }
   }
 
   private pendToRemoveParticipant(pc: ParticipantContents){
-    const remove = Array.from(pc.myContents.values()).filter(c => c.type === 'camera' || c.type ==='screen')
-    remove.forEach(c => pc.myContents.delete(c.id))
+    const removes = Array.from(pc.myContents.values()).filter(c => c.type === 'camera' || c.type ==='screen')
+    removes.forEach(c => {
+      pc.myContents.delete(c.id)
+      this.owner.delete(c.id)
+    })
     this.pendToRemoves.set(pc.participantId, pc)
-    this.removeParticipant(pc)
-  }
-
-  private removeParticipant(pc: ParticipantContents) {
     this.participants.delete(pc.participantId)
   }
 

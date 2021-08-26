@@ -120,14 +120,30 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
       console.log('Disconnected but succeed in leaving... strange ... try to join again.')
     }).catch(()=>{
       console.log('Disconnected and failed to leave... try to join again')
+      this.conference.bmRelaySocket?.close()
     }).finally(()=>{
+      ///*  // reload or
+
+      //  Ask reload to user or auto reload ?
+      //  window.location.reload()
+
+      /*/ // init again
       this.init().then(()=>{
         this.joinConference(this.conference.room!)
       })
+    //  */
     })
   }
 
   private onStateChanged(state: ConnectionStatesType) {
+    //  console.log(`ConnctionStateChanged: ${this.state} => ${state}`)
+    if (this.state !== state && state === ConnectionStates.DISCONNECTED){
+      setTimeout(()=>{
+        this._jitsiConnection!.disconnect().finally(()=>{
+          setTimeout(this.reconnect.bind(this), 1000)
+        })
+      }, 1000)
+    }
     this.state = state
     //  console.log(`ConnctionStateChanged: Current Connection State: ${state}`)
     if (state === ConnectionStates.DISCONNECTED){ this.reconnect() }

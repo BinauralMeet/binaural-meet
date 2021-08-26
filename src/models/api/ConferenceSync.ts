@@ -15,12 +15,14 @@ export const MessageType = {
   PARTICIPANT_TRACKLIMITS: 'm_track_limits',    //  -> message, basically does not sync
   YARN_PHONE: 'YARN_PHONE',                     //  -> message
   CALL_REMOTE: 'call_remote',                   //  -> message, to give notification to a remote user.
-  CONTENT_UPDATE_REQUEST: 'content_update',     //  -> message
-  CONTENT_REMOVE_REQUEST: 'content_remove',     //  -> message
   MUTE_VIDEO: 'm_mute_video',                   //  ask to mute video
   MUTE_AUDIO: 'm_mute_audio',                   //  ask to mute audio
   RELOAD_BROWSER: 'm_reload',                   //  ask to reload browser
   KICK: 'm_kick',
+  //  instant but accumulating message
+  CONTENT_UPDATE_REQUEST: 'content_update',     //  -> message
+  CONTENT_REMOVE_REQUEST: 'content_remove',     //  -> message
+  LEFT_CONTENT_REMOVE_REQUEST: 'left_content_remove',     //  -> message
 
   //  common messages possibly stored in the server (PropertyType is also used as type of message stored)
   PARTICIPANT_POSE: 'mp',                       //  -> update presence once per 5 sec / message immediate value
@@ -125,6 +127,10 @@ export class ConferenceSync{
   private onReloadBrower(from: string){
     window.location.reload()
   }
+  private onLeftContentRemoveRequest(from:string, cids:string[]){
+    console.log(`onLeftContentRemoveRequest for ${cids} from ${from}.`)
+    this.conference.room?.contents.removeLeftContentByRemoteRequest(cids)
+  }
 
   bind() {
     //  participant related -----------------------------------------------------------------------
@@ -169,9 +175,6 @@ export class ConferenceSync{
       }
     })
   }
-  unbind() {
-    this.disposers.forEach(d => d())
-  }
 
   //  Utilities
   private fragmentedMessages:FragmentedMessage[] = []
@@ -188,9 +191,8 @@ export class ConferenceSync{
   }
   lastMessageTime = Date.now()
   onBmMessage(msgs: BMMessage[]){
-    const diff = Date.now() - this.lastMessageTime
     this.lastMessageTime = Date.now()
-    console.log(`Receive ${msgs.length} relayed messages. period:${diff}`)
+    //  console.log(`Receive ${msgs.length} relayed messages. period:${diff}`)
     for(const msg of msgs){
       switch(msg.t){
         case MessageType.AFK_CHANGED: this.onAfkChanged(msg.p, JSON.parse(msg.v)); break

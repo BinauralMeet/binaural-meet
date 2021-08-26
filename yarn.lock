@@ -1322,6 +1322,11 @@
   resolved "https://registry.yarnpkg.com/@iconify-icons/heroicons-outline/-/heroicons-outline-1.1.2.tgz#fb446b576872f5b3f640420801cce58997c9639c"
   integrity sha512-NgbxSdjkWOdU4oIlxEbwu3P44BQZHiXcxNek/1empVDPprzOHQsBxXtZorh6GvLlz1p4lKyzAhBsN79bh7iNsw==
 
+"@iconify/icons-bi@^1.1.6":
+  version "1.1.6"
+  resolved "https://registry.yarnpkg.com/@iconify/icons-bi/-/icons-bi-1.1.6.tgz#90a636476235a61dc44b5f754e0242c50dc946a7"
+  integrity sha512-CWk+Ar7Ake7ygEHcTa+Tc+WVFYhLoZJWcfXDddIG8B3bhXidi7XMVNhlak6X3ZynQS2jknLyCLx4fJlfboKAIQ==
+
 "@iconify/icons-mdi@^1.1.13":
   version "1.1.13"
   resolved "https://registry.yarnpkg.com/@iconify/icons-mdi/-/icons-mdi-1.1.13.tgz#5cf40310f28e538ea3c155499c3d72e2d40081a7"

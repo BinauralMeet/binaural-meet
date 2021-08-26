@@ -19,6 +19,7 @@ export const defaultContent: ISharedContent = Object.assign({}, mapObjectDefault
   id: '',
   zorder: 0,
   pinned: false,
+  noFrame: false,
 })
 
 ///  Add perceptibility and function to object obtained by JSON.parse()
@@ -55,6 +56,7 @@ export class SharedContent implements ISharedContent {
   id!: string
   zorder!: number
   pinned!: boolean
+  noFrame!: boolean
   pose!: Pose2DMap
   size!: [number, number]
   originalSize!:[number, number]

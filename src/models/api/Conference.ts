@@ -51,7 +51,6 @@ export class Conference extends EventEmitter {
   sync = new ConferenceSync(this)
   @observable channelOpened = false     //  is JVB message channel open ?
   bmRelaySocket:WebSocket|undefined = undefined //  Socket for message passing via separate relay server
-  receivePeriod = 50                    //  period to receive message from relay server
 
   constructor(){
     super()
@@ -64,7 +63,7 @@ export class Conference extends EventEmitter {
     if (this.bmRelaySocket?.readyState === WebSocket.OPEN) {
       //  period should be 50 to 5000 ms
       const target = 0.5
-      const period = (1 + Math.round(Math.max(0, (loadController.averagedLoad - target)/(1 - target)) * 9)) * 50
+      const period = (1 + Math.round(Math.max(0, (loadController.averagedLoad - target)/(1 - target)) * 39)) * 50
       if (this.lastPeriod !== period){
         this.sendMessage(MessageType.SET_PERIOD, '', period)
       }
@@ -94,10 +93,9 @@ export class Conference extends EventEmitter {
   }
 
   public uninit(){
-    if (config.bmRelayServer){
-      this.sendMessage(MessageType.PARTICIPANT_LEFT, '', undefined)
+    if (config.bmRelayServer && participants.localId){
+      this.sendMessage(MessageType.PARTICIPANT_LEFT, '', participants.localId)
     }
-    this.sync.unbind()
 
     return new Promise((resolve, reject) => {
       this._jitsiConference?.leave().then((arg) => {
@@ -154,13 +152,12 @@ export class Conference extends EventEmitter {
     if (this.name && participants.localId){
       const msg:BMMessage = {t:type, r:this.name, p: participants.localId,
         d:to, v:JSON.stringify(value)}
+      //  create websocket
       if (!this.bmRelaySocket){
-        this.bmRelaySocket = new WebSocket(config.bmRelayServer)
-        this.bmRelaySocket.addEventListener('error', ()=> {
-          console.error(`Failed to open ${config.bmRelayServer}`)
-          this.sendMessageViaJitsi(type, to, value)
-        })
-        this.bmRelaySocket.addEventListener('message', (ev: MessageEvent<any>)=> {
+        const onOpen = () => {
+          this.sendMessage(MessageType.REQUEST, '', '')
+        }
+        const onMessage = (ev: MessageEvent<any>)=> {
           //  console.log(`ws:`, ev)
           if (typeof ev.data === 'string') {
             const msgs = JSON.parse(ev.data) as BMMessage[]
@@ -168,10 +165,28 @@ export class Conference extends EventEmitter {
             this.sync.onBmMessage(msgs)
             this.loadControl()
           }
-        })
+        }
+        const onClose = () => {
+          this.bmRelaySocket = new WebSocket(config.bmRelayServer)
+          setHandler()
+        }
+        const onError = () => {
+          console.error(`Failed to open ${config.bmRelayServer}`)
+          this.sendMessageViaJitsi(type, to, value)
+        }
+        const setHandler = () => {
+          this.bmRelaySocket?.addEventListener('error', onError)
+          this.bmRelaySocket?.addEventListener('message', onMessage)
+          this.bmRelaySocket?.addEventListener('open', onOpen)
+          this.bmRelaySocket?.addEventListener('close', onClose)
+        }
+        onClose()
       }
-      if (this.bmRelaySocket.readyState !== WebSocket.OPEN){
-        this.bmRelaySocket.addEventListener('open', ()=> {
+      //  send or queue message
+      if (this.bmRelaySocket?.readyState === WebSocket.OPEN){
+        this.bmRelaySocket.send(JSON.stringify(msg))
+      }else{
+        this.bmRelaySocket?.addEventListener('open', ()=> {
           const waitAndSend = ()=>{
             if(this.bmRelaySocket?.readyState !== WebSocket.OPEN){
               setTimeout(waitAndSend, 100)
@@ -181,9 +196,9 @@ export class Conference extends EventEmitter {
           }
           waitAndSend()
         })
-      }else{
-        this.bmRelaySocket.send(JSON.stringify(msg))
       }
+    }else{
+      console.warn(`Relay Socket: Not connected. room:${this.name} id:${participants.localId}.`)
     }
   }
 
