@@ -165,7 +165,11 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   }
   function onCloseForm(){
     setShowForm(false)
+    if (props.content.pinned){
+      setShowTitle(false)
+    }
     props.map.keyInputUsers.delete('contentForm')
+    props.updateAndSend(props.content)
   }
   function updateHandler() {
     if (JSON.stringify(pose) !== JSON.stringify(props.content.pose) ||
@@ -441,9 +445,11 @@ const useStyles = makeStyles({
   },
   rndCls: (props: StyleProps) => ({
     borderRadius: props.showTitle ? '0.5em 0.5em 0 0' : '0 0 0 0',
-    backgroundColor: settings.useTransparent ? 'rgba(200,200,200,0.5)' : 'rgba(200,200,200,1)',
-    boxShadow: settings.useTransparent ? '0.2em 0.2em 0.2em 0.2em rgba(0,0,0,0.4)' :
-       '0.2em 0.2em 0.2em 0.2em rgba(100,100,100,1)',
+    backgroundColor: props.props.content.noFrame ? 'rgba(0,0,0,0)' :
+      settings.useTransparent ? 'rgba(200,200,200,0.5)' : 'rgba(200,200,200,1)',
+    boxShadow: props.props.content.noFrame ? undefined :
+      settings.useTransparent ? '0.2em 0.2em 0.2em 0.2em rgba(0,0,0,0.4)' :
+        '0.2em 0.2em 0.2em 0.2em rgba(100,100,100,1)',
   }),
   rndContainer: (props: StyleProps) => ({
     width:'100%',

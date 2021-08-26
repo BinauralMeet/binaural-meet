@@ -292,7 +292,7 @@ export class SharedContents extends EventEmitter {
   private getOrTakeContent(cid: string, callBy?:string) {
     const pid = this.owner.get(cid)
     if (pid) {
-      const pc = pid ? this.participants.get(pid) : undefined
+      const pc = this.participants.get(pid)
       if (pc) {
         return {pid, pc, take:false}  //  get content
       }else{

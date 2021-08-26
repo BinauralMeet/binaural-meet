@@ -100,7 +100,7 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
   public joinConference(conferenceName: string) {
     if (this._jitsiConnection) {
       this.conference.init(conferenceName, () => {
-        return this._jitsiConnection?.initJitsiConference(conferenceName, config)
+        return this._jitsiConnection?.initJitsiConference(conferenceName.toLowerCase(), config)
       })
 
       return

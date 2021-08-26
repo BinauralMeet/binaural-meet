@@ -92,6 +92,8 @@ export const enTranslate = {
   ctClose: 'Close',
   ctName: 'Titile',
   ctFocus: 'Show it in the center',
+  ctFrameVisible: 'Normal frame',
+  ctFrameInvisible: 'Invisible frame',
   upload: 'Upload',
   Save: 'Save',
   Clear: 'Clear',

@@ -1,6 +1,8 @@
 import imageLine from '@iconify-icons/clarity/image-line'
 import imageOutlineBadged from '@iconify-icons/clarity/image-outline-badged'
 import clipboardCopy from '@iconify-icons/heroicons-outline/clipboard-copy'
+import biImage from '@iconify/icons-bi/image'
+import biImageNoFrame from '@iconify/icons-bi/image-alt'
 import pinIcon from '@iconify/icons-mdi/pin'
 import pinOffIcon from '@iconify/icons-mdi/pin-off'
 import {Icon} from '@iconify/react'
@@ -156,7 +158,13 @@ export const SharedContentForm: React.FC<SharedContentFormProps> = (props: Share
               makeContentWallpaper(props.content, checked)
               props.updateOnly(props.content)
             }}/>, <Icon icon={imageOutlineBadged} height={TITLE_HEIGHT}/>, t('ctWallpaper')) : undefined}</Fragment>,
-        ]}</TableBody></Table>
+          <Fragment key="noFrame">{
+            Row(t('ctFrameVisible'), <Icon icon={biImage} height={TITLE_HEIGHT}/>,
+            <Switch color="primary" checked={props.content.noFrame} onChange={(ev, checked)=>{
+              props.content.noFrame = checked
+              props.updateOnly(props.content)
+            }}/>, <Icon icon={biImageNoFrame} height={TITLE_HEIGHT}/>, t('ctFrameInvisible')) }</Fragment>,
+          ]}</TableBody></Table>
         <Box mt={2} mb={2}>
           <Button variant="contained" color="primary" style={{textTransform:'none'}}
             onClick={()=>{

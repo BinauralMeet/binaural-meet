@@ -123,8 +123,8 @@ export class Conference extends EventEmitter {
   }
 
   public uninit(){
-    if (config.bmRelayServer){
-      this.sendMessage(MessageType.PARTICIPANT_LEFT, '', undefined)
+    if (config.bmRelayServer && participants.localId){
+      this.sendMessage(MessageType.PARTICIPANT_LEFT, '', participants.localId)
     }
     if (participants.local.tracks.audio) {
       this.removeTrack(participants.local.tracks.audio as JitsiLocalTrack)?.then(()=>{

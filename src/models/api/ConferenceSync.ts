@@ -192,6 +192,9 @@ export class ConferenceSync{
     contents.onParticipantLeft(id)
     chat.participantLeft(id)
     participants.leave(id)
+    if (this.conference.bmRelaySocket?.readyState === WebSocket.OPEN){
+      this.conference.sendMessage(MessageType.PARTICIPANT_LEFT, '', id)
+    }
   }
   private onChatMessage(pid: string, msg: ChatMessageToSend){
     //  console.log(`PRIVATE_MESSAGE_RECEIVED id:${id}, text:${msg.msg}, ts:${msg.ts}`)
@@ -362,7 +365,7 @@ export class ConferenceSync{
     this.conference.on(MessageType.PARTICIPANT_TRACKLIMITS, this.onParticipantTrackLimits)
 
     //  left/join
-    this.conference.on(ConferenceEvents.USER_LEFT, this.onParticipantLeft)
+    this.conference.on(ConferenceEvents.USER_LEFT, this.onParticipantLeft.bind(this))
     this.conference.on(ConferenceEvents.USER_JOINED, (id) => {
       const name = this.conference._jitsiConference?.getParticipantById(id).getDisplayName()
       if (name === contentTrackCarrierName || name === roomInfoPeeperName) {

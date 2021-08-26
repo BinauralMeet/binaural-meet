@@ -89,6 +89,8 @@ export const jaTranslate = {
   ctDelete: '削除する',
   ctClose: '閉じる',
   ctName: 'タイトル',
+  ctFrameVisible: 'フレームあり',
+  ctFrameInvisible: 'フレームなし',
   upload: 'アップロード',
   Save: '保存',
   Clear: 'クリア',

@@ -26,6 +26,7 @@ export const defaultContent: ISharedContent = Object.assign({}, mapObjectDefault
   id: '',
   zorder: 0,
   pinned: false,
+  noFrame: false,
 })
 
 ///  Add perceptibility and function to object obtained by JSON.parse()
@@ -66,6 +67,7 @@ export class SharedContent implements ISharedContent {
   size!: [number, number]
   originalSize!:[number, number]
   perceptibility!: Perceptibility
+  noFrame!: boolean
   constructor() {
     Object.assign(this, _.cloneDeep(defaultContent))
   }
@@ -280,7 +282,7 @@ export function createContentOfVideo(tracks: JitsiLocalTrack[], map: MapData, ty
 
 const extractData = extract<ISharedContentData>({
   zorder: true, name: true, ownerName: true, color: true, textColor:true,
-  type: true, url: true, pose: true, size: true, originalSize: true, pinned: true,
+  type: true, url: true, pose: true, size: true, originalSize: true, pinned: true, noFrame: true,
 })
 export function extractContentData(c:ISharedContent) {
   return extractData(c)
@@ -291,7 +293,7 @@ export function extractContentDatas(cs:ISharedContent[]) {
 const extractDataAndId = extract<ISharedContentData&ISharedContentId>({
   zorder: true, name: true, ownerName: true, color: true, textColor:true,
   type: true, url: true, pose: true, size: true, originalSize: true,
-  pinned: true, id: true,
+  pinned: true, noFrame: true, id: true,
 })
 export function extractContentDataAndId(c: ISharedContent) {
   return extractDataAndId(c)
