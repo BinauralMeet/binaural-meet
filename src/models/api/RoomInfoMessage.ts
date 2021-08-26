@@ -53,6 +53,8 @@ export const MessageType = {
   CLEAR: 'clear',               //  clear server's info.
   SET_PERIOD: 'set_period',     //  set the period to receive messages.
 
+  ROOMS_TO_SHOW: 'rooms_to_show', //  list rooms to show
+
   REQUEST_ROOM_PROPS: 'req_room_props',
   ROOM_PROPS: 'room_props',
   ROOM_PROP: 'room_prop',

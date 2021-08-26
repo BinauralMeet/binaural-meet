@@ -14,7 +14,6 @@ import {TextLineStyle} from './LeftBar'
 export const ContentLine: React.FC<TextLineStyle &
 {room: Room, participant: ParticipantBase, content: ISharedContent}> = (props) => {
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
-  const {lineHeight, ...contentProps} = props
 
   return <Observer>{()=> {
     const typeIcon = contentTypeIcons(props.content.type, props.fontSize)

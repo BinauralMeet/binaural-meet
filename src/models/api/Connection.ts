@@ -88,13 +88,11 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
 
   public joinConference(room: Room) {
     if (this._jitsiConnection) {
-      this.conference.init(conferenceName, () => {
-		this.conferenceName = room.name
+      this.conference.init(room, () => {
         return this._jitsiConnection?.initJitsiConference(room.name, config)
-        this.conference.init(jitsiConference, room)
       })
-      
-return
+
+      return
     }
     throw new Error('No connection has been established.')
   }

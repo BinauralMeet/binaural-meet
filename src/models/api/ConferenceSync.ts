@@ -1,15 +1,13 @@
 import {contentTrackCarrierName, roomInfoPeeperName} from '@models/api/Constants'
 import {RemoteInformation} from '@models/Participant'
+import {TrackStates} from '@models/Participant'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {makeThemContents} from '@stores/sharedContents/SharedContentCreator'
 import JitsiMeetJS from 'lib-jitsi-meet'
 import {IReactionDisposer} from 'mobx'
+import {roomInfoServer} from '../../index'
 import type {BMMessage, Conference} from './Conference'
 import {ConferenceEvents} from './Conference'
-import roomInfoServer from './roomInfoServer'
-
-// config.js
-declare const config:any             //  from ../../config.js included from index.html
 
 export const MessageType = {
   //  common instant messages
@@ -73,56 +71,79 @@ export class ConferenceSync{
     //  setInterval(()=>{ this.checkRemoteAlive() }, 1000)
   }
 
-  //  Send content update request to pid
-  sendContentUpdateRequest(pid: string, updated: ISharedContent) {
-    if (updated.url.length > FRAGMENTING_LENGTH) {
-      this.sendFragmentedMessage(MessageType.CONTENT_UPDATE_REQUEST, pid, updated)
+  private onParticipantJoined(id: string){
+    const name = this.conference._jitsiConference?.getParticipantById(id).getDisplayName()
+    if (name === contentTrackCarrierName || name === roomInfoPeeperName) {
+      //  do nothing
     }else {
-      this.conference.sendMessage(MessageType.CONTENT_UPDATE_REQUEST, pid, updated)
+      this.conference.room!.participants.join(id)
+      roomInfoServer.addParticipant(this.conference.room!.name, id)
     }
+  }
+
+  private onParticipantLeft(id: string){
+    if (this.conference?.room){
+      this.conference.room.contents.onParticipantLeft(id)
+      this.conference.room.participants.leave(id)
+      roomInfoServer.removeParticipant(this.conference.room.name, id)
+    }
+  }
+
+  private onMuteVideo(from: string, value: boolean){
+    this.conference.room!.participants.local.muteVideo = value
+  }
+  private onMuteAudio(from: string, value: boolean){
+    this.conference.room!.participants.local.muteAudio = value
+  }
+  private onAfkChanged(from:string, afk: boolean){
+    const remote = this.conference.room!.participants.find(from)
+    if (remote){ remote.awayFromKeyboard = afk }
+  }
+  private onParticipantInfo(from:string, info:RemoteInformation){
+    const remote = this.conference?.room!.participants.remote.get(from)
+    if (remote) {
+      Object.assign(remote.information, info)
+      roomInfoServer.updateParticipant(this.conference.room!.name, remote)
+    }
+  }
+  private onParticipantTrackState(from:string, states:TrackStates){
+    const remote = this.conference.room!.participants.remote.get(from)
+    if (remote) {
+      Object.assign(remote.trackStates, states)
+    }
+  }
+
+  private onMyContent(from:string, cs_:ISharedContent[]){
+    const cs = makeThemContents(cs_)
+    this.conference.room!.contents.replaceRemoteContents(cs, from)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const remote = this.conference.room!.participants.remote.get(from)
+    syncLog(`recv remote contents ${JSON.stringify(cs.map(c => c.id))} from ${from}.`, cs)
+    roomInfoServer?.updateContents(this.conference.room!.name, cs, from)
+  }
+
+  private onReloadBrower(from: string){
+    window.location.reload()
   }
 
   bind() {
     //  participant related -----------------------------------------------------------------------
     //  left/join
-    this.conference.on(ConferenceEvents.USER_LEFT, this.onParticipantLeft)
-    this.conference.on(ConferenceEvents.USER_JOINED, (id) => {
-      const name = this.conference._jitsiConference?.getParticipantById(id).getDisplayName()
-      if (name === contentTrackCarrierName || name === roomInfoPeeperName) {
-        //  do nothing
-      }else {
-        this.conference.room!.participants.join(id)
-        roomInfoServer.addParticipant(this.conference.room!.name, id)
-      }
-    })
-
+    this.conference.on(ConferenceEvents.USER_LEFT, this.onParticipantLeft.bind(this))
+    this.conference.on(ConferenceEvents.USER_JOINED, this.onParticipantJoined.bind(this))
     //  info
-    this.conference.on(PropertyType.PARTICIPANT_INFO, (from:string, info:RemoteInformation) => {
-      const remote = this.conference.room!.participants.remote.get(from)
-      if (remote) {
-        Object.assign(remote.information, info)
-        roomInfoServer?.updateParticipant(this.conference.room!.name, remote)
-      }
-    })
-
+    this.conference.on(PropertyType.PARTICIPANT_INFO, this.onParticipantInfo.bind(this))
     //  mute video
-    this.conference.on(MessageType.MUTE_VIDEO, this.onMuteVideo)
+    this.conference.on(MessageType.MUTE_VIDEO, this.onMuteVideo.bind(this))
     //  mute audio
-    this.conference.on(MessageType.MUTE_AUDIO, this.onMuteAudio)
+    this.conference.on(MessageType.MUTE_AUDIO, this.onMuteAudio.bind(this))
     //  reload browser
-    this.conference.on(MessageType.RELOAD_BROWSER, this.onReloadBrower)
+    this.conference.on(MessageType.RELOAD_BROWSER, this.onReloadBrower.bind(this))
 
     // contents related ---------------------------------------------------------------
     //  my contents
     //  Send my content to remote to refresh.
-    this.conference.on(PropertyType.MY_CONTENT, (from:string, cs_:ISharedContent[]) => {
-      const cs = makeThemContents(cs_)
-      this.conference.room!.contents.replaceRemoteContents(cs, from)
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const remote = this.conference.room!.participants.remote.get(from)
-      syncLog(`recv remote contents ${JSON.stringify(cs.map(c => c.id))} from ${from}.`, cs)
-      roomInfoServer?.updateContents(this.conference.room!.name, cs, from)
-    })
+    this.conference.on(PropertyType.MY_CONTENT, this.onMyContent.bind(this))
 
     //  Get data channel state
     this.conference._jitsiConference?.addEventListener(JitsiMeetJS.events.conference.DATA_CHANNEL_OPENED, () => {
@@ -165,10 +186,6 @@ export class ConferenceSync{
       count += 1
     }
   }
-  private onParticipantLeft(id: string){
-    this.conference.room!.contents.onParticipantLeft(id)
-    this.conference.room!.participants.leave(id)
-    roomInfoServer?.removeParticipant(this.conference.room!.name, id)
   lastMessageTime = Date.now()
   onBmMessage(msgs: BMMessage[]){
     const diff = Date.now() - this.lastMessageTime
@@ -177,19 +194,19 @@ export class ConferenceSync{
     for(const msg of msgs){
       switch(msg.t){
         case MessageType.AFK_CHANGED: this.onAfkChanged(msg.p, JSON.parse(msg.v)); break
-        case MessageType.CALL_REMOTE: this.onCallRemote(msg.p); break
-        case MessageType.CHAT_MESSAGE: this.onChatMessage(msg.p, JSON.parse(msg.v)); break
-        case MessageType.CONTENT_REMOVE_REQUEST: this.onContentRemoveRequest(msg.p, JSON.parse(msg.v)); break
-        case MessageType.CONTENT_UPDATE_REQUEST: this.onContentUpdateRequest(msg.p, JSON.parse(msg.v)); break
-        case MessageType.PARTICIPANT_MOUSE: this.onParticipantMouse(msg.p, JSON.parse(msg.v)); break
-        case MessageType.PARTICIPANT_POSE: this.onParticipantPose(msg.p, JSON.parse(msg.v)); break
-        case MessageType.PARTICIPANT_TRACKLIMITS: this.onParticipantTrackLimits(msg.p, JSON.parse(msg.v)); break
-        case MessageType.YARN_PHONE: this.onYarnPhone(msg.p, JSON.parse(msg.v)); break
-        case PropertyType.MAIN_SCREEN_CARRIER: this.onMainScreenCarrier(msg.p, JSON.parse(msg.v)); break
+        //case MessageType.CALL_REMOTE: this.onCallRemote(msg.p); break
+        //case MessageType.CHAT_MESSAGE: this.onChatMessage(msg.p, JSON.parse(msg.v)); break
+        //case MessageType.CONTENT_REMOVE_REQUEST: this.onContentRemoveRequest(msg.p, JSON.parse(msg.v)); break
+        //case MessageType.CONTENT_UPDATE_REQUEST: this.onContentUpdateRequest(msg.p, JSON.parse(msg.v)); break
+        //case MessageType.PARTICIPANT_MOUSE: this.onParticipantMouse(msg.p, JSON.parse(msg.v)); break
+        //case MessageType.PARTICIPANT_POSE: this.onParticipantPose(msg.p, JSON.parse(msg.v)); break
+        //case MessageType.PARTICIPANT_TRACKLIMITS: this.onParticipantTrackLimits(msg.p, JSON.parse(msg.v)); break
+        //case MessageType.YARN_PHONE: this.onYarnPhone(msg.p, JSON.parse(msg.v)); break
+        //case PropertyType.MAIN_SCREEN_CARRIER: this.onMainScreenCarrier(msg.p, JSON.parse(msg.v)); break
         case PropertyType.MY_CONTENT: this.onMyContent(msg.p, JSON.parse(msg.v)); break
         case PropertyType.PARTICIPANT_INFO: this.onParticipantInfo(msg.p, JSON.parse(msg.v)); break
-        case PropertyType.PARTICIPANT_PHYSICS: this.onParticipantPhysics(msg.p, JSON.parse(msg.v)); break
-        case PropertyType.PARTICIPANT_POSE: this.onParticipantPose(msg.p, JSON.parse(msg.v)); break
+        //case PropertyType.PARTICIPANT_PHYSICS: this.onParticipantPhysics(msg.p, JSON.parse(msg.v)); break
+        //case PropertyType.PARTICIPANT_POSE: this.onParticipantPose(msg.p, JSON.parse(msg.v)); break
         case PropertyType.PARTICIPANT_TRACKSTATES: this.onParticipantTrackState(msg.p, JSON.parse(msg.v)); break
         default:
           console.log(`Unhandled message type ${msg.t} from ${msg.p}`)

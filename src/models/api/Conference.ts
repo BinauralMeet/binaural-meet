@@ -7,8 +7,12 @@ import {EventEmitter} from 'events'
 import JitsiMeetJS, {JitsiValues} from 'lib-jitsi-meet'
 import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
 import {makeObservable, observable} from 'mobx'
+import {roomInfoServer} from '../../index'
 import {ConferenceSync, MessageType} from './ConferenceSync'
-import { MessageType as RoomInfoMT } from './RoomInfoMessage'
+import {MessageType as RoomInfoMT} from './RoomInfoMessage'
+
+// config.js
+declare const config:any             //  from ../../config.js included from index.html
 
 //  Log level and module log options
 export const JITSILOGLEVEL = 'warn'  // log level for lib-jitsi-meet {debug|log|warn|error}
@@ -46,7 +50,6 @@ export class Conference extends EventEmitter {
   public joinTime = 0
   sync = new ConferenceSync(this)
   @observable channelOpened = false     //  is JVB message channel open ?
-  roomInfoServer?: RoomInfoServer       //  room info server for the room properties.
   bmRelaySocket:WebSocket|undefined = undefined //  Socket for message passing via separate relay server
   receivePeriod = 50                    //  period to receive message from relay server
 
@@ -72,52 +75,27 @@ export class Conference extends EventEmitter {
 
   setRoomProp(name:string, value:string){
     const roomName = this._jitsiConference?.getName()
-    if (roomName && this.roomInfoServer){
-      this.roomInfoServer.send(RoomInfoMT.ROOM_PROP, roomName, participants.localId, [name, value])
+    if (roomName && roomInfoServer){
+      roomInfoServer.send(RoomInfoMT.ROOM_PROP, roomName, participants.localId, [name, value])
     }
   }
 
-  public init(name:string, createJitsiConference:()=>JitsiMeetJS.JitsiConference|undefined){
-    //  check last kicked time
-    if (name){
-      const str = window.localStorage.getItem('kickTimes')
-      if (str){
-        const kickTimes = JSON.parse(str) as KickTime[]
-        const found = kickTimes.find(kt => kt.room === name)
-        if (found){
-          const diff = Date.now() - found.time
-          const KICK_WAIT_MIN = 15  //  Can not login KICK_WAIT_MIN minutes once kicked.
-          if (diff < KICK_WAIT_MIN * 60 * 1000){
-            window.location.reload()
-
-            return
-          }
-        }
-      }
-    }
-
+  public init(room: Room, createJitsiConference:()=>JitsiMeetJS.JitsiConference|undefined){
     //  register event handlers and join
-    this.name = name
+    this.room = room
+    this.name = room.name
     this._jitsiConference = createJitsiConference()
     this.registerJistiConferenceEvents()
     this.sync.bind()
-    this._jitsiConference.setDisplayName(roomInfoPeeperName)
-    this._jitsiConference.join('')
-    this._jitsiConference.setSenderVideoConstraint(1080)
+    this._jitsiConference?.setDisplayName(roomInfoPeeperName)
+    this._jitsiConference?.join('')
+    this._jitsiConference?.setSenderVideoConstraint(1080)
     this.joinTime = Date.now()
-
-    this.roomInfoServer = connectRoomInfoServer(this.name)
   }
 
   public uninit(){
     if (config.bmRelayServer){
       this.sendMessage(MessageType.PARTICIPANT_LEFT, '', undefined)
-    }
-    if (participants.local.tracks.audio) {
-      this.removeTrack(participants.local.tracks.audio as JitsiLocalTrack)
-    }
-    if (participants.local.tracks.avatar) {
-      this.removeTrack(participants.local.tracks.avatar as JitsiLocalTrack)
     }
     this.sync.unbind()
 
@@ -266,10 +244,6 @@ export class Conference extends EventEmitter {
         eventLog('MESSAGE_RECEIVED', id, text, timeStamp)
         //  this.emit(ConferenceEvents.MESSAGE_RECEIVED, id, text, timeStamp)
     })
-
-    //  kicked
-    this._jitsiConference.on(JitsiMeetJS.events.conference.KICKED,
-      (p:JitsiParticipant, r:string)=>{this.sync.onKicked(p.getId(),r)})
   }
   private onConferenceJoined() {
     //  set localId

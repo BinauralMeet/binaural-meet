@@ -1,6 +1,6 @@
 import {App} from '@components/App'
 import {Connection, connections} from '@models/api'
-import roomInfoServer from '@models/api/roomInfoServer'
+import {connectRoomInfoServer} from '@models/api/RoomInfoServer'
 import {i18nInit} from '@models/locales'
 import loadController from '@models/trafficControl/loadController'
 import {urlParameters} from '@models/url'
@@ -12,12 +12,17 @@ import rooms from '@stores/Rooms'
 import {configure} from 'mobx'
 import ReactDOM from 'react-dom'
 
+// config.js
+declare const config:any             //  from ../../config.js included from index.html
+declare const d:any                  //  from index.html
+
 configure({
     enforceActions: "never",
 })
-declare const d:any                  //  from index.html
 
 i18nInit().then(main)
+
+export const roomInfoServer = connectRoomInfoServer(config.roomInfoServer)
 
 function main() {
   //  for debug
