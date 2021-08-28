@@ -93,7 +93,12 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
     <Box mt={2}>
       <Button variant="contained" color={btnColor()} style={{textTransform:'none'}}
         disabled={!roomInfo.passMatched} onClick={() => {
-        if (roomInfo.passMatched) { connection.conference.sendMessage(MessageType.RELOAD_BROWSER, '', '') }
+        if (roomInfo.passMatched) {
+          connection.conference.sendMessageViaJitsi(MessageType.RELOAD_BROWSER, '', '')
+          if (connection.conference.bmRelaySocket?.readyState === WebSocket.OPEN){
+            connection.conference.sendMessageViaRelay(MessageType.RELOAD_BROWSER, '', '')
+          }
+        }
       }}> Reload </Button>&emsp;
     </Box>
   </Box>}</Observer>

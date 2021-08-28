@@ -1,5 +1,6 @@
 import {t} from '@models/locales'
 import {priorityCalculator} from '@models/middleware/trafficControl'
+import { urlParameters } from '@models/url'
 import {ConnectionInfo} from '@stores/ConnectionInfo'
 import errorInfo from '@stores/ErrorInfo'
 import participants from '@stores/participants/Participants'
@@ -142,6 +143,9 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
       console.log('Disconnected and failed to leave... try to join again')
       this.conference.bmRelaySocket?.close()
     }).finally(()=>{
+      if (urlParameters.testBot !== null){
+        window.location.reload()
+      }
       ///*  // reload or
 
       //  Ask reload to user or auto reload ?
