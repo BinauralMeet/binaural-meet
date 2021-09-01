@@ -593,7 +593,7 @@ export class SharedContents extends EventEmitter {
   }
 
   //  screen fps setting
-  @observable screenFps = 30
+  @observable screenFps = 5
   @action setScreenFps(fps: number){ this.screenFps = fps }
 }
 

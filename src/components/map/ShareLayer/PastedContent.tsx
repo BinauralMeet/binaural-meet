@@ -68,7 +68,7 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
             //  Openning of self url makes infinite loop. So, create text instead.
             content = createContentOfText(str, map)
             content.name = '! recursive reference'
-          }else if (ext === '.jpg' || ext === '.JPG' || ext === 'jpeg' || ext === 'JPEG' || ext === '.png' || ext === '.PNG') {
+          }else if (ext === '.jpg' || ext === '.JPG' || ext === 'jpeg' || ext === 'JPEG' || ext === '.png' || ext === '.PNG' || ext === '.gif' || ext === '.GIF' || ext === '.svg' || ext === '.SVG') {
             createContentOfImageUrl(str, map).then((content) => {
               content.name = url.pathname
               if (SHARE_DIRECT) {
