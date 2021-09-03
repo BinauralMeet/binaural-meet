@@ -71,7 +71,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
       }}> Mute all mics </Button>&nbsp;
       <Button variant="contained" color={btnColor()} style={{textTransform:'none'}}
         disabled={!roomInfo.passMatched} onClick={() => {
-        if (roomInfo.passMatched) { connection.conference.sendMessage(MessageType.MUTE_VIDEO, '', false) }
+        if (roomInfo.passMatched) { connection.conference.sendMessage(MessageType.MUTE_AUDIO, '', false) }
       }}> Switch on all mics </Button>
     </Box>
     <Box mt={2}>

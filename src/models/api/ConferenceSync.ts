@@ -561,6 +561,7 @@ export class ConferenceSync{
     }
   }
   lastMessageTime = Date.now()
+  // tslint:disable-next-line: cyclomatic-complexity
   onBmMessage(msgs: BMMessage[]){
     this.lastMessageTime = Date.now()
     //  console.log(`Receive ${msgs.length} relayed messages. period:${diff}`)
@@ -577,6 +578,9 @@ export class ConferenceSync{
         case MessageType.PARTICIPANT_TRACKLIMITS: this.onParticipantTrackLimits(msg.p, JSON.parse(msg.v)); break
         case MessageType.YARN_PHONE: this.onYarnPhone(msg.p, JSON.parse(msg.v)); break
         case MessageType.RELOAD_BROWSER: this.onReloadBrower(msg.p); break
+        case MessageType.MUTE_VIDEO: this.onMuteVideo(msg.p, JSON.parse(msg.v)); break
+        case MessageType.MUTE_AUDIO: this.onMuteAudio(msg.p, JSON.parse(msg.v)); break
+        case MessageType.KICK: this.onKicked(msg.p, JSON.parse(msg.v)); break
         case PropertyType.MAIN_SCREEN_CARRIER: this.onMainScreenCarrier(msg.p, JSON.parse(msg.v)); break
         case PropertyType.MY_CONTENT: this.onMyContent(msg.p, JSON.parse(msg.v)); break
         case PropertyType.PARTICIPANT_INFO: this.onParticipantInfo(msg.p, JSON.parse(msg.v)); break
