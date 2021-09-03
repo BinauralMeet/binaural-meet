@@ -1,12 +1,14 @@
-import DialogContent from '@material-ui/core/DialogContent'
-import DialogTitle from '@material-ui/core/DialogTitle'
-import Popover, { PopoverProps } from '@material-ui/core/Popover'
+import Button from '@material-ui/core/Button'
+import Paper from '@material-ui/core/Paper'
+import Popper, { PopperProps } from '@material-ui/core/Popper'
 import { connection } from '@models/api'
 import React from 'react'
 import {useState} from 'react'
 import {Stores} from '../utils'
 
-export interface StatusDialogProps extends PopoverProps, Stores{
+declare const config:any             //  from ../../config.js included from index.html
+
+export interface StatusDialogProps extends Omit<PopperProps, 'children'>, Stores{
   close: () => void,
 }
 
@@ -23,12 +25,14 @@ class Status{
   open = false
   update = false
   interval: NodeJS.Timeout|undefined = undefined
+  messageServer = ''
+  roomInfoServer = ''
 }
 const status = new Status()
 
 export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogProps) => {
   const [update,setUpdate] = useState<boolean>(false)
-  status.open = props.open
+  status.open = props.open === true
   status.update = update
 
   function updateStatus(){
@@ -64,6 +68,19 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
       }
       setUpdate(status.update ? false : true)
     }
+    if (connection.conference.roomInfoServer?.ws?.readyState === WebSocket.OPEN){
+      status.roomInfoServer = config.roomInfoServer
+    }
+    if (connection.conference.bmRelaySocket?.readyState === WebSocket.OPEN) {
+      status.messageServer = config.bmRelayServer
+    }else{
+      const chatRoom = connection.conference._jitsiConference?.room
+      if (status.open && chatRoom){
+        status.messageServer = 'bridge'
+      }else{
+        status.messageServer = 'prosody'
+      }
+    }
   }
   if (props.open){
     if (!status.interval){
@@ -77,19 +94,23 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
       console.log('clearInterval')
     }
   }
-  const {close, ...popoverProps} = props
+  const {close, ...poperProps} = props
 
-  return <Popover {...popoverProps} onClose={()=>props.close()}>
-    <DialogTitle>
-      {'Status report'}
-    </DialogTitle>
-    <DialogContent>
+  return <Popper {...poperProps}>
+    <Paper style={{background:'rgba(255,255,255,0.6)', padding:'0.4em'}}>
       <div style={{overflowY:'auto'}}>
-        {`${status.sessions.length} sessions`}<br />
-        {status.sessions.map((sess, idx) => <div key={idx}>
-          Bridge: {sess.remotes.map((r,k) => <span key={k.toString()}>{r.address} {r.port}/{r.protocol}<br /></span>)}
+        <strong>Servers</strong><br />
+        {status.sessions.length === 0 ? <div>No WebRTC</div> :
+        status.sessions.map((sess, idx) => <div key={idx}>
+          WebRTC: {sess.remotes.map((r,k) => <span key={k.toString()}>{r.address} {r.port}/{r.protocol}<br /></span>)}
         </div>)}
+        <div> Message: {status.messageServer}</div>
+        <div> Room info: {status.roomInfoServer}</div>
       </div>
-    </DialogContent>
-  </Popover>
+      <Button variant="contained" color="primary" style={{textTransform:'none', marginTop:'0.4em'}}
+        onClick={close}
+        > Close </Button>
+
+    </Paper>
+  </Popper>
 }
