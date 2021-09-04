@@ -2,7 +2,6 @@ import {StoreProvider as ChatProvider} from '@hooks/ChatStore'
 import {StoreProvider as MapProvider} from '@hooks/MapStore'
 import {StoreProvider as ParticipantsProvider} from '@hooks/ParticipantsStore'
 import {StoreProvider as ContentsProvider} from '@hooks/SharedContentsStore'
-import {t} from '@models/locales'
 import { urlParameters } from '@models/url'
 import {isPortrait, isSmartphone} from '@models/utils'
 import chatStore from '@stores/Chat'
@@ -46,9 +45,7 @@ export const App: React.FC<{}> = () => {
   window.onerror = (message, source, lineno, colno, error) => {
     if ((error?.message === 'Ping timeout' || error?.message === 'Strophe: Websocket error [object Event]')
      && message === null && source === null && lineno === null && colno === null){
-      errorInfo.type = 'connection'
-      errorInfo.title = t('etConnection')
-      errorInfo.message = t('emConnection')
+      errorInfo.setType('connection')
       if (urlParameters.testBot !== null){  //  testBot
         window.location.reload()  //  testBot will reload when connection is cutted off.
       }

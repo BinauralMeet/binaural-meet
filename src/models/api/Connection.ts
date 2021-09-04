@@ -1,4 +1,3 @@
-import {t} from '@models/locales'
 import {priorityCalculator} from '@models/middleware/trafficControl'
 import { urlParameters } from '@models/url'
 import {ConnectionInfo} from '@stores/ConnectionInfo'
@@ -122,9 +121,7 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
     return Promise.reject('No connection has been established.')
   }
   reconnect(){
-    errorInfo.type = 'retry'
-    errorInfo.title = t('etRetry')
-    errorInfo.message = t('emRetry')
+    errorInfo.setType('retry')
 
     /*  // if not reload, this block is needed
     const localCamera = this.conference.getLocalCameraTrack()

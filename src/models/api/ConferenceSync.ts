@@ -218,8 +218,7 @@ export class ConferenceSync{
     if (remote){ remote.awayFromKeyboard = afk }
   }
   public onKicked(pid:string, reason:string){
-    errorInfo.message = `Kicked by ${participants.remote.get(pid)?.information.name}. ${reason}`
-    errorInfo.type = 'kicked'
+    errorInfo.setType('kicked', participants.remote.get(pid)?.information.name, reason)
     const str = window.localStorage.getItem('kickTimes')
     let found:KickTime|undefined = undefined
     let kickTimes:KickTime[] = []

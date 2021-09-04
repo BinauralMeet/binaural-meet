@@ -155,21 +155,6 @@ export class Conference extends EventEmitter {
   //  Commmands for local tracks --------------------------------------------
   private localMicTrack?: JitsiLocalTrack
   private localCameraTrack?: JitsiLocalTrack
-/*
-  public setLocalMicTrack(track: JitsiLocalTrack) {
-    function doSetLocalMicTrack(conf:Conference, track:JitsiLocalTrack) {
-      conf.localMicTrack = track
-      conf.localMicTrack.videoType = 'mic'
-      conf._jitsiConference?.addTrack(conf.localMicTrack)
-    }
-    if (this.localMicTrack) {
-      this._jitsiConference?.removeTrack(this.localMicTrack).then(() => {
-        doSetLocalMicTrack(this, track)
-      })
-    }else {
-      doSetLocalMicTrack(this, track)
-    }
-  }*/
   private doSetLocalMicTrack(track:JitsiLocalTrack) {
     this.localMicTrack = track
     this.localMicTrack.videoType = 'mic'

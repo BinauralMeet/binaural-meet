@@ -5,7 +5,7 @@ import {t} from '@models/locales'
 import {priorityCalculator} from '@models/middleware/trafficControl'
 import { defaultInformation } from '@models/Participant'
 import {urlParameters} from '@models/url'
-import {addV2, mulV2} from '@models/utils'
+import {addV2, diffSet, mulV2} from '@models/utils'
 import {createJitisLocalTracksFromStream} from '@models/utils/jitsiTrack'
 import map from '@stores/Map'
 import participants from '@stores/participants/Participants'
@@ -14,12 +14,55 @@ import {action, autorun, computed, makeObservable, observable, when} from 'mobx'
 export type ErrorType = '' | 'connection' | 'retry' | 'noMic' | 'micPermission' | 'channel' | 'entrance' | 'afk' | 'kicked'
 
 export class ErrorInfo {
-  @observable message = ''
   @computed get fatal() { return !this.type }
   @observable type:ErrorType = 'entrance'
-  @observable title = ''
+  @observable types: Set<ErrorType> = new Set()
   @observable supressedTypes:Set<ErrorType> = new Set()
+  reason? = ''
+  name? = ''
+  @action setType(type: ErrorType, name?:string, reason?:string){
+    this.type = type
+    this.types.add(type)
+    this.reason = reason
+    this.name = name
+  }
+  @computed get title() {
+    switch(this.type){
+      case 'connection': return t('etConnection')
+      case 'retry': return t('etRetry')
+      case 'noMic': return t('etNoMic')
+      case 'micPermission': return t('etMicPermission')
+      case 'channel': return t('etNoChannel')
+      case 'entrance': return ''
+      case 'afk': return t('afkTitle')
+      case 'kicked': return `Kicked by ${this.name}. ${this.reason}`
+    }
+
+    return this.type
+  }
+  @computed get message() {
+    switch(this.type){
+      case 'connection': return t('emConnection')
+      case 'retry': return t('emRetry')
+      case 'noMic': return t('emNoMic')
+      case 'micPermission': return t('emMicPermission')
+      case 'channel': return t('emNoChannel')
+      case 'entrance': return ''
+      case 'afk': return t('afkMessage')
+      case 'kicked': return ''
+    }
+
+    return `no message defined for ${this.type}`
+  }
+
   show(){
+    if (this.type === ''){
+      const types = diffSet(this.types, this.supressedTypes)
+      if (types.size){
+        this.type = types.values().next().value
+      }
+    }
+
     return this.type!=='' && !this.supressedTypes.has(this.type)
   }
 
@@ -37,8 +80,7 @@ export class ErrorInfo {
     })
     autorun(() => {
       if (participants.local.awayFromKeyboard){
-        this.title = t('afkTitle')
-        this.type = 'afk'
+        this.setType('afk')
       }
     })
   }
@@ -65,7 +107,7 @@ export class ErrorInfo {
     //  const nav = window?.performance?.getEntriesByType('navigation')[0] as any
     //  console.log(nav)
     if (urlParameters.skipEntrance !== null/* || nav.type === 'reload'*/  ){
-      this.type = ''
+      this.clear()
       participants.local.sendInformation()
     }
     this.enumerateDevices()
@@ -77,46 +119,44 @@ export class ErrorInfo {
       setTimeout(this.startTestBot.bind(this), 3000)
     }
   }
-  @action clear() {
+  @action clear(type?: ErrorType) {
     if (this.type === 'afk'){
       participants.local.awayFromKeyboard = false
     }
-    this.type = ''
-    this.title = ''
-    this.message = ''
+    if (type){
+      this.types.delete(type)
+      if (this.type === type) { this.type = '' }
+    }else{
+      this.types.clear()
+      this.type = ''
+    }
   }
   @action checkConnection() {
     if (connection.state !== ConnectionStates.CONNECTED) {
-      this.type = 'connection'
-      this.title = t('etConnection')
-      this.message = t('emConnection')
+      this.setType('connection')
       setTimeout(this.checkConnection.bind(this), 5 * 1000)
     }else {
-      this.clear()
+      this.clear('connection')
       this.checkMic()
     }
   }
   @action checkMic() {
-    if (!participants.local.muteAudio && !connection.conference.getLocalMicTrack()) {
+    if (participants.localId && !participants.local.muteAudio && !connection.conference.getLocalMicTrack()) {
       if (this.audioInputs.length) {
-        this.type = 'micPermission'
-        this.title = t('etMicPermission')
-        this.message = t('emMicPermission')
+        this.setType('micPermission')
         //  this.message += 'You have: '
         //  this.audioInputs.forEach((device) => { this.message += `[${device.deviceId} - ${device.label}]` })
       }else {
-        this.type = 'noMic'
-        this.title = t('etNoMic')
-        this.message = t('emNoMic')
+        this.clear('micPermission')
+        this.setType('noMic')
       }
       setTimeout(this.checkMic.bind(this),   5 * 1000)
     }else {
       if (participants.local.muteAudio){
         setTimeout(this.checkMic.bind(this),   5 * 1000)
       }
-      if (this.type === 'noMic' || this.type === 'micPermission'){
-        this.clear()
-      }
+      this.clear('noMic')
+      this.clear('micPermission')
       this.checkRemote()
     }
   }
@@ -144,12 +184,10 @@ export class ErrorInfo {
   @action checkChannel() {
     if (participants.remote.size > 0) {
       if (!connection.conference._jitsiConference?.rtc._channel?.isOpen()) {
-        this.type = 'channel'
-        this.title = t('etNoChannel')
-        this.message = t('emNoChannel')
+        this.setType('channel')
         setTimeout(this.checkChannel.bind(this), 5 * 1000)
       }else {
-        this.clear()
+        this.clear('channel')
       }
     }else {
       this.checkRemote()
