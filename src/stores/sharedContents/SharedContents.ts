@@ -1,7 +1,9 @@
 import {connection} from '@models/api'
+import {MessageType} from '@models/api/ConferenceSync'
 import {SharedContent as ISharedContent, WallpaperStore} from '@models/SharedContent'
 import {diffMap, intersectionMap} from '@models/utils'
 import {default as participantsStore} from '@stores/participants/Participants'
+import participants from '@stores/participants/Participants'
 import {EventEmitter} from 'events'
 import _ from 'lodash'
 import {action, autorun, computed, makeObservable, observable} from 'mobx'
@@ -294,7 +296,15 @@ export class SharedContents extends EventEmitter {
     if (pid) {
       const pc = this.participants.get(pid)
       if (pc) {
-        return {pid, pc, take:false}  //  get content
+        if (pid === this.localId || participants.remote.has(pid)){
+          return {pid, pc, take:false}  //  get content
+        }else{
+          //  The participant own the contents is already left but not notified.
+          this.takeContentsFromDead(pc)
+          connection.conference.sendMessage(MessageType.PARTICIPANT_LEFT, '', pid)
+
+          return {pid: this.localId, pc: this.participants.get(this.localId), take:true}
+        }
       }else{
         const pc = this.pendToRemoves.get(pid)
         if (pc){
@@ -363,7 +373,14 @@ export class SharedContents extends EventEmitter {
         this.removeMyContent(cid)
         connection.conference.sync.sendMyContents()
       }else if (pid) {
-        connection.conference.sync.sendContentRemoveRequest(pid, [cid])
+        if (participants.remote.has(pid)){
+          connection.conference.sync.sendContentRemoveRequest(pid, [cid])
+        }
+      }
+    } else if (pid && connection.conference.bmRelaySocket?.readyState === WebSocket.OPEN)  {
+      //  remove participant remaining in relay server
+      if (!participants.remote.has(pid)){
+        connection.conference.sendMessageViaRelay(MessageType.PARTICIPANT_LEFT, '', pid)
       }
     }
   }
@@ -413,15 +430,18 @@ export class SharedContents extends EventEmitter {
     }
   }
   //  remove my content
-  private removeMyContent(cid:string){
-    const local = this.getParticipant(this.localId)
-    const toRemove = local.myContents.get(cid)
+  private removeMyContent(cid:string, pid?: string){
+    if (!pid) { pid = this.localId }
+    const pc = this.getParticipant(pid)
+    const toRemove = pc.myContents.get(cid)
     if (toRemove) {
       this.disposeContent(toRemove)
-      local.myContents.delete(cid)
+      pc.myContents.delete(cid)
       this.owner.delete(cid)
       this.updateAll()
-      connection.conference.sync.sendMyContents()
+      if (pid === this.localId){
+        connection.conference.sync.sendMyContents()
+      }
     }else {
       console.log(`I don't have ${cid} to remove.`)
     }
