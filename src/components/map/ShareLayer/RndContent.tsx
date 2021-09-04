@@ -493,6 +493,7 @@ const useStyles = makeStyles({
     borderColor: 'yellow',
     borderStyle: props.editing ? 'solid' : 'none',
     cursor: props.editing ? 'default' : undefined,
+    opacity: props.props.content.opacity,
   }),
   note: (props:StyleProps) => (
     props.showTitle ? {

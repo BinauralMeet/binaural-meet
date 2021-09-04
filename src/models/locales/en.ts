@@ -94,6 +94,8 @@ export const enTranslate = {
   ctFocus: 'Show it in the center',
   ctFrameVisible: 'Normal frame',
   ctFrameInvisible: 'Invisible frame',
+  ctOpaque: 'Opaque',
+  ctTransparent: 'Transparent',
   upload: 'Upload',
   Save: 'Save',
   Clear: 'Clear',

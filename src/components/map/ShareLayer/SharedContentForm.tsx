@@ -1,8 +1,10 @@
 import imageLine from '@iconify-icons/clarity/image-line'
 import imageOutlineBadged from '@iconify-icons/clarity/image-outline-badged'
 import clipboardCopy from '@iconify-icons/heroicons-outline/clipboard-copy'
+import biDashCircleDotted from '@iconify/icons-bi/dash-circle-dotted'
 import biImage from '@iconify/icons-bi/image'
 import biImageNoFrame from '@iconify/icons-bi/image-alt'
+import biPlusCircleFill from '@iconify/icons-bi/plus-circle-fill'
 import pinIcon from '@iconify/icons-mdi/pin'
 import pinOffIcon from '@iconify/icons-mdi/pin-off'
 import {Icon} from '@iconify/react'
@@ -10,6 +12,7 @@ import Box from '@material-ui/core/Box'
 import Button from '@material-ui/core/Button'
 import DialogContent from '@material-ui/core/DialogContent'
 import Popover, { PopoverProps } from '@material-ui/core/Popover'
+import Slider from '@material-ui/core/Slider'
 import Switch from '@material-ui/core/Switch'
 import Table from '@material-ui/core/Table'
 import TableBody from '@material-ui/core/TableBody'
@@ -51,7 +54,7 @@ function Row(left1: ContentType, left2: ContentType, center: ContentType,
   return <TableRow key={key}>
     <TableCell align="right" style={cellstyle}>{left1}</TableCell>
     <TableCell align="right" style={cellstyle}>{left2}</TableCell>
-    <TableCell style={cellstyle}>{center}</TableCell>
+    <TableCell align="center" style={cellstyle}>{center}</TableCell>
     <TableCell style={cellstyle}>{right2}</TableCell>
     <TableCell style={cellstyle}>{right1}</TableCell>
   </TableRow>
@@ -161,10 +164,19 @@ export const SharedContentForm: React.FC<SharedContentFormProps> = (props: Share
           <Fragment key="noFrame">{
             Row(t('ctFrameVisible'), <Icon icon={biImage} height={TITLE_HEIGHT}/>,
             <Switch color="primary" checked={props.content.noFrame} onChange={(ev, checked)=>{
-              props.content.noFrame = checked
+              props.content.noFrame = checked ? true : undefined
               props.updateOnly(props.content)
             }}/>, <Icon icon={biImageNoFrame} height={TITLE_HEIGHT}/>, t('ctFrameInvisible')) }</Fragment>,
-          ]}</TableBody></Table>
+          <Fragment key="opacity">{
+            Row(t('ctTransparent'), <Icon icon={biDashCircleDotted} height={TITLE_HEIGHT}/>,
+            <Slider color="primary" value={props.content.opacity===undefined ? 1000 : props.content.opacity*1000}
+              min={0} max={1000}
+              style={{width:'6em', marginLeft:'0.4em', marginRight:'0.4em'}}
+              onChange={(ev, value) => {
+                props.content.opacity = value === 1000 ? undefined : (value as number) / 1000
+                props.updateOnly(props.content)
+            }} />, <Icon icon={biPlusCircleFill} height={TITLE_HEIGHT}/>, t('ctOpaque')) }</Fragment>,
+            ]}</TableBody></Table>
         <Box mt={2} mb={2}>
           <Button variant="contained" color="primary" style={{textTransform:'none'}}
             onClick={()=>{
