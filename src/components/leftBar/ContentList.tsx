@@ -4,9 +4,12 @@ import {Tooltip} from '@material-ui/core'
 import {useTranslation} from '@models/locales'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {getRandomColor, rgb2Color} from '@models/utils'
+import {isDarkColor} from '@models/utils'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
+import roomInfo from '@stores/RoomInfo'
 import _ from 'lodash'
 import {Observer} from 'mobx-react-lite'
+import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {contentTypeIcons} from '../map/ShareLayer/Content'
 import {Stores} from '../utils'
@@ -63,9 +66,10 @@ export const RawContentList: React.FC<Stores&TextLineStyle&{all: ISharedContent[
     <ContentLine key={c.id} content = {c} {...props}
       participant={participants.find(contents.owner.get(c.id) as string) as ParticipantBase} />)
   const {t} = useTranslation()
+  const textColor = useObserver(() => isDarkColor(roomInfo.backgroundFill) ? 'white' : 'black')
 
   return <div className={classes.container} >
-    <div className={classes.title}>{t('Contents')}</div>
+    <div className={classes.title} style={{color:textColor}}>{t('Contents')}</div>
     {elements}
   </div>
 }

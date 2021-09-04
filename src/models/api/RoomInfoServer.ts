@@ -1,3 +1,4 @@
+import roomInfo from '@stores/RoomInfo'
 import {Message, MessageType} from './RoomInfoMessage'
 
 declare const config:any                  //  from ../../config.js included from index.html
@@ -39,10 +40,15 @@ export class RoomInfoServer{
     if (type === MessageType.ROOM_PROPS){
       const props = value as [string, string][]
       this.roomProps = new Map(props)
+      props.forEach((prop) => this.onUpdateProp(prop[0], prop[1]))
     }else if (type === MessageType.ROOM_PROP){
       const prop = value as [string, string]
       this.roomProps.set(prop[0], prop[1])
+      this.onUpdateProp(prop[0], prop[1])
     }
+  }
+  onUpdateProp(key:string, val:string){
+    roomInfo.onUpdateProp(key, val)
   }
 }
 

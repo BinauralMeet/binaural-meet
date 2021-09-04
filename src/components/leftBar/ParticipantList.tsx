@@ -3,14 +3,16 @@ import {LocalParticipantForm} from '@components/map/ParticipantsLayer/LocalParti
 import {RemoteParticipantForm} from '@components/map/ParticipantsLayer/RemoteParticipantForm'
 import {Tooltip} from '@material-ui/core'
 import {connection} from '@models/api'
+import {isDarkColor} from '@models/utils'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
+import roomInfo from '@stores/RoomInfo'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {Stores} from '../utils'
 import {styleForList} from '../utils/styles'
 import {TextLineStyle} from './LeftBar'
-import { StatusDialog } from './StatusDialog'
+import {StatusDialog} from './StatusDialog'
 
 export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: ParticipantBase}> = (props) => {
   const name = useObserver(() => (props.participant.information.name))
@@ -56,6 +58,8 @@ export const RawParticipantList: React.FC<Stores&TextLineStyle&{localId: string,
   const store = props.participants
   const classes = styleForList({height: props.lineHeight, fontSize: props.fontSize})
   const {localId, remoteIds, lineHeight, fontSize, ...statusProps} = props
+  const textColor = useObserver(() => isDarkColor(roomInfo.backgroundFill) ? 'white' : 'black')
+
   remoteIds.sort((a, b) => {
     const pa = store.remote.get(a)
     const pb = store.remote.get(b)
@@ -73,7 +77,7 @@ export const RawParticipantList: React.FC<Stores&TextLineStyle&{localId: string,
 
   return (
     <div className={classes.container} >
-      <div className={classes.title} ref={ref}
+      <div className={classes.title} style={{color:textColor}} ref={ref}
         onClick={()=>{setShowStat(true)}}
       >{(store.remote.size + 1).toString()} in {connection.conference.name}</div>
       <StatusDialog open={showStat}

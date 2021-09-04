@@ -2,12 +2,14 @@ import {StoreProvider as ChatProvider} from '@hooks/ChatStore'
 import {StoreProvider as MapProvider} from '@hooks/MapStore'
 import {StoreProvider as ParticipantsProvider} from '@hooks/ParticipantsStore'
 import {StoreProvider as ContentsProvider} from '@hooks/SharedContentsStore'
-import { urlParameters } from '@models/url'
+import {urlParameters} from '@models/url'
 import {isPortrait, isSmartphone} from '@models/utils'
+import { rgb2Color } from '@models/utils'
 import chatStore from '@stores/Chat'
 import errorInfo from '@stores/ErrorInfo'
 import mapStore from '@stores/Map'
 import participantsStore from '@stores/participants/Participants'
+import roomInfo from '@stores/RoomInfo'
 import sharedContentsStore from '@stores/sharedContents/SharedContents'
 import {Observer} from 'mobx-react-lite'
 import React, {Fragment, useRef} from 'react'
@@ -56,13 +58,12 @@ export const App: React.FC<{}> = () => {
     return true
   }
 
-
-  return (
-    <ParticipantsProvider value={participantsStore}>
+  return <Observer>{()=>{
+    return <ParticipantsProvider value={participantsStore}>
     <ChatProvider value={chatStore}>
     <ContentsProvider value={sharedContentsStore}>
     <MapProvider value={mapStore}>
-      <div ref={refDiv} className={classes.back}>
+      <div ref={refDiv} className={classes.back} style={{backgroundColor: rgb2Color(roomInfo.backgroundFill)}}>
         <SplitPane className={classes.fill} split="vertical" resizerClassName={clsSplit.resizerVertical}
           minSize={0} defaultSize="7em">
           <LeftBar {...stores} />
@@ -79,6 +80,6 @@ export const App: React.FC<{}> = () => {
     </ContentsProvider>
     </ChatProvider>
     </ParticipantsProvider >
-  )
+  }}</Observer>
 }
 App.displayName = 'App'

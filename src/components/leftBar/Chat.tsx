@@ -7,18 +7,27 @@ import SendIcon from '@material-ui/icons/Send'
 import {MessageType} from '@models/api/ConferenceSync'
 import {connection} from '@models/api/ConnectionDefs'
 import {t} from '@models/locales'
+import {isDarkColor} from '@models/utils'
 import chat, {ChatMessage, ChatMessageToSend, ChatMessageType} from '@stores/Chat'
+import roomInfo from '@stores/RoomInfo'
 import {Observer} from 'mobx-react-lite'
 import React from 'react'
 import {Stores} from '../utils'
 import {styleForList} from '../utils/styles'
 import {TextLineStyle} from './LeftBar'
 
-const colorMap: { [key in ChatMessageType]: string } = {
+const colorMapBlack: { [key in ChatMessageType]: string } = {
   text: 'black',
   called: 'red',
   callTo: 'black',
   log: 'black',
+  private: 'purple',
+}
+const colorMapWhite: { [key in ChatMessageType]: string } = {
+  text: 'white',
+  called: 'red',
+  callTo: 'white',
+  log: 'white',
   private: 'purple',
 }
 
@@ -30,6 +39,8 @@ export const ChatLine: React.FC<Stores & TextLineStyle &{message: ChatMessage}> 
 
   return <Observer>{() => {
     const timestamp = formatTimestamp(props.message.timestamp)    //  make formated timestamp for tooltip
+    const colorMap = isDarkColor(roomInfo.backgroundFill) ? colorMapWhite : colorMapBlack
+    const backColor = isDarkColor(roomInfo.backgroundFill) ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.3)'
 
     return <Tooltip title={
       props.message.type==='private' ?
@@ -37,7 +48,7 @@ export const ChatLine: React.FC<Stores & TextLineStyle &{message: ChatMessage}> 
         {name:props.message.name})}<br/>{timestamp}</>
         : <>{props.message.name}<br/>{timestamp}</>
       } placement="right">
-      <div style={{wordWrap:'break-word', marginTop:2, fontSize, backgroundColor:'#D0D0E0'}}>
+      <div style={{wordWrap:'break-word', marginTop:2, fontSize, backgroundColor:backColor}}>
         <span style={{marginRight:'0.3em'}} onClick={()=>{
           const from = props.participants.find(props.message.pid)
           if (from) { props.map.focusOn(from) }
@@ -93,9 +104,12 @@ export const ChatInBar: React.FC<Stores&TextLineStyle>  = (props) => {
       </Tooltip>
       <Observer>{()=>{
         const nameTo = props.chat.sendTo ? props.participants?.find(props.chat.sendTo)?.information?.name : undefined
+        const textColor = isDarkColor(roomInfo.backgroundFill) ? 'white' : 'black'
 
         return <TextField label={nameTo ? t('cmToName', {name: nameTo}) : t('cmToAll')} multiline={true} value={text}
           style={{width:'100%', userSelect:'none'}} size={props.lineHeight > 20 ? 'medium' : 'small'}
+          InputProps={{style:{color:textColor}}}
+          InputLabelProps={{style:{color:textColor}}}
           onFocus={()=>{props.map.keyInputUsers.add('chat')}}
           onBlur={()=>{props.map.keyInputUsers.delete('chat')}}
           onKeyDown={(ev)=>{
