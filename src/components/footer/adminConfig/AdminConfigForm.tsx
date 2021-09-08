@@ -149,6 +149,8 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
           if (roomInfo.passMatched) {
             roomInfo.backgroundFill = [0xDF, 0xDB, 0xE5]
             roomInfo.backgroundColor = [0xB9, 0xB2, 0xC4]
+            connection.conference.setRoomProp('backgroundFill', JSON.stringify(roomInfo.backgroundFill))
+            connection.conference.setRoomProp('backgroundColor', JSON.stringify(roomInfo.backgroundColor))
           }
         }}> Default </Button>&emsp;
 

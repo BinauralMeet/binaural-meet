@@ -1,9 +1,12 @@
 import {makeStyles} from '@material-ui/core/styles'
+import {PARTICIPANT_SIZE} from '@models/Participant'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {assert, shallowEqualsForMap} from '@models/utils'
-import { defaultContent } from '@stores/sharedContents/SharedContentCreator'
+import {assert, normV, shallowEqualsForMap, subV2} from '@models/utils'
+import {calcVolume} from '@stores/AudioParameters/StereoParameters'
+import {Participants} from '@stores/participants/Participants'
+import {defaultContent} from '@stores/sharedContents/SharedContentCreator'
 import {contentLog} from '@stores/sharedContents/SharedContents'
-import { useObserver } from 'mobx-react-lite'
+import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import YouTubePlayer from 'yt-player'
 import {ContentProps} from './Content'
@@ -33,12 +36,19 @@ class YTMember{
   pauseTimeout:NodeJS.Timeout|null = null
   params: Map<YTParam, string|undefined> = new Map()
   content: ISharedContent = defaultContent
+  participants: Participants|undefined
   editing = false
+  prevRelPos:[number, number] = [0, 0]
+  volumeUI = 0
+  prevVolumeDist = 0
+  volumeDist = 0
+  volumeIntervalTimer = 0
   updateAndSend: (c: ISharedContent) => void = ()=>{}
 
   setProps(props:ContentProps){
     this.content = props.content
     this.updateAndSend = props.updateAndSend
+    this.participants = props.participants
   }
 }
 
@@ -186,6 +196,45 @@ function ytPauseInterval(member: YTMember) {
   return undefined
 }
 
+function updateUIVolume(member:YTMember){
+  if (!member.player){ return }
+  if (member.volumeDist === 1 && member.prevVolumeDist === 1){
+    const curVolume = member.player.getVolume() / 100
+    if (curVolume !== member.volumeUI){
+      member.volumeUI = curVolume
+      //  console.log(`volumeUI Changed:${member.volumeUI} cur:${curVolume}`)
+    }
+  }else{
+    member.player.setVolume(member.volumeUI * member.volumeDist * 100)
+  }
+  member.prevVolumeDist = member.volumeDist
+}
+function updateVolume(distance:number, member: YTMember){
+  if (member.player){
+    member.volumeDist = calcVolume(distance)
+    member.player.setVolume(member.volumeUI * member.volumeDist * 100)
+    //  console.log(`updateVolume(${distance}) UI:${member.volumeUI} D:${member.volumeDist}`)
+  }
+}
+function checkPositionsForVolume(member:YTMember){
+  if (!member.participants) { return }
+  updateUIVolume(member)
+  const relPos = subV2(member.content.pose.position, member.participants.local.pose.position)
+  const diff = subV2(relPos, member.prevRelPos)
+  if (normV(diff) > PARTICIPANT_SIZE * 0.1){
+    member.prevRelPos = [relPos[0], relPos[1]]
+    for(let i=0; i<2; i++){
+      if (relPos[i] < 0){
+        relPos[i] += member.content.size[i]
+        if (relPos[i] > 0) { relPos[i] = 0 }
+      }
+    }
+    const dist = normV(relPos)
+    updateVolume(dist, member)
+  }
+}
+
+
 /* Memo about youtube state
  *  played=time time=start time stamp  in ms
  *  paused=time time=current time in the clip.
@@ -247,11 +296,15 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
             }
           }
 
-          /*
-          player.on('error', err => contentLog('YT on error ', err))
-          player.on('unstarted', () => contentLog('YT on unstarted'))
+          ///*
+          player.on('error', (err:any) => contentLog('YT on error ', err))
           player.on('buffering', () => contentLog('YT on buffering'))
-          player.on('cued', () => contentLog('YT on cued')) */
+          player.on('cued', () => contentLog('YT on cued')) //  */
+
+          player.on('unstarted', () => {
+            member.volumeUI = player.getVolume() / 100
+            player.unMute()
+          })
           player.on('ended', () => {
             ytUpdateState('ended', 0, member)
           })
@@ -322,13 +375,20 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
             player.load(member.params.get('v') as string)
           }
         }
-      }else {
+      }
+      if (!member.volumeIntervalTimer){
+        member.volumeIntervalTimer = setInterval(checkPositionsForVolume, 200, member)
+      }
+
+      return () => {
         if (member.player) {
           member.player.destroy()
         }
         member.player = undefined
+        if (member.volumeIntervalTimer){
+          clearInterval(member.volumeIntervalTimer)
+        }
       }
-
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [props.content.id],

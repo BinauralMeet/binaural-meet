@@ -56,3 +56,13 @@ autorun(() => {
   const bcast = participants.local.physics.onStage
   stereoParameters.setBroadcast(bcast)
 })
+
+export function calcVolume(dist: number){
+  const mul = ((dist * dist) / (stereoParameters.refDistance * stereoParameters.refDistance)
+  + stereoParameters.refDistance - 1) / (dist ? dist : 1)
+  const distance = mul * dist
+  const volume = Math.pow(Math.max(distance, stereoParameters.refDistance) / stereoParameters.refDistance,
+  - stereoParameters.rolloffFactor)
+
+  return volume
+}
