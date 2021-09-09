@@ -2,13 +2,13 @@ import {makeStyles} from '@material-ui/core/styles'
 import {PARTICIPANT_SIZE} from '@models/Participant'
 import {assert, normV, shallowEqualsForMap, subV2} from '@models/utils'
 import {calcVolume} from '@stores/AudioParameters/StereoParameters'
-//import {contentLog} from '@stores/sharedContents/SharedContents'
+import {contentLog} from '@stores/sharedContents/SharedContents'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import YouTubePlayer from 'yt-player'
 import {ContentProps} from './Content'
 
-const contentLog = console.log
+//  const contentLog = console.log
 
 function getCurrentTimestamp() {
 
