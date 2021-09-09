@@ -10,7 +10,7 @@ export const jaTranslate = {
   Contents: '共有',
   'Create and Share': '共有 (c)',
   'Share Text':'テキストの共有',
-  'Share iframe':'Webページの共有',
+  'Share iframe':'Webページの共有(多くのサイトを表示できません)',
   'Share image':'画像の共有',
   'Select video camera to share':'共有するカメラの選択',
   shareImport: 'ファイルからインポート (_i)',

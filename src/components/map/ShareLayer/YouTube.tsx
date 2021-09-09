@@ -1,17 +1,14 @@
 import {makeStyles} from '@material-ui/core/styles'
 import {PARTICIPANT_SIZE} from '@models/Participant'
-import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {assert, normV, shallowEqualsForMap, subV2} from '@models/utils'
 import {calcVolume} from '@stores/AudioParameters/StereoParameters'
-import {Participants} from '@stores/participants/Participants'
-import {defaultContent} from '@stores/sharedContents/SharedContentCreator'
-import {contentLog} from '@stores/sharedContents/SharedContents'
+//import {contentLog} from '@stores/sharedContents/SharedContents'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import YouTubePlayer from 'yt-player'
 import {ContentProps} from './Content'
 
-//const contentLog = console.log
+const contentLog = console.log
 
 function getCurrentTimestamp() {
 
@@ -29,27 +26,20 @@ type YTParam = YTState | 'rate' | 'index' | 'list' | 'v'
 
 class YTMember{
   player?:YouTubePlayer
-  prohibitUntil:YTState | '' | 'playingTwice' | 'forever' = ''
+  goal: YTState|'' = ''
+  skipOnPlaying = 0
   pauseIntervalTimer = 0
   lastCurrentTimePaused = 0
-  playTimeout:NodeJS.Timeout|null = null
-  pauseTimeout:NodeJS.Timeout|null = null
+  playTimeout = 0
+  pauseTimeout = 0
   params: Map<YTParam, string|undefined> = new Map()
-  content: ISharedContent = defaultContent
-  participants: Participants|undefined
   editing = false
   prevRelPos:[number, number] = [0, 0]
-  volumeUI = 0
-  prevVolumeDist = 0
-  volumeDist = 0
-  volumeIntervalTimer = 0
-  updateAndSend: (c: ISharedContent) => void = ()=>{}
-
-  setProps(props:ContentProps){
-    this.content = props.content
-    this.updateAndSend = props.updateAndSend
-    this.participants = props.participants
-  }
+  volumeUI = 0.5          //  volume set by user
+  volumeDist = 0          //  volume by distance
+  prevVolumeDist = 0      //  previous volume by distance
+  volumeIntervalTimer = 0 //  interval timer to check and update volume
+  props!: ContentProps
 }
 
 export function paramArray2map(paramArray: string[]):Map<YTParam, string|undefined> {
@@ -74,16 +64,17 @@ export function paramMap2Str(params:Map<string, string|undefined>) {
 function clearAllTimer(member: YTMember){
   if (member.playTimeout){
     clearTimeout(member.playTimeout)
-    member.playTimeout = null
+    member.playTimeout = 0
   }
   if (member.pauseTimeout){
     clearTimeout(member.pauseTimeout)
-    member.pauseTimeout = null
+    member.pauseTimeout = 0
   }
 }
 
 function ytSeekAndPlay(start:number, index: number, member: YTMember) {
   assert(member.player)
+  member.goal = 'playing'
   clearAllTimer(member)
   const now = getCurrentTimestamp()
   let seekTo = (now - start) * member.player.getPlaybackRate()
@@ -96,10 +87,9 @@ function ytSeekAndPlay(start:number, index: number, member: YTMember) {
   }
 
   //  seek and play
-  member.prohibitUntil = 'playing'
   let seekTarget = -1000
-  const onTime = () => {
-    assert(member.player)
+  const onTime:TimerHandler = () => {
+    if (!member.player) { return }
     const cur = member.player.getCurrentTime()
     if (member.player.getState() === 'paused' && Math.abs(seekTarget - cur) < TOLERANCE){
       member.player.play()
@@ -113,12 +103,12 @@ function ytSeekAndPlay(start:number, index: number, member: YTMember) {
     const TIMETOSEEK = 1
     seekTarget = seekTo + TIMETOSEEK * member.player.getPlaybackRate()
     if (member.player.getState() === 'unstarted'){
+      member.skipOnPlaying = 1
       member.player.play()
-      member.prohibitUntil = 'playingTwice'
     }
     if (index >= 0 && index !== member.player.getPlaylistIndex()) {
+      member.skipOnPlaying = 1
       member.player.playVideoAt(index)
-      member.prohibitUntil = 'playingTwice'
     }
     member.player.pause()
     member.player.seek(seekTarget)
@@ -128,15 +118,16 @@ function ytSeekAndPlay(start:number, index: number, member: YTMember) {
 }
 function ytSeekAndPause(time:number, member: YTMember) {
   assert(member.player)
+  member.goal = 'paused'
   clearAllTimer(member)
-  const pauseCheck = () => {
-    assert(member.player)
+  const pauseCheck:TimerHandler = () => {
+    if (!member.player) { return }
     const indexStr = member.params.get('index')
     const index = Number(indexStr ? indexStr : -1)
-  if (member.player.getState() !== 'paused' ||
-    (index >= 0 && index !== member.player.getPlaylistIndex())){
-      member.prohibitUntil = 'paused'
-      if (member.player.getState() === 'unstarted'){ member.player.play() }
+    //  make it paused state.
+    if (member.player.getState() !== 'paused' ||
+      (index >= 0 && index !== member.player.getPlaylistIndex())) {
+      if (member.player.getState() === 'unstarted') { member.player.play() }
       if (index >= 0 && index !== member.player.getPlaylistIndex()) {
         member.player.playVideoAt(index)
       }
@@ -145,7 +136,7 @@ function ytSeekAndPause(time:number, member: YTMember) {
 
       return
     }
-    if (member.prohibitUntil === 'paused'){ member.prohibitUntil = '' }
+    //  Check if the seek time achieves goal
     if (member.player.getCurrentTime() !== time) {
       member.player.seek(time)
       contentLog(`ytSeekAndPause seek to ${time}`, member.params)
@@ -160,31 +151,31 @@ function deleteState(params: Map<string, string|undefined>){
   params.delete('ended')
 }
 
-function ytUpdateState(newState: string, time:number, member: YTMember) {
-  const newParams = new Map<string, string|undefined>(member.params)
-  deleteState(newParams)
-  newParams.set(newState, String(time))
-  newParams.set('rate', String(member.player?.getPlaybackRate()))
+function ytUpdateState(newState: YTState, time:number, member: YTMember) {
+  deleteState(member.params)
+  member.params.set(newState, String(time))
+  member.params.set('rate', String(member.player?.getPlaybackRate()))
   const idx = member.player?.getPlaylistIndex()
-  newParams.set('index', String(idx ? idx : -1))
-  member.content.url = paramMap2Str(newParams)
-  member.updateAndSend(member.content)
-  contentLog(`YT sent member ${newState}`, newParams)
+  member.params.set('index', String(idx ? idx : -1))
+  member.props.content.url = paramMap2Str(member.params)
+  member.props.updateAndSend(member.props.content)
+  contentLog(`YT SEND state ${newState} t=${time}`, member.params)
 }
 
-function ytPauseInterval(member: YTMember) {
-  const state = member.player?.getState()
-  if (!member.editing &&  state === 'paused' && member.params.has('paused')) {
-    const currentTime = Number(member.player?.getCurrentTime())
+function ytPauseInterval(member: YTMember) {  //  Seeked by user duruing paused.
+  if (!member.player) { return }
+  const state = member.player.getState()
+  if (!member.editing && member.goal==='' && state === 'paused' && member.params.has('paused')) {
+    //  when local and remote state is paused (already sent paused).
+    const currentTime = member.player.getCurrentTime()
     const TOLERANCE = 0.1
-    //  contentLog(`YT ytPauseInterval cur:${currentTime}, last:${member.lastCurrentTimePaused}`)
+    contentLog(`YT ytPauseInterval cur:${currentTime}, last:${member.lastCurrentTimePaused} param${member.params.get('paused')}`)
     if (Math.abs(currentTime - member.lastCurrentTimePaused) > TOLERANCE) {
       member.lastCurrentTimePaused = currentTime
-      member.params.set('paused', String(currentTime))
-      const newContent = Object.assign({}, member.content)
-      newContent.url = paramMap2Str(member.params)
-      member.updateAndSend(newContent)
-      contentLog(`YT sent current time of paused state time:${currentTime}`, member.params)
+      const paramTime = Number(member.params.get('paused'))
+      if (currentTime !== paramTime){
+        ytUpdateState('paused', currentTime, member)
+      }
     }
   }else {
     if (member.pauseIntervalTimer) {
@@ -217,15 +208,15 @@ function updateVolume(distance:number, member: YTMember){
   }
 }
 function checkPositionsForVolume(member:YTMember){
-  if (!member.participants) { return }
+  if (!member.props.participants) { return }
   updateUIVolume(member)
-  const relPos = subV2(member.content.pose.position, member.participants.local.pose.position)
+  const relPos = subV2(member.props.content.pose.position, member.props.participants.local.pose.position)
   const diff = subV2(relPos, member.prevRelPos)
   if (normV(diff) > PARTICIPANT_SIZE * 0.1){
     member.prevRelPos = [relPos[0], relPos[1]]
     for(let i=0; i<2; i++){
       if (relPos[i] < 0){
-        relPos[i] += member.content.size[i]
+        relPos[i] += member.props.content.size[i]
         if (relPos[i] > 0) { relPos[i] = 0 }
       }
     }
@@ -242,140 +233,149 @@ function checkPositionsForVolume(member:YTMember){
 
 export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
   assert(props.content.type === 'youtube')
-
   const classes = useStyles()
   const memberRef = useRef<YTMember>(new YTMember())
   const member = memberRef.current
-  member.setProps(props)
+  member.props = props
 
   //  Editing (No sync) ?
   const editing = useObserver(() => props.contents.editing === props.content.id)
-  if (editing){
-    member.prohibitUntil = 'forever'
-  }else{
-    member.prohibitUntil = ''
-  }
 
-  //  Check params and reflect them
-  const newParams = paramStr2map(props.content.url)
-  if (!editing && (member.editing || !shallowEqualsForMap(member.params, newParams))) {
-    member.editing = editing
-    member.params = newParams
+  //  Check params and reflect them to ytPlayer
+  const oldParams = member.params
+  member.params = paramStr2map(props.content.url)
+  if (!editing && (member.editing || !shallowEqualsForMap(member.params, oldParams))) {
     if (member.player) {
-      member.player.setPlaybackRate(Number(member.params.get('rate')))
-      if (member.params.has('playing')) {
-        contentLog('YT render for play')
+      if (member.params.get('rate') !== oldParams.get('rate')){ //  set playback rate
+        member.player.setPlaybackRate(Number(member.params.get('rate')))
+      }
+      //  set state
+      const newPlaying = member.params.get('playing')
+      const moveToPlay = newPlaying!==undefined && newPlaying !== oldParams.get('playing')
+      const newPaused = member.params.get('paused')
+      const moveToPause = newPaused!==undefined && newPaused !== oldParams.get('paused')
+      if (moveToPlay) {
+        contentLog(`YT render move to play=${newPlaying} state`)
         ytSeekAndPlay(Number(member.params.get('playing')), Number(member.params.get('index')), member)
-      }else if (member.params.has('paused')) {
-        contentLog('YT render for pause')
+      }else if (moveToPause) {
+        contentLog(`YT render move to pause=${newPaused} state`)
         ytSeekAndPause(Number(member.params.get('paused')), member)
       }
     }
-  }else{
-    member.editing = editing
   }
+  member.editing = editing
 
   //  Create player when the component is created.
   useEffect(
     () => {
-      if (props.content.id) {
-        if (!member.player) {
-          const id = `#YT${props.content.id}`
-          const player = new YouTubePlayer(id, {autoplay:member.params.has('playing')})
-          member.player = player
-          contentLog(`YTPlayer for ${id} created`)
-          //  set initial parameters
-          if (member.params.has('rate')){
-            player.setPlaybackRate(Number(member.params.get('rate')))
+      assert(props.content.id)
+      let selfPlayed = false
+      if (!member.player) {
+        const id = `#YT${props.content.id}`
+        const player = new YouTubePlayer(id)
+        if (!member.params.has('playing') && !member.params.has('paused') && !member.params.has('ended')){
+          member.skipOnPlaying = 1
+          player.play()
+          const now = getCurrentTimestamp()
+          const elasp = player.getCurrentTime() / player.getPlaybackRate()
+          const start = now - elasp
+          member.params.set('playing', String(start))
+          selfPlayed = true
+        }
+        member.player = player
+        contentLog(`YTPlayer for ${id} created`)
+        //  set initial parameters
+        if (member.params.has('rate')){
+          player.setPlaybackRate(Number(member.params.get('rate')))
+        }
+        if (!member.editing){
+          if (member.params.has('paused')) {
+            ytSeekAndPause(Number(member.params.get('paused')), member)
+          }else if (!selfPlayed && member.params.has('playing')){
+            ytSeekAndPlay(Number(member.params.get('playing')), Number(member.params.get('index')), member)
           }
-          if (!member.editing){
-            if (member.params.has('playing')) {
-              ytSeekAndPlay(Number(member.params.get('playing')), Number(member.params.get('index')), member)
-            }else if (member.params.has('paused')) {
-              ytSeekAndPause(Number(member.params.get('paused')), member)
-            }
+        }
+
+        ///*
+        player.on('error', (err:any) => contentLog('YT on error ', err))
+        player.on('buffering', () => contentLog('YT on buffering'))
+        player.on('cued', () => contentLog('YT on cued'))     //  */
+
+        player.on('unstarted', () => {
+          contentLog('YT on unstarted')
+          player.unMute()
+        })
+        player.on('ended', () => {
+          contentLog('YT on ended')
+          ytUpdateState('ended', 0, member)
+        })
+        player.on('paused', () => {
+          contentLog(`YT on paused at ${player.getCurrentTime()} goal:${member.goal}`, member.params)
+          if (!member.pauseIntervalTimer) {
+            const INTERVAL = 333
+            member.pauseIntervalTimer
+              = setInterval(ytPauseInterval, INTERVAL, member)
           }
-
-          ///*
-          player.on('error', (err:any) => contentLog('YT on error ', err))
-          player.on('buffering', () => contentLog('YT on buffering'))
-          player.on('cued', () => contentLog('YT on cued')) //  */
-
-          player.on('unstarted', () => {
-            member.volumeUI = player.getVolume() / 100
-            player.unMute()
-          })
-          player.on('ended', () => {
-            ytUpdateState('ended', 0, member)
-          })
-          player.on('paused', () => {
-            if (!member.pauseIntervalTimer) {
-              const INTERVAL = 333
-              member.pauseIntervalTimer
-                = setInterval(ytPauseInterval, INTERVAL, member)
-            }
-
-            contentLog(`YT on paused at ${player.getCurrentTime()} until=${member.prohibitUntil}`, member.params)
-
-            if (member.prohibitUntil) {
-              if (member.prohibitUntil === 'paused') {
-                member.prohibitUntil = ''
-              }
-
-              return
-            }
+          if (member.goal === 'paused') { //  paused by remote
+            member.goal = ''
+          }else if(member.goal === ''){   //  paused by user's operation
             if (!member.params.has('paused')) {
-              contentLog('send paused')
               ytUpdateState('paused', player.getCurrentTime(), member)
             }
-          })
-          player.on('playing', () => {
-            contentLog(`YT on playing until=${member.prohibitUntil}`, member.params)
-            if (member.prohibitUntil) {
-              if (member.prohibitUntil === 'playingTwice') {
-                member.prohibitUntil = 'playing'
-              }else if (member.prohibitUntil === 'playing') {
-                member.prohibitUntil = ''
-              }
-
-              return
+          }else{
+            console.warn(`paused for goal ${member.goal}`)
+          }
+        })
+        player.on('playing', () => {
+          contentLog(`YT on playing goal=${member.goal} skip=${member.skipOnPlaying}`, member.params)
+          let indexUpdated = false
+          if (player.getPlaylist().length > 0) {
+            if (player.getPlaylistIndex() !== Number(member.params.get('index'))) {
+              member.params.set('index', String(player.getPlaylistIndex()))
+              indexUpdated = true
             }
-            // tslint:disable-next-line: no-magic-numbers
-            let indexUpdated = false
-            if (player.getPlaylist().length > 0) {
-              if (player.getPlaylistIndex() !== Number(member.params.get('index'))) {
-                member.params.set('index', String(player.getPlaylistIndex()))
-                indexUpdated = true
-              }
+          }
+          if (member.goal === 'playing'){ //  play by remote
+            if (member.skipOnPlaying){
+              member.skipOnPlaying = 0
+            }else{
+              member.goal = ''
             }
+          }else if (member.goal === ''){
             if (!member.params.has('playing') || indexUpdated) { //  start time is not specified yet.
               const now = getCurrentTimestamp()
               const elasp = player.getCurrentTime() / player.getPlaybackRate()
               const start = now - elasp
-              contentLog(`playing=${start}`, member.params)
               ytUpdateState('playing', start, member)
             }
-          })
-          player.on('playbackRateChange', () => {
-            const now = getCurrentTimestamp()
-            const elasp = player.getCurrentTime() / player.getPlaybackRate()
-            const start = now - elasp
-            ytUpdateState(player.getState(), start, member)
-          })
-        }
-
-        const player = member.player
-        if (player) {
-          if (member.params.has('list')) {
-            player.loadList({
-              listType:'playlist',
-              list:member.params.get('list') as string,
-            })
-          }else if (member.params.has('v')) {
-            player.load(member.params.get('v') as string)
           }
+        })
+        player.on('playbackRateChange', () => {
+          contentLog(`YT on playbackRateChange`)
+          const now = getCurrentTimestamp()
+          const elasp = player.getCurrentTime() / player.getPlaybackRate()
+          const start = now - elasp
+          const state = player.getState()
+          const ytState:YTState = state === 'paused' ? 'paused' : state === 'playing' ? 'playing' : 'ended'
+          ytUpdateState(ytState, start, member)
+        })
+      }
+
+      //  set video clip id
+      const player = member.player
+      if (player) {
+        if (member.params.has('list')) {
+          player.loadList({
+            listType:'playlist',
+            list:member.params.get('list') as string,
+          })
+          contentLog(`YT loadList: ${member.params.get('list')}`)
+        }else if (member.params.has('v')) {
+          player.load(member.params.get('v') as string)
+          contentLog(`YT load: ${member.params.get('v')}`)
         }
       }
+
       if (!member.volumeIntervalTimer){
         member.volumeIntervalTimer = setInterval(checkPositionsForVolume, 200, member)
       }
@@ -391,7 +391,7 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [props.content.id],
+    [],
   )
 
   return <div id={`YT${props.content.id}`} className={classes.iframe} />
