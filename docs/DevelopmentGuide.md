@@ -11,17 +11,17 @@ In the case of Windows environment. Following are recommended.
 - NodeJS
 
 - VSCode
-- Git for Windows 
-- Tortoise Git (if you prefer) 
+- Git for Windows
+- Tortoise Git (if you prefer)
 
 ### Get source tree and create environment
 
-1. Clone the repository including submodules from GitHub.
+1. Clone the repository including submodules from GitHub. (Use "git clone --recursive")
 2. Open the "binaural-meet" folder by VSCode.
 3. Start terminal in VSCode. If PowerShell is started, Please set it to use GitBash.
-   1. Open "View" - "Command palette" and type "Terminal: Clear Selection" 
+   1. Open "View" - "Command palette" and type "Terminal: Clear Selection"
    2. Open "View" - "Command palette" and type "Terminal: Select Default Profile" and choose "Git Bash"
-4. Install yarn:  execute "npm install -g yarn"' in console
+4. Install yarn: execute "npm install -g yarn"' in console
 5. Set shell for yarn
 
 ```bash
@@ -86,15 +86,15 @@ To learn React, check out the [React documentation](https://reactjs.org/).
 
 
 
-# The technology stack of Binaural Meet 
+# The technology stack of Binaural Meet
 
 ## React Hooks
 
-[React Hooks](https://reactjs.org/docs/hooks-intro.html) is used, 
+[React Hooks](https://reactjs.org/docs/hooks-intro.html) is used,
 
 ## MobX
 
-[MobX](https://mobx.js.org/) is used to manage the states. 
+[MobX](https://mobx.js.org/) is used to manage the states.
 
 ## lib-jitsi-meet
 
