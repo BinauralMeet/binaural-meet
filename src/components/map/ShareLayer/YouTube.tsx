@@ -8,7 +8,10 @@ import React, {useEffect, useRef} from 'react'
 import YouTubePlayer from 'yt-player'
 import {ContentProps} from './Content'
 
-//  const contentLog = console.log
+const PLAYTIME_TOLERANCE = 0.1
+//const contentLog = console.log
+const CHECK_INTERVAL = 333
+const VOLUME_INTERVAL = 200
 
 function getCurrentTimestamp() {
 
@@ -78,10 +81,9 @@ function ytSeekAndPlay(start:number, index: number, member: YTMember) {
   clearAllTimer(member)
   const now = getCurrentTimestamp()
   let seekTo = (now - start) * member.player.getPlaybackRate()
-  const TOLERANCE = 0.1
   if (member.player.getState() === 'playing' &&
     (member.player.getPlaylist().length === 0 || member.player.getPlaylistIndex() === index) &&
-    Math.abs(member.player.getCurrentTime() - seekTo) < TOLERANCE) {
+    Math.abs(member.player.getCurrentTime() - seekTo) < PLAYTIME_TOLERANCE) {
 
     return  //  already playing and position is good.
   }
@@ -91,27 +93,39 @@ function ytSeekAndPlay(start:number, index: number, member: YTMember) {
   const onTime:TimerHandler = () => {
     if (!member.player) { return }
     const cur = member.player.getCurrentTime()
-    if (member.player.getState() === 'paused' && Math.abs(seekTarget - cur) < TOLERANCE){
+    //  In case we can start to play now
+    if (member.player.getState() === 'paused' && Math.abs(seekTarget - cur) < PLAYTIME_TOLERANCE){
       member.player.play()
       contentLog(`ytSeekAndPlay: ${member.player.getState()}  ` +
       `cur:${member.player.getCurrentTime()}  toSeek:${seekTo}`, member.params)
 
       return
     }
+
+    //  Otherwise, seek, pause and wait again.
     const now = getCurrentTimestamp()
     seekTo = (now - start) * member.player.getPlaybackRate()
     const TIMETOSEEK = 1
     seekTarget = seekTo + TIMETOSEEK * member.player.getPlaybackRate()
-    if (member.player.getState() === 'unstarted'){
+    let duration = member.player.getDuration()
+    if (member.player.getState() === 'unstarted' || !duration){
       member.skipOnPlaying = 1
       member.player.play()
+      duration = member.player.getDuration()
     }
     if (index >= 0 && index !== member.player.getPlaylistIndex()) {
       member.skipOnPlaying = 1
       member.player.playVideoAt(index)
+      duration = member.player.getDuration()
     }
-    member.player.pause()
-    member.player.seek(seekTarget)
+    if (duration){
+      member.player.pause()
+      if (seekTarget > duration) {
+        seekTarget = 0
+        start = now + TIMETOSEEK - seekTarget / member.player.getPlaybackRate()
+      }
+      member.player.seek(seekTarget)
+    }
     member.playTimeout = setTimeout(onTime, TIMETOSEEK * 1000)
   }
   onTime()
@@ -132,7 +146,7 @@ function ytSeekAndPause(time:number, member: YTMember) {
         member.player.playVideoAt(index)
       }
       member.player.pause()
-      member.pauseTimeout = setTimeout(pauseCheck, 200)
+      member.pauseTimeout = setTimeout(pauseCheck, CHECK_INTERVAL)
 
       return
     }
@@ -165,12 +179,11 @@ function ytUpdateState(newState: YTState, time:number, member: YTMember) {
 function ytPauseInterval(member: YTMember) {  //  Seeked by user duruing paused.
   if (!member.player) { return }
   const state = member.player.getState()
-  if (!member.editing && member.goal==='' && state === 'paused' && member.params.has('paused')) {
+  if (!member.editing && member.goal==='' && state === 'paused') {
     //  when local and remote state is paused (already sent paused).
     const currentTime = member.player.getCurrentTime()
-    const TOLERANCE = 0.1
     contentLog(`YT ytPauseInterval cur:${currentTime}, last:${member.lastCurrentTimePaused} param${member.params.get('paused')}`)
-    if (Math.abs(currentTime - member.lastCurrentTimePaused) > TOLERANCE) {
+    if (Math.abs(currentTime - member.lastCurrentTimePaused) > PLAYTIME_TOLERANCE) {
       member.lastCurrentTimePaused = currentTime
       const paramTime = Number(member.params.get('paused'))
       if (currentTime !== paramTime){
@@ -274,12 +287,9 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
         const id = `#YT${props.content.id}`
         const player = new YouTubePlayer(id)
         if (!member.params.has('playing') && !member.params.has('paused') && !member.params.has('ended')){
-          member.skipOnPlaying = 1
+          //member.skipOnPlaying = 1
           player.play()
-          const now = getCurrentTimestamp()
-          const elasp = player.getCurrentTime() / player.getPlaybackRate()
-          const start = now - elasp
-          member.params.set('playing', String(start))
+          member.params.set('playing', String(-1))
           selfPlayed = true
         }
         member.player = player
@@ -307,23 +317,31 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
         })
         player.on('ended', () => {
           contentLog('YT on ended')
-          ytUpdateState('ended', 0, member)
+          if (member.player){
+            const now = getCurrentTimestamp()
+            ytSeekAndPlay(now, 0, member)
+          }
+          //ytUpdateState('ended', 0, member)
         })
         player.on('paused', () => {
           contentLog(`YT on paused at ${player.getCurrentTime()} goal:${member.goal}`, member.params)
-          if (!member.pauseIntervalTimer) {
-            const INTERVAL = 333
-            member.pauseIntervalTimer
-              = setInterval(ytPauseInterval, INTERVAL, member)
-          }
           if (member.goal === 'paused') { //  paused by remote
             member.goal = ''
           }else if(member.goal === ''){   //  paused by user's operation
             if (!member.params.has('paused')) {
-              ytUpdateState('paused', player.getCurrentTime(), member)
+              setTimeout(()=>{
+                if (!member.params.has('paused') && !member.params.has('playing') && player.getState() === 'paused'){
+                  ytUpdateState('paused', player.getCurrentTime(), member)
+                }
+              }, 1000)
             }
           }else{
-            console.warn(`paused for goal ${member.goal}`)
+            contentLog(`paused for goal ${member.goal}`)
+          }
+          //  Add interval timer to check seek when paused is acheived.
+          if (member.goal === '' && !member.pauseIntervalTimer) {
+            member.pauseIntervalTimer
+              = setInterval(ytPauseInterval, CHECK_INTERVAL, member)
           }
         })
         player.on('playing', () => {
@@ -342,10 +360,14 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
               member.goal = ''
             }
           }else if (member.goal === ''){
-            if (!member.params.has('playing') || indexUpdated) { //  start time is not specified yet.
-              const now = getCurrentTimestamp()
-              const elasp = player.getCurrentTime() / player.getPlaybackRate()
-              const start = now - elasp
+            const now = getCurrentTimestamp()
+            const elasp = player.getCurrentTime() / player.getPlaybackRate()
+            const start = now - elasp
+            let started = Number(member.params.get('playing'))
+            if (started === -1){ started = start }
+            const diff = start - started
+            if (!member.params.has('playing') || indexUpdated || Math.abs(diff) > PLAYTIME_TOLERANCE) {
+              //  play by user or index in play list changed or seeked.
               ytUpdateState('playing', start, member)
             }
           }
@@ -377,7 +399,7 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
       }
 
       if (!member.volumeIntervalTimer){
-        member.volumeIntervalTimer = setInterval(checkPositionsForVolume, 200, member)
+        member.volumeIntervalTimer = setInterval(checkPositionsForVolume, VOLUME_INTERVAL, member)
       }
 
       return () => {
