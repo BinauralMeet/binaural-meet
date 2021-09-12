@@ -3,11 +3,13 @@ import Paper from '@material-ui/core/Paper'
 import Popper, { PopperProps } from '@material-ui/core/Popper'
 import {Room} from '@stores/Room'
 import React from 'react'
-import {useEffect, useState} from 'react'
+import {useState} from 'react'
 
-export interface StatusDialogProps extends PopoverProps{
-  close: () => void
-  room: Room
+declare const config:any             //  from ../../config.js included from index.html
+
+export interface StatusDialogProps extends Omit<PopperProps, 'children'>{
+  room: Room,
+  close: () => void,
 }
 
 class Remote{
@@ -23,6 +25,7 @@ class Status{
   open = false
   update = false
   interval: NodeJS.Timeout|undefined = undefined
+  messageServer = ''
 }
 const status = new Status()
 
@@ -64,13 +67,10 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
       }
       setUpdate(status.update ? false : true)
     }
-    if (connection.conference.roomInfoServer?.ws?.readyState === WebSocket.OPEN){
-      status.roomInfoServer = config.roomInfoServer
-    }
-    if (connection.conference.bmRelaySocket?.readyState === WebSocket.OPEN) {
+    if (props.room.connection?.conference.bmRelaySocket?.readyState === WebSocket.OPEN) {
       status.messageServer = config.bmRelayServer
     }else{
-      const chatRoom = connection.conference._jitsiConference?.room
+      const chatRoom = props.room.connection?.conference._jitsiConference?.room
       if (status.open && chatRoom){
         status.messageServer = 'bridge'
       }else{
@@ -101,7 +101,6 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
           WebRTC: {sess.remotes.map((r,k) => <span key={k.toString()}>{r.address} {r.port}/{r.protocol}<br /></span>)}
         </div>)}
         <div> Message: {status.messageServer}</div>
-        <div> Room info: {status.roomInfoServer}</div>
       </div>
       <Button variant="contained" color="primary" style={{textTransform:'none', marginTop:'0.4em'}}
         onClick={close}

@@ -55,7 +55,6 @@ export class SharedContent implements ISharedContent {
   id!: string
   zorder!: number
   pinned!: boolean
-  noFrame!: boolean
   pose!: Pose2DMap
   size!: [number, number]
   originalSize!:[number, number]

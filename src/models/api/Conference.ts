@@ -112,6 +112,7 @@ export class Conference extends EventEmitter {
   }
 
   //  Commmands for local tracks --------------------------------------------
+/*
   private localMicTrack?: JitsiLocalTrack
   private localCameraTrack?: JitsiLocalTrack
   private doSetLocalMicTrack(track:JitsiLocalTrack) {
@@ -190,7 +191,7 @@ export class Conference extends EventEmitter {
   public getLocalCameraTrack() {
     return this.localCameraTrack
   }
-
+*/
   //  Jitsi API Calls ----------------------------------------
   //  generic send command
   public sendCommand(name: string, values: JitsiValues) {

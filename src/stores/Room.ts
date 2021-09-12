@@ -5,7 +5,7 @@ import {SharedContents} from '@stores/sharedContents/SharedContents'
 export class Room {
   name = ''
   participants = new Participants()
-  contents = new SharedContents()
+  contents = new SharedContents(this)
   connection?:Connection = undefined
   constructor (name: string, connection?:Connection){
     this.connection = connection

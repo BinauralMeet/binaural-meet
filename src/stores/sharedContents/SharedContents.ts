@@ -1,6 +1,8 @@
+import {MessageType} from '@models/api/ConferenceSync'
 import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {diffMap} from '@models/utils'
 import {default as participantsStore} from '@stores/participants/Participants'
+import {Room} from '@stores/Room'
 import {EventEmitter} from 'events'
 import {action, autorun, computed, makeObservable, observable} from 'mobx'
 
@@ -23,9 +25,11 @@ export class ParticipantContents{
 }
 
 export class SharedContents extends EventEmitter {
+  room:Room
   private localId = ''
-  constructor() {
+  constructor(room: Room) {
     super()
+    this.room = room
     makeObservable(this)
     autorun(() => {
       //  sync localId to participantsStore
@@ -210,12 +214,12 @@ export class SharedContents extends EventEmitter {
     if (pid) {
       const pc = this.participants.get(pid)
       if (pc) {
-        if (pid === this.localId || participants.remote.has(pid)){
+        if (pid === this.localId || this.room.participants.remote.has(pid)){
           return {pid, pc, take:false}  //  get content
         }else{
           //  The participant own the contents is already left but not notified.
           this.takeContentsFromDead(pc)
-          connection.conference.sendMessage(MessageType.PARTICIPANT_LEFT, '', pid)
+          this.room.connection?.conference.sendMessage(MessageType.PARTICIPANT_LEFT, '', pid)
 
           return {pid: this.localId, pc: this.participants.get(this.localId), take:true}
         }
@@ -342,34 +346,9 @@ export class SharedContents extends EventEmitter {
     contentLog('onParticipantLeft called with pid = ', pidLeave)
     const participantLeave = this.participants.get(pidLeave)
     if (participantLeave) {
-      const allPids = Array.from(participantsStore.remote.keys())
-      allPids.push(this.localId)
-      allPids.sort()
-      const idx = allPids.findIndex(cur => cur > pidLeave)
-      const next = allPids[idx >= 0 ? idx : 0]
-      contentLog('next = ', next)
-      if (next === this.localId) {
-        contentLog('Next is me')
-        this.takeContentsFromDead(participantLeave)
-        contentLog('remove:', pidLeave, ' current:', JSON.stringify(allPids))
-        contentLog('local contents sz:', this.localParticipant.myContents.size,
-                   ' json:', JSON.stringify(Array.from(this.localParticipant.myContents.keys())))
-      } else {
-        contentLog('Next is remote')
-        this.pendToRemoveParticipant(participantLeave)
-      }
+      this.participants.delete(participantLeave.participantId)
       this.updateAll()
     }
-  }
-
-  private pendToRemoveParticipant(pc: ParticipantContents){
-    const removes = Array.from(pc.myContents.values()).filter(c => c.type === 'camera' || c.type ==='screen')
-    removes.forEach(c => {
-      pc.myContents.delete(c.id)
-      this.owner.delete(c.id)
-    })
-    this.pendToRemoves.set(pc.participantId, pc)
-    this.participants.delete(pc.participantId)
   }
 
   clearAllRemotes(){
