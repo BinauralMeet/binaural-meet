@@ -11,7 +11,7 @@ import {ParticipantBase} from './ParticipantBase'
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
 
-export interface MediaSettings {
+export interface MediaSettings{
   stream:{
     muteVideo: boolean,
     muteAudio: boolean,
@@ -62,8 +62,8 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
     //  console.debug('URL headphone', urlParameters.headphone)
     this.muteAudio = urlParameters.muteMic !== null ? true : false
     //  console.debug('URL muteMic', urlParameters.muteMic)
-    this.muteVideo = urlParameters.muteCamera !== null ? true : false
-    //  console.debug('URL muteCamera', urlParameters.muteCamera)
+    this.muteVideo = urlParameters.cameraOn !== null ? false : true
+    //  console.debug('URL cameraOn', urlParameters.cameraOn)
     this.loadMediaSettingsFromStorage()
     this.loadPhysicsFromStorage()
     autorun(() => {
@@ -110,9 +110,7 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
   }
 
   //  Save and MediaSettings etc.
-  saveMediaSettingsToStorage(isLocalStorage:boolean) {
-    let storage = sessionStorage
-    if (isLocalStorage) { storage = localStorage }
+  saveMediaSettingsToStorage() {
     const muteStatus:MediaSettings = {
       stream:{
         muteVideo: this.muteVideo,
@@ -124,17 +122,21 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
       soundLocalizationBase: this.soundLocalizationBase,
     }
     //  console.log(storage === localStorage ? 'Save to localStorage' : 'Save to sessionStorage')
-    storage.setItem('localParticipantStreamControl', JSON.stringify(muteStatus))
+    localStorage.setItem('localParticipantStreamControl', JSON.stringify(muteStatus))
+    sessionStorage.setItem('localParticipantStreamControl', JSON.stringify(muteStatus))
   }
   @action.bound
   loadMediaSettingsFromStorage(rv?: MediaSettings) {
-    let storage = localStorage
-    if (sessionStorage.getItem('localParticipantStreamControl')) {
-      storage = sessionStorage
-    }
-    const settingInStr = storage.getItem('localParticipantStreamControl')
-    if (settingInStr) {
-      const setting = JSON.parse(settingInStr) as MediaSettings
+    const settingStrInLocal = localStorage.getItem('localParticipantStreamControl')
+    const settingStrInSession = sessionStorage.getItem('localParticipantStreamControl')
+    let settingLocal: MediaSettings|undefined = undefined
+    let settingSession: MediaSettings|undefined = undefined
+    if (settingStrInLocal) { settingLocal = JSON.parse(settingStrInLocal) as MediaSettings }
+    if (settingStrInSession) { settingSession = JSON.parse(settingStrInSession) as MediaSettings }
+    const setting = settingLocal
+    if (setting){
+      setting.stream.muteVideo = true
+      if (settingSession){ setting.stream.muteVideo = settingSession.stream.muteVideo }
       if (rv){
         Object.assign(rv, setting)
       }else{

@@ -1,7 +1,8 @@
 import {Stores} from '@components/utils'
 import {acceleratorText2El} from '@components/utils/formatter'
 import {useStore as useContentsStore} from '@hooks/SharedContentsStore'
-import shareSquare from '@iconify-icons/fa-solid/share-square'
+import windowArrowUp from '@iconify-icons/fluent/window-arrow-up-24-regular'
+
 import {Icon} from '@iconify/react'
 import {makeStyles} from '@material-ui/styles'
 import {useTranslation} from '@models/locales'
@@ -33,7 +34,7 @@ export const ShareButton: React.FC<ShareButtonProps> = (props) => {
       <FabWithTooltip size={props.size} color={sharing ? 'secondary' : 'primary'}
         title = {acceleratorText2El(t('ttCreateAndshare'))}
         aria-label="share" onClick={() => props.setShowDialog(true)}>
-        <Icon icon={shareSquare} style={{width:props.iconSize, height:props.iconSize}} />
+        <Icon icon={windowArrowUp} style={{width:props.iconSize, height:props.iconSize}} />
       </FabWithTooltip>
       <ShareDialog {...props} open={props.showDialog} onClose={() => props.setShowDialog(false)} />
     </div>

@@ -172,21 +172,21 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
     function closeMicMenu(did:string) {
       if (did) {
         participants.local.devicePreference.audioInputDevice = did
-        participants.local.saveMediaSettingsToStorage(true)
+        participants.local.saveMediaSettingsToStorage()
       }
       setMicMenuEl(null)
     }
     function closeSpeakerMenu(did:string) {
       if (did) {
         participants.local.devicePreference.audioOutputDevice = did
-        participants.local.saveMediaSettingsToStorage(true)
+        participants.local.saveMediaSettingsToStorage()
       }
       setSpeakerMenuEl(null)
     }
     function closeVideoMenu(did:string) {
       if (did) {
         participants.local.devicePreference.videoInputDevice = did
-        participants.local.saveMediaSettingsToStorage(true)
+        participants.local.saveMediaSettingsToStorage()
       }
       setVideoMenuEl(null)
     }
@@ -218,7 +218,7 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
             if (participants.local.muteSpeaker) {
               participants.local.muteAudio = true
             }
-            participants.local.saveMediaSettingsToStorage(true)
+            participants.local.saveMediaSettingsToStorage()
           }}
           onClickMore = { (ev) => {
             updateDevices(ev)
@@ -240,7 +240,7 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
             if (!participants.local.muteAudio) {
               participants.local.muteSpeaker = false
             }
-            participants.local.saveMediaSettingsToStorage(true)
+            participants.local.saveMediaSettingsToStorage()
           }}
           onClickMore = { (ev) => {
             updateDevices(ev)
@@ -260,7 +260,7 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
         <FabMain size={fabSize} color={mute.muteV ? 'primary' : 'secondary'} aria-label="camera"
           onClick = { () => {
             participants.local.muteVideo = !mute.muteV
-            participants.local.saveMediaSettingsToStorage(true)
+            participants.local.saveMediaSettingsToStorage()
           }}
           onClickMore = { (ev) => {
             updateDevices(ev)
