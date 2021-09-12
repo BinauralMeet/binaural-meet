@@ -122,6 +122,9 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
       console.log('Disconnected and failed to leave... try to join again')
       this.conference.bmRelaySocket?.close()
     }).finally(()=>{
+      if (urlParameters.testBot !== null){
+        window.location.reload()
+      }
       ///*  // reload or
 
       //  Ask reload to user or auto reload ?

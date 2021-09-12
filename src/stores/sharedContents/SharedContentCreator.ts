@@ -19,7 +19,6 @@ export const defaultContent: ISharedContent = Object.assign({}, mapObjectDefault
   id: '',
   zorder: 0,
   pinned: false,
-  noFrame: false,
 })
 
 ///  Add perceptibility and function to object obtained by JSON.parse()
@@ -61,6 +60,8 @@ export class SharedContent implements ISharedContent {
   size!: [number, number]
   originalSize!:[number, number]
   perceptibility!: Perceptibility
+  noFrame?: boolean
+  opacity?: number
   constructor() {
     Object.assign(this, _.cloneDeep(defaultContent))
   }

@@ -1,6 +1,6 @@
 import {App} from '@components/App'
 import {Connection, connections} from '@models/api'
-import {connectRoomInfoServer} from '@models/api/roomInfoServer'
+import {connectRoomInfoServer} from '@models/api/RoomInfoServer'
 import {i18nInit} from '@models/locales'
 import loadController from '@models/trafficControl/loadController'
 import {urlParameters} from '@models/url'

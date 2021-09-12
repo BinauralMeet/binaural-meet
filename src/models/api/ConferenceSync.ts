@@ -189,9 +189,8 @@ export class ConferenceSync{
       count += 1
     }
   }
-  lastMessageTime = Date.now()
+  // tslint:disable-next-line: cyclomatic-complexity
   onBmMessage(msgs: BMMessage[]){
-    this.lastMessageTime = Date.now()
     //  console.log(`Receive ${msgs.length} relayed messages. period:${diff}`)
     for(const msg of msgs){
       switch(msg.t){

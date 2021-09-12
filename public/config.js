@@ -63,15 +63,16 @@ const config_binaural = {
     muc: 'conference.binaural.me'
   },
   serviceUrl: 'wss://binaural.me:443/xmpp-websocket',
-  //  bosh: 'https://binaural.me/http-bind',
+  //bosh: 'https://binaural.me/http-bind',
+  bmRelayServer: 'wss://binaural.me/relayServer-websocket',
+  roomInfoServer: 'wss://binaural.me/roomInfoServer-websocket',
+  corsProxyUrl: 'https://binaural.me/cors_proxy/',
 
-  bmRelayServer: 'wss://binaural.me:8443',
-  roomInfoServer: 'wss://binaural.me:7443',
 
   //	bmRelayServer: 'ws://localhost:8443',
   //	roomInfoServer: 'ws://localhost:7443',
 
-  corsProxyUrl: 'https://binaural.me/cors_proxy/',
+  //corsProxyUrl: 'http://localhost:7020',
 }
 Object.assign(config_binaural, Object.assign(common_config, config_binaural))
 

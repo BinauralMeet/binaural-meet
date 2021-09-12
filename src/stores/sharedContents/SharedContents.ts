@@ -118,9 +118,68 @@ export class SharedContents extends EventEmitter {
     this.all = newAll
     this.sorted = newSorted
 
+    /*  do not save wall paper. Load wall paper may cause lost of wall paper
+    this.saveWallpaper()  */
+
     //  console.log('update all len=', this.all.length, ' all=', JSON.stringify(this.all))
   }
 
+  /*
+  //  wallpaper contents
+  wallpapers = ''
+  private getWallpaper() {
+    let nWallpapers = this.sorted.findIndex((c) => !isContentWallpaper(c))
+    if (nWallpapers < 0) { nWallpapers = this.sorted.length }
+
+    return this.sorted.slice(0, nWallpapers)
+  }
+  private oldWallPapers: ISharedContent[] = []
+  private saveWallpaper() {
+    if (!this.localId) { return }
+    if (!this.wallpapers) { this.loadWallpaper() }
+    let newWallPapers = this.getWallpaper()
+    if (newWallPapers.find((c, idx) => c !== this.oldWallPapers[idx])
+     || newWallPapers.length !== this.oldWallPapers.length){
+       this.oldWallPapers = newWallPapers //  save old one to compare next time.
+      //  check dupulicated wall papers.
+      if (this.removeSameWallpaper(newWallPapers)) { newWallPapers = this.getWallpaper() }
+      //  update wallpapers in localStorage
+      const newStore:WallpaperStore = {room:connection.conference.name, contents:extractContentDatas(newWallPapers)}
+      let wpStores:WallpaperStore[] = []
+      const oldStr = localStorage.getItem('wallpapers')
+      if (oldStr) { wpStores = JSON.parse(oldStr) as WallpaperStore[] }
+      const idx = wpStores.findIndex(wps => wps.room ===  newStore.room)
+      idx === -1 ? wpStores.push(newStore) : wpStores[idx] = newStore
+      localStorage.setItem('wallpapers', JSON.stringify(wpStores))
+    }
+  }
+  private loadWallpaper() {
+    if (this.wallpapers) { return }         //  already loaded
+    const curWp = this.getWallpaper()
+    if (curWp.length) {                     //  already exist
+      this.wallpapers = JSON.stringify(curWp)
+
+      return
+    }
+
+    //  load wallpapers from local storage
+    const str = localStorage.getItem('wallpapers')
+    if (!str) {
+      this.wallpapers = JSON.stringify([])
+    }else {
+      const wpStores = JSON.parse(str) as WallpaperStore[]
+      const loaded = wpStores.find(store => store.room === connection.conference.name)
+      if (loaded) {
+        loaded.contents.forEach((lc) => {
+          const newContent = createContent()
+          Object.assign(newContent, lc)
+          this.addLocalContent(newContent)
+        })
+        this.wallpapers = JSON.stringify(this.getWallpaper())
+      }
+    }
+  }
+  */
   takeContentsFromDead(pc: ParticipantContents, cidTake?: string){
     //  console.log(`Take ${cidTake} from pid:${pc.participantId}`)
     let updated = false
@@ -151,7 +210,15 @@ export class SharedContents extends EventEmitter {
     if (pid) {
       const pc = this.participants.get(pid)
       if (pc) {
-        return {pid, pc, take:false}  //  get content
+        if (pid === this.localId || participants.remote.has(pid)){
+          return {pid, pc, take:false}  //  get content
+        }else{
+          //  The participant own the contents is already left but not notified.
+          this.takeContentsFromDead(pc)
+          connection.conference.sendMessage(MessageType.PARTICIPANT_LEFT, '', pid)
+
+          return {pid: this.localId, pc: this.participants.get(this.localId), take:true}
+        }
       }else{
         const pc = this.pendToRemoves.get(pid)
         if (pc){
@@ -338,6 +405,6 @@ export class SharedContents extends EventEmitter {
   }
 
   //  screen fps setting
-  @observable screenFps = 30
+  @observable screenFps = 5
   @action setScreenFps(fps: number){ this.screenFps = fps }
 }

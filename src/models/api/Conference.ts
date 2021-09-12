@@ -111,6 +111,86 @@ export class Conference extends EventEmitter {
     })
   }
 
+  //  Commmands for local tracks --------------------------------------------
+  private localMicTrack?: JitsiLocalTrack
+  private localCameraTrack?: JitsiLocalTrack
+  private doSetLocalMicTrack(track:JitsiLocalTrack) {
+    this.localMicTrack = track
+    this.localMicTrack.videoType = 'mic'
+    this._jitsiConference?.addTrack(this.localMicTrack)
+  }
+  public setLocalMicTrack(track: JitsiLocalTrack|undefined){
+    const promise = new Promise<JitsiLocalTrack|undefined>((resolveFunc, rejectionFunc) => {
+      if (track) {
+        if (this.localMicTrack) {
+          const prev = this.localMicTrack
+          this._jitsiConference?.removeTrack(this.localMicTrack).then(() => {
+            this.doSetLocalMicTrack(track)
+            resolveFunc(prev)
+          })
+        }else {
+          this.doSetLocalMicTrack(track)
+          resolveFunc(undefined)
+        }
+      }else {
+        if (this.localMicTrack) {
+          this._jitsiConference?.removeTrack(this.localMicTrack).then(() => {
+            const prev = this.localMicTrack
+            this.localMicTrack = undefined
+            resolveFunc(prev)
+          })
+        }else {
+          resolveFunc(undefined)
+        }
+      }
+    })
+
+    return promise
+
+  }
+
+
+  private doSetLocalCameraTrack(track:JitsiLocalTrack) {
+    this.localCameraTrack = track
+    this.localCameraTrack.videoType = 'camera'
+    this._jitsiConference?.addTrack(this.localCameraTrack)
+  }
+  public setLocalCameraTrack(track: JitsiLocalTrack|undefined) {
+    const promise = new Promise<JitsiLocalTrack|undefined>((resolveFunc, rejectionFunc) => {
+      if (track) {
+        //  this.cameraTrackConverter(track)
+        if (this.localCameraTrack) {
+          const prev = this.localCameraTrack
+          this._jitsiConference?.removeTrack(this.localCameraTrack).then(() => {
+            this.doSetLocalCameraTrack(track)
+            resolveFunc(prev)
+          })
+        }else {
+          this.doSetLocalCameraTrack(track)
+          resolveFunc(undefined)
+        }
+      }else {
+        if (this.localCameraTrack) {
+          this._jitsiConference?.removeTrack(this.localCameraTrack).then(() => {
+            const prev = this.localCameraTrack
+            this.localCameraTrack = undefined
+            resolveFunc(prev)
+          })
+        }else {
+          resolveFunc(undefined)
+        }
+      }
+    })
+
+    return promise
+  }
+  public getLocalMicTrack() {
+    return this.localMicTrack
+  }
+  public getLocalCameraTrack() {
+    return this.localCameraTrack
+  }
+
   //  Jitsi API Calls ----------------------------------------
   //  generic send command
   public sendCommand(name: string, values: JitsiValues) {
@@ -264,6 +344,7 @@ export class Conference extends EventEmitter {
     //  set localId
     this.localId = this._jitsiConference!.myUserId()
     participants.setLocalId(this.localId)
+
     //  request remote info
     if (config.bmRelayServer){
       this.sendMessage(MessageType.REQUEST, '', undefined)
