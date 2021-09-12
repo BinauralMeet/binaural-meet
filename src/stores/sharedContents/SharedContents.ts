@@ -1,13 +1,13 @@
 import {connection} from '@models/api'
 import {MessageType} from '@models/api/ConferenceSync'
-import {SharedContent as ISharedContent, WallpaperStore} from '@models/SharedContent'
+import {SharedContent as ISharedContent} from '@models/SharedContent'
 import {diffMap, intersectionMap} from '@models/utils'
 import {default as participantsStore} from '@stores/participants/Participants'
 import participants from '@stores/participants/Participants'
 import {EventEmitter} from 'events'
 import _ from 'lodash'
 import {action, autorun, computed, makeObservable, observable} from 'mobx'
-import {createContent, extractContentDatas, isContentWallpaper, moveContentToTop} from './SharedContentCreator'
+import {createContent, isContentWallpaper, moveContentToTop} from './SharedContentCreator'
 import {SharedContentTracks} from './SharedContentTracks'
 
 export const CONTENTLOG = false      // show manipulations and sharing of content
@@ -190,10 +190,13 @@ export class SharedContents extends EventEmitter {
     this.all = newAll
     this.sorted = newSorted
 
-    this.saveWallpaper()
+    /*  do not save wall paper. Load wall paper may cause lost of wall paper
+    this.saveWallpaper()  */
+
     //  console.log('update all len=', this.all.length, ' all=', JSON.stringify(this.all))
   }
 
+  /*
   //  wallpaper contents
   wallpapers = ''
   private getWallpaper() {
@@ -205,9 +208,7 @@ export class SharedContents extends EventEmitter {
   private oldWallPapers: ISharedContent[] = []
   private saveWallpaper() {
     if (!this.localId) { return }
-    if (!this.wallpapers) {
-      this.loadWallpaper()
-    }
+    if (!this.wallpapers) { this.loadWallpaper() }
     let newWallPapers = this.getWallpaper()
     if (newWallPapers.find((c, idx) => c !== this.oldWallPapers[idx])
      || newWallPapers.length !== this.oldWallPapers.length){
@@ -224,7 +225,7 @@ export class SharedContents extends EventEmitter {
       localStorage.setItem('wallpapers', JSON.stringify(wpStores))
     }
   }
-  loadWallpaper() {
+  private loadWallpaper() {
     if (this.wallpapers) { return }         //  already loaded
     const curWp = this.getWallpaper()
     if (curWp.length) {                     //  already exist
@@ -250,6 +251,7 @@ export class SharedContents extends EventEmitter {
       }
     }
   }
+  */
 
   //  add
   addLocalContent(c:ISharedContent) {

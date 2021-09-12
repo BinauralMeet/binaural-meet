@@ -528,8 +528,11 @@ export class Conference extends EventEmitter {
         participants.local.devicePreference[prop] = ''
       }
     }
-    //  load wallpapers after 2secs
-    setTimeout(contents.loadWallpaper.bind(contents), 2000)
+
+    //  do not load wallpapers. This may cause lost of wall papers.
+    /*  //  load wallpapers after 2secs
+    setTimeout(contents.loadWallpaper.bind(contents), 2000) */
+
     //  request remote info
     if (config.bmRelayServer){
       this.sendMessage(MessageType.REQUEST, '', undefined)

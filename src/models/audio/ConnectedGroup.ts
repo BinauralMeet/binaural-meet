@@ -19,11 +19,11 @@ function getRelativePoseFromObject(localPose: Pose2DMap, participant: RemotePart
     //  remotePose.position = remotePose.position.map((pos, idx) => pos - 0.5 * content.size[idx]) as [number, number]
     localPose.position.forEach((pos, idx) => {
       if (localPose.position[idx] > remotePose.position[idx]) {
-        remotePose.position[idx] += Math.min(content.size[idx], localPose.position[idx] - remotePose.position[idx])
+        const fromLT = localPose.position[idx] - remotePose.position[idx]
+        remotePose.position[idx] += Math.min(content.size[idx], fromLT > 0 ? fromLT : 0)
       }
     })
-  }
-  if (participant && participants.yarnPhones.has(participant.id)) {
+  }else if (participant && participants.yarnPhones.has(participant.id)) {
     //  This remote participant is directly connected to local participant
     const diff = subV2(remotePose.position, localPose.position)
     const dist = normV(diff)
