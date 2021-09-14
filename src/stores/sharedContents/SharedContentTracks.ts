@@ -14,7 +14,7 @@ const contentTrackLog = LOG_CONTENT_TRACK ? console.log : () => {}
 export class SharedContentTracks {
   private sharedContents:SharedContents
   //  Map<pid (of content carrier), cid / screen map>
-  public carrierMap = new Map<string, string>()
+  @observable.shallow public carrierMap = new Map<string, string>()
   //  remote tracks whose content or screen is not received yet.
   remoteTrackPool = new Map<string, Set<JitsiRemoteTrack>>()
   //

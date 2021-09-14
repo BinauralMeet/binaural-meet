@@ -41,15 +41,13 @@ export class ConnectedGroup {
 
   constructor(local: IObservableValue<LocalParticipant>, remote: RemoteParticipant|undefined,
               contentTrack: JitsiRemoteTrack|undefined, group: NodeGroup) {
-    const carrierId = contentTrack?.getParticipantId()
-    const cid = carrierId && contents.tracks.carrierMap.get(carrierId)
-    const content = cid ? contents.find(cid) : undefined
     this.disposers.push(autorun(
       () => {
+        const carrierId = contentTrack?.getParticipantId()
+        const cid = carrierId && contents.tracks.carrierMap.get(carrierId)
+        const content = cid ? contents.find(cid) : undefined
         const base = _.clone(local.get().pose)
-        if (local.get().soundLocalizationBase === 'user') {
-          base.orientation = 0
-        }
+        if (local.get().soundLocalizationBase === 'user') { base.orientation = 0 }
         if (remote && !remote.physics.located) {
           // not located yet -> mute sound
           group.updatePose(convertToAudioCoordinate({orientation:0, position:[MAP_SIZE, MAP_SIZE]}))
