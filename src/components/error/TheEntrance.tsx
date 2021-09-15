@@ -21,9 +21,11 @@ export const TheEntrance: React.FC<{}> = (props) => {
 
   const onClose = (save: boolean) => {
     if (save) {
-      participants.local.information.name = name
-      participants.local.sendInformation()
-      participants.local.saveInformationToStorage(true)
+      if (participants.local.information.name !== name){
+        participants.local.information.name = name
+        participants.local.sendInformation()
+        participants.local.saveInformationToStorage(true)
+      }
       urlParameters.room = room
       sessionStorage.setItem('room', room)
     }

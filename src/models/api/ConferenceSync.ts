@@ -50,6 +50,7 @@ export const MessageType = {
   //  messages only for bmRelayServer
   PARTICIPANT_LEFT: 'm_participant_left',       //  remove infos of the participant
   REQUEST: 'request',                           //  request for all info
+  REQUEST_TO: 'request_to',                     //  request for all info to specified participants
   SET_PERIOD: 'set_period',                     //  set period to send message to me.
 }
 
@@ -91,9 +92,10 @@ export class ConferenceSync{
     //  setInterval(()=>{ this.checkRemoteAlive() }, 1000)
   }
   sendAllAboutMe(){
+    syncLog('sendAllAboutMe called.')
     this.sendPoseMessageNow()
     this.sendMouseMessageNow()
-    this.sendParticipantInfoMessage()
+    participants.local.sendInformation()
     this.sendPhysics()
     this.sendTrackStates()
     if (contents.tracks.localMainConnection?.localId){ this.sendMainScreenCarrier(true) }
@@ -113,8 +115,17 @@ export class ConferenceSync{
       this.conference.sendMessage(MessageType.PARTICIPANT_MOUSE, '', mouseStr)
     }
   }
-  sendParticipantInfoMessage(){
-    this.conference.sendMessage(PropertyType.PARTICIPANT_INFO, '', {...participants.local.informationToSend})
+  sendParticipantInfo(){
+    if (!participants.local.informationToSend){ return }
+    if (config.bmRelayServer){
+      this.conference.sendMessage(PropertyType.PARTICIPANT_INFO, '', {...participants.local.informationToSend})
+    }else{
+      this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_INFO,
+        {...participants.local.informationToSend})
+    }
+    let name = participants.local.information.name
+    while(name.slice(0,1) === '_'){ name = name.slice(1) }
+    this.conference._jitsiConference?.setDisplayName(name)
   }
   sendPhysics(){
     if (config.bmRelayServer){
@@ -253,6 +264,8 @@ export class ConferenceSync{
           chat.participantNameChanged(from, name)
         }
       }
+      remote.informationReceived = true
+      syncLog(`Info of ${from} received.`)
     }
   }
   private onParticipantTrackState(from:string, states:TrackStates){
@@ -457,20 +470,8 @@ export class ConferenceSync{
         }
       })
     }))
-    this.disposers.push(autorun(() => {
-      this.sendAfkChanged()
-    }))
-    this.disposers.push(autorun(() => {
-      if (config.bmRelayServer){
-        this.sendParticipantInfoMessage()
-      }else{
-        this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_INFO,
-          {...participants.local.informationToSend})
-      }
-      let name = participants.local.information.name
-      while(name.slice(0,1) === '_'){ name = name.slice(1) }
-      this.conference._jitsiConference?.setDisplayName(name)
-    }))
+    this.disposers.push(autorun(this.sendAfkChanged.bind(this)))
+    this.disposers.push(autorun(this.sendParticipantInfo.bind(this)))
     this.disposers.push(autorun(this.sendTrackStates.bind(this)))
     const calcWait = () => this.conference.bmRelaySocket?.readyState === WebSocket.OPEN
       ? Math.ceil(Math.max((participants.remote.size / 15) * 33, 33))
@@ -561,9 +562,10 @@ export class ConferenceSync{
   }
   // tslint:disable-next-line: cyclomatic-complexity
   onBmMessage(msgs: BMMessage[]){
-    //  console.log(`Receive ${msgs.length} relayed messages. period:${diff}`)
+    syncLog(`Receive ${msgs.length} relayed messages.`)
     for(const msg of msgs){
       switch(msg.t){
+        case MessageType.REQUEST_TO: this.sendAllAboutMe(); break
         case MessageType.AFK_CHANGED: this.onAfkChanged(msg.p, JSON.parse(msg.v)); break
         case MessageType.CALL_REMOTE: this.onCallRemote(msg.p); break
         case MessageType.CHAT_MESSAGE: this.onChatMessage(msg.p, JSON.parse(msg.v)); break
@@ -588,6 +590,15 @@ export class ConferenceSync{
           console.log(`Unhandled message type ${msg.t} from ${msg.p}`)
           break
       }
+    }
+    this.checkInfo()
+  }
+  checkInfo(){
+    const remotes = Array.from(participants.remote.values())
+    const ids = remotes.filter(remote => !remote.informationReceived).map(remote => remote.id)
+    if (ids.length){
+      syncLog(`checkInfo sent ${ids}`)
+      this.conference.sendMessageViaRelay(MessageType.REQUEST_TO, '', ids)
     }
   }
 }

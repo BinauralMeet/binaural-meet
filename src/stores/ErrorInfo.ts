@@ -243,8 +243,6 @@ export class ErrorInfo {
     participants.local.information.name = `testBot ${randChar()}${randChar()}${randChar()}`
     participants.local.sendInformation()
     participants.local.pose.position = center as [number, number]
-    //  participants.local.remoteAudioLimit = 2
-    //  participants.local.remoteVideoLimit = 1
 
     const move = () => {
       participants.local.pose.position = addV2(center, mulV2(100, [Math.cos(counter / 60), Math.sin(counter / 60)]))

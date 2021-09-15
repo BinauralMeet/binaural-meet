@@ -14,6 +14,7 @@ class TrackStates implements Store<ITrackStates>{
 
 export class RemoteParticipant extends ParticipantBase implements Store<IRemoteParticipant> {
   information:RemoteInformation = this.information as RemoteInformation
+  informationReceived = false
   @observable trackStates = new TrackStates()
   @observable called = false
   lastDistance = 0

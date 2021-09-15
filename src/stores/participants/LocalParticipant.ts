@@ -2,7 +2,7 @@ import {Pose2DMap} from '@models/MapObject'
 import {LocalInformation, LocalParticipant as ILocalParticipant, Physics, RemoteInformation, TrackStates} from '@models/Participant'
 import {urlParameters} from '@models/url'
 import {checkImageUrl} from '@models/utils'
-import {shallowObservable, Store} from '@stores/utils'
+import {Store} from '@stores/utils'
 import md5 from 'md5'
 import {action, computed, makeObservable, observable} from 'mobx'
 import {autorun} from 'mobx'
@@ -39,7 +39,7 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
   @observable audioOutputDevice:string|undefined = undefined
 
   information = this.information as LocalInformation
-  informationToSend:RemoteInformation
+  @observable.ref informationToSend:RemoteInformation|undefined
   @action setThirdPersonView(tpv: boolean) { this.thirdPersonView = tpv }
   @computed get trackStates():TrackStates {
     return {
@@ -52,9 +52,7 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
 
   constructor() {
     super(true)
-    const info:Partial<LocalInformation> = Object.assign({}, this.information)
-    delete info.email
-    this.informationToSend = shallowObservable<RemoteInformation>(info as RemoteInformation)
+    this.informationToSend = undefined
     makeObservable(this)
     this.loadInformationFromStorage()
     if (urlParameters.name) { this.information.name = urlParameters.name }
@@ -85,9 +83,8 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
 
   //  send infomration to other participants
   @action sendInformation(){
-    const info = Object.assign({}, this.information) as Partial<LocalInformation>
-    delete info.email
-    Object.assign(this.informationToSend, info)
+    const {email, ...info} = this.information
+    this.informationToSend = info
   }
   //  save and load participant's name etc.
   saveInformationToStorage(isLocalStorage:boolean) {
