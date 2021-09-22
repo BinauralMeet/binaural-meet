@@ -47,7 +47,7 @@ export const CameraSelector: React.FC<CameraSelectorProps> = (props) => {
             const content = createContentOfVideo(tracks, map, 'camera')
             contents.shareContent(content)
             assert(content.id)
-            contents.tracks.addLocalContents(content.id, tracks)
+            contents.tracks.addLocalContent(content.id, tracks)
           }
         },
       )

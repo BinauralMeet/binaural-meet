@@ -25,9 +25,10 @@ import EditIcon from '@material-ui/icons/Edit'
 import FlipToBackIcon from '@material-ui/icons/FlipToBack'
 import FlipToFrontIcon from '@material-ui/icons/FlipToFront'
 import {t} from '@models/locales'
-import { Pose2DMap } from '@models/MapObject'
-import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {canContentBeAWallpaper, copyContentToClipboard, isContentEditable, isContentWallpaper, makeContentWallpaper,
+import {ISharedContent} from '@models/ISharedContent'
+import {canContentBeAWallpaper, isContentEditable, isContentWallpaper} from '@models/ISharedContent'
+import {Pose2DMap} from '@models/utils'
+import {copyContentToClipboard,  makeContentWallpaper,
    moveContentToBottom, moveContentToTop} from '@stores/sharedContents/SharedContentCreator'
 import {Observer} from 'mobx-react-lite'
 import React, {Fragment} from 'react'

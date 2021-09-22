@@ -121,6 +121,7 @@ class Member{
     }
 
     this.props = this.newProps
+
     const url = new URL(this.props.content.url)
     this.mainUrl = url.hash ? url.href.substring(0, url.href.length - url.hash.length) : url.href
     let pageNum = this.pageNum

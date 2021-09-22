@@ -24,7 +24,7 @@ import SubjectIcon from '@material-ui/icons/Subject'
 import {initOptions} from '@models/api/Connection'
 import {connection} from '@models/api/ConnectionDefs'
 import {useTranslation} from '@models/locales'
-import {SharedContent as ISharedContent} from '@models/SharedContent'
+import {ISharedContent} from '@models/ISharedContent'
 import {assert} from '@models/utils'
 import {createContent, createContentOfIframe, createContentOfText,
   createContentOfVideo, extractContentData, extractContentDatas} from '@stores/sharedContents/SharedContentCreator'
@@ -144,7 +144,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
         const content = createContentOfVideo(tracks, map, 'screen')
         sharedContents.shareContent(content)
         assert(content.id)
-        sharedContents.tracks.addLocalContents(content.id, tracks)
+        sharedContents.tracks.addLocalContent(content.id, tracks)
       }
     })
     setStep('none')

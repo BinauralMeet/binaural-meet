@@ -12,11 +12,11 @@ import FlipToBackIcon from '@material-ui/icons/FlipToBack'
 import FlipToFrontIcon from '@material-ui/icons/FlipToFront'
 import MoreHorizIcon from '@material-ui/icons/MoreHoriz'
 import settings from '@models/api/Settings'
+import {isContentEditable, ISharedContent} from '@models/ISharedContent'
 import {t} from '@models/locales'
-import {Pose2DMap} from '@models/MapObject'
-import {SharedContent as ISharedContent} from '@models/SharedContent'
+import {Pose2DMap} from '@models/utils'
 import {addV2, extractScaleX, extractScaleY, mulV, rotateVector2DByDegree, subV2} from '@models/utils'
-import {copyContentToClipboard, isContentEditable, moveContentToBottom, moveContentToTop} from '@stores/sharedContents/SharedContentCreator'
+import {copyContentToClipboard, moveContentToBottom, moveContentToTop} from '@stores/sharedContents/SharedContentCreator'
 import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useLayoutEffect, useRef, useState} from 'react'
@@ -24,13 +24,13 @@ import {Rnd} from 'react-rnd'
 import {useGesture} from 'react-use-gesture'
 import { FullGestureState, UserHandlersPartial } from 'react-use-gesture/dist/types'
 import {Content, contentTypeIcons, editButtonTip} from './Content'
-import {SharedContentProps} from './SharedContent'
+import {ISharedContentProps} from './SharedContent'
 import {SharedContentForm} from './SharedContentForm'
 
 const MOUSE_RIGHT = 2
 
 export type MouseOrTouch = React.MouseEvent | React.TouchEvent
-export interface RndContentProps extends SharedContentProps {
+export interface RndContentProps extends ISharedContentProps {
   hideAll ?: boolean
   autoHideTitle ?: boolean
   onShare ?: (evt: MouseOrTouch) => void

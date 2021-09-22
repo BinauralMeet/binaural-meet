@@ -1,6 +1,7 @@
 import {action, makeObservable, observable} from 'mobx'
 
 export class RoomInfo{
+  @observable roomProps = new Map<string, string>()
   @observable password=''
   @observable newPassword=''
   @observable passMatched=false

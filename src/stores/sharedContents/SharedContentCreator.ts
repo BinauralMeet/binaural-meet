@@ -1,8 +1,9 @@
 import {getProxiedUrl} from '@models/api/CORS'
 import {getImageSize, uploadToGyazo} from '@models/api/Gyazo'
-import {defaultPerceptibility,  Perceptibility, Pose2DMap} from '@models/MapObject'
-import {ContentType, SharedContent as ISharedContent,
-  SharedContentData as ISharedContentData, SharedContentId as ISharedContentId, TextMessages} from '@models/SharedContent'
+import {defaultPerceptibility,  Perceptibility} from '@models/MapObject'
+import {ContentType, isContentWallpaper, ISharedContent, SharedContentData,
+  SharedContentId, TEN_YEAR, TextMessages, TIME_RESOLUTION_IN_MS} from '@models/ISharedContent'
+import {Pose2DMap} from '@models/utils'
 import {extract} from '@models/utils'
 import { getMimeType } from '@models/utils'
 import {MapData} from '@stores/Map'
@@ -12,8 +13,6 @@ import _ from 'lodash'
 import participants from '../participants/Participants'
 import sharedContents, {contentLog} from './SharedContents'
 
-const TIME_RESOLUTION_IN_MS = 100
-export const TEN_YEAR = 1000 * 60 * 60 * 24 * 365 * 10 / TIME_RESOLUTION_IN_MS
 export const defaultContent: ISharedContent = Object.assign({}, mapObjectDefaultValue, {
   name: '',
   ownerName: '',
@@ -38,7 +37,7 @@ export function jsonToContents(json: string, perceptibility = defaultPerceptibil
   return cs as ISharedContent[]
 }
 
-export function makeItContent(it: ISharedContentData) {
+export function makeItContent(it: SharedContentData) {
   const sc = it as ISharedContent
   sc.perceptibility = Object.assign({}, defaultPerceptibility)
 
@@ -52,7 +51,7 @@ export function makeThemContents(them: ISharedContent[]) {
   return them
 }
 
-export class SharedContent implements ISharedContent {
+class SharedContentImp implements ISharedContent {
   name!: string
   ownerName!: string
   color!: number[]
@@ -74,7 +73,7 @@ export class SharedContent implements ISharedContent {
 }
 
 export function createContent() {
-  const content = new SharedContent()
+  const content = new SharedContentImp()
   content.ownerName = participants.local.information.name
   content.color = participants.local.information.color
   content.textColor = participants.local.information.textColor
@@ -182,8 +181,9 @@ export function createContentOfText(message: string, map: MapData) {
 
   return pasted
 }
-export function createContentOfImage(imageFile: Blob, map: MapData, offset?:[number, number]): Promise<SharedContent> {
-  const promise = new Promise<SharedContent>((resolutionFunc, rejectionFunc) => {
+export function createContentOfImage(imageFile: Blob, map: MapData,  offset?:[number, number])
+  : Promise<SharedContentImp> {
+  const promise = new Promise<SharedContentImp>((resolutionFunc, rejectionFunc) => {
     uploadToGyazo(imageFile).then((url) => {
       createContentOfImageUrl(url, map, offset).then(resolutionFunc)
     }).catch(rejectionFunc)
@@ -192,9 +192,10 @@ export function createContentOfImage(imageFile: Blob, map: MapData, offset?:[num
   return promise
 }
 
-export function createContentOfImageUrl(url: string, map: MapData, offset?:[number, number]): Promise<SharedContent> {
+export function createContentOfImageUrl(url: string, map: MapData,
+  offset?:[number, number]): Promise<SharedContentImp> {
   const IMAGESIZE_LIMIT = 500
-  const promise = new Promise<SharedContent>((resolutionFunc, rejectionFunc) => {
+  const promise = new Promise<SharedContentImp>((resolutionFunc, rejectionFunc) => {
     getImageSize(url).then((size) => {
       // console.log("mousePos:" + (global as any).mousePositionOnMap)
       const pasted = createContent()
@@ -230,9 +231,9 @@ function updateSigninStatus(isSignedIn:boolean) {
   }
 }
 
-export function createContentOfPdf(file: File, map: MapData, offset?:[number, number]): Promise<SharedContent> {
+export function createContentOfPdf(file: File, map: MapData, offset?:[number, number]): Promise<SharedContentImp> {
   console.error('createContentOfPdf called.')
-  const promise = new Promise<SharedContent>((resolutionFunc, rejectionFunc) => {
+  const promise = new Promise<SharedContentImp>((resolutionFunc, rejectionFunc) => {
     if (gapi) {
       const API_KEY = 'AIzaSyCE4B2cKycH0fVmBznwfr1ynnNf2qNEU9M'
       const CLIENT_ID = '188672642721-3f8u1671ecugbl2ukhjmb18nv283upm0.apps.googleusercontent.com'
@@ -280,7 +281,7 @@ export function createContentOfVideo(tracks: JitsiLocalTrack[], map: MapData, ty
   return pasted
 }
 
-const extractData = extract<ISharedContentData>({
+const extractData = extract<SharedContentData>({
   zorder: true, name: true, ownerName: true, color: true, textColor:true,
   type: true, url: true, pose: true, size: true, originalSize: true, pinned: true, noFrame: true, opacity: true,
 })
@@ -290,7 +291,7 @@ export function extractContentData(c:ISharedContent) {
 export function extractContentDatas(cs:ISharedContent[]) {
   return cs.map(extractContentData)
 }
-const extractDataAndId = extract<ISharedContentData&ISharedContentId>({
+const extractDataAndId = extract<SharedContentData&SharedContentId>({
   zorder: true, name: true, ownerName: true, color: true, textColor:true,
   type: true, url: true, pose: true, size: true, originalSize: true,
   pinned: true, noFrame: true, opacity:true, id: true,
@@ -423,25 +424,8 @@ export function getInformationOfGDriveContent(fileId: string){
   return rv
 }
 
-//  Does content use keyinput during editing or not.
-export function doseContentEditingUseKeyinput(c: SharedContent){
-  return c.type === 'text' || c.type === 'pdf'
-}
-//  can this type of content be a wall paper or not
-export function canContentBeAWallpaper(c: SharedContent){
-  return c.type !== 'camera' && c.type !== 'screen'
-}
-//  editable or not
-export function isContentEditable(c: SharedContent) {
-  return c.type === 'text' || c.type === 'iframe' || c.type === 'pdf' ||
-    c.type === 'whiteboard' || c.type === 'gdrive' || c.type === 'youtube'
-}
-//  wallpaper or not
-export function isContentWallpaper(c: ISharedContent) {
-  return c.zorder <= TEN_YEAR
-}
 //  change zorder to the top.
-export function moveContentToTop(c: SharedContent) {
+export function moveContentToTop(c: SharedContentImp) {
   if (isContentWallpaper(c)){
     let top = sharedContents.sorted.findIndex(c => c.zorder > TEN_YEAR)
     if (top < 0){ top = sharedContents.sorted.length }
@@ -455,7 +439,7 @@ export function moveContentToTop(c: SharedContent) {
   }
 }
 //  change zorder to the bottom.
-export function moveContentToBottom(c: SharedContent) {
+export function moveContentToBottom(c: SharedContentImp) {
   if (isContentWallpaper(c)){
     const bottom = sharedContents.sorted[0]
     if (bottom !== c) {
@@ -471,7 +455,7 @@ export function moveContentToBottom(c: SharedContent) {
   }
 }
 //  change zorder to far below the bottom.
-export function makeContentWallpaper(c: SharedContent, flag: boolean) {
+export function makeContentWallpaper(c: SharedContentImp, flag: boolean) {
   //if (isContentWallpaper(c)) { return }
   if (flag){
     let zorder = TEN_YEAR - (Math.floor(Date.now() / TIME_RESOLUTION_IN_MS) - c.zorder)

@@ -1,6 +1,6 @@
 import {BaseProps} from '@components/utils'
 import {makeStyles} from '@material-ui/core/styles'
-import {isContentWallpaper} from '@stores/sharedContents/SharedContentCreator'
+import {isContentWallpaper} from '@models/ISharedContent'
 import _ from 'lodash'
 import {Observer} from 'mobx-react-lite'
 import React from 'react'

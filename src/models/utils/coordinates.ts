@@ -1,5 +1,12 @@
-import {Pose2DMap} from '@models/MapObject'
-import {Pose3DAudio} from '@models/Participant'
+export interface Pose2DMap {
+  position: [number, number]
+  orientation: number
+}
+
+export interface Pose3DAudio {  // right hand cartesian coordinate system
+  position: [number, number, number],
+  orientation: [number, number, number],
+}
 
 export function addV2(a:number[], b:number[]): [number, number] {
   return [a[0] + b[0], a[1] + b[1]]
@@ -64,22 +71,6 @@ export function convertToAudioCoordinate(pose: Pose2DMap): Pose3DAudio {
   }
 }
 
-export function transformPoint2D(
-  matrix: DOMMatrixReadOnly | DOMMatrix, point: [number, number]): [number, number] {
-  return [
-    matrix.a * point[0] + matrix.c * point[1] + matrix.e,
-    matrix.b * point[0] + matrix.d * point[1] + matrix.f,
-  ]
-}
-
-export function rotateVector2D(
-  matrix: DOMMatrixReadOnly | DOMMatrix, point: [number, number]): [number, number] {
-  return [
-    matrix.a * point[0] + matrix.c * point[1],
-    matrix.b * point[0] + matrix.d * point[1],
-  ]
-}
-
 export function rotateVector2DByDegree(
   degree: number, vector: [number, number]): [number, number] {
   const rad = degree * (Math.PI / 180)
@@ -92,28 +83,6 @@ export function rotateVector2DByDegree(
   ]
 }
 
-export function multiply(matrix: (DOMMatrix | DOMMatrixReadOnly)[]) {
-  return matrix.reduce((p: DOMMatrix, c) => p.multiplySelf(c), new DOMMatrix())
-}
-
-export function extractScaleX(matrix: DOMMatrix | DOMMatrixReadOnly) {
-  return Math.abs(Math.sign(matrix.a) * Math.sqrt(Math.pow(matrix.a, 2) + Math.pow(matrix.c, 2)))
-}
-
-export function extractScaleY(matrix: DOMMatrix | DOMMatrixReadOnly) {
-  return Math.abs(Math.sign(matrix.d) * Math.sqrt(Math.pow(matrix.b, 2) + Math.pow(matrix.d, 2)))
-}
-
-export function extractScale(matrix: DOMMatrix | DOMMatrixReadOnly): [number, number] {
-  return [
-    extractScaleX(matrix),
-    extractScaleY(matrix),
-  ]
-}
-
-export function extractRotation(matrix: DOMMatrix | DOMMatrixReadOnly): number {
-  return Math.atan2(-matrix.c, matrix.a)
-}
 
 export function crossProduct(vec1: [number, number], vec2: [number, number]): number {
   return vec1[0] * vec2[0] + vec1[1] * vec2[1]
@@ -127,14 +96,30 @@ export function rotate90ClockWise(vec: [number, number]): [number, number] {
   return [vec[1], -vec[0]]
 }
 
-export function transfromAt(center:[number, number], tranform: DOMMatrixReadOnly, baseMatrix:DOMMatrixReadOnly) {
-  const tm = (new DOMMatrix()).translate(-center[0], -center[1])
-  const itm = (new DOMMatrix()).translateSelf(...center)
-  const newMatrix = multiply([itm, tranform, tm, baseMatrix])
-
-  return newMatrix
-}
 
 export function square(s: number) {
   return s * s
+}
+
+//  rect: [top, right, bottom, left]
+export function getRect(pose: Pose2DMap, size: [number, number]){
+  if (pose.orientation === 0){
+    return [pose.position[1], pose.position[0] + size[0], pose.position[1] + size[1], pose.position[0]]
+  }
+  const lt = rotateVector2DByDegree(pose.orientation, pose.position)
+  const vr = rotateVector2DByDegree(pose.orientation, [size[0], 0])
+  const vb = rotateVector2DByDegree(pose.orientation, [0, size[1]])
+  const xs = [lt[0], lt[0]+vr[0], lt[0]+vb[0], lt[0]+vr[0]+vb[0]]
+  const ys = [lt[1], lt[1]+vr[1], lt[1]+vb[1], lt[1]+vr[1]+vb[1]]
+  xs.sort((a,b) => a-b)
+  ys.sort((a,b) => a-b)
+
+  return [ys[0], xs[3], ys[3], xs[0]]
+}
+
+export function isOverlapped(a:number[], b:number[]){
+  if (a[0] > b[2] || a[2] < b[0]) { return false }
+  if (a[3] > b[1] || a[1] < b[3]) { return false }
+
+  return true
 }

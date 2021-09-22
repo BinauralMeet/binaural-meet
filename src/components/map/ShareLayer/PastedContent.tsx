@@ -1,5 +1,5 @@
 import {Stores} from '@components/utils'
-import {SharedContent, SharedContent as ISharedContent} from '@models/SharedContent'
+import {ISharedContent, TIME_RESOLUTION_IN_MS} from '@models/ISharedContent'
 import { isSelfUrl } from '@models/utils'
 import {MapData} from '@stores/Map'
 import {createContent, createContentOfIframe, createContentOfImage, createContentOfImageUrl,
@@ -39,7 +39,7 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
       Array.from(dataTransfer.items).forEach((item) => {
         const file = item.getAsFile()
         if (item.kind === 'file' && file) {
-          let creator: ((file:File, map:MapData, offset?:[number, number]) => Promise<SharedContent>)
+          let creator: ((file:File, map:MapData, offset?:[number, number]) => Promise<ISharedContent>)
             | undefined = undefined
           if (item.type.indexOf('image') !== -1) {
             creator = createContentOfImage
@@ -116,7 +116,6 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
   function onShare() {
     // console.log("onClick b:", evt.button, " bs:" ,evt.buttons, " d:", evt.detail, " p:", evt.eventPhase)
     //  Add the pasted content to sharedContents and clear the pastedContent.
-    const TIME_RESOLUTION_IN_MS = 100
     pastedContent.zorder = Math.floor(Date.now() / TIME_RESOLUTION_IN_MS)
     pastedContent.pinned = true
     sharedContents.addLocalContent(_.cloneDeep(pastedContent))

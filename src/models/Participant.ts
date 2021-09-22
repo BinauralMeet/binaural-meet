@@ -22,11 +22,6 @@ export interface LocalParticipant extends ParticipantBase {
 }
 export type Participant = LocalParticipant | RemoteParticipant
 
-export interface Pose3DAudio {  // right hand cartesian coordinate system
-  position: [number, number, number],
-  orientation: [number, number, number],
-}
-
 export interface RemoteInformation {
   name: string
   avatarSrc: string

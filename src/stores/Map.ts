@@ -1,4 +1,5 @@
 import {MapObject as IMapObject} from '@models/MapObject'
+import { PARTICIPANT_SIZE } from '@models/Participant'
 import {
   addV2, extractRotation, radian2Degree, rotateVector2D, subV2, transformPoint2D} from '@models/utils'
 import {action, computed, makeObservable, observable} from 'mobx'
@@ -67,6 +68,14 @@ export class MapData {
   }
   rotateToWindow(pos:[number, number]) {
     return rotateVector2D(this.matrix, pos)
+  }
+  visibleArea(){
+    const lt = this.fromWindow([0,0])
+    const rb = this.fromWindow(this.screenSize)
+    const margin = PARTICIPANT_SIZE * 4
+//    console.log(`visibleArea ${lt}, ${rb}`)
+
+    return [lt[1] - margin, rb[0] + margin, rb[1] + margin, lt[0] - margin]
   }
   readonly keyInputUsers = new Set<string>()
 

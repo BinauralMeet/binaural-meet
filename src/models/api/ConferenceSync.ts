@@ -1,12 +1,13 @@
 import {contentTrackCarrierName, roomInfoPeeperName} from '@models/api/Constants'
 import { KickTime } from '@models/KickTime'
 import {t} from '@models/locales'
-import {Pose2DMap} from '@models/MapObject'
 import {priorityCalculator} from '@models/middleware/trafficControl'
 import {defaultRemoteInformation, Mouse, PARTICIPANT_SIZE, Physics, RemoteInformation, TrackStates} from '@models/Participant'
-import {SharedContent as ISharedContent} from '@models/SharedContent'
+import {ISharedContent} from '@models/ISharedContent'
 import {urlParameters} from '@models/url'
+import {Pose2DMap} from '@models/utils'
 import {normV, subV2} from '@models/utils'
+import {assert} from '@models/utils'
 import chat, { ChatMessage, ChatMessageToSend } from '@stores/Chat'
 import errorInfo from '@stores/ErrorInfo'
 import {MediaSettings} from '@stores/participants/LocalParticipant'
@@ -18,41 +19,11 @@ import _ from 'lodash'
 import {autorun, IReactionDisposer} from 'mobx'
 import type {BMMessage, Conference} from './Conference'
 import {ConferenceEvents} from './Conference'
+import {MessageType} from './MessageType'
 import { notification } from './Notification'
 
 // config.js
 declare const config:any             //  from ../../config.js included from index.html
-
-export const MessageType = {
-  //  common instant messages
-  CHAT_MESSAGE: 'm_chat',                       //  -> text chat message
-  PARTICIPANT_TRACKLIMITS: 'm_track_limits',    //  -> message, basically does not sync
-  YARN_PHONE: 'YARN_PHONE',                     //  -> message
-  CALL_REMOTE: 'call_remote',                   //  -> message, to give notification to a remote user.
-  MUTE_VIDEO: 'm_mute_video',                   //  ask to mute video
-  MUTE_AUDIO: 'm_mute_audio',                   //  ask to mute audio
-  RELOAD_BROWSER: 'm_reload',                   //  ask to reload browser
-  KICK: 'm_kick',
-  //  instant but accumulating message
-  CONTENT_UPDATE_REQUEST: 'content_update',     //  -> message
-  CONTENT_REMOVE_REQUEST: 'content_remove',     //  -> message
-  LEFT_CONTENT_REMOVE_REQUEST: 'left_content_remove',     //  -> message
-
-  //  common messages possibly stored in the server (PropertyType is also used as type of message stored)
-  PARTICIPANT_POSE: 'mp',                       //  -> update presence once per 5 sec / message immediate value
-  PARTICIPANT_MOUSE: 'mm',                      //  -> message
-  AFK_CHANGED: 'afk_changed',                   //
-
-  //  For message fragmentation for SCTP
-  FRAGMENT_HEAD: 'frag_head',
-  FRAGMENT_CONTENT: 'frag_cont',
-
-  //  messages only for bmRelayServer
-  PARTICIPANT_LEFT: 'm_participant_left',       //  remove infos of the participant
-  REQUEST: 'request',                           //  request for all info
-  REQUEST_TO: 'request_to',                     //  request for all info to specified participants
-  SET_PERIOD: 'set_period',                     //  set period to send message to me.
-}
 
 export const PropertyType = {
   PARTICIPANT_INFO: 'p_info',                   //  -> presence
@@ -146,7 +117,7 @@ export class ConferenceSync{
     }
   }
   sendAfkChanged(){
-    this.conference.sendMessage(MessageType.AFK_CHANGED, '', participants.local.awayFromKeyboard)
+    this.conference.sendMessage(MessageType.PARTICIPANT_AFK, '', participants.local.awayFromKeyboard)
   }
 
   //  Only for test (admin config dialog).
@@ -157,7 +128,7 @@ export class ConferenceSync{
   //  Send content update request to pid
   sendContentUpdateRequest(pid: string, updated: ISharedContent[]) {
     if (!this.conference.bmRelaySocket &&
-      updated.map(c=>c.url.length).reduce((prev, cur) => prev+cur) > FRAGMENTING_LENGTH) {
+      updated.map(c=>c.url ? c.url.length : 0).reduce((prev, cur) => prev+cur) > FRAGMENTING_LENGTH) {
       this.sendFragmentedMessage(MessageType.CONTENT_UPDATE_REQUEST, pid, updated)
     }else {
       this.conference.sendMessage(MessageType.CONTENT_UPDATE_REQUEST, pid, updated)
@@ -168,6 +139,7 @@ export class ConferenceSync{
     this.conference.sendMessage(MessageType.CONTENT_REMOVE_REQUEST, pid, removed)
   }
   sendLeftContentRemoveRequest(removed: string[]) {
+    assert(!config.bmRelayServer)
     this.conference.sendMessage(MessageType.LEFT_CONTENT_REMOVE_REQUEST, '', removed)
   }
   //  send main screen carrir
@@ -183,13 +155,13 @@ export class ConferenceSync{
   }
   //  send myContents of local to remote participants.
   sendMyContents() {
-    const cs = Array.from(contents.localParticipant.myContents.values())
-    const contentsToSend = extractContentDataAndIds(cs)
-    syncLog(`send all contents ${JSON.stringify(contentsToSend.map(c => c.id))}.`,
-            contentsToSend)
     if (config.bmRelayServer){
-      this.conference.sendMessage(PropertyType.MY_CONTENT, '', contentsToSend)
+      this.sendContentUpdateRequest('', Array.from(contents.roomContents.values()))
     }else{
+      const cs = Array.from(contents.localParticipant.myContents.values())
+      const contentsToSend = extractContentDataAndIds(cs)
+      syncLog(`send all contents ${JSON.stringify(contentsToSend.map(c => c.id))}.`,
+              contentsToSend)
       this.conference.setLocalParticipantProperty(PropertyType.MY_CONTENT, contentsToSend)
     }
   }
@@ -414,7 +386,7 @@ export class ConferenceSync{
       this.conference._jitsiConference?.room.leave()
       this.onKicked(pid, reason)
     })
-    this.conference.on(MessageType.AFK_CHANGED, this.onAfkChanged)
+    this.conference.on(MessageType.PARTICIPANT_AFK, this.onAfkChanged)
     this.conference.on(PropertyType.PARTICIPANT_INFO, this.onParticipantInfo)
     this.conference.on(PropertyType.PARTICIPANT_TRACKSTATES, this.onParticipantTrackState)
     this.conference.on(MessageType.PARTICIPANT_POSE, this.onParticipantPose)
@@ -566,7 +538,7 @@ export class ConferenceSync{
     for(const msg of msgs){
       switch(msg.t){
         case MessageType.REQUEST_TO: this.sendAllAboutMe(); break
-        case MessageType.AFK_CHANGED: this.onAfkChanged(msg.p, JSON.parse(msg.v)); break
+        case MessageType.PARTICIPANT_AFK: this.onAfkChanged(msg.p, JSON.parse(msg.v)); break
         case MessageType.CALL_REMOTE: this.onCallRemote(msg.p); break
         case MessageType.CHAT_MESSAGE: this.onChatMessage(msg.p, JSON.parse(msg.v)); break
         case MessageType.CONTENT_REMOVE_REQUEST: this.onContentRemoveRequest(msg.p, JSON.parse(msg.v)); break

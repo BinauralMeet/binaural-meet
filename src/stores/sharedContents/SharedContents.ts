@@ -1,18 +1,22 @@
 import {connection} from '@models/api'
-import {MessageType} from '@models/api/ConferenceSync'
-import {SharedContent as ISharedContent} from '@models/SharedContent'
+import {MessageType} from '@models/api/MessageType'
+import {isContentWallpaper, ISharedContent, SharedContentInfo, WallpaperStore} from '@models/ISharedContent'
 import {diffMap, intersectionMap} from '@models/utils'
+import {assert} from '@models/utils'
 import {default as participantsStore} from '@stores/participants/Participants'
 import participants from '@stores/participants/Participants'
 import {EventEmitter} from 'events'
 import _ from 'lodash'
 import {action, autorun, computed, makeObservable, observable} from 'mobx'
-import {createContent, isContentWallpaper, moveContentToTop} from './SharedContentCreator'
+import {createContent, extractContentDatas, moveContentToTop} from './SharedContentCreator'
 import {SharedContentTracks} from './SharedContentTracks'
 
 export const CONTENTLOG = false      // show manipulations and sharing of content
 export const contentLog = CONTENTLOG ? console.log : (a:any) => {}
 export const contentDebug = CONTENTLOG ? console.debug : (a:any) => {}
+
+// config.js
+declare const config:any             //  from ../../config.js included from index.html
 
 function zorderComp(a:ISharedContent, b:ISharedContent) {
   return a.zorder - b.zorder
@@ -20,15 +24,16 @@ function zorderComp(a:ISharedContent, b:ISharedContent) {
 
 export class ParticipantContents{
   constructor(pid: string) {
+    assert(!config.bmRelayServer)
     makeObservable(this)
     this.participantId = pid
   }
-  contentIdCounter = 0
   participantId = ''
   @observable.shallow myContents = new Map<string, ISharedContent>()
 }
 
 export class SharedContents extends EventEmitter {
+  private contentIdCounter = 0
   private localId = ''
   constructor() {
     super()
@@ -56,12 +61,6 @@ export class SharedContents extends EventEmitter {
       localStorage.setItem('screenFps', JSON.stringify(this.screenFps))
     })
   }
-  tracks = new SharedContentTracks(this)
-
-  @observable pasteEnabled = true
-
-  //  the user editing content
-  @observable editing = ''
   @action setEditing(id: string){
     if (id !== this.editing && this.beforeChangeEditing){
       this.beforeChangeEditing(this.editing, id)
@@ -78,12 +77,21 @@ export class SharedContents extends EventEmitter {
   // -----------------------------------------------------------------
   //  Contents
   //  All shared contents in Z order. Observed by component.
+  tracks = new SharedContentTracks(this)
+  @observable pasteEnabled = true
+  @observable editing = ''    //  the user editing content
   @observable.shallow all: ISharedContent[] = []
   @observable.shallow sorted: ISharedContent[] = []
-  //  contents by owner
+  //  Contents by owner  used only when no relay server exists.
   participants: Map < string, ParticipantContents > = new Map<string, ParticipantContents>()
   pendToRemoves: Map < string, ParticipantContents > = new Map<string, ParticipantContents>()
+  //  Contents by room  used only when a relay server exsits.
+  @observable.shallow roomContents = new Map<string, ISharedContent>()
+  //  Contents info     used only when a relay server exsits.
+  @observable.shallow roomContentsInfo = new Map<string, SharedContentInfo>()
+
   getParticipant(pid: string) {
+    assert(!config.bmRelayServer)
     //  prepare participantContents
     let participant = this.participants.get(pid)
     if (!participant) {
@@ -117,16 +125,22 @@ export class SharedContents extends EventEmitter {
   //  Map<cid, pid>, map from contentId to participantId
   owner: Map<string, string> = new Map<string, string>()
 
-  public find(contentId: string) {
-    const pid = this.owner.get(contentId)
-    if (pid) {
-      return this.participants.get(pid)?.myContents.get(contentId)
+  public find(cid: string) {
+    if (config.bmRelayServer){
+      return this.roomContents.get(cid)
+    }else{
+      const pid = this.owner.get(cid)
+      if (pid) {
+        return this.participants.get(pid)?.myContents.get(cid)
+      }
     }
 
     return undefined
   }
 
   removeSameWallpaper(bgs: ISharedContent[]) {
+    assert(!config.bmRelayServer)
+
     let rv = false
     this.localParticipant.myContents.forEach((c) => {
       if (isContentWallpaper(c)) {
@@ -146,6 +160,10 @@ export class SharedContents extends EventEmitter {
   }
 
   checkDuplicatedWallpaper(pid: string, cs: ISharedContent[]) {
+    assert(!config.bmRelayServer)
+
+    if (config.bmRelayServer){ return }
+
     const targets = cs.filter(isContentWallpaper)
     this.localParticipant.myContents.forEach((c) => {
       if (isContentWallpaper(c)) {
@@ -159,6 +177,8 @@ export class SharedContents extends EventEmitter {
   }
 
   private removeDuplicated() {
+    assert(!config.bmRelayServer)
+
     let changed = false
     this.participants.forEach((remote) => {
       if (remote.participantId > this.localParticipant.participantId) {
@@ -175,14 +195,18 @@ export class SharedContents extends EventEmitter {
     }
   }
   private updateAll() {
-    this.removeDuplicated()
     const newAll:ISharedContent[] = []
-    this.participants.forEach((participant) => {
-      newAll.push(...participant.myContents.values())
-    })
-    this.pendToRemoves.forEach((participant) => {
-      newAll.push(...participant.myContents.values())
-    })
+    if (config.bmRelayServer){
+      Object.assign(newAll, Array.from(this.roomContents.values()))
+    }else{
+      this.removeDuplicated()
+      this.participants.forEach((participant) => {
+        newAll.push(...participant.myContents.values())
+      })
+      this.pendToRemoves.forEach((participant) => {
+        newAll.push(...participant.myContents.values())
+      })
+    }
     const newSorted = Array.from(newAll).sort(zorderComp)
     newSorted.forEach((c, idx) => {c.zIndex = idx+1})
 
@@ -190,13 +214,11 @@ export class SharedContents extends EventEmitter {
     this.all = newAll
     this.sorted = newSorted
 
-    /*  do not save wall paper. Load wall paper may cause lost of wall paper
-    this.saveWallpaper()  */
-
-    //  console.log('update all len=', this.all.length, ' all=', JSON.stringify(this.all))
+    if (!config.bmRelayServer){
+      this.saveWallpaper()
+    }
   }
 
-  /*
   //  wallpaper contents
   wallpapers = ''
   private getWallpaper() {
@@ -225,7 +247,7 @@ export class SharedContents extends EventEmitter {
       localStorage.setItem('wallpapers', JSON.stringify(wpStores))
     }
   }
-  private loadWallpaper() {
+  loadWallpaper() {
     if (this.wallpapers) { return }         //  already loaded
     const curWp = this.getWallpaper()
     if (curWp.length) {                     //  already exist
@@ -251,21 +273,25 @@ export class SharedContents extends EventEmitter {
       }
     }
   }
-  */
 
   //  add
   addLocalContent(c:ISharedContent) {
-    if (!participantsStore.localId) {
-      console.error('addLocalContant() failed. Invalid Participant ID.')
+    if (config.bmRelayServer){
+      if (!c.id) { c.id = this.getUniqueId() }
+      this.updateByLocal(c)
+    }else{
+      if (!participantsStore.localId) {
+        console.error('addLocalContant() failed. Invalid Participant ID.')
 
-      return
+        return
+      }
+      if (!c.id) { c.id = this.getUniqueId() }
+      this.localParticipant.myContents.set(c.id, c)
+      this.owner.set(c.id, participantsStore.localId)
+      //  console.log('addLocalConent', c)
+      this.updateAll()
+      connection.conference.sync.sendMyContents()
     }
-    if (!c.id) { c.id = this.getUniqueId() }
-    this.localParticipant.myContents.set(c.id, c)
-    this.owner.set(c.id, participantsStore.localId)
-    //  console.log('addLocalConent', c)
-    this.updateAll()
-    connection.conference.sync.sendMyContents()
   }
 
   takeContentsFromDead(pc: ParticipantContents, cidTake?: string){
@@ -339,82 +365,124 @@ export class SharedContents extends EventEmitter {
   //  Temporaly update local only no sync with other participant.
   //  This makes non-detectable inconsistency and must call updateByLocal() soon later.
   updateLocalOnly(newContent: ISharedContent){
-    const pc = this.checkAndGetContent(newContent.id, 'updateByLocal').pc
-    if (pc) {
-      pc.myContents.set(newContent.id, newContent)
-      this.updateAll()
+    if (config.bmRelayServer){
+      this.roomContents.set(newContent.id, newContent)
+    }else{
+      const pc = this.checkAndGetContent(newContent.id, 'updateByLocal').pc
+      if (pc) {
+        pc.myContents.set(newContent.id, newContent)
+      }
     }
+    this.updateAll()
   }
   //  updated by local user
   updateByLocal(newContent: ISharedContent) {
-    const {pid, pc} = this.getOrTakeContent(newContent.id, 'updateByLocal')
-    if (pc) {
-      if (pid === this.localId) {
-        pc.myContents.set(newContent.id, newContent)
-        this.updateAll()
-        connection.conference.sync.sendMyContents()
-      }else if (pid) {
-        connection.conference.sync.sendContentUpdateRequest(pid, [newContent])
+    if (config.bmRelayServer){
+      this.roomContents.set(newContent.id, newContent)
+      connection.conference.sync.sendContentUpdateRequest('', [newContent])
+      this.updateAll()
+    }else{
+      const {pid, pc} = this.getOrTakeContent(newContent.id, 'updateByLocal')
+      if (pc) {
+        if (pid === this.localId) {
+          pc.myContents.set(newContent.id, newContent)
+          this.updateAll()
+          connection.conference.sync.sendMyContents()
+        }else if (pid) {
+          connection.conference.sync.sendContentUpdateRequest(pid, [newContent])
+        }
       }
     }
   }
 
   //  removed by local user
   removeByLocal(cid: string) {
-    const {pid, pc, take} = this.getOrTakeContent(cid, 'removeByLocal')
-    //console.log(`remove by local pid:${pid} take;${take} cid:${cid}.`)
-    if (pc) {
-      if (take){
-        //  if take the content from pendToRemoves, remove from pendToRemove in remotes.
-        console.log(`sendLeftContentRemoveRequest of ${cid}.`)
-        connection.conference.sync.sendLeftContentRemoveRequest([cid])
+    if (config.bmRelayServer){
+      const toRemove = this.roomContents.get(cid)
+      if (toRemove){
+        this.disposeContent(toRemove)
+        this.roomContents.delete(cid)
       }
-
-      //  remove the content
-      if (pid === this.localId) {
-        this.removeMyContent(cid)
-        connection.conference.sync.sendMyContents()
-      }else if (pid) {
-        if (participants.remote.has(pid)){
-          connection.conference.sync.sendContentRemoveRequest(pid, [cid])
+      connection.conference.sync.sendContentRemoveRequest('', [cid])
+      this.updateAll()
+    }else{
+      const {pid, pc, take} = this.getOrTakeContent(cid, 'removeByLocal')
+      //console.log(`remove by local pid:${pid} take;${take} cid:${cid}.`)
+      if (pc) {
+        if (take){
+          //  if take the content from pendToRemoves, remove from pendToRemove in remotes.
+          console.log(`sendLeftContentRemoveRequest of ${cid}.`)
+          connection.conference.sync.sendLeftContentRemoveRequest([cid])
         }
-      }
-    } else if (pid && connection.conference.bmRelaySocket?.readyState === WebSocket.OPEN)  {
-      //  remove participant remaining in relay server
-      if (!participants.remote.has(pid)){
-        connection.conference.sendMessageViaRelay(MessageType.PARTICIPANT_LEFT, '', pid)
+
+        //  remove the content
+        if (pid === this.localId) {
+          this.removeMyContent(cid)
+          connection.conference.sync.sendMyContents()
+        }else if (pid) {
+          if (participants.remote.has(pid)){
+            connection.conference.sync.sendContentRemoveRequest(pid, [cid])
+          }
+        }
+      } else if (pid && connection.conference.bmRelaySocket?.readyState === WebSocket.OPEN) {
+        //  remove participant remaining in relay server
+        if (!participants.remote.has(pid)){
+          connection.conference.sendMessageViaRelay(MessageType.PARTICIPANT_LEFT, '', pid)
+        }
       }
     }
   }
   //  Update request from remote.
   updateByRemoteRequest(cs: ISharedContent[]) {
-    const local = this.getParticipant(this.localId)
-    for (const c of cs) {
-      const pid = this.owner.get(c.id)
-      if (pid === this.localId) {
-        local.myContents.set(c.id, c)
-      }else {
-        console.error(`Update request of ${c.id} is for ${pid} and not for me.`)
+    if (config.bmRelayServer){
+      for (const c of cs) {
+        this.roomContents.set(c.id, c)
+        if ((c.type === 'screen' || c.type === 'camera')) {
+          this.tracks.onUpdateContent(c)
+        }
       }
+    }else{
+      const local = this.getParticipant(this.localId)
+      for (const c of cs) {
+        const pid = this.owner.get(c.id)
+        if (pid === this.localId) {
+          local.myContents.set(c.id, c)
+        }else {
+          console.error(`Update request of ${c.id} is for ${pid} and not for me.`)
+        }
+      }
+      connection.conference.sync.sendMyContents()
     }
     this.updateAll()
-    connection.conference.sync.sendMyContents()
   }
   //  Remove request from remote.
   removeByRemoteRequest(cids: string[]) {
-    for (const cid of cids){
-      const {pid, pc} = this.checkAndGetContent(cid, 'removeByRemoteRequest')
-      if (pc) {
-        if (pid === this.localId) {
-          this.removeMyContent(cid)
-        }else {
-          console.error('remote try to remove my content')
+    if (config.bmRelayServer){
+      for (const cid of cids) {
+        const toRemove = this.roomContents.get(cid)
+        if (toRemove){
+          this.disposeContent(toRemove)
+          this.roomContents.delete(cid)
         }
       }
+      this.updateAll()
+    }else{
+      for (const cid of cids){
+        const {pid, pc} = this.checkAndGetContent(cid, 'removeByRemoteRequest')
+        if (pc) {
+          if (pid === this.localId) {
+            this.removeMyContent(cid)
+          }else {
+            console.error('remote try to remove my content')
+          }
+        }
+      }
+      connection.conference.sync.sendMyContents()
     }
-    connection.conference.sync.sendMyContents()
   }
   removeLeftContentByRemoteRequest(cids: string[]) {
+    assert(!config.bmRelayServer)
+
     for (const cid of cids){
       const pid = this.owner.get(cid)
       if (pid){
@@ -433,6 +501,8 @@ export class SharedContents extends EventEmitter {
   }
   //  remove my content
   private removeMyContent(cid:string, pid?: string){
+    assert(!config.bmRelayServer)
+
     if (!pid) { pid = this.localId }
     const pc = this.getParticipant(pid)
     const toRemove = pc.myContents.get(cid)
@@ -451,6 +521,8 @@ export class SharedContents extends EventEmitter {
 
   //  replace remote contents of an remote user by remote.
   replaceRemoteContents(cs: ISharedContent[], pid:string) {
+    assert(!config.bmRelayServer)
+
     if (pid === contents.localId) {
       console.error('A remote tries to replace local contents.')
     }
@@ -465,6 +537,8 @@ export class SharedContents extends EventEmitter {
 
   //  Update remote contents by remote.
   private updateRemoteContents(cs: ISharedContent[], pid:string) {
+    assert(!config.bmRelayServer)
+
     if (pid === contents.localId) {
       console.error('A remote tries to updates local contents.')
     }
@@ -499,6 +573,8 @@ export class SharedContents extends EventEmitter {
   }
   //  Remove remote contents by remote.
   private removeRemoteContents(cids: string[], pid:string) {
+    assert(!config.bmRelayServer)
+
     if (pid === contents.localId) {
       console.error('Remote removes local contents.')
     }
@@ -518,34 +594,39 @@ export class SharedContents extends EventEmitter {
 
   //  If I'm the next, obtain the contents
   onParticipantLeft(pidLeave:string) {
-    contentLog('onParticipantLeft called with pid = ', pidLeave)
-    const participantLeave = this.participants.get(pidLeave)
-    if (participantLeave) {
-      const allPids = Array.from(participantsStore.remote.keys())
-      allPids.push(this.localId)
-      allPids.sort()
-      const idx = allPids.findIndex(cur => cur > pidLeave)
-      const next = allPids[idx >= 0 ? idx : 0]
-      contentLog('next = ', next)
-      let updated = false
-      if (next === this.localId) {
-        contentLog('Next is me')
-        updated = this.takeContentsFromDead(participantLeave) || updated
-        contentLog('remove:', pidLeave, ' current:', JSON.stringify(allPids))
-        contentLog('local contents sz:', this.localParticipant.myContents.size,
-                   ' json:', JSON.stringify(Array.from(this.localParticipant.myContents.keys())))
-      } else {
-        contentLog('Next is remote')
-        this.pendToRemoveParticipant(participantLeave)
-      }
-      this.updateAll()
-      if (updated){
-        connection.conference.sync.sendMyContents()
+    if (!config.bmRelayServer){
+
+      contentLog('onParticipantLeft called with pid = ', pidLeave)
+      const participantLeave = this.participants.get(pidLeave)
+      if (participantLeave) {
+        const allPids = Array.from(participantsStore.remote.keys())
+        allPids.push(this.localId)
+        allPids.sort()
+        const idx = allPids.findIndex(cur => cur > pidLeave)
+        const next = allPids[idx >= 0 ? idx : 0]
+        contentLog('next = ', next)
+        let updated = false
+        if (next === this.localId) {
+          contentLog('Next is me')
+          updated = this.takeContentsFromDead(participantLeave) || updated
+          contentLog('remove:', pidLeave, ' current:', JSON.stringify(allPids))
+          contentLog('local contents sz:', this.localParticipant.myContents.size,
+                     ' json:', JSON.stringify(Array.from(this.localParticipant.myContents.keys())))
+        } else {
+          contentLog('Next is remote')
+          this.pendToRemoveParticipant(participantLeave)
+        }
+        this.updateAll()
+        if (updated){
+          connection.conference.sync.sendMyContents()
+        }
       }
     }
   }
 
   private pendToRemoveParticipant(pc: ParticipantContents){
+    assert(!config.bmRelayServer)
+
     const removes = Array.from(pc.myContents.values()).filter(c => c.type === 'camera' || c.type ==='screen')
     removes.forEach(c => {
       pc.myContents.delete(c.id)
@@ -556,47 +637,53 @@ export class SharedContents extends EventEmitter {
   }
 
   clearAllRemotes(){
-    const remotes = Array.from(this.participants.keys()).filter(key => key !== this.localId)
-    remotes.forEach(pid=>this.participants.delete(pid))
-    this.tracks.clearConnection()
+    if (config.bmRelayServer){
+      this.roomContents.clear()
+    }else{
+      const remotes = Array.from(this.participants.keys()).filter(key => key !== this.localId)
+      remotes.forEach(pid=>this.participants.delete(pid))
+      this.tracks.clearConnection()
+    }
   }
 
   removeAllContents(){
-    this.participants.forEach((pc, pid) => {
-      if (pid !== this.localId){
+    if (config.bmRelayServer){
+      const cids = Array.from(this.roomContents.keys())
+      connection.conference.sync.sendContentRemoveRequest('', cids)
+      this.roomContents.clear()
+    }else{
+      this.participants.forEach((pc, pid) => {
+        if (pid !== this.localId){
+          const cs = Array.from(pc.myContents.values())
+          connection.conference.sync.sendContentRemoveRequest(pid, cs.map(c => c.id))
+        }
+      })
+      this.pendToRemoves.forEach(pc => {
         const cs = Array.from(pc.myContents.values())
-        connection.conference.sync.sendContentRemoveRequest(pid, cs.map(c => c.id))
-      }
-    })
-    this.pendToRemoves.forEach(pc => {
-      const cs = Array.from(pc.myContents.values())
-      connection.conference.sync.sendLeftContentRemoveRequest(cs.map(c => c.id))
-    })
-    this.owner.clear()
-    this.participants.clear()
-    this.pendToRemoves.clear()
-    connection.conference.sync.sendMyContents()
+        connection.conference.sync.sendLeftContentRemoveRequest(cs.map(c => c.id))
+      })
+      this.owner.clear()
+      this.participants.clear()
+      this.pendToRemoves.clear()
+      connection.conference.sync.sendMyContents()
+    }
     this.updateAll()
   }
 
   // create a new unique content id
-  getUniqueId() {
+  getUniqueId(): string {
     const pid = participantsStore.localId
-    if (!this.participants.has(pid)) {
-      this.participants.set(pid, new ParticipantContents(pid))
-    }
-    const participant = this.participants.get(pid)
-    if (participant) {
-      while (1) {
-        participant.contentIdCounter += 1
-        const id = `${participant.participantId}_${participant.contentIdCounter}`
-        if (!this.owner.has(id)) {
-          return id
-        }
+    while (1) {
+      this.contentIdCounter += 1
+      const id = `${pid}_${this.contentIdCounter}`
+      if (config.bmRelayServer){
+        if (!this.roomContents.has(id)) { return id }
+      }else{
+        if (!this.owner.has(id)) { return id }
       }
     }
-    console.error('Error in getUniqueId()')
 
+    //  eslint-disable-next-line no-unreachable
     return ''
   }
 
@@ -605,10 +692,9 @@ export class SharedContents extends EventEmitter {
       this.setEditing('')
     }
     if (c.type === 'screen' || c.type === 'camera') {
-      const pid = this.owner.get(c.id)
-      if (pid === this.localId) {
+      if (this.tracks.contentCarriers.has(c.id)){
         this.tracks.clearLocalContent(c.id)
-      }else {
+      }else{
         this.tracks.clearRemoteContent(c.id)
       }
     }

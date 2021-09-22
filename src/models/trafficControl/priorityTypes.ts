@@ -1,5 +1,4 @@
-import {Pose2DMap} from '@models/MapObject'
-import {JitsiRemoteTrack} from 'lib-jitsi-meet'
+import {Pose2DMap} from '@models/utils'
 
 export interface TrackInfo {
   pose: Pose2DMap,
@@ -13,5 +12,3 @@ export interface RemoteTrackInfo extends TrackInfo {
   priority: number,
   muted: boolean,
 }
-
-type Id = number

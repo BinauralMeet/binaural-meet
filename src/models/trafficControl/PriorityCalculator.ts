@@ -1,5 +1,5 @@
 import {PARTICIPANT_SIZE} from '@models/Participant'
-import {SharedContent} from '@models/SharedContent'
+import {ISharedContent} from '@models/ISharedContent'
 import {diffMap} from '@models/utils'
 import {participantsStore as participants} from '@stores/participants'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
@@ -27,7 +27,7 @@ function extractParticipantTrackInfo(participant: RemoteParticipant, track: Jits
     muted: track.isAudioTrack() ? participant.muteAudio : participant.muteVideo
   }
 }
-function extractContentTrackInfo(content: SharedContent, track:JitsiTrack): RemoteTrackInfo {
+function extractContentTrackInfo(content: ISharedContent, track:JitsiTrack): RemoteTrackInfo {
   return {
     endpointId: (track as JitsiRemoteTrack).getParticipantId(),
     onStage : false,

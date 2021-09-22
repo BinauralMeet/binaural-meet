@@ -1,11 +1,10 @@
 import {Stores} from '@components/utils'
-import {SharedContent as ISharedContent} from '@models/SharedContent'
-import {doseContentEditingUseKeyinput} from '@stores/sharedContents/SharedContentCreator'
+import {doseContentEditingUseKeyinput, ISharedContent} from '@models/ISharedContent'
 import {contentLog} from '@stores/sharedContents/SharedContents'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {MouseOrTouch, RndContent} from './RndContent'
-export interface SharedContentProps extends Stores{
+export interface ISharedContentProps extends Stores{
   content: ISharedContent,
 }
 
@@ -16,10 +15,7 @@ export const sharedContentHandler = (props: Stores&{content:ISharedContent}) => 
       evt.stopPropagation()
       props.map.keyInputUsers.delete(props.content.id)
       props.map.keyInputUsers.delete('contentForm')
-      const pid = props.contents.owner.get(props.content.id)
-      if (pid) {
-        props.contents.removeByLocal(props.content.id)
-      }
+      props.contents.removeByLocal(props.content.id)
     },
     updateAndSend:(c: ISharedContent) => {
       //	console.log('updateByLocal(send content)')
@@ -31,7 +27,7 @@ export const sharedContentHandler = (props: Stores&{content:ISharedContent}) => 
   }
 }
 
-export const SharedContent: React.FC<SharedContentProps> = (props:SharedContentProps) => {
+export const SharedContent: React.FC<ISharedContentProps> = (props:ISharedContentProps) => {
   //  set whether use keyboard input or not
   const map = props.map
   const editing = useObserver(() => props.contents.editing === props.content.id)

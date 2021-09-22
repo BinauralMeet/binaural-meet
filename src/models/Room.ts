@@ -1,5 +1,5 @@
 import {ParticipantBase} from './Participant'
-import {SharedContent} from './SharedContent'
+import {ISharedContent} from './ISharedContent'
 import {Terrain} from './Terrain'
 
 export interface Room {
@@ -9,6 +9,6 @@ export interface Room {
   }
   terrain: Terrain
   sharedContents: {
-    [key: string]: SharedContent,
+    [key: string]: ISharedContent,
   }
 }

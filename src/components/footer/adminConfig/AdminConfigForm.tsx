@@ -3,7 +3,7 @@ import Button from '@material-ui/core/Button'
 import Popover from '@material-ui/core/Popover'
 import TextField from '@material-ui/core/TextField'
 import {connection} from '@models/api'
-import {MessageType} from '@models/api/ConferenceSync'
+import {MessageType} from '@models/api/MessageType'
 import {isDarkColor, rgb2Color} from '@models/utils'
 import roomInfo from '@stores/RoomInfo'
 import contents from '@stores/sharedContents/SharedContents'
@@ -17,8 +17,8 @@ export interface AdminConfigFormProps{
 }
 function onKeyPress(ev:React.KeyboardEvent){
   if (ev.key === 'Enter') {
-    let pass = connection.conference.roomInfoServer?.roomProps.get('password')
-    roomInfo.passMatched = roomInfo?.password === (pass ? pass : '')
+    let pass = roomInfo.roomProps.get('password')
+    roomInfo.passMatched = roomInfo.password === (pass ? pass : '')
   }
 }
 function btnColor(){
@@ -45,7 +45,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
           onKeyPress={onKeyPress}/>
         &emsp;
         <Button variant="contained" color="primary" style={{textTransform:'none'}} onClick={() => {
-          let pass = connection.conference.roomInfoServer?.roomProps.get('password')
+          let pass = roomInfo.roomProps.get('password')
           if (!pass){ pass = '' }
           roomInfo.passMatched = roomInfo?.password === pass
         }}> Check </Button>&emsp;

@@ -1,14 +1,17 @@
 import {connection} from '@models/api'
 import {ConnectionForContent} from '@models/api/ConnectionForScreenContent'
-import {SharedContent} from '@models/SharedContent'
+import {ISharedContent} from '@models/ISharedContent'
 import {assert} from '@models/utils'
 import {SharedContents} from '@stores/sharedContents/SharedContents'
 import {JitsiLocalTrack, JitsiRemoteTrack, JitsiTrack} from 'lib-jitsi-meet'
 import {action, computed, makeObservable, observable} from 'mobx'
 
+// config.js
+declare const config:any             //  from ../../config.js included from index.html
+
 export const CID_MAINSCREEN = 'mainScreen'
 
-const LOG_CONTENT_TRACK = false
+const LOG_CONTENT_TRACK = true
 const contentTrackLog = LOG_CONTENT_TRACK ? console.log : () => {}
 
 export class SharedContentTracks {
@@ -27,7 +30,7 @@ export class SharedContentTracks {
   localMainConnection?:ConnectionForContent = undefined
   //  tracks for local main
   @observable.shallow localMains: Set<JitsiLocalTrack> = new Set()
-  //  connection for localContents
+  //  connection for localContents  key is cid
   contentCarriers: Map<string, ConnectionForContent> = new Map()
   //  tracks for local contents
   @observable localContents: Map<string, Set<JitsiLocalTrack>> = new Map()
@@ -67,7 +70,7 @@ export class SharedContentTracks {
     }
   }
 
-  public onUpdateContent(c: SharedContent) {
+  public onUpdateContent(c: ISharedContent) {
     contentTrackLog(`update SC: id:${c.id} pid:${c.url} cid in map:${this.carrierMap.get(c.url)}`)
     if (c.url) {
       assert(!this.carrierMap.has(c.url) || this.carrierMap.get(c.url) === c.id)
@@ -94,11 +97,20 @@ export class SharedContentTracks {
     }else if (cid === CID_MAINSCREEN) {
       this.addRemoteMain(track)
     }else {
-      if (this.sharedContents.localParticipant.myContents.has(cid)) {
-        contentTrackLog(`SC addRT:Local: cid:${cid} pid:${track.getParticipantId()} track:${track.toString()}`)
-      }else {
-        contentTrackLog(`SC addRT:cid:${cid} pid:${track.getParticipantId()} track:${track.toString()}`)
-        this.addRemoteContent(track)
+      if (config.bmRelayServer){
+        if (this.contentCarriers.has(cid)){
+          contentTrackLog(`SC addRT:Local: cid:${cid} pid:${track.getParticipantId()} track:${track.toString()}`)
+        }else{
+          contentTrackLog(`SC addRT:cid:${cid} pid:${track.getParticipantId()} track:${track.toString()}`)
+          this.addRemoteContent(track)
+        }
+      }else{
+        if (this.sharedContents.localParticipant.myContents.has(cid)) {
+          contentTrackLog(`SC addRT:Local: cid:${cid} pid:${track.getParticipantId()} track:${track.toString()}`)
+        }else {
+          contentTrackLog(`SC addRT:cid:${cid} pid:${track.getParticipantId()} track:${track.toString()}`)
+          this.addRemoteContent(track)
+        }
       }
     }
   }
@@ -222,7 +234,7 @@ export class SharedContentTracks {
 
   // -----------------------------------------------------------------
   //  Functions for contents
-  @action addLocalContents(cid:string, tracks: JitsiLocalTrack[]) {
+  @action addLocalContent(cid:string, tracks: JitsiLocalTrack[]) {
     assert(tracks.length)
     const trackSet = new Set(this.localContents.get(cid))
     tracks.forEach(track => trackSet!.add(track))

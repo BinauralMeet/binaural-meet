@@ -1,6 +1,6 @@
-import {Pose2DMap} from '@models/MapObject'
 import {LocalInformation, LocalParticipant as ILocalParticipant, Physics, RemoteInformation, TrackStates} from '@models/Participant'
 import {urlParameters} from '@models/url'
+import {Pose2DMap} from '@models/utils'
 import {checkImageUrl} from '@models/utils'
 import {Store} from '@stores/utils'
 import md5 from 'md5'

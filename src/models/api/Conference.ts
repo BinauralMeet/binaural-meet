@@ -1,16 +1,15 @@
-import {connectRoomInfoServer, RoomInfoServer} from '@models/api/RoomInfoServer'
 import { KickTime } from '@models/KickTime'
-import loadController from '@models/trafficControl/loadController'
+import { assert } from '@models/utils'
+import map from '@stores/Map'
 import {participantsStore} from '@stores/participants'
 import {default as participants} from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
-import JitsiMeetJS, {JitsiLocalTrack, JitsiRemoteTrack,
-  JitsiTrack, JitsiValues, TMediaType} from 'lib-jitsi-meet'
+import JitsiMeetJS, {JitsiLocalTrack, JitsiRemoteTrack, JitsiTrack, JitsiValues, TMediaType} from 'lib-jitsi-meet'
 import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
 import {makeObservable, observable} from 'mobx'
-import {ConferenceSync, MessageType} from './ConferenceSync'
-import { MessageType as RoomInfoMT } from './RoomInfoMessage'
+import {ConferenceSync} from './ConferenceSync'
+import {MessageType} from './MessageType'
 
 //  Log level and module log options
 export const JITSILOGLEVEL = 'warn'  // log level for lib-jitsi-meet {debug|log|warn|error}
@@ -52,7 +51,6 @@ export class Conference extends EventEmitter {
   public joinTime = 0
   sync = new ConferenceSync(this)
   @observable channelOpened = false     //  is JVB message channel open ?
-  roomInfoServer?: RoomInfoServer       //  room info server for the room properties.
   bmRelaySocket:WebSocket|undefined = undefined //  Socket for message passing via separate relay server
 
   constructor(){
@@ -60,25 +58,8 @@ export class Conference extends EventEmitter {
     makeObservable(this)
   }
 
-  lastPeriod = -1
-  private loadControl(){
-    if (this.bmRelaySocket?.readyState === WebSocket.OPEN) {
-      //  period should be 50 to 5000 ms
-      const target = 0.5
-      const period = (1 + Math.round(Math.max(0, (loadController.averagedLoad - target)/(1 - target)) * 39)) * 50
-      if (this.lastPeriod !== period){
-        this.sendMessage(MessageType.SET_PERIOD, '', period)
-      }
-      this.lastPeriod = period
-      //  console.log(`SET_PERIOD ${period}`)
-    }
-  }
-
   setRoomProp(name:string, value:string){
-    const roomName = this._jitsiConference?.getName()
-    if (roomName && this.roomInfoServer){
-      this.roomInfoServer.send(RoomInfoMT.ROOM_PROP, roomName, participants.localId, [name, value])
-    }
+    this.sendMessageViaRelay(MessageType.ROOM_PROP, '', [name, value])
   }
 
   public init(name:string, createJitsiConference:()=>JitsiMeetJS.JitsiConference|undefined){
@@ -118,8 +99,6 @@ export class Conference extends EventEmitter {
       console.log(`contentCarriers: ${JSON.stringify(contents.tracks.contentCarriers)}`)
       console.log(`remoteMains: ${JSON.stringify(contents.tracks.remoteMains.keys())}`)
     }
-
-    this.roomInfoServer = connectRoomInfoServer(this.name)
   }
 
   public uninit(){
@@ -150,6 +129,20 @@ export class Conference extends EventEmitter {
         this._jitsiConference = undefined
       })
     })
+  }
+
+  onIdle(){
+    if (this.receivedMessages.length){
+      const N_MESSAGES_ONE_IDLE = 10
+      const msgs = this.receivedMessages.splice(0, N_MESSAGES_ONE_IDLE)
+      this.sync.onBmMessage(msgs)
+      //  console.log('Process msgs', msgs)
+    }else{
+      if (this.bmRelaySocket){
+        //  console.log('request msg')
+        this.sendMessageViaRelay(MessageType.REQUEST_RANGE, '', map.visibleArea())
+      }
+    }
   }
 
   //  Commmands for local tracks --------------------------------------------
@@ -306,7 +299,7 @@ export class Conference extends EventEmitter {
   }
 
   sendMessage(type:string, to:string, value:any) {
-    if (config.bmRelayServer){
+    if (this.bmRelaySocket){
       this.sendMessageViaRelay(type, to, value)
     }else{
       this.sendMessageViaJitsi(type, to, value)
@@ -327,41 +320,53 @@ export class Conference extends EventEmitter {
       }
     }
   }
+  receivedMessages: BMMessage[] = []
+  connectToRelayServer(){
+    if (this.bmRelaySocket){ return }
+    const onOpen = () => {
+      console.log(`onOpen ${participants.localId}`)
+      this.sendMessage(MessageType.REQUEST_ALL, '', '')
+      this.sync.sendAllAboutMe()
+    }
+    const onMessage = (ev: MessageEvent<any>)=> {
+      //  console.log(`ws:`, ev)
+      if (typeof ev.data === 'string') {
+        const msgs = JSON.parse(ev.data) as BMMessage[]
+        //  console.log(`Len:${msgs.length}: ${ev.data}`)
+        this.receivedMessages.push(...msgs)
+      }
+    }
+    const onClose = () => {
+      this.bmRelaySocket = new WebSocket(config.bmRelayServer)
+      setHandler()
+    }
+    const onError = () => {
+      console.error(`Error in WebSocket for ${config.bmRelayServer}`)
+      this.bmRelaySocket?.close(3000, 'onError')
+      onClose()
+    }
+    const setHandler = () => {
+      this.bmRelaySocket?.addEventListener('error', onError)
+      this.bmRelaySocket?.addEventListener('message', onMessage)
+      this.bmRelaySocket?.addEventListener('open', onOpen)
+      this.bmRelaySocket?.addEventListener('close', onClose)
+      if ((window as any).requestIdleCallback){
+        const idleFunc = () => {
+          this.onIdle();
+          (window as any).requestIdleCallback(idleFunc)
+        }
+        (window as any).requestIdleCallback(idleFunc)
+      }
+    }
+    onClose()
+  }
   sendMessageViaRelay(type:string, to:string, value:any) {
+    assert(this.bmRelaySocket)
+
     if (this.name && participants.localId){
       const msg:BMMessage = {t:type, r:this.name, p: participants.localId,
         d:to, v:JSON.stringify(value)}
       //  create websocket
-      if (!this.bmRelaySocket){
-        const onOpen = () => {
-          this.sendMessage(MessageType.REQUEST, '', '')
-          this.sync.sendAllAboutMe()
-        }
-        const onMessage = (ev: MessageEvent<any>)=> {
-          //  console.log(`ws:`, ev)
-          if (typeof ev.data === 'string') {
-            const msgs = JSON.parse(ev.data) as BMMessage[]
-            //  console.log(`Len:${msgs.length}: ${ev.data}`)
-            this.sync.onBmMessage(msgs)
-            this.loadControl()
-          }
-        }
-        const onClose = () => {
-          this.bmRelaySocket = new WebSocket(config.bmRelayServer)
-          setHandler()
-        }
-        const onError = () => {
-          console.error(`Failed to open ${config.bmRelayServer}`)
-          this.sendMessageViaJitsi(type, to, value)
-        }
-        const setHandler = () => {
-          this.bmRelaySocket?.addEventListener('error', onError)
-          this.bmRelaySocket?.addEventListener('message', onMessage)
-          this.bmRelaySocket?.addEventListener('open', onOpen)
-          this.bmRelaySocket?.addEventListener('close', onClose)
-        }
-        onClose()
-      }
       //  send or queue message
       if (this.bmRelaySocket?.readyState === WebSocket.OPEN){
         this.bmRelaySocket.send(JSON.stringify(msg))
@@ -529,13 +534,14 @@ export class Conference extends EventEmitter {
       }
     }
 
-    //  do not load wallpapers. This may cause lost of wall papers.
-    /*  //  load wallpapers after 2secs
-    setTimeout(contents.loadWallpaper.bind(contents), 2000) */
+    //  load wallpapers after 2secs
+    if (!config.bmRelayServer){
+      setTimeout(contents.loadWallpaper.bind(contents), 2000)
+    }
 
     //  request remote info
     if (config.bmRelayServer){
-      this.sendMessage(MessageType.REQUEST, '', undefined)
+      this.connectToRelayServer()
     }
   }
 

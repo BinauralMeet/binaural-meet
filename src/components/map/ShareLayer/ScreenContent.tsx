@@ -1,5 +1,5 @@
 import {makeStyles} from '@material-ui/core/styles'
-import {SharedContent} from '@models/SharedContent'
+import {ISharedContent} from '@models/ISharedContent'
 import {assert, mulV2} from '@models/utils'
 import sharedContents from '@stores/sharedContents/SharedContents'
 import {JitsiLocalTrack, JitsiRemoteTrack} from 'lib-jitsi-meet'
@@ -18,7 +18,7 @@ const useStyles = makeStyles({
 interface ScreenContentMember{
   locals: JitsiLocalTrack[]
   remotes: JitsiRemoteTrack[]
-  content: SharedContent
+  content: ISharedContent
 }
 
 export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {

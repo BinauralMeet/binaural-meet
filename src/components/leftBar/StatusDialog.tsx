@@ -26,7 +26,6 @@ class Status{
   update = false
   interval: NodeJS.Timeout|undefined = undefined
   messageServer = ''
-  roomInfoServer = ''
 }
 const status = new Status()
 
@@ -68,9 +67,6 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
       }
       setUpdate(status.update ? false : true)
     }
-    if (connection.conference.roomInfoServer?.ws?.readyState === WebSocket.OPEN){
-      status.roomInfoServer = config.roomInfoServer
-    }
     if (connection.conference.bmRelaySocket?.readyState === WebSocket.OPEN) {
       status.messageServer = config.bmRelayServer
     }else{
@@ -105,7 +101,6 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
           WebRTC: {sess.remotes.map((r,k) => <span key={k.toString()}>{r.address} {r.port}/{r.protocol}<br /></span>)}
         </div>)}
         <div> Message: {status.messageServer}</div>
-        <div> Room info: {status.roomInfoServer}</div>
       </div>
       <Button variant="contained" color="primary" style={{textTransform:'none', marginTop:'0.4em'}}
         onClick={close}

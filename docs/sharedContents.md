@@ -1,9 +1,18 @@
 # Protocol for Shared contents
 
 ### Specification
+- Each participant can share new contents.
+  - Contents has id, type, text (URL), pose, size, name and owner_name properties.
 
-- Each participant can share new contents. 
-  - Contents has id, type, text (URL), pose, size and timestamp properties. 
+- Way to sync
+  - Via Jitsi
+    - Each participant's property has contents.
+    - When leave, the contents are owned by the next participant.
+    - When update, the packet will sent to the owner.
+  - Via relay
+    - Contents are owned by relayServer and properties are not used.
+    - Relayserver does not distinguish owners.
+    - When update, packet will update the content on the server and relayed.
 
 ```tsx
 class MapObject{
@@ -22,7 +31,7 @@ class Content: MapObject{
 - Even when a participant leave room, contents will remain.
 
 ### Protocol
-Each participant has followings as participant as properties of Jitsi conference (Prosody manages the information) as: 
+Each participant has followings as participant as properties of Jitsi conference (Prosody manages the information) as:
 ```tsx
 ParticipantProperty{
   //  properties for contents
@@ -34,7 +43,7 @@ ParticipantProperty{
 
 ### Arbitrations
 
-- When a participant leave from the room. The contents owned by the participant will move to the next participant. 
+- When a participant leave from the room. The contents owned by the participant will move to the next participant.
  - Next means the participant with next larger id or the smallest id.
  - Until contents moved to next participant, the contents of left participant must be kept.
 - When content with the same id owned by more than two participants, participant with smaller id loose the content.

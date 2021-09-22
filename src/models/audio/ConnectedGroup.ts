@@ -1,7 +1,7 @@
 import {MAP_SIZE} from '@components/Constants'
-import {Pose2DMap} from '@models/MapObject'
 import {LocalParticipant, PARTICIPANT_SIZE, RemoteParticipant} from '@models/Participant'
-import {SharedContent} from '@models/SharedContent'
+import {ISharedContent} from '@models/ISharedContent'
+import {Pose2DMap} from '@models/utils'
 import {addV2, convertToAudioCoordinate, getRelativePose, mulV2, normV, subV2} from '@models/utils'
 import {stereoParametersStore} from '@stores/AudioParameters'
 import participants from '@stores/participants/Participants'
@@ -12,7 +12,7 @@ import {autorun, IObservableValue, IReactionDisposer} from 'mobx'
 import {NodeGroup} from './NodeGroup'
 
 function getRelativePoseFromObject(localPose: Pose2DMap, participant: RemoteParticipant|undefined,
-                                   content: SharedContent|undefined) {
+                                   content: ISharedContent|undefined) {
   const remotePose = _.cloneDeep(participant ? participant.pose :
     content ? content.pose : {position:[0, 0], orientation:0}) as Pose2DMap
   if (content) {

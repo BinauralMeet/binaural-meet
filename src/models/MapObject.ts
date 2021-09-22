@@ -1,8 +1,4 @@
-export interface Pose2DMap {
-  position: [number, number]
-  orientation: number
-}
-
+import {Pose2DMap} from '@models/utils/coordinates'
 export interface Perceptibility {
   visibility: boolean             // the whole object is visible
   coreContentVisibility: boolean  // core content (e.g. video stream for remote participant) is visible
