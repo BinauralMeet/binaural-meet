@@ -6,7 +6,7 @@ export const StoredMessageType = {
   PARTICIPANT_PHYSICS: 'p_physics',             //  -> presence
   PARTICIPANT_TRACKSTATES: 'p_trackstates',     //  -> presence
   MAIN_SCREEN_CARRIER: 'main_screen_carrier',   //  -> presence
-  MY_CONTENT: 'my_content',                     //  -> presence
+  MY_CONTENT: 'my_content',                     //  -> presence, only when no bmRelayServer
 }
 export type StoredMessageKeys = keyof typeof StoredMessageType
 
@@ -26,7 +26,10 @@ export const AccumuratingMessageType = {
   //  contents
   CONTENT_UPDATE_REQUEST: 'content_update',     //  -> message
   CONTENT_REMOVE_REQUEST: 'content_remove',     //  -> message
-  LEFT_CONTENT_REMOVE_REQUEST: 'left_content_remove',     //  -> message
+  CONTENT_REQUEST_BY_ID:  'content_req_id',
+  LEFT_CONTENT_REMOVE_REQUEST: 'left_content_remove',     //  -> message, only when no bmRelayServer
+  CONTENT_INFO_UPDATE: 'content_info_update',   //  only for bmRelayServer to clients.
+  CONTENT_INFO_REMOVE: 'content_info_remove',   //  only for bmRelayServer to clients.
 }
 export type accumuratingMessageKeys = keyof typeof AccumuratingMessageType
 

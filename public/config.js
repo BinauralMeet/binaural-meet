@@ -25,7 +25,7 @@ const rtcConfig = {
   screenOptions:{
     desktopSharingFrameRate:{
       min:  0.3,
-      max:  30,
+      max:  60,
     },
   },
 }
@@ -64,11 +64,11 @@ const config_binaural = {
   },
   serviceUrl: 'wss://binaural.me:443/xmpp-websocket',
   //bosh: 'https://binaural.me/http-bind',
-  bmRelayServer: 'wss://binaural.me/relayServer-websocket',
+  //bmRelayServer: 'wss://binaural.me/relayServer-websocket',
   roomInfoServer: 'wss://binaural.me/roomInfoServer-websocket',
   corsProxyUrl: 'https://binaural.me/cors_proxy/',
 
-  //bmRelayServer: 'ws://localhost:8443',
+  bmRelayServer: 'ws://localhost:8443',
   //roomInfoServer: 'ws://localhost:7443',
   //corsProxyUrl: 'http://localhost:7020',
 }

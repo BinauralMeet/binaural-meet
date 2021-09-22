@@ -1,5 +1,6 @@
 import {Stores} from '@components/utils'
 import {doseContentEditingUseKeyinput, ISharedContent} from '@models/ISharedContent'
+import {SharedContentInfo} from '@models/ISharedContent'
 import {contentLog} from '@stores/sharedContents/SharedContents'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
@@ -8,7 +9,7 @@ export interface ISharedContentProps extends Stores{
   content: ISharedContent,
 }
 
-export const sharedContentHandler = (props: Stores&{content:ISharedContent}) => {
+export const sharedContentHandler = (props: Stores&{content:SharedContentInfo}) => {
   return {
     onClose: (evt: MouseOrTouch) => {
       contentLog('RndContent onClose for ', props.content.id)

@@ -10,8 +10,8 @@ import PhotoIcon from '@material-ui/icons/Photo'
 import ScreenShareIcon from '@material-ui/icons/ScreenShare'
 import SubjectIcon from '@material-ui/icons/Subject'
 import YouTubeIcon from '@material-ui/icons/YouTube'
-import {t} from '@models/locales'
 import {ContentType, ISharedContent} from '@models/ISharedContent'
+import {t} from '@models/locales'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {GDrive} from './GDrive'
@@ -37,16 +37,17 @@ export function contentTypeIcons(type: ContentType, size = 12, width = -1) {
 
   return icons[type]
 }
-export function editButtonTip(editing: boolean, c: ISharedContent){
-  if (c.type === 'whiteboard'){
+export function editButtonTip(editing: boolean, c?: ISharedContent){
+  const type = c ? c.type : ''
+  if (type === 'whiteboard'){
     return editing ? t('ctEndEditWhiteboard') : t('ctEditWhiteboard')
-  }else if (c.type === 'gdrive'){
+  }else if (type === 'gdrive'){
     return editing ? t('ctEndEditGDrive') : t('ctEditGDrive')
-  }else if (c.type === 'youtube'){
+  }else if (type === 'youtube'){
     return editing ? t('ctEndEditYoutube') : t('ctEditYoutube')
-  }else if (c.type === 'iframe'){
+  }else if (type === 'iframe'){
     return editing ? t('ctEndEditIframe') : t('ctEditIframe')
-  }else if (c.type === 'text'){
+  }else if (type === 'text'){
     return editing ? t('ctEndEditText') : t('ctEditText')
   }
 

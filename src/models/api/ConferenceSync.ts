@@ -1,9 +1,9 @@
 import {contentTrackCarrierName, roomInfoPeeperName} from '@models/api/Constants'
+import {ISharedContent} from '@models/ISharedContent'
 import { KickTime } from '@models/KickTime'
 import {t} from '@models/locales'
 import {priorityCalculator} from '@models/middleware/trafficControl'
 import {defaultRemoteInformation, Mouse, PARTICIPANT_SIZE, Physics, RemoteInformation, TrackStates} from '@models/Participant'
-import {ISharedContent} from '@models/ISharedContent'
 import {urlParameters} from '@models/url'
 import {Pose2DMap} from '@models/utils'
 import {normV, subV2} from '@models/utils'
@@ -330,6 +330,15 @@ export class ConferenceSync{
     const remote = participants.remote.get(from)
     syncLog(`recv remote contents ${JSON.stringify(cs.map(c => c.id))} from ${from}.`, cs)
   }
+  private onContentInfoUpdate(from:string, cs:ISharedContent[]){
+    assert(config.bmRelayServer)
+    cs.forEach(c => contents.roomContentsInfo.set(c.id, c))
+  }
+  private onContentInfoRemove(from:string, cids:string[]){
+    assert(config.bmRelayServer)
+    cids.forEach(cid => contents.roomContentsInfo.delete(cid))
+  }
+
   private onContentUpdateRequest(from:string, cds:ISharedContent[]){
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const cs = makeThemContents(cds)
@@ -544,6 +553,8 @@ export class ConferenceSync{
         case MessageType.CONTENT_REMOVE_REQUEST: this.onContentRemoveRequest(msg.p, JSON.parse(msg.v)); break
         case MessageType.LEFT_CONTENT_REMOVE_REQUEST: this.onLeftContentRemoveRequest(msg.p, JSON.parse(msg.v)); break
         case MessageType.CONTENT_UPDATE_REQUEST: this.onContentUpdateRequest(msg.p, JSON.parse(msg.v)); break
+        case MessageType.CONTENT_INFO_UPDATE: this.onContentInfoUpdate(msg.p, JSON.parse(msg.v)); break
+        case MessageType.CONTENT_INFO_REMOVE: this.onContentInfoRemove(msg.p, JSON.parse(msg.v)); break
         case MessageType.PARTICIPANT_MOUSE: this.onParticipantMouse(msg.p, JSON.parse(msg.v)); break
         case MessageType.PARTICIPANT_POSE: this.onParticipantPose(msg.p, JSON.parse(msg.v)); break
         case MessageType.PARTICIPANT_TRACKLIMITS: this.onParticipantTrackLimits(msg.p, JSON.parse(msg.v)); break

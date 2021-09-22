@@ -1,13 +1,14 @@
 import {sharedContentHandler} from '@components/map/ShareLayer/SharedContent'
 import {SharedContentForm} from '@components/map/ShareLayer/SharedContentForm'
 import {Tooltip} from '@material-ui/core'
-import {ISharedContent} from '@models/ISharedContent'
+import {SharedContentInfo} from '@models/ISharedContent'
 import {useTranslation} from '@models/locales'
 import {getRandomColor, rgb2Color} from '@models/utils'
 import {isDarkColor} from '@models/utils'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import roomInfo from '@stores/RoomInfo'
-import _ from 'lodash'
+import contents from '@stores/sharedContents/SharedContents'
+import { autorun } from 'mobx'
 import {Observer} from 'mobx-react-lite'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
@@ -17,31 +18,59 @@ import {styleForList} from '../utils/styles'
 import {TextLineStyle} from './LeftBar'
 
 export const ContentLine: React.FC<TextLineStyle & Stores &
-{participant: ParticipantBase, content: ISharedContent}> = (props) => {
+{participant: ParticipantBase, content: SharedContentInfo}> = (props) => {
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
   const [showForm, setShowForm] = React.useState(false)
   const ref = React.useRef<HTMLDivElement>(null)
-  const {lineHeight, ...contentProps} = props
+  const {lineHeight, content, ...contentProps} = props
 
   return <Observer>{()=> {
     const typeIcon = contentTypeIcons(props.content.type, props.fontSize)
     const colors = getRandomColor(props.content.ownerName)
+    const content = props.contents.find(props.content.id)
     if (props.content.color?.length){ colors[0] = rgb2Color(props.content.color) }
     if (props.content.textColor?.length){ colors[1] = rgb2Color(props.content.textColor) }
 
     return <>
       <Tooltip title={props.content.ownerName} placement="right">
         <div className={classes.line} style={{backgroundColor:colors[0], color:colors[1]}} ref={ref}
-          onClick={() => props.map.focusOn(props.content)}
+          onClick={() => {
+            const found = contents.find(props.content.id)
+            if (found){
+              props.map.focusOn(found)
+            }else{
+              contents.requestContent([props.content.id])
+              const disposer = autorun(()=>{
+                const found = contents.find(props.content.id)
+                if (found){
+                  props.map.focusOn(found)
+                  disposer()
+                }
+              })
+            }
+          }}
           onContextMenu={() => {
-            setShowForm(true)
+            const found = contents.find(props.content.id)
+            if (found){
+              setShowForm(true)
+            }else{
+              contents.requestContent([props.content.id])
+              const disposer = autorun(()=>{
+                const found = contents.find(props.content.id)
+                if (found){
+                  setShowForm(true)
+                  disposer()
+                }
+              })
+            }
             props.map.keyInputUsers.add('contentForm')
           }}
         >
           {typeIcon}{props.content.name}
         </div>
       </Tooltip>
-      <SharedContentForm {...contentProps} {...sharedContentHandler(props)} open={showForm}
+      <SharedContentForm {...contentProps} contents={props.contents} content={content}
+        {...sharedContentHandler(props)} open={showForm}
         close={()=>{
           setShowForm(false)
           props.map.keyInputUsers.delete('contentForm')
@@ -52,15 +81,25 @@ export const ContentLine: React.FC<TextLineStyle & Stores &
   }}</Observer>
 }
 
-export const RawContentList: React.FC<Stores&TextLineStyle&{all: ISharedContent[]}>  = (props) => {
+export const ContentList: React.FC<Stores&TextLineStyle>  = (props) => {
   //  console.log('Render RawContentList')
   const contents = props.contents
-  const all:ISharedContent[] = []
-  Object.assign(all, props.all)
-  all.reverse() // Already sorted in the reverse order. all.sort((a, b) => { return b.zorder - a.zorder } )
+  const all = useObserver(() => {
+    const all:SharedContentInfo[] =
+      Array.from(contents.roomContentsInfo.size ? contents.roomContentsInfo.values() : contents.all)
+    all.sort((a,b) => {
+      let rv = a.name.localeCompare(b.name)
+      if (rv === 0){ rv = a.ownerName.localeCompare(b.ownerName) }
+      if (rv === 0){ rv = a.type.localeCompare(b.type) }
+      if (rv === 0){ rv = a.id.localeCompare(b.id) }
+
+      return rv
+    })
+
+    return all
+  })
 
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
-
   const participants = props.participants
   const elements = all.map(c =>
     <ContentLine key={c.id} content = {c} {...props}
@@ -73,17 +112,4 @@ export const RawContentList: React.FC<Stores&TextLineStyle&{all: ISharedContent[
     {elements}
   </div>
 }
-RawContentList.displayName = 'RawContentList'
-
-export const ContentList = React.memo<Stores&TextLineStyle>(
-  (props) => {
-    return <Observer>{ () => {
-      return <RawContentList {...props} all = {props.contents.sorted} />
-    }
-    }</Observer>
-  },
-  (prev, next) => {
-    return _.isEqual(prev.contents.sorted.map(c => c.id), next.contents.sorted.map(c => c.id))
-      && prev.fontSize === next.fontSize && prev.lineHeight === next.lineHeight
-  },
-)
+ContentList.displayName = 'ContentList'

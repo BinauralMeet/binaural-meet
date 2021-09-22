@@ -381,6 +381,7 @@ export class SharedContents extends EventEmitter {
       this.roomContents.set(newContent.id, newContent)
       connection.conference.sync.sendContentUpdateRequest('', [newContent])
       this.updateAll()
+      this.roomContentsInfo.set(newContent.id, newContent)
     }else{
       const {pid, pc} = this.getOrTakeContent(newContent.id, 'updateByLocal')
       if (pc) {
@@ -404,6 +405,7 @@ export class SharedContents extends EventEmitter {
         this.roomContents.delete(cid)
       }
       connection.conference.sync.sendContentRemoveRequest('', [cid])
+      this.roomContentsInfo.delete(cid)
       this.updateAll()
     }else{
       const {pid, pc, take} = this.getOrTakeContent(cid, 'removeByLocal')
@@ -430,6 +432,12 @@ export class SharedContents extends EventEmitter {
           connection.conference.sendMessageViaRelay(MessageType.PARTICIPANT_LEFT, '', pid)
         }
       }
+    }
+  }
+  //  request content by id which is not sent yet.
+  requestContent(cids: string[]){
+    if (config.bmRelayServer){
+      connection.conference.sendMessageViaRelay(MessageType.CONTENT_REQUEST_BY_ID, '', cids)
     }
   }
   //  Update request from remote.

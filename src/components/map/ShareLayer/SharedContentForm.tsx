@@ -24,9 +24,9 @@ import DoneIcon from '@material-ui/icons/Done'
 import EditIcon from '@material-ui/icons/Edit'
 import FlipToBackIcon from '@material-ui/icons/FlipToBack'
 import FlipToFrontIcon from '@material-ui/icons/FlipToFront'
-import {t} from '@models/locales'
 import {ISharedContent} from '@models/ISharedContent'
 import {canContentBeAWallpaper, isContentEditable, isContentWallpaper} from '@models/ISharedContent'
+import {t} from '@models/locales'
 import {Pose2DMap} from '@models/utils'
 import {copyContentToClipboard,  makeContentWallpaper,
    moveContentToBottom, moveContentToTop} from '@stores/sharedContents/SharedContentCreator'
@@ -36,9 +36,9 @@ import {contentTypeIcons, editButtonTip} from './Content'
 import {RndContentProps, TITLE_HEIGHT} from './RndContent'
 
 type PopoverPropsNoOnClose = Omit<PopoverProps, 'onClose'>
-export interface SharedContentFormProps extends RndContentProps, PopoverPropsNoOnClose{
+export interface SharedContentFormProps extends Omit<RndContentProps, 'content'>, PopoverPropsNoOnClose{
   close: () => void,
-  content: ISharedContent
+  content?: ISharedContent
   open: boolean
 }
 
@@ -71,6 +71,7 @@ class SharedContentFormMember{
     this.save(props)
   }
   save(props: SharedContentFormProps){
+    if (!props.content) { return }
     this.zorder = props.content.zorder
     this.pinned = props.content.pinned
     this.name = props.content.name
@@ -78,6 +79,7 @@ class SharedContentFormMember{
     this.editing = props.contents.editing
   }
   restore(props: SharedContentFormProps){
+    if (!props.content) { return }
     props.content.zorder = this.zorder
     props.content.pinned = this.pinned
     props.content.name = this.name
@@ -91,7 +93,9 @@ export const SharedContentForm: React.FC<SharedContentFormProps> = (props: Share
   function closeForm(ev:Object, reason:string) {
     if (reason === 'enter' || reason==='backdropClick'){
       member.save(props)
-      props.updateAndSend(props.content)
+      if (props.content){
+        props.updateAndSend(props.content)
+      }
     }
     props.close()
   }
@@ -111,12 +115,14 @@ export const SharedContentForm: React.FC<SharedContentFormProps> = (props: Share
     <Observer>{()=>
       <DialogContent>
         <table><tbody><tr><td>
-       {contentTypeIcons(props.content.type, TITLE_HEIGHT)}
+       {contentTypeIcons(props.content ? props.content.type : '', TITLE_HEIGHT)}
        </td><td>
-        <TextField label={t('ctName')} multiline={false} value={props.content.name} inputProps={{autoFocus:true}}
+        <TextField label={t('ctName')} multiline={false} value={props.content ? props.content.name : ''}
+          inputProps={{autoFocus:true}}
           style={{marginLeft:20, width:'100%'}}
           onChange={event => {
             //setName(event.target.value)
+            if (!props.content) { return }
             props.content.name = event.target.value
             props.updateOnly(props.content)
           }}
@@ -126,11 +132,13 @@ export const SharedContentForm: React.FC<SharedContentFormProps> = (props: Share
         <Box mt={2} mb={2}>
           <Button variant="contained" style={{textTransform:'none'}}
             onClick={()=>{
+              if (!props.content) { return }
               moveContentToTop(props.content)
               props.updateOnly(props.content)
             }}><FlipToFrontIcon />&nbsp; {t('ctMoveTop')}</Button> &nbsp;
           <Button variant="contained" style={{textTransform:'none'}}
             onClick={()=>{
+              if (!props.content) { return }
               moveContentToBottom(props.content)
               props.updateOnly(props.content)
             }}><FlipToBackIcon />&nbsp; {t('ctMoveBottom')}</Button> &nbsp;
@@ -138,42 +146,49 @@ export const SharedContentForm: React.FC<SharedContentFormProps> = (props: Share
         <Box mt={2} mb={2}>
           <Button variant="contained" style={{textTransform:'none'}}
             onClick={()=>{
+              if (!props.content) { return }
               copyContentToClipboard(props.content)
             }}><Icon icon={clipboardCopy} height={TITLE_HEIGHT}/>&nbsp; {t('ctCopyToClipboard')}</Button> &nbsp;
           <Button variant="contained" style={{textTransform:'none'}}
             onClick={()=>{
+              if (!props.content) { return }
               props.map.focusOn(props.content)
             }}>{t('ctFocus')}</Button>
         </Box>
         <Table size="small" ><TableBody>{[
           Row(t('ctUnpin'),<Icon icon={pinOffIcon} height={TITLE_HEIGHT} />,
-            <Switch color="primary" checked={props.content.pinned} onChange={(ev, checked)=>{
+            <Switch color="primary" checked={props.content?.pinned} onChange={(ev, checked)=>{
+              if (!props.content) { return }
               props.content.pinned = checked
               props.updateOnly(props.content)
             }}/>, <Icon icon={pinIcon} height={TITLE_HEIGHT} />, t('ctPin'), 'pin'),
           <Fragment key="edit">{isContentEditable(props.content) ?
             Row(editButtonTip(true, props.content),<DoneIcon />,
-            <Switch color="primary" checked={props.content.id === props.contents.editing} onChange={(ev, checked)=>{
+            <Switch color="primary" checked={props.content?.id === props.contents.editing} onChange={(ev, checked)=>{
+              if (!props.content) { return }
               props.contents.setEditing(checked ? props.content.id : '')
             }}/>, <EditIcon />, editButtonTip(false, props.content)) : undefined}</Fragment>,
           <Fragment key="wall">{canContentBeAWallpaper(props.content) ?
             Row(t('ctUnWallpaper'), <Icon icon={imageLine} height={TITLE_HEIGHT}/>,
             <Switch color="primary" checked={isContentWallpaper(props.content)} onChange={(ev, checked)=>{
+              if (!props.content) { return }
               makeContentWallpaper(props.content, checked)
               props.updateOnly(props.content)
             }}/>, <Icon icon={imageOutlineBadged} height={TITLE_HEIGHT}/>, t('ctWallpaper')) : undefined}</Fragment>,
           <Fragment key="noFrame">{
             Row(t('ctFrameVisible'), <Icon icon={biImage} height={TITLE_HEIGHT}/>,
-            <Switch color="primary" checked={props.content.noFrame} onChange={(ev, checked)=>{
+            <Switch color="primary" checked={props.content?.noFrame} onChange={(ev, checked)=>{
+              if (!props.content) { return }
               props.content.noFrame = checked ? true : undefined
               props.updateOnly(props.content)
             }}/>, <Icon icon={biImageNoFrame} height={TITLE_HEIGHT}/>, t('ctFrameInvisible')) }</Fragment>,
           <Fragment key="opacity">{
             Row(t('ctTransparent'), <Icon icon={biDashCircleDotted} height={TITLE_HEIGHT}/>,
-            <Slider color="primary" value={props.content.opacity===undefined ? 1000 : props.content.opacity*1000}
+            <Slider color="primary" value={props.content?.opacity===undefined ? 1000 : props.content.opacity*1000}
               min={0} max={1000}
               style={{width:'6em', marginLeft:'0.4em', marginRight:'0.4em'}}
               onChange={(ev, value) => {
+                if (!props.content) { return }
                 props.content.opacity = value === 1000 ? undefined : (value as number) / 1000
                 props.updateOnly(props.content)
             }} />, <Icon icon={biPlusCircleFill} height={TITLE_HEIGHT}/>, t('ctOpaque')) }</Fragment>,
@@ -185,6 +200,7 @@ export const SharedContentForm: React.FC<SharedContentFormProps> = (props: Share
             }}>{t('btSave')}</Button>
           <Button variant="contained" color="secondary" style={{textTransform:'none', marginLeft:15}}
             onClick={()=>{
+              if (!props.content) { return }
               member.restore(props)
               props.updateOnly(props.content)
             }}>{t('btCancel')}</Button>
