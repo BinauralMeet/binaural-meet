@@ -3,10 +3,11 @@ import {LocalParticipantForm} from '@components/map/ParticipantsLayer/LocalParti
 import {RemoteParticipantForm} from '@components/map/ParticipantsLayer/RemoteParticipantForm'
 import {Tooltip} from '@material-ui/core'
 import {connection} from '@models/api'
+import {ParticipantInfo} from '@models/Participant'
 import {isDarkColor} from '@models/utils'
-import {ParticipantBase} from '@stores/participants/ParticipantBase'
-import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
+import {extranctParticipantInfo} from '@stores/participants/ParticipantBase'
 import roomInfo from '@stores/RoomInfo'
+import { autorun } from 'mobx'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {Stores} from '../utils'
@@ -14,10 +15,10 @@ import {styleForList} from '../utils/styles'
 import {TextLineStyle} from './LeftBar'
 import {StatusDialog} from './StatusDialog'
 
-export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: ParticipantBase}> = (props) => {
-  const name = useObserver(() => (props.participant.information.name))
-  const avatarSrc = useObserver(() => (props.participant.information.avatarSrc))
-  const colors = useObserver(() => props.participant.getColor())
+export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: ParticipantInfo}> = (props) => {
+  const name = useObserver(() => (props.participant.name))
+  const avatarSrc = useObserver(() => (props.participant.avatarSrc))
+  const colors = useObserver(() => props.participant.colors)
   const size = useObserver(() => props.lineHeight)
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
   const [showForm, setShowForm] = React.useState(false)
@@ -27,10 +28,35 @@ export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: Partic
   return <>
     <Tooltip title={props.participant.id} placement="right">
       <div className={classes.outer} ref={ref}
-        onClick={(ev) => { props.map.focusOn(props.participant) }}
+        onClick={() => {
+          const found = props.participants.find(props.participant.id)
+          if (found){
+            props.map.focusOn(found)
+          }else{
+            const disposer = autorun(()=>{
+              const found = props.participants.find(props.participant.id)
+              if (found){
+                props.map.focusOn(found)
+                disposer()
+              }
+            })
+          }
+        }}
         onContextMenu={() => {
-          setShowForm(true)
-          props.map.keyInputUsers.add('participantList')
+          const found = props.participants.find(props.participant.id)
+          if (found){
+            setShowForm(true)
+            props.map.keyInputUsers.add('participantList')
+          }else{
+            const disposer = autorun(()=>{
+              const found = props.participants.find(props.participant.id)
+              if (found){
+                setShowForm(true)
+                props.map.keyInputUsers.add('participantList')
+                disposer()
+              }
+            })
+          }
         }}>
         <ImageAvatar border={true} colors={colors} size={size * 1.05}
           name={name} avatarSrc={avatarSrc} />
@@ -47,7 +73,7 @@ export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: Partic
       <RemoteParticipantForm {...props} open={showForm} close={()=>{
         setShowForm(false)
         props.map.keyInputUsers.delete('participantList')
-      }} participant={props.participant as RemoteParticipant}
+      }} participant={props.participants.remote.get(props.participant.id)}
         anchorEl={ref.current} anchorOrigin={{vertical:'top', horizontal:'right'}} />
     }
   </>
@@ -70,9 +96,12 @@ export const RawParticipantList: React.FC<Stores&TextLineStyle&{localId: string,
 
     return rv
   })
+  const hasInfo = store.participantsInfo.size !== 0
   const remoteElements = remoteIds.map(id =>
-    <ParticipantLine key={id} participant={store.remote.get(id) as RemoteParticipant} {...props} />)
-  const localElement = (<ParticipantLine key={localId} participant={store.local} {...props} />)
+    <ParticipantLine key={id}
+      participant={hasInfo ? store.participantsInfo.get(id)! : extranctParticipantInfo(store.remote.get(id)!)}
+      {...props} />)
+  const localElement = (<ParticipantLine key={localId} participant={extranctParticipantInfo(store.local)} {...props} />)
   const ref = React.useRef<HTMLDivElement>(null)
 
   return (
@@ -91,7 +120,8 @@ RawParticipantList.displayName = 'ParticipantList'
 export const ParticipantList = React.memo<Stores&TextLineStyle>(
   (props) => {
     const localId = useObserver(() => props.participants.localId)
-    const ids = useObserver(() => Array.from(props.participants.remote.keys()))
+    const ids = useObserver(() => Array.from(props.participants.participantsInfo.size ?
+      props.participants.participantsInfo.keys() : props.participants.remote.keys()))
 
     return <RawParticipantList {...props} localId={localId} remoteIds = {ids} />
   },

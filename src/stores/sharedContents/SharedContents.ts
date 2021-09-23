@@ -437,7 +437,7 @@ export class SharedContents extends EventEmitter {
   //  request content by id which is not sent yet.
   requestContent(cids: string[]){
     if (config.bmRelayServer){
-      connection.conference.sendMessageViaRelay(MessageType.CONTENT_REQUEST_BY_ID, '', cids)
+      connection.conference.sendMessageViaRelay(MessageType.CONTENT_UPDATE_REQUEST_BY_ID, '', cids)
     }
   }
   //  Update request from remote.
@@ -472,6 +472,7 @@ export class SharedContents extends EventEmitter {
           this.disposeContent(toRemove)
           this.roomContents.delete(cid)
         }
+        contents.roomContentsInfo.delete(cid)
       }
       this.updateAll()
     }else{

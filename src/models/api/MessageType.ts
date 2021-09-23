@@ -24,12 +24,11 @@ export type InstantMessageKeys = keyof typeof InstantMessageType
 
 export const AccumuratingMessageType = {
   //  contents
-  CONTENT_UPDATE_REQUEST: 'content_update',     //  -> message
-  CONTENT_REMOVE_REQUEST: 'content_remove',     //  -> message
-  CONTENT_REQUEST_BY_ID:  'content_req_id',
-  LEFT_CONTENT_REMOVE_REQUEST: 'left_content_remove',     //  -> message, only when no bmRelayServer
-  CONTENT_INFO_UPDATE: 'content_info_update',   //  only for bmRelayServer to clients.
-  CONTENT_INFO_REMOVE: 'content_info_remove',   //  only for bmRelayServer to clients.
+  CONTENT_UPDATE_REQUEST: 'c_update',     //  -> message
+  CONTENT_REMOVE_REQUEST: 'c_remove',     //  -> message
+  CONTENT_UPDATE_REQUEST_BY_ID:  'c_update_by_id',
+  LEFT_CONTENT_REMOVE_REQUEST: 'left_c_remove',     //  -> message, only when no bmRelayServer
+  CONTENT_INFO_UPDATE: 'c_info_update',   //  only for bmRelayServer to clients.
 }
 export type accumuratingMessageKeys = keyof typeof AccumuratingMessageType
 

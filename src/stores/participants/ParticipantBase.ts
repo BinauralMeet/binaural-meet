@@ -1,7 +1,7 @@
 import {
   defaultInformation, defaultPhysics,
   defaultRemoteInformation,
-  LocalInformation, Mouse, ParticipantBase as IParticipantBase, Physics, RemoteInformation, Tracks,
+  LocalInformation, Mouse, ParticipantBase as IParticipantBase, ParticipantInfo, Physics, RemoteInformation, Tracks
 } from '@models/Participant'
 import {findReverseColorRGB, findTextColorRGB, getRandomColorRGB, rgb2Color} from '@models/utils'
 import {MapObject} from '@stores/MapObject'
@@ -100,3 +100,13 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
   }
 }
 
+export function extranctParticipantInfo(p: ParticipantBase){
+  const rv:ParticipantInfo = {
+    id:p.id,
+    name:p.information.name,
+    avatarSrc:p.information.avatarSrc,
+    colors: p.getColor()
+  }
+
+  return rv
+}

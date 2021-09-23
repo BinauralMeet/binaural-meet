@@ -17,7 +17,7 @@ import React from 'react'
 
 export interface RemoteParticipantFormProps extends PopoverProps{
   close: () => void,
-  participant: RemoteParticipant
+  participant?: RemoteParticipant
   map: MapData
 }
 
@@ -26,13 +26,15 @@ export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (prop
   const [clear, setClear] = React.useState<string>('')
   function onKeyPressKick(ev:React.KeyboardEvent){
     if (ev.key === 'Enter' && kick === 'kick') {
+      if (!props.participant) { return }
       connection.conference.kickParticipant(props.participant.id)
-      setTimeout(()=>{connection.conference.sendMessage(MessageType.KICK, props.participant.id, 'Kicked by administrator.')}, 5000)
+      setTimeout(()=>{connection.conference.sendMessage(MessageType.KICK, props.participant!.id, 'Kicked by administrator.')}, 5000)
       props.close()
     }
   }
   function onKeyPressClear(ev:React.KeyboardEvent){
     if (ev.key === 'Enter' && clear === 'clear') {
+      if (!props.participant) { return }
       const participant = contents.participants.get(props.participant.id)
       participant?.myContents.forEach(c => contents.removeByLocal(c.id))
       props.close()
@@ -49,19 +51,20 @@ export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (prop
 
   return <Popover {...popoverProps} onClose={closeConfig}>
     <DialogTitle>
-      {props.participant.information.name}
+      {props.participant?.information.name}
     </DialogTitle>
     <DialogContent>
       <Box mb={2}>
       <Button variant="contained" style={{textTransform:'none'}}
           onClick={()=>{
             closeConfig({}, 'enter')
-            props.participant.call()
+            props.participant?.call()
           }}>{t('rsCall')}</Button>
       </Box>
       <Box mb={2}>
       <Button variant="contained" style={{textTransform:'none'}}
         onClick={()=>{
+          if (!props.participant) { return }
           if (participants.yarnPhones.has(props.participant.id)){
             participants.yarnPhones.delete(props.participant.id)
           }else{
@@ -69,20 +72,22 @@ export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (prop
           }
           closeConfig({}, 'enter')
         }}>
-          {participants.yarnPhones.has(props.participant.id) ?
+          {props.participant && participants.yarnPhones.has(props.participant.id) ?
             t('rsCutYarnPhone') : t('rsConnectYarnPhone')}</Button>
       </Box>
       <Box mb={2}>
       <Button variant="contained" style={{textTransform:'none'}}
         onClick={()=>{
+          if (!props.participant) { return }
           chat.sendTo = props.participant.id
           closeConfig({}, 'enter')
         }}>
-          {t('rsChatTo', {name: props.participant.information.name})}</Button>
+          {t('rsChatTo', {name: props.participant?.information.name})}</Button>
       </Box>
       <Box mb={2}>
       <Button variant="contained" style={{textTransform:'none'}}
       onClick={()=>{
+        if (!props.participant) { return }
         props.map.focusOn(props.participant)
       }}>{t('ctFocus')}</Button>
       </Box>

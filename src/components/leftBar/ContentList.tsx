@@ -53,17 +53,18 @@ export const ContentLine: React.FC<TextLineStyle & Stores &
             const found = contents.find(props.content.id)
             if (found){
               setShowForm(true)
+              props.map.keyInputUsers.add('contentForm')
             }else{
               contents.requestContent([props.content.id])
               const disposer = autorun(()=>{
                 const found = contents.find(props.content.id)
                 if (found){
                   setShowForm(true)
+                  props.map.keyInputUsers.add('contentForm')
                   disposer()
                 }
               })
             }
-            props.map.keyInputUsers.add('contentForm')
           }}
         >
           {typeIcon}{props.content.name}

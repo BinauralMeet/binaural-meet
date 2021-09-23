@@ -334,11 +334,6 @@ export class ConferenceSync{
     assert(config.bmRelayServer)
     cs.forEach(c => contents.roomContentsInfo.set(c.id, c))
   }
-  private onContentInfoRemove(from:string, cids:string[]){
-    assert(config.bmRelayServer)
-    cids.forEach(cid => contents.roomContentsInfo.delete(cid))
-  }
-
   private onContentUpdateRequest(from:string, cds:ISharedContent[]){
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const cs = makeThemContents(cds)
@@ -554,7 +549,6 @@ export class ConferenceSync{
         case MessageType.LEFT_CONTENT_REMOVE_REQUEST: this.onLeftContentRemoveRequest(msg.p, JSON.parse(msg.v)); break
         case MessageType.CONTENT_UPDATE_REQUEST: this.onContentUpdateRequest(msg.p, JSON.parse(msg.v)); break
         case MessageType.CONTENT_INFO_UPDATE: this.onContentInfoUpdate(msg.p, JSON.parse(msg.v)); break
-        case MessageType.CONTENT_INFO_REMOVE: this.onContentInfoRemove(msg.p, JSON.parse(msg.v)); break
         case MessageType.PARTICIPANT_MOUSE: this.onParticipantMouse(msg.p, JSON.parse(msg.v)); break
         case MessageType.PARTICIPANT_POSE: this.onParticipantPose(msg.p, JSON.parse(msg.v)); break
         case MessageType.PARTICIPANT_TRACKLIMITS: this.onParticipantTrackLimits(msg.p, JSON.parse(msg.v)); break

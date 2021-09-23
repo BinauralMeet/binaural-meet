@@ -1,3 +1,4 @@
+import {ParticipantInfo} from '@models/Participant'
 import {JitsiRemoteTrack} from 'lib-jitsi-meet'
 import {action, computed, makeObservable, observable} from 'mobx'
 import {LocalParticipant} from './LocalParticipant'
@@ -7,6 +8,8 @@ export class Participants {
   constructor() {
     makeObservable(this)
   }
+
+  @observable.shallow participantsInfo = new Map<string, ParticipantInfo>()
 
   @observable.shallow readonly remote = new Map<string, RemoteParticipant>()
   local_ = observable.box(new LocalParticipant())

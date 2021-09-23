@@ -2,6 +2,14 @@ import {JitsiTrack} from 'lib-jitsi-meet'
 import {MapObject} from './MapObject'
 
 export const PARTICIPANT_SIZE = 60
+
+export interface ParticipantInfo {
+  id: string
+  name: string
+  avatarSrc: string
+  colors: string[]
+}
+
 export interface ParticipantBase extends MapObject{
   physics: Physics
   tracks: Tracks
