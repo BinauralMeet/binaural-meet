@@ -3,9 +3,10 @@ import {LocalParticipantForm} from '@components/map/ParticipantsLayer/LocalParti
 import {RemoteParticipantForm} from '@components/map/ParticipantsLayer/RemoteParticipantForm'
 import {Tooltip} from '@material-ui/core'
 import {connection} from '@models/api'
-import {ParticipantInfo} from '@models/Participant'
+import { MessageType } from '@models/api/MessageType'
+import {getColorOfParticipant} from '@models/Participant'
 import {isDarkColor} from '@models/utils'
-import {extranctParticipantInfo} from '@stores/participants/ParticipantBase'
+import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import roomInfo from '@stores/RoomInfo'
 import { autorun } from 'mobx'
 import {useObserver} from 'mobx-react-lite'
@@ -15,10 +16,13 @@ import {styleForList} from '../utils/styles'
 import {TextLineStyle} from './LeftBar'
 import {StatusDialog} from './StatusDialog'
 
-export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: ParticipantInfo}> = (props) => {
-  const name = useObserver(() => (props.participant.name))
-  const avatarSrc = useObserver(() => (props.participant.avatarSrc))
-  const colors = useObserver(() => props.participant.colors)
+// config.js
+declare const config:any             //  from ../../config.js included from index.html
+
+export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: ParticipantBase}> = (props) => {
+  const name = useObserver(() => (props.participant.information.name))
+  const avatarSrc = useObserver(() => (props.participant.information.avatarSrc))
+  const colors = useObserver(() => getColorOfParticipant(props.participant.information))
   const size = useObserver(() => props.lineHeight)
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
   const [showForm, setShowForm] = React.useState(false)
@@ -29,28 +33,32 @@ export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: Partic
     <Tooltip title={props.participant.id} placement="right">
       <div className={classes.outer} ref={ref}
         onClick={() => {
-          const found = props.participants.find(props.participant.id)
-          if (found){
-            props.map.focusOn(found)
+          if (props.participant.physics.located){
+            props.map.focusOn(props.participant)
           }else{
+            if(config.bmRelayServer){
+              connection.conference.sendMessageViaRelay(
+                MessageType.REQUEST_PARTICIPANT_STATES, '', [props.participant.id])
+            }
             const disposer = autorun(()=>{
-              const found = props.participants.find(props.participant.id)
-              if (found){
-                props.map.focusOn(found)
+              if (props.participant.physics.located){
+                props.map.focusOn(props.participant)
                 disposer()
               }
             })
           }
         }}
         onContextMenu={() => {
-          const found = props.participants.find(props.participant.id)
-          if (found){
+          if (props.participant.physics.located){
             setShowForm(true)
             props.map.keyInputUsers.add('participantList')
           }else{
+            if(config.bmRelayServer){
+              connection.conference.sendMessageViaRelay(
+                MessageType.REQUEST_PARTICIPANT_STATES, '', [props.participant.id])
+            }
             const disposer = autorun(()=>{
-              const found = props.participants.find(props.participant.id)
-              if (found){
+              if (props.participant.physics.located){
                 setShowForm(true)
                 props.map.keyInputUsers.add('participantList')
                 disposer()
@@ -96,12 +104,11 @@ export const RawParticipantList: React.FC<Stores&TextLineStyle&{localId: string,
 
     return rv
   })
-  const hasInfo = store.participantsInfo.size !== 0
   const remoteElements = remoteIds.map(id =>
     <ParticipantLine key={id}
-      participant={hasInfo ? store.participantsInfo.get(id)! : extranctParticipantInfo(store.remote.get(id)!)}
+      participant={store.remote.get(id)!}
       {...props} />)
-  const localElement = (<ParticipantLine key={localId} participant={extranctParticipantInfo(store.local)} {...props} />)
+  const localElement = (<ParticipantLine key={localId} participant={store.local} {...props} />)
   const ref = React.useRef<HTMLDivElement>(null)
 
   return (
@@ -120,8 +127,7 @@ RawParticipantList.displayName = 'ParticipantList'
 export const ParticipantList = React.memo<Stores&TextLineStyle>(
   (props) => {
     const localId = useObserver(() => props.participants.localId)
-    const ids = useObserver(() => Array.from(props.participants.participantsInfo.size ?
-      props.participants.participantsInfo.keys() : props.participants.remote.keys()))
+    const ids = useObserver(() => Array.from(props.participants.remote.keys()))
 
     return <RawParticipantList {...props} localId={localId} remoteIds = {ids} />
   },

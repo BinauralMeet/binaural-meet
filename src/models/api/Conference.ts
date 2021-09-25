@@ -8,6 +8,7 @@ import {EventEmitter} from 'events'
 import JitsiMeetJS, {JitsiLocalTrack, JitsiRemoteTrack, JitsiTrack, JitsiValues, TMediaType} from 'lib-jitsi-meet'
 import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
 import {makeObservable, observable} from 'mobx'
+import {BMMessage} from './BMMessage'
 import {ConferenceSync} from './ConferenceSync'
 import {MessageType} from './MessageType'
 
@@ -35,13 +36,6 @@ export const ConferenceEvents = {
   REMOTE_TRACK_REMOVED: 'remote_track_removed',
 //  MESSAGE_RECEIVED: 'message_received',
 //  PRIVATE_MESSAGE_RECEIVED: 'prev_message_received',
-}
-export interface BMMessage {
-  t: string,  //  type
-  r: string,  //  room id
-  p: string,  //  source pid
-  d: string,  //  distination pid
-  v: string,  //  JSON value
 }
 
 export class Conference extends EventEmitter {

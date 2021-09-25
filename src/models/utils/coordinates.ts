@@ -123,3 +123,36 @@ export function isOverlapped(a:number[], b:number[]){
 
   return true
 }
+
+export function isInRect(point: [number, number], rect:number[]){
+  return rect[3] <= point[0] && point[0] <= rect[1]
+    && rect[0] <= point[1] && point[1] <= rect[2]
+}
+
+export interface Mouse{
+  position:[number, number]
+  show: boolean
+}
+
+function round(n:number){
+  return Math.round(n*100) / 100
+}
+export function pose2Str(pose:Pose2DMap){
+  return `${round(pose.position[0])},${round(pose.position[1])},${round(pose.orientation)}`
+}
+export function mouse2Str(mouse: Mouse){
+  return `${mouse.position[0]},${mouse.position[1]},${mouse.show?'t':''}`
+}
+export function str2Pose(str:string){
+  const poseArray = str.split(',')
+  const pose:Pose2DMap = {position:[Number(poseArray[0]), Number(poseArray[1])] as [number, number],
+    orientation:Number(poseArray[2])}
+
+  return pose
+}
+export function str2Mouse(str:string){
+  const mouseArray = str.split(',')
+  const mouse:Mouse = {position:[Number(mouseArray[0]),Number(mouseArray[1])], show: mouseArray[2] ? true : false}
+
+  return mouse
+}

@@ -1,19 +1,27 @@
-export const StoredMessageType = {
-  PARTICIPANT_POSE: 'mp',                       //  -> update presence once per 5 sec / message immediate value
-  PARTICIPANT_MOUSE: 'mm',                      //  -> message
-  PARTICIPANT_AFK: 'p_afk',                     //
-  PARTICIPANT_INFO: 'p_info',                   //  -> presence
+//  messages forward only when participants are in the range.
+export const ParticipantMessageType = {
+  PARTICIPANT_AFK: 'p_afk',                     //  -> presence
   PARTICIPANT_PHYSICS: 'p_physics',             //  -> presence
   PARTICIPANT_TRACKSTATES: 'p_trackstates',     //  -> presence
+}
+export type ParticipantMessageKeys = keyof typeof ParticipantMessageType
+export const PoseMessageType = {
+  PARTICIPANT_POSE: 'mp',                       //  -> presence and message
+  PARTICIPANT_MOUSE: 'mm',                      //  -> presence and message
+}
+export const StoredMessageType = {
+  ...ParticipantMessageType,
+  PARTICIPANT_INFO: 'p_info',                   //  -> presence
   MAIN_SCREEN_CARRIER: 'main_screen_carrier',   //  -> presence
-  MY_CONTENT: 'my_content',                     //  -> presence, only when no bmRelayServer
+  MY_CONTENT: 'my_content',                     //  -> presence, used only when no bmRelayServer exist
 }
 export type StoredMessageKeys = keyof typeof StoredMessageType
 
 export const InstantMessageType = {
-  CHAT_MESSAGE: 'm_chat',                       //  -> text chat message
+  REQUEST_PARTICIPANT_STATES: 'req_p_state',    //  -> message, to get states to display participant
   PARTICIPANT_TRACKLIMITS: 'm_track_limits',    //  -> message, basically does not sync
   YARN_PHONE: 'YARN_PHONE',                     //  -> message
+  CHAT_MESSAGE: 'm_chat',                       //  -> text chat message
   CALL_REMOTE: 'call_remote',                   //  -> message, to give notification to a remote user.
   MUTE_VIDEO: 'm_mute_video',                   //  ask to mute video
   MUTE_AUDIO: 'm_mute_audio',                   //  ask to mute audio
@@ -22,6 +30,7 @@ export const InstantMessageType = {
 }
 export type InstantMessageKeys = keyof typeof InstantMessageType
 
+//  messages which can be merged.
 export const AccumuratingMessageType = {
   //  contents
   CONTENT_UPDATE_REQUEST: 'c_update',     //  -> message
@@ -35,6 +44,7 @@ export type accumuratingMessageKeys = keyof typeof AccumuratingMessageType
 export const MessageType = {
   ...InstantMessageType,
   ...StoredMessageType,
+  ...PoseMessageType,
   ...AccumuratingMessageType,
 
   //  special

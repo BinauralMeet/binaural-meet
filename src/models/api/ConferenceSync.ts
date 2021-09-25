@@ -3,9 +3,9 @@ import {ISharedContent} from '@models/ISharedContent'
 import { KickTime } from '@models/KickTime'
 import {t} from '@models/locales'
 import {priorityCalculator} from '@models/middleware/trafficControl'
-import {defaultRemoteInformation, Mouse, PARTICIPANT_SIZE, Physics, RemoteInformation, TrackStates} from '@models/Participant'
+import {defaultRemoteInformation, PARTICIPANT_SIZE, Physics, RemoteInformation, TrackStates} from '@models/Participant'
 import {urlParameters} from '@models/url'
-import {Pose2DMap} from '@models/utils'
+import {Mouse, mouse2Str, pose2Str, str2Mouse, str2Pose} from '@models/utils'
 import {normV, subV2} from '@models/utils'
 import {assert} from '@models/utils'
 import chat, { ChatMessage, ChatMessageToSend } from '@stores/Chat'
@@ -17,10 +17,11 @@ import contents from '@stores/sharedContents/SharedContents'
 import JitsiMeetJS from 'lib-jitsi-meet'
 import _ from 'lodash'
 import {autorun, IReactionDisposer} from 'mobx'
-import type {BMMessage, Conference} from './Conference'
+import {BMMessage} from './BMMessage'
+import {Conference} from './Conference'
 import {ConferenceEvents} from './Conference'
 import {MessageType} from './MessageType'
-import { notification } from './Notification'
+import {notification} from './Notification'
 
 // config.js
 declare const config:any             //  from ../../config.js included from index.html
@@ -49,10 +50,6 @@ interface FragmentedMessage{
 
 const SYNC_LOG = false
 const syncLog = SYNC_LOG ? console.log : () => {}
-
-function round(n:number){ return Math.round(n*100) / 100 }
-function pose2Str(pose:Pose2DMap){ return `${round(pose.position[0])},${round(pose.position[1])},${round(pose.orientation)}`}
-function mouse2Str(mouse: Mouse){ return `${mouse.position[0]},${mouse.position[1]},${mouse.show?'t':''}` }
 
 export class ConferenceSync{
   conference: Conference
@@ -167,7 +164,7 @@ export class ConferenceSync{
   }
 
   //  message handler
-  private onParticipantTrackLimits(from:string, limits:string[]){
+  private onParticipantTrackLimits(limits:string[]){
     participants.local.remoteVideoLimit = limits[0]
     participants.local.remoteAudioLimit = limits[1]
   }
@@ -179,7 +176,8 @@ export class ConferenceSync{
       this.conference.sendMessage(MessageType.PARTICIPANT_LEFT, '', id)
     }
   }
-  private onChatMessage(pid: string, msg: ChatMessageToSend){
+  private onChatMessage(pid: string|undefined, msg: ChatMessageToSend){
+    assert(pid)
     //  console.log(`PRIVATE_MESSAGE_RECEIVED id:${id}, text:${msg.msg}, ts:${msg.ts}`)
     const from = participants.find(pid)
     if (from){
@@ -187,7 +185,8 @@ export class ConferenceSync{
         from.information.avatarSrc, from.getColor(), msg.ts, msg.to ? 'private':'text'))
     }
   }
-  private onCallRemote(from:string){
+  private onCallRemote(from:string|undefined){
+    assert(from)
     const caller = participants.find(from)
     if (caller){
       chat.calledBy(caller)
@@ -196,11 +195,13 @@ export class ConferenceSync{
       }
     }
   }
-  private onAfkChanged(from:string, afk: boolean){
+  private onAfkChanged(from:string|undefined, afk: boolean){
+    assert(from)
     const remote = participants.find(from)
     if (remote){ remote.awayFromKeyboard = afk }
   }
-  public onKicked(pid:string, reason:string){
+  public onKicked(pid:string|undefined, reason:string){
+    assert(pid)
     errorInfo.setType('kicked', participants.remote.get(pid)?.information.name, reason)
     const str = window.localStorage.getItem('kickTimes')
     let found:KickTime|undefined = undefined
@@ -222,7 +223,8 @@ export class ConferenceSync{
     }, 10000)
   }
 
-  private onParticipantInfo(from:string, info:RemoteInformation){
+  private onParticipantInfo(from:string|undefined, info:RemoteInformation){
+    assert(from)
     if (urlParameters.testBot !== null) { return }
 
     const remote = participants.remote.get(from)
@@ -240,7 +242,8 @@ export class ConferenceSync{
       syncLog(`Info of ${from} received.`)
     }
   }
-  private onParticipantTrackState(from:string, states:TrackStates){
+  private onParticipantTrackState(from:string|undefined, states:TrackStates){
+    assert(from)
     if (urlParameters.testBot !== null) { return }
 
     const remote = participants.remote.get(from)
@@ -248,10 +251,9 @@ export class ConferenceSync{
       Object.assign(remote.trackStates, states)
     }
   }
-  private onParticipantPose(from:string, poseStr:string){
-    const poseArray = poseStr.split(',')
-    const pose = {position:[Number(poseArray[0]), Number(poseArray[1])] as [number, number],
-      orientation:Number(poseArray[2])}
+  private onParticipantPose(from:string|undefined, poseStr:string){
+    assert(from)
+    const pose = str2Pose(poseStr)
     const remote = participants.remote.get(from)
     const local = participants.local
     if (remote) {
@@ -272,20 +274,22 @@ export class ConferenceSync{
       }
     }
   }
-  private onParticipantMouse(from:string, mouseStr:string){
-    const mouseArray = mouseStr.split(',')
-    const mouse:Mouse = {position:[Number(mouseArray[0]),Number(mouseArray[1])], show: mouseArray[2] ? true : false}
+  private onParticipantMouse(from:string|undefined, mouseStr:string){
+    assert(from)
+    const mouse = str2Mouse(mouseStr)
     if (urlParameters.testBot !== null) { return }
     const remote = participants.remote.get(from)
     if (remote) { Object.assign(remote.mouse, mouse) }
   }
-  private onParticipantPhysics(from:string, physics:Physics){
+  private onParticipantPhysics(from:string|undefined, physics:Physics){
+    assert(from)
     const remote = participants.remote.get(from)
     if (remote) {
       remote.physics.onStage = physics.onStage
     }
   }
-  private onYarnPhone(from:string, drArray:string[]){
+  private onYarnPhone(from:string|undefined, drArray:string[]){
+    assert(from)
     //  console.log(`yarn from ${from} local:${participants.localId}`)
     const myself = drArray.find(id => id === participants.localId)
     if (myself) {
@@ -302,27 +306,29 @@ export class ConferenceSync{
       participants.yarnPhones.delete(from)
     }
   }
-  private onMuteVideo(from: string, value: boolean){
+  private onMuteVideo(value: boolean){
     const setting = {} as MediaSettings
     participants.local.loadMediaSettingsFromStorage(setting)
     participants.local.muteVideo = value || setting.stream.muteVideo
   }
-  private onMuteAudio(from: string, value: boolean){
+  private onMuteAudio(value: boolean){
     const setting = {} as MediaSettings
     participants.local.loadMediaSettingsFromStorage(setting)
     participants.local.muteAudio = value || setting.stream.muteAudio
   }
-  private onReloadBrower(from: string){
+  private onReloadBrower(){
     window.location.reload()
   }
   //  contents
-  private onMainScreenCarrier(from: string, msg:{carrierId:string, enabled:boolean}){
+  private onMainScreenCarrier(from: string|undefined, msg:{carrierId:string, enabled:boolean}){
+    assert(from)
     const remote = participants.remote.get(from)
     if (remote) {
       contents.tracks.onMainScreenCarrier(msg.carrierId, msg.enabled)
     }
   }
-  private onMyContent(from:string, cs_:ISharedContent[]){
+  private onMyContent(from:string|undefined, cs_:ISharedContent[]){
+    assert(from)
     const cs = makeThemContents(cs_)
     contents.checkDuplicatedWallpaper(from, cs)
     contents.replaceRemoteContents(cs, from)
@@ -330,20 +336,20 @@ export class ConferenceSync{
     const remote = participants.remote.get(from)
     syncLog(`recv remote contents ${JSON.stringify(cs.map(c => c.id))} from ${from}.`, cs)
   }
-  private onContentInfoUpdate(from:string, cs:ISharedContent[]){
+  private onContentInfoUpdate(cs:ISharedContent[]){
     assert(config.bmRelayServer)
     cs.forEach(c => contents.roomContentsInfo.set(c.id, c))
   }
-  private onContentUpdateRequest(from:string, cds:ISharedContent[]){
+  private onContentUpdateRequest(cds:ISharedContent[]){
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const cs = makeThemContents(cds)
     contents.updateByRemoteRequest(cs)
   }
-  private onContentRemoveRequest(from:string, cids:string[]){
+  private onContentRemoveRequest(cids:string[]){
     contents.removeByRemoteRequest(cids)
   }
-  private onLeftContentRemoveRequest(from:string, cids:string[]){
-    console.log(`onLeftContentRemoveRequest for ${cids} from ${from}.`)
+  private onLeftContentRemoveRequest(cids:string[]){
+    console.log(`onLeftContentRemoveRequest for ${cids}.`)
     contents.removeLeftContentByRemoteRequest(cids)
   }
 
@@ -545,17 +551,17 @@ export class ConferenceSync{
         case MessageType.PARTICIPANT_AFK: this.onAfkChanged(msg.p, JSON.parse(msg.v)); break
         case MessageType.CALL_REMOTE: this.onCallRemote(msg.p); break
         case MessageType.CHAT_MESSAGE: this.onChatMessage(msg.p, JSON.parse(msg.v)); break
-        case MessageType.CONTENT_REMOVE_REQUEST: this.onContentRemoveRequest(msg.p, JSON.parse(msg.v)); break
-        case MessageType.LEFT_CONTENT_REMOVE_REQUEST: this.onLeftContentRemoveRequest(msg.p, JSON.parse(msg.v)); break
-        case MessageType.CONTENT_UPDATE_REQUEST: this.onContentUpdateRequest(msg.p, JSON.parse(msg.v)); break
-        case MessageType.CONTENT_INFO_UPDATE: this.onContentInfoUpdate(msg.p, JSON.parse(msg.v)); break
+        case MessageType.CONTENT_REMOVE_REQUEST: this.onContentRemoveRequest(JSON.parse(msg.v)); break
+        case MessageType.LEFT_CONTENT_REMOVE_REQUEST: this.onLeftContentRemoveRequest(JSON.parse(msg.v)); break
+        case MessageType.CONTENT_UPDATE_REQUEST: this.onContentUpdateRequest(JSON.parse(msg.v)); break
+        case MessageType.CONTENT_INFO_UPDATE: this.onContentInfoUpdate(JSON.parse(msg.v)); break
         case MessageType.PARTICIPANT_MOUSE: this.onParticipantMouse(msg.p, JSON.parse(msg.v)); break
         case MessageType.PARTICIPANT_POSE: this.onParticipantPose(msg.p, JSON.parse(msg.v)); break
-        case MessageType.PARTICIPANT_TRACKLIMITS: this.onParticipantTrackLimits(msg.p, JSON.parse(msg.v)); break
+        case MessageType.PARTICIPANT_TRACKLIMITS: this.onParticipantTrackLimits(JSON.parse(msg.v)); break
         case MessageType.YARN_PHONE: this.onYarnPhone(msg.p, JSON.parse(msg.v)); break
-        case MessageType.RELOAD_BROWSER: this.onReloadBrower(msg.p); break
-        case MessageType.MUTE_VIDEO: this.onMuteVideo(msg.p, JSON.parse(msg.v)); break
-        case MessageType.MUTE_AUDIO: this.onMuteAudio(msg.p, JSON.parse(msg.v)); break
+        case MessageType.RELOAD_BROWSER: this.onReloadBrower(); break
+        case MessageType.MUTE_VIDEO: this.onMuteVideo(JSON.parse(msg.v)); break
+        case MessageType.MUTE_AUDIO: this.onMuteAudio(JSON.parse(msg.v)); break
         case MessageType.KICK: this.onKicked(msg.p, JSON.parse(msg.v)); break
         case PropertyType.MAIN_SCREEN_CARRIER: this.onMainScreenCarrier(msg.p, JSON.parse(msg.v)); break
         case PropertyType.MY_CONTENT: this.onMyContent(msg.p, JSON.parse(msg.v)); break

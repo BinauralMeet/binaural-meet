@@ -1,14 +1,9 @@
 import {JitsiTrack} from 'lib-jitsi-meet'
 import {MapObject} from './MapObject'
+import {findReverseColorRGB, findTextColorRGB, getRandomColorRGB, rgb2Color} from './utils/color'
+import {Mouse} from './utils/coordinates'
 
 export const PARTICIPANT_SIZE = 60
-
-export interface ParticipantInfo {
-  id: string
-  name: string
-  avatarSrc: string
-  colors: string[]
-}
 
 export interface ParticipantBase extends MapObject{
   physics: Physics
@@ -16,7 +11,6 @@ export interface ParticipantBase extends MapObject{
   mouse: Mouse
   id: string
   information: RemoteInformation|LocalInformation
-  awayFromKeyboard: boolean
 }
 
 export interface RemoteParticipant extends ParticipantBase {
@@ -30,13 +24,15 @@ export interface LocalParticipant extends ParticipantBase {
 }
 export type Participant = LocalParticipant | RemoteParticipant
 
-export interface RemoteInformation {
+export interface BaseInformation {
   name: string
   avatarSrc: string
   color: number[]
   textColor: number[]
 }
-export interface LocalInformation extends RemoteInformation {
+export interface RemoteInformation extends BaseInformation{
+}
+export interface LocalInformation extends BaseInformation{
   email: string
   notifyCall: boolean
   notifyTouch: boolean
@@ -75,13 +71,29 @@ export interface TrackStates{
 export interface Physics {
   located: boolean
   onStage: boolean
+  awayFromKeyboard: boolean
 }
 export const defaultPhysics: Physics = {
   located: true,
   onStage: false,
+  awayFromKeyboard: false,
 }
 
-export interface Mouse{
-  position:[number, number]
-  show: boolean
+export function getColorOfParticipant(information: BaseInformation) {
+  let color = information.color
+  if (!color.length) {
+    if (information.name.length){
+      color = getRandomColorRGB(information.name)
+    }else{
+      color = [0xD0, 0xD0, 0xE0]
+    }
+  }
+  let textColor = information.textColor
+  if (!textColor.length) {
+    textColor = findTextColorRGB(color)
+  }
+  const reverseRGB = findReverseColorRGB(color)
+  const colors = [rgb2Color(color), rgb2Color(textColor), rgb2Color(reverseRGB)]
+
+  return colors
 }

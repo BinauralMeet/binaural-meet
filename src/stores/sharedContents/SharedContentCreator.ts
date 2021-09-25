@@ -1,6 +1,5 @@
 import {getProxiedUrl} from '@models/api/CORS'
 import {getImageSize, uploadToGyazo} from '@models/api/Gyazo'
-import {defaultPerceptibility,  Perceptibility} from '@models/MapObject'
 import {ContentType, isContentWallpaper, ISharedContent, SharedContentData,
   SharedContentId, TEN_YEAR, TextMessages, TIME_RESOLUTION_IN_MS} from '@models/ISharedContent'
 import {Pose2DMap} from '@models/utils'
@@ -27,27 +26,7 @@ export const defaultContent: ISharedContent = Object.assign({}, mapObjectDefault
   pinned: false,
 })
 
-///  Add perceptibility and function to object obtained by JSON.parse()
-export function jsonToContents(json: string, perceptibility = defaultPerceptibility) {
-  const cs = JSON.parse(json)
-  for (const c of cs) {
-    c.perceptibility = Object.assign({}, defaultPerceptibility)
-  }
-
-  return cs as ISharedContent[]
-}
-
-export function makeItContent(it: SharedContentData) {
-  const sc = it as ISharedContent
-  sc.perceptibility = Object.assign({}, defaultPerceptibility)
-
-  return sc
-}
 export function makeThemContents(them: ISharedContent[]) {
-  for (const c of them) {
-    makeItContent(c)
-  }
-
   return them
 }
 
@@ -64,7 +43,6 @@ class SharedContentImp implements ISharedContent {
   pose!: Pose2DMap
   size!: [number, number]
   originalSize!:[number, number]
-  perceptibility!: Perceptibility
   noFrame?: boolean
   opacity?: number
   constructor() {

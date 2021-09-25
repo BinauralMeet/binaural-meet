@@ -1,9 +1,10 @@
 import {
   defaultInformation, defaultPhysics,
   defaultRemoteInformation,
-  LocalInformation, Mouse, ParticipantBase as IParticipantBase, ParticipantInfo, Physics, RemoteInformation, Tracks
+  LocalInformation, ParticipantBase as IParticipantBase, Physics, RemoteInformation, Tracks
 } from '@models/Participant'
 import {findReverseColorRGB, findTextColorRGB, getRandomColorRGB, rgb2Color} from '@models/utils'
+import {Mouse} from '@models/utils'
 import {MapObject} from '@stores/MapObject'
 import {Store} from '@stores/utils'
 import {JitsiTrack} from 'lib-jitsi-meet'
@@ -42,11 +43,11 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
   @observable muteVideo = false
   // determines whether the audio would be rendered
   @computed get showAudio () {
-    return !this.muteAudio && this.perceptibility.audibility
+    return !this.muteAudio
   }
   // determines whether the video would be rendered
   @computed get showVideo () {
-    return !this.muteVideo && this.perceptibility.coreContentVisibility
+    return !this.muteVideo
   }
 
   constructor(isLocal=false) {
@@ -98,15 +99,4 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
   setPhysics(physics: Partial<Physics>) {
     Object.assign(this.physics, physics)
   }
-}
-
-export function extranctParticipantInfo(p: ParticipantBase){
-  const rv:ParticipantInfo = {
-    id:p.id,
-    name:p.information.name,
-    avatarSrc:p.information.avatarSrc,
-    colors: p.getColor()
-  }
-
-  return rv
 }
