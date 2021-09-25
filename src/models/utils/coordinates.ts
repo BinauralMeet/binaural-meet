@@ -123,10 +123,22 @@ export function isOverlapped(a:number[], b:number[]){
 
   return true
 }
+export function isOverlappedToCircle(rect:number[], circle:number[]){
+  if (isInRect(circle as [number, number], rect)){ return true }
+  const d2 = Math.min(square(rect[3] - circle[0]), square(rect[1] - circle[0]))
+    + Math.min(square(rect[0] - circle[1]), square(rect[2] - circle[1]))
+
+  return d2 < square(circle[2])
+}
 
 export function isInRect(point: [number, number], rect:number[]){
   return rect[3] <= point[0] && point[0] <= rect[1]
     && rect[0] <= point[1] && point[1] <= rect[2]
+}
+export function isInCircle(point: [number, number], circle:number[]){
+  const d2 = square(point[0] - circle[0]) + square(point[1] - circle[1])
+
+  return d2 <= square(circle[2])
 }
 
 export interface Mouse{

@@ -1,5 +1,5 @@
-import { KickTime } from '@models/KickTime'
-import { assert } from '@models/utils'
+import {KickTime} from '@models/KickTime'
+import {assert} from '@models/utils'
 import map from '@stores/Map'
 import {participantsStore} from '@stores/participants'
 import {default as participants} from '@stores/participants/Participants'
@@ -27,6 +27,11 @@ export const sendLog = SENDLOG ? console.log : (a:any) => {}
 // config.js
 declare const config:any             //  from ../../config.js included from index.html
 declare const d:any                  //  from index.html
+
+interface IdleDeadline {
+  readonly didTimeout: boolean
+  timeRemaining(): DOMHighResTimeStamp
+}
 
 const CONF = JitsiMeetJS.events.conference
 export const ConferenceEvents = {
@@ -125,16 +130,20 @@ export class Conference extends EventEmitter {
     })
   }
 
-  onIdle(){
+  onIdle(deadline: IdleDeadline){
     if (this.receivedMessages.length){
+      while(deadline.timeRemaining() > 20){
+        const msgs = this.receivedMessages.splice(0, 1)
+        this.sync.onBmMessage(msgs)
+      }
+      /*
       const N_MESSAGES_ONE_IDLE = 10
-      const msgs = this.receivedMessages.splice(0, N_MESSAGES_ONE_IDLE)
       this.sync.onBmMessage(msgs)
-      //  console.log('Process msgs', msgs)
+      //  console.log('Process msgs', msgs) */
     }else{
       if (this.bmRelaySocket){
         //  console.log('request msg')
-        this.sendMessageViaRelay(MessageType.REQUEST_RANGE, map.visibleArea())
+        this.sendMessageViaRelay(MessageType.REQUEST_RANGE, [map.visibleArea(), participants.audibleArea()])
       }
     }
   }
@@ -345,8 +354,8 @@ export class Conference extends EventEmitter {
       this.bmRelaySocket?.addEventListener('open', onOpen)
       this.bmRelaySocket?.addEventListener('close', onClose)
       if ((window as any).requestIdleCallback){
-        const idleFunc = () => {
-          this.onIdle();
+        const idleFunc = (deadline: IdleDeadline) => {
+          this.onIdle(deadline);
           (window as any).requestIdleCallback(idleFunc)
         }
         (window as any).requestIdleCallback(idleFunc)

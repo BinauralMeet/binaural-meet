@@ -3,7 +3,7 @@ import {ISharedContent} from '@models/ISharedContent'
 import { KickTime } from '@models/KickTime'
 import {t} from '@models/locales'
 import {priorityCalculator} from '@models/middleware/trafficControl'
-import {defaultRemoteInformation, PARTICIPANT_SIZE, Physics, RemoteInformation, TrackStates} from '@models/Participant'
+import {defaultRemoteInformation, PARTICIPANT_SIZE, RemoteInformation, TrackStates} from '@models/Participant'
 import {urlParameters} from '@models/url'
 import {Mouse, mouse2Str, pose2Str, str2Mouse, str2Pose} from '@models/utils'
 import {normV, subV2} from '@models/utils'
@@ -29,8 +29,8 @@ declare const config:any             //  from ../../config.js included from inde
 export const PropertyType = {
   PARTICIPANT_INFO: 'p_info',                   //  -> presence
   PARTICIPANT_POSE: 'p_pose',                   //  -> update presence once per 5 sec / message immediate value
-  PARTICIPANT_PHYSICS: 'p_physics',             //  -> presence
-  PARTICIPANT_TRACKSTATES: 'p_trackstates',     //  -> presence
+  PARTICIPANT_ON_STAGE: 'p_onStage',            //  -> presence
+  PARTICIPANT_TRACKSTATES: 'p_trackSt',         //  -> presence
   MAIN_SCREEN_CARRIER: 'main_screen_carrier',   //  -> presence
   MY_CONTENT: 'my_content',                     //  -> presence
 }
@@ -64,7 +64,7 @@ export class ConferenceSync{
     this.sendPoseMessageNow()
     this.sendMouseMessageNow()
     participants.local.sendInformation()
-    this.sendPhysics()
+    this.sendOnStage()
     this.sendTrackStates()
     if (contents.tracks.localMainConnection?.localId){ this.sendMainScreenCarrier(true) }
     this.sendMyContents()
@@ -95,12 +95,13 @@ export class ConferenceSync{
     while(name.slice(0,1) === '_'){ name = name.slice(1) }
     this.conference._jitsiConference?.setDisplayName(name)
   }
-  sendPhysics(){
+  sendOnStage(){
     if (config.bmRelayServer){
-      this.conference.sendMessage(PropertyType.PARTICIPANT_PHYSICS, {...participants.local.physics})
+      this.conference.sendMessage(PropertyType.PARTICIPANT_ON_STAGE, participants.local.physics.onStage)
     }else{
       if (this.conference.channelOpened) {
-        this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_PHYSICS, {...participants.local.physics})
+        this.conference.setLocalParticipantProperty(
+          PropertyType.PARTICIPANT_ON_STAGE, participants.local.physics.onStage)
       }
     }
   }
@@ -281,11 +282,11 @@ export class ConferenceSync{
     const remote = participants.remote.get(from)
     if (remote) { Object.assign(remote.mouse, mouse) }
   }
-  private onParticipantPhysics(from:string|undefined, physics:Physics){
+  private onParticipantOnStage(from:string|undefined, onStage:boolean){
     assert(from)
     const remote = participants.remote.get(from)
     if (remote) {
-      remote.physics.onStage = physics.onStage
+      remote.physics.onStage = onStage
     }
   }
   private onYarnPhone(from:string|undefined, drArray:string[]){
@@ -402,7 +403,7 @@ export class ConferenceSync{
     this.conference.on(MessageType.PARTICIPANT_POSE, this.onParticipantPose)
     this.conference.on(PropertyType.PARTICIPANT_POSE, this.onParticipantPose)
     this.conference.on(MessageType.PARTICIPANT_MOUSE, this.onParticipantMouse)
-    this.conference.on(PropertyType.PARTICIPANT_PHYSICS, this.onParticipantPhysics)
+    this.conference.on(PropertyType.PARTICIPANT_ON_STAGE, this.onParticipantOnStage)
     this.conference.on(MessageType.YARN_PHONE, this.onYarnPhone)
     this.conference.on(MessageType.MUTE_VIDEO, this.onMuteVideo)
     this.conference.on(MessageType.MUTE_AUDIO, this.onMuteAudio)
@@ -515,7 +516,7 @@ export class ConferenceSync{
     }
     this.disposers.push(autorun(() => { sendMouse('') }))
 
-    this.disposers.push(autorun(() => { this.sendPhysics() }))
+    this.disposers.push(autorun(() => { this.sendOnStage() }))
 
     const sendYarnPhones = () => {
       if (this.conference.channelOpened) {
@@ -566,7 +567,7 @@ export class ConferenceSync{
         case PropertyType.MAIN_SCREEN_CARRIER: this.onMainScreenCarrier(msg.p, JSON.parse(msg.v)); break
         case PropertyType.MY_CONTENT: this.onMyContent(msg.p, JSON.parse(msg.v)); break
         case PropertyType.PARTICIPANT_INFO: this.onParticipantInfo(msg.p, JSON.parse(msg.v)); break
-        case PropertyType.PARTICIPANT_PHYSICS: this.onParticipantPhysics(msg.p, JSON.parse(msg.v)); break
+        case PropertyType.PARTICIPANT_ON_STAGE: this.onParticipantOnStage(msg.p, JSON.parse(msg.v)); break
         case PropertyType.PARTICIPANT_POSE: this.onParticipantPose(msg.p, JSON.parse(msg.v)); break
         case PropertyType.PARTICIPANT_TRACKSTATES: this.onParticipantTrackState(msg.p, JSON.parse(msg.v)); break
         default:

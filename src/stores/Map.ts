@@ -72,7 +72,7 @@ export class MapData {
   visibleArea(){
     const lt = this.fromWindow([0,0])
     const rb = this.fromWindow(this.screenSize)
-    const margin = PARTICIPANT_SIZE * 4
+    const margin = PARTICIPANT_SIZE
 //    console.log(`visibleArea ${lt}, ${rb}`)
 
     return [lt[1] - margin, rb[0] + margin, rb[1] + margin, lt[0] - margin]

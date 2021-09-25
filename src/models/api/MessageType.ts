@@ -1,13 +1,13 @@
 //  messages forward only when participants are in the range.
 export const ParticipantMessageType = {
   PARTICIPANT_AFK: 'p_afk',                     //  -> presence
-  PARTICIPANT_PHYSICS: 'p_physics',             //  -> presence
-  PARTICIPANT_TRACKSTATES: 'p_trackstates',     //  -> presence
+  PARTICIPANT_TRACKSTATES: 'p_trackSt',         //  -> presence
 }
 export type ParticipantMessageKeys = keyof typeof ParticipantMessageType
 export const PoseMessageType = {
   PARTICIPANT_POSE: 'mp',                       //  -> presence and message
   PARTICIPANT_MOUSE: 'mm',                      //  -> presence and message
+  PARTICIPANT_ON_STAGE: 'p_onStage',            //  -> presence
 }
 export const StoredMessageType = {
   ...ParticipantMessageType,

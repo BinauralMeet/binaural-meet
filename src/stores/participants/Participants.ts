@@ -1,3 +1,4 @@
+import { PARTICIPANT_SIZE } from '@models/Participant'
 import {JitsiRemoteTrack} from 'lib-jitsi-meet'
 import {action, computed, makeObservable, observable} from 'mobx'
 import {LocalParticipant} from './LocalParticipant'
@@ -87,6 +88,10 @@ export class Participants {
 
   isLocal(participantId: string) {
     return participantId === this.localId
+  }
+
+  audibleArea(){
+    return [this.local.pose.position[0], this.local.pose.position[1], PARTICIPANT_SIZE * 7]
   }
 }
 
