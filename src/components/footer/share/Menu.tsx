@@ -6,25 +6,28 @@ import bxWindowClose from '@iconify-icons/bx/bx-window-close'
 import whiteboard24Regular from '@iconify-icons/fluent/whiteboard-24-regular'
 import cursorDefaultOutline from '@iconify/icons-mdi/cursor-default-outline'
 import {Icon} from '@iconify/react'
+import Collapse from '@material-ui/core/Collapse'
 import Divider from '@material-ui/core/Divider'
 import FormControl from '@material-ui/core/FormControl'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
 import List from '@material-ui/core/List'
+import ListItem from '@material-ui/core/ListItem'
 import Radio from '@material-ui/core/Radio'
 import RadioGroup from '@material-ui/core/RadioGroup'
 import CameraAltIcon from '@material-ui/icons/CameraAlt'
+import ExpandLess from '@material-ui/icons/ExpandLess'
+import ExpandMore from '@material-ui/icons/ExpandMore'
 import DownloadIcon from '@material-ui/icons/GetApp'
 import HttpIcon from '@material-ui/icons/Http'
 import ImageIcon from '@material-ui/icons/Image'
-import OpenInBrowserIcon from '@material-ui/icons/OpenInBrowser'
 import UploadIcon from '@material-ui/icons/Publish'
 import ScreenShareIcon from '@material-ui/icons/ScreenShare'
 import StopScreenShareIcon from '@material-ui/icons/StopScreenShare'
 import SubjectIcon from '@material-ui/icons/Subject'
 import {initOptions} from '@models/api/Connection'
 import {connection} from '@models/api/ConnectionDefs'
-import {useTranslation} from '@models/locales'
 import {ISharedContent} from '@models/ISharedContent'
+import {useTranslation} from '@models/locales'
 import {assert} from '@models/utils'
 import {createContent, createContentOfIframe, createContentOfText,
   createContentOfVideo, extractContentData, extractContentDatas} from '@stores/sharedContents/SharedContentCreator'
@@ -96,6 +99,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
     {main: sharedContents.tracks.localMains.size, contents: sharedContents.tracks.localContents.size}))
   const showMouse = useObserver(() => participants.local.mouse.show)
   const fileInput = useRef<HTMLInputElement>(null)
+  const [openMore, setOpenMore] = React.useState(false)
 
   //  for CameraSelector
   function updateDevices() {
@@ -215,74 +219,16 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
 
   return (
     <List>
-      <input type="file" accept="application/json" ref={fileInput} style={{display:'none'}}
-        onChange={
-          (ev) => {
-            setStep('none')
-            importItems(ev, sharedContents)
-          }
-       }
-      />
-      <ShareDialogItem
-        key="shareImport" text={t('shareImport')} icon={<UploadIcon />} onClick={importFile}
-      />
-      <ShareDialogItem
-        key="shareDownload" text={t('shareDownload')} icon={<DownloadIcon />} onClick={downloadFile}
-      />
-      <Divider />
-      <ShareDialogItem
-        key="shareIframe" text={t('shareIframe')} icon={<HttpIcon />} onClick={() => setStep('iframe')}
-      />
-      <ShareDialogItem
-        key="shareText" text={t('shareText')} icon={<SubjectIcon />}
-        onClick={createText}
-      />
       <ShareDialogItem
         key="shareImage" text={t('shareImage')} icon={<ImageIcon />} onClick={() => setStep('image')}
+      />
+      <ShareDialogItem
+        key="shareText" text={t('shareText')} icon={<SubjectIcon />} onClick={createText}
       />
       <ShareDialogItem
         key="shareWhiteboard" text={t('shareWhiteboard')} icon={<Icon icon={whiteboard24Regular} style={{fontSize:'1.5rem'}} />}
          onClick={createWhiteboard}
       />
-      <Divider />
-      <ShareDialogItem key="shareCamera" text={t('shareCamera')} icon={<CameraAltIcon />}
-        onClick={() => setStep('camera')}
-      />
-      <ShareDialogItem
-        key="shareScreenBackground"
-        icon={sharing.main ? <StopScreenShareIcon /> : <ScreenShareIcon />}
-        text={sharing.main ? t('stopScreenBackground') : t('shareScreenBackground')}
-        onClick={screenAsBackgrouond}
-      />
-      <ShareDialogItem
-        key="shareScreenContent"
-        icon={<OpenInBrowserIcon />}
-        text={t('shareScreenContent')}
-        onClick={createScreen} />
-      {sharedContents.tracks.localContents.size ?
-        <ShareDialogItem
-          key = "stopScreen"
-          icon={<Icon icon={bxWindowClose} />}
-          text={t('stopScreen')}
-          onClick={closeAllScreens}
-          /> : undefined}
-      <ShareDialogItem key="fps" icon={<></>} text={t('frameRateSetting')} onClick={()=>{}}>
-        <FormControl component="fieldset">
-          <Observer>{
-            ()=> <RadioGroup row aria-label="screen-fps" name="FPS" value={props.contents.screenFps}
-              onChange={(ev)=>{
-                props.contents.setScreenFps(Number(ev.target.value))
-              }}>
-              <FormControlLabel value={1} control={<Radio />} label="1" />
-              <FormControlLabel value={5} control={<Radio />} label="5" />
-              <FormControlLabel value={15} control={<Radio />} label="15" />
-              <FormControlLabel value={30} control={<Radio />} label="30" />
-              <FormControlLabel value={60} control={<Radio />}
-                label={<span>60&nbsp;&nbsp;&nbsp;&nbsp;{t('fps')}</span>} />
-            </RadioGroup>
-          }</Observer>
-        </FormControl>
-      </ShareDialogItem>
       <Divider />
       <ShareDialogItem
         key="shareMouse"
@@ -293,6 +239,71 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
           setStep('none')
         }}
       />
+      <ShareDialogItem key="shareCamera" text={t('shareCamera')} icon={<CameraAltIcon />}
+        onClick={() => setStep('camera')}
+      />
+      <ShareDialogItem
+        key="shareScreenContent"
+        icon={<ScreenShareIcon />}
+        text={t('shareScreenContent')}
+        onClick={createScreen}
+        secondEl = {<FormControl component="fieldset">
+          <Observer>{
+            ()=> <RadioGroup row aria-label="screen-fps" name="FPS" value={props.contents.screenFps}
+              onChange={(ev)=>{ props.contents.setScreenFps(Number(ev.target.value)) }}
+              onClick={(ev)=>{
+                ev.stopPropagation()
+                setTimeout(createScreen, 100)
+              }}
+            >
+              <FormControlLabel value={1} control={<Radio />} label="1" />
+              <FormControlLabel value={5} control={<Radio />} label="5" />
+              <FormControlLabel value={15} control={<Radio />} label="15" />
+              <FormControlLabel value={30} control={<Radio />} label="30" />
+              <FormControlLabel value={60} control={<Radio />}
+                label={<span>60&nbsp;&nbsp;&nbsp;&nbsp;{t('fps')}</span>} />
+            </RadioGroup>
+          }</Observer>
+        </FormControl>}
+      />
+      {sharedContents.tracks.localContents.size ?
+        <div style={{paddingLeft:'1em'}}><ShareDialogItem dense key = "stopScreen"
+          icon={<Icon icon={bxWindowClose} style={{fontSize:'1.5rem'}}/>}
+          text={t('stopScreen')}
+          onClick={closeAllScreens}
+          /></div> : undefined}
+      <Divider />
+      <ListItem button dense onClick={()=>{ setOpenMore(!openMore) }}>
+        {openMore ? <ExpandLess /> : <ExpandMore />}
+      </ListItem>
+      <Collapse in={openMore} timeout="auto" unmountOnExit>
+        <div style={{paddingLeft:'1em'}}>
+          <ShareDialogItem
+            key="shareIframe" text={t('shareIframe')} icon={<HttpIcon />} onClick={() => setStep('iframe')}
+          />
+          <ShareDialogItem
+            key="shareScreenBackground"
+            icon={sharing.main ? <StopScreenShareIcon /> : <ScreenShareIcon />}
+            text={sharing.main ? t('stopScreenBackground') : t('shareScreenBackground')}
+            onClick={screenAsBackgrouond}
+          />
+          <Divider />
+          <input type="file" accept="application/json" ref={fileInput} style={{display:'none'}}
+            onChange={
+              (ev) => {
+                setStep('none')
+                importItems(ev, sharedContents)
+              }
+            }
+          />
+          <ShareDialogItem
+            key="shareImport" text={t('shareImport')} icon={<UploadIcon />} onClick={importFile}
+          />
+          <ShareDialogItem
+            key="shareDownload" text={t('shareDownload')} icon={<DownloadIcon />} onClick={downloadFile}
+          />
+        </div>
+      </Collapse>
     </List>
   )
 }

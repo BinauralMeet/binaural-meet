@@ -6,9 +6,11 @@ import {isSmartphone} from '@models/utils'
 import React from 'react'
 
 interface ShareDialogItemProps {
-  icon: JSX.Element
+  icon?: JSX.Element
   text: string
-  onClick: () => void
+  secondEl?: JSX.Element
+  onClick?: () => void
+  dense?: boolean
 }
 
 export const ShareDialogItem: React.FC<ShareDialogItemProps> = (props) => {
@@ -19,15 +21,18 @@ export const ShareDialogItem: React.FC<ShareDialogItemProps> = (props) => {
   } = props
   const textEl = acceleratorText2El(text)
 
-  return (
-    <ListItem button={true} onClick={onClick}>
+  return icon ?
+    <ListItem button dense={props.dense} onClick={onClick}>
       <ListItemAvatar style={{fontSize: isSmartphone() ? '2.5em' : '1em'}}>
         {icon}
       </ListItemAvatar>
-      <ListItemText style={{fontSize: isSmartphone() ? '2.5em' : '1em'}}>
-        {textEl}
-      </ListItemText>
+      <ListItemText style={{fontSize: isSmartphone() ? '2.5em' : '1em'}}
+        primary={textEl} secondary={props.secondEl} />
+      {props.children}
+    </ListItem> :
+    <ListItem  dense={props.dense} onClick={onClick}>
+      <ListItemText style={{fontSize: isSmartphone() ? '2.5em' : '1em'}}
+        primary={textEl} secondary={props.secondEl} />
       {props.children}
     </ListItem>
-  )
 }

@@ -23,7 +23,7 @@ export const enTranslate = {
   shareCamera: '_Camera',
   shareScreenBackground:'Screen as the _background',
   stopScreenBackground:'Stop _background screen',
-  shareScreenContent:'_Screen in a window',
+  shareScreenContent:'_Screen',
   stopScreen:'C_lose all screen and camera windows',
   frameRateSetting: 'Frame rate:',
   fps: 'fps',

@@ -134,14 +134,16 @@ export class Conference extends EventEmitter {
   onIdle(deadline: IdleDeadline){
     //console.log(`onIdle time = ${Date.now() % 1000}`)
     if (this.receivedMessages.length){
+      /*
       const len = this.receivedMessages.length
       let count = 0
+      //  */
       while(deadline.timeRemaining() > 10 && this.receivedMessages.length){
         const msg = this.receivedMessages.shift()
         if (msg){
           this.sync.onBmMessage([msg])
         }
-        count ++
+      //  count ++
       }
       //console.log(`onIdle proccessed ${count} / ${len} messages. Remains ${deadline.timeRemaining()}ms.`)
     }else{
