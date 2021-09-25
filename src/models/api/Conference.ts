@@ -130,19 +130,25 @@ export class Conference extends EventEmitter {
     })
   }
 
+  lastRequest = 0
   onIdle(deadline: IdleDeadline){
+    //console.log(`onIdle time = ${Date.now() % 1000}`)
     if (this.receivedMessages.length){
-      while(deadline.timeRemaining() > 20){
-        const msgs = this.receivedMessages.splice(0, 1)
-        this.sync.onBmMessage(msgs)
+      const len = this.receivedMessages.length
+      let count = 0
+      while(deadline.timeRemaining() > 10 && this.receivedMessages.length){
+        const msg = this.receivedMessages.shift()
+        if (msg){
+          this.sync.onBmMessage([msg])
+        }
+        count ++
       }
-      /*
-      const N_MESSAGES_ONE_IDLE = 10
-      this.sync.onBmMessage(msgs)
-      //  console.log('Process msgs', msgs) */
+      //console.log(`onIdle proccessed ${count} / ${len} messages. Remains ${deadline.timeRemaining()}ms.`)
     }else{
-      if (this.bmRelaySocket){
+      const now = Date.now()
+      if (this.bmRelaySocket && (now - this.lastRequest > 50)){
         //  console.log('request msg')
+        this.lastRequest = now
         this.sendMessageViaRelay(MessageType.REQUEST_RANGE, [map.visibleArea(), participants.audibleArea()])
       }
     }
