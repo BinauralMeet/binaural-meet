@@ -28,7 +28,8 @@ export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (prop
     if (ev.key === 'Enter' && kick === 'kick') {
       if (!props.participant) { return }
       connection.conference.kickParticipant(props.participant.id)
-      setTimeout(()=>{connection.conference.sendMessage(MessageType.KICK, props.participant!.id, 'Kicked by administrator.')}, 5000)
+      setTimeout(()=>{connection.conference.sendMessage(
+        MessageType.KICK, 'Kicked by administrator.', props.participant!.id)}, 5000)
       props.close()
     }
   }

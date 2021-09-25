@@ -53,7 +53,7 @@ export class Conference extends EventEmitter {
   }
 
   setRoomProp(name:string, value:string){
-    this.sendMessageViaRelay(MessageType.ROOM_PROP, '', [name, value])
+    this.sendMessageViaRelay(MessageType.ROOM_PROP, [name, value])
   }
 
   public init(name:string, createJitsiConference:()=>JitsiMeetJS.JitsiConference|undefined){
@@ -97,7 +97,7 @@ export class Conference extends EventEmitter {
 
   public uninit(){
     if (config.bmRelayServer && participants.localId){
-      this.sendMessage(MessageType.PARTICIPANT_LEFT, '', participants.localId)
+      this.sendMessage(MessageType.PARTICIPANT_LEFT, participants.localId)
     }
     if (participants.local.tracks.audio) {
       this.removeTrack(participants.local.tracks.audio as JitsiLocalTrack)?.then(()=>{
@@ -134,7 +134,7 @@ export class Conference extends EventEmitter {
     }else{
       if (this.bmRelaySocket){
         //  console.log('request msg')
-        this.sendMessageViaRelay(MessageType.REQUEST_RANGE, '', map.visibleArea())
+        this.sendMessageViaRelay(MessageType.REQUEST_RANGE, map.visibleArea())
       }
     }
   }
@@ -292,14 +292,14 @@ export class Conference extends EventEmitter {
     }
   }
 
-  sendMessage(type:string, to:string, value:any) {
+  sendMessage(type:string, value:any, to?: string) {
     if (this.bmRelaySocket){
-      this.sendMessageViaRelay(type, to, value)
+      this.sendMessageViaRelay(type, value, to)
     }else{
-      this.sendMessageViaJitsi(type, to, value)
+      this.sendMessageViaJitsi(type, value, to)
     }
   }
-  sendMessageViaJitsi(type:string, to:string, value:any) {
+  sendMessageViaJitsi(type:string, value:any, to?:string) {
     const jc = this._jitsiConference as any
     const viaBridge = jc?.rtc?._channel?.isOpen() ? true : false
     const connected = jc?.chatRoom?.connection.connected
@@ -307,7 +307,7 @@ export class Conference extends EventEmitter {
 
     if (viaBridge || connected){
       const msg = viaBridge ? {type, value} : JSON.stringify({type, value})
-      this._jitsiConference?.sendMessage(msg, to, viaBridge)
+      this._jitsiConference?.sendMessage(msg, to ? to : '', viaBridge)
     }else{
       if (participants.remote.size){
         console.log('Conference.sendMessageViaJitsi() failed: Not connected.')
@@ -319,7 +319,7 @@ export class Conference extends EventEmitter {
     if (this.bmRelaySocket){ return }
     const onOpen = () => {
       console.log(`onOpen ${participants.localId}`)
-      this.sendMessage(MessageType.REQUEST_ALL, '', '')
+      this.sendMessageViaRelay(MessageType.REQUEST_ALL, {}, undefined, true)
       this.sync.sendAllAboutMe()
     }
     const onMessage = (ev: MessageEvent<any>)=> {
@@ -354,12 +354,18 @@ export class Conference extends EventEmitter {
     }
     onClose()
   }
-  sendMessageViaRelay(type:string, to:string, value:any) {
+  sendMessageViaRelay(type:string, value:any, to?:string, sendRandP?:boolean) {
     assert(this.bmRelaySocket)
 
     if (this.name && participants.localId){
-      const msg:BMMessage = {t:type, r:this.name, p: participants.localId,
-        d:to, v:JSON.stringify(value)}
+      const msg:BMMessage = {t:type, v:JSON.stringify(value)}
+      if (sendRandP) {
+        msg.r = this.name
+        msg.p = participants.localId
+      }
+      if (to){
+        msg.t = to
+      }
       //  create websocket
       //  send or queue message
       if (this.bmRelaySocket?.readyState === WebSocket.OPEN){

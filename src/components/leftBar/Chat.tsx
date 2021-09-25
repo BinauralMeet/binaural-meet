@@ -4,8 +4,8 @@ import {Tooltip} from '@material-ui/core'
 import IconButton from '@material-ui/core/IconButton'
 import TextField from '@material-ui/core/TextField'
 import SendIcon from '@material-ui/icons/Send'
-import {MessageType} from '@models/api/MessageType'
 import {connection} from '@models/api/ConnectionDefs'
+import {MessageType} from '@models/api/MessageType'
 import {t} from '@models/locales'
 import {isDarkColor} from '@models/utils'
 import chat, {ChatMessage, ChatMessageToSend, ChatMessageType} from '@stores/Chat'
@@ -65,9 +65,9 @@ export const ChatLine: React.FC<Stores & TextLineStyle &{message: ChatMessage}> 
   }}</Observer>
 }
 
-function sendMessage(text: string, sendTo: string, props: Stores){
+function sendChatMessage(text: string, sendTo: string, props: Stores){
   const msg:ChatMessageToSend = {msg:text, ts: Date.now(), to: sendTo}
-  connection.conference.sendMessage(MessageType.CHAT_MESSAGE, sendTo, msg)
+  connection.conference.sendMessage(MessageType.CHAT_MESSAGE, msg, sendTo)
   const local = props.participants.local
   if (sendTo) {
     const remote = props.participants.remote.get(sendTo)
@@ -95,7 +95,7 @@ export const ChatInBar: React.FC<Stores&TextLineStyle>  = (props) => {
           <IconButton size={'small'} onClick={()=>{
             const nameTo = props.chat.sendTo ?
               props.participants?.find(props.chat.sendTo)?.information?.name : undefined
-            sendMessage(text, nameTo ? props.chat.sendTo : '', props)
+            sendChatMessage(text, nameTo ? props.chat.sendTo : '', props)
             setText('')
           }}>
             <SendIcon color="primary" />
@@ -121,7 +121,7 @@ export const ChatInBar: React.FC<Stores&TextLineStyle>  = (props) => {
           onKeyPress={(ev)=>{
             //  if (ev.key === 'Enter'){  }
             if (ev.key === '\n'){ //  CTRL + Enter
-              sendMessage(text, nameTo ? props.chat.sendTo : '', props)
+              sendChatMessage(text, nameTo ? props.chat.sendTo : '', props)
               setText('')
             }
           }}

@@ -38,7 +38,7 @@ export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: Partic
           }else{
             if(config.bmRelayServer){
               connection.conference.sendMessageViaRelay(
-                MessageType.REQUEST_PARTICIPANT_STATES, '', [props.participant.id])
+                MessageType.REQUEST_PARTICIPANT_STATES, [props.participant.id])
             }
             const disposer = autorun(()=>{
               if (props.participant.physics.located){
@@ -55,7 +55,7 @@ export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: Partic
           }else{
             if(config.bmRelayServer){
               connection.conference.sendMessageViaRelay(
-                MessageType.REQUEST_PARTICIPANT_STATES, '', [props.participant.id])
+                MessageType.REQUEST_PARTICIPANT_STATES, [props.participant.id])
             }
             const disposer = autorun(()=>{
               if (props.participant.physics.located){

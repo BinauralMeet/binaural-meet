@@ -329,7 +329,7 @@ export class SharedContents extends EventEmitter {
         }else{
           //  The participant own the contents is already left but not notified.
           this.takeContentsFromDead(pc)
-          connection.conference.sendMessage(MessageType.PARTICIPANT_LEFT, '', pid)
+          connection.conference.sendMessage(MessageType.PARTICIPANT_LEFT, pid)
 
           return {pid: this.localId, pc: this.participants.get(this.localId), take:true}
         }
@@ -429,7 +429,7 @@ export class SharedContents extends EventEmitter {
       } else if (pid && connection.conference.bmRelaySocket?.readyState === WebSocket.OPEN) {
         //  remove participant remaining in relay server
         if (!participants.remote.has(pid)){
-          connection.conference.sendMessageViaRelay(MessageType.PARTICIPANT_LEFT, '', pid)
+          connection.conference.sendMessageViaRelay(MessageType.PARTICIPANT_LEFT, pid)
         }
       }
     }
@@ -437,7 +437,7 @@ export class SharedContents extends EventEmitter {
   //  request content by id which is not sent yet.
   requestContent(cids: string[]){
     if (config.bmRelayServer){
-      connection.conference.sendMessageViaRelay(MessageType.CONTENT_UPDATE_REQUEST_BY_ID, '', cids)
+      connection.conference.sendMessageViaRelay(MessageType.CONTENT_UPDATE_REQUEST_BY_ID, cids)
     }
   }
   //  Update request from remote.

@@ -121,7 +121,7 @@ function ytSeekAndPlay(start:number, index: number, member: YTMember) {
     if (duration){
       member.player.pause()
       if (seekTarget > duration) {
-        seekTarget = 0
+        seekTarget = seekTarget % duration
         start = now + TIMETOSEEK - seekTarget / member.player.getPlaybackRate()
       }
       member.player.seek(seekTarget)
@@ -288,9 +288,9 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
         const player = new YouTubePlayer(id)
         if (!member.params.has('playing') && !member.params.has('paused') && !member.params.has('ended')){
           //member.skipOnPlaying = 1
-          player.play()
-          member.params.set('playing', String(-1))
           selfPlayed = true
+          member.params.set('playing', String(-1))
+          player.play()
         }
         member.player = player
         contentLog(`YTPlayer for ${id} created`)

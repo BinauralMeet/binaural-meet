@@ -65,19 +65,19 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
       <Box mt={2}>
         <Button variant="contained" color={btnColor()} style={{textTransform:'none'}}
           disabled={!roomInfo.passMatched} onClick={() => {
-          if (roomInfo.passMatched) { connection.conference.sendMessage(MessageType.MUTE_VIDEO, '', true) }
+          if (roomInfo.passMatched) { connection.conference.sendMessage(MessageType.MUTE_VIDEO, true) }
         }}> Mute all videos </Button> &nbsp;
         <Button variant="contained" color={btnColor()} style={{textTransform:'none'}}
           disabled={!roomInfo.passMatched} onClick={() => {
-          if (roomInfo.passMatched) { connection.conference.sendMessage(MessageType.MUTE_VIDEO, '', false) }
+          if (roomInfo.passMatched) { connection.conference.sendMessage(MessageType.MUTE_VIDEO, false) }
         }}> Show all videos </Button>&emsp;
         <Button variant="contained" color={btnColor()} style={{textTransform:'none'}}
           disabled={!roomInfo.passMatched} onClick={() => {
-          if (roomInfo.passMatched) { connection.conference.sendMessage(MessageType.MUTE_AUDIO, '', true) }
+          if (roomInfo.passMatched) { connection.conference.sendMessage(MessageType.MUTE_AUDIO, true) }
         }}> Mute all mics </Button>&nbsp;
         <Button variant="contained" color={btnColor()} style={{textTransform:'none'}}
           disabled={!roomInfo.passMatched} onClick={() => {
-          if (roomInfo.passMatched) { connection.conference.sendMessage(MessageType.MUTE_AUDIO, '', false) }
+          if (roomInfo.passMatched) { connection.conference.sendMessage(MessageType.MUTE_AUDIO, false) }
         }}> Switch on all mics </Button>
       </Box>
       <Box mt={2}>
@@ -100,9 +100,9 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
         <Button variant="contained" color={btnColor()} style={{textTransform:'none'}}
           disabled={!roomInfo.passMatched} onClick={() => {
           if (roomInfo.passMatched) {
-            connection.conference.sendMessageViaJitsi(MessageType.RELOAD_BROWSER, '', '')
+            connection.conference.sendMessageViaJitsi(MessageType.RELOAD_BROWSER, {})
             if (connection.conference.bmRelaySocket?.readyState === WebSocket.OPEN){
-              connection.conference.sendMessageViaRelay(MessageType.RELOAD_BROWSER, '', '')
+              connection.conference.sendMessageViaRelay(MessageType.RELOAD_BROWSER, {})
             }
           }
         }}> Reload </Button>&emsp;
