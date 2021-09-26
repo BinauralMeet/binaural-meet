@@ -297,6 +297,14 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
       <ListItem button dense onClick={()=>{ setOpenMore(!openMore) }}>
         {openMore ? <ExpandLess /> : <ExpandMore />}
       </ListItem>
+      <input type="file" accept="application/json" ref={fileInput} style={{display:'none'}}
+        onChange={
+          (ev) => {
+            setStep('none')
+            importItems(ev, sharedContents)
+          }
+        }
+      />
       <Collapse in={openMore} timeout="auto" unmountOnExit>
         <div style={{paddingLeft:'1em'}}>
           <ShareDialogItem
@@ -310,14 +318,6 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
             onClick={screenAsBackgrouond}
           />
           <Divider />
-          <input type="file" accept="application/json" ref={fileInput} style={{display:'none'}}
-            onChange={
-              (ev) => {
-                setStep('none')
-                importItems(ev, sharedContents)
-              }
-            }
-          />
           <ShareDialogItem
             key="shareImport" text={t('shareImport')} icon={<UploadIcon />} onClick={importFile}
             tip = {t('shareImportTip')}
