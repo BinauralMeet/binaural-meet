@@ -51,6 +51,7 @@ interface Member{
   props: ContentProps
   params: Map<string, string>
   scrolling: boolean
+  onscroll:()=>void
 }
 
 function updateUrl(member: Member) {
@@ -69,7 +70,7 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
   const params = getParamsFromUrl(props.content.url)
   const fileId = params.get('id')
   const mimeType = params.get('mimeType')
-  const memberRef = useRef<Member>({props, params, scrolling:false})
+  const memberRef = useRef<Member>({props, params, scrolling:false, onscroll:()=>{}})
   const member = memberRef.current
   member.props = props
   member.params = params
@@ -92,10 +93,11 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
     const top = Number(member.params.get('top'))
     if (!editing && !member.scrolling && divScroll.current
       && !isNaN(top) && top !== divScroll.current.scrollTop) {
-      const onscroll = divScroll.current.onscroll
       divScroll.current.onscroll = () => {}
       divScroll.current.scrollTop = top
-      divScroll.current.onscroll = onscroll
+      setTimeout(()=>{
+        if (divScroll.current){ divScroll.current.onscroll = member.onscroll }
+      }, 100)
       //  console.log(`scrool to top=${top}`)
     }
   })
@@ -119,13 +121,14 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
         member.scrolling = false
         //  console.log(`scrolling: ${member.current.scrolling}`)
       },                           INTERVAL)
-
-      divScroll.current.onscroll = () => {
+      member.onscroll = () => {
         member.scrolling = true
         //  console.log(`scrolling: ${member.current.scrolling}`)
         sendScroll()
         endScroll()
       }
+
+      divScroll.current.onscroll = member.onscroll
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config.bmRelayServer ? contents.roomContents : contents.localParticipant.myContents, props.content.id])
