@@ -5,6 +5,7 @@ import {ContentType, isContentWallpaper, ISharedContent, SharedContentData,
 import {Pose2DMap} from '@models/utils'
 import {extract} from '@models/utils'
 import { getMimeType } from '@models/utils'
+import {isSelfUrl} from '@models/utils'
 import {MapData} from '@stores/Map'
 import {defaultValue as mapObjectDefaultValue} from '@stores/MapObject'
 import {JitsiLocalTrack} from 'lib-jitsi-meet'
@@ -257,6 +258,92 @@ export function createContentOfVideo(tracks: JitsiLocalTrack[], map: MapData, ty
   pasted.size = [(pasted.originalSize[0] || 640) / 2, (pasted.originalSize[1] || 360) / 2]
 
   return pasted
+}
+
+export function createContentFromText(str: string, map:MapData){
+  return new Promise<ISharedContent>((resolve, reject)=>{
+    let content = undefined
+    if (str.indexOf('http://') === 0 || str.indexOf('https://') === 0) {
+      const url = new URL(str)
+      const ext = str.slice(-4)
+      if (isSelfUrl(url)) {
+        //  Openning of self url makes infinite loop. So, create text instead.
+        content = createContentOfText(str, map)
+        content.name = '! recursive reference'
+        resolve(content)
+      }else if (ext === '.jpg' || ext === '.JPG' || ext === 'jpeg' || ext === 'JPEG' ||
+        ext === '.png' || ext === '.PNG' || ext === '.gif' || ext === '.GIF' ||
+        ext === '.svg' || ext === '.SVG') {
+        createContentOfImageUrl(str, map).then((content) => {
+          content.name = url.pathname
+          resolve(content)
+        }).catch(reject)
+      }else {
+        createContentOfIframe(str, map).then((content) => {
+          if (content.type === 'iframe') {
+            //  iframe is not work well because of CORS problem.
+            content = createContentOfText(str, map)
+            content.name = `${url.host}${url.pathname}${url.search}`
+          }
+          if (content.type === 'youtube') {
+            content.name = `${url.search.substring(1)}`
+          }else {
+            content.name = `${url.host}${url.pathname}${url.search}`
+          }
+          resolve(content)
+        }).catch(reject)
+      }
+    }else {
+      content = createContentOfText(str, map)
+      content.name = str.substring(0, 20)
+      resolve(content)
+    }
+  })
+}
+//  set pasted or dragged content to pasted content (not shared) or create shared content directly
+export function createContentsFromDataTransfer(dataTransfer: DataTransfer, map: MapData) {
+  return new Promise<ISharedContent[]>((resolve, reject)=>{
+    if (dataTransfer?.types.includes('Files')) {   //  If file is pasted)
+      const items = Array.from(dataTransfer.items)
+      const contents:ISharedContent[] = []
+      const reasons:any[] = []
+      for(const item of items){
+        const file = item.getAsFile()
+        if (item.kind === 'file' && file) {
+          let creator: ((file:File, map:MapData, offset?:[number, number]) => Promise<ISharedContent>)
+            | undefined = undefined
+          if (item.type.indexOf('image') !== -1) {
+            creator = createContentOfImage
+          }else if (item.type === 'application/pdf') {
+            creator = createContentOfPdf
+          }
+          if (creator) {
+            creator(file, map).then((content) => {
+              content.name = file.name
+              contents.push(content)
+              if (contents.length + reasons.length === items.length){
+                contents.length ? resolve(contents) : reject(reasons)
+              }
+            }).catch((reason) => {
+              reasons.push(reason)
+              if (contents.length + reasons.length  === items.length){
+                contents.length ? resolve(contents) : reject(reasons)
+              }
+            })
+          }
+        }else{
+          reasons.push('Creator not found.')
+        }
+      }
+    }else if (dataTransfer?.types.includes('text/plain')) {
+      dataTransfer.items[0].getAsString((str:string) => {
+        createContentFromText(str, map).then(c => resolve([c])).catch(reject)
+      })
+    }else {
+      console.error('Unhandled content types:', dataTransfer?.types)
+      reject(`Unhandled content types:${dataTransfer?.types}`)
+    }
+  })
 }
 
 const extractData = extract<SharedContentData>({

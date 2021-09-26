@@ -1,10 +1,11 @@
 import {formatTimestamp} from '@components/utils'
+import {textToLinkedText} from '@components/utils/Text'
 import {Tooltip} from '@material-ui/core'
 import {makeStyles} from '@material-ui/core/styles'
 import {CSSProperties} from '@material-ui/styles'
 import settings from '@models/api/Settings'
 import {compTextMessage, TextMessage, TextMessages} from '@models/ISharedContent'
-import {assert, findTextColorRGB, isSelfUrl} from '@models/utils'
+import {assert, findTextColorRGB} from '@models/utils'
 import {getRandomColorRGB, rgba} from '@models/utils'
 import _ from 'lodash'
 import {Observer, useObserver} from 'mobx-react-lite'
@@ -141,27 +142,6 @@ export const TextDiv: React.FC<TextDivProps> = (props:TextDivProps) => {
   </div></Tooltip>
 }
 
-function makeLink(key:number, regResult: string[]){
-  //console.log('reg:', regResult)
-  let href='', target='', disp=''
-  if (regResult[1]) { disp=href=regResult[1]; target='_blank' }
-  else if (regResult[2]) {
-    href = regResult[2]
-    disp = regResult[6] ? regResult[6] : regResult[2]
-    target = regResult[3] ? '_self' : '_blank'
-  }
-  else {
-    disp = regResult[7]
-    href = regResult[11]
-    target = (regResult[9]||regResult[10]) ? '_self' : '_blank'
-  }
-  if (isSelfUrl(new URL(href))){
-    target = '_self'
-  }
-
-  return <a key={key} href={href} target={target} rel="noreferrer">{disp}</a>
-}
-
 const cssText: CSSProperties = {
   height: '100%',
   width: '100%',
@@ -254,25 +234,8 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
     const textEditing = (editing &&
       (text.pid === props.participants.localId || !props.participants.remote.has(text.pid)))
 
-    const textToShow:JSX.Element[] = []
-    if (!textEditing){
-      //  add link to URL strings
-      const urlReg = 'https?:\\/\\/[-_.!~*\'()a-zA-Z0-9;/?:@&=+$,%#]+'
-      const urlRegExp = new RegExp(`(${urlReg})|` +
-        `\\[(${urlReg})(( *>)|( +move))?\\s*(\\S+)\\]` +
-        `|\\[(\\S+)((\\s*>)|(\\s+move)|\\s)\\s*(${urlReg})\\]`)
-      let regResult:RegExpExecArray | null
-      let start = 0
-      while ((regResult = urlRegExp.exec(text.message.slice(start))) !== null) {
-        const before = text.message.slice(start, start + regResult.index)
-        if (before) {
-          textToShow.push(<span key={start}>{before}</span>)
-        }
-        textToShow.push(makeLink(start + before.length, regResult))
-        start += before.length + regResult[0].length
-      }
-      textToShow.push(<span key={start}>{text.message.slice(start)}</span>)
-    }
+    let textToShow:JSX.Element[] = []
+    if (!textEditing){ textToShow = textToLinkedText(text.message) }
 
     return <TextDiv {...props} key={idx} text={text} div={ref.current} textToShow={textToShow}
       member={member} textEditing={textEditing} autoFocus = {text === focusToEdit} />

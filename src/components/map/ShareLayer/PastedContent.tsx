@@ -1,9 +1,6 @@
 import {Stores} from '@components/utils'
 import {ISharedContent, TIME_RESOLUTION_IN_MS} from '@models/ISharedContent'
-import { isSelfUrl } from '@models/utils'
-import {MapData} from '@stores/Map'
-import {createContent, createContentOfIframe, createContentOfImage, createContentOfImageUrl,
-  createContentOfPdf, createContentOfText} from '@stores/sharedContents/SharedContentCreator'
+import {createContent, createContentsFromDataTransfer} from '@stores/sharedContents/SharedContentCreator'
 import {default as sharedContents} from '@stores/sharedContents/SharedContents'
 import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
@@ -35,82 +32,15 @@ export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentP
   //  set pasted or dragged content to pasted content (not shared) or create shared content directly
   const SHARE_DIRECT = true
   function setContent(dataTransfer: DataTransfer) {
-    if (dataTransfer?.types.includes('Files')) {   //  If file is pasted)
-      Array.from(dataTransfer.items).forEach((item) => {
-        const file = item.getAsFile()
-        if (item.kind === 'file' && file) {
-          let creator: ((file:File, map:MapData, offset?:[number, number]) => Promise<ISharedContent>)
-            | undefined = undefined
-          if (item.type.indexOf('image') !== -1) {
-            creator = createContentOfImage
-          }else if (item.type === 'application/pdf') {
-            creator = createContentOfPdf
-          }
-          if (creator) {
-            creator(file, map).then((content) => {
-              content.name = file.name
-              if (SHARE_DIRECT) {
-                sharedContents.shareContent(content)
-              } else {
-                sharedContents.setPasted(content)
-              }
-            })
-          }
-        }
-      })
-    }else if (dataTransfer?.types.includes('text/plain')) {
-      dataTransfer.items[0].getAsString((str:string) => {
-        let content = undefined
-        if (str.indexOf('http://') === 0 || str.indexOf('https://') === 0) {
-          const url = new URL(str)
-          const ext = str.slice(-4)
-          if (isSelfUrl(url)) {
-            //  Openning of self url makes infinite loop. So, create text instead.
-            content = createContentOfText(str, map)
-            content.name = '! recursive reference'
-          }else if (ext === '.jpg' || ext === '.JPG' || ext === 'jpeg' || ext === 'JPEG' || ext === '.png' || ext === '.PNG' || ext === '.gif' || ext === '.GIF' || ext === '.svg' || ext === '.SVG') {
-            createContentOfImageUrl(str, map).then((content) => {
-              content.name = url.pathname
-              if (SHARE_DIRECT) {
-                sharedContents.shareContent(content)
-              } else {
-                sharedContents.setPasted(content)
-              }
-            })
-          }else {
-            createContentOfIframe(str, map).then((content) => {
-              if (content.type === 'iframe') {
-                //  iframe is not work well because of CORS problem.
-                content = createContentOfText(str, map)
-                content.name = `${url.host}${url.pathname}${url.search}`
-              }
-              if (content.type === 'youtube') {
-                content.name = `${url.search.substring(1)}`
-              }else {
-                content.name = `${url.host}${url.pathname}${url.search}`
-              }
-              if (SHARE_DIRECT) {
-                sharedContents.shareContent(content)
-              } else {
-                sharedContents.setPasted(content)
-              }
-            })
-          }
+    createContentsFromDataTransfer(dataTransfer, map).then(cs => {
+      for(const c of cs){
+        if (SHARE_DIRECT) {
+          sharedContents.shareContent(c)
         } else {
-          content = createContentOfText(str, map)
-          content.name = str.substring(0, 20)
+          sharedContents.setPasted(c)
         }
-        if (content) {
-          if (SHARE_DIRECT) {
-            sharedContents.shareContent(content)
-          } else {
-            sharedContents.setPasted(content)
-          }
-        }
-      })
-    }else {
-      console.error('Unhandled content types=', dataTransfer?.types)
-    }
+      }
+    })
   }
 
   function onShare() {

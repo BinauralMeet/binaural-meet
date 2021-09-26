@@ -1,5 +1,6 @@
 import { ImageAvatar } from '@components/avatar/ImageAvatar'
 import {formatTimestamp} from '@components/utils'
+import { textToLinkedText } from '@components/utils/Text'
 import {Tooltip} from '@material-ui/core'
 import IconButton from '@material-ui/core/IconButton'
 import TextField from '@material-ui/core/TextField'
@@ -58,7 +59,7 @@ export const ChatLine: React.FC<Stores & TextLineStyle &{message: ChatMessage}> 
           />
         </span>
         <span style={{color:colorMap[props.message.type]}}>
-          {props.message.text}
+          {textToLinkedText(props.message.text)}
         </span>
     </div>
    </Tooltip>

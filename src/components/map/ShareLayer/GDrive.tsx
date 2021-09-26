@@ -9,6 +9,9 @@ import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import {ContentProps} from './Content'
 
+// config.js
+declare const config:any             //  from ../../config.js included from index.html
+
 const useStyles = makeStyles({
   iframe: {
     width: '100%',
@@ -108,7 +111,7 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
       }
     }
     if (divScroll.current) {
-      const mine = contents.localParticipant.myContents.has(props.content.id)
+      const mine = config.bmRelayServer || contents.localParticipant.myContents.has(props.content.id)
       const INTERVAL = 100
       const sendScroll = mine ? _.throttle(() => setTimeout(doSendScroll, INTERVAL), INTERVAL)
         : _.debounce(doSendScroll, INTERVAL)
@@ -125,7 +128,7 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  },        [contents.localParticipant.myContents, props.content.id])
+  }, [config.bmRelayServer ? contents.roomContents : contents.localParticipant.myContents, props.content.id])
 
   const vscroll = isGDrivePreviewScrollable(mimeType)
 
