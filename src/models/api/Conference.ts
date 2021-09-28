@@ -381,7 +381,7 @@ export class Conference extends EventEmitter {
         msg.p = participants.localId
       }
       if (to){
-        msg.t = to
+        msg.d = to
       }
       //  create websocket
       //  send or queue message
