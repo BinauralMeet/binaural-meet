@@ -113,6 +113,31 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   //  Mouse and touch operations ----------------------------------------------
   const MOUSE_LEFT = 1
   const MOUSE_RIGHT = 2
+
+  //  zoom by scrollwheel
+  function wheelHandler(event:React.WheelEvent) {
+    if (!event.ctrlKey) {
+      /*  //  translate map
+      const diff = mulV2(0.2, rotateVector2D(matrix.inverse(), [event.deltaX, event.deltaY]))
+      const newMatrix = matrix.translate(-diff[0], -diff[1])
+      mapStore.setMatrix(newMatrix)*/
+
+      //  zoom map
+      let scale = Math.pow(1.2, event.deltaY / 100)
+      scale = limitScale(extractScaleX(mapStore.matrix), scale)
+      //  console.log(`zoom scale:${scale}`)
+      if (scale === 1){
+        return
+      }
+
+      //  console.log(`Wheel: ${movement}  scale=${scale}`)
+      const newMatrix = mapStore.matrix.scale(scale, scale, 1,
+        ...transformPoint2D(mapStore.matrix.inverse(), mapStore.mouse))
+      mapStore.setMatrix(newMatrix)
+      mapStore.setCommittedMatrix(newMatrix)
+    }
+  }
+
   const bind = useGesture(
     {
       onDragStart: ({buttons}) => {
@@ -209,26 +234,6 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         return [d, a]
       },
       onPinchEnd: () => mapStore.setCommittedMatrix(matrix),
-      onWheel: ({movement, ctrlKey, event}) => {
-        //  event?.preventDefault()
-
-        if (false) {  // false:alwas zoom (or ctrlKey: scroll and zoom)
-          // scroll wheel - translate map
-          const diff = mulV2(0.2, rotateVector2D(matrix.inverse(), movement))
-          const newMatrix = matrix.translate(-diff[0], -diff[1])
-          mapStore.setMatrix(newMatrix)
-        }else {
-          //  CTRL+weel - zoom map
-          let scale = Math.pow(1.2, movement[1] / 1000)
-          scale = limitScale(extractScaleX(matrix), scale)
-          if (scale === 1){ return }
-
-          //  console.log(`Wheel: ${movement}  scale=${scale}`)
-          const newMatrix = matrix.scale(scale, scale, 1, ...transformPoint2D(matrix.inverse(), mapStore.mouse))
-          mapStore.setMatrix(newMatrix)
-        }
-      },
-      onWheelEnd: () => mapStore.setCommittedMatrix(matrix),
       onMove:({xy}) => {
         mapStore.setMouse(xy)
         participants.local.mouse.position = Object.assign({}, mapStore.mouseOnMap)
@@ -255,8 +260,8 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   // Prevent browser's zoom
   useEffect(
     () => {
-      function handler(event:WheelEvent) {
-        //  console.log(event)
+      function topWindowHandler(event:WheelEvent) {
+        //console.log(event)
         if (event.ctrlKey) {
           if (window.visualViewport && window.visualViewport.scale > 1){
             if (event.deltaY < 0){
@@ -271,9 +276,13 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
           //  console.log('CTRL + mouse wheel = zoom prevented.', event)
         }
       }
-      window.document.body.addEventListener('wheel', handler, {passive: false})
 
-      return () => window.document.body.removeEventListener('wheel', handler)
+
+      window.document.body.addEventListener('wheel', topWindowHandler, {passive: false})
+
+      return () => {
+        window.document.body.removeEventListener('wheel', topWindowHandler)
+      }
     },
     [],
   )
@@ -349,9 +358,9 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
   const classes = useStyles(styleProps)
 
   return (
-    <div className={classes.root} ref={outer} {...bind()} >
+    <div className={classes.root} ref={outer} {...bind()}>
       <ResizeObserver onResize = { onResizeOuter } />
-      <div className={classes.center}>
+      <div className={classes.center} onWheel={wheelHandler}>
         <div id="map-transform" className={classes.transform} ref={container}>
             {props.children}
         </div>
