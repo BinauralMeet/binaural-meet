@@ -12,6 +12,7 @@ import chat, { ChatMessage, ChatMessageToSend } from '@stores/Chat'
 import errorInfo from '@stores/ErrorInfo'
 import {MediaSettings} from '@stores/participants/LocalParticipant'
 import participants from '@stores/participants/Participants'
+import roomInfo from '@stores/RoomInfo'
 import {extractContentDataAndIds, makeThemContents} from '@stores/sharedContents/SharedContentCreator'
 import contents from '@stores/sharedContents/SharedContents'
 import JitsiMeetJS from 'lib-jitsi-meet'
@@ -165,6 +166,9 @@ export class ConferenceSync{
   }
 
   //  message handler
+  private onRoomProp(key: string, value: string){
+    roomInfo.onUpdateProp(key, value)
+  }
   private onParticipantTrackLimits(limits:string[]){
     participants.local.remoteVideoLimit = limits[0]
     participants.local.remoteAudioLimit = limits[1]
@@ -548,6 +552,7 @@ export class ConferenceSync{
     syncLog(`Receive ${msgs.length} relayed messages.`)
     for(const msg of msgs){
       switch(msg.t){
+        case MessageType.ROOM_PROP: this.onRoomProp(...(JSON.parse(msg.v) as [string, string])); break
         case MessageType.REQUEST_TO: this.sendAllAboutMe(); break
         case MessageType.PARTICIPANT_AFK: this.onAfkChanged(msg.p, JSON.parse(msg.v)); break
         case MessageType.CALL_REMOTE: this.onCallRemote(msg.p); break

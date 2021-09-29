@@ -147,8 +147,8 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
         <Button variant="contained" color={btnColor()} style={{textTransform:'none'}}
           disabled={!roomInfo.passMatched} onClick={() => {
           if (roomInfo.passMatched) {
-            roomInfo.backgroundFill = [0xDF, 0xDB, 0xE5]
-            roomInfo.backgroundColor = [0xB9, 0xB2, 0xC4]
+            roomInfo.backgroundFill = roomInfo.defaultBackgroundFill
+            roomInfo.backgroundColor = roomInfo.defaultBackgroundColor
             connection.conference.setRoomProp('backgroundFill', JSON.stringify(roomInfo.backgroundFill))
             connection.conference.setRoomProp('backgroundColor', JSON.stringify(roomInfo.backgroundColor))
           }

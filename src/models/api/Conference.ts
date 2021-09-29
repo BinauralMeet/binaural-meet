@@ -3,6 +3,7 @@ import {assert} from '@models/utils'
 import map from '@stores/Map'
 import {participantsStore} from '@stores/participants'
 import {default as participants} from '@stores/participants/Participants'
+import roomInfo from '@stores/RoomInfo'
 import contents from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
 import JitsiMeetJS, {JitsiLocalTrack, JitsiRemoteTrack, JitsiTrack, JitsiValues, TMediaType} from 'lib-jitsi-meet'
@@ -58,7 +59,9 @@ export class Conference extends EventEmitter {
   }
 
   setRoomProp(name:string, value:string){
+    //  console.log(`setRoomProp(${name}, ${value})`)
     this.sendMessageViaRelay(MessageType.ROOM_PROP, [name, value])
+    roomInfo.onUpdateProp(name, value)
   }
 
   public init(name:string, createJitsiConference:()=>JitsiMeetJS.JitsiConference|undefined){
@@ -335,7 +338,7 @@ export class Conference extends EventEmitter {
   connectToRelayServer(){
     if (this.bmRelaySocket){ return }
     const onOpen = () => {
-      console.log(`onOpen ${participants.localId}`)
+      //console.log(`onOpen ${participants.localId}`)
       this.sendMessageViaRelay(MessageType.REQUEST_ALL, {}, undefined, true)
       this.sync.sendAllAboutMe()
     }
@@ -348,8 +351,10 @@ export class Conference extends EventEmitter {
       }
     }
     const onClose = () => {
-      this.bmRelaySocket = new WebSocket(config.bmRelayServer)
-      setHandler()
+      setTimeout(()=>{
+        this.bmRelaySocket = new WebSocket(config.bmRelayServer)
+        setHandler()
+      }, 5 * 1000)
     }
     const onError = () => {
       console.error(`Error in WebSocket for ${config.bmRelayServer}`)
@@ -369,7 +374,8 @@ export class Conference extends EventEmitter {
         (window as any).requestIdleCallback(idleFunc)
       }
     }
-    onClose()
+    this.bmRelaySocket = new WebSocket(config.bmRelayServer)
+    setHandler()
   }
   sendMessageViaRelay(type:string, value:any, to?:string, sendRandP?:boolean) {
     assert(this.bmRelaySocket)
