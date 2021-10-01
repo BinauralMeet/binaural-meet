@@ -29,11 +29,6 @@ export const sendLog = SENDLOG ? console.log : (a:any) => {}
 declare const config:any             //  from ../../config.js included from index.html
 declare const d:any                  //  from index.html
 
-interface IdleDeadline {
-  readonly didTimeout: boolean
-  timeRemaining(): DOMHighResTimeStamp
-}
-
 const CONF = JitsiMeetJS.events.conference
 export const ConferenceEvents = {
   USER_JOINED: 'joined',
@@ -134,29 +129,25 @@ export class Conference extends EventEmitter {
   }
 
   lastRequest = 0
-  onIdle(deadline: IdleDeadline){
-    //console.log(`onIdle time = ${Date.now() % 1000}`)
-    if (this.receivedMessages.length){
-      /*
-      const len = this.receivedMessages.length
-      let count = 0
-      //  */
-      while(deadline.timeRemaining() > 10 && this.receivedMessages.length){
-        const msg = this.receivedMessages.shift()
-        if (msg){
-          this.sync.onBmMessage([msg])
-        }
-      //  count ++
+  private step(){
+    const period = 50
+    const timeToProcess = 30
+    const deadline = Date.now() + timeToProcess
+    while(Date.now() < deadline && this.receivedMessages.length){
+      const msg = this.receivedMessages.shift()
+      if (msg){
+        this.sync.onBmMessage([msg])
       }
-      //console.log(`onIdle proccessed ${count} / ${len} messages. Remains ${deadline.timeRemaining()}ms.`)
-    }else{
+    }
+    if (!this.receivedMessages.length && Date.now() < deadline){
       const now = Date.now()
       if (this.bmRelaySocket && (now - this.lastRequest > 50)){
-        //  console.log('request msg')
         this.lastRequest = now
         this.sendMessageViaRelay(MessageType.REQUEST_RANGE, [map.visibleArea(), participants.audibleArea()])
       }
     }
+    //console.log(`step remain:${deadline - Date.now()}`)
+    setTimeout(()=>{this.step()}, period)
   }
 
   //  Commmands for local tracks --------------------------------------------
@@ -366,13 +357,17 @@ export class Conference extends EventEmitter {
       this.bmRelaySocket?.addEventListener('message', onMessage)
       this.bmRelaySocket?.addEventListener('open', onOpen)
       this.bmRelaySocket?.addEventListener('close', onClose)
+
+      /*  Use Idle
       if ((window as any).requestIdleCallback){
         const idleFunc = (deadline: IdleDeadline) => {
           this.onIdle(deadline);
           (window as any).requestIdleCallback(idleFunc)
         }
         (window as any).requestIdleCallback(idleFunc)
-      }
+      }*/
+      //  Use timer
+      this.step()
     }
     this.bmRelaySocket = new WebSocket(config.bmRelayServer)
     setHandler()
