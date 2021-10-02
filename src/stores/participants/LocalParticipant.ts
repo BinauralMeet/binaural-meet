@@ -32,8 +32,8 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
   @observable useStereoAudio = false  //  will be override by url switch
   @observable thirdPersonView = config.thirdPersonView as boolean
   @observable soundLocalizationBase = config.soundLocalizationBase ? config.soundLocalizationBase : 'user'
-  @observable remoteVideoLimit = config.remoteVideoLimit || -1 as number
-  @observable remoteAudioLimit = config.remoteAudioLimit || -1 as number
+  @observable remoteVideoLimit = config.remoteVideoLimit as number || -1
+  @observable remoteAudioLimit = config.remoteAudioLimit as number || -1
   @observable audioInputDevice:string|undefined = undefined
   @observable videoInputDevice:string|undefined = undefined
   @observable audioOutputDevice:string|undefined = undefined

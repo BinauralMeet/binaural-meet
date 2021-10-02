@@ -120,26 +120,26 @@ export class ConferenceSync{
   }
 
   //  Only for test (admin config dialog).
-  sendTrackLimits(to:string, limits?:string[]) {
+  sendTrackLimits(to:string, limits?:number[]) {
     this.conference.sendMessage(MessageType.PARTICIPANT_TRACKLIMITS, limits ? limits :
       [participants.local.remoteVideoLimit, participants.local.remoteAudioLimit],  to ? to : undefined)
   }
   //  Send content update request to pid
-  sendContentUpdateRequest(pid: string, updated: ISharedContent[]) {
+  sendContentUpdateRequest(pid: string, updatedContents: ISharedContent[]) {
     if (!this.conference.bmRelaySocket &&
-      updated.map(c=>c.url ? c.url.length : 0).reduce((prev, cur) => prev+cur) > FRAGMENTING_LENGTH) {
-      this.sendFragmentedMessage(MessageType.CONTENT_UPDATE_REQUEST, updated, pid)
+      updatedContents.map(c=>c.url ? c.url.length : 0).reduce((prev, cur) => prev+cur) > FRAGMENTING_LENGTH) {
+      this.sendFragmentedMessage(MessageType.CONTENT_UPDATE_REQUEST, updatedContents, pid)
     }else {
-      this.conference.sendMessage(MessageType.CONTENT_UPDATE_REQUEST, updated, pid)
+      this.conference.sendMessage(MessageType.CONTENT_UPDATE_REQUEST, updatedContents, pid)
     }
   }
   //  Send content remove request to pid
-  sendContentRemoveRequest(pid: string, removed: string[]) {
-    this.conference.sendMessage(MessageType.CONTENT_REMOVE_REQUEST, removed, pid)
+  sendContentRemoveRequest(pid: string, removedIds: string[]) {
+    this.conference.sendMessage(MessageType.CONTENT_REMOVE_REQUEST, removedIds, pid)
   }
-  sendLeftContentRemoveRequest(removed: string[]) {
+  sendLeftContentRemoveRequest(removedIds: string[]) {
     assert(!config.bmRelayServer)
-    this.conference.sendMessage(MessageType.LEFT_CONTENT_REMOVE_REQUEST, removed)
+    this.conference.sendMessage(MessageType.LEFT_CONTENT_REMOVE_REQUEST, removedIds)
   }
   //  send main screen carrir
   sendMainScreenCarrier(enabled: boolean) {
@@ -169,7 +169,7 @@ export class ConferenceSync{
   private onRoomProp(key: string, value: string){
     roomInfo.onUpdateProp(key, value)
   }
-  private onParticipantTrackLimits(limits:string[]){
+  private onParticipantTrackLimits(limits:number[]){
     participants.local.remoteVideoLimit = limits[0]
     participants.local.remoteAudioLimit = limits[1]
   }
