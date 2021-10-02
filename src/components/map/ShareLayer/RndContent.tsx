@@ -12,7 +12,7 @@ import FlipToBackIcon from '@material-ui/icons/FlipToBack'
 import FlipToFrontIcon from '@material-ui/icons/FlipToFront'
 import MoreHorizIcon from '@material-ui/icons/MoreHoriz'
 import settings from '@models/api/Settings'
-import {isContentEditable, ISharedContent} from '@models/ISharedContent'
+import {doseContentEditingUseKeyinput, isContentEditable, ISharedContent} from '@models/ISharedContent'
 import {t} from '@models/locales'
 import {Pose2DMap} from '@models/utils'
 import {addV2, extractScaleX, extractScaleY, mulV, rotateVector2DByDegree, subV2} from '@models/utils'
@@ -393,7 +393,18 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
               <CloseRoundedIcon /></div>}
         </div>
       </div>
-      <div className={classes.content} ref={contentRef}>
+      <div className={classes.content} ref={contentRef}
+        onFocus={()=>{
+          if (doseContentEditingUseKeyinput(props.content) && editing){
+            props.map.keyInputUsers.add(props.content.id)
+          }
+        }}
+        onBlur={()=>{
+          if (doseContentEditingUseKeyinput(props.content) && editing){
+            props.map.keyInputUsers.delete(props.content.id)
+          }
+        }}
+      >
         <Content {...props}/>
       </div>
     </div>

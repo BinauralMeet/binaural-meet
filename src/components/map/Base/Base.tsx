@@ -197,9 +197,6 @@ export const Base: React.FC<BaseProps> = (props: BaseProps) => {
         }
       },
       onDragEnd: () => {
-        if (mem.mouseDown){
-          props.contents.setEditing('')
-        }
         mapStore.setCommittedMatrix(matrix)
         mem.dragging = false
         mem.mouseDown = false

@@ -1,6 +1,8 @@
 import {sharedContentHandler} from '@components/map/ShareLayer/SharedContent'
 import {SharedContentForm} from '@components/map/ShareLayer/SharedContentForm'
 import {Tooltip} from '@material-ui/core'
+import Button from '@material-ui/core/Button'
+import DoneIcon from '@material-ui/icons/CheckCircle'
 import {SharedContentInfo} from '@models/ISharedContent'
 import {useTranslation} from '@models/locales'
 import {getRandomColor, rgb2Color} from '@models/utils'
@@ -99,7 +101,7 @@ export const ContentList: React.FC<Stores&TextLineStyle>  = (props) => {
 
     return all
   })
-
+  const editing = useObserver(() => contents.editing)
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
   const participants = props.participants
   const elements = all.map(c =>
@@ -109,7 +111,12 @@ export const ContentList: React.FC<Stores&TextLineStyle>  = (props) => {
   const textColor = useObserver(() => isDarkColor(roomInfo.backgroundFill) ? 'white' : 'black')
 
   return <div className={classes.container} >
-    <div className={classes.title} style={{color:textColor}}>{t('Contents')}</div>
+    <div className={classes.title} style={{color:textColor}}>{t('Contents')}
+      {editing ? <Button variant="contained" size="small" color="primary"
+        style={{marginLeft:4, padding:3, height:'1.4em', fontSize:'0.8'}}
+        onClick={()=>{ contents.setEditing('')}}>
+          <DoneIcon style={{fontSize:'1em'}}/>&nbsp;{t('shareEditEnd')}</Button>: undefined}
+    </div>
     {elements}
   </div>
 }

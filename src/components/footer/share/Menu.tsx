@@ -248,6 +248,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
         key="shareWhiteboard" text={t('shareWhiteboard')} icon={<Icon icon={whiteboard24Regular} style={{fontSize:'1.5rem'}} />}
          onClick={createWhiteboard}
       />
+
       <Divider />
       <ShareDialogItem
         tip = {t('shareMouseTip')}

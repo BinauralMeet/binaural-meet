@@ -40,9 +40,6 @@ export const LeftBar: React.FC<Stores> = (stores) => {
 
   const bind = useGesture(
     {
-      onClickCapture: ()=>{
-        stores.contents.setEditing('')
-      },
       onPinch: ({da: [d, a], origin, event, memo}) => {
         if (memo === undefined) {
           return [d, a]

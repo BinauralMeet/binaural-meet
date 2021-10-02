@@ -78,6 +78,9 @@ export const TextEdit: React.FC<TextEditProps> = (props:TextEditProps) => {
         if (sendTextLater){ sendTextLater.cancel() }
         sendText(text, props)
       }}
+      onFocus={()=>{
+
+      }}
       onKeyDown={(ev) => {
         if (ev.key === 'Escape' || ev.key === 'Esc') {
           ev.stopPropagation()

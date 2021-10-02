@@ -100,15 +100,15 @@ export function createContentOfIframe(urlStr: string, map: MapData) {
       pasted.url = `id=${fileId}`
       pasted.pose.position[0] = map.mouseOnMap[0]
       pasted.pose.position[1] = map.mouseOnMap[1]
-      pasted.size[0] = 600
-      pasted.size[1] = 800
+      pasted.size[0] = 900
+      pasted.size[1] = 700
     }else if (url.hostname === 'wbo.ophir.dev'){  //  whiteboard
       pasted.type = 'whiteboard'
       pasted.url = urlStr
       pasted.pose.position[0] = map.mouseOnMap[0]
       pasted.pose.position[1] = map.mouseOnMap[1]
-      pasted.size[0] = 600
-      pasted.size[1] = 700
+      pasted.size[0] = 700
+      pasted.size[1] = 740
     }else if (url.pathname.substring(url.pathname.length-4) === '.pdf' ||
       url.pathname.substring(url.pathname.length-4) === '.PDF' ){  //  pdf
       makeItPdf(pasted, urlStr, map)
@@ -422,6 +422,14 @@ export function isGDrivePreviewScrollable(mimeType?: string) {
     || mimeType.slice(0, 5) === 'audio'
   )
 }
+export function isGDrivePreviewEditUrl(mimeType?: string){
+  if (!mimeType){ return false }
+
+  return mimeType === 'application/vnd.google-apps.spreadsheet'
+  || mimeType === 'application/vnd.google-apps.document'
+  || mimeType === 'application/vnd.google-apps.presentation'
+}
+
 export function getGDriveUrl(editing: boolean, params: Map<string, string>){
   const fileId = params.get('id')
   let mimeType = params.get('mimeType')
@@ -429,7 +437,7 @@ export function getGDriveUrl(editing: boolean, params: Map<string, string>){
   const comp = 'application/vnd.google-apps.'
 
   let url = `https://drive.google.com/file/d/${fileId}/preview`
-  if (editing){
+  if (editing || isGDrivePreviewEditUrl(mimeType)){
     if (mimeType.substr(0, comp.length) === comp){
       let app = mimeType.substr(comp.length)
       if (app !== 'failed'){

@@ -209,7 +209,7 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
       setShowAdmin(false)
     }
 
-    return <div ref={containerRef} className={classes.container} onClickCapture={()=>{props.contents.setEditing('')}}>
+    return <div ref={containerRef} className={classes.container}>
       <Collapse in={show} classes={classes}>
         <StereoAudioSwitch size={fabSize} iconSize={iconSize} />
         <FabMain size={fabSize} color={mute.muteS ? 'primary' : 'secondary' }

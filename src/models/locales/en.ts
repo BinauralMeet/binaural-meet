@@ -27,6 +27,7 @@ export const enTranslate = {
   shareImageTip: 'Image files will be uploaded to gyazo.com. You can also paste the URL of the image.',
   shareWhiteboard: '_Whiteboard',
   shareWhiteboardTip: 'Place the wbo.ophir.dev whiteboard.',
+  shareEditEnd: 'Stop editing',
   shareCamera: '_Camera',
   shareScreenBackground:'Screen as the _background',
   stopScreenBackground:'Stop _background screen',

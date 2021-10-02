@@ -26,6 +26,7 @@ export const jaTranslate = {
   shareImageTip: 'マップ上で Ctrl+V / Cmd+V で貼付けできます。画像は gyazo.com にアップロードされます。画像のURLも貼付けできます。',
   shareWhiteboard: 'ホワイトボード (_w)',
   shareWhiteboardTip: 'wbo.ophir.dev のホワイトボードを置きます。',
+  shareEditEnd: '編集終了',
   shareCamera: 'ビデオカメラ (_c)',
   shareScreenBackground:'背景に画面共有 (_b)',
   stopScreenBackground:'背景の画面共有を停止 (_b)',
