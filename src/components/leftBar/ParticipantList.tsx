@@ -27,6 +27,7 @@ export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: Partic
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
   const [showForm, setShowForm] = React.useState(false)
   const ref = React.useRef<HTMLDivElement>(null)
+  const {lineHeight, ...propsForForm} = props
   //  console.log(`PColor pid:${props.participant.id} colors:${colors}`, props.participant)
 
   return <>
@@ -78,7 +79,7 @@ export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: Partic
         setShowForm(false)
         props.map.keyInputUsers.delete('participantList')
       }} anchorEl={ref.current} anchorOrigin={{vertical:'top', horizontal:'right'}} /> :
-      <RemoteParticipantForm {...props} open={showForm} close={()=>{
+      <RemoteParticipantForm {...propsForForm} open={showForm} close={()=>{
         setShowForm(false)
         props.map.keyInputUsers.delete('participantList')
       }} participant={props.participants.remote.get(props.participant.id)}
@@ -92,6 +93,7 @@ export const RawParticipantList: React.FC<Stores&TextLineStyle&{localId: string,
   const store = props.participants
   const classes = styleForList({height: props.lineHeight, fontSize: props.fontSize})
   const {localId, remoteIds, lineHeight, fontSize, ...statusProps} = props
+  const lineProps = {lineHeight, fontSize, ...statusProps}
   const textColor = useObserver(() => isDarkColor(roomInfo.backgroundFill) ? 'white' : 'black')
 
   remoteIds.sort((a, b) => {
@@ -107,8 +109,8 @@ export const RawParticipantList: React.FC<Stores&TextLineStyle&{localId: string,
   const remoteElements = remoteIds.map(id =>
     <ParticipantLine key={id}
       participant={store.remote.get(id)!}
-      {...props} />)
-  const localElement = (<ParticipantLine key={localId} participant={store.local} {...props} />)
+      {...lineProps} />)
+  const localElement = (<ParticipantLine key={localId} participant={store.local} {...lineProps} />)
   const ref = React.useRef<HTMLDivElement>(null)
 
   return (

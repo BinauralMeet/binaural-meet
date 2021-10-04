@@ -231,7 +231,7 @@ export class ConferenceSync{
     pids.forEach(pid => {
       const participant = participants.find(pid)
       if (participant){
-        participant.pose.position = [CONTENT_OUT_OF_RANGE_VALUE, CONTENT_OUT_OF_RANGE_VALUE]
+        participant.physics.located = false
       }
     })
   }

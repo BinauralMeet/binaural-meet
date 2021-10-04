@@ -31,11 +31,11 @@ export const ContentLine: React.FC<TextLineStyle & Stores &
   const [showForm, setShowForm] = React.useState(false)
   const ref = React.useRef<HTMLDivElement>(null)
   const {lineHeight, content, ...contentProps} = props
+  const targetContent = locatedContentOnly(props.contents.find(props.content.id))
 
   return <Observer>{()=> {
     const typeIcon = contentTypeIcons(props.content.type, props.fontSize)
     const colors = getRandomColor(props.content.ownerName)
-    const content = locatedContentOnly(props.contents.find(props.content.id))
 
     if (props.content.color?.length){ colors[0] = rgb2Color(props.content.color) }
     if (props.content.textColor?.length){ colors[1] = rgb2Color(props.content.textColor) }
@@ -66,7 +66,7 @@ export const ContentLine: React.FC<TextLineStyle & Stores &
             }else{
               contents.requestContent([props.content.id])
               const disposer = autorun(()=>{
-                const found = contents.find(props.content.id)
+                const found = locatedContentOnly(contents.find(props.content.id))
                 if (found){
                   setShowForm(true)
                   props.map.keyInputUsers.add('contentForm')
@@ -79,11 +79,11 @@ export const ContentLine: React.FC<TextLineStyle & Stores &
           {typeIcon}{props.content.name}
         </div>
       </Tooltip>
-      <SharedContentForm {...contentProps} contents={props.contents} content={content}
+      <SharedContentForm {...contentProps} contents={props.contents} content={targetContent}
         {...sharedContentHandler(props)} open={showForm}
         close={()=>{
           setShowForm(false)
-          props.map.keyInputUsers.delete('contentForm')
+           props.map.keyInputUsers.delete('contentForm')
         }}
         anchorEl={ref.current} anchorOrigin={{vertical:'top', horizontal:'right'}}
       />
