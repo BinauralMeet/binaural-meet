@@ -138,9 +138,9 @@ export class Conference extends EventEmitter {
         this.sync.onBmMessage([msg])
       }
     }
+    const lastRequestTimeOld = this.lastRequestTime
     const now = Date.now()
     const REQUEST_WAIT_TIMEOUT = 20 * 1000  //  wait 20 sec when failed to receive message.
-    //  console.log(`step delta=${this.lastReceivedTime - this.lastRequestTime}`)
     if (now < deadline && this.bmRelaySocket && !this.receivedMessages.length
       && now - this.lastRequestTime > 50
       && (this.lastReceivedTime >= this.lastRequestTime
@@ -148,7 +148,7 @@ export class Conference extends EventEmitter {
         this.lastRequestTime = now
         this.sendMessageViaRelay(MessageType.REQUEST_RANGE, [map.visibleArea(), participants.audibleArea()])
     }
-    //  console.log(`step remain:${deadline - Date.now()}`)
+    console.log(`step RTT:${this.lastReceivedTime - lastRequestTimeOld} remain:${deadline - Date.now()}/${timeToProcess}`)
     setTimeout(()=>{this.step()}, period)
   }
 
@@ -340,18 +340,18 @@ export class Conference extends EventEmitter {
       if (typeof ev.data === 'string') {
         const msgs = JSON.parse(ev.data) as BMMessage[]
         //  console.log(`Relay sock onMessage len:${msgs.length}`)
-        /*
+        //*
         if (msgs.length){
           this.receivedMessages.push(...msgs)
         }
         this.lastReceivedTime = Date.now()
-        */
+        /*/
         setTimeout(()=>{
           if (msgs.length){
             this.receivedMessages.push(...msgs)
           }
           this.lastReceivedTime = Date.now()
-        }, 1000)
+        }, 1000)  //  */
       }
     }
     const onClose = () => {
