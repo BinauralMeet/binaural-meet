@@ -43,10 +43,11 @@ export class Conference extends EventEmitter {
   public _jitsiConference?: JitsiMeetJS.JitsiConference
   public name=''
   public localId = ''
-  public joinTime = 0
   sync = new ConferenceSync(this)
   @observable channelOpened = false     //  is JVB message channel open ?
   bmRelaySocket:WebSocket|undefined = undefined //  Socket for message passing via separate relay server
+  private lastRequestTime = 0
+  private lastReceivedTime = 1
 
   constructor(){
     super()
@@ -85,7 +86,6 @@ export class Conference extends EventEmitter {
     this.sync.bind()
     this._jitsiConference?.join('')
     this._jitsiConference?.setSenderVideoConstraint(1080)
-    this.joinTime = Date.now()
 
     //  To access from debug console, add object d to the window.
     d.conference = this
@@ -128,7 +128,6 @@ export class Conference extends EventEmitter {
     })
   }
 
-  lastRequest = 0
   private step(){
     const period = 50
     const timeToProcess = 30
@@ -139,14 +138,17 @@ export class Conference extends EventEmitter {
         this.sync.onBmMessage([msg])
       }
     }
-    if (!this.receivedMessages.length && Date.now() < deadline){
-      const now = Date.now()
-      if (this.bmRelaySocket && (now - this.lastRequest > 50)){
-        this.lastRequest = now
+    const now = Date.now()
+    const REQUEST_WAIT_TIMEOUT = 20 * 1000  //  wait 20 sec when failed to receive message.
+    //  console.log(`step delta=${this.lastReceivedTime - this.lastRequestTime}`)
+    if (now < deadline && this.bmRelaySocket && !this.receivedMessages.length
+      && now - this.lastRequestTime > 50
+      && (this.lastReceivedTime >= this.lastRequestTime
+        || now - this.lastRequestTime > REQUEST_WAIT_TIMEOUT)){
+        this.lastRequestTime = now
         this.sendMessageViaRelay(MessageType.REQUEST_RANGE, [map.visibleArea(), participants.audibleArea()])
-      }
     }
-    //console.log(`step remain:${deadline - Date.now()}`)
+    //  console.log(`step remain:${deadline - Date.now()}`)
     setTimeout(()=>{this.step()}, period)
   }
 
@@ -337,8 +339,19 @@ export class Conference extends EventEmitter {
       //  console.log(`ws:`, ev)
       if (typeof ev.data === 'string') {
         const msgs = JSON.parse(ev.data) as BMMessage[]
-        //  console.log(`Len:${msgs.length}: ${ev.data}`)
-        this.receivedMessages.push(...msgs)
+        //  console.log(`Relay sock onMessage len:${msgs.length}`)
+        /*
+        if (msgs.length){
+          this.receivedMessages.push(...msgs)
+        }
+        this.lastReceivedTime = Date.now()
+        */
+        setTimeout(()=>{
+          if (msgs.length){
+            this.receivedMessages.push(...msgs)
+          }
+          this.lastReceivedTime = Date.now()
+        }, 1000)
       }
     }
     const onClose = () => {

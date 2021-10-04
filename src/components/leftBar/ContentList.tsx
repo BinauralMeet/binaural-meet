@@ -3,14 +3,14 @@ import {SharedContentForm} from '@components/map/ShareLayer/SharedContentForm'
 import {Tooltip} from '@material-ui/core'
 import Button from '@material-ui/core/Button'
 import DoneIcon from '@material-ui/icons/CheckCircle'
-import {SharedContentInfo} from '@models/ISharedContent'
+import {isContentOutOfRange, ISharedContent, SharedContentInfo} from '@models/ISharedContent'
 import {useTranslation} from '@models/locales'
 import {getRandomColor, rgb2Color} from '@models/utils'
 import {isDarkColor} from '@models/utils'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import roomInfo from '@stores/RoomInfo'
 import contents from '@stores/sharedContents/SharedContents'
-import { autorun } from 'mobx'
+import {autorun} from 'mobx'
 import {Observer} from 'mobx-react-lite'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
@@ -18,6 +18,12 @@ import {contentTypeIcons} from '../map/ShareLayer/Content'
 import {Stores} from '../utils'
 import {styleForList} from '../utils/styles'
 import {TextLineStyle} from './LeftBar'
+
+function locatedContentOnly(content: ISharedContent|undefined){
+  if (isContentOutOfRange(content)){ return undefined }
+
+  return content
+}
 
 export const ContentLine: React.FC<TextLineStyle & Stores &
 {participant: ParticipantBase, content: SharedContentInfo}> = (props) => {
@@ -29,7 +35,8 @@ export const ContentLine: React.FC<TextLineStyle & Stores &
   return <Observer>{()=> {
     const typeIcon = contentTypeIcons(props.content.type, props.fontSize)
     const colors = getRandomColor(props.content.ownerName)
-    const content = props.contents.find(props.content.id)
+    const content = locatedContentOnly(props.contents.find(props.content.id))
+
     if (props.content.color?.length){ colors[0] = rgb2Color(props.content.color) }
     if (props.content.textColor?.length){ colors[1] = rgb2Color(props.content.textColor) }
 
@@ -52,7 +59,7 @@ export const ContentLine: React.FC<TextLineStyle & Stores &
             }
           }}
           onContextMenu={() => {
-            const found = contents.find(props.content.id)
+            const found = locatedContentOnly(contents.find(props.content.id))
             if (found){
               setShowForm(true)
               props.map.keyInputUsers.add('contentForm')

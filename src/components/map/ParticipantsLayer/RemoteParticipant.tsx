@@ -43,6 +43,7 @@ export const RemoteParticipant: React.FC<ParticipantProps> = (props) => {
     }else {
       participants.yarnPhones.add(id)
     }
+    participants.yarnPhoneUpdated = true
   }
   function onClose() {
     props.map.keyInputUsers.delete('remoteForm')

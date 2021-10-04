@@ -12,7 +12,8 @@ export class Participants {
   @observable.shallow readonly remote = new Map<string, RemoteParticipant>()
   local_ = observable.box(new LocalParticipant())
 
-  @observable.shallow readonly yarnPhones = new Set<string>()
+  @observable readonly yarnPhones = new Set<string>()
+  @observable yarnPhoneUpdated = false
 
   @computed get count(): number {
     return this.remote.size

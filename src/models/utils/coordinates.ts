@@ -2,6 +2,12 @@ export interface Pose2DMap {
   position: [number, number]
   orientation: number
 }
+export function clonePose2DMap(p:Pose2DMap):Pose2DMap{
+  return {position:[p.position[0], p.position[1]], orientation:p.orientation}
+}
+export function cloneV2(v:number[]):[number, number]{
+  return [v[0], v[1]]
+}
 
 export interface Pose3DAudio {  // right hand cartesian coordinate system
   position: [number, number, number],

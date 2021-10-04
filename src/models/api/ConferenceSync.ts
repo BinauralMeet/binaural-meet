@@ -1,5 +1,6 @@
 import {contentTrackCarrierName, roomInfoPeeperName} from '@models/api/Constants'
 import {ISharedContent} from '@models/ISharedContent'
+import {CONTENT_OUT_OF_RANGE_VALUE} from '@models/ISharedContent'
 import { KickTime } from '@models/KickTime'
 import {t} from '@models/locales'
 import {priorityCalculator} from '@models/middleware/trafficControl'
@@ -23,7 +24,6 @@ import {Conference} from './Conference'
 import {ConferenceEvents} from './Conference'
 import {MessageType} from './MessageType'
 import {notification} from './Notification'
-
 // config.js
 declare const config:any             //  from ../../config.js included from index.html
 
@@ -227,6 +227,34 @@ export class ConferenceSync{
       window.location.reload()
     }, 10000)
   }
+  private onParticipantOut(pids: string[]){
+    pids.forEach(pid => {
+      const participant = participants.find(pid)
+      if (participant){
+        participant.pose.position = [CONTENT_OUT_OF_RANGE_VALUE, CONTENT_OUT_OF_RANGE_VALUE]
+      }
+    })
+  }
+  private onMouseOut(pids: string[]){
+    pids.forEach(pid => {
+      const participant = participants.find(pid)
+      if (participant){
+        participant.mouse.position = [CONTENT_OUT_OF_RANGE_VALUE, CONTENT_OUT_OF_RANGE_VALUE]
+      }
+    })
+  }
+  private onContentOut(cids: string[]){
+    cids.forEach(cid => {
+      const content = contents.find(cid)
+      if (content){
+        const newContent = Object.assign({}, content)
+        newContent.pose = {position: [CONTENT_OUT_OF_RANGE_VALUE, CONTENT_OUT_OF_RANGE_VALUE],
+          orientation: content.pose.orientation}
+        contents.updateByRemoteRequest([newContent])
+        //  console.log(`content out ${cid}`)
+      }
+    })
+  }
 
   private onParticipantInfo(from:string|undefined, info:RemoteInformation){
     assert(from)
@@ -293,10 +321,10 @@ export class ConferenceSync{
       remote.physics.onStage = onStage
     }
   }
-  private onYarnPhone(from:string|undefined, drArray:string[]){
+  private onYarnPhone(from:string|undefined, connectedPids:string[]){
     assert(from)
     //  console.log(`yarn from ${from} local:${participants.localId}`)
-    const myself = drArray.find(id => id === participants.localId)
+    const myself = connectedPids.find(id => id === participants.localId)
     if (myself) {
       if (!participants.yarnPhones.has(from)){
         participants.yarnPhones.add(from)
@@ -523,7 +551,8 @@ export class ConferenceSync{
     this.disposers.push(autorun(() => { this.sendOnStage() }))
 
     const sendYarnPhones = () => {
-      if (this.conference.channelOpened) {
+      if (this.conference.channelOpened && participants.yarnPhoneUpdated) {
+        participants.yarnPhoneUpdated = false
         this.conference.sendMessage(MessageType.YARN_PHONE, Array.from(participants.yarnPhones))
       }
     }
@@ -569,6 +598,9 @@ export class ConferenceSync{
         case MessageType.MUTE_VIDEO: this.onMuteVideo(JSON.parse(msg.v)); break
         case MessageType.MUTE_AUDIO: this.onMuteAudio(JSON.parse(msg.v)); break
         case MessageType.KICK: this.onKicked(msg.p, JSON.parse(msg.v)); break
+        case MessageType.PARTICIPANT_OUT: this.onParticipantOut(JSON.parse(msg.v)); break
+        case MessageType.MOUSE_OUT: this.onMouseOut(JSON.parse(msg.v)); break
+        case MessageType.CONTENT_OUT: this.onContentOut(JSON.parse(msg.v)); break
         case PropertyType.MAIN_SCREEN_CARRIER: this.onMainScreenCarrier(msg.p, JSON.parse(msg.v)); break
         case PropertyType.MY_CONTENT: this.onMyContent(msg.p, JSON.parse(msg.v)); break
         case PropertyType.PARTICIPANT_INFO: this.onParticipantInfo(msg.p, JSON.parse(msg.v)); break

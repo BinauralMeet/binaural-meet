@@ -62,7 +62,10 @@ export function isContentEditable(c?: ISharedContent) {
 export function isContentWallpaper(c?: ISharedContent) {
   return c && c.zorder <= TEN_YEAR
 }
-
+export const CONTENT_OUT_OF_RANGE_VALUE = 1024*1024
+export function isContentOutOfRange(c?: ISharedContent) {
+  return !c || c.pose.position[0] === CONTENT_OUT_OF_RANGE_VALUE
+}
 
 export interface WallpaperStore {
   room: string
