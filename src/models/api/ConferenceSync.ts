@@ -489,8 +489,8 @@ export class ConferenceSync{
     this.disposers.push(autorun(this.sendParticipantInfo.bind(this)))
     this.disposers.push(autorun(this.sendTrackStates.bind(this)))
     const calcWait = () => this.conference.bmRelaySocket?.readyState === WebSocket.OPEN
-      ? 50
-      : Math.ceil(Math.max((participants.remote.size / 3) * 33, 33))
+      ? Math.ceil(Math.max((participants.remote.size / 50) * 50, 50))
+      : Math.ceil(Math.max((participants.remote.size / 4) * 50, 50))
     let sendPoseMessage: (poseStr:string) => void = ()=>{}
     let poseWait = 0
     let lastPoseStr=''

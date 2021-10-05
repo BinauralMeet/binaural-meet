@@ -86,6 +86,8 @@ export class Conference extends EventEmitter {
     this.sync.bind()
     this._jitsiConference?.join('')
     this._jitsiConference?.setSenderVideoConstraint(1080)
+    //  start relayServer communication.
+    this.step()
 
     //  To access from debug console, add object d to the window.
     d.conference = this
@@ -113,6 +115,8 @@ export class Conference extends EventEmitter {
       })
     }
     this.sync.observeEnd()
+    //  stop relayServer communication.
+    this.stopStep = true
 
     return new Promise((resolve, reject) => {
       this._jitsiConference?.leave().then((arg) => {
@@ -128,28 +132,35 @@ export class Conference extends EventEmitter {
     })
   }
 
+  private stopStep = false
   private step(){
     const period = 50
-    const timeToProcess = 30
-    const deadline = Date.now() + timeToProcess
-    while(Date.now() < deadline && this.receivedMessages.length){
-      const msg = this.receivedMessages.shift()
-      if (msg){
-        this.sync.onBmMessage([msg])
+    if (this.bmRelaySocket?.readyState === WebSocket.OPEN){
+      const timeToProcess = 30
+      const deadline = Date.now() + timeToProcess
+      while(Date.now() < deadline && this.receivedMessages.length){
+        const msg = this.receivedMessages.shift()
+        if (msg){
+          this.sync.onBmMessage([msg])
+        }
       }
+      const lastRequestTimeOld = this.lastRequestTime
+      const now = Date.now()
+      const REQUEST_WAIT_TIMEOUT = 20 * 1000  //  wait 20 sec when failed to receive message.
+      if (now < deadline && this.bmRelaySocket && !this.receivedMessages.length
+        && now - this.lastRequestTime > 50
+        && (this.lastReceivedTime >= this.lastRequestTime
+          || now - this.lastRequestTime > REQUEST_WAIT_TIMEOUT)){
+          this.lastRequestTime = now
+          this.sendMessageViaRelay(MessageType.REQUEST_RANGE, [map.visibleArea(), participants.audibleArea()])
+      }
+      console.log(`step RTT:${this.lastReceivedTime - lastRequestTimeOld} remain:${deadline - Date.now()}/${timeToProcess}`)
     }
-    const lastRequestTimeOld = this.lastRequestTime
-    const now = Date.now()
-    const REQUEST_WAIT_TIMEOUT = 20 * 1000  //  wait 20 sec when failed to receive message.
-    if (now < deadline && this.bmRelaySocket && !this.receivedMessages.length
-      && now - this.lastRequestTime > 50
-      && (this.lastReceivedTime >= this.lastRequestTime
-        || now - this.lastRequestTime > REQUEST_WAIT_TIMEOUT)){
-        this.lastRequestTime = now
-        this.sendMessageViaRelay(MessageType.REQUEST_RANGE, [map.visibleArea(), participants.audibleArea()])
+    if (!this.stopStep){
+      setTimeout(()=>{this.step()}, period)
+    }else{
+      this.stopStep = false
     }
-    console.log(`step RTT:${this.lastReceivedTime - lastRequestTimeOld} remain:${deadline - Date.now()}/${timeToProcess}`)
-    setTimeout(()=>{this.step()}, period)
   }
 
   //  Commmands for local tracks --------------------------------------------
@@ -380,7 +391,6 @@ export class Conference extends EventEmitter {
         (window as any).requestIdleCallback(idleFunc)
       }*/
       //  Use timer
-      this.step()
     }
     this.bmRelaySocket = new WebSocket(config.bmRelayServer)
     setHandler()
