@@ -142,7 +142,7 @@ export class Conference extends EventEmitter {
 
   private stopStep = false
   private step(){
-    const period = Math.max((this.relayRttAverage-20) * participants.remote.size, 0) + 30
+    const period = Math.min(Math.max((this.relayRttAverage-20) * participants.remote.size/20, 0) + 33, 5*1000)
     if (this.bmRelaySocket?.readyState === WebSocket.OPEN){
       const timeToProcess = period * 0.8
       const deadline = Date.now() + timeToProcess
@@ -366,8 +366,10 @@ export class Conference extends EventEmitter {
         }
         this.lastReceivedTime = Date.now()
         this.relayRttLast = this.lastReceivedTime - this.lastRequestTime
-        const alpha = 0.1
-        this.relayRttAverage = alpha * this.relayRttLast + (1-alpha) * this.relayRttAverage
+        const alpha = 0.3
+        if (msgs.length){
+          this.relayRttAverage = alpha * this.relayRttLast + (1-alpha) * this.relayRttAverage
+        }
         /*/
         setTimeout(()=>{
           if (msgs.length){

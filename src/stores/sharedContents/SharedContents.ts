@@ -471,6 +471,10 @@ export class SharedContents extends EventEmitter {
         if (toRemove){
           this.disposeContent(toRemove)
           this.roomContents.delete(cid)
+        }else{
+          if (contents.editing === cid){
+            contents.editing = ''
+          }
         }
         contents.roomContentsInfo.delete(cid)
       }
