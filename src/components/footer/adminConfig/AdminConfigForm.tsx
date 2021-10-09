@@ -102,7 +102,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
           if (roomInfo.passMatched) {
             connection.conference.sendMessageViaJitsi(MessageType.RELOAD_BROWSER, {})
             if (connection.conference.bmRelaySocket?.readyState === WebSocket.OPEN){
-              connection.conference.sendMessageViaRelay(MessageType.RELOAD_BROWSER, {})
+              connection.conference.pushOrUpdateMessageViaRelay(MessageType.RELOAD_BROWSER, {})
             }
           }
         }}> Reload </Button>&emsp;

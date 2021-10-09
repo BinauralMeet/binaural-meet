@@ -11,7 +11,7 @@ import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
 import {makeObservable, observable} from 'mobx'
 import {BMMessage} from './BMMessage'
 import {ConferenceSync} from './ConferenceSync'
-import {MessageType} from './MessageType'
+import {ClientToServerOnlyMessageType, MessageType, ObjectArrayMessageTypes, StringArrayMessageTypes} from './MessageType'
 
 //  Log level and module log options
 export const JITSILOGLEVEL = 'warn'  // log level for lib-jitsi-meet {debug|log|warn|error}
@@ -39,6 +39,11 @@ export const ConferenceEvents = {
 //  PRIVATE_MESSAGE_RECEIVED: 'prev_message_received',
 }
 
+//  Cathegolies of BMMessage's types
+const stringArrayMessageTypesForClient = new Set(StringArrayMessageTypes)
+stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.CONTENT_UPDATE_REQUEST_BY_ID)
+stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.REQUEST_PARTICIPANT_STATES)
+
 export class Conference extends EventEmitter {
   public _jitsiConference?: JitsiMeetJS.JitsiConference
   public name=''
@@ -46,8 +51,11 @@ export class Conference extends EventEmitter {
   sync = new ConferenceSync(this)
   @observable channelOpened = false     //  is JVB message channel open ?
   bmRelaySocket:WebSocket|undefined = undefined //  Socket for message passing via separate relay server
-  private lastRequestTime = 0
-  private lastReceivedTime = 1
+  private lastRequestTime = Date.now()
+  private lastReceivedTime = Date.now()
+  private messagesToSendToRelay: BMMessage[] = []
+  relayRttLast = 50
+  relayRttAverage = 50
 
   constructor(){
     super()
@@ -56,7 +64,7 @@ export class Conference extends EventEmitter {
 
   setRoomProp(name:string, value:string){
     //  console.log(`setRoomProp(${name}, ${value})`)
-    this.sendMessageViaRelay(MessageType.ROOM_PROP, [name, value])
+    this.pushOrUpdateMessageViaRelay(MessageType.ROOM_PROP, [name, value])
     roomInfo.onUpdateProp(name, value)
   }
 
@@ -134,9 +142,9 @@ export class Conference extends EventEmitter {
 
   private stopStep = false
   private step(){
-    const period = 50
+    const period = Math.max((this.relayRttAverage-20) * participants.remote.size, 0) + 30
     if (this.bmRelaySocket?.readyState === WebSocket.OPEN){
-      const timeToProcess = 30
+      const timeToProcess = period * 0.8
       const deadline = Date.now() + timeToProcess
       while(Date.now() < deadline && this.receivedMessages.length){
         const msg = this.receivedMessages.shift()
@@ -144,17 +152,17 @@ export class Conference extends EventEmitter {
           this.sync.onBmMessage([msg])
         }
       }
-      const lastRequestTimeOld = this.lastRequestTime
+      const REQUEST_WAIT_TIMEOUT = period + 20 * 1000  //  wait 20 sec when failed to receive message.
       const now = Date.now()
-      const REQUEST_WAIT_TIMEOUT = 20 * 1000  //  wait 20 sec when failed to receive message.
       if (now < deadline && this.bmRelaySocket && !this.receivedMessages.length
         && now - this.lastRequestTime > 50
         && (this.lastReceivedTime >= this.lastRequestTime
           || now - this.lastRequestTime > REQUEST_WAIT_TIMEOUT)){
           this.lastRequestTime = now
-          this.sendMessageViaRelay(MessageType.REQUEST_RANGE, [map.visibleArea(), participants.audibleArea()])
+          this.pushOrUpdateMessageViaRelay(MessageType.REQUEST_RANGE, [map.visibleArea(), participants.audibleArea()])
+          this.sendMessageViaRelay()
       }
-      console.log(`step RTT:${this.lastReceivedTime - lastRequestTimeOld} remain:${deadline - Date.now()}/${timeToProcess}`)
+      console.log(`step RTT:${this.relayRttAverage} remain:${deadline - Date.now()}/${timeToProcess}`)
     }
     if (!this.stopStep){
       setTimeout(()=>{this.step()}, period)
@@ -317,8 +325,8 @@ export class Conference extends EventEmitter {
   }
 
   sendMessage(type:string, value:any, to?: string) {
-    if (this.bmRelaySocket){
-      this.sendMessageViaRelay(type, value, to)
+    if (config.bmRelayServer){
+      this.pushOrUpdateMessageViaRelay(type, value, to)
     }else{
       this.sendMessageViaJitsi(type, value, to)
     }
@@ -342,9 +350,10 @@ export class Conference extends EventEmitter {
   connectToRelayServer(){
     if (this.bmRelaySocket){ return }
     const onOpen = () => {
-      //console.log(`onOpen ${participants.localId}`)
-      this.sendMessageViaRelay(MessageType.REQUEST_ALL, {}, undefined, true)
+      this.messagesToSendToRelay = []
+      this.pushOrUpdateMessageViaRelay(MessageType.REQUEST_ALL, {}, undefined, true)
       this.sync.sendAllAboutMe()
+      this.sendMessageViaRelay()
     }
     const onMessage = (ev: MessageEvent<any>)=> {
       //  console.log(`ws:`, ev)
@@ -356,6 +365,9 @@ export class Conference extends EventEmitter {
           this.receivedMessages.push(...msgs)
         }
         this.lastReceivedTime = Date.now()
+        this.relayRttLast = this.lastReceivedTime - this.lastRequestTime
+        const alpha = 0.1
+        this.relayRttAverage = alpha * this.relayRttLast + (1-alpha) * this.relayRttAverage
         /*/
         setTimeout(()=>{
           if (msgs.length){
@@ -395,36 +407,76 @@ export class Conference extends EventEmitter {
     this.bmRelaySocket = new WebSocket(config.bmRelayServer)
     setHandler()
   }
-  sendMessageViaRelay(type:string, value:any, to?:string, sendRandP?:boolean) {
-    assert(this.bmRelaySocket)
 
-    if (this.name && participants.localId){
-      const msg:BMMessage = {t:type, v:JSON.stringify(value)}
-      if (sendRandP) {
-        msg.r = this.name
-        msg.p = participants.localId
-      }
-      if (to){
-        msg.d = to
-      }
-      //  create websocket
-      //  send or queue message
-      if (this.bmRelaySocket?.readyState === WebSocket.OPEN){
-        this.bmRelaySocket.send(JSON.stringify(msg))
-      }else{
-        this.bmRelaySocket?.addEventListener('open', ()=> {
-          const waitAndSend = ()=>{
-            if(this.bmRelaySocket?.readyState !== WebSocket.OPEN){
-              setTimeout(waitAndSend, 100)
-            }else{
-              this.bmRelaySocket?.send(JSON.stringify(msg))
-            }
+  pushOrUpdateMessageViaRelay(type:string, value:any, dest?:string, sendRandP?:boolean) {
+    assert(config.bmRelayServer)
+    if (!this.bmRelaySocket || this.bmRelaySocket.readyState !== WebSocket.OPEN){ return }
+    if (!this.name || !participants.localId){
+      console.warn(`Relay Socket: Not connected. room:${this.name} id:${participants.localId}.`)
+
+      return
+    }
+
+
+    const msg:BMMessage = {t:type, v:''}
+    if (sendRandP) {
+      msg.r = this.name
+      msg.p = participants.localId
+    }
+    if (dest){
+      msg.d = dest
+    }
+    const idx = this.messagesToSendToRelay.findIndex(m =>
+      m.t === msg.t && m.r === msg.r && m.p === msg.p && m.d === msg.d)
+    if (idx >= 0){
+      if (stringArrayMessageTypesForClient.has(msg.t)){
+        const oldV = JSON.parse(this.messagesToSendToRelay[idx].v) as string[]
+        for(const ne of value as string[]){
+          if (oldV.findIndex(e => e === ne) < 0){ oldV.push(ne) }
+        }
+        this.messagesToSendToRelay[idx].v = JSON.stringify(oldV)
+      }else if (ObjectArrayMessageTypes.has(msg.t)){
+        const oldV = JSON.parse(this.messagesToSendToRelay[idx].v) as {id:string}[]
+        for(const ne of value as {id:string}[]){
+          const found = oldV.findIndex(e => e.id === ne.id)
+          if (found >= 0){
+            oldV[found] = ne
+          }else{
+            oldV.push(ne)
           }
-          waitAndSend()
-        })
+        }
+        this.messagesToSendToRelay[idx].v = JSON.stringify(oldV)
+      }else{  //  overwrite
+        //console.log(`overwrite messageType: ${msg.t}`)
+        msg.v = JSON.stringify(value)
+        this.messagesToSendToRelay[idx] = msg
       }
     }else{
-      console.warn(`Relay Socket: Not connected. room:${this.name} id:${participants.localId}.`)
+      msg.v = JSON.stringify(value)
+      this.messagesToSendToRelay.push(msg)
+      //console.log(`msg:${JSON.stringify(msg)} messages: ${JSON.stringify(this.messagesToSendToRelay)}`)
+    }
+  }
+  private sendMessageViaRelay() {
+    if (this.messagesToSendToRelay.length === 0){ return }
+
+    if (this.bmRelaySocket?.readyState === WebSocket.OPEN){
+      this.bmRelaySocket.send(JSON.stringify(this.messagesToSendToRelay))
+      //  console.log(`Sent bmMessages: ${JSON.stringify(this.messagesToSendToRelay)}`)
+      this.messagesToSendToRelay = []
+    }else{
+      //  console.log(`Wait to send bmMessages: ${JSON.stringify(this.messagesToSendToRelay)}`)
+      this.bmRelaySocket?.addEventListener('open', ()=> {
+        const waitAndSend = ()=>{
+          if(this.bmRelaySocket?.readyState !== WebSocket.OPEN){
+            setTimeout(waitAndSend, 100)
+          }else{
+            this.bmRelaySocket?.send(JSON.stringify(this.messagesToSendToRelay))
+            this.messagesToSendToRelay = []
+          }
+        }
+        waitAndSend()
+      })
     }
   }
 

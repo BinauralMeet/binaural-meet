@@ -38,7 +38,7 @@ export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: Partic
             props.map.focusOn(props.participant)
           }else{
             if(config.bmRelayServer){
-              connection.conference.sendMessageViaRelay(
+              connection.conference.pushOrUpdateMessageViaRelay(
                 MessageType.REQUEST_PARTICIPANT_STATES, [props.participant.id])
             }
             const disposer = autorun(()=>{
@@ -55,7 +55,7 @@ export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: Partic
             props.map.keyInputUsers.add('participantList')
           }else{
             if(config.bmRelayServer){
-              connection.conference.sendMessageViaRelay(
+              connection.conference.pushOrUpdateMessageViaRelay(
                 MessageType.REQUEST_PARTICIPANT_STATES, [props.participant.id])
             }
             const disposer = autorun(()=>{

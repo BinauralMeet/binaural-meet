@@ -30,14 +30,15 @@ export const InstantMessageType = {
   RELOAD_BROWSER: 'm_reload',                   //  not used, ask to reload browser
   KICK: 'm_kick',                               //  reason:string
 }
-export type InstantMessageKeys = keyof typeof InstantMessageType
+export const InstantMessageTypes = new Set(Object.values(InstantMessageType))
+
 
 //  messages which can be merged.
 export const ObjectArrayMessageType = {
   CONTENT_UPDATE_REQUEST: 'c_update',     //  IShraedContent[]
   CONTENT_INFO_UPDATE: 'c_info_update',   //  SharedContentInfo[], only bmRelayServer to clients.
 }
-export const ObjectArrayMessageTypeKeys = new Set(Object.keys(ObjectArrayMessageType))
+export const ObjectArrayMessageTypes = new Set(Object.values(ObjectArrayMessageType))
 
 export const StringArrayMessageType = {
   LEFT_CONTENT_REMOVE_REQUEST: 'left_c_remove',   //  ids:string[], only when no bmRelayServer
@@ -46,7 +47,7 @@ export const StringArrayMessageType = {
   MOUSE_OUT: 'm_out',                             //  ids:stirng[]
   CONTENT_OUT: 'c_out',                           //  ids:stirng[]
 }
-export const StringArrayMessageTypeKeys = new Set(Object.keys(StringArrayMessageType))
+export const StringArrayMessageTypes = new Set(Object.values(StringArrayMessageType))
 
 export const ClientToServerOnlyMessageType = {
   CONTENT_UPDATE_REQUEST_BY_ID: 'c_update_by_id', //  cids:string[],

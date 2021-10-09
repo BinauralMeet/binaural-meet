@@ -488,33 +488,36 @@ export class ConferenceSync{
     this.disposers.push(autorun(this.sendAfkChanged.bind(this)))
     this.disposers.push(autorun(this.sendParticipantInfo.bind(this)))
     this.disposers.push(autorun(this.sendTrackStates.bind(this)))
-    const calcWait = () => this.conference.bmRelaySocket?.readyState === WebSocket.OPEN
-      ? Math.ceil(Math.max((participants.remote.size / 50) * 50, 50))
-      : Math.ceil(Math.max((participants.remote.size / 4) * 50, 50))
-    let sendPoseMessage: (poseStr:string) => void = ()=>{}
-    let poseWait = 0
-    let lastPoseStr=''
-    this.disposers.push(autorun(() => {
-      const newWait = calcWait()
-      if (newWait !== poseWait) {
-        poseWait = newWait
-        sendPoseMessage = _.throttle((poseStr:string) => {
-          if (this.conference.channelOpened){
-            this.conference.sendMessage(MessageType.PARTICIPANT_POSE, poseStr)
-          }
-        },                           poseWait)  //  30fps
-        //  console.log(`poseWait = ${poseWait}`)
-      }
+    if (config.bmRelayServer){
+      this.disposers.push(autorun(() => {
+        this.sendPoseMessageNow()
+        this.sendMouseMessageNow()
+      }))
+    }else{
+      //  pose via bridge
+      const calcWait = () => Math.ceil(Math.max((participants.remote.size / 4) * 50, 50))
+      let sendPoseMessage: (poseStr:string) => void = ()=>{}
+      let poseWait = 0
+      let lastPoseStr=''
+      this.disposers.push(autorun(() => {
+        const newWait = calcWait()
+        if (newWait !== poseWait) {
+          poseWait = newWait
+          sendPoseMessage = _.throttle((poseStr:string) => {
+            if (this.conference.channelOpened){
+              this.conference.sendMessage(MessageType.PARTICIPANT_POSE, poseStr)
+            }
+          },                           poseWait)  //  30fps
+          //  console.log(`poseWait = ${poseWait}`)
+        }
 
-      const poseStr = pose2Str(participants.local.pose)
-      if (this.conference.channelOpened && lastPoseStr !== poseStr) {
-        sendPoseMessage(poseStr)
-        lastPoseStr = poseStr
-      }
-    }))
-    let updateTimeForProperty = 0
-
-    if (!config.bmRelayServer) {
+        const poseStr = pose2Str(participants.local.pose)
+        if (this.conference.channelOpened && lastPoseStr !== poseStr) {
+          sendPoseMessage(poseStr)
+          lastPoseStr = poseStr
+        }
+      }))
+      let updateTimeForProperty = 0
       let lastPoseStrProprty = ''
       const setPoseProperty = () => {
         const now = Date.now()
@@ -530,23 +533,23 @@ export class ConferenceSync{
       }
       setPoseProperty()
       setInterval(setPoseProperty, 2.5 * 1000)
-    }
-
-    let wait = 0
-    let sendMouseMessage = (mouse:Mouse) => {}
-    const sendMouse = (to: string) => {
-      const newWait = calcWait()
-      if (wait !== newWait) {
-        wait = newWait
-        sendMouseMessage = _.throttle((mouse: Mouse) => {
-          this.conference.sendMessage(MessageType.PARTICIPANT_MOUSE, mouse2Str(mouse))
-        },                            wait)
+      //  mouse via bridge
+      let wait = 0
+      let sendMouseMessage = (mouse:Mouse) => {}
+      const sendMouse = (to: string) => {
+        const newWait = calcWait()
+        if (wait !== newWait) {
+          wait = newWait
+          sendMouseMessage = _.throttle((mouse: Mouse) => {
+            this.conference.sendMessage(MessageType.PARTICIPANT_MOUSE, mouse2Str(mouse))
+          },                            wait)
+        }
+        if (this.conference.channelOpened) {
+          sendMouseMessage({...participants.local.mouse})
+        }
       }
-      if (this.conference.channelOpened) {
-        sendMouseMessage({...participants.local.mouse})
-      }
+      this.disposers.push(autorun(() => { sendMouse('') }))
     }
-    this.disposers.push(autorun(() => { sendMouse('') }))
 
     this.disposers.push(autorun(() => { this.sendOnStage() }))
 
@@ -619,7 +622,7 @@ export class ConferenceSync{
     const ids = remotes.filter(remote => !remote.informationReceived).map(remote => remote.id)
     if (ids.length){
       syncLog(`checkInfo sent ${ids}`)
-      this.conference.sendMessageViaRelay(MessageType.REQUEST_TO, ids)
+      this.conference.pushOrUpdateMessageViaRelay(MessageType.REQUEST_TO, ids)
     }
   }
 }
