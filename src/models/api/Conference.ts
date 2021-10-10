@@ -142,7 +142,7 @@ export class Conference extends EventEmitter {
 
   private stopStep = false
   private step(){
-    const period = Math.min(Math.max((this.relayRttAverage-20) * participants.remote.size/20, 0) + 33, 5*1000)
+    const period = 50
     if (this.bmRelaySocket?.readyState === WebSocket.OPEN){
       const timeToProcess = period * 0.8
       const deadline = Date.now() + timeToProcess
@@ -152,10 +152,13 @@ export class Conference extends EventEmitter {
           this.sync.onBmMessage([msg])
         }
       }
-      const REQUEST_WAIT_TIMEOUT = period + 20 * 1000  //  wait 20 sec when failed to receive message.
+      const REQUEST_INTERVAL = Math.min(
+        Math.max((this.relayRttAverage-20) * participants.remote.size/40, 0) + 20,
+        3*1000)
+      const REQUEST_WAIT_TIMEOUT = REQUEST_INTERVAL + 20 * 1000  //  wait 20 sec when failed to receive message.
       const now = Date.now()
       if (now < deadline && this.bmRelaySocket && !this.receivedMessages.length
-        && now - this.lastRequestTime > 50
+        && now - this.lastRequestTime > REQUEST_INTERVAL
         && (this.lastReceivedTime >= this.lastRequestTime
           || now - this.lastRequestTime > REQUEST_WAIT_TIMEOUT)){
           this.lastRequestTime = now
@@ -358,14 +361,15 @@ export class Conference extends EventEmitter {
     const onMessage = (ev: MessageEvent<any>)=> {
       //  console.log(`ws:`, ev)
       if (typeof ev.data === 'string') {
+        this.lastReceivedTime = Date.now()
+        this.relayRttLast = this.lastReceivedTime - this.lastRequestTime
+
         const msgs = JSON.parse(ev.data) as BMMessage[]
         //  console.log(`Relay sock onMessage len:${msgs.length}`)
         //*
         if (msgs.length){
           this.receivedMessages.push(...msgs)
         }
-        this.lastReceivedTime = Date.now()
-        this.relayRttLast = this.lastReceivedTime - this.lastRequestTime
         const alpha = 0.3
         if (msgs.length){
           this.relayRttAverage = alpha * this.relayRttLast + (1-alpha) * this.relayRttAverage
