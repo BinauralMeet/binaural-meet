@@ -90,6 +90,8 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
         <Button variant="contained" color={btnColor()} style={{textTransform:'none'}}
           disabled={!roomInfo.passMatched} onClick={() => {
             if (roomInfo.passMatched){
+              const ids = new Set(contents.roomContentsInfo.keys())
+              contents.all.forEach(c => ids.add(c.id))
               contents.all.filter(c => c.ownerName === clearName).forEach(c => contents.removeByLocal(c.id))
             }
         }}> Clear contents by user name </Button> &thinsp;

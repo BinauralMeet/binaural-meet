@@ -165,7 +165,7 @@ export class Conference extends EventEmitter {
           this.pushOrUpdateMessageViaRelay(MessageType.REQUEST_RANGE, [map.visibleArea(), participants.audibleArea()])
           this.sendMessageViaRelay()
       }
-      console.log(`step RTT:${this.relayRttAverage} remain:${deadline - Date.now()}/${timeToProcess}`)
+      //  console.log(`step RTT:${this.relayRttAverage} remain:${deadline - Date.now()}/${timeToProcess}`)
     }
     if (!this.stopStep){
       setTimeout(()=>{this.step()}, period)
@@ -354,8 +354,8 @@ export class Conference extends EventEmitter {
     if (this.bmRelaySocket){ return }
     const onOpen = () => {
       this.messagesToSendToRelay = []
-      this.pushOrUpdateMessageViaRelay(MessageType.REQUEST_ALL, {}, undefined, true)
-      this.sync.sendAllAboutMe()
+      this.sync.sendAllAboutMe(true)
+      this.pushOrUpdateMessageViaRelay(MessageType.REQUEST_ALL, {})
       this.sendMessageViaRelay()
     }
     const onMessage = (ev: MessageEvent<any>)=> {

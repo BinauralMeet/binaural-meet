@@ -66,6 +66,9 @@ export const styleForList = makeStyles({
   outer: {
     display: 'flex',
     whiteSpace: 'nowrap',
+    padding: 0,
+    margin: 0,
+    width: '100%',
   },
   line: (props: ListLineProps) => ({
     display: 'flex',
@@ -78,6 +81,6 @@ export const styleForList = makeStyles({
     fontSize: props.fontSize,
     height: props.height,
     width: '100%',
-    margin: '1px 0 1px 0',
+    padding: 0,
   }),
 })

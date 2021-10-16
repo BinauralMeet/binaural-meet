@@ -29,7 +29,7 @@ export const ContentLine: React.FC<TextLineStyle & Stores &
 {participant: ParticipantBase, content: SharedContentInfo}> = (props) => {
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
   const [showForm, setShowForm] = React.useState(false)
-  const ref = React.useRef<HTMLDivElement>(null)
+  const ref = React.useRef<HTMLButtonElement>(null)
   const {lineHeight, content, ...contentProps} = props
   const targetContent = locatedContentOnly(props.contents.find(props.content.id))
 
@@ -42,7 +42,8 @@ export const ContentLine: React.FC<TextLineStyle & Stores &
 
     return <>
       <Tooltip title={props.content.ownerName} placement="right">
-        <div className={classes.line} style={{backgroundColor:colors[0], color:colors[1]}} ref={ref}
+        <Button variant="contained" className={classes.line}
+          style={{backgroundColor:colors[0], color:colors[1], margin: '1px 0 1px 0'}} ref={ref}
           onClick={() => {
             const found = contents.find(props.content.id)
             if (found){
@@ -75,9 +76,8 @@ export const ContentLine: React.FC<TextLineStyle & Stores &
               })
             }
           }}
-        >
-          {typeIcon}{props.content.name}
-        </div>
+        >{typeIcon}{props.content.name}
+        </Button>
       </Tooltip>
       <SharedContentForm {...contentProps} contents={props.contents} content={targetContent}
         {...sharedContentHandler(props)} open={showForm}

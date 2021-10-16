@@ -74,8 +74,9 @@ export const RawImageAvatar: React.FC<ImageAvatarProps> = (props: ImageAvatarPro
     }
     const size = props.border ? props.size * BORDER_CONTENT : props.size
 
-    return props.avatarSrc ? <Avatar src={props.avatarSrc} className={classes.imageAvatar}/> :
-      <Avatar className={classes.textAvatar}>
+    return props.avatarSrc ?
+      <Avatar src={props.avatarSrc} className={classes.imageAvatar} /> :
+      <Avatar className={classes.textAvatar} >
         <div style={{height:size, width:size, textAlign:'center',
           verticalAlign:'middle', display:'table-cell', whiteSpace:'nowrap'}}>
         {initial}</div></Avatar>

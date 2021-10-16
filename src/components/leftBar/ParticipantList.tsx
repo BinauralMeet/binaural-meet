@@ -2,13 +2,15 @@ import {ImageAvatar} from '@components/avatar/ImageAvatar'
 import {LocalParticipantForm} from '@components/map/ParticipantsLayer/LocalParticipantForm'
 import {RemoteParticipantForm} from '@components/map/ParticipantsLayer/RemoteParticipantForm'
 import {Tooltip} from '@material-ui/core'
+import Button from '@material-ui/core/Button'
+import IconButton from '@material-ui/core/IconButton'
 import {connection} from '@models/api'
 import { MessageType } from '@models/api/MessageType'
 import {getColorOfParticipant} from '@models/Participant'
 import {isDarkColor} from '@models/utils'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import roomInfo from '@stores/RoomInfo'
-import { autorun } from 'mobx'
+import {autorun} from 'mobx'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {Stores} from '../utils'
@@ -26,52 +28,55 @@ export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: Partic
   const size = useObserver(() => props.lineHeight)
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
   const [showForm, setShowForm] = React.useState(false)
-  const ref = React.useRef<HTMLDivElement>(null)
+  const ref = React.useRef<HTMLButtonElement>(null)
   const {lineHeight, ...propsForForm} = props
   //  console.log(`PColor pid:${props.participant.id} colors:${colors}`, props.participant)
+  function onClick(){
+    if (props.participant.physics.located){
+      props.map.focusOn(props.participant)
+    }else{
+      if(config.bmRelayServer){
+        connection.conference.pushOrUpdateMessageViaRelay(
+          MessageType.REQUEST_PARTICIPANT_STATES, [props.participant.id])
+      }
+      const disposer = autorun(()=>{
+        if (props.participant.physics.located){
+          props.map.focusOn(props.participant)
+          disposer()
+        }
+      })
+    }
+  }
+  function onContextMenu(){
+    if (props.participant.physics.located){
+      setShowForm(true)
+      props.map.keyInputUsers.add('participantList')
+    }else{
+      if(config.bmRelayServer){
+        connection.conference.pushOrUpdateMessageViaRelay(
+          MessageType.REQUEST_PARTICIPANT_STATES, [props.participant.id])
+      }
+      const disposer = autorun(()=>{
+        if (props.participant.physics.located){
+          setShowForm(true)
+          props.map.keyInputUsers.add('participantList')
+          disposer()
+        }
+      })
+    }
+  }
 
   return <>
     <Tooltip title={props.participant.id} placement="right">
-      <div className={classes.outer} ref={ref}
-        onClick={() => {
-          if (props.participant.physics.located){
-            props.map.focusOn(props.participant)
-          }else{
-            if(config.bmRelayServer){
-              connection.conference.pushOrUpdateMessageViaRelay(
-                MessageType.REQUEST_PARTICIPANT_STATES, [props.participant.id])
-            }
-            const disposer = autorun(()=>{
-              if (props.participant.physics.located){
-                props.map.focusOn(props.participant)
-                disposer()
-              }
-            })
-          }
-        }}
-        onContextMenu={() => {
-          if (props.participant.physics.located){
-            setShowForm(true)
-            props.map.keyInputUsers.add('participantList')
-          }else{
-            if(config.bmRelayServer){
-              connection.conference.pushOrUpdateMessageViaRelay(
-                MessageType.REQUEST_PARTICIPANT_STATES, [props.participant.id])
-            }
-            const disposer = autorun(()=>{
-              if (props.participant.physics.located){
-                setShowForm(true)
-                props.map.keyInputUsers.add('participantList')
-                disposer()
-              }
-            })
-          }
-        }}>
-        <ImageAvatar border={true} colors={colors} size={size * 1.05}
-          name={name} avatarSrc={avatarSrc} />
-        <div className={classes.line} style={{backgroundColor:colors[0], color:colors[1], width:'100%'}}>
-          {name}
-        </div>
+      <div className={classes.outer} style={{margin:'1px 0 1px 0'}}>
+        <IconButton style={{margin:0, padding:0}} onClick={onClick} onContextMenu={onContextMenu}>
+          <ImageAvatar border={true} colors={colors} size={size} name={name} avatarSrc={avatarSrc} />
+        </IconButton>
+        <Button variant="contained" className={classes.line} ref={ref}
+          style={{backgroundColor:colors[0], color:colors[1]}}
+          onClick={onClick} onContextMenu={onContextMenu}>
+            {name}
+        </Button>
       </div>
     </Tooltip>
     {props.participant.id === props.participants.localId ?

@@ -49,7 +49,7 @@ export const ChatLine: React.FC<Stores & TextLineStyle &{message: ChatMessage}> 
         {name:props.message.name})}<br/>{timestamp}</>
         : <>{props.message.name}<br/>{timestamp}</>
       } placement="right">
-      <div style={{wordWrap:'break-word', marginTop:2, fontSize, backgroundColor:backColor}}>
+      <div style={{display:'flex', wordWrap:'break-word', marginTop:2, fontSize, backgroundColor:backColor}}>
         <span style={{marginRight:'0.3em'}} onClick={()=>{
           const from = props.participants.find(props.message.pid)
           if (from) { props.map.focusOn(from) }

@@ -1,6 +1,6 @@
 import {connection} from '@models/api'
 import {MessageType} from '@models/api/MessageType'
-import {isContentWallpaper, ISharedContent, SharedContentInfo, WallpaperStore} from '@models/ISharedContent'
+import {extractSharedContentInfo, isContentWallpaper, ISharedContent, SharedContentInfo, WallpaperStore} from '@models/ISharedContent'
 import {diffMap, intersectionMap} from '@models/utils'
 import {assert} from '@models/utils'
 import {default as participantsStore} from '@stores/participants/Participants'
@@ -574,6 +574,7 @@ export class SharedContents extends EventEmitter {
       }
       //  set content
       remote.myContents.set(c.id, c)
+      contents.roomContentsInfo.set(c.id, extractSharedContentInfo(c))
       //  update track in cases of track based contents.
       if (c.type === 'screen' || c.type === 'camera') {
         this.tracks.onUpdateContent(c)
@@ -598,6 +599,7 @@ export class SharedContents extends EventEmitter {
         this.disposeContent(c)
         pc.myContents.delete(cid)
         this.owner.delete(cid)
+        this.roomContentsInfo.delete(cid)
       }else {
         console.error(`removeByRemote: failed to find content cid=${cid}`)
       }
@@ -652,18 +654,26 @@ export class SharedContents extends EventEmitter {
   clearAllRemotes(){
     if (config.bmRelayServer){
       this.roomContents.clear()
+      this.roomContentsInfo.clear()
     }else{
       const remotes = Array.from(this.participants.keys()).filter(key => key !== this.localId)
-      remotes.forEach(pid=>this.participants.delete(pid))
+      remotes.forEach(pid=>{
+        const p = this.participants.get(pid)
+        if (p){
+          p.myContents.forEach(c => this.roomContentsInfo.delete(c.id))
+        }
+        this.participants.delete(pid)
+      })
       this.tracks.clearConnection()
     }
   }
 
   removeAllContents(){
     if (config.bmRelayServer){
-      const cids = Array.from(this.roomContents.keys())
+      const cids = Array.from(this.roomContentsInfo.keys())
       connection.conference.sync.sendContentRemoveRequest('', cids)
       this.roomContents.clear()
+      this.roomContentsInfo.clear()
     }else{
       this.participants.forEach((pc, pid) => {
         if (pid !== this.localId){
@@ -679,6 +689,7 @@ export class SharedContents extends EventEmitter {
       this.participants.clear()
       this.pendToRemoves.clear()
       connection.conference.sync.sendMyContents()
+      this.roomContentsInfo.clear()
     }
     this.updateAll()
   }
