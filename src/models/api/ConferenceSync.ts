@@ -178,7 +178,7 @@ export class ConferenceSync{
     chat.participantLeft(id)
     participants.leave(id)
     if (this.conference.bmRelaySocket?.readyState === WebSocket.OPEN){
-      this.conference.sendMessage(MessageType.PARTICIPANT_LEFT, id)
+      this.conference.sendMessage(MessageType.PARTICIPANT_LEFT, [id])
     }
   }
   private onChatMessage(pid: string|undefined, msg: ChatMessageToSend){

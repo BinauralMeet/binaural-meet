@@ -329,7 +329,7 @@ export class SharedContents extends EventEmitter {
         }else{
           //  The participant own the contents is already left but not notified.
           this.takeContentsFromDead(pc)
-          connection.conference.sendMessage(MessageType.PARTICIPANT_LEFT, pid)
+          connection.conference.sendMessage(MessageType.PARTICIPANT_LEFT, [pid])
 
           return {pid: this.localId, pc: this.participants.get(this.localId), take:true}
         }
