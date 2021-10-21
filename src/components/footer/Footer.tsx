@@ -1,5 +1,5 @@
 import {ErrorDialog} from '@components/error/ErrorDialog'
-import {Stores} from '@components/utils'
+import {BMProps} from '@components/utils'
 import {acceleratorText2El} from '@components/utils/formatter'
 import megaphoneIcon from '@iconify/icons-mdi/megaphone'
 import {Icon} from '@iconify/react'
@@ -42,16 +42,17 @@ class Member{
   touched = false
 }
 
-export const Footer: React.FC<Stores&{height?:number}> = (props) => {
+export const Footer: React.FC<BMProps&{height?:number}> = (props) => {
+  const {map, participants} = props.stores
   //  showor not
   const [show, setShow] = React.useState<boolean>(true)
   const [showAdmin, setShowAdmin] = React.useState<boolean>(false)
   const [showShare, setShowShareRaw] = React.useState<boolean>(false)
   function setShowShare(flag: boolean) {
     if (flag) {
-      props.map.keyInputUsers.add('shareDialog')
+      map.keyInputUsers.add('shareDialog')
     }else {
-      props.map.keyInputUsers.delete('shareDialog')
+      map.keyInputUsers.delete('shareDialog')
     }
     setShowShareRaw(flag)
   }
@@ -61,7 +62,6 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const adminButton = useRef<HTMLDivElement>(null)
   //  observers
-  const participants = props.participants
   const mute = useObserver(() => ({
     muteA: participants.local.muteAudio,  //  mic
     muteS: participants.local.muteSpeaker,  //  speaker
@@ -79,7 +79,7 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
 
   //  Footer collapse conrtrol
   function checkMouseOnBottom() {
-    return props.map.screenSize[1] - (props.map.mouse[1] - props.map.offset[1]) < 90
+    return map.screenSize[1] - (map.mouse[1] - map.offset[1]) < 90
   }
   const mouseOnBottom = useObserver(checkMouseOnBottom)
   useEffect(() => {
@@ -109,7 +109,7 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       //  console.log(`onKeyDown: code: ${e.code}`)
-      if (props.map.keyInputUsers.size === 0) {
+      if (map.keyInputUsers.size === 0) {
         if (!e.ctrlKey && !e.metaKey && !e.altKey){
           if (e.code === 'KeyM') {  //  mute/unmute audio
             participants.local.muteAudio = !participants.local.muteAudio
@@ -153,7 +153,7 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
         > { (selected ? '✔\u00A0' : '\u2003') + info.label }</MenuItem>  //  \u00A0: NBSP, u2003: EM space.
     }
 
-    const micMenuItems:JSX.Element[] = [<MenuItem  key = {'broadcast'} ><BroadcastControl /></MenuItem>]
+    const micMenuItems:JSX.Element[] = [<MenuItem  key = {'broadcast'} ><BroadcastControl {...props} /></MenuItem>]
     const speakerMenuItems:JSX.Element[] = []
     const videoMenuItems:JSX.Element[] = []
     deviceInfos.forEach((info) => {
@@ -201,17 +201,17 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
     }
 
     function openAdmin(){
-      props.map.keyInputUsers.add('adminForm')
+      map.keyInputUsers.add('adminForm')
       setShowAdmin(true)
     }
     function closeAdmin(){
-      props.map.keyInputUsers.delete('adminForm')
+      map.keyInputUsers.delete('adminForm')
       setShowAdmin(false)
     }
 
     return <div ref={containerRef} className={classes.container}>
       <Collapse in={show} classes={classes}>
-        <StereoAudioSwitch size={fabSize} iconSize={iconSize} />
+        <StereoAudioSwitch size={fabSize} iconSize={iconSize} {...props}/>
         <FabMain size={fabSize} color={mute.muteS ? 'primary' : 'secondary' }
           aria-label="speaker" onClick={() => {
             participants.local.muteSpeaker = !mute.muteS
@@ -278,7 +278,7 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
         <ShareButton {...props} size={fabSize} iconSize={iconSize} showDialog={showShare}
           setShowDialog={setShowShare} />
 
-        <ErrorDialog />
+        <ErrorDialog {...props}/>
 
         <FabMain size={fabSize} onClick={openAdmin} divRef={adminButton}
           style={{marginLeft:'auto', marginRight:10, opacity:0.1}}>
@@ -287,7 +287,7 @@ export const Footer: React.FC<Stores&{height?:number}> = (props) => {
         <Popover open={showAdmin} onClose={closeAdmin}
           anchorEl={adminButton.current} anchorOrigin={{vertical:'top', horizontal:'left'}}
           anchorReference = "anchorEl" >
-          <AdminConfigForm close={closeAdmin} />
+          <AdminConfigForm close={closeAdmin} stores={props.stores}/>
         </Popover>
       </Collapse>
     </div >

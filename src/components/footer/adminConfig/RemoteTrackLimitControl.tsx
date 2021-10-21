@@ -1,11 +1,10 @@
-import {useStore} from '@hooks/ParticipantsStore'
+import {Stores} from '@components/utils'
 import Button from '@material-ui/core/Button'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
 import Grid from '@material-ui/core/Grid'
 import Slider from '@material-ui/core/Slider'
 import {connection} from '@models/api'
 import {t} from '@models/locales'
-import roomInfo from '@stores/RoomInfo'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 
@@ -21,8 +20,9 @@ const MySlider: React.FC<MySliderProps> = (props) => {
   /></Grid>
 }
 
-export const RemoteTrackLimitControl: React.FC<{}> = () => {
-  const local = useStore().local
+export const RemoteTrackLimitControl: React.FC<Stores> = (props:Stores) => {
+  const roomInfo = props.roomInfo
+  const local = props.participants.local
   const videoLimit = useObserver(() => local.remoteVideoLimit)
   const audioLimit = useObserver(() => local.remoteAudioLimit)
   const videoSlider = <MySlider value={videoLimit >= 0 ? videoLimit : MAX}

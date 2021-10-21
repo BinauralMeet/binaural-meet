@@ -87,7 +87,7 @@ export const TextEdit: React.FC<TextEditProps> = (props:TextEditProps) => {
           ev.preventDefault()
           if (sendTextLater){ sendTextLater.cancel() }
           sendText(text, props)
-          props.contents.setEditing('')
+          props.stores.contents.setEditing('')
         }
       }}
     />
@@ -165,6 +165,7 @@ const useStyles = makeStyles({
 
 export const Text: React.FC<ContentProps> = (props:ContentProps) => {
   assert(props.content.type === 'text')
+  const {contents, participants} = props.stores
   const memberRef = React.useRef<TextMember>(new TextMember())
   const member = memberRef.current
   const classes = useStyles()
@@ -172,15 +173,15 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
   const url = props.content.url
   const newTexts = JSON.parse(url) as TextMessages
   //const refEdit = useRef<HTMLDivElement>(null)
-  const editing = useObserver(() => props.contents.editing === props.content.id)
+  const editing = useObserver(() => contents.editing === props.content.id)
   if (editing){
-    props.contents.setBeforeChangeEditing((cur, next) => {
+    contents.setBeforeChangeEditing((cur, next) => {
       if (cur === props.content.id && next === ''){
         if (ref.current){
           member.messages = member.messages.filter(text => text.message.length)
           onUpdateTexts(member.messages, ref.current, props)
         }
-        props.contents.setBeforeChangeEditing() //  clear me
+        contents.setBeforeChangeEditing() //  clear me
       }
     })
   }
@@ -201,14 +202,14 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
     if (index === -1) {
       indices.add(member.messages.length)
       member.messages.push(newMessage)       //  Add new messages
-    }else if (newMessage.pid !== props.participants.localId){
+    }else if (newMessage.pid !== participants.localId){
       indices.add(index)
       member.messages[index] = newMessage  //  Update remote messages
     }
   })
   //  remove removed messages
   member.messages = member.messages.filter((msg, idx) =>
-    msg.pid === props.participants.localId || indices.has(idx))
+    msg.pid === participants.localId || indices.has(idx))
   member.messages.sort(compTextMessage)
 
   let focusToEdit:undefined|TextMessage = undefined
@@ -218,16 +219,16 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
     if (last) {
       member.messages.push(last)
     }
-    if (last?.pid !== props.participants.localId) {
-      member.messages.push({message:'', pid:props.participants.localId,
-        name:props.participants.local.information.name,
-        color: props.participants.local.information.color,
-        textColor: props.participants.local.information.textColor,
+    if (last?.pid !== participants.localId) {
+      member.messages.push({message:'', pid:participants.localId,
+        name:participants.local.information.name,
+        color: participants.local.information.color,
+        textColor: participants.local.information.textColor,
         time:Date.now()})
     }
     if (!member.editing) {  //  Find the message to focus to edit, i.e. my last message.
       member.messages.reverse()
-      focusToEdit = member.messages.find(message => message.pid === props.participants.localId)
+      focusToEdit = member.messages.find(message => message.pid === participants.localId)
       member.messages.reverse()
     }
   }
@@ -235,7 +236,7 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
   //  Makeing text (JSX element) to show
   const textDivs = member.messages.map((text, idx) => {
     const textEditing = (editing &&
-      (text.pid === props.participants.localId || !props.participants.remote.has(text.pid)))
+      (text.pid === participants.localId || !participants.remote.has(text.pid)))
 
     let textToShow:JSX.Element[] = []
     if (!textEditing){ textToShow = textToLinkedText(text.message) }

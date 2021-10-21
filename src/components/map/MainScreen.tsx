@@ -1,4 +1,4 @@
-import {useStore as useContentsStore} from '@hooks/SharedContentsStore'
+import {BMProps} from '@components/utils'
 import {makeStyles} from '@material-ui/core'
 import TraceablePeerConnection from 'lib-jitsi-meet/modules/RTC/TraceablePeerConnection'
 import _ from 'lodash'
@@ -29,14 +29,13 @@ const setStream = (
   video.srcObject = stream
   video.autoplay = true
 }
-export interface MainScreenProps{
+export interface MainScreenProps extends BMProps{
   showAllTracks?:boolean
 }
 
 export const MainScreen: React.FC<MainScreenProps> = (props) => {
   const classes = useStyles()
-  const store = useContentsStore()
-  const stream = useObserver(() => (store.tracks.mainStream))
+  const stream = useObserver(() => (props.stores.contents.tracks.mainStream))
   const videoRef = useRef<HTMLVideoElement>(null)
   useEffect(
     () => {

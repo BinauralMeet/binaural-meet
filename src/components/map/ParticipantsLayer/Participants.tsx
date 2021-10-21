@@ -1,18 +1,18 @@
-import {useStore} from '@hooks/ParticipantsStore'
+import {Stores} from '@components/utils'
+import {MapProps } from '@components/utils'
 import {PARTICIPANT_SIZE} from '@models/Participant'
 import {urlParameters} from '@models/url'
-import {MapData} from '@stores/Map'
-import {Participants} from '@stores/participants/Participants'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {MemoedLocalParticipant as LocalParticipant} from './LocalParticipant'
 import {MouseCursor} from './MouseCursor'
 import {RemoteParticipant} from './RemoteParticipant'
+
 interface LineProps {
   start: [number, number]
   end: [number, number]
-  participants: Participants,
   remote: string,
+  stores: Stores
 }
 
 const Line: React.FC<LineProps> = (props) => {
@@ -24,8 +24,8 @@ const Line: React.FC<LineProps> = (props) => {
   return <svg xmlns="http://www.w3.org/2000/svg" style={{position:'absolute', left, top, width, height, pointerEvents:'stroke'}}
     viewBox={`0, 0, ${width}, ${height}`}
     onClick = {() => {
-      props.participants.yarnPhones.delete(props.remote)
-      props.participants.yarnPhoneUpdated = true
+      props.stores.participants.yarnPhones.delete(props.remote)
+      props.stores.participants.yarnPhoneUpdated = true
     }}
     >
     <line x1={props.start[0] - left} y1={props.start[1] - top}
@@ -33,18 +33,18 @@ const Line: React.FC<LineProps> = (props) => {
   </svg>
 }
 
-export const ParticipantsLayer: React.FC<{map:MapData}> = (props) => {
-  const store = useStore()
+export const ParticipantsLayer: React.FC<MapProps> = (props) => {
+  const store = props.stores.participants
   const ids = useObserver(() => Array.from(store.remote.keys()).filter((id) => {
     const remote = store.find(id)!
 
     return remote.physics.located
   }))
   const localId = useObserver(() => store.localId)
-  const remoteElements = ids.map(id => <RemoteParticipant map={props.map} key={id} participants={store}
+  const remoteElements = ids.map(id => <RemoteParticipant key={id} stores={props.stores}
     participant={store.remote.get(id)!} size={PARTICIPANT_SIZE} />)
-  const localElement = (<LocalParticipant map={props.map} key={'local'} participants={store}
-    participant={store.local} size={PARTICIPANT_SIZE} />)
+  const localElement = (<LocalParticipant key={'local'} participant={store.local}
+    size={PARTICIPANT_SIZE} stores={props.stores}/>)
   const lines = useObserver(
     () => Array.from(store.yarnPhones).map((rid) => {
       const start = store.local.pose.position
@@ -52,15 +52,17 @@ export const ParticipantsLayer: React.FC<{map:MapData}> = (props) => {
       if (!remote) { return undefined }
       const end = remote.pose.position
 
-      return <Line start={start} end={end} key={rid} participants={store} remote={rid} />
+      return <Line start={start} end={end} key={rid} remote={rid} stores={props.stores}/>
     }),
   )
 
   const mouseIds = useObserver(() => Array.from(store.remote.keys()).filter(id => (store.find(id)!.mouse.show)))
-  const remoteMouseCursors = mouseIds.map(id => <MouseCursor key={`M_${id}`} participantId={id} />)
+  const remoteMouseCursors = mouseIds.map(
+    id => <MouseCursor key={`M_${id}`} participantId={id} stores={props.stores} />)
 
   const showLocalMouse = useObserver(() => store.local.mouse.show)
-  const localMouseCursor = showLocalMouse ? <MouseCursor key={'M_local'} participantId={localId} /> : undefined
+  const localMouseCursor = showLocalMouse
+    ? <MouseCursor key={'M_local'} participantId={localId}  stores={props.stores} /> : undefined
 
   if (urlParameters.testBot !== null) { return <div /> }
 

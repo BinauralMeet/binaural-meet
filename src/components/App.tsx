@@ -1,7 +1,3 @@
-import {StoreProvider as ChatProvider} from '@hooks/ChatStore'
-import {StoreProvider as MapProvider} from '@hooks/MapStore'
-import {StoreProvider as ParticipantsProvider} from '@hooks/ParticipantsStore'
-import {StoreProvider as ContentsProvider} from '@hooks/SharedContentsStore'
 import {urlParameters} from '@models/url'
 import {isPortrait, isSmartphone} from '@models/utils'
 import { rgb2Color } from '@models/utils'
@@ -30,6 +26,7 @@ export const App: React.FC<{}> = () => {
     participants: participantsStore,
     contents: sharedContentsStore,
     chat: chatStore,
+    roomInfo: roomInfo,
   }
   const refDiv = useRef<HTMLDivElement>(null)
   //  toucmove: prevent browser zoom by pinch
@@ -59,27 +56,19 @@ export const App: React.FC<{}> = () => {
   }
 
   return <Observer>{()=>{
-    return <ParticipantsProvider value={participantsStore}>
-    <ChatProvider value={chatStore}>
-    <ContentsProvider value={sharedContentsStore}>
-    <MapProvider value={mapStore}>
-      <div ref={refDiv} className={classes.back} style={{backgroundColor: rgb2Color(roomInfo.backgroundFill)}}>
+    return <div ref={refDiv} className={classes.back} style={{backgroundColor: rgb2Color(roomInfo.backgroundFill)}}>
         <SplitPane className={classes.fill} split="vertical" resizerClassName={clsSplit.resizerVertical}
           minSize={0} defaultSize="7em">
-          <LeftBar {...stores} />
+          <LeftBar stores={stores}/>
           <Fragment>
-            <MainScreen showAllTracks = {DEBUG_VIDEO} />
+            <MainScreen showAllTracks = {DEBUG_VIDEO} stores={stores} />
             <Observer>{() => <Map transparent={sharedContentsStore.tracks.mainStream !== undefined
-             || DEBUG_VIDEO} {...stores} />
+             || DEBUG_VIDEO} stores={stores} />
             }</Observer>
-            <Footer {...stores} height={(isSmartphone() && isPortrait()) ? 100 : undefined} />
+            <Footer stores={stores} height={(isSmartphone() && isPortrait()) ? 100 : undefined} />
           </Fragment>
         </SplitPane>
       </div>
-    </MapProvider>
-    </ContentsProvider>
-    </ChatProvider>
-    </ParticipantsProvider >
   }}</Observer>
 }
 App.displayName = 'App'

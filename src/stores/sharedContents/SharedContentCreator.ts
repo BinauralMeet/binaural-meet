@@ -415,7 +415,8 @@ export function isGDrivePreviewScrollable(mimeType?: string) {
   if (!mimeType){ return true }
 
   return !(
-    mimeType === 'application/vnd.google-apps.presentation'
+    mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    || mimeType === 'application/vnd.google-apps.presentation'
     || mimeType === 'application/vnd.google-apps.spreadsheet'
     || mimeType.slice(0, 5) === 'image'
     || mimeType.slice(0, 5) === 'video'
@@ -425,7 +426,8 @@ export function isGDrivePreviewScrollable(mimeType?: string) {
 export function isGDrivePreviewEditUrl(mimeType?: string){
   if (!mimeType){ return false }
 
-  return mimeType === 'application/vnd.google-apps.spreadsheet'
+  return mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  || mimeType === 'application/vnd.google-apps.spreadsheet'
   || mimeType === 'application/vnd.google-apps.document'
   || mimeType === 'application/vnd.google-apps.presentation'
 }
@@ -444,6 +446,9 @@ export function getGDriveUrl(editing: boolean, params: Map<string, string>){
         if (app === 'spreadsheet'){ app = 'spreadsheets' }
         url = `https://docs.google.com/${app}/d/${fileId}/edit`
       }
+    } else if (mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+      const app = 'spreadsheets'
+      url = `https://docs.google.com/${app}/d/${fileId}/edit`
     }
   }
 

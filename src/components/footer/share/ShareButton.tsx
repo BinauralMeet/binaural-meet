@@ -1,6 +1,5 @@
-import {Stores} from '@components/utils'
+import {BMProps} from '@components/utils'
 import {acceleratorText2El} from '@components/utils/formatter'
-import {useStore as useContentsStore} from '@hooks/SharedContentsStore'
 import windowArrowUp from '@iconify-icons/fluent/window-arrow-up-24-regular'
 
 import {Icon} from '@iconify/react'
@@ -17,7 +16,7 @@ const useStyles = makeStyles({
     display: 'inline-block',
   },
 })
-interface ShareButtonProps extends Stores{
+interface ShareButtonProps extends BMProps{
   showDialog:boolean
   setShowDialog(flag: boolean):void
   size?: number
@@ -25,7 +24,7 @@ interface ShareButtonProps extends Stores{
 }
 export const ShareButton: React.FC<ShareButtonProps> = (props) => {
   const classes = useStyles()
-  const store = useContentsStore()
+  const store = props.stores.contents
   const sharing = useObserver(() => store.tracks.localMains.size + store.tracks.localContents.size)
   const {t} = useTranslation()
 

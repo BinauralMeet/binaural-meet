@@ -88,7 +88,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   const [preciseOrientation, setPreciseOrientation] = useState(pose.orientation)
   const [dragging, setDragging] = useState(false)
   const rnd = useRef<Rnd>(null)                         //  ref to rnd to update position and size
-  const contents = props.contents
+  const {contents, map} = props.stores
   const editing = useObserver(() => contents.editing === props.content.id)
   function setEditing(flag: boolean) { contents.setEditing(flag ? props.content.id : '') }
   const memberRef = useRef<RndContentMember>(new RndContentMember())
@@ -109,7 +109,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   )
 
   function setPoseAndSizeToRnd(){
-    if (rnd.current) { rnd.current.resizable.orientation = pose.orientation + props.map.rotation }
+    if (rnd.current) { rnd.current.resizable.orientation = pose.orientation + map.rotation }
     const titleHeight = showTitle ? TITLE_HEIGHT : 0
     rnd.current?.updatePosition({x:pose.position[0], y:pose.position[1] - titleHeight})
     rnd.current?.updateSize({width:size[0], height:size[1] + titleHeight})
@@ -119,7 +119,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       setPoseAndSizeToRnd()
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [pose, size, showTitle, props.map.rotation],
+    [pose, size, showTitle, map.rotation],
   )
 
   //  handlers
@@ -160,7 +160,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   }
   function onClickMore(evt: MouseOrTouch){
     stop(evt)
-    props.map.keyInputUsers.add('contentForm')
+    map.keyInputUsers.add('contentForm')
     setShowForm(true)
   }
   function onCloseForm(){
@@ -168,7 +168,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     if (props.content.pinned){
       setShowTitle(false)
     }
-    props.map.keyInputUsers.delete('contentForm')
+    map.keyInputUsers.delete('contentForm')
     props.updateAndSend(props.content)
   }
   function updateHandler() {
@@ -201,7 +201,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       pose.orientation = newOri
       setPose(Object.assign({}, pose))
     }else {
-      const lv = props.map.rotateFromWindow(delta)
+      const lv = map.rotateFromWindow(delta)
       const cv = rotateVector2DByDegree(-pose.orientation, lv)
       pose.position = addV2(pose.position, cv)
       setPose(Object.assign({}, pose))
@@ -243,9 +243,9 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       if (currentTarget instanceof Element && event instanceof PointerEvent){
         currentTarget.releasePointerCapture(event?.pointerId)
       }
-      if (!props.map.keyInputUsers.size && member.buttons === MOUSE_RIGHT){ //  right click
+      if (!map.keyInputUsers.size && member.buttons === MOUSE_RIGHT){ //  right click
         setShowForm(true)
-        props.map.keyInputUsers.add('contentForm')
+        map.keyInputUsers.add('contentForm')
       }
       member.buttons = 0
     },
@@ -259,7 +259,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   const handlerForContent:UserHandlersPartial = Object.assign({}, handlerForTitle)
   handlerForContent.onDrag = (args: FullGestureState<'drag'>) => {
     //  console.log('onDragBody:', args.delta)
-    if (isFixed || props.map.keyInputUsers.has(props.content.id)) { return }
+    if (isFixed || map.keyInputUsers.has(props.content.id)) { return }
     handlerForTitle.onDrag?.call(this, args)
   }
 
@@ -282,7 +282,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       return
     }
 
-    const scale = (extractScaleX(props.map.matrix) + extractScaleY(props.map.matrix)) / 2
+    const scale = (extractScaleX(map.matrix) + extractScaleY(map.matrix)) / 2
     const cd:[number, number] = [delta.width / scale, delta.height / scale]
     // console.log('resize dir:', dir, ' delta:', delta, ' d:', d, ' pos:', pos)
     if (dir === 'left' || dir === 'right') {
@@ -340,7 +340,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
             }}
             onContextMenu = {() => {
               setShowForm(true)
-              props.map.keyInputUsers.add('contentForm')
+              map.keyInputUsers.add('contentForm')
             }}
             >
           <div className={classes.type}>
@@ -396,12 +396,12 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       <div className={classes.content} ref={contentRef}
         onFocus={()=>{
           if (doseContentEditingUseKeyinput(props.content) && editing){
-            props.map.keyInputUsers.add(props.content.id)
+            map.keyInputUsers.add(props.content.id)
           }
         }}
         onBlur={()=>{
           if (doseContentEditingUseKeyinput(props.content) && editing){
-            props.map.keyInputUsers.delete(props.content.id)
+            map.keyInputUsers.delete(props.content.id)
           }
         }}
       >

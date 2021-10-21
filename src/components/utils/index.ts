@@ -1,15 +1,21 @@
 import {Chat} from '@stores/Chat'
 import {MapData} from '@stores/Map'
 import {Participants} from '@stores/participants/Participants'
+import {RoomInfo} from '@stores/RoomInfo'
 import {SharedContents} from '@stores/sharedContents/SharedContents'
 export interface Stores {
   map: MapData
   participants: Participants
   contents: SharedContents
   chat: Chat
+  roomInfo: RoomInfo
 }
 
-export interface BaseProps extends Stores {
+export interface BMProps {
+  stores: Stores
+}
+
+export interface MapProps extends BMProps {
   transparent?: boolean
 }
 

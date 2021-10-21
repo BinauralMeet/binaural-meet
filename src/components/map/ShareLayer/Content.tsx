@@ -1,4 +1,4 @@
-import {Stores} from '@components/utils'
+import {BMProps} from '@components/utils'
 import whiteboard24Regular from '@iconify-icons/fluent/whiteboard-24-regular'
 import filePdfBox from '@iconify/icons-mdi/file-pdf-box'
 import GoogleDriveIcon from '@iconify/icons-mdi/google-drive'
@@ -79,14 +79,14 @@ const useStyles = makeStyles({
     height: '100%',
   },
 })
-export interface ContentProps extends Stores{
+export interface ContentProps extends BMProps{
   content:ISharedContent
   updateAndSend: (c: ISharedContent) => void
   updateOnly: (c:ISharedContent) => void
 }
 export const RawContent: React.FC<ContentProps> = (props:ContentProps) => {
   const classes = useStyles()
-  const editing = useObserver(() => props.contents.editing === props.content.id)
+  const editing = useObserver(() => props.stores.contents.editing === props.content.id)
 
   let rv
   if (props.content.type === 'img') {
@@ -117,6 +117,6 @@ export const RawContent: React.FC<ContentProps> = (props:ContentProps) => {
 export const Content = (props: ContentProps) =>
   React.useMemo(() => <RawContent {...props} />,
   //  eslint-disable-next-line react-hooks/exhaustive-deps
-  [props.content.url, props.content.id, props.content.type, props.contents.editing === props.content.id,
+  [props.content.url, props.content.id, props.content.type, props.stores.contents.editing === props.content.id,
    props.content.pose, props.content.size, props.content.originalSize])
 Content.displayName = 'Content'

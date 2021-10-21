@@ -1,6 +1,5 @@
 import {MAP_SIZE} from '@components/Constants'
 import {MoreButton, moreButtonControl, MoreButtonMember} from '@components/utils/MoreButton'
-import {useStore} from '@hooks/ParticipantsStore'
 import {makeStyles} from '@material-ui/core/styles'
 import {addV2, assert, mulV2, rotateVector2DByDegree, subV2, transformPoint2D, transfromAt} from '@models/utils'
 import {useObserver} from 'mobx-react-lite'
@@ -40,7 +39,8 @@ interface LocalParticipantMember extends MoreButtonMember{
   scrollAgain: boolean
 }
 const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
-  const participants = useStore()
+  const map = props.stores.map
+  const participants = props.stores.participants
   const participant = participants.local
   assert(props.participant.id === participant.id)
   const member = useRef<LocalParticipantMember>({} as LocalParticipantMember).current
@@ -48,14 +48,14 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
 
   const moveParticipant = (state: DragState<HTMLDivElement>) => {
     //  move local participant
-    let delta = subV2(state.xy, props.map.toWindow(participant!.pose.position))
+    let delta = subV2(state.xy, map.toWindow(participant!.pose.position))
     const norm = Math.sqrt(delta[0] * delta[0] + delta[1] * delta[1])
     if (norm > AVATAR_SPEED_LIMIT) {
       delta = mulV2(AVATAR_SPEED_LIMIT / norm, delta)
     }
 
     if (participants.local.thirdPersonView) {
-      const localDelta = props.map.rotateFromWindow(delta)  // transform.rotateG2L(delta)
+      const localDelta = map.rotateFromWindow(delta)  // transform.rotateG2L(delta)
       participant!.pose.position = addV2(participant!.pose.position, localDelta)
       const SMOOTHRATIO = 0.8
       if (!member.smoothedDelta) { member.smoothedDelta = [delta[0], delta[1]] }
@@ -67,7 +67,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
       const ROTATION_SPEED = 0.2
       participant!.pose.orientation += diff * ROTATION_SPEED
     } else {
-      participant!.pose.position = addV2(props.map.rotateFromWindow(delta), //    transform.rotateG2L(delta),
+      participant!.pose.position = addV2(map.rotateFromWindow(delta), //    transform.rotateG2L(delta),
                                          participant!.pose.position)
     }
     participant.savePhysicsToStorage(false)
@@ -103,11 +103,11 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     if (newA < -HALF_DEGREE) { newA += WHOLE_DEGREE }
     participant.pose.orientation = newA
     if (!participants.local.thirdPersonView) {
-      const center = transformPoint2D(props.map.matrix, participants.local.pose.position)
+      const center = transformPoint2D(map.matrix, participants.local.pose.position)
       const changeMatrix = (new DOMMatrix()).rotateSelf(0, 0, -deltaA)
-      const newMatrix = transfromAt(center, changeMatrix, props.map.matrix)
-      props.map.setMatrix(newMatrix)
-      props.map.setCommittedMatrix(newMatrix)
+      const newMatrix = transfromAt(center, changeMatrix, map.matrix)
+      map.setMatrix(newMatrix)
+      map.setCommittedMatrix(newMatrix)
     }
     const delta = rotateVector2DByDegree(participant!.pose.orientation, [0, -deltaF])
     //  console.log(participant!.pose.position, delta)
@@ -123,13 +123,13 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   }
 
   const scrollMap = () => {
-    const posOnScreen = props.map.toWindow(participant!.pose.position)
+    const posOnScreen = map.toWindow(participant!.pose.position)
     const target = [posOnScreen[0], posOnScreen[1]]
     const RATIO = 0.2
-    const left = props.map.left + props.map.screenSize[0] * RATIO
-    const right = props.map.left + props.map.screenSize[0] * (1 - RATIO)
-    const bottom = props.map.screenSize[1] * (1 - RATIO)
-    const top = participants.local.thirdPersonView ? props.map.screenSize[1] * RATIO : bottom
+    const left = map.left + map.screenSize[0] * RATIO
+    const right = map.left + map.screenSize[0] * (1 - RATIO)
+    const bottom = map.screenSize[1] * (1 - RATIO)
+    const top = participants.local.thirdPersonView ? map.screenSize[1] * RATIO : bottom
     if (target[0] < left) { target[0] = left }
     if (target[0] > right) { target[0] = right }
     if (target[1] < top) { target[1] = top }
@@ -142,21 +142,21 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
       diff = mulV2(MAP_SPEED_MIN / norm, diff) as [number, number]
     }
     const SCROOL_SPEED = 0.1
-    const mapMove = mulV2(SCROOL_SPEED, props.map.rotateFromWindow(diff) as [number, number])
+    const mapMove = mulV2(SCROOL_SPEED, map.rotateFromWindow(diff) as [number, number])
     const EPSILON = 0.2
     if (Math.abs(mapMove[0]) + Math.abs(mapMove[1]) > EPSILON) {
-      const newMat = props.map.matrix.translate(-mapMove[0], -mapMove[1])
-      const trans = props.map.rotateFromWindow([newMat.e, newMat.f])
+      const newMat = map.matrix.translate(-mapMove[0], -mapMove[1])
+      const trans = map.rotateFromWindow([newMat.e, newMat.f])
       const HALF = 0.5
       let changed = false
       if (trans[0] < -MAP_SIZE * HALF) { trans[0] = -MAP_SIZE * HALF; changed = true }
       if (trans[0] > MAP_SIZE * HALF) { trans[0] = MAP_SIZE * HALF; changed = true }
       if (trans[1] < -MAP_SIZE * HALF) { trans[1] = -MAP_SIZE * HALF; changed = true }
       if (trans[1] > MAP_SIZE * HALF) { trans[1] = MAP_SIZE * HALF; changed = true }
-      const transMap = props.map.rotateToWindow(trans);
+      const transMap = map.rotateToWindow(trans);
       [newMat.e, newMat.f] = transMap
-      props.map.setMatrix(newMat)
-      props.map.setCommittedMatrix(newMat)
+      map.setMatrix(newMat)
+      map.setCommittedMatrix(newMat)
       member.scrollAgain = !changed
 
       return !changed
@@ -190,7 +190,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   }
   const keycodesUse = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
     'KeyQ', 'KeyW', 'KeyE', 'KeyA', 'KeyS', 'KeyD'])
-  KeyHandlerPlain(onKeyTimer, 33, keycodesUse, keycodesUse, () => (props.map.keyInputUsers.size === 0))
+  KeyHandlerPlain(onKeyTimer, 33, keycodesUse, keycodesUse, () => (map.keyInputUsers.size === 0))
 
   //  pointer drag
   const TIMER_INTERVAL = 33
@@ -229,11 +229,11 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   const moreControl = moreButtonControl(setShowMore, member)
   function onClose() {
     setShowConfig(false)
-    props.map.keyInputUsers.delete('LocalParticipantConfig')
+    map.keyInputUsers.delete('LocalParticipantConfig')
   }
   function openConfig() {
     setShowConfig(true)
-    props.map.keyInputUsers.add('LocalParticipantConfig')
+    map.keyInputUsers.add('LocalParticipantConfig')
   }
   const ref = useRef<HTMLButtonElement>(null)
 
@@ -248,7 +248,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     <MoreButton show={showMore} className={classes.more} htmlColor={color} {...moreControl}
       buttonRef = {ref}
       onClickMore = {openConfig} />
-    <LocalParticipantForm map={props.map} open={showConfig} close={onClose}
+    <LocalParticipantForm stores={props.stores} open={showConfig} close={onClose}
       anchorEl={ref.current} anchorOrigin={{vertical:'top', horizontal:'left'}}
       anchorReference = "anchorEl"
     />

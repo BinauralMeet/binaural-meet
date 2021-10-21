@@ -1,28 +1,28 @@
-import {Stores} from '@components/utils'
+import {BMProps} from '@components/utils'
 import {ISharedContent} from '@models/ISharedContent'
 import {SharedContentInfo} from '@models/ISharedContent'
 import {contentLog} from '@stores/sharedContents/SharedContents'
 import React from 'react'
 import {MouseOrTouch, RndContent} from './RndContent'
-export interface ISharedContentProps extends Stores{
+export interface ISharedContentProps extends BMProps{
   content: ISharedContent,
 }
 
-export const sharedContentHandler = (props: Stores&{content:SharedContentInfo}) => {
+export const sharedContentHandler = (props: BMProps&{content:SharedContentInfo}) => {
   return {
     onClose: (evt: MouseOrTouch) => {
       contentLog('RndContent onClose for ', props.content.id)
       evt.stopPropagation()
-      props.map.keyInputUsers.delete(props.content.id)
-      props.map.keyInputUsers.delete('contentForm')
-      props.contents.removeByLocal(props.content.id)
+      props.stores.map.keyInputUsers.delete(props.content.id)
+      props.stores.map.keyInputUsers.delete('contentForm')
+      props.stores.contents.removeByLocal(props.content.id)
     },
     updateAndSend:(c: ISharedContent) => {
       //	console.log('updateByLocal(send content)')
-      props.contents.updateByLocal(Object.assign({}, c))
+      props.stores.contents.updateByLocal(Object.assign({}, c))
     },
     updateOnly:(c: ISharedContent) => {
-      props.contents.updateLocalOnly(Object.assign({}, c))
+      props.stores.contents.updateLocalOnly(Object.assign({}, c))
     }
   }
 }

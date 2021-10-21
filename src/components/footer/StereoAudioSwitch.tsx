@@ -1,4 +1,4 @@
-import {useStore as useParticipantsStore} from '@hooks/ParticipantsStore'
+import {BMProps} from '@components/utils'
 import Container from '@material-ui/core/Container'
 import Grid from '@material-ui/core/Grid'
 import Popover from '@material-ui/core/Popover'
@@ -32,8 +32,8 @@ export const SoundLocalizationSetting: React.FC<{}> = () => {
 SoundLocalizationSetting.displayName = 'SoundLocalizationSetting'
 
 
-export const StereoAudioSwitch: React.FC<{size?: number, iconSize:number}> = (props) => {
-  const participants = useParticipantsStore()
+export const StereoAudioSwitch: React.FC<BMProps&{size?: number, iconSize:number}> = (props) => {
+  const participants = props.stores.participants
   const stereo = useObserver(() => participants.local.useStereoAudio)
   const [button, setButton] = React.useState<Element|null>(null)
 

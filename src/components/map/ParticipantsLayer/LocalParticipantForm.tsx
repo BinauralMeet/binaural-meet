@@ -1,4 +1,4 @@
-import {useStore} from '@hooks/ParticipantsStore'
+import { BMProps } from '@components/utils'
 import Box from '@material-ui/core/Box'
 import Button from '@material-ui/core/Button'
 import Checkbox from '@material-ui/core/Checkbox'
@@ -11,14 +11,12 @@ import {uploadToGyazo} from '@models/api/Gyazo'
 import {useTranslation} from '@models/locales'
 import {isDarkColor, rgb2Color} from '@models/utils'
 import {isSmartphone} from '@models/utils/utils'
-import {MapData} from '@stores/Map'
 import {Observer} from 'mobx-react-lite'
 import React, {useState} from 'react'
 import {SketchPicker} from 'react-color'
 
-export interface LocalParticipantFormProps extends PopoverProps{
+export interface LocalParticipantFormProps extends PopoverProps, BMProps{
   close: () => void,
-  map: MapData
 }
 
 const tfIStyle = {fontSize: isSmartphone() ? '2em' : '1em',
@@ -28,7 +26,7 @@ const tfLStyle = {fontSize: isSmartphone() ? '1em' : '1em'}
 const iStyle = {fontSize: isSmartphone() ? '2.5rem' : '1rem'}
 
 export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props: LocalParticipantFormProps) => {
-  const participants = useStore()
+  const {participants, map} = props.stores
   const local = participants.local
   const [file, setFile] = useState<File|null>()
   const [showColorPicker, setShowColorPicker] = useState(false)
@@ -178,7 +176,7 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
           onClick={()=>{ local.loadInformationFromStorage()}}>{t('btCancel')}</Button>
         <Button variant="contained" style={{marginLeft:15, textTransform:'none'}}
           onClick={()=>{
-            props.map.focusOn(local)
+            map.focusOn(local)
           }}>{t('ctFocus')}</Button>
       </Box>
     </DialogContent>

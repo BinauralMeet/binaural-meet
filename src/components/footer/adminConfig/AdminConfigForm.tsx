@@ -1,3 +1,4 @@
+import {Stores} from '@components/utils'
 import Box from '@material-ui/core/Box'
 import Button from '@material-ui/core/Button'
 import Popover from '@material-ui/core/Popover'
@@ -5,7 +6,7 @@ import TextField from '@material-ui/core/TextField'
 import {connection} from '@models/api'
 import {MessageType} from '@models/api/MessageType'
 import {isDarkColor, rgb2Color} from '@models/utils'
-import roomInfo from '@stores/RoomInfo'
+import {RoomInfo} from '@stores/RoomInfo'
 import contents from '@stores/sharedContents/SharedContents'
 import {Observer} from 'mobx-react-lite'
 import React from 'react'
@@ -14,15 +15,13 @@ import {RemoteTrackLimitControl} from './RemoteTrackLimitControl'
 
 export interface AdminConfigFormProps{
   close?: () => void,
+  stores: Stores,
 }
-function onKeyPress(ev:React.KeyboardEvent){
+function onKeyPress(ev:React.KeyboardEvent, roomInfo: RoomInfo){
   if (ev.key === 'Enter') {
     let pass = roomInfo.roomProps.get('password')
     roomInfo.passMatched = roomInfo.password === (pass ? pass : '')
   }
-}
-function btnColor(){
-  return roomInfo.passMatched ? 'primary' : 'default'
 }
 export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConfigFormProps) => {
   const [clearName, setClearName] = React.useState('')
@@ -30,19 +29,21 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
   const [showColorPicker, setShowColorPicker] = React.useState(false)
   const fillButton = React.useRef<HTMLButtonElement>(null)
   const colorButton = React.useRef<HTMLButtonElement>(null)
+  const {roomInfo} = props.stores
 
   return <Observer>{()=>{
     const textForFill = isDarkColor(roomInfo.backgroundFill) ? 'white' : 'black'
     const textForColor = isDarkColor(roomInfo.backgroundColor) ? 'white' : 'black'
+    const btnColor = roomInfo.passMatched ? 'primary' : 'default'
 
     return  <Box m={2}>
       <Box m={2}>
-        <RemoteTrackLimitControl key="remotelimitcontrol" />
+        <RemoteTrackLimitControl key="remotelimitcontrol" {...props.stores}/>
       </Box>
       <Box mt={2} mb={2}>
         <TextField autoFocus label="Admin password" type="password" style={{marginTop:-12}}
           value={roomInfo?.password} onChange={(ev)=>{ roomInfo.password=ev.currentTarget.value}}
-          onKeyPress={onKeyPress}/>
+          onKeyPress={(ev)=>onKeyPress(ev, roomInfo)}/>
         &emsp;
         <Button variant="contained" color="primary" style={{textTransform:'none'}} onClick={() => {
           let pass = roomInfo.roomProps.get('password')
@@ -55,7 +56,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
         <TextField label="New password to update" type="text" style={{marginTop:-12}}
           value={roomInfo?.newPassword} onChange={(ev)=>{roomInfo.newPassword=ev.currentTarget.value}}
         />&emsp;
-        <Button variant="contained" color={btnColor()} disabled={!roomInfo.passMatched} style={{textTransform:'none'}}
+        <Button variant="contained" color={btnColor} disabled={!roomInfo.passMatched} style={{textTransform:'none'}}
           onClick={() => {
             if (roomInfo.passMatched){
               connection.conference.setRoomProp('password', roomInfo.newPassword)
@@ -63,31 +64,31 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
           }}> Update password </Button>&emsp;
       </Box>
       <Box mt={2}>
-        <Button variant="contained" color={btnColor()} style={{textTransform:'none'}}
+        <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
           disabled={!roomInfo.passMatched} onClick={() => {
           if (roomInfo.passMatched) { connection.conference.sendMessage(MessageType.MUTE_VIDEO, true) }
         }}> Mute all videos </Button> &nbsp;
-        <Button variant="contained" color={btnColor()} style={{textTransform:'none'}}
+        <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
           disabled={!roomInfo.passMatched} onClick={() => {
           if (roomInfo.passMatched) { connection.conference.sendMessage(MessageType.MUTE_VIDEO, false) }
         }}> Show all videos </Button>&emsp;
-        <Button variant="contained" color={btnColor()} style={{textTransform:'none'}}
+        <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
           disabled={!roomInfo.passMatched} onClick={() => {
           if (roomInfo.passMatched) { connection.conference.sendMessage(MessageType.MUTE_AUDIO, true) }
         }}> Mute all mics </Button>&nbsp;
-        <Button variant="contained" color={btnColor()} style={{textTransform:'none'}}
+        <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
           disabled={!roomInfo.passMatched} onClick={() => {
           if (roomInfo.passMatched) { connection.conference.sendMessage(MessageType.MUTE_AUDIO, false) }
         }}> Switch on all mics </Button>
       </Box>
       <Box mt={2}>
-        <Button variant="contained" color={btnColor()} style={{textTransform:'none'}}
+        <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
           disabled={!roomInfo.passMatched} onClick={() => {
           if (roomInfo.passMatched) {
             contents.removeAllContents()
           }
         }}> Remove all Contents </Button>&emsp;
-        <Button variant="contained" color={btnColor()} style={{textTransform:'none'}}
+        <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
           disabled={!roomInfo.passMatched} onClick={() => {
             if (roomInfo.passMatched){
               const ids = new Set(contents.roomContentsInfo.keys())
@@ -99,7 +100,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
             value={clearName} onChange={(ev)=>{setClearName(ev.currentTarget.value)}} />
       </Box>
       <Box mt={2}>
-        <Button variant="contained" color={btnColor()} style={{textTransform:'none'}}
+        <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
           disabled={!roomInfo.passMatched} onClick={() => {
           if (roomInfo.passMatched) {
             connection.conference.sendMessageViaJitsi(MessageType.RELOAD_BROWSER, {})
@@ -146,7 +147,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
             }}
           />
         </Popover>&nbsp;
-        <Button variant="contained" color={btnColor()} style={{textTransform:'none'}}
+        <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
           disabled={!roomInfo.passMatched} onClick={() => {
           if (roomInfo.passMatched) {
             roomInfo.backgroundFill = roomInfo.defaultBackgroundFill

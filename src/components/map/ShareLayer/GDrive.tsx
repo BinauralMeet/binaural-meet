@@ -1,4 +1,3 @@
-import {useStore} from '@hooks/SharedContentsStore'
 import {makeStyles} from '@material-ui/core/styles'
 import {t} from '@models/locales'
 import {assert} from '@models/utils'
@@ -66,7 +65,7 @@ function updateUrl(member: Member) {
 export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
   assert(props.content.type === 'gdrive')
   const divScroll = useRef<HTMLDivElement>(null)
-  const contents = useStore()
+  const contents = props.stores.contents
   const params = getParamsFromUrl(props.content.url)
   const fileId = params.get('id')
   const mimeType = params.get('mimeType')
@@ -85,7 +84,7 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
   }
   //  console.log(`Name:${props.content.name} mime: ${mimeType}`)
   const classes = useStyles(props)
-  const editing = useObserver(() => props.contents.editing === props.content.id)
+  const editing = useObserver(() => props.stores.contents.editing === props.content.id)
   const url = getGDriveUrl(editing, member.params)
 
   //  scroll to given 'top' param

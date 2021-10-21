@@ -4,11 +4,11 @@ import Popper, { PopperProps } from '@material-ui/core/Popper'
 import { connection } from '@models/api'
 import React from 'react'
 import {useState} from 'react'
-import {Stores} from '../utils'
+import {BMProps} from '../utils'
 
 declare const config:any             //  from ../../config.js included from index.html
 
-export interface StatusDialogProps extends Omit<PopperProps, 'children'>, Stores{
+export interface StatusDialogProps extends Omit<PopperProps, 'children'>, BMProps{
   close: () => void,
 }
 

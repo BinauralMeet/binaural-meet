@@ -1,6 +1,7 @@
 import {ImageAvatar} from '@components/avatar/ImageAvatar'
 import {LocalParticipantForm} from '@components/map/ParticipantsLayer/LocalParticipantForm'
 import {RemoteParticipantForm} from '@components/map/ParticipantsLayer/RemoteParticipantForm'
+import {BMProps} from '@components/utils'
 import {Tooltip} from '@material-ui/core'
 import Button from '@material-ui/core/Button'
 import IconButton from '@material-ui/core/IconButton'
@@ -9,11 +10,9 @@ import { MessageType } from '@models/api/MessageType'
 import {getColorOfParticipant} from '@models/Participant'
 import {isDarkColor} from '@models/utils'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
-import roomInfo from '@stores/RoomInfo'
 import {autorun} from 'mobx'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
-import {Stores} from '../utils'
 import {styleForList} from '../utils/styles'
 import {TextLineStyle} from './LeftBar'
 import {StatusDialog} from './StatusDialog'
@@ -21,7 +20,8 @@ import {StatusDialog} from './StatusDialog'
 // config.js
 declare const config:any             //  from ../../config.js included from index.html
 
-export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: ParticipantBase}> = (props) => {
+export const ParticipantLine: React.FC<TextLineStyle&BMProps&{participant: ParticipantBase}> = (props) => {
+  const map = props.stores.map
   const name = useObserver(() => (props.participant.information.name))
   const avatarSrc = useObserver(() => (props.participant.information.avatarSrc))
   const colors = useObserver(() => getColorOfParticipant(props.participant.information))
@@ -33,7 +33,7 @@ export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: Partic
   //  console.log(`PColor pid:${props.participant.id} colors:${colors}`, props.participant)
   function onClick(){
     if (props.participant.physics.located){
-      props.map.focusOn(props.participant)
+      map.focusOn(props.participant)
     }else{
       if(config.bmRelayServer){
         connection.conference.pushOrUpdateMessageViaRelay(
@@ -41,7 +41,7 @@ export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: Partic
       }
       const disposer = autorun(()=>{
         if (props.participant.physics.located){
-          props.map.focusOn(props.participant)
+          map.focusOn(props.participant)
           disposer()
         }
       })
@@ -50,7 +50,7 @@ export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: Partic
   function onContextMenu(){
     if (props.participant.physics.located){
       setShowForm(true)
-      props.map.keyInputUsers.add('participantList')
+      map.keyInputUsers.add('participantList')
     }else{
       if(config.bmRelayServer){
         connection.conference.pushOrUpdateMessageViaRelay(
@@ -59,7 +59,7 @@ export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: Partic
       const disposer = autorun(()=>{
         if (props.participant.physics.located){
           setShowForm(true)
-          props.map.keyInputUsers.add('participantList')
+          map.keyInputUsers.add('participantList')
           disposer()
         }
       })
@@ -79,31 +79,32 @@ export const ParticipantLine: React.FC<TextLineStyle&Stores&{participant: Partic
         </Button>
       </div>
     </Tooltip>
-    {props.participant.id === props.participants.localId ?
-      <LocalParticipantForm map={props.map} open={showForm} close={()=>{
+    {props.participant.id === props.stores.participants.localId ?
+      <LocalParticipantForm stores={props.stores} open={showForm} close={()=>{
         setShowForm(false)
-        props.map.keyInputUsers.delete('participantList')
+        map.keyInputUsers.delete('participantList')
       }} anchorEl={ref.current} anchorOrigin={{vertical:'top', horizontal:'right'}} /> :
       <RemoteParticipantForm {...propsForForm} open={showForm} close={()=>{
         setShowForm(false)
-        props.map.keyInputUsers.delete('participantList')
-      }} participant={props.participants.remote.get(props.participant.id)}
+        map.keyInputUsers.delete('participantList')
+      }} participant={props.stores.participants.remote.get(props.participant.id)}
         anchorEl={ref.current} anchorOrigin={{vertical:'top', horizontal:'right'}} />
     }
   </>
 }
 
-export const RawParticipantList: React.FC<Stores&TextLineStyle&{localId: string, remoteIds: string[]}> = (props) => {
+export const RawParticipantList: React.FC<BMProps&TextLineStyle&{localId: string, remoteIds: string[]}> = (props) => {
   const [showStat, setShowStat] = React.useState(false)
-  const store = props.participants
+  const participants = props.stores.participants
+  const roomInfo = props.stores.roomInfo
   const classes = styleForList({height: props.lineHeight, fontSize: props.fontSize})
   const {localId, remoteIds, lineHeight, fontSize, ...statusProps} = props
   const lineProps = {lineHeight, fontSize, ...statusProps}
   const textColor = useObserver(() => isDarkColor(roomInfo.backgroundFill) ? 'white' : 'black')
 
   remoteIds.sort((a, b) => {
-    const pa = store.remote.get(a)
-    const pb = store.remote.get(b)
+    const pa = participants.remote.get(a)
+    const pb = participants.remote.get(b)
     let rv = pa!.information.name.localeCompare(pb!.information.name, undefined, {sensitivity: 'accent'})
     if (rv === 0) {
       rv = (pa!.information.avatarSrc || '').localeCompare(pb!.information.avatarSrc || '', undefined, {sensitivity: 'accent'})
@@ -113,16 +114,16 @@ export const RawParticipantList: React.FC<Stores&TextLineStyle&{localId: string,
   })
   const remoteElements = remoteIds.map(id =>
     <ParticipantLine key={id}
-      participant={store.remote.get(id)!}
+      participant={participants.remote.get(id)!}
       {...lineProps} />)
-  const localElement = (<ParticipantLine key={localId} participant={store.local} {...lineProps} />)
+  const localElement = (<ParticipantLine key={localId} participant={participants.local} {...lineProps} />)
   const ref = React.useRef<HTMLDivElement>(null)
 
   return (
     <div className={classes.container} >
       <div className={classes.title} style={{color:textColor}} ref={ref}
         onClick={()=>{setShowStat(true)}}
-      >{(store.remote.size + 1).toString()} in {connection.conference.name}</div>
+      >{(participants.remote.size + 1).toString()} in {connection.conference.name}</div>
       <StatusDialog open={showStat}
         close={()=>{setShowStat(false)}} {...statusProps} anchorEl={ref.current}/>
       {localElement}{remoteElements}
@@ -131,10 +132,10 @@ export const RawParticipantList: React.FC<Stores&TextLineStyle&{localId: string,
 }
 RawParticipantList.displayName = 'ParticipantList'
 
-export const ParticipantList = React.memo<Stores&TextLineStyle>(
+export const ParticipantList = React.memo<BMProps&TextLineStyle>(
   (props) => {
-    const localId = useObserver(() => props.participants.localId)
-    const ids = useObserver(() => Array.from(props.participants.remote.keys()))
+    const localId = useObserver(() => props.stores.participants.localId)
+    const ids = useObserver(() => Array.from(props.stores.participants.remote.keys()))
 
     return <RawParticipantList {...props} localId={localId} remoteIds = {ids} />
   },

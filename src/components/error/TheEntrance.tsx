@@ -1,4 +1,4 @@
-import {useStore as useParticipants} from '@hooks/ParticipantsStore'
+import {BMProps} from '@components/utils'
 import usageEn from '@images/usage.en.png'
 import usageJa from '@images/usage.ja.png'
 import Box from '@material-ui/core/Box'
@@ -13,8 +13,8 @@ import errorInfo from '@stores/ErrorInfo'
 import React, {useState} from 'react'
 import {ErrorDialogFrame} from './ErrorDialog'
 
-export const TheEntrance: React.FC<{}> = (props) => {
-  const participants = useParticipants()
+export const TheEntrance: React.FC<BMProps> = (props) => {
+  const {participants} = props.stores
   const [name, setName] = useState(participants.local.information.name)
   const savedRoom = sessionStorage.getItem('room')
   const [room, setRoom] = useState(urlParameters.room ? urlParameters.room : savedRoom ? savedRoom : '')

@@ -76,7 +76,7 @@ class SharedContentFormMember{
     this.pinned = props.content.pinned
     this.name = props.content.name
     this.pose = props.content.pose
-    this.editing = props.contents.editing
+    this.editing = props.stores.contents.editing
   }
   restore(props: SharedContentFormProps){
     if (!props.content) { return }
@@ -84,7 +84,7 @@ class SharedContentFormMember{
     props.content.pinned = this.pinned
     props.content.name = this.name
     props.content.pose = this.pose
-    props.contents.setEditing(this.editing)
+    props.stores.contents.setEditing(this.editing)
   }
 }
 export const SharedContentForm: React.FC<SharedContentFormProps> = (props: SharedContentFormProps) => {
@@ -107,6 +107,7 @@ export const SharedContentForm: React.FC<SharedContentFormProps> = (props: Share
 
   const extractPopoverProps = ({onClose, autoHideTitle, updateAndSend, updateOnly, close, ...reminder}
     : SharedContentFormProps) => reminder
+    const {contents, map} = props.stores
     const popoverProps:PopoverPropsNoOnClose = extractPopoverProps(props)
 
   return <Popover onClose={closeForm} {...popoverProps} onMouseDown={(ev)=>{
@@ -152,7 +153,7 @@ export const SharedContentForm: React.FC<SharedContentFormProps> = (props: Share
           <Button variant="contained" style={{textTransform:'none'}}
             onClick={()=>{
               if (!props.content) { return }
-              props.map.focusOn(props.content)
+              map.focusOn(props.content)
             }}>{t('ctFocus')}</Button>
         </Box>
         <Table size="small" ><TableBody>{[
@@ -164,9 +165,9 @@ export const SharedContentForm: React.FC<SharedContentFormProps> = (props: Share
             }}/>, <Icon icon={pinIcon} height={TITLE_HEIGHT} />, t('ctPin'), 'pin'),
           <Fragment key="edit">{isContentEditable(props.content) ?
             Row(editButtonTip(true, props.content),<DoneIcon />,
-            <Switch color="primary" checked={props.content?.id === props.contents.editing} onChange={(ev, checked)=>{
+            <Switch color="primary" checked={props.content?.id === contents.editing} onChange={(ev, checked)=>{
               if (!props.content) { return }
-              props.contents.setEditing(checked ? props.content.id : '')
+              contents.setEditing(checked ? props.content.id : '')
             }}/>, <EditIcon />, editButtonTip(false, props.content)) : undefined}</Fragment>,
           <Fragment key="wall">{canContentBeAWallpaper(props.content) ?
             Row(t('ctUnWallpaper'), <Icon icon={imageLine} height={TITLE_HEIGHT}/>,

@@ -1,9 +1,9 @@
 import {MAP_SIZE} from '@components/Constants'
+import {MapProps} from '@components/utils'
 import jitsiIcon from '@images/jitsi/Poweredby_Jitsi_logo_white_04_2020_white.png'
 import {makeStyles} from '@material-ui/core/styles'
-import { rgb2Color} from '@models/utils'
-import roomInfo from '@stores/RoomInfo'
-import { Observer, useObserver } from 'mobx-react-lite'
+import {rgb2Color} from '@models/utils'
+import {Observer, useObserver} from 'mobx-react-lite'
 import React from 'react'
 const HALF = 0.5
 
@@ -26,7 +26,7 @@ const useStyles = makeStyles({
       width: MAP_SIZE,
     }
   },
-  logo: (props:BackgroundProps) => {
+  logo: (props:MapProps) => {
     if (props.transparent) {
       return {
         display:'none',
@@ -48,15 +48,13 @@ const useStyles = makeStyles({
   },
 })
 
-export interface BackgroundProps{
-  transparent?: boolean
-}
-interface BackgroundStyleProps extends BackgroundProps{
+interface BackgroundStyleProps extends MapProps{
   color: number[]
   fill: number[]
 }
 
-export const Background: React.FC<BackgroundProps> = (props) => {
+export const Background: React.FC<MapProps> = (props) => {
+  const roomInfo = props.stores.roomInfo
   const styleProps = {
     color: [0,0,0],
     fill: [0,0,0],

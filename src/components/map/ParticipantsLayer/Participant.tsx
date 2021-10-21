@@ -1,5 +1,5 @@
 import {Avatar} from '@components/avatar'
-import {useStore as useMapStore} from '@hooks/MapStore'
+import {Stores} from '@components/utils'
 import megaphoneIcon from '@iconify/icons-mdi/megaphone'
 import {Icon} from '@iconify/react'
 import {Tooltip} from '@material-ui/core'
@@ -8,9 +8,7 @@ import HeadsetIcon from '@material-ui/icons/HeadsetMic'
 import MicOffIcon from '@material-ui/icons/MicOff'
 import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
 import {addV2, mulV2, normV, rotateVector2DByDegree, subV2} from '@models/utils'
-import {MapData} from '@stores/Map'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
-import {Participants} from '@stores/participants/Participants'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
@@ -66,17 +64,16 @@ const useStyles = makeStyles({
 
 export interface ParticipantProps{
   participant: LocalParticipant | RemoteParticipant
-  participants: Participants
   size: number
   onContextMenu?:(ev:React.MouseEvent<HTMLDivElement, MouseEvent>) => void
-  map: MapData
+  stores: Stores
 }
 export interface RawParticipantProps extends ParticipantProps{
   isLocal: boolean
 }
 
 const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawParticipantProps> = (props, ref) => {
-  const mapData = useMapStore()
+  const mapData = props.stores.map
 //  const participants = useStore()
   const participant = props.participant
   const participantProps = useObserver(() => ({
@@ -120,10 +117,10 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
   const eyeballs = eyeballsGlobal.map(g => addV2([0, -0.04 * outerRadius],
                                                  rotateVector2DByDegree(-participantProps.orientation, g)))
   function onClickEye(ev: React.MouseEvent | React.TouchEvent | React.PointerEvent){
-    if (props.participant.id === props.participants.localId){
+    if (props.participant.id === props.stores.participants.localId){
       ev.stopPropagation()
       ev.preventDefault()
-      props.participants.local.awayFromKeyboard = true
+      props.stores.participants.local.awayFromKeyboard = true
     }
   }
   const eyeClick = {

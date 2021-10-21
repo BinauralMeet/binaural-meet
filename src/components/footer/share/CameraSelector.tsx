@@ -1,6 +1,3 @@
-import {useStore as useMapStore} from '@hooks/MapStore'
-import {useStore as useParticipants} from '@hooks/ParticipantsStore'
-import {useStore as useContents} from '@hooks/SharedContentsStore'
 import MenuItem from '@material-ui/core/MenuItem'
 import {assert} from '@models/utils'
 import {createContentOfVideo} from '@stores/sharedContents/SharedContentCreator'
@@ -21,12 +18,8 @@ interface CameraSelectorProps extends DialogPageProps{
 }
 
 export const CameraSelector: React.FC<CameraSelectorProps> = (props) => {
-  const {
-    setStep,
-  } = props
-  const contents = useContents()
-  const map = useMapStore()
-  const participants = useParticipants()
+  const {setStep} = props
+  const {contents, map, participants} = props.stores
   const videoMenuItems = useObserver(() =>
     props.cameras.videos.map((info, idx) => makeMenuItem(info, closeVideoMenu, idx)))
   function makeMenuItem(info: MediaDeviceInfo, close:(did:string) => void, key:number):JSX.Element {

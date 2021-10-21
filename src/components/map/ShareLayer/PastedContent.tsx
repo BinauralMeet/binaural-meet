@@ -1,4 +1,4 @@
-import {Stores} from '@components/utils'
+import {BMProps} from '@components/utils'
 import {ISharedContent, TIME_RESOLUTION_IN_MS} from '@models/ISharedContent'
 import {createContent, createContentsFromDataTransfer} from '@stores/sharedContents/SharedContentCreator'
 import {default as sharedContents} from '@stores/sharedContents/SharedContents'
@@ -7,11 +7,9 @@ import {useObserver} from 'mobx-react-lite'
 import React, {useEffect} from 'react'
 import {MouseOrTouch, RndContent} from './RndContent'
 
-export interface PastedContentProps extends Stores{
-}
 
-export const PastedContent: React.FC<PastedContentProps> = (props:PastedContentProps) => {
-  const map = props.map
+export const PastedContent: React.FC<BMProps> = (props:BMProps) => {
+  const map = props.stores.map
   //  Pasted handler. It prevents paste to dialog.
   function onPaste(evt: ClipboardEvent) {
     //  console.log(`onPaste called enabled:${sharedContents.pasteEnabled}`)

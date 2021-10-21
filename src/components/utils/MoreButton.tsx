@@ -1,8 +1,6 @@
-import {useStore as useMapStore} from '@hooks/MapStore'
 import IconButton from '@material-ui/core/IconButton'
 import Zoom from '@material-ui/core/Zoom'
 import MoreVertIcon from '@material-ui/icons/MoreVert'
-import {MapData} from '@stores/Map'
 import React, {CSSProperties} from 'react'
 
 //  utility to control more button
@@ -44,14 +42,13 @@ export interface MoreButtonProps{
   color?: FabColor
   className?: string
   style?: CSSProperties
-  onClickMore?(ev:React.PointerEvent|React.MouseEvent|React.TouchEvent, map:MapData): void
+  onClickMore?(ev:React.PointerEvent|React.MouseEvent|React.TouchEvent): void
   buttonRef?: React.RefObject<HTMLButtonElement>
 }
 
 export const MoreButton: React.FC<MoreButtonProps> = (props) => {
-  const map = useMapStore()
   const handleClick = (event: React.PointerEvent<HTMLButtonElement>) => {
-    if (props.onClickMore) { props.onClickMore(event, map) }
+    if (props.onClickMore) { props.onClickMore(event) }
   }
 
   return <Zoom in={props.show} style={props.style} >

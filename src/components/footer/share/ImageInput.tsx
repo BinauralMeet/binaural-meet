@@ -1,4 +1,3 @@
-import {useStore as useMapStore} from '@hooks/MapStore'
 import {useTranslation} from '@models/locales'
 import {createContentOfImage} from '@stores/sharedContents/SharedContentCreator'
 import sharedContents from '@stores/sharedContents/SharedContents'
@@ -27,10 +26,10 @@ export const ImageInput: React.FC<ImageInputProps> = (props) => {
     />
   )
 
-  const map = useMapStore()
+  const map = props.stores.map
 
   return (
-    <Input
+    <Input stores={props.stores}
       setStep={setStep}
       onFinishInput={(files) => {
         // TODO modify store
