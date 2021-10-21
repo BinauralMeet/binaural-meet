@@ -6,7 +6,7 @@ import {Tooltip} from '@material-ui/core'
 import Button from '@material-ui/core/Button'
 import IconButton from '@material-ui/core/IconButton'
 import {connection} from '@models/api'
-import { MessageType } from '@models/api/MessageType'
+import {MessageType} from '@models/api/MessageType'
 import {getColorOfParticipant} from '@models/Participant'
 import {isDarkColor} from '@models/utils'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
@@ -67,13 +67,13 @@ export const ParticipantLine: React.FC<TextLineStyle&BMProps&{participant: Parti
   }
 
   return <>
-    <Tooltip title={props.participant.id} placement="right">
+    <Tooltip title={`${props.participant.information.name} (${props.participant.id})`} placement="right">
       <div className={classes.outer} style={{margin:'1px 0 1px 0'}}>
         <IconButton style={{margin:0, padding:0}} onClick={onClick} onContextMenu={onContextMenu}>
           <ImageAvatar border={true} colors={colors} size={size} name={name} avatarSrc={avatarSrc} />
         </IconButton>
         <Button variant="contained" className={classes.line} ref={ref}
-          style={{backgroundColor:colors[0], color:colors[1]}}
+          style={{backgroundColor:colors[0], color:colors[1], textTransform:'none'}}
           onClick={onClick} onContextMenu={onContextMenu}>
             {name}
         </Button>

@@ -41,7 +41,7 @@ export const ContentLine: React.FC<BMProps & TextLineStyle &
     if (props.content.textColor?.length){ colors[1] = rgb2Color(props.content.textColor) }
 
     return <>
-      <Tooltip title={props.content.ownerName} placement="right">
+      <Tooltip title={<>{props.content.name}<br />{props.content.ownerName}</>} placement="right">
         <Button variant="contained" className={classes.line}
           style={{backgroundColor:colors[0], color:colors[1], margin: '1px 0 1px 0'}} ref={ref}
           onClick={() => {
