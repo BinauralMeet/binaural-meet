@@ -1,8 +1,15 @@
+import {ISharedContent} from '@models/ISharedContent'
 import {MapObject as IMapObject} from '@models/MapObject'
 import { PARTICIPANT_SIZE } from '@models/Participant'
 import {
-  addV2, extractRotation, radian2Degree, rotateVector2D, subV2, transformPoint2D} from '@models/utils'
+  addV2, extractRotation, extractScaleX, radian2Degree, rotateVector2D, subV2, transformPoint2D} from '@models/utils'
+import {TITLE_HEIGHT} from '@stores/sharedContents/SharedContents'
 import {action, computed, makeObservable, observable} from 'mobx'
+
+export const SCALE_LIMIT = {
+  minScale: 0.2,
+  maxScale: 5,
+}
 
 const HALF = 0.5
 export class MapData {
@@ -13,7 +20,8 @@ export class MapData {
 
   @observable matrix: DOMMatrixReadOnly = new DOMMatrixReadOnly()
   @observable committedMatrix: DOMMatrixReadOnly = new DOMMatrixReadOnly()
-  @observable screenSize: [number, number] = [0, 0]
+  @observable matrixBeforeZoom?:DOMMatrixReadOnly
+  @observable screenSize: [number, number] = [0, 0]   //  size of the client window of the map
   @computed get offset(): [number, number] {
     return [-(this.left + this.screenSize[0] * HALF), -(this.screenSize[1] * HALF)]
   }
@@ -34,8 +42,9 @@ export class MapData {
     this.committedMatrix = m
     this.mouseOnMap = this.fromWindow(mouse)
     this.saveMatrixToStorage(false)
+    this.matrixBeforeZoom = undefined
   }
-  @action setScreenSize(s:[number, number]) {
+  @action setScreenSize(s:[number, number]) {   //  size of the client window of the map
     this.screenSize[0] = s[0]
     this.screenSize[1] = s[1]
   }
@@ -54,6 +63,39 @@ export class MapData {
     this.setMatrix(newMat)
     this.setCommittedMatrix(newMat)
   }
+  @action zoomTo(content: ISharedContent){
+    const matrixOrg = this.matrix
+    const contentSize = Array.from(content.size)
+    contentSize[1] += TITLE_HEIGHT
+    const scales = [map.screenSize[0] / contentSize[0], map.screenSize[1] / contentSize[1]]
+    const newScale = Math.max(Math.min(scales[0], scales[1], SCALE_LIMIT.maxScale), SCALE_LIMIT.minScale)
+    const oldScale = extractScaleX(matrixOrg)
+
+    const im = matrixOrg.inverse()
+    const diff = subV2(content.pose.position, [im.e, im.f])
+
+    const left = contentSize[0] / 2
+    const top = (this.screenSize[1] / newScale) / 2 - TITLE_HEIGHT
+    const trn = new DOMMatrix().translate(-diff[0] - left, -diff[1] - top)
+
+
+    const newMat = trn.preMultiplySelf(matrixOrg).preMultiplySelf(new DOMMatrix().scale(newScale/oldScale))
+    console.log(`newScale:${newScale} old${oldScale}  newMat scaleX=${extractScaleX(newMat)}`)
+    this.setMatrix(newMat)
+    this.setCommittedMatrix(newMat)
+    this.matrixBeforeZoom = matrixOrg
+    console.log(`zoomTo: before: ${this.matrixBeforeZoom}`)
+  }
+  @action restoreZoom(){
+    if (this.matrixBeforeZoom){
+      this.setMatrix(this.matrixBeforeZoom)
+      this.setCommittedMatrix(this.matrixBeforeZoom)
+    }
+  }
+  @computed get zoomed(){
+    return this.matrixBeforeZoom !== undefined
+  }
+
   toWindow(pos:[number, number]) {
     return subV2(transformPoint2D(this.matrix, pos), this.offset)
   }

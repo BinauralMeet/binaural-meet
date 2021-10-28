@@ -5,6 +5,8 @@ import Popover from '@material-ui/core/Popover'
 import TextField from '@material-ui/core/TextField'
 import {connection} from '@models/api'
 import {MessageType} from '@models/api/MessageType'
+import {recording} from '@models/api/Recording'
+import {RecordedBlobHeader} from '@models/api/Recording'
 import {isDarkColor, rgb2Color} from '@models/utils'
 import {RoomInfo} from '@stores/RoomInfo'
 import contents from '@stores/sharedContents/SharedContents'
@@ -27,9 +29,10 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
   const [clearName, setClearName] = React.useState('')
   const [showFillPicker, setShowFillPicker] = React.useState(false)
   const [showColorPicker, setShowColorPicker] = React.useState(false)
+  const [downloadLink, setDownloadLink] = React.useState('')
   const fillButton = React.useRef<HTMLButtonElement>(null)
   const colorButton = React.useRef<HTMLButtonElement>(null)
-  const {roomInfo} = props.stores
+  const {roomInfo, participants} = props.stores
 
   return <Observer>{()=>{
     const textForFill = isDarkColor(roomInfo.backgroundFill) ? 'white' : 'black'
@@ -111,7 +114,9 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
         }}> Reload </Button>&emsp;
 
         <Button variant="contained" disabled={!roomInfo.passMatched}
-          style={{backgroundColor:rgb2Color(roomInfo.backgroundFill), color:textForFill, textTransform:'none'}}
+          style={roomInfo.passMatched ?
+            {backgroundColor:rgb2Color(roomInfo.backgroundFill), color:textForFill, textTransform:'none'}
+            : {textTransform:'none'} }
           onClick={()=>{if (roomInfo.passMatched){ setShowFillPicker(true) }}} ref={fillButton}>
           Back color</Button>
         <Popover open={showFillPicker}
@@ -130,7 +135,9 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
         </Popover>
         &nbsp;
         <Button variant="contained" disabled={!roomInfo.passMatched}
-          style={{backgroundColor:rgb2Color(roomInfo.backgroundColor), color:textForColor, textTransform:'none'}}
+          style={roomInfo.passMatched ?
+            {backgroundColor:rgb2Color(roomInfo.backgroundColor), color:textForColor, textTransform:'none'}
+            : {textTransform:'none'} }
           onClick={()=>{if (roomInfo.passMatched){ setShowColorPicker(true)} }} ref={colorButton}>
           Pattern color</Button>
         <Popover open={showColorPicker}
@@ -156,7 +163,45 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
             connection.conference.setRoomProp('backgroundColor', JSON.stringify(roomInfo.backgroundColor))
           }
         }}> Default </Button>&emsp;
-
+        <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
+          disabled={!roomInfo.passMatched} onClick={() => {
+            participants.local.recording = !participants.local.recording
+            if (participants.local.recording){
+              recording.start()
+            }else{
+              recording.stop().then((recorders)=>{
+                const blobs:Blob[] = []
+                const headers:RecordedBlobHeader[] = []
+                for(const r of recorders){
+                  if (r.blobs.length){
+                    const blob = new Blob(r.blobs)
+                    const header:RecordedBlobHeader = {
+                      pid:r.pid, cid: r.cid, role:r.role, size:blob.size, type:r.blobs[0].type}
+                    blobs.push(blob)
+                    headers.push(header)
+                  }
+                }
+                blobs.unshift(new Blob([JSON.stringify(headers)], {type:'text'}))
+                const headerLen = new Uint32Array(1)
+                headerLen[0] = blobs[0].size
+                blobs.unshift(new Blob([headerLen]))
+                const all = new Blob(blobs, {type:'application/octet-stream'})
+                setDownloadLink(URL.createObjectURL(all))
+                all.slice(0, 4).arrayBuffer().then(buffer => {
+                  const view = new Int32Array(buffer)
+                  const headerLen = view[0]
+                  all.slice(4, 4+headerLen).text().then(text => {
+                    const headers = JSON.parse(text) as RecordedBlobHeader[]
+                    console.log(JSON.stringify(headers))
+                  })
+                })
+                blobs.forEach(blob => {
+                  console.log(`blobSize: ${blob.size}`)
+                })
+              })
+            }
+          }}>{participants.local.recording ? 'Stop Recording' : 'Start Recording'}</Button>&emsp;
+        {downloadLink ? <a href={downloadLink} download="BMRecord.bin">Download</a> : undefined}
       </Box>
 
     </Box>}

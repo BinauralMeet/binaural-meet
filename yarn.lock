@@ -1322,6 +1322,11 @@
   resolved "https://registry.yarnpkg.com/@iconify-icons/heroicons-outline/-/heroicons-outline-1.1.2.tgz#fb446b576872f5b3f640420801cce58997c9639c"
   integrity sha512-NgbxSdjkWOdU4oIlxEbwu3P44BQZHiXcxNek/1empVDPprzOHQsBxXtZorh6GvLlz1p4lKyzAhBsN79bh7iNsw==
 
+"@iconify-icons/tabler@^1.1.5":
+  version "1.1.5"
+  resolved "https://registry.yarnpkg.com/@iconify-icons/tabler/-/tabler-1.1.5.tgz#67b0dc335001d5947e875e036f5c2db5aa12ac8a"
+  integrity sha512-eDSVMfD6boJZ0e1Kf/yOS5qy7OTWiDykqPlUy+kmfJLeisV4VnMe+jvX1eCcbeQw/UEOpZiM6sBMUQvbvhX1zQ==
+
 "@iconify/icons-bi@^1.1.6":
   version "1.1.6"
   resolved "https://registry.yarnpkg.com/@iconify/icons-bi/-/icons-bi-1.1.6.tgz#90a636476235a61dc44b5f754e0242c50dc946a7"
@@ -1879,6 +1884,11 @@
   integrity sha512-kSjgDMZONiIfSH1Nxcr5JIRMwUetDki63FSQfpTCz8ogF3Ulqm8+mr5f78dUYs6vMiB6gBusQqfQmBvHZj/lwg==
   dependencies:
     "@babel/types" "^7.3.0"
+
+"@types/dom-mediacapture-record@^1.0.10":
+  version "1.0.10"
+  resolved "https://registry.yarnpkg.com/@types/dom-mediacapture-record/-/dom-mediacapture-record-1.0.10.tgz#3b96ead62f89b01eb2b9d5d080f29b2373f2493c"
+  integrity sha512-8O84hHuVhMMLHLybf3y9SQpNcnQSuzVzcJaUNq9+4Ovb7fodS0aQXep4hyMtxd6fe/dyszbHFjFqtyawf4y46A==
 
 "@types/eslint@^7.2.6":
   version "7.2.6"

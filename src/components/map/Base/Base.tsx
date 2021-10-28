@@ -6,6 +6,7 @@ import {
   radian2Degree, rotate90ClockWise, rotateVector2D, transformPoint2D, transfromAt, vectorLength,
 } from '@models/utils'
 import {addV2, mulV2, normV, subV2} from '@models/utils/coordinates'
+import {SCALE_LIMIT} from '@stores/Map'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import ResizeObserver from 'react-resize-observer'
@@ -15,12 +16,12 @@ import {useGesture} from 'react-use-gesture'
 function limitScale(currentScale: number, scale: number): number {
   const targetScale = currentScale * scale
 
-  if (targetScale > options.maxScale) {
-    return options.maxScale / currentScale
+  if (targetScale > SCALE_LIMIT.maxScale) {
+    return SCALE_LIMIT.maxScale / currentScale
   }
 
-  if (targetScale < options.minScale) {
-    return options.minScale / currentScale
+  if (targetScale < SCALE_LIMIT.minScale) {
+    return SCALE_LIMIT.minScale / currentScale
   }
 
   return scale
@@ -55,11 +56,6 @@ const useStyles = makeStyles({
 })
 
 type MapProps = React.PropsWithChildren<BP>
-
-const options = {
-  minScale: 0.2,
-  maxScale: 5,
-}
 
 class BaseMember{
   prebThirdPersonView = false
@@ -194,7 +190,9 @@ export const Base: React.FC<MapProps> = (props: MapProps) => {
         }
       },
       onDragEnd: () => {
-        map.setCommittedMatrix(matrix)
+        if (matrix.toString() !== map.committedMatrix.toString()) {
+          map.setCommittedMatrix(matrix)
+        }
         mem.dragging = false
         mem.mouseDown = false
         //  console.log('Base onDragEnd:')

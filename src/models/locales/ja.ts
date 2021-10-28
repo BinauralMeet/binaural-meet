@@ -95,6 +95,8 @@ export const jaTranslate = {
   ctWallpaper: '壁紙にする',
   ctUnWallpaper: '壁紙からはずす',
   ctCopyToClipboard: 'クリップボードにコピー',
+  ctMaximize: '最大化するように拡大する',
+  ctUnMaximize: '最大化と拡大を戻す',
   ctFocus: '中央に表示',
   ctDelete: '削除する',
   ctClose: '閉じる',

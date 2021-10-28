@@ -42,6 +42,24 @@ export class SharedContentTracks {
 
   // -----------------------------------------------------------------
   //  Public interface
+  public allContentStreams(){
+    const streams: {stream:MediaStream, cid:string}[] = []
+    this.localContents.forEach((tracks, cid) => {
+      if (tracks.size){
+        streams.push({cid,
+          stream: new MediaStream(Array.from(tracks).map(c => c.getTrack())) })
+      }
+    })
+    this.remoteContents.forEach((tracks, cid) => {
+      if (tracks.size){
+        streams.push({cid,
+          stream: new MediaStream(Array.from(tracks).map(c => c.getTrack())) })
+      }
+    })
+
+    return streams
+  }
+
   public clearConnection(){
     this.clearAllRemotes()
     this.clearLocalContentCarriers()

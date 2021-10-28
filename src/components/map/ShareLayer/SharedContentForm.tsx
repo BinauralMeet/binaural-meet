@@ -30,10 +30,11 @@ import {t} from '@models/locales'
 import {Pose2DMap} from '@models/utils'
 import {copyContentToClipboard,  makeContentWallpaper,
    moveContentToBottom, moveContentToTop} from '@stores/sharedContents/SharedContentCreator'
+import {TITLE_HEIGHT} from '@stores/sharedContents/SharedContents'
 import {Observer} from 'mobx-react-lite'
 import React, {Fragment} from 'react'
 import {contentTypeIcons, editButtonTip} from './Content'
-import {RndContentProps, TITLE_HEIGHT} from './RndContent'
+import {RndContentProps} from './RndContent'
 
 type PopoverPropsNoOnClose = Omit<PopoverProps, 'onClose'>
 export interface SharedContentFormProps extends Omit<RndContentProps, 'content'>, PopoverPropsNoOnClose{

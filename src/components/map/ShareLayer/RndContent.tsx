@@ -1,4 +1,6 @@
 import clipboardCopy from '@iconify-icons/heroicons-outline/clipboard-copy'
+import maximizeIcon from '@iconify-icons/tabler/arrows-maximize'
+import minimizeIcon from '@iconify-icons/tabler/arrows-minimize'
 import pinIcon from '@iconify/icons-mdi/pin'
 import pinOffIcon from '@iconify/icons-mdi/pin-off'
 import {Icon} from '@iconify/react'
@@ -12,11 +14,12 @@ import FlipToBackIcon from '@material-ui/icons/FlipToBack'
 import FlipToFrontIcon from '@material-ui/icons/FlipToFront'
 import MoreHorizIcon from '@material-ui/icons/MoreHoriz'
 import settings from '@models/api/Settings'
-import {doseContentEditingUseKeyinput, isContentEditable, ISharedContent} from '@models/ISharedContent'
+import {doseContentEditingUseKeyinput, isContentEditable, isContentMaximizable, ISharedContent} from '@models/ISharedContent'
 import {t} from '@models/locales'
 import {Pose2DMap} from '@models/utils'
 import {addV2, extractScaleX, extractScaleY, mulV, rotateVector2DByDegree, subV2} from '@models/utils'
 import {copyContentToClipboard, moveContentToBottom, moveContentToTop} from '@stores/sharedContents/SharedContentCreator'
+import {TITLE_HEIGHT} from '@stores/sharedContents/SharedContents'
 import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useLayoutEffect, useRef, useState} from 'react'
@@ -55,7 +58,6 @@ class RndContentMember{
 
 //  -----------------------------------------------------------------------------------
 //  The RnDContent component
-export const TITLE_HEIGHT = 24
 export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => {
   /*
   function rotateG2C(gv: [number, number]) {
@@ -90,6 +92,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   const rnd = useRef<Rnd>(null)                         //  ref to rnd to update position and size
   const {contents, map} = props.stores
   const editing = useObserver(() => contents.editing === props.content.id)
+  const zoomed = useObserver(() => map.zoomed)
   function setEditing(flag: boolean) { contents.setEditing(flag ? props.content.id : '') }
   const memberRef = useRef<RndContentMember>(new RndContentMember())
   const member = memberRef.current
@@ -157,6 +160,14 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   function onClickCopy(evt: MouseOrTouch){
     stop(evt)
     copyContentToClipboard(props.content)
+  }
+  function onClickMaximize(evt: MouseOrTouch){
+    stop(evt)
+    if (map.zoomed){
+      map.restoreZoom()
+    }else{
+      map.zoomTo(props.content)
+    }
   }
   function onClickMore(evt: MouseOrTouch){
     stop(evt)
@@ -381,6 +392,13 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
                 <Icon icon={clipboardCopy} height={TITLE_HEIGHT}/>
             </div>
           </Tooltip>
+          {isContentMaximizable(props.content) ?
+            <Tooltip placement="top" title={zoomed ? t('ctUnMaximize') : t('ctMaximize')} >
+              <div className={classes.titleButton} onClick={onClickMaximize}
+                onTouchStart={stop}>
+                  <Icon icon={zoomed ? minimizeIcon: maximizeIcon} height={TITLE_HEIGHT}/>
+              </div>
+            </Tooltip> : undefined}
           <div className={classes.titleButton} onClick={onClickMore} onTouchStart={stop} ref={formRef}>
               <MoreHorizIcon />
           </div>

@@ -15,6 +15,8 @@ export const CONTENTLOG = false      // show manipulations and sharing of conten
 export const contentLog = CONTENTLOG ? console.log : (a:any) => {}
 export const contentDebug = CONTENTLOG ? console.debug : (a:any) => {}
 
+export const TITLE_HEIGHT = 24
+
 // config.js
 declare const config:any             //  from ../../config.js included from index.html
 

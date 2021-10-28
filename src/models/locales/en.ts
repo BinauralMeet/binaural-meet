@@ -98,6 +98,8 @@ export const enTranslate = {
   ctWallpaper: 'Make this wallpaper',
   ctUnWallpaper: 'Remove this from wallpaper',
   ctCopyToClipboard: 'Copy to clipboard',
+  ctMaximize: 'Zoom and move to maximize this content',
+  ctUnMaximize: 'Unmaximize and restore the view',
   ctDelete: 'Delete',
   ctClose: 'Close',
   ctName: 'Titile',

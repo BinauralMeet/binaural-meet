@@ -41,6 +41,7 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
   @observable muteAudio = false
   @observable muteSpeaker = false
   @observable muteVideo = false
+  @observable recording = false
   // determines whether the audio would be rendered
   @computed get showAudio () {
     return !this.muteAudio

@@ -1,5 +1,6 @@
 import {Pose2DMap} from '@models/utils/coordinates'
 import {MapObject} from './MapObject'
+const MAXIMIZABLE_IMAGE_MIN_WIDTH = 200
 
 export type ContentType = 'img' | 'text' | 'pdf' | 'youtube' | 'iframe' | 'screen' | 'camera' |
   'gdrive' | 'whiteboard' | ''
@@ -57,6 +58,12 @@ export function canContentBeAWallpaper(c?: ISharedContent){
 export function isContentEditable(c?: ISharedContent) {
   return c && (c.type === 'text' || c.type === 'iframe' || c.type === 'pdf' ||
     c.type === 'whiteboard' || c.type === 'gdrive' || c.type === 'youtube')
+}
+//  maximizable or not
+export function isContentMaximizable(c?: ISharedContent) {
+  return c && (c.type === 'iframe' || c.type === 'pdf' || c.type === 'whiteboard' ||
+    c.type === 'gdrive' || c.type === 'youtube' || c.type === 'screen' || c.type === 'camera'
+    ||  (c.type === 'img' && c.size[0] > MAXIMIZABLE_IMAGE_MIN_WIDTH))
 }
 //  wallpaper or not
 export function isContentWallpaper(c?: ISharedContent) {
