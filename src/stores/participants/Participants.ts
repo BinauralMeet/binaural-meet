@@ -11,6 +11,7 @@ export class Participants {
 
   @observable.shallow readonly remote = new Map<string, RemoteParticipant>()
   local_ = observable.box(new LocalParticipant())
+  @observable.shallow readonly playback = new Map<string, RemoteParticipant>()
 
   @observable readonly yarnPhones = new Set<string>()
   @observable yarnPhoneUpdated = false
@@ -59,6 +60,18 @@ export class Participants {
     const res = this.remote.get(participantId)
 
     return res
+  }
+
+  getPlayback(id: string){
+    let rv = this.playback.get(id)
+    if (!rv){
+      rv = new RemoteParticipant(id)
+      this.playback.set(id, rv)
+    }
+
+    return rv
+  }
+  addPlaybackStream(stream: MediaStream){
   }
 
   addRemoteTrack(track: JitsiRemoteTrack):boolean {

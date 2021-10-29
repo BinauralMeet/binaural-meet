@@ -278,12 +278,9 @@ export class ErrorInfo {
     const stream = new MediaStream()
     stream.addTrack(audioStream.getAudioTracks()[0])
     stream.addTrack(vidoeStream.getVideoTracks()[0])
-    createJitisLocalTracksFromStream(stream).then(
-      (tracks) => {
-        connection.conference.setLocalCameraTrack(tracks[0])
-        connection.conference.setLocalMicTrack(tracks[1])
-      },
-    )
+    const tracks = createJitisLocalTracksFromStream(stream)
+    connection.conference.setLocalCameraTrack(tracks[0])
+    connection.conference.setLocalMicTrack(tracks[1])
   }
 }
 

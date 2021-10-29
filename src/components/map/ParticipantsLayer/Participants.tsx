@@ -55,6 +55,9 @@ export const ParticipantsLayer: React.FC<MapProps> = (props) => {
       return <Line start={start} end={end} key={rid} remote={rid} stores={props.stores}/>
     }),
   )
+  const playIds = useObserver(()=> Array.from(store.playback.keys()))
+  const playbackElements = playIds.map(id => <RemoteParticipant key={id} stores={props.stores}
+    participant={store.playback.get(id)!} size={PARTICIPANT_SIZE} />)
 
   const mouseIds = useObserver(() => Array.from(store.remote.keys()).filter(id => (store.find(id)!.mouse.show)))
   const remoteMouseCursors = mouseIds.map(
@@ -70,6 +73,7 @@ export const ParticipantsLayer: React.FC<MapProps> = (props) => {
   return(
     <div style={{position:'absolute', zIndex:0x7FFF}}>
       {lines}
+      {playbackElements}
       {remoteElements}
       {localElement}
       {remoteMouseCursors}

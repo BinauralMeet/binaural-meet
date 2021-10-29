@@ -1,4 +1,5 @@
 import {contentTrackCarrierName, roomInfoPeeperName} from '@models/api/Constants'
+import {recorder} from '@models/api/Recorder'
 import {ISharedContent} from '@models/ISharedContent'
 import {CONTENT_OUT_OF_RANGE_VALUE} from '@models/ISharedContent'
 import { KickTime } from '@models/KickTime'
@@ -24,6 +25,7 @@ import {Conference} from './Conference'
 import {ConferenceEvents} from './Conference'
 import {MessageType} from './MessageType'
 import {notification} from './Notification'
+
 // config.js
 declare const config:any             //  from ../../config.js included from index.html
 
@@ -583,6 +585,7 @@ export class ConferenceSync{
   onBmMessage(msgs: BMMessage[]){
     syncLog(`Receive ${msgs.length} relayed messages.`)
     for(const msg of msgs){
+      recorder.recordMessage(msg)
       switch(msg.t){
         case MessageType.ROOM_PROP: this.onRoomProp(...(JSON.parse(msg.v) as [string, string])); break
         case MessageType.REQUEST_TO: this.sendAllAboutMe(false); break

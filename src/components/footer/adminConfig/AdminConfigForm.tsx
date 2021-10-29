@@ -5,8 +5,7 @@ import Popover from '@material-ui/core/Popover'
 import TextField from '@material-ui/core/TextField'
 import {connection} from '@models/api'
 import {MessageType} from '@models/api/MessageType'
-import {recording} from '@models/api/Recording'
-import {RecordedBlobHeader} from '@models/api/Recording'
+import {BlobHeader, player, recorder} from '@models/api/Recorder'
 import {isDarkColor, rgb2Color} from '@models/utils'
 import {RoomInfo} from '@stores/RoomInfo'
 import contents from '@stores/sharedContents/SharedContents'
@@ -30,6 +29,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
   const [showFillPicker, setShowFillPicker] = React.useState(false)
   const [showColorPicker, setShowColorPicker] = React.useState(false)
   const [downloadLink, setDownloadLink] = React.useState('')
+  const fileToPlay = React.useRef<HTMLInputElement>(null)
   const fillButton = React.useRef<HTMLButtonElement>(null)
   const colorButton = React.useRef<HTMLButtonElement>(null)
   const {roomInfo, participants} = props.stores
@@ -167,41 +167,38 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
           disabled={!roomInfo.passMatched} onClick={() => {
             participants.local.recording = !participants.local.recording
             if (participants.local.recording){
-              recording.start()
+              recorder.start(props.stores)
             }else{
-              recording.stop().then((recorders)=>{
-                const blobs:Blob[] = []
-                const headers:RecordedBlobHeader[] = []
-                for(const r of recorders){
-                  if (r.blobs.length){
-                    const blob = new Blob(r.blobs)
-                    const header:RecordedBlobHeader = {
-                      pid:r.pid, cid: r.cid, role:r.role, size:blob.size, type:r.blobs[0].type}
-                    blobs.push(blob)
-                    headers.push(header)
-                  }
-                }
-                blobs.unshift(new Blob([JSON.stringify(headers)], {type:'text'}))
-                const headerLen = new Uint32Array(1)
-                headerLen[0] = blobs[0].size
-                blobs.unshift(new Blob([headerLen]))
-                const all = new Blob(blobs, {type:'application/octet-stream'})
+              recorder.stop().then((all)=>{
                 setDownloadLink(URL.createObjectURL(all))
                 all.slice(0, 4).arrayBuffer().then(buffer => {
                   const view = new Int32Array(buffer)
                   const headerLen = view[0]
                   all.slice(4, 4+headerLen).text().then(text => {
-                    const headers = JSON.parse(text) as RecordedBlobHeader[]
+                    const headers = JSON.parse(text) as BlobHeader[]
                     console.log(JSON.stringify(headers))
+                    for (const header of headers){
+                      console.log(`blob: ${JSON.stringify(header)}`)
+                    }
                   })
-                })
-                blobs.forEach(blob => {
-                  console.log(`blobSize: ${blob.size}`)
                 })
               })
             }
-          }}>{participants.local.recording ? 'Stop Recording' : 'Start Recording'}</Button>&emsp;
-        {downloadLink ? <a href={downloadLink} download="BMRecord.bin">Download</a> : undefined}
+          }}>{participants.local.recording ? 'Stop Recorder' : 'Start Recorder'}</Button>&nbsp;
+        {downloadLink ? <><a href={downloadLink} download="BMRecord.bin">Download</a>&nbsp;</> : undefined}
+        <input type="file" accept="application/octet-stream" ref={fileToPlay} style={{display:'none'}}
+          onChange={ (ev) => {
+            const files = ev.currentTarget?.files
+            if (files && files.length) {
+              player.load(files[0]).then(()=>{
+                player.play(props.stores, connection)
+              })
+            }
+          }}  />
+        <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
+          disabled={!roomInfo.passMatched} onClick={() => {
+            fileToPlay.current?.click()
+          }}>Play</Button>
       </Box>
 
     </Box>}

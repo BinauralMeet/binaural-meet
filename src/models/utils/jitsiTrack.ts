@@ -2,12 +2,13 @@ import JitsiMeetJS from 'lib-jitsi-meet'
 import JitsiLocalTrack from 'lib-jitsi-meet/modules/RTC/JitsiLocalTrack'
 //import * as TPC from 'lib-jitsi-meet/modules/RTC/TPCUtils'
 
-export function createJitisLocalTracksFromStream(stream: MediaStream): Promise < JitsiLocalTrack[] > {
+export function createJitisLocalTracksFromStream(stream: MediaStream){
   const videoTrack: MediaStreamTrack = stream.getVideoTracks()[0]
   const audioTrack: MediaStreamTrack = stream.getAudioTracks()[0]
-  const videoStream: MediaStream = new MediaStream([videoTrack])
   let audioStream: MediaStream
   let audioTrackInfo: JitsiMeetJS.TrackInfo | undefined = undefined
+  let videoStream: MediaStream
+  let videoTrackInfo: JitsiMeetJS.TrackInfo | undefined = undefined
 
   if (audioTrack) {
     audioStream = new MediaStream([audioTrack])
@@ -24,23 +25,22 @@ export function createJitisLocalTracksFromStream(stream: MediaStream): Promise <
     }
   }
 
-  const videoTrackInfo: JitsiMeetJS.TrackInfo = {
-    videoType: 'camera',
-    mediaType: 'video',
-    rtcId: 1,
-    stream: videoStream,
-    track: videoTrack,
-    effects: undefined,
-    resolution: videoTrack.getSettings().height,
-    deviceId: 'videofile_chrome',
-    facingMode: 'environment',
+  if (videoTrack) {
+    videoStream = new MediaStream([videoTrack])
+    videoTrackInfo = {
+      videoType: 'camera',
+      mediaType: 'video',
+      rtcId: 1,
+      stream: videoStream,
+      track: videoTrack,
+      effects: undefined,
+      resolution: videoTrack.getSettings().height,
+      deviceId: 'videofile_chrome',
+      facingMode: 'environment',
+    }
   }
 
 
-  return audioTrackInfo ?
-  Promise.resolve([
-    new JitsiLocalTrack(videoTrackInfo),
-    new JitsiLocalTrack(audioTrackInfo),
-  ]) :
-  Promise.resolve([new JitsiLocalTrack(videoTrackInfo)])
+  return [videoTrackInfo ? new JitsiLocalTrack(videoTrackInfo) : undefined,
+    audioTrackInfo ? new JitsiLocalTrack(audioTrackInfo) : undefined]
 }
