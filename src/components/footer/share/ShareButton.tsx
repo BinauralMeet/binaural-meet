@@ -1,6 +1,6 @@
 import {BMProps} from '@components/utils'
 import {acceleratorText2El} from '@components/utils/formatter'
-import windowArrowUp from '@iconify-icons/fluent/window-arrow-up-24-regular'
+import windowArrowUp from '@iconify/icons-fluent/window-arrow-up-24-regular'
 
 import {Icon} from '@iconify/react'
 import {makeStyles} from '@material-ui/styles'

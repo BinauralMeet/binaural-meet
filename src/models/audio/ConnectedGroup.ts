@@ -1,7 +1,7 @@
 import {MAP_SIZE} from '@components/Constants'
+import {ISharedContent, ZoneType} from '@models/ISharedContent'
 import {LocalParticipant, PARTICIPANT_SIZE, RemoteParticipant} from '@models/Participant'
-import {ISharedContent} from '@models/ISharedContent'
-import {Pose2DMap} from '@models/utils'
+import {getRect, isCircleInRect, Pose2DMap} from '@models/utils'
 import {addV2, convertToAudioCoordinate, getRelativePose, mulV2, normV, subV2} from '@models/utils'
 import {stereoParametersStore} from '@stores/AudioParameters'
 import participants from '@stores/participants/Participants'
@@ -39,20 +39,53 @@ function getRelativePoseFromObject(localPose: Pose2DMap, participant: RemotePart
 export class ConnectedGroup {
   private readonly disposers: IReactionDisposer[] = []
 
-  constructor(local: IObservableValue<LocalParticipant>, remote: RemoteParticipant|undefined,
+  constructor(obsLocal: IObservableValue<LocalParticipant>, remote: RemoteParticipant|undefined,
               contentTrack: JitsiRemoteTrack|undefined, group: NodeGroup) {
     this.disposers.push(autorun(
       () => {
         const carrierId = contentTrack?.getParticipantId()
         const cid = carrierId && contents.tracks.carrierMap.get(carrierId)
         const content = cid ? contents.find(cid) : undefined
-        const base = _.clone(local.get().pose)
-        if (local.get().soundLocalizationBase === 'user') { base.orientation = 0 }
-        if (remote && !remote.physics.located) {
-          // not located yet -> mute sound
+        const local = obsLocal.get()
+        const base = _.clone(local.pose)
+        if (local.soundLocalizationBase === 'user') { base.orientation = 0 }
+        let localsZoneType:ZoneType|undefined = undefined
+        let inOtherClosedZone = false
+        let remoteInLocalsZone = false
+        if (remote){
+          if (remote.closedZone){
+              //  Need to compare by ids, because they are observable objects.
+              if(remote.closedZone.id === local.zone?.id){
+              remoteInLocalsZone = true
+            }else{
+              inOtherClosedZone = true
+            }
+            //  console.log(`remote: ${remote.closedZone?.id} local:${local.zone?.id}`)
+          }
+          if (local.zone && !remoteInLocalsZone){
+            const rect = getRect(local.zone.pose, local.zone.size)
+            localsZoneType = local.zone?.zone
+            remoteInLocalsZone = isCircleInRect(remote.pose.position, 0.5*PARTICIPANT_SIZE, rect)
+          }
+        }
+        if (remote &&
+          (!remote.physics.located || inOtherClosedZone || (localsZoneType==='close' && !remoteInLocalsZone))) {
+          // not located yet or in different clozed zone -> mute sound
           group.updatePose(convertToAudioCoordinate({orientation:0, position:[MAP_SIZE, MAP_SIZE]}))
-        }else {
+          /*
+            console.log(`mute ${remote.id} loc:${remote.physics.located} ` +
+              `other:${inOtherClosedZone} lzt:${localsZoneType} rInL:${remoteInLocalsZone}`)  //*/
+          }else{
+          // locate sound source.
           const relativePose = getRelativePoseFromObject(base, remote, content)
+          if (remote && remoteInLocalsZone){
+            //  make distance very small (1)
+            remote.inLocalsZone = remoteInLocalsZone
+            const distance = normV(relativePose.position)
+            if (distance > 1e-10){
+              relativePose.position = mulV2(1/distance, relativePose.position)
+            }
+          }
           const pose = convertToAudioCoordinate(relativePose)
           group.updatePose(pose)
         }

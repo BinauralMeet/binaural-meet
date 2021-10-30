@@ -348,7 +348,8 @@ export function createContentsFromDataTransfer(dataTransfer: DataTransfer, map: 
 
 const extractData = extract<SharedContentData>({
   zorder: true, name: true, ownerName: true, color: true, textColor:true,
-  type: true, url: true, pose: true, size: true, originalSize: true, pinned: true, noFrame: true, opacity: true,
+  type: true, url: true, pose: true, size: true, originalSize: true, pinned: true,
+  noFrame: true, opacity: true, zone:true
 })
 export function extractContentData(c:ISharedContent) {
   return extractData(c)
@@ -359,7 +360,7 @@ export function extractContentDatas(cs:ISharedContent[]) {
 const extractDataAndId = extract<SharedContentData&SharedContentId>({
   zorder: true, name: true, ownerName: true, color: true, textColor:true,
   type: true, url: true, pose: true, size: true, originalSize: true,
-  pinned: true, noFrame: true, opacity:true, id: true,
+  pinned: true, noFrame: true, opacity:true, zone:true, id: true,
 })
 export function extractContentDataAndId(c: ISharedContent) {
   return extractDataAndId(c)

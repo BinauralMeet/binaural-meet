@@ -1,3 +1,4 @@
+import { ISharedContent } from '@models/ISharedContent'
 import {JitsiTrack} from 'lib-jitsi-meet'
 import {MapObject} from './MapObject'
 import {findReverseColorRGB, findTextColorRGB, getRandomColorRGB, rgb2Color} from './utils/color'
@@ -15,12 +16,15 @@ export interface ParticipantBase extends MapObject{
 
 export interface RemoteParticipant extends ParticipantBase {
   informationReceived: boolean
+  closedZone?: ISharedContent
+  inLocalsZone: boolean
 }
 
 export type SoundLocalizationBase = 'avatar' | 'user'
 export interface LocalParticipant extends ParticipantBase {
   soundLocalizationBase: SoundLocalizationBase
   information: LocalInformation
+  zone?: ISharedContent
 }
 export type Participant = LocalParticipant | RemoteParticipant
 

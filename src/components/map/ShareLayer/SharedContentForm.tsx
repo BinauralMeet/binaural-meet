@@ -1,9 +1,13 @@
 import imageLine from '@iconify-icons/clarity/image-line'
 import imageOutlineBadged from '@iconify-icons/clarity/image-outline-badged'
+import hiMeeting from '@iconify-icons/healthicons/group-discussion-meetingx3'
+import roomClosed from '@iconify-icons/healthicons/square-medium-negative'
 import clipboardCopy from '@iconify-icons/heroicons-outline/clipboard-copy'
 import biDashCircleDotted from '@iconify/icons-bi/dash-circle-dotted'
 import biImage from '@iconify/icons-bi/image'
 import biImageNoFrame from '@iconify/icons-bi/image-alt'
+import roomOpen from '@iconify/icons-fluent/square-hint-24-regular'
+
 import biPlusCircleFill from '@iconify/icons-bi/plus-circle-fill'
 import pinIcon from '@iconify/icons-mdi/pin'
 import pinOffIcon from '@iconify/icons-mdi/pin-off'
@@ -11,6 +15,7 @@ import {Icon} from '@iconify/react'
 import Box from '@material-ui/core/Box'
 import Button from '@material-ui/core/Button'
 import DialogContent from '@material-ui/core/DialogContent'
+import IconButton from '@material-ui/core/IconButton'
 import Popover, { PopoverProps } from '@material-ui/core/Popover'
 import Slider from '@material-ui/core/Slider'
 import Switch from '@material-ui/core/Switch'
@@ -184,6 +189,23 @@ export const SharedContentForm: React.FC<SharedContentFormProps> = (props: Share
               props.content.noFrame = checked ? true : undefined
               props.updateOnly(props.content)
             }}/>, <Icon icon={biImageNoFrame} height={TITLE_HEIGHT}/>, t('ctFrameInvisible')) }</Fragment>,
+          <Fragment key="zone">{
+            props.content?.type === 'img' ?
+            Row(t('ctNotAudioZone'), <Icon icon={imageLine} height={TITLE_HEIGHT}/>,
+              <Switch color="primary" checked={props.content?.zone!==undefined} onChange={(ev, checked)=>{
+                if (!props.content) { return }
+                props.content.zone = checked ? (props.content.zone ? props.content.zone : 'open') : undefined
+                props.updateOnly(props.content)
+                }}/>, <Icon icon={hiMeeting} height={TITLE_HEIGHT}/>,
+              <>
+                { props.content.zone ? <IconButton size={'small'} onClick={()=>{
+                  if (!props.content){ return }
+                  props.content.zone = props.content.zone === 'close' ? 'open' : 'close'
+                  props.updateOnly(props.content)}}>
+                  <Icon icon={props.content.zone==='close' ? roomClosed : roomOpen} height={TITLE_HEIGHT}/>
+                </IconButton> : undefined}
+                {props.content.zone === 'close' ? t('ctClosedAudioZone') : t('ctOpenAudioZone')}
+              </>) : undefined }</Fragment>,
           <Fragment key="opacity">{
             Row(t('ctTransparent'), <Icon icon={biDashCircleDotted} height={TITLE_HEIGHT}/>,
             <Slider color="primary" value={props.content?.opacity===undefined ? 1000 : props.content.opacity*1000}

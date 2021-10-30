@@ -1,3 +1,4 @@
+import { ISharedContent } from '@models/ISharedContent'
 import {RemoteInformation, RemoteParticipant as IRemoteParticipant, TrackStates as ITrackStates} from '@models/Participant'
 import {action, makeObservable, observable} from 'mobx'
 import {Store} from '../utils'
@@ -17,6 +18,8 @@ export class RemoteParticipant extends ParticipantBase implements Store<IRemoteP
   informationReceived = false
   @observable trackStates = new TrackStates()
   @observable called = false
+  @observable inLocalsZone = false
+  @observable closedZone: ISharedContent | undefined = undefined
   lastDistance = 0
   constructor(id:string) {
     super()

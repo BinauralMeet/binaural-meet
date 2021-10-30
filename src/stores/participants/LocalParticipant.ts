@@ -1,3 +1,4 @@
+import { ISharedContent } from '@models/ISharedContent'
 import {LocalInformation, LocalParticipant as ILocalParticipant, Physics, RemoteInformation, TrackStates} from '@models/Participant'
 import {urlParameters} from '@models/url'
 import {Pose2DMap} from '@models/utils'
@@ -32,11 +33,13 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
   @observable useStereoAudio = false  //  will be override by url switch
   @observable thirdPersonView = config.thirdPersonView as boolean
   @observable soundLocalizationBase = config.soundLocalizationBase ? config.soundLocalizationBase : 'user'
+  @observable zone:ISharedContent|undefined = undefined    //  The zone on which the local participant located.
   @observable remoteVideoLimit = config.remoteVideoLimit as number || -1
   @observable remoteAudioLimit = config.remoteAudioLimit as number || -1
   @observable audioInputDevice:string|undefined = undefined
   @observable videoInputDevice:string|undefined = undefined
   @observable audioOutputDevice:string|undefined = undefined
+
 
   information = this.information as LocalInformation
   @observable.ref informationToSend:RemoteInformation|undefined
@@ -64,7 +67,7 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
     //  console.debug('URL cameraOn', urlParameters.cameraOn)
     this.loadMediaSettingsFromStorage()
     this.loadPhysicsFromStorage()
-    autorun(() => {
+    autorun(() => { //  image avatar
       const gravatar = 'https://www.gravatar.com/avatar/'
       let src = this.information.avatarSrc
       if ((!src || src.includes(gravatar, 0)) && this.information.email){

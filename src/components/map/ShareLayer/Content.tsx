@@ -1,5 +1,5 @@
 import {BMProps} from '@components/utils'
-import whiteboard24Regular from '@iconify-icons/fluent/whiteboard-24-regular'
+import whiteboard24Regular from '@iconify/icons-fluent/whiteboard-24-regular'
 import filePdfBox from '@iconify/icons-mdi/file-pdf-box'
 import GoogleDriveIcon from '@iconify/icons-mdi/google-drive'
 import {Icon} from '@iconify/react'

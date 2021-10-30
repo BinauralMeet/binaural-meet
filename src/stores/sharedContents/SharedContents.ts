@@ -1,8 +1,10 @@
 import {connection} from '@models/api'
 import {MessageType} from '@models/api/MessageType'
 import {extractSharedContentInfo, isContentWallpaper, ISharedContent, SharedContentInfo, WallpaperStore} from '@models/ISharedContent'
+import {PARTICIPANT_SIZE} from '@models/Participant'
 import {diffMap, intersectionMap} from '@models/utils'
 import {assert} from '@models/utils'
+import {getRect, isCircleInRect} from '@models/utils'
 import {default as participantsStore} from '@stores/participants/Participants'
 import participants from '@stores/participants/Participants'
 import {EventEmitter} from 'events'
@@ -40,8 +42,7 @@ export class SharedContents extends EventEmitter {
   constructor() {
     super()
     makeObservable(this)
-    autorun(() => {
-      //  sync localId to participantsStore
+    autorun(() => { //  sync localId to participantsStore
       const newLocalId = participantsStore.localId
       Array.from(this.owner.keys()).forEach((key) => {
         if (this.owner.get(key) === this.localId) {
@@ -59,8 +60,21 @@ export class SharedContents extends EventEmitter {
     })
     const fps = localStorage.getItem('screenFps')
     if (fps){ this.screenFps = JSON.parse(fps) }
-    autorun(() => {
+    autorun(() => { //  save screen Fps
       localStorage.setItem('screenFps', JSON.stringify(this.screenFps))
+    })
+    autorun(() => { //  update audio zone of the local participant
+      const pos = participants.local.pose.position
+      participants.local.zone = this.zones.find(c => isCircleInRect(pos, 0.5*PARTICIPANT_SIZE, getRect(c.pose, c.size)))
+      const closeds = this.closedZones.map(c => ({content:c, rect:getRect(c.pose, c.size)}))
+      participants.remote.forEach(r => {
+        if (!r.muteAudio && r.physics.located){
+          const found = closeds.find(c => isCircleInRect(r.pose.position, 0.5*PARTICIPANT_SIZE, c.rect))
+          r.closedZone = found?.content
+        }else{
+          r.closedZone = undefined
+        }
+      })
     })
   }
   @action setEditing(id: string){
@@ -81,9 +95,11 @@ export class SharedContents extends EventEmitter {
   //  All shared contents in Z order. Observed by component.
   tracks = new SharedContentTracks(this)
   @observable pasteEnabled = true
-  @observable editing = ''    //  the user editing content
-  @observable.shallow all: ISharedContent[] = []
-  @observable.shallow sorted: ISharedContent[] = []
+  @observable editing = ''                        //  the user editing content
+  @observable.shallow all: ISharedContent[] = []  //  all contents to display
+  sorted: ISharedContent[] = []                   //  all contents sorted by zorder (bottom to top)
+  zones: ISharedContent[] = []                    //  audio zones sorted by zorder (top to bottom)
+  closedZones: ISharedContent[] = []              //  closed audio zones sorted by zorder (top to bottom)
   //  Contents by owner  used only when no relay server exists.
   participants: Map < string, ParticipantContents > = new Map<string, ParticipantContents>()
   pendToRemoves: Map < string, ParticipantContents > = new Map<string, ParticipantContents>()
@@ -215,6 +231,9 @@ export class SharedContents extends EventEmitter {
     //  update observed values
     this.all = newAll
     this.sorted = newSorted
+    this.zones = this.sorted.filter(c => c.zone !== undefined)
+    this.zones.reverse()
+    this.closedZones = this.zones.filter(c => c.zone === 'close')
 
     if (!config.bmRelayServer){
       this.saveWallpaper()

@@ -1,5 +1,5 @@
-import {PARTICIPANT_SIZE} from '@models/Participant'
 import {ISharedContent} from '@models/ISharedContent'
+import {PARTICIPANT_SIZE} from '@models/Participant'
 import {diffMap} from '@models/utils'
 import {participantsStore as participants} from '@stores/participants'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
@@ -17,7 +17,7 @@ function extractParticipantTrackInfo(participant: RemoteParticipant, track: Jits
   return {
     endpointId: participant.id,
     onStage : track.isAudioTrack() &&
-      (participant.physics.onStage || participants.yarnPhones.has(participant.id)),
+      (participant.physics.onStage || participants.yarnPhones.has(participant.id) || participant.inLocalsZone),
     pose: {
       ...participant.pose,
     },

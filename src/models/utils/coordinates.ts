@@ -107,8 +107,11 @@ export function square(s: number) {
   return s * s
 }
 
+//  rect or circle
+export type Shape = [number, number, number, number] | [number, number, number]
+
 //  rect: [top, right, bottom, left]
-export function getRect(pose: Pose2DMap, size: [number, number]){
+export function getRect(pose: Pose2DMap, size: [number, number]):[number, number, number, number]{
   if (pose.orientation === 0){
     return [pose.position[1], pose.position[0] + size[0], pose.position[1] + size[1], pose.position[0]]
   }
@@ -140,6 +143,10 @@ export function isOverlappedToCircle(rect:number[], circle:number[]){
 export function isInRect(point: [number, number], rect:number[]){
   return rect[3] <= point[0] && point[0] <= rect[1]
     && rect[0] <= point[1] && point[1] <= rect[2]
+}
+export function isCircleInRect(point: [number, number], radius:number, rect:number[]){
+  return rect[3] <= point[0]-radius && point[0]+radius <= rect[1]
+    && rect[0] <= point[1]-radius && point[1]+radius <= rect[2]
 }
 export function isInCircle(point: [number, number], circle:number[]){
   const d2 = square(point[0] - circle[0]) + square(point[1] - circle[1])

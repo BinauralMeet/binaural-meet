@@ -1312,10 +1312,10 @@
   resolved "https://registry.yarnpkg.com/@iconify-icons/fa/-/fa-1.1.0.tgz#062b4f180ba9a4622bcd61434961fbe004b33118"
   integrity sha512-yywRO6E5p+G5hHq4S8HoWQ8Tfz42pYNreYx8+ZWwJBrICk1dcfn7b+Oo8lzG+vmmku+ye6J8MDSP/F0QLB6xbg==
 
-"@iconify-icons/fluent@^1.1.14":
-  version "1.1.14"
-  resolved "https://registry.yarnpkg.com/@iconify-icons/fluent/-/fluent-1.1.14.tgz#c192bfd2e1ff7937b999b247072845c7ed958e40"
-  integrity sha512-AiPq8oVGuzquGimzFGlBCzwIZtMA/D39lwIQcIV27PAVMmvwcbmaFKp2cbbO6ehNbJtrrP0bBA7BNebHc+VHVA==
+"@iconify-icons/healthicons@^1.1.6":
+  version "1.1.6"
+  resolved "https://registry.yarnpkg.com/@iconify-icons/healthicons/-/healthicons-1.1.6.tgz#591671b81c5c1d7e0f88a8bd4ebc268adabed35e"
+  integrity sha512-zTsfCqxCpdeOhMnqXEcLNsc+YmBiz4m85MWaj1ybPxgxPoX8Na3XXN0ya2AhJ8gsJgf+9Tq5raTBKPzp3A/Bhw==
 
 "@iconify-icons/heroicons-outline@^1.1.2":
   version "1.1.2"
@@ -1331,6 +1331,11 @@
   version "1.1.6"
   resolved "https://registry.yarnpkg.com/@iconify/icons-bi/-/icons-bi-1.1.6.tgz#90a636476235a61dc44b5f754e0242c50dc946a7"
   integrity sha512-CWk+Ar7Ake7ygEHcTa+Tc+WVFYhLoZJWcfXDddIG8B3bhXidi7XMVNhlak6X3ZynQS2jknLyCLx4fJlfboKAIQ==
+
+"@iconify/icons-fluent@^1.1.30":
+  version "1.1.30"
+  resolved "https://registry.yarnpkg.com/@iconify/icons-fluent/-/icons-fluent-1.1.30.tgz#dd72c065162846e1043ffb6fcadfad7e39cd3938"
+  integrity sha512-C3JVE3x0mLFMGAferC/CasxcUARAKFrNV2ApVTNP2XAJlLixU/xgdfF6lRtTeHiUfCpAaSRh9wzDQEdG9DLTkQ==
 
 "@iconify/icons-mdi@^1.1.13":
   version "1.1.13"
@@ -6104,6 +6109,13 @@ import-local@^3.0.2:
     pkg-dir "^4.2.0"
     resolve-cwd "^3.0.0"
 
+import@^0.0.6:
+  version "0.0.6"
+  resolved "https://registry.yarnpkg.com/import/-/import-0.0.6.tgz#d0eb79df86aa2677c6db61578a5212b3031e6042"
+  integrity sha1-0Ot534aqJnfG22FXilISswMeYEI=
+  dependencies:
+    optimist "0.3.x"
+
 imurmurhash@^0.1.4:
   version "0.1.4"
   resolved "https://registry.yarnpkg.com/imurmurhash/-/imurmurhash-0.1.4.tgz#9218b9b2b928a238b13dc4fb6b6d576f231453ea"
@@ -8206,6 +8218,13 @@ opn@^5.5.0:
   integrity sha512-PqHpggC9bLV0VeWcdKhkpxY+3JTzetLSqTCWL/z/tFIbI6G8JCjondXklT1JinczLz2Xib62sSp0T/gKT4KksA==
   dependencies:
     is-wsl "^1.1.0"
+
+optimist@0.3.x:
+  version "0.3.7"
+  resolved "https://registry.yarnpkg.com/optimist/-/optimist-0.3.7.tgz#c90941ad59e4273328923074d2cf2e7cbc6ec0d9"
+  integrity sha1-yQlBrVnkJzMokjB00s8ufLxuwNk=
+  dependencies:
+    wordwrap "~0.0.2"
 
 optimize-css-assets-webpack-plugin@5.0.4:
   version "5.0.4"
@@ -11889,6 +11908,11 @@ word-wrap@^1.2.3, word-wrap@~1.2.3:
   version "1.2.3"
   resolved "https://registry.yarnpkg.com/word-wrap/-/word-wrap-1.2.3.tgz#610636f6b1f703891bd34771ccb17fb93b47079c"
   integrity sha512-Hz/mrNwitNRh/HUAtM/VT/5VH+ygD6DV7mYKZAtHOrbs8U7lvPS6xf7EJKMF0uW1KJCl0H701g3ZGus+muE5vQ==
+
+wordwrap@~0.0.2:
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/wordwrap/-/wordwrap-0.0.3.tgz#a3d5da6cd5c0bc0008d37234bbaf1bed63059107"
+  integrity sha1-o9XabNXAvAAI03I0u68b7WMFkQc=
 
 workbox-background-sync@^5.1.4:
   version "5.1.4"

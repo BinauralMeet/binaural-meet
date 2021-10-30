@@ -28,6 +28,8 @@ export function extractSharedContentInfo(c: SharedContentInfo){
   return rv
 }
 
+export type ZoneType = 'open' | 'close'
+
 export interface SharedContentData extends SharedContentInfoData {
   zorder: number                  //  unix timestamp when shared or moved to top.
   url: string                     //  url or text to share
@@ -37,6 +39,7 @@ export interface SharedContentData extends SharedContentInfoData {
   pinned: boolean                 //  pinned (not resizable or resizable)
   noFrame?: boolean               //  no (invisible) frame
   opacity?: number                //  opacity
+  zone?: ZoneType                 //  is this a audio zone is the zone closed or open?
 }
 
 export interface ISharedContent extends MapObject, SharedContentData, SharedContentId {
