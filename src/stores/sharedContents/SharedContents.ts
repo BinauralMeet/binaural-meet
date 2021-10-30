@@ -66,6 +66,8 @@ export class SharedContents extends EventEmitter {
     autorun(() => { //  update audio zone of the local participant
       const pos = participants.local.pose.position
       participants.local.zone = this.zones.find(c => isCircleInRect(pos, 0.5*PARTICIPANT_SIZE, getRect(c.pose, c.size)))
+    })
+    autorun(() => { //  update closed audio zones of remote participants
       const closeds = this.closedZones.map(c => ({content:c, rect:getRect(c.pose, c.size)}))
       participants.remote.forEach(r => {
         if (!r.muteAudio && r.physics.located){
@@ -98,8 +100,8 @@ export class SharedContents extends EventEmitter {
   @observable editing = ''                        //  the user editing content
   @observable.shallow all: ISharedContent[] = []  //  all contents to display
   sorted: ISharedContent[] = []                   //  all contents sorted by zorder (bottom to top)
-  zones: ISharedContent[] = []                    //  audio zones sorted by zorder (top to bottom)
-  closedZones: ISharedContent[] = []              //  closed audio zones sorted by zorder (top to bottom)
+  @observable.shallow zones: ISharedContent[] = []        //  audio zones sorted by zorder (top to bottom)
+  @observable.shallow closedZones: ISharedContent[] = []  //  closed audio zones sorted by zorder (top to bottom)
   //  Contents by owner  used only when no relay server exists.
   participants: Map < string, ParticipantContents > = new Map<string, ParticipantContents>()
   pendToRemoves: Map < string, ParticipantContents > = new Map<string, ParticipantContents>()
