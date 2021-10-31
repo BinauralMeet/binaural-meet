@@ -1,8 +1,8 @@
 import {MAP_SIZE} from '@components/Constants'
-import {ISharedContent, ZoneType} from '@models/ISharedContent'
+import {ISharedContent} from '@models/ISharedContent'
 import {LocalParticipant, PARTICIPANT_SIZE, RemoteParticipant} from '@models/Participant'
 import {getRect, isCircleInRect, Pose2DMap} from '@models/utils'
-import {addV2, convertToAudioCoordinate, getRelativePose, mulV2, normV, subV2} from '@models/utils'
+import {convertToAudioCoordinate, getRelativePose, mulV2, normV} from '@models/utils'
 import {stereoParametersStore} from '@stores/AudioParameters'
 import participants from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
@@ -11,26 +11,19 @@ import _ from 'lodash'
 import {autorun, IObservableValue, IReactionDisposer} from 'mobx'
 import {NodeGroup} from './NodeGroup'
 
+const audioLog = false ? console.log : ()=>{}
+
 function getRelativePoseFromObject(localPose: Pose2DMap, participant: RemoteParticipant|undefined,
                                    content: ISharedContent|undefined) {
   const remotePose = _.cloneDeep(participant ? participant.pose :
     content ? content.pose : {position:[0, 0], orientation:0}) as Pose2DMap
   if (content) {
-    //  remotePose.position = remotePose.position.map((pos, idx) => pos - 0.5 * content.size[idx]) as [number, number]
     localPose.position.forEach((pos, idx) => {
       if (localPose.position[idx] > remotePose.position[idx]) {
         const fromLT = localPose.position[idx] - remotePose.position[idx]
         remotePose.position[idx] += Math.min(content.size[idx], fromLT > 0 ? fromLT : 0)
       }
     })
-  }else if (participant && participants.yarnPhones.has(participant.id)) {
-    //  This remote participant is directly connected to local participant
-    const diff = subV2(remotePose.position, localPose.position)
-    const dist = normV(diff)
-    if (dist > PARTICIPANT_SIZE * 0.5) {
-      const dir = mulV2(0.5 / dist, diff)
-      remotePose.position = addV2(localPose.position, dir)
-    }
   }
 
   return getRelativePose(localPose, remotePose)
@@ -49,36 +42,33 @@ export class ConnectedGroup {
         const local = obsLocal.get()
         const base = _.clone(local.pose)
         if (local.soundLocalizationBase === 'user') { base.orientation = 0 }
-        let localsZoneType:ZoneType|undefined = undefined
         let inOtherClosedZone = false
-        let remoteInLocalsZone = false
+        let remoteInLocalsZone = false  //  Remote is in local's zone or connected by yarn phone.
         if (remote){
-          if (remote.closedZone){
-              //  Need to compare by ids, because they are observable objects.
-              if(remote.closedZone.id === local.zone?.id){
+          if (participants.yarnPhones.has(remote.id)){
+            remoteInLocalsZone = true
+          }else if (remote.closedZone){
+            if(remote.closedZone === local.zone){
               remoteInLocalsZone = true
             }else{
               inOtherClosedZone = true
             }
-            //  console.log(`remote: ${remote.closedZone?.id} local:${local.zone?.id}`)
           }
-          if (local.zone && !remoteInLocalsZone){
+          if (!(inOtherClosedZone||remoteInLocalsZone) && local.zone){
             const rect = getRect(local.zone.pose, local.zone.size)
-            localsZoneType = local.zone?.zone
             remoteInLocalsZone = isCircleInRect(remote.pose.position, 0.5*PARTICIPANT_SIZE, rect)
+            inOtherClosedZone = !remoteInLocalsZone && (local.zone.zone==='close')
           }
         }
-        if (remote &&
-          (!remote.physics.located || inOtherClosedZone || (localsZoneType==='close' && !remoteInLocalsZone))) {
-          // not located yet or in different clozed zone -> mute sound
+        if (remote && (!remote.physics.located || inOtherClosedZone)) {
+          // Not located yet or in different clozed zone -> mute audio
           group.updatePose(convertToAudioCoordinate({orientation:0, position:[MAP_SIZE, MAP_SIZE]}))
-          /*
-            console.log(`mute ${remote.id} loc:${remote.physics.located} ` +
-              `other:${inOtherClosedZone} lzt:${localsZoneType} rInL:${remoteInLocalsZone}`)  //*/
-          }else{
+          audioLog(`mute ${remote.id} loc:${remote.physics.located} other:${inOtherClosedZone} rInL:${remoteInLocalsZone}`)
+        }else{
           // locate sound source.
           const relativePose = getRelativePoseFromObject(base, remote, content)
           if (remote && remoteInLocalsZone){
+            audioLog(`In zone: pid:${remote.id}`)
             //  make distance very small (1)
             remote.inLocalsZone = remoteInLocalsZone
             const distance = normV(relativePose.position)

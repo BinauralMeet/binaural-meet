@@ -8,23 +8,23 @@ export const PARTICIPANT_SIZE = 60
 
 export interface ParticipantBase extends MapObject{
   physics: Physics
-  tracks: Tracks
   mouse: Mouse
   id: string
   information: RemoteInformation|LocalInformation
 }
 
 export interface RemoteParticipant extends ParticipantBase {
+  tracks: Tracks
   informationReceived: boolean
   closedZone?: ISharedContent
   inLocalsZone: boolean
 }
 
-export type SoundLocalizationBase = 'avatar' | 'user'
 export interface LocalParticipant extends ParticipantBase {
   soundLocalizationBase: SoundLocalizationBase
   information: LocalInformation
   zone?: ISharedContent
+  tracks: Tracks
 }
 export type Participant = LocalParticipant | RemoteParticipant
 
@@ -82,6 +82,8 @@ export const defaultPhysics: Physics = {
   onStage: false,
   awayFromKeyboard: false,
 }
+
+export type SoundLocalizationBase = 'avatar' | 'user'
 
 export function getColorOfParticipant(information: BaseInformation) {
   let color = information.color

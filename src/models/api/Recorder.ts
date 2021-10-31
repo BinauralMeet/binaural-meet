@@ -2,7 +2,9 @@ import {Stores} from '@components/utils'
 import {Connection} from '@models/api/Connection'
 import {ParticipantBase, RemoteInformation} from '@models/Participant'
 import {mouse2Str, pose2Str, str2Mouse, str2Pose} from '@models/utils'
+import { LocalParticipant } from '@stores/participants/LocalParticipant'
 import participants from '@stores/participants/Participants'
+import { RemoteParticipant } from '@stores/participants/RemoteParticipant'
 import {extractContentDataAndIds } from '@stores/sharedContents/SharedContentCreator'
 import contents from '@stores/sharedContents/SharedContents'
 import {BMMessage} from './BMMessage'
@@ -135,7 +137,7 @@ export class Recorder{
   }
 
   makeMediaRecorders(){
-    const all:ParticipantBase[] = Array.from(participants.remote.values())
+    const all:(RemoteParticipant|LocalParticipant)[] = Array.from(participants.remote.values())
     all.push(participants.local)
     for(const p of all){
       if (p.tracks.avatarStream){

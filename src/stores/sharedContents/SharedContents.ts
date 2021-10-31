@@ -66,6 +66,7 @@ export class SharedContents extends EventEmitter {
     autorun(() => { //  update audio zone of the local participant
       const pos = participants.local.pose.position
       participants.local.zone = this.zones.find(c => isCircleInRect(pos, 0.5*PARTICIPANT_SIZE, getRect(c.pose, c.size)))
+      //  console.log(`sc autorun local zone:${participants.local.zone?.id}`)
     })
     autorun(() => { //  update closed audio zones of remote participants
       const closeds = this.closedZones.map(c => ({content:c, rect:getRect(c.pose, c.size)}))
@@ -233,8 +234,7 @@ export class SharedContents extends EventEmitter {
     //  update observed values
     this.all = newAll
     this.sorted = newSorted
-    this.zones = this.sorted.filter(c => c.zone !== undefined)
-    this.zones.reverse()
+    this.zones = this.sorted.filter(c => c.zone !== undefined).reverse()
     this.closedZones = this.zones.filter(c => c.zone === 'close')
 
     if (!config.bmRelayServer){

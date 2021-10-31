@@ -10,13 +10,13 @@ import {Store} from '@stores/utils'
 import {JitsiTrack} from 'lib-jitsi-meet'
 import {action, computed, makeObservable, observable} from 'mobx'
 
-export class TracksStore<T extends JitsiTrack> implements Tracks{
+export class TracksStore implements Tracks{
   constructor(){
     makeObservable(this)
   }
-  @observable.ref audio:T|undefined = undefined
+  @observable.ref audio:JitsiTrack|undefined = undefined
   @observable audioLevel = 0
-  @observable.ref avatar:T|undefined = undefined
+  @observable.ref avatar:JitsiTrack|undefined = undefined
   @observable avatarOk = this.avatar ? !this.avatar.getTrack().muted : true
   @computed get audioStream() { return this.audio?.getOriginalStream() }
   @computed get avatarStream() { return this.avatarOk ? this.avatar?.getOriginalStream() : undefined }
@@ -30,10 +30,8 @@ export class TracksStore<T extends JitsiTrack> implements Tracks{
   }
 }
 
-
 export class ParticipantBase extends MapObject implements Store<IParticipantBase> {
   @observable id = ''
-  @observable.shallow tracks = new TracksStore<JitsiTrack>()
   @observable.shallow physics = defaultPhysics
   @observable.shallow mouse:Mouse = {position:[0, 0], show:false}
   @observable awayFromKeyboard = false

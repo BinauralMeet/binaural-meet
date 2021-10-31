@@ -8,7 +8,7 @@ import md5 from 'md5'
 import {action, computed, makeObservable, observable} from 'mobx'
 import {autorun} from 'mobx'
 import {DevicePreference} from './localPlugins'
-import {ParticipantBase} from './ParticipantBase'
+import {ParticipantBase, TracksStore} from './ParticipantBase'
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
 
@@ -30,10 +30,11 @@ interface PhysicsInfo{
 
 export class LocalParticipant extends ParticipantBase implements Store<ILocalParticipant> {
   devicePreference = new DevicePreference()
+  @observable.shallow tracks = new TracksStore()
   @observable useStereoAudio = false  //  will be override by url switch
   @observable thirdPersonView = config.thirdPersonView as boolean
   @observable soundLocalizationBase = config.soundLocalizationBase ? config.soundLocalizationBase : 'user'
-  @observable zone:ISharedContent|undefined = undefined    //  The zone on which the local participant located.
+  @observable.ref zone:ISharedContent|undefined = undefined    //  The zone on which the local participant located.
   @observable remoteVideoLimit = config.remoteVideoLimit as number || -1
   @observable remoteAudioLimit = config.remoteAudioLimit as number || -1
   @observable audioInputDevice:string|undefined = undefined
