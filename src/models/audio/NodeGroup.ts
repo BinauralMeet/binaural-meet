@@ -36,8 +36,9 @@ export const BROADCAST_DISTANCE = 100000
 export type PlayMode = 'Context' | 'Element' | 'Pause'
 
 export class NodeGroup {
-  private sourceNode: MediaStreamAudioSourceNode | undefined = undefined
+  private sourceNode: MediaStreamAudioSourceNode | MediaElementAudioSourceNode | undefined = undefined
   private audioElement: HTMLAudioElement | undefined = undefined
+  private audioElementForBlob?: HTMLAudioElement
 
   private readonly gainNode: GainNode
   private readonly pannerNode: PannerNode
@@ -145,6 +146,11 @@ export class NodeGroup {
 
   updateStream(stream: MediaStream | undefined) {
     this.updateSourceStream(stream)
+    this.setPlayMode(this.playMode)
+  }
+
+  playBlob(blob: Blob | undefined){
+    this.playSourceBlob(blob)
     this.setPlayMode(this.playMode)
   }
 
@@ -275,6 +281,28 @@ export class NodeGroup {
     this.audioElement.srcObject = stream
     //    }
   }
+
+  private playSourceBlob(blob: Blob | undefined) {
+    if (this.sourceNode) {
+      this.sourceNode.disconnect()
+    }
+    if (blob === undefined) {
+      this.sourceNode = undefined
+
+      return
+    }
+
+    if (!this.audioElementForBlob) { this.audioElementForBlob = this.createAudioElement() }
+    this.audioElementForBlob.src = URL.createObjectURL(blob)
+    this.sourceNode = this.context.createMediaElementSource(this.audioElementForBlob)
+    function playAgain(group: NodeGroup){
+      group.audioElementForBlob?.play().catch(()=>{
+        setTimeout(()=>playAgain(group), 500)
+      })
+    }
+    playAgain(this)
+  }
+
 
   createAudioElement() {
     const audio = new Audio()

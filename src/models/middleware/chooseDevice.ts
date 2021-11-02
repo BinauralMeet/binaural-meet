@@ -68,12 +68,12 @@ autorun(() => {
     if (DELETE_MIC_TRACK){
       connection.conference.setLocalMicTrack(undefined).then(track => {
         track?.dispose()
-        participants.local.tracks.audioLevel = 0
+        participants.local.audioLevel = 0
       })
     } else {
       const track = connection.conference.getLocalMicTrack()
       if (track) { connection.conference.removeTrack(track) }
-      participants.local.tracks.audioLevel = 0
+      participants.local.audioLevel = 0
     }
   }
 })

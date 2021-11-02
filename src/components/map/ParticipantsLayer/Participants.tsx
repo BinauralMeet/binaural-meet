@@ -6,6 +6,7 @@ import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {MemoedLocalParticipant as LocalParticipant} from './LocalParticipant'
 import {MouseCursor} from './MouseCursor'
+import {PlaybackParticipant} from './PlaybackParticipant'
 import {RemoteParticipant} from './RemoteParticipant'
 
 interface LineProps {
@@ -56,7 +57,7 @@ export const ParticipantsLayer: React.FC<MapProps> = (props) => {
     }),
   )
   const playIds = useObserver(()=> Array.from(store.playback.keys()))
-  const playbackElements = playIds.map(id => <RemoteParticipant key={id} stores={props.stores}
+  const playbackElements = playIds.map(id => <PlaybackParticipant key={id} stores={props.stores}
     participant={store.playback.get(id)!} size={PARTICIPANT_SIZE} />)
 
   const mouseIds = useObserver(() => Array.from(store.remote.keys()).filter(id => (store.find(id)!.mouse.show)))

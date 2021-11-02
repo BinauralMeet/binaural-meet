@@ -1,6 +1,6 @@
 import {MAP_SIZE} from '@components/Constants'
 import {ISharedContent} from '@models/ISharedContent'
-import {LocalParticipant, PARTICIPANT_SIZE, RemoteParticipant} from '@models/Participant'
+import {LocalParticipant, ParticipantBase, PARTICIPANT_SIZE, PlaybackParticipant, RemoteParticipant} from '@models/Participant'
 import {getRect, isCircleInRect, Pose2DMap} from '@models/utils'
 import {convertToAudioCoordinate, getRelativePose, mulV2, normV} from '@models/utils'
 import {stereoParametersStore} from '@stores/AudioParameters'
@@ -13,7 +13,7 @@ import {NodeGroup} from './NodeGroup'
 
 const audioLog = false ? console.log : ()=>{}
 
-function getRelativePoseFromObject(localPose: Pose2DMap, participant: RemoteParticipant|undefined,
+function getRelativePoseFromObject(localPose: Pose2DMap, participant: ParticipantBase|undefined,
                                    content: ISharedContent|undefined) {
   const remotePose = _.cloneDeep(participant ? participant.pose :
     content ? content.pose : {position:[0, 0], orientation:0}) as Pose2DMap
@@ -32,8 +32,8 @@ function getRelativePoseFromObject(localPose: Pose2DMap, participant: RemotePart
 export class ConnectedGroup {
   private readonly disposers: IReactionDisposer[] = []
 
-  constructor(obsLocal: IObservableValue<LocalParticipant>, remote: RemoteParticipant|undefined,
-              contentTrack: JitsiRemoteTrack|undefined, group: NodeGroup) {
+  constructor(obsLocal: IObservableValue<LocalParticipant>, contentTrack: JitsiRemoteTrack|undefined,
+    play: PlaybackParticipant|undefined, remote: RemoteParticipant|undefined, group: NodeGroup) {
     this.disposers.push(autorun(
       () => {
         const carrierId = contentTrack?.getParticipantId()
@@ -84,8 +84,12 @@ export class ConnectedGroup {
 
     this.disposers.push(autorun(
       () => {
-        const track: JitsiTrack | undefined = remote ? remote.tracks.audio : contentTrack
-        group.updateStream(track?.getOriginalStream())
+        if (play){
+          group.playBlob(play.audioBlob)
+        }else{
+          const track: JitsiTrack | undefined = remote ? remote.tracks.audio : contentTrack
+          group.updateStream(track?.getOriginalStream())
+        }
       },
     ))
 

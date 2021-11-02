@@ -241,9 +241,14 @@ class Player{
   }
   playMedia(media:MediaPlay){
     console.log(`media:${media.blob.type}, pid:${media.pid}, cid:${media.pid}, role:${media.role}`)
-    /*if (media.pid){
+    if (media.pid){
       const p = participants.getPlayback(media.pid)
-    }*/
+      if (media.role === 'mic'){
+        p.audioBlob = media.blob
+      }else if (media.role === 'avatar'){
+        p.videoBlob = media.blob
+      }
+    }
   }
   playMessage(msg: BMMessage){
     //console.log(`playMessage(${JSON.stringify(msg)})`)

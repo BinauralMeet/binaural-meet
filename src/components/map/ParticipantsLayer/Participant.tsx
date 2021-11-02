@@ -9,6 +9,7 @@ import MicOffIcon from '@material-ui/icons/MicOff'
 import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
 import {addV2, mulV2, normV, rotateVector2DByDegree, subV2} from '@models/utils'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
+import { PlaybackParticipant } from '@stores/participants/PlaybackParticipant'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
@@ -63,7 +64,7 @@ const useStyles = makeStyles({
 })
 
 export interface ParticipantProps{
-  participant: LocalParticipant | RemoteParticipant
+  participant: LocalParticipant | RemoteParticipant | PlaybackParticipant
   size: number
   onContextMenu?:(ev:React.MouseEvent<HTMLDivElement, MouseEvent>) => void
   stores: Stores
@@ -84,7 +85,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
   }))
   const name = useObserver(() => participant!.information.name)
   const audioLevel = useObserver(() =>
-    participant!.trackStates.micMuted ? 0 : Math.pow(participant!.tracks.audioLevel, 0.5))
+    participant!.trackStates.micMuted ? 0 : Math.pow(participant!.audioLevel, 0.5))
   // console.log(`audioLevel ${audioLevel}`)
   const micMuted = useObserver(() => participant.trackStates.micMuted)
   const speakerMuted = useObserver(() => participant.trackStates.speakerMuted)

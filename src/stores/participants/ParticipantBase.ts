@@ -1,7 +1,7 @@
 import {
   defaultInformation, defaultPhysics,
-  defaultRemoteInformation,
-  LocalInformation, ParticipantBase as IParticipantBase, Physics, RemoteInformation, Tracks
+  defaultRemoteInformation, LocalInformation,
+  ParticipantBase as IParticipantBase, Physics, RemoteInformation, Tracks, TrackStates as ITrackStates
 } from '@models/Participant'
 import {findReverseColorRGB, findTextColorRGB, getRandomColorRGB, rgb2Color} from '@models/utils'
 import {Mouse} from '@models/utils'
@@ -15,7 +15,6 @@ export class TracksStore implements Tracks{
     makeObservable(this)
   }
   @observable.ref audio:JitsiTrack|undefined = undefined
-  @observable audioLevel = 0
   @observable.ref avatar:JitsiTrack|undefined = undefined
   @observable avatarOk = this.avatar ? !this.avatar.getTrack().muted : true
   @computed get audioStream() { return this.audio?.getOriginalStream() }
@@ -25,8 +24,14 @@ export class TracksStore implements Tracks{
       this.avatarOk = !mute
     }
   }
-  @action setAudioLevel(newLevel: number) {
-    this.audioLevel = newLevel
+}
+
+export class TrackStates implements Store<ITrackStates>{
+  @observable micMuted = false
+  @observable speakerMuted = false
+  @observable headphone = false
+  constructor(){
+    makeObservable(this)
   }
 }
 
@@ -39,6 +44,8 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
   @observable muteAudio = false
   @observable muteSpeaker = false
   @observable muteVideo = false
+  @observable audioLevel = 0
+  @action setAudioLevel(a:number) { this.audioLevel = a }
   @observable recording = false
   // determines whether the audio would be rendered
   @computed get showAudio () {

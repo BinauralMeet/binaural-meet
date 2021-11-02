@@ -1,4 +1,5 @@
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
+import { PlaybackParticipant } from '@stores/participants/PlaybackParticipant'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import {Observer} from 'mobx-react-lite'
 import React from 'react'
@@ -6,7 +7,7 @@ import {AvatarProps} from '.'
 import {ComposedAvatar} from './ComposedAvatar'
 
 export interface ConnectedAvatarProps {
-  participant: LocalParticipant | RemoteParticipant
+  participant: LocalParticipant | RemoteParticipant | PlaybackParticipant
   size: number
   isLocal: boolean
 }
@@ -21,7 +22,10 @@ const ConnectedAvatar: React.FC<ConnectedAvatarProps> = (props) => {
     const args = {colors, avatarSrc, name}
 
     return <ComposedAvatar {...args}
-    stream={participant.showVideo ? participant.tracks.avatarStream : undefined}
+      stream={participant.showVideo && !(participant instanceof PlaybackParticipant) ?
+        participant.tracks.avatarStream : undefined}
+      blob={participant.showVideo && (participant instanceof PlaybackParticipant) ?
+        participant.videoBlob: undefined}
       colors={colors} size={props.size} style={{pointerEvents:'none'}}
       mirror={props.isLocal}
     />

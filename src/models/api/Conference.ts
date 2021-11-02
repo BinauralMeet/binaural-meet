@@ -569,10 +569,10 @@ export class Conference extends EventEmitter {
       const participant = participantsStore.find(id)
       if (participant) {
         if (! (participant === participantsStore.local && participant.muteAudio)) {
-          participant?.tracks.setAudioLevel(level)
+          participant?.setAudioLevel(level)
           //	console.log(`pid:${participant.id} audio:${level}`)
         }else {
-          participant?.tracks.setAudioLevel(0)
+          participant?.setAudioLevel(0)
         }
       }
     })

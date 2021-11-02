@@ -13,6 +13,11 @@ export interface ParticipantBase extends MapObject{
   information: RemoteInformation|LocalInformation
 }
 
+export interface PlaybackParticipant extends ParticipantBase {
+  audioBlob?: Blob
+  videoBlob?: Blob
+}
+
 export interface RemoteParticipant extends ParticipantBase {
   tracks: Tracks
   informationReceived: boolean

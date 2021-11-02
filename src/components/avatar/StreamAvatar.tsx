@@ -24,19 +24,20 @@ const useStyles = makeStyles({
 })
 
 export interface StreamAvatarProps {
-  stream: MediaStream
+  stream?: MediaStream
+  blob?: Blob
   size?: number
   style?: any
   mirror?: boolean
 }
 
-const setStream = (
-  video: HTMLVideoElement,
-  stream: MediaStream,
-  videoLargerWidthClass: string,
-  videoLargerHeightClass: string,
-  ) => {
-  video.srcObject = stream
+function setStream(video: HTMLVideoElement, stream: MediaStream|undefined, blob: Blob|undefined,
+  videoLargerWidthClass: string, videoLargerHeightClass: string){
+  if (stream) {video.srcObject = stream}
+  else if (blob){
+    const url = URL.createObjectURL(blob)
+    video.src = url
+  }
   video.autoplay = true
 
   video.onloadedmetadata = () => {
@@ -60,12 +61,12 @@ export const StreamAvatar: React.FC<StreamAvatarProps> = (props: StreamAvatarPro
 
   useEffect(
     () => {
-      if (videoRef !== null && videoRef.current !== null) {
-        setStream(videoRef.current, props.stream,
+      if (videoRef?.current !== null) {
+        setStream(videoRef.current, props.stream, props.blob,
                   classes.videoLargerWidth, classes.videoLargerHeight)
       }
     },
-    [videoRef, classes.videoLargerWidth, classes.videoLargerHeight, props.stream],
+    [videoRef, classes.videoLargerWidth, classes.videoLargerHeight, props.stream, props.blob],
   )
 
   return <div className={classes.root} style={props.style}>
