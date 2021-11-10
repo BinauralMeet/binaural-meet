@@ -1,5 +1,4 @@
 import {Stores} from '@components/utils'
-import {Connection} from '@models/api/Connection'
 import {ParticipantBase, RemoteInformation} from '@models/Participant'
 import {mouse2Str, pose2Str, str2Mouse, str2Pose} from '@models/utils'
 import { LocalParticipant } from '@stores/participants/LocalParticipant'
@@ -54,10 +53,17 @@ class Message{
   }
 }
 
+interface JSONPart{
+  startTime: number
+  stopTime: number
+  messages: Message[]
+}
 export class Recorder{
   medias: MediaRec[] = []
   messages: Message[] = []
   recording = false
+  startTime = 0
+  stopTime = 0
   recordMessage(msg:BMMessage){
     if (this.recording){
       this.messages.push(new Message(msg))
@@ -67,6 +73,7 @@ export class Recorder{
   start(stores: Stores){
     this.recording = true
     this.makeMediaRecorders()
+    this.startTime = Date.now()
     for(const m of this.medias){
       m.media.start()
       m.startTime = Date.now()
@@ -109,9 +116,11 @@ export class Recorder{
   stop(){
     const promise = new Promise<Blob>((resolve)=>{
       this.stopMediaRecordings().then((medias)=>{
+        this.stopTime = Date.now()
         const blobs:Blob[] = []
         const headers:BlobHeader[] = []
-        const blob = new Blob([JSON.stringify(this.messages)], {type:'application/json'})
+        const jsonPart:JSONPart = {startTime:this.startTime, stopTime: this.stopTime, messages:this.messages}
+        const blob = new Blob([JSON.stringify(jsonPart)], {type:'application/json'})
         const header:BlobHeader = {role:'message', size:blob.size, type:blob.type}
         blobs.push(blob)
         headers.push(header)
@@ -124,6 +133,7 @@ export class Recorder{
             headers.push(header)
           }
         }
+
         blobs.unshift(new Blob([JSON.stringify(headers)], {type:'application/json'}))
         const headerLen = new Uint32Array(1)
         headerLen[0] = blobs[0].size
@@ -176,7 +186,16 @@ class MediaPlay{
 class Player{
   messages: Message[] = []
   medias: MediaPlay[] = []
+  startTime = 0
+  stopTime = 0
+  clear(){
+    this.messages = []
+    this.medias = []
+    this.startTime = 0
+    this.stopTime = 0
+  }
   load(archive: Blob){
+    this.clear()
     const promise = new Promise<Player>((resolve) => {
       let start = 0
       archive.slice(start, start+4).arrayBuffer().then(buffer => {
@@ -192,7 +211,10 @@ class Player{
             if (header.role === 'message'){
               //  eslint-disable-next-line no-loop-func
               archive.slice(start, start+header.size).text().then(text => {
-                this.messages = JSON.parse(text) as Message[]
+                const jsonPart = JSON.parse(text) as JSONPart
+                this.messages = jsonPart.messages
+                this.startTime = jsonPart.startTime
+                this.stopTime = jsonPart.stopTime
                 count ++
                 if (count === headers.length){ resolve(this) }
               })
@@ -216,14 +238,15 @@ class Player{
 
     return promise
   }
-  play(stores: Stores, connection: Connection){
+  play(){
     const messages = Array.from(this.messages)
     const medias = Array.from(this.medias)
     messages.sort((a,b) => a.time - b.time)
     medias.sort((a,b) => a.time - b.time)
-    let time = this.messages.length && this.medias.length ? Math.min(this.messages[0].time, this.medias[0].time)
-      : this.messages.length ? this.messages[0].time : this.medias[0].time
-    function step(player: Player){
+    let time = this.startTime
+    const timeDiff = Date.now() - this.startTime
+    const step = () => {
+      time = Date.now() - timeDiff
       while (messages.length && messages[0].time < time){
         const message = messages.shift()!
         player.playMessage(message.msg)
@@ -232,17 +255,26 @@ class Player{
         const media = medias.shift()!
         player.playMedia(media)
       }
-      time += 30
-      if (messages.length || medias.length){
-        setTimeout(() => {step(player)}, 30)
+      if (time < player.stopTime){
+        setTimeout(() => {step()}, 30)
+      }else{
+        this.cleanup()
       }
     }
-    setTimeout(() => {step(this)}, 30)
+    step()
   }
-  playMedia(media:MediaPlay){
+  private pids = new Set<string>()
+  private cleanup(){
+    this.pids.forEach(pid=>{
+      participants.removePlayback(pid)
+    })
+  }
+  private playMedia(media:MediaPlay){
     console.log(`media:${media.blob.type}, pid:${media.pid}, cid:${media.pid}, role:${media.role}`)
     if (media.pid){
-      const p = participants.getPlayback(media.pid)
+      const pid = `p_${media.pid}`
+      this.pids.add(pid)
+      const p = participants.getPlayback(pid)
       if (media.role === 'mic'){
         p.audioBlob = media.blob
       }else if (media.role === 'avatar'){
@@ -250,25 +282,28 @@ class Player{
       }
     }
   }
-  playMessage(msg: BMMessage){
+  private playMessage(msg: BMMessage){
     //console.log(`playMessage(${JSON.stringify(msg)})`)
+    const pid = msg.p ? `p_${msg.p}` : ''
+    if (pid){
+      this.pids.add(pid)
+    }
+    const participant = pid ? participants.getPlayback(pid) : undefined
+
     switch(msg.t){
       case MessageType.PARTICIPANT_INFO:
-        if (msg.p){
-          const p = participants.getPlayback(msg.p)
-          p.information = JSON.parse(msg.v) as RemoteInformation
+        if (participant){
+          participant.information = JSON.parse(msg.v) as RemoteInformation
         }
         break
       case MessageType.PARTICIPANT_POSE:
-        if (msg.p){
-          const p = participants.getPlayback(msg.p)
-          p.pose = str2Pose(JSON.parse(msg.v) as string)
+        if (participant){
+          participant.pose = str2Pose(JSON.parse(msg.v) as string)
         }
         break
       case MessageType.PARTICIPANT_MOUSE:
-        if (msg.p){
-          const p = participants.getPlayback(msg.p)
-          p.mouse = str2Mouse(JSON.parse(msg.v) as string)
+        if (participant){
+          participant.mouse = str2Mouse(JSON.parse(msg.v) as string)
         }
         break
       default:

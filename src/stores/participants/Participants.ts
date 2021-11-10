@@ -72,7 +72,8 @@ export class Participants {
 
     return rv
   }
-  addPlaybackStream(stream: MediaStream){
+  removePlayback(id:string){
+    return this.playback.delete(id)
   }
 
   addRemoteTrack(track: JitsiRemoteTrack):boolean {

@@ -36,16 +36,17 @@ export const BROADCAST_DISTANCE = 100000
 export type PlayMode = 'Context' | 'Element' | 'Pause'
 
 export class NodeGroup {
-  private sourceNode: MediaStreamAudioSourceNode | MediaElementAudioSourceNode | undefined = undefined
-  private audioElement: HTMLAudioElement | undefined = undefined
-  private audioElementForBlob?: HTMLAudioElement
+  protected sourceNode: MediaStreamAudioSourceNode | MediaElementAudioSourceNode | undefined = undefined
+  protected audioElement: HTMLAudioElement | undefined = undefined
 
-  private readonly gainNode: GainNode
-  private readonly pannerNode: PannerNode
-  private readonly destination: MediaStreamAudioDestinationNode
+  protected readonly gainNode: GainNode
+  protected readonly pannerNode: PannerNode
+  protected readonly destination: MediaStreamAudioDestinationNode
 
-  private readonly context: AudioContext
-  private playMode: PlayMode|undefined
+  protected readonly context: AudioContext
+  protected playMode: PlayMode|undefined
+  protected audibility = false
+
   private audioDeviceId = ''
   private distance = 1
 
@@ -68,6 +69,7 @@ export class NodeGroup {
   setPlayMode(playMode: PlayMode|undefined) {
     this.playMode = playMode
 
+    console.log(`setPlayMode(${playMode}) called.`)
     switch (playMode) {
       case 'Pause': {
         this.sourceNode?.disconnect()
@@ -80,7 +82,7 @@ export class NodeGroup {
           this.interval = undefined
         }
         if (this.audioElement) {
-          this.audioElement.pause()
+          this.audioElement.pause() //  Do not pause when this is for playback.
         }
         break
       }
@@ -149,11 +151,6 @@ export class NodeGroup {
     this.setPlayMode(this.playMode)
   }
 
-  playBlob(blob: Blob | undefined){
-    this.playSourceBlob(blob)
-    this.setPlayMode(this.playMode)
-  }
-
   updatePose(pose: Pose3DAudio) {
     const dist = normV(pose.position)
     const mul = ((dist * dist) / (this.pannerNode.refDistance * this.pannerNode.refDistance)
@@ -173,7 +170,7 @@ export class NodeGroup {
     }
     this.updateVolume()
   }
-  private updateVolume() {
+  protected updateVolume() {
     let volume = 0
     if (this.playMode === 'Element') {
       volume = Math.pow(Math.max(this.distance, this.pannerNode.refDistance) / this.pannerNode.refDistance,
@@ -212,7 +209,6 @@ export class NodeGroup {
     })
   }
 
-  private audibility = false
   updateAudibility(audibility: boolean) {
     if (audibility) {
       this.gainNode.connect(this.pannerNode)
@@ -282,6 +278,22 @@ export class NodeGroup {
     //    }
   }
 
+
+  createAudioElement() {
+    const audio = new Audio()
+    setAudioOutputDevice(audio, this.audioDeviceId)
+
+    return audio
+  }
+}
+export class NodeGroupForPlayback extends NodeGroup {
+  private audioElementForBlob?: HTMLAudioElement
+
+  playBlob(blob: Blob | undefined){
+    this.playSourceBlob(blob)
+    this.setPlayMode(this.playMode)
+  }
+
   private playSourceBlob(blob: Blob | undefined) {
     if (this.sourceNode) {
       this.sourceNode.disconnect()
@@ -292,22 +304,52 @@ export class NodeGroup {
       return
     }
 
+    //  For the context mode
     if (!this.audioElementForBlob) { this.audioElementForBlob = this.createAudioElement() }
     this.audioElementForBlob.src = URL.createObjectURL(blob)
     this.sourceNode = this.context.createMediaElementSource(this.audioElementForBlob)
-    function playAgain(group: NodeGroup){
+    this.sourceNode.connect(this.gainNode)
+    this.audioElementForBlob.muted = true
+    function playAgain(group: NodeGroupForPlayback){
       group.audioElementForBlob?.play().catch(()=>{
         setTimeout(()=>playAgain(group), 500)
       })
     }
     playAgain(this)
+
+    //  For the element mode
+    if (this.audioElement === undefined) {
+      this.audioElement = this.createAudioElement()
+    }
+    this.audioElement.src = URL.createObjectURL(blob)
+    this.audioElement.muted = true
+    function playAgain2(group: NodeGroupForPlayback){
+      group.audioElement?.play().catch(()=>{
+        setTimeout(()=>playAgain2(group), 500)
+      })
+    }
+    playAgain2(this)
   }
 
+  setPlayMode(playMode: PlayMode|undefined) {
+    this.playMode = playMode
 
-  createAudioElement() {
-    const audio = new Audio()
-    setAudioOutputDevice(audio, this.audioDeviceId)
-
-    return audio
+    console.log(`setPlayMode(${playMode}) called.`)
+    switch (playMode) {
+      case 'Pause': break
+      case 'Context':
+        if (this.audioElementForBlob){ this.audioElementForBlob.muted = false }
+        if (this.audioElement){ this.audioElement.muted = true }
+      break
+      case 'Element':
+        if (this.audioElement){ this.audioElement.muted = false }
+        if (this.audioElementForBlob){ this.audioElementForBlob.muted = true }
+      break
+      default:
+        console.error(`Unknown output: ${playMode}`)
+        break
+    }
+    this.updateAudibility(this.audibility)
+    this.updateVolume()
   }
 }

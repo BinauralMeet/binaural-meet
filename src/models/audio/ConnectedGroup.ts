@@ -9,7 +9,7 @@ import contents from '@stores/sharedContents/SharedContents'
 import {JitsiRemoteTrack, JitsiTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
 import {autorun, IObservableValue, IReactionDisposer} from 'mobx'
-import {NodeGroup} from './NodeGroup'
+import {NodeGroup, NodeGroupForPlayback} from './NodeGroup'
 
 const audioLog = false ? console.log : ()=>{}
 
@@ -33,7 +33,7 @@ export class ConnectedGroup {
   private readonly disposers: IReactionDisposer[] = []
 
   constructor(obsLocal: IObservableValue<LocalParticipant>, contentTrack: JitsiRemoteTrack|undefined,
-    play: PlaybackParticipant|undefined, remote: RemoteParticipant|undefined, group: NodeGroup) {
+    remote: RemoteParticipant|undefined, group: NodeGroup) {
     this.disposers.push(autorun(
       () => {
         const carrierId = contentTrack?.getParticipantId()
@@ -45,6 +45,7 @@ export class ConnectedGroup {
         let inOtherClosedZone = false
         let remoteInLocalsZone = false  //  Remote is in local's zone or connected by yarn phone.
         if (remote){
+          //  Check where is the remote and the yarn phone connection.
           if (participants.yarnPhones.has(remote.id)){
             remoteInLocalsZone = true
           }else if (remote.closedZone){
@@ -68,8 +69,8 @@ export class ConnectedGroup {
           // locate sound source.
           const relativePose = getRelativePoseFromObject(base, remote, content)
           if (remote && remoteInLocalsZone){
-            audioLog(`In zone: pid:${remote.id}`)
             //  make distance very small (1)
+            audioLog(`In zone: pid:${remote.id}`)
             remote.inLocalsZone = remoteInLocalsZone
             const distance = normV(relativePose.position)
             if (distance > 1e-10){
@@ -84,12 +85,8 @@ export class ConnectedGroup {
 
     this.disposers.push(autorun(
       () => {
-        if (play){
-          group.playBlob(play.audioBlob)
-        }else{
-          const track: JitsiTrack | undefined = remote ? remote.tracks.audio : contentTrack
-          group.updateStream(track?.getOriginalStream())
-        }
+        const track: JitsiTrack | undefined = remote ? remote.tracks.audio : contentTrack
+        group.updateStream(track?.getOriginalStream())
       },
     ))
 
@@ -99,6 +96,41 @@ export class ConnectedGroup {
 
     this.disposers.push(autorun(
       () => group.updateBroadcast(remote?.physics.onStage ? true : false),
+    ))
+  }
+
+  dispose() {
+    for (const disposer of this.disposers) {
+      disposer()
+    }
+  }
+}
+
+export class ConnectedGroupForPlayback {
+  private readonly disposers: IReactionDisposer[] = []
+
+  constructor(obsLocal: IObservableValue<LocalParticipant>, play: PlaybackParticipant, group: NodeGroupForPlayback) {
+    this.disposers.push(autorun(
+      () => {
+        const local = obsLocal.get()
+        const base = _.clone(local.pose)
+        if (local.soundLocalizationBase === 'user') { base.orientation = 0 }
+        // locate sound source.
+        const relativePose = getRelativePoseFromObject(base, play, undefined)
+        const pose = convertToAudioCoordinate(relativePose)
+        group.updatePose(pose)
+      },
+    ))
+
+    this.disposers.push(autorun(
+      () => {
+        console.log(`playBlob(${play.audioBlob})`)
+        group.playBlob(play.audioBlob)
+      },
+    ))
+
+    this.disposers.push(autorun(
+      () => group.updatePannerConfig(stereoParametersStore),
     ))
   }
 

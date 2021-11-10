@@ -167,6 +167,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
           disabled={!roomInfo.passMatched} onClick={() => {
             participants.local.recording = !participants.local.recording
             if (participants.local.recording){
+              if (props.close) { props.close() }
               recorder.start(props.stores)
             }else{
               recorder.stop().then((all)=>{
@@ -190,8 +191,9 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
           onChange={ (ev) => {
             const files = ev.currentTarget?.files
             if (files && files.length) {
+              if (props.close){ props.close() }
               player.load(files[0]).then(()=>{
-                player.play(props.stores, connection)
+                player.play()
               })
             }
           }}  />
