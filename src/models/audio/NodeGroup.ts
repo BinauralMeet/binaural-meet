@@ -69,7 +69,6 @@ export class NodeGroup {
   setPlayMode(playMode: PlayMode|undefined) {
     this.playMode = playMode
 
-    console.log(`setPlayMode(${playMode}) called.`)
     switch (playMode) {
       case 'Pause': {
         this.sourceNode?.disconnect()
@@ -334,7 +333,6 @@ export class NodeGroupForPlayback extends NodeGroup {
   setPlayMode(playMode: PlayMode|undefined) {
     this.playMode = playMode
 
-    console.log(`setPlayMode(${playMode}) called.`)
     switch (playMode) {
       case 'Pause': break
       case 'Context':

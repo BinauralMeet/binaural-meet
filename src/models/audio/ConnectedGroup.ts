@@ -124,7 +124,7 @@ export class ConnectedGroupForPlayback {
 
     this.disposers.push(autorun(
       () => {
-        console.log(`playBlob(${play.audioBlob})`)
+        //console.log(`playBlob(${play.audioBlob})`)
         group.playBlob(play.audioBlob)
       },
     ))
