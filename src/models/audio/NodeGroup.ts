@@ -285,6 +285,8 @@ export class NodeGroup {
     return audio
   }
 }
+
+
 export class NodeGroupForPlayback extends NodeGroup {
   private audioElementForBlob?: HTMLAudioElement
 
@@ -302,13 +304,16 @@ export class NodeGroupForPlayback extends NodeGroup {
 
       return
     }
+    const url = URL.createObjectURL(blob)
+    //  console.log(`playSourceBlob t:${blob.type} sz:${blob.size} ${url}`)
 
     //  For the context mode
-    if (!this.audioElementForBlob) { this.audioElementForBlob = this.createAudioElement() }
-    this.audioElementForBlob.src = URL.createObjectURL(blob)
+    if (this.audioElementForBlob){ this.audioElementForBlob.remove() }
+    this.audioElementForBlob = this.createAudioElement()
+    this.audioElementForBlob.src = url
     this.sourceNode = this.context.createMediaElementSource(this.audioElementForBlob)
     this.sourceNode.connect(this.gainNode)
-    this.audioElementForBlob.muted = true
+    this.audioElementForBlob.muted = false
     function playAgain(group: NodeGroupForPlayback){
       group.audioElementForBlob?.play().catch(()=>{
         setTimeout(()=>playAgain(group), 500)
@@ -319,9 +324,9 @@ export class NodeGroupForPlayback extends NodeGroup {
     //  For the element mode
     if (this.audioElement === undefined) {
       this.audioElement = this.createAudioElement()
+      this.audioElement.muted = false
     }
     this.audioElement.src = URL.createObjectURL(blob)
-    this.audioElement.muted = true
     function playAgain2(group: NodeGroupForPlayback){
       group.audioElement?.play().catch(()=>{
         setTimeout(()=>playAgain2(group), 500)
@@ -332,22 +337,6 @@ export class NodeGroupForPlayback extends NodeGroup {
 
   setPlayMode(playMode: PlayMode|undefined) {
     this.playMode = playMode
-
-    switch (playMode) {
-      case 'Pause': break
-      case 'Context':
-        if (this.audioElementForBlob){ this.audioElementForBlob.muted = false }
-        if (this.audioElement){ this.audioElement.muted = true }
-      break
-      case 'Element':
-        if (this.audioElement){ this.audioElement.muted = false }
-        if (this.audioElementForBlob){ this.audioElementForBlob.muted = true }
-      break
-      default:
-        console.error(`Unknown output: ${playMode}`)
-        break
-    }
-    this.updateAudibility(this.audibility)
     this.updateVolume()
   }
 }

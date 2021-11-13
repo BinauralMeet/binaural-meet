@@ -172,17 +172,17 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
             }else{
               recorder.stop().then((all)=>{
                 setDownloadLink(URL.createObjectURL(all))
-                all.slice(0, 4).arrayBuffer().then(buffer => {
-                  const view = new Int32Array(buffer)
-                  const headerLen = view[0]
-                  all.slice(4, 4+headerLen).text().then(text => {
-                    const headers = JSON.parse(text) as BlobHeader[]
-                    console.log(JSON.stringify(headers))
-                    for (const header of headers){
-                      console.log(`blob: ${JSON.stringify(header)}`)
-                    }
+                if (false){
+                  all.slice(0, 4).arrayBuffer().then(buffer => {
+                    const view = new Int32Array(buffer)
+                    const headerLen = view[0]
+                    all.slice(4, 4+headerLen).text().then(text => {
+                      const headers = JSON.parse(text) as BlobHeader[]
+                      console.log(JSON.stringify(headers))
+                      for (const header of headers){ console.log(`blob: ${JSON.stringify(header)}`) }
+                    })
                   })
-                })
+                }
               })
             }
           }}>{participants.local.recording ? 'Stop Recorder' : 'Start Recorder'}</Button>&nbsp;
@@ -197,8 +197,8 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
               })
             }
           }}  />
-        <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
-          disabled={!roomInfo.passMatched} onClick={() => {
+        <Button variant="contained" color='primary' style={{textTransform:'none'}}
+          onClick={() => {
             fileToPlay.current?.click()
           }}>Play</Button>
       </Box>

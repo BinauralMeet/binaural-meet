@@ -1,3 +1,4 @@
+import { MAP_SIZE } from '@components/Constants'
 import {recorder} from '@models/api/Recorder'
 import {KickTime} from '@models/KickTime'
 import {assert} from '@models/utils'
@@ -164,7 +165,9 @@ export class Conference extends EventEmitter {
         && (this.lastReceivedTime >= this.lastRequestTime
           || now - this.lastRequestTime > REQUEST_WAIT_TIMEOUT)){
           this.lastRequestTime = now
-          this.pushOrUpdateMessageViaRelay(MessageType.REQUEST_RANGE, [map.visibleArea(), participants.audibleArea()])
+          const area = recorder.recording ? [-MAP_SIZE*2, MAP_SIZE*2, MAP_SIZE*2, -MAP_SIZE*2]
+            : map.visibleArea()
+          this.pushOrUpdateMessageViaRelay(MessageType.REQUEST_RANGE, [area, participants.audibleArea()])
           this.sendMessageViaRelay()
       }
       //  console.log(`step RTT:${this.relayRttAverage} remain:${deadline - Date.now()}/${timeToProcess}`)
@@ -592,7 +595,7 @@ export class Conference extends EventEmitter {
     this._jitsiConference.on(JitsiMeetJS.events.conference.KICKED,
       (p:JitsiParticipant, r:string)=>{this.sync.onKicked(p.getId(),r)})
   }
-  /*
+  /*  Resize the video (May not have any effect on the resolution)
   private video:undefined | HTMLVideoElement = undefined
   private canvas:undefined | HTMLCanvasElement = undefined
   private cameraTrackConverter(track: JitsiLocalTrack) {

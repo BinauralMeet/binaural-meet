@@ -17,6 +17,7 @@ import React from 'react'
 import {GDrive} from './GDrive'
 import {PDF} from './PDF'
 import {ScreenContent} from './ScreenContent'
+import {PlaybackScreenContent} from './PlaybackScreenContent'
 import {Text} from './Text'
 import {YouTube} from './YouTube'
 
@@ -32,6 +33,8 @@ export function contentTypeIcons(type: ContentType, size = 12, width = -1) {
     whiteboard: <span style={{width, height:size}}><Icon icon={whiteboard24Regular} height={size} /></span>,
     camera: <CameraAltIcon style={{fontSize:size, width}} />,
     pdf : <span style={{width, height:size}}><Icon icon={filePdfBox} height={size} /></span>,
+    playbackScreen: <ScreenShareIcon style={{fontSize:size, width}} />,
+    playbackCamera: <CameraAltIcon style={{fontSize:size, width}} />,
     '': undefined,
   }
 
@@ -107,6 +110,8 @@ export const RawContent: React.FC<ContentProps> = (props:ContentProps) => {
     rv = <Text {...props} />
   }else if (props.content.type === 'screen' || props.content.type === 'camera') {
     rv = <ScreenContent {...props} />
+  }else if (props.content.type === 'playbackScreen' || props.content.type === 'playbackCamera') {
+    rv = <PlaybackScreenContent {...props} />
   }else {
     rv = <div>Unknown type:{props.content.type} for {props.content.url}</div>
   }

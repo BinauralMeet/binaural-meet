@@ -110,6 +110,8 @@ export class SharedContents extends EventEmitter {
   @observable.shallow roomContents = new Map<string, ISharedContent>()
   //  Contents info     used only when a relay server exsits.
   @observable.shallow roomContentsInfo = new Map<string, SharedContentInfo>()
+  //  Contents for playback.
+  @observable.shallow playbackContents = new Map<string, ISharedContent>()
 
   getParticipant(pid: string) {
     assert(!config.bmRelayServer)
@@ -137,6 +139,19 @@ export class SharedContents extends EventEmitter {
   @action shareContent(content:ISharedContent) {
     moveContentToTop(content)
     this.addLocalContent(content)
+  }
+
+  @action updatePlayback(content: ISharedContent){
+    content.playback = true
+    this.playbackContents.set(content.id, content)
+    this.updateAll()
+  }
+  @action removePlayback(cid: string){
+    this.playbackContents.delete(cid)
+    this.updateAll()
+  }
+  findPlayback(cid: string){
+    return this.playbackContents.get(cid)
   }
 
   @computed get localParticipant(): ParticipantContents {
@@ -228,6 +243,8 @@ export class SharedContents extends EventEmitter {
         newAll.push(...participant.myContents.values())
       })
     }
+    newAll.push(...Array.from(this.playbackContents.values()))
+
     const newSorted = Array.from(newAll).sort(zorderComp)
     newSorted.forEach((c, idx) => {c.zIndex = idx+1})
 

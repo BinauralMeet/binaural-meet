@@ -3,7 +3,7 @@ import {MapObject} from './MapObject'
 const MAXIMIZABLE_IMAGE_MIN_WIDTH = 200
 
 export type ContentType = 'img' | 'text' | 'pdf' | 'youtube' | 'iframe' | 'screen' | 'camera' |
-  'gdrive' | 'whiteboard' | ''
+  'gdrive' | 'whiteboard' | 'playbackScreen' | 'playbackCamera' |  ''
 
 export interface SharedContentInfoData {
   name: string                    //  name or title of the content.
@@ -40,6 +40,7 @@ export interface SharedContentData extends SharedContentInfoData {
   noFrame?: boolean               //  no (invisible) frame
   opacity?: number                //  opacity
   zone?: ZoneType                 //  is this a audio zone is the zone closed or open?
+  playback?: boolean              //  is playback or normal content
 }
 
 export interface ISharedContent extends MapObject, SharedContentData, SharedContentId {

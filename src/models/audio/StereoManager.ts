@@ -99,7 +99,7 @@ export class StereoManager {
       autorun(() => {
         const accepts = new Set(priorityCalculator.tracksToAccept[1].map(info => info.endpointId))
         for (const id in this.nodes) {
-          if (accepts.has(id)) {
+          if (accepts.has(id) || this.nodes[id] instanceof NodeGroupForPlayback) {
             this.nodes[id].setPlayMode(this.playMode)
           }else {
             this.nodes[id].setPlayMode('Pause')

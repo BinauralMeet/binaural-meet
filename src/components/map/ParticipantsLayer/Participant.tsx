@@ -6,6 +6,7 @@ import {Tooltip} from '@material-ui/core'
 import {makeStyles} from '@material-ui/core/styles'
 import HeadsetIcon from '@material-ui/icons/HeadsetMic'
 import MicOffIcon from '@material-ui/icons/MicOff'
+import PlayArrowIcon from '@material-ui/icons/PlayArrow'
 import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
 import {addV2, mulV2, normV, rotateVector2DByDegree, subV2} from '@models/utils'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
@@ -71,6 +72,7 @@ export interface ParticipantProps{
 }
 export interface RawParticipantProps extends ParticipantProps{
   isLocal: boolean
+  isPlayback?: boolean
 }
 
 const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawParticipantProps> = (props, ref) => {
@@ -190,6 +192,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
             {speakerMuted ? <SpeakerOffIcon className={classes.icon} color="secondary" /> :
               (micMuted ? <MicOffIcon className={classes.icon} color="secondary" /> : undefined)}
             {!micMuted && onStage ? <Icon className={classes.icon} icon={megaphoneIcon} color="gold" /> : undefined }
+            {props.isPlayback ? <PlayArrowIcon className={classes.icon} htmlColor="#0C0" /> : undefined}
           </div>
         </Tooltip>
       </div>

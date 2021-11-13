@@ -43,9 +43,9 @@ export const ObjectArrayMessageTypes = new Set(Object.values(ObjectArrayMessageT
 export const StringArrayMessageType = {
   LEFT_CONTENT_REMOVE_REQUEST: 'left_c_remove',   //  ids:string[], only when no bmRelayServer
   CONTENT_REMOVE_REQUEST: 'c_remove',             //  ids:string[]
-  PARTICIPANT_OUT: 'p_out',                       //  ids:stirng[]
-  MOUSE_OUT: 'm_out',                             //  ids:stirng[]
-  CONTENT_OUT: 'c_out',                           //  ids:stirng[]
+  PARTICIPANT_OUT: 'p_out',                       //  ids:stirng[], server to client only
+  MOUSE_OUT: 'm_out',                             //  ids:stirng[], server to client only
+  CONTENT_OUT: 'c_out',                           //  ids:stirng[], server to client only
 }
 export const StringArrayMessageTypes = new Set(Object.values(StringArrayMessageType))
 

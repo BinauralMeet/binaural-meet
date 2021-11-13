@@ -13,6 +13,7 @@ import EditIcon from '@material-ui/icons/Edit'
 import FlipToBackIcon from '@material-ui/icons/FlipToBack'
 import FlipToFrontIcon from '@material-ui/icons/FlipToFront'
 import MoreHorizIcon from '@material-ui/icons/MoreHoriz'
+import PlayArrowIcon from '@material-ui/icons/PlayArrow'
 import settings from '@models/api/Settings'
 import {doseContentEditingUseKeyinput, isContentEditable, isContentMaximizable, ISharedContent} from '@models/ISharedContent'
 import {t} from '@models/locales'
@@ -406,9 +407,10 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
             anchorEl={contentRef.current} anchorOrigin={{vertical:'top', horizontal:'right'}}
           />
           <div className={classes.note} onClick={onClickShare} onTouchStart={stop}>Share</div>
-          {props.content.pinned ? undefined :
-            <div className={classes.close} onClick={onClickClose} onTouchStart={stop}>
-              <CloseRoundedIcon /></div>}
+          {props.content.playback ? <div className={classes.close} ><PlayArrowIcon htmlColor="#0C0" /></div> :
+            props.content.pinned ? undefined :
+              <div className={classes.close} onClick={onClickClose} onTouchStart={stop}>
+                <CloseRoundedIcon /></div>}
         </div>
       </div>
       <div className={classes.content} ref={contentRef}
