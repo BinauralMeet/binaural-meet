@@ -67,7 +67,7 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
       const cur = ms.getTracks()
       if (cur.length) {
         if (! _.isEqual(old, cur)) {
-          console.log('prev-next:', old, cur)
+          //  console.log('prev-next:', old, cur)
           ref.current.srcObject = ms
           ref.current.autoplay = true
         }

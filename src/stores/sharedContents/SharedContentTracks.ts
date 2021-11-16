@@ -11,7 +11,7 @@ declare const config:any             //  from ../../config.js included from inde
 
 export const CID_MAINSCREEN = 'mainScreen'
 
-const LOG_CONTENT_TRACK = true
+const LOG_CONTENT_TRACK = false
 const contentTrackLog = LOG_CONTENT_TRACK ? console.log : () => {}
 
 export class SharedContentTracks {

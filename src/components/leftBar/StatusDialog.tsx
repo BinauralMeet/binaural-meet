@@ -81,13 +81,13 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
   if (props.open){
     if (!status.interval){
       status.interval = setInterval(updateStatus, 100)
-      console.log('setInterval')
+      //console.log('setInterval')
     }
   }else{
     if (status.interval){
       clearInterval(status.interval)
       status.interval = undefined
-      console.log('clearInterval')
+      //console.log('clearInterval')
     }
   }
   const {close, ...poperProps} = props
