@@ -43,7 +43,8 @@ const memoedUpdater = (() => {
     if (!_.isEqual(res, memo)) {
       // Send res to Jitsi bridge
       const videoConstraints:JitsiMeetJS.VideoConstraints = {
-        onStageEndpoints: res[0]
+        selectedEndpoints: res[0]
+        //onStageEndpoints: res[0]
       }
       connection.conference.setReceiverConstraints(videoConstraints)
       connection.conference.setPerceptibles(res)

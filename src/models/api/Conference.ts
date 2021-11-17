@@ -594,7 +594,13 @@ export class Conference extends EventEmitter {
     //  kicked
     this._jitsiConference.on(JitsiMeetJS.events.conference.KICKED,
       (p:JitsiParticipant, r:string)=>{this.sync.onKicked(p.getId(),r)})
+
+    //  connection status (bandwidth etc)
+    //	this._jitsiConference.statistics.addConnectionStatsListener(this.onConnectionStats)
   }
+//  onConnectionStats(tpc: TraceablePeerConnection, stats:Object){
+//    console.log(`onConnectionStats: ${JSON.stringify(stats)}`)
+//  }
   /*  Resize the video (May not have any effect on the resolution)
   private video:undefined | HTMLVideoElement = undefined
   private canvas:undefined | HTMLCanvasElement = undefined

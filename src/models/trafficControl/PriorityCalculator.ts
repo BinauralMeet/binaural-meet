@@ -219,20 +219,18 @@ export class PriorityCalculator {
 
   private calcPriority() {
     //  list participants
-    const recalculateList = Array.from(participants.remote.keys()).filter(
-      key => this.updateAll ? true : this.updateSet.has(key))
-    recalculateList.forEach((id) => {
-      const rp = participants.remote.get(id)
-      if (rp) {
-        [rp.tracks.avatar, rp.tracks.audio].forEach((track, idx) => {
-          if (track) {
-            const trackInfo = extractParticipantTrackInfo(rp, track)
-            trackInfo.priority = this.calcPriorityValue(this.local, trackInfo)
-            this.priorityMaps[idx].set(rp.id, trackInfo)
-          }
-        })
-      }
-    })
+    const remotes = Array.from(participants.remote.values())
+    const recalculates = this.updateAll ? remotes
+      : remotes.filter(r => this.updateSet.has(r.id))
+    for(const rp of recalculates){
+      [rp.tracks.avatar, rp.tracks.audio].forEach((track, idx) => {
+        if (track) {
+          const trackInfo = extractParticipantTrackInfo(rp, track)
+          trackInfo.priority = this.calcPriorityValue(this.local, trackInfo)
+          this.priorityMaps[idx].set(rp.id, trackInfo)
+        }
+      })
+    }
 
     //  list contents
     const contentTracks = Array.from(contents.tracks.remoteContents.values())
@@ -241,6 +239,7 @@ export class PriorityCalculator {
 
       return next.done ? undefined : next.value.getParticipantId()
     })
+
     const recalculateCarrierList = carrierIds.filter(pid => pid && (this.updateAll ? true : this.updateSet.has(pid)))
     recalculateCarrierList.forEach((pid) => {
       const cid = contents.tracks.carrierMap.get(pid!)

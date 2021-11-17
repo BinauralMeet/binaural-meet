@@ -36,9 +36,24 @@ declare class JingleSessionPC{
   bitRateAlreadyReduced?: boolean
   peerconnection: TraceablePeerConnection
 }
+declare class Statistics {
+  addAudioLevelListener(listener: EventListener)
+  removeAudioLevelListener(listener: EventListener)
+
+  addBeforeDisposedListener(listener: EventListener)
+  removeBeforeDisposedListener(listener: EventListener)
+
+  addConnectionStatsListener(listener: (tpc:TraceablePeerConnection, stats: Object)=>void)
+  removeConnectionStatsListener(listener: EventListener)
+
+  addByteSentStatsListener(listener: EventListener)
+  addByteSentStatsListener(listener: EventListener)
+}
 declare class JitsiConference {
   rtc: RTC
   room: ChatRoom
+  statistics: Statistics
+  jvbJingleSession:JingleSessionPC
 
   constructor(options: any);
 
@@ -135,8 +150,6 @@ declare class JitsiConference {
   getProperty(key: string): any;
   isP2PActive(): boolean;
   getP2PConnectionState(): string | null;
-
-  jvbJingleSession:JingleSessionPC
 }
 
 export { JitsiValues, JitsiValuesChildren};
