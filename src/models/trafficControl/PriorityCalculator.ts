@@ -73,9 +73,9 @@ export class PriorityCalculator {
   // priority cache
   private readonly priorityMapForContent = new Map<string, RemoteTrackInfo>()
   private readonly priorityMaps = [new Map<string, RemoteTrackInfo>(), new Map<string, RemoteTrackInfo>()]
-  lastPriority: [string[], string[]] = [[], []] //  video endpoint ids, audio endpoint ids
   lastContentVideos: string[] = []
   lastParticipantVideos: string[] = []
+  lastAudios: string[] = []
 
   // list of observable track info lists
   @observable tracksToAccept:[RemoteTrackInfo[], RemoteTrackInfo[]] = [[], []]
@@ -93,8 +93,11 @@ export class PriorityCalculator {
     this.updateAll = true
     this.updateSet.clear()
     this.priorityMaps.forEach(m => m.clear())
-    this.lastPriority=[[],[]]
+    this.priorityMapForContent.clear()
     this.tracksToAccept = [[],[]]
+    this.lastContentVideos = []
+    this.lastParticipantVideos = []
+    this.lastAudios = []
   }
 
   setLimits(limits:number[]):void {
@@ -163,11 +166,11 @@ export class PriorityCalculator {
         throw new Error(`Cannot find disposer for remote participant with id: ${id}`)
       }
       disposer()
-      this.priorityMaps[1].delete(id)
       this.priorityMapForContent.delete(id)
+      this.priorityMaps[1].delete(id)
       remoteDiposers.delete(id)
       this.updateSet.add(id)
-      priorityLog('onRemoveContent:', id, this.priorityMaps[0])
+      priorityLog('onRemoveContent:', id, this.priorityMapForContent)
     }
 
     const onAddParticipant = (rp: RemoteParticipant) => {
@@ -192,7 +195,7 @@ export class PriorityCalculator {
           this.updateSet.add((tracks.values().next().value as JitsiRemoteTrack).getParticipantId())
         }
       }))
-      priorityLog('onAddContent:', id, this.priorityMaps[0])
+      priorityLog('onAddContent:', id, this.priorityMapForContent)
     }
 
     this.disposers = [localChangeDisposer, remoteChangeDisposer, remoteContentsChangeDisposer]
@@ -279,26 +282,26 @@ export class PriorityCalculator {
       }
     }
 
-    const newLists:[RemoteTrackInfo[], RemoteTrackInfo[]] = [[], []]
     //  video
     const contentVideos = prioritizedContentTrackInfoList.filter(info => !info.muted)
-    const participantVideos = prioritizedContentTrackInfoList.filter(info => !info.muted)
-    newLists[0] = contentVideos
-    newLists[0].push(...participantVideos)
-    newLists[0].splice(this.limits[0])
+    const participantVideos = prioritizedTrackInfoLists[0].filter(info => !info.muted)
+    if (contentVideos.length > this.limits[0]){
+      contentVideos.splice(this.limits[0])
+      participantVideos.splice(0)
+    }else{
+      participantVideos.splice(this.limits[0] - contentVideos.length)
+    }
     //  audio : list all
-    newLists[1] = prioritizedTrackInfoLists[1]
+    const audios = prioritizedTrackInfoLists[1]
     const nMuted = prioritizedTrackInfoLists[1].filter(info => info.muted).length
-    newLists[1].splice(Math.min(this.limits[0] + nMuted, newLists[1].length))
-
+    audios.splice(Math.min(this.limits[0] + nMuted, audios.length))
     //  done
-    this.tracksToAccept = newLists
+    this.tracksToAccept = [[...contentVideos, ...participantVideos], audios]
 
     //  end point ids must be sent to JVB.
-    const prioritizedEidLists = this.tracksToAccept.map(infos => infos.map(info => info.endpointId))
-    this.lastPriority = prioritizedEidLists as [string[], string[]]
     this.lastContentVideos = contentVideos.map(info => info.endpointId)
     this.lastParticipantVideos = participantVideos.map(info => info.endpointId)
+    this.lastAudios = audios.map(info => info.endpointId)
   }
 
   // lower value means higher priority

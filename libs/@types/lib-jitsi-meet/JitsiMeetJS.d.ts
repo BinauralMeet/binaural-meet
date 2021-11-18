@@ -8,7 +8,7 @@ import JitsiTrack, { TrackInfo, VideoType, MediaType, TMediaType, JitsiTrackEven
 import JitsiLocalTrack from './modules/RTC/JitsiLocalTrack'
 import JitsiRemoteTrack from './modules/RTC/JitsiRemoteTrack'
 import { JitsiConnection } from './JitsiConnection';
-import { JitsiConference, JitsiValues, VideoConstraints} from "./JitsiConference"
+import { JitsiConference, JitsiValues, VideoConstraints, BMPerceptibles} from "./JitsiConference"
 
 export const version: string;
 export const events: JitsiMeetEvents;

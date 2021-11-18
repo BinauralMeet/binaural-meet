@@ -40,17 +40,19 @@ const memoedUpdater = (() => {
 
   return () => {
     priorityCalculator.update()
-    if (!_.isEqual(priorityCalculator.lastPriority, memo)) {
+    const newList = [priorityCalculator.lastContentVideos,
+      priorityCalculator.lastParticipantVideos, priorityCalculator.lastAudios]
+    if (!_.isEqual(newList, memo)) {
       // Send res to Jitsi bridge
       const perceptibles:JitsiMeetJS.BMPerceptibles = {
-        audibles: priorityCalculator.lastPriority[1],
+        audibles: priorityCalculator.lastAudios,
         visibleContents: priorityCalculator.lastContentVideos,
-        visiblePerticipants: priorityCalculator.lastParticipantVideos,
+        visibleParticipants: priorityCalculator.lastParticipantVideos,
       }
       connection.conference.setPerceptibles(perceptibles)
-      priorityLog('setPerceptibles:', priorityCalculator.lastPriority)
+      priorityLog('setPerceptibles:', newList)
       //console.log(`setPerceptibles:${JSON.stringify(res)}`)
-      memo = _.cloneDeep(priorityCalculator.lastPriority)
+      memo = _.cloneDeep(newList)
     }
   }
 })()

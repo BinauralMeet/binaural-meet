@@ -292,7 +292,7 @@ export class Conference extends EventEmitter {
 
   //  send Perceptibles API added by hasevr
   public setPerceptibles(perceptibles:JitsiMeetJS.BMPerceptibles) {
-    sendLog(`SEND setPerceptibles ${JSON.stringify(perceptibles)}`)
+    //  console.log(`SEND setPerceptibles ${JSON.stringify(perceptibles)}`)
     if (this._jitsiConference?.setPerceptibles) {
       this._jitsiConference.setPerceptibles(perceptibles)
     }

@@ -50,10 +50,10 @@ declare class Statistics {
   addByteSentStatsListener(listener: EventListener)
 }
 
-declare interface BMPerceptibles{
-  visibleContents?:string[]
-  visibleParticipants?:string[]
-  audibles?:string[]
+export declare interface BMPerceptibles{
+  visibleContents:string[]
+  visibleParticipants:string[]
+  audibles:string[]
 }
 
 declare class JitsiConference {
