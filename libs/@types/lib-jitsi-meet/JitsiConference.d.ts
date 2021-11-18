@@ -49,6 +49,13 @@ declare class Statistics {
   addByteSentStatsListener(listener: EventListener)
   addByteSentStatsListener(listener: EventListener)
 }
+
+declare interface BMPerceptibles{
+  visibleContents?:string[]
+  visibleParticipants?:string[]
+  audibles?:string[]
+}
+
 declare class JitsiConference {
   rtc: RTC
   room: ChatRoom
@@ -108,7 +115,7 @@ declare class JitsiConference {
   setSenderVideoConstraint(height: number):void;
   setReceiverConstraints(videoConstraints: VideoConstraints):void;
 
-  setPerceptibles(perceptibles: [string[], string[]]): void;
+  setPerceptibles(perceptibles: BMPerceptibles): void;
   getParticipants(): JitsiParticipant[];
   getParticipantCount(countHidden: boolean): number;
   getParticipantById(id: string): JitsiParticipant;

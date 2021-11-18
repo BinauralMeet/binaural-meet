@@ -103,7 +103,7 @@ export function init(options?: IJitsiMeetJSOptions): void;
 export function setLogLevel(level: any): void;
 export function createLocalTracks(options?: JitsiTrackOptions, firePermissionPromptIsShownEvent?: boolean): Promise<Array<JitsiLocalTrack>>;
 export { JitsiConnection, JitsiConference, JitsiTrack, TrackInfo, JitsiLocalTrack, JitsiRemoteTrack,
-   VideoType, MediaType, TMediaType, JitsiValues, JitisTrackError, JitsiTrackEvents, VideoConstraints};
+   VideoType, MediaType, TMediaType, JitsiValues, JitisTrackError, JitsiTrackEvents, VideoConstraints, BMPerceptibles};
 export interface JitsiMediaDevices{
   setAudioOutputDevice(deviceId: string):void
   getAudioOutputDevice():string

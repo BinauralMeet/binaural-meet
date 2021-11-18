@@ -20,7 +20,7 @@ export class ConnectionForContent extends EventEmitter {
           this.jitsiConference = this.jitsiConnection.initJitsiConference(connection.conference.name, config)
           this.jitsiConference.on(JitsiMeetJS.events.conference.CONFERENCE_JOINED, () => {
             this.localId = this.jitsiConference!.myUserId()
-            this.jitsiConference?.setPerceptibles([[], []])
+            this.jitsiConference?.setPerceptibles({audibles:[], visibleContents:[], visibleParticipants:[]})
             resolve('')
           })
           this.jitsiConference.setDisplayName(contentTrackCarrierName)

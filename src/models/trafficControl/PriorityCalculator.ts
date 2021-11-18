@@ -1,4 +1,4 @@
-import {ISharedContent} from '@models/ISharedContent'
+import {isContentOutOfRange, ISharedContent} from '@models/ISharedContent'
 import {PARTICIPANT_SIZE} from '@models/Participant'
 import {diffMap} from '@models/utils'
 import {participantsStore as participants} from '@stores/participants'
@@ -71,8 +71,11 @@ export class PriorityCalculator {
   private limitUpdated = false  // true when local participant.remoteVideoLimit orremoteAudioLimit changes
 
   // priority cache
+  private readonly priorityMapForContent = new Map<string, RemoteTrackInfo>()
   private readonly priorityMaps = [new Map<string, RemoteTrackInfo>(), new Map<string, RemoteTrackInfo>()]
-  private lastPriority: [string[], string[]] = [[], []] //  video endpoint ids, audio endpoint ids
+  lastPriority: [string[], string[]] = [[], []] //  video endpoint ids, audio endpoint ids
+  lastContentVideos: string[] = []
+  lastParticipantVideos: string[] = []
 
   // list of observable track info lists
   @observable tracksToAccept:[RemoteTrackInfo[], RemoteTrackInfo[]] = [[], []]
@@ -160,7 +163,8 @@ export class PriorityCalculator {
         throw new Error(`Cannot find disposer for remote participant with id: ${id}`)
       }
       disposer()
-      this.priorityMaps.forEach(priorityMap => priorityMap.delete(id))
+      this.priorityMaps[1].delete(id)
+      this.priorityMapForContent.delete(id)
       remoteDiposers.delete(id)
       this.updateSet.add(id)
       priorityLog('onRemoveContent:', id, this.priorityMaps[0])
@@ -202,19 +206,15 @@ export class PriorityCalculator {
     this._enabled = false
   }
 
-  // returns same reference when no updates
-  update(): [string[], string[]] {
-    if (!this.haveUpdates) {
-      return this.lastPriority
-    }
+  // update lastPriority
+  update() {
+    if (!this.haveUpdates) { return }
 
-    const priority = this.calcPriority()
+    this.calcPriority()
 
     this.updateAll = false
     this.updateSet.clear()
     this.limitUpdated = false
-
-    return priority
   }
 
   private calcPriority() {
@@ -240,42 +240,51 @@ export class PriorityCalculator {
       return next.done ? undefined : next.value.getParticipantId()
     })
 
-    const recalculateCarrierList = carrierIds.filter(pid => pid && (this.updateAll ? true : this.updateSet.has(pid)))
-    recalculateCarrierList.forEach((pid) => {
+    const recalculateCarrierIds = carrierIds.filter(pid => pid && (this.updateAll ? true : this.updateSet.has(pid)))
+    recalculateCarrierIds.forEach((pid) => {
       const cid = contents.tracks.carrierMap.get(pid!)
       const content = cid ? contents.find(cid) : undefined
-      if (content) {
+      if (content && !isContentOutOfRange(content)) {
         const tracks = Array.from(contents.tracks.remoteContents.get(content.id)!)
         const videoAudio = [tracks.find(track => track.isVideoTrack()), tracks.find(track => track.isAudioTrack())]
+        const trackInfos:RemoteTrackInfo[] = []
         videoAudio.forEach((track, idx) => {
           if (track) {
-            const trackInfo = extractContentTrackInfo(content, track)
-            trackInfo.priority = this.calcPriorityValue(this.local, trackInfo)
-            this.priorityMaps[idx].set(content.id, trackInfo)
+            trackInfos[idx] = extractContentTrackInfo(content, track)
+            trackInfos[idx].priority = this.calcPriorityValue(this.local, trackInfos[idx])
           }
         })
+        if (trackInfos[0]){ this.priorityMapForContent.set(content.id, trackInfos[0]) }
+        if (trackInfos[1]){ this.priorityMaps[1].set(content.id, trackInfos[1]) }
       }
     })
 
     //  update prioritizedTrackLists
-    const prioritizedTrackInfoLists =
-      this.priorityMaps.map(priorityMap =>
-        Array.from(priorityMap.values()).sort(
-          (a, b) => a.priority - b.priority)) as [RemoteTrackInfo[], RemoteTrackInfo[]]
+    const prioritizedContentTrackInfoList = Array.from(this.priorityMapForContent.values())
+      .sort((a, b) => a.priority - b.priority)
+    const prioritizedTrackInfoLists = this.priorityMaps.map(priorityMap =>
+      Array.from(priorityMap.values()).sort((a, b) => a.priority - b.priority)
+    ) as [RemoteTrackInfo[], RemoteTrackInfo[]]
+
     //  add main tracks
     const mainTracks = contents.tracks.remoteMainTrack()
-    if (mainTracks) {
-      prioritizedTrackInfoLists.forEach((list, idx) => {
-        const mainTrack = mainTracks[idx]
-        if (mainTrack) {
-          const mainInfo = extractMainTrackInfo(mainTrack)
-          list.unshift(mainInfo)
-        }
-      })
+    if (mainTracks){
+      if (mainTracks[0]){
+        const mainVideoInfo = extractMainTrackInfo(mainTracks[0])
+        prioritizedContentTrackInfoList.unshift(mainVideoInfo)
+      }
+      if (mainTracks[1]){
+        const mainAudioInfo = extractMainTrackInfo(mainTracks[1])
+        prioritizedTrackInfoLists[1].unshift(mainAudioInfo)
+      }
     }
+
     const newLists:[RemoteTrackInfo[], RemoteTrackInfo[]] = [[], []]
     //  video
-    newLists[0] = prioritizedTrackInfoLists[0].filter(info => !info.muted)
+    const contentVideos = prioritizedContentTrackInfoList.filter(info => !info.muted)
+    const participantVideos = prioritizedContentTrackInfoList.filter(info => !info.muted)
+    newLists[0] = contentVideos
+    newLists[0].push(...participantVideos)
     newLists[0].splice(this.limits[0])
     //  audio : list all
     newLists[1] = prioritizedTrackInfoLists[1]
@@ -288,8 +297,8 @@ export class PriorityCalculator {
     //  end point ids must be sent to JVB.
     const prioritizedEidLists = this.tracksToAccept.map(infos => infos.map(info => info.endpointId))
     this.lastPriority = prioritizedEidLists as [string[], string[]]
-
-    return this.lastPriority
+    this.lastContentVideos = contentVideos.map(info => info.endpointId)
+    this.lastParticipantVideos = participantVideos.map(info => info.endpointId)
   }
 
   // lower value means higher priority

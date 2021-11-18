@@ -39,18 +39,18 @@ const memoedUpdater = (() => {
   let memo: any = undefined
 
   return () => {
-    const res = priorityCalculator.update()
-    if (!_.isEqual(res, memo)) {
+    priorityCalculator.update()
+    if (!_.isEqual(priorityCalculator.lastPriority, memo)) {
       // Send res to Jitsi bridge
-      const videoConstraints:JitsiMeetJS.VideoConstraints = {
-        selectedEndpoints: res[0]
-        //onStageEndpoints: res[0]
+      const perceptibles:JitsiMeetJS.BMPerceptibles = {
+        audibles: priorityCalculator.lastPriority[1],
+        visibleContents: priorityCalculator.lastContentVideos,
+        visiblePerticipants: priorityCalculator.lastParticipantVideos,
       }
-      connection.conference.setReceiverConstraints(videoConstraints)
-      connection.conference.setPerceptibles(res)
-      priorityLog('setPerceptibles:', res)
+      connection.conference.setPerceptibles(perceptibles)
+      priorityLog('setPerceptibles:', priorityCalculator.lastPriority)
       //console.log(`setPerceptibles:${JSON.stringify(res)}`)
-      memo = _.cloneDeep(res)
+      memo = _.cloneDeep(priorityCalculator.lastPriority)
     }
   }
 })()
