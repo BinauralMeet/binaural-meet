@@ -77,7 +77,15 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
     getInformationOfGDriveContent(fileId).then((res)=>{
       if ((res.name && props.content.name !== res.name) || res.mimeType){
         member.params.set('mimeType', res.mimeType)
+        console.log(`mime: ${res.mimeType}`, res)
         if (res.name){ props.content.name = res.name }
+        updateUrl(member)
+      }
+    }).catch(reason=>{
+      console.log(`GDrive failed ${reason.body}`)
+      if (reason.status === 404){
+        console.log('404 may be video')
+        member.params.set('mimeType', 'video')
         updateUrl(member)
       }
     })

@@ -198,6 +198,8 @@ export class ErrorInfo {
   canvas: HTMLCanvasElement|undefined = undefined
   oscillator: OscillatorNode|undefined = undefined
   startTestBot () {
+    participants.local.muteAudio = false
+    participants.local.muteVideo = false
     let counter = 0
     //  Create dummy audio
     const ctxA = new AudioContext()
