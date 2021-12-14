@@ -130,6 +130,29 @@ export const Base: React.FC<MapProps> = (props: MapProps) => {
       map.setCommittedMatrix(newMatrix)
     }
   }
+  function moveParticipant(move: boolean, givenTarget?:[number,number]) {
+    const local = participants.local
+    let target = givenTarget
+    if (!target){ target = map.mouseOnMap }
+    const diff = subV2(target, local.pose.position)
+    if (normV(diff) > (givenTarget ? PARTICIPANT_SIZE*2 : PARTICIPANT_SIZE / 2)) {
+      const dir = mulV2(20 / normV(diff), diff)
+      local.pose.orientation = Math.atan2(dir[0], -dir[1]) * 180 / Math.PI
+      if (move) {
+        local.pose.position = addV2(local.pose.position, dir)
+      }
+      local.savePhysicsToStorage(false)
+    }
+  }
+  function moveParticipantPeriodically(move: boolean, target?:[number,number]) {
+    moveParticipant(move, target)
+    const TIMER_INTERVAL = move ? 33 : 300
+    setTimeout(() => {
+      if (mem.mouseDown) {
+        moveParticipantPeriodically(true)
+      }
+    }, TIMER_INTERVAL) //  move to mouse position
+  }
 
   const bind = useGesture(
     {
@@ -140,25 +163,7 @@ export const Base: React.FC<MapProps> = (props: MapProps) => {
         //  console.log('Base StartDrag:')
         if (buttons === MOUSE_LEFT) {
           //  move participant to mouse position
-          setTimeout(() => {
-            function moveParticipant(move: boolean) {
-              if (mem.mouseDown) {
-                const local = participants.local
-                const diff = subV2(map.mouseOnMap, local.pose.position)
-                if (normV(diff) > PARTICIPANT_SIZE / 2) {
-                  const dir = mulV2(10 / normV(diff), diff)
-                  local.pose.orientation = Math.atan2(dir[0], -dir[1]) * 180 / Math.PI
-                  if (move) {
-                    local.pose.position = addV2(local.pose.position, dir)
-                  }
-                  local.savePhysicsToStorage(false)
-                }
-                const TIMER_INTERVAL = move ? 33 : 300
-                setTimeout(() => { moveParticipant(true) }, TIMER_INTERVAL)
-              }
-            }
-            moveParticipant(false)
-          },         300)
+          moveParticipantPeriodically(false)  //  inital rotation.
         }
       },
       onDrag: ({down, delta, xy, buttons}) => {
@@ -185,17 +190,22 @@ export const Base: React.FC<MapProps> = (props: MapProps) => {
             const diff = rotateVector2D(matrix.inverse(), delta)
             const newMatrix = matrix.translate(...diff)
             map.setMatrix(newMatrix)
-            //  console.log('Base onDrag:', delta)
+            //  rotate and direct participant to the mouse position.
+            if (delta[0] || delta[1]){
+              moveParticipant(false, map.centerOnMap)
+            }
+            //console.log('Base onDrag:', delta)
           }
         }
       },
       onDragEnd: () => {
         if (matrix.toString() !== map.committedMatrix.toString()) {
           map.setCommittedMatrix(matrix)
+          moveParticipant(false, map.centerOnMap)
+          //console.log(`Base onDragEnd: (${map.centerOnMap})`)
         }
         mem.dragging = false
         mem.mouseDown = false
-        //  console.log('Base onDragEnd:')
       },
       onPinch: ({da: [d, a], origin, event, memo}) => {
         if (memo === undefined) {

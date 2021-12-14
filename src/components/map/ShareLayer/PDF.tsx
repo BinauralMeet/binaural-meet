@@ -158,8 +158,19 @@ class Member{
           this.numPages = doc.numPages
           resolve(this.document)
         }).catch(reason => {
-          console.error(`PDF: failed to load ${this.mainUrl}`)
-          reject(reason)
+          const task = getDocument({
+            url: this.mainUrl,
+            cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.7.570/cmaps/',
+            cMapPacked: true,
+          })
+          task.promise.then((doc) => {
+            this.document = doc
+            this.numPages = doc.numPages
+            resolve(this.document)
+          }).catch(reason => {
+            console.error(`PDF: failed to load ${this.mainUrl}`)
+            reject(reason)
+          })
         })
 //        task.onProgress = (progress:{loaded: number, total: number}) => {
 //          console.log(`PDF progress ${progress.loaded}/${progress.total}`)

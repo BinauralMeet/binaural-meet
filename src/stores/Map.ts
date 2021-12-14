@@ -95,6 +95,9 @@ export class MapData {
   @computed get zoomed(){
     return this.matrixBeforeZoom !== undefined
   }
+  @computed get centerOnMap(){
+    return transformPoint2D(this.matrix.inverse(), [0,0])
+  }
 
   toWindow(pos:[number, number]) {
     return subV2(transformPoint2D(this.matrix, pos), this.offset)
