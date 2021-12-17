@@ -16,8 +16,8 @@ import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {GDrive} from './GDrive'
 import {PDF} from './PDF'
-import {ScreenContent} from './ScreenContent'
 import {PlaybackScreenContent} from './PlaybackScreenContent'
+import {ScreenContent} from './ScreenContent'
 import {Text} from './Text'
 import {YouTube} from './YouTube'
 
@@ -97,7 +97,7 @@ export const RawContent: React.FC<ContentProps> = (props:ContentProps) => {
   }else if (props.content.type === 'iframe' || props.content.type === 'whiteboard') {
     rv = <div className={classes.div}>
       <iframe className={editing ? classes.iframeEdit : classes.iframe}
-        style={props.content.type==='whiteboard'?{backgroundColor:'white'}:{}}
+        style={props.content.type==='whiteboard'?{backgroundColor: props.content.noFrame?'rgba(0,0,0,0)':'white'}:{}}
         src={props.content.url} key={props.content.name} title={props.content.name}/>
       </div>
   }else if (props.content.type === 'youtube') {

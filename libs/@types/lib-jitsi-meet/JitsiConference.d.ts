@@ -56,6 +56,71 @@ export declare interface BMPerceptibles{
   audibles:string[]
 }
 
+declare interface AvgRtpStatsReporter{
+
+}
+declare interface StatsBandwidth{
+  upload:number
+  download:number
+}
+declare interface StatsBitrate extends StatsBandwidth{
+  audio: StatsBandwidth
+  video: StatsBandwidth
+}
+declare interface StatsCodecValue{
+  audio: string, video: string
+}
+declare interface StatsCodecMember{
+  [id: string]: StatsCodecValue
+}
+declare interface StatsCodec{
+    [id: string]: StatsCodecMember
+}
+declare interface StatsFramerateMember{
+  [id: string]: number
+}
+declare interface StatsFramerate{
+  [id: string]: StatsFramerateMember
+}
+declare interface StatsPakcetLoss extends StatsBandWidth{
+  total: number
+}
+
+declare interface StatsResolutionMember{
+  [id: string]: {height:number, width:number}
+}
+declare interface StatsResolution {
+  [id: string]: StatsResolutionMember
+}
+declare interface StatsTransport {
+  ip: string
+  localCandidateType: string
+  localip: string
+  networkType: string
+  p2p: boolean
+  remoteCandidateType: string
+  rtt: number
+  type: string
+}
+
+declare interface ConnectionQualityStats{
+  connectionQuality?: number
+  jvbRTT?: number
+  bridgeCount?: number
+  serverRegion?: string
+  bandwidth?: StatsBandwidth
+  bitrate?: StatsBitrate
+  codec?: StatsCodec
+  framerate?: StatsFramerate
+  packetLoss?: StatsPacketLoss
+  resolution?: StatsResolution
+  transport?: StatsTransport[]
+}
+declare interface ConnectionQuality{
+  _localStats:ConnectionQualityStats
+  getStats(pid?: string): ConnectionQualityStats
+}
+
 declare class JitsiConference {
   rtc: RTC
   room: ChatRoom
@@ -65,6 +130,8 @@ declare class JitsiConference {
   constructor(options: any);
 
   static resourceCreator(jid: string, isAuthenticatedUser: boolean): string;
+  connectionQuality: ConnectionQuality
+  avgRtpStatsReporter: RvgRtpStatsReporter
 
   join(password: string): void;
   // TODO: add details.

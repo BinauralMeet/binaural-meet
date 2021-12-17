@@ -2,6 +2,7 @@ import Button from '@material-ui/core/Button'
 import Paper from '@material-ui/core/Paper'
 import Popper, { PopperProps } from '@material-ui/core/Popper'
 import { connection } from '@models/api'
+import contents from '@stores/sharedContents/SharedContents'
 import React from 'react'
 import {useState} from 'react'
 import {BMProps} from '../utils'
@@ -91,6 +92,34 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
     }
   }
   const {close, ...poperProps} = props
+  const stat = connection.conference._jitsiConference?.connectionQuality.getStats()
+  const stats = Array.from(contents.tracks.contentCarriers.values())
+    .filter(c => c&&c.jitsiConference).map(c => c.jitsiConference!.connectionQuality.getStats())
+  if (stat) { stats.unshift(stat) }
+  const bitrates = stats.filter(s=>s.bitrate).map(s=>s.bitrate!)
+  const statSum = {
+    audio: {
+      up: bitrates.map(b => b.audio.upload).reduce((a, b) => a+b, 0),
+      down: bitrates.map(b => b.audio.download).reduce((a, b) => a+b, 0),
+    },
+    video: {
+      up: bitrates.map(b => b.video.upload).reduce((a, b) => a+b, 0),
+      down: bitrates.map(b => b.video.download).reduce((a, b) => a+b, 0),
+    }
+  }
+  const loss = {
+    up: stat?.packetLoss?.upload || 0,
+    down: stat?.packetLoss?.download || 0
+  }
+  const codecSet = new Set<string>()
+  for(const pid in stat?.codec){
+    const p = stat?.codec[pid]
+    for (const ssrc in p){
+      codecSet.add(p[ssrc].audio)
+      codecSet.add(p[ssrc].video)
+    }
+  }
+  const codecs = Array.from(codecSet)
 
   return <Popper {...poperProps}>
     <Paper style={{background:'rgba(255,255,255,0.6)', padding:'0.4em'}}>
@@ -101,6 +130,13 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
           WebRTC: {sess.remotes.map((r,k) => <span key={k.toString()}>{r.address} {r.port}/{r.protocol}<br /></span>)}
         </div>)}
         <div> Message: {status.messageServer}</div>
+        <div> Bitrate (kbps): audio: ⇑{statSum.audio.up}&nbsp; ⇓{statSum.audio.down}
+        &nbsp;&nbsp; video: ⇑{statSum.video.up}&nbsp; ⇓{statSum.video.down}</div>
+        <div> Quality:{stat?.connectionQuality} &nbsp; Loss: ⇑{loss.up}&nbsp; ⇓{loss.down}
+        &nbsp;&nbsp;RTT:{stat?.jvbRTT}
+        {codecs.length ? <>&nbsp;&nbsp;Codecs:{`${codecs}`}</> : undefined}
+        </div>
+        {/*<div> Quality: {JSON.stringify(stat)}</div>*/}
       </div>
       <Button variant="contained" color="primary" style={{textTransform:'none', marginTop:'0.4em'}}
         onClick={close}
