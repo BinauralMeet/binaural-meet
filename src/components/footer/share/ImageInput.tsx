@@ -33,7 +33,7 @@ export const ImageInput: React.FC<ImageInputProps> = (props) => {
       setStep={setStep}
       onFinishInput={(files) => {
         // TODO modify store
-        files.forEach((file, i) => {
+        files.forEach(async (file, i) => {
           const IMAGE_OFFSET_X = 30
           const IMAGE_OFFSET_Y = -20
           createContentOfImage(file, map, [IMAGE_OFFSET_X * i, IMAGE_OFFSET_Y * i]).then(

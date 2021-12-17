@@ -24,6 +24,8 @@ export const jaTranslate = {
   sharePasteTip: 'マップ上で Ctrl+V / Cmd+V でも貼付けできます。PDF、画像、YouTube、Google DocsへのURLを認識します。',
   shareImage: '画像 (_g)',
   shareImageTip: 'マップ上で Ctrl+V / Cmd+V で貼付けできます。画像は gyazo.com にアップロードされます。画像のURLも貼付けできます。',
+  shareGDrive: 'Import Files from Google Drive',
+  shareGDriveTip: 'Upload any available file from Google Drive',
   shareWhiteboard: 'ホワイトボード (_w)',
   shareWhiteboardTip: 'wbo.ophir.dev のホワイトボードを置きます。',
   shareEditEnd: '編集終了',

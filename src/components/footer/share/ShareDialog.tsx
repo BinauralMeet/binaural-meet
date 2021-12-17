@@ -9,6 +9,7 @@ import sharedContents from '@stores/sharedContents/SharedContents'
 import React, {useRef, useState} from 'react'
 import {CameraSelector} from './CameraSelector'
 import {CameraSelectorMember} from './CameraSelector'
+import { GoogleDriveImport } from './GoogleDrive'
 import {ImageInput} from './ImageInput'
 import {ShareMenu} from './Menu'
 import {Step} from './Step'
@@ -63,6 +64,14 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
         return <ImageInput setStep={setStep} stores={props.stores}/>
       case 'camera':
         return <CameraSelector setStep={setStep} stores={props.stores} cameras={cameras.current} />
+      case 'Gdrive':
+        return <GoogleDriveImport
+        stores={props.stores}
+        setStep={setStep} onSelectedFile={(value) => {
+          createContentOfIframe(value, map).then((c) => {
+            sharedContents.shareContent(c)
+          })
+        }} />
       default:
         throw new Error(`Unknown step: ${step}`)
     }

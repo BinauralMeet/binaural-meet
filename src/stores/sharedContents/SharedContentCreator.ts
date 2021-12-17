@@ -1,5 +1,6 @@
 import {getProxiedUrl} from '@models/api/CORS'
 import {getImageSize, uploadToGyazo} from '@models/api/Gyazo'
+import GoogleDrive from '@models/api/GoogleDrive'
 import {ContentType, isContentWallpaper, ISharedContent, SharedContentData,
   SharedContentId, TEN_YEAR, TextMessages, TIME_RESOLUTION_IN_MS} from '@models/ISharedContent'
 import {Pose2DMap} from '@models/utils'
@@ -160,15 +161,18 @@ export function createContentOfText(message: string, map: MapData) {
 
   return pasted
 }
-export function createContentOfImage(imageFile: Blob, map: MapData,  offset?:[number, number])
-  : Promise<SharedContentImp> {
-  const promise = new Promise<SharedContentImp>((resolutionFunc, rejectionFunc) => {
-    uploadToGyazo(imageFile).then((url) => {
-      createContentOfImageUrl(url, map, offset).then(resolutionFunc)
-    }).catch(rejectionFunc)
-  })
+export async function createContentOfImage(imageFile: File, map: MapData,  offset?:[number, number])
+  : Promise<any> {//Promise<SharedContentImp> {
+  // const promise = new Promise<SharedContentImp>((resolutionFunc, rejectionFunc) => {
+  //   uploadToGyazo(imageFile).then((url) => {
+  //     createContentOfImageUrl(url, map, offset).then(resolutionFunc)
+  //   }).catch(rejectionFunc)
+  // })
 
-  return promise
+  // return promise
+
+  const url = await GoogleDrive.uploadFileToGoogleDrive(imageFile)
+  return createContentOfImageUrl(url, map, offset)
 }
 
 export function createContentOfImageUrl(url: string, map: MapData,

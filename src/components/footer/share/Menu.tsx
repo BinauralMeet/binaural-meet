@@ -18,6 +18,7 @@ import ExpandMore from '@material-ui/icons/ExpandMore'
 import DownloadIcon from '@material-ui/icons/GetApp'
 import HttpIcon from '@material-ui/icons/Http'
 import ImageIcon from '@material-ui/icons/Image'
+import InsertDriveFileTwoTone from '@material-ui/icons/InsertDriveFileTwoTone';
 import UploadIcon from '@material-ui/icons/Publish'
 import ScreenShareIcon from '@material-ui/icons/ScreenShare'
 import StopScreenShareIcon from '@material-ui/icons/StopScreenShare'
@@ -234,6 +235,10 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
       <ShareDialogItem
         tip = {t('shareImageTip')}
         key="shareImage" text={t('shareImage')} icon={<ImageIcon />} onClick={() => setStep('image')}
+      />
+      <ShareDialogItem
+        tip = {t('shareGDriveTip')}
+        key="shareGDrive" text={t('shareGDrive')} icon={<InsertDriveFileTwoTone />} onClick={() => setStep('Gdrive')}
       />
       <ShareDialogItem
         key="shareText" text={t('shareText')} icon={<SubjectIcon />} onClick={createText}
