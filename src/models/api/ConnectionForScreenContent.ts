@@ -9,8 +9,8 @@ declare const config:any                  //  from ../../config.js included from
 
 
 export class ConnectionForContent extends EventEmitter {
-  private jitsiConnection?: JitsiMeetJS.JitsiConnection
-  private jitsiConference?: JitsiMeetJS.JitsiConference
+  public jitsiConnection?: JitsiMeetJS.JitsiConnection
+  public jitsiConference?: JitsiMeetJS.JitsiConference
   public localId = ''
 
   public init() {
@@ -20,7 +20,10 @@ export class ConnectionForContent extends EventEmitter {
           this.jitsiConference = this.jitsiConnection.initJitsiConference(connection.conference.name, config)
           this.jitsiConference.on(JitsiMeetJS.events.conference.CONFERENCE_JOINED, () => {
             this.localId = this.jitsiConference!.myUserId()
-            this.jitsiConference?.setPerceptibles({audibles:[], visibleContents:[], visibleParticipants:[]})
+            this.jitsiConference!.setPerceptibles({audibles:[], visibleContents:[], visibleParticipants:[]})
+            setTimeout(()=>{
+              this.jitsiConference!.setPerceptibles({audibles:[], visibleContents:[], visibleParticipants:[]})
+            }, 1000)
             resolve('')
           })
           this.jitsiConference.setDisplayName(contentTrackCarrierName)
