@@ -20,8 +20,8 @@ export function addV2(a:number[], b:number[]): [number, number] {
 export function subV2(a:number[], b:number[]): [number, number] {
   return [a[0] - b[0], a[1] - b[1]]
 }
-export function mulV<S extends number, T extends number[]>(s: S, v2: T): T {
-  return [v2[0] * s,  v2[1] * s] as T
+export function mulV<S extends number, T extends number[]>(s: S, v: T): T {
+  return v.map(e => s*e) as T
 }
 export function mulV2(a:number, v:number[]): [number, number] {
   return [a * v[0], a * v[1]]

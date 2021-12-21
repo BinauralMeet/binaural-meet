@@ -1,6 +1,6 @@
 import {
-  defaultInformation, defaultPhysics,
-  defaultRemoteInformation, LocalInformation,
+  defaultInformation, defaultPhysics, defaultRemoteInformation,
+  defaultViewpoint, LocalInformation,
   ParticipantBase as IParticipantBase, Physics, RemoteInformation, Tracks, TrackStates as ITrackStates
 } from '@models/Participant'
 import {findReverseColorRGB, findTextColorRGB, getRandomColorRGB, rgb2Color} from '@models/utils'
@@ -38,8 +38,8 @@ export class TrackStates implements Store<ITrackStates>{
 export class ParticipantBase extends MapObject implements Store<IParticipantBase> {
   @observable id = ''
   @observable.shallow physics = defaultPhysics
+  @observable.shallow viewpoint = defaultViewpoint
   @observable.shallow mouse:Mouse = {position:[0, 0], show:false}
-  @observable awayFromKeyboard = false
   @observable.shallow information: LocalInformation | RemoteInformation
   @observable muteAudio = false
   @observable muteSpeaker = false

@@ -83,7 +83,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
     position: participant.pose.position,
     orientation: participant.pose.orientation,
     mousePosition: participant.mouse.position,
-    awayFromKeyboard: participant.awayFromKeyboard,
+    awayFromKeyboard: participant.physics.awayFromKeyboard,
   }))
   const name = useObserver(() => participant!.information.name)
   const audioLevel = useObserver(() =>
@@ -93,6 +93,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
   const speakerMuted = useObserver(() => participant.trackStates.speakerMuted)
   const headphone = useObserver(() => participant.trackStates.headphone)
   const onStage = useObserver(() => participant.physics.onStage)
+  const viewpoint = useObserver(() => ({center:participant.viewpoint.center, height:participant.viewpoint.height}))
 
   const classes = useStyles({
     ...participantProps,
@@ -105,9 +106,15 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
   const AUDIOLEVELSCALE = props.size * SVG_RATIO * HALF
   const svgCenter = SVG_RATIO * props.size * HALF
 
+  const shadowOffset = Math.sqrt(viewpoint.height) / 2.5 - 4
+  const shadowScale = 1 + (shadowOffset/200)
+  const eyeOffsetMul = normV(viewpoint.center)/500 * 0.16 + 0.85
+
   const dir = subV2(participantProps.mousePosition, participantProps.position)
+  const eyeDist = 0.4
   const eyeOffsets:[[number, number], [number, number]]
-    = [[0.4 * outerRadius, -outerRadius], [-0.4 * outerRadius, -outerRadius]]
+    = [[eyeDist * outerRadius, - eyeOffsetMul*outerRadius],
+      [-eyeDist * outerRadius, - eyeOffsetMul*outerRadius]]
   const dirs = eyeOffsets.map(offset => subV2(dir, rotateVector2DByDegree(participantProps.orientation, offset)))
   const eyeballsGlobal = dirs.map((dir) => {
     const norm = normV(dir)
@@ -123,7 +130,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
     if (props.participant.id === props.stores.participants.localId){
       ev.stopPropagation()
       ev.preventDefault()
-      props.stores.participants.local.awayFromKeyboard = true
+      props.stores.participants.local.physics.awayFromKeyboard = true
     }
   }
   const eyeClick = {
@@ -144,8 +151,21 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
 
   return (
     <div className={classes.root + ' dragHandle'} onContextMenu={props.onContextMenu}>
-      <div className={classes.pointerRotate}>
-        <svg className={classes.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO} xmlns="http://www.w3.org/2000/svg">
+      <svg className={classes.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO}
+        xmlns="http://www.w3.org/2000/svg">{/* Cast shadow to show the height */}
+        <defs>
+          <radialGradient id="grad">
+            <stop offset="0%" stopColor="rgb(0,0,0,0.4)"/>
+            <stop offset="70%" stopColor="rgb(0,0,0,0.4)"/>
+            <stop offset="100%" stopColor="rgb(0,0,0,0)"/>
+          </radialGradient>
+        </defs>
+        <circle r={outerRadius * shadowScale} cy={svgCenter+shadowOffset} cx={svgCenter+shadowOffset}
+          stroke="none" fill={'url(#grad)'} />
+      </svg>
+      <div className={classes.pointerRotate}>{/* The avatar */}
+        <svg
+          className={classes.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO} xmlns="http://www.w3.org/2000/svg">
           <circle r={outerRadius} cy={svgCenter} cx={svgCenter} stroke="none" fill={color} />
           {audioMeter}
           {config.avatar === 'arrow' ?  //  arrow (circle with a corner) type avatar

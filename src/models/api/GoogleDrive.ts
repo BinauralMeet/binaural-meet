@@ -1,16 +1,16 @@
 
-import { createReadStream } from "fs";
+import { createReadStream } from "fs"
 /**
  * Abstract class to store base Google credentials
  */
 class GoogleDrive {
-  private clientId: string;
-  private clientSecret: string;
-  private appId: string;
-  private apiToken: string;
-  private scopes: string[];
+  private clientId: string
+  private clientSecret: string
+  private appId: string
+  private apiToken: string
+  private scopes: string[]
 
-  private loadState = 0;
+  private loadState = 0
 
   constructor(
     clientId="858773398697-vki2lito392c5dlss9s31ap077nn0qbd.apps.googleusercontent.com",
@@ -26,7 +26,7 @@ class GoogleDrive {
     //   //gapi is loading lock until done
     //   console.log('D: loading gapi')
     // }
-    gapi.load('auth', {'callback': this.onAuthApiLoad.bind(this)});
+    gapi.load('auth', {'callback': this.onAuthApiLoad.bind(this)})
     // while (this.loadState<2) {
     //   //apis still loading
     //   console.log('D: loading gapi APIs')
@@ -36,7 +36,7 @@ class GoogleDrive {
 
   private onAuthApiLoad() {
     this.loadState++
-    gapi.client.load('drive', 'v3',this.onDriveLoad.bind(this));
+    gapi.client.load('drive', 'v3',this.onDriveLoad.bind(this))
   }
   private onDriveLoad() {
     this.loadState++
@@ -50,7 +50,7 @@ class GoogleDrive {
           'scope': this.scopes,
           'immediate': false
         },
-        (r)=>r.error?reject(r):resolve(r));
+        (r)=>r.error?reject(r):resolve(r))
     })
     console.log(res)
   }
@@ -71,7 +71,7 @@ class GoogleDrive {
       var fileMetadata = {
         'name' : 'Binaural Meet Files',
         'mimeType' : 'application/vnd.google-apps.folder',
-      };
+      }
       const directoryResponse = await gapi.client.drive.files.create({
         resource: fileMetadata,
       })
@@ -87,16 +87,16 @@ class GoogleDrive {
         name: file.name,
         mimeType: file.type,
         parents: [dirId], // Please set folderId here.
-    };
-    const form = new FormData();
-    form.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'}));
-    form.append('file', file);
+    }
+    const form = new FormData()
+    form.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'}))
+    form.append('file', file)
     const fileUploadResponse = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
       method: 'POST',
       headers: new Headers({'Authorization': 'Bearer ' + gapi.auth.getToken().access_token}),
       body: form
     }).then((res) => {
-      return res.json();
+      return res.json()
     })
 
     await gapi.client.drive.permissions.create({
@@ -105,7 +105,7 @@ class GoogleDrive {
         role: 'reader',
         type: 'anyone',
       }
-    } as any);
+    } as any)
 
   //   const webViewLink = await gapi.client.drive.files.get({
   //     fileId: res.id,

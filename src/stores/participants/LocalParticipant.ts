@@ -1,8 +1,8 @@
 import { ISharedContent } from '@models/ISharedContent'
 import {LocalInformation, LocalParticipant as ILocalParticipant, Physics, RemoteInformation, TrackStates} from '@models/Participant'
 import {urlParameters} from '@models/url'
-import {Pose2DMap} from '@models/utils'
-import {checkImageUrl} from '@models/utils'
+import {checkImageUrl, mulV2, Pose2DMap, subV2} from '@models/utils'
+import {MapData} from '@stores/Map'
 import {Store} from '@stores/utils'
 import md5 from 'md5'
 import {action, computed, makeObservable, observable} from 'mobx'
@@ -108,6 +108,11 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
     if (infoInStr) {
       Object.assign(this.information, JSON.parse(infoInStr))
     }
+  }
+
+  @action updateViewpointCenter(map: MapData){
+    const pos = map.toWindow(this.pose.position)
+    this.viewpoint.center = subV2(mulV2(0.5, map.screenSize), pos)
   }
 
   //  Save and MediaSettings etc.

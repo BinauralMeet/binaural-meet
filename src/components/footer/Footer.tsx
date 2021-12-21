@@ -122,7 +122,7 @@ export const Footer: React.FC<BMProps&{height?:number}> = (props) => {
             e.stopPropagation()
           }
           if (e.code === 'KeyL' || e.code === 'Escape') {  //  Leave from keyboard
-            participants.local.awayFromKeyboard = true
+            participants.local.physics.awayFromKeyboard = true
           }
         }
       }

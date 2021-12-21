@@ -79,7 +79,7 @@ export class ErrorInfo {
       }
     })
     autorun(() => {
-      if (participants.local.awayFromKeyboard){
+      if (participants.local.physics.awayFromKeyboard){
         this.setType('afk')
       }
     })
@@ -121,7 +121,7 @@ export class ErrorInfo {
   }
   @action clear(type?: ErrorType) {
     if (this.type === 'afk'){
-      participants.local.awayFromKeyboard = false
+      participants.local.physics.awayFromKeyboard = false
     }
     if (type){
       this.types.delete(type)

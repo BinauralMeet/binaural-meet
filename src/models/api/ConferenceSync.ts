@@ -5,7 +5,7 @@ import {CONTENT_OUT_OF_RANGE_VALUE} from '@models/ISharedContent'
 import { KickTime } from '@models/KickTime'
 import {t} from '@models/locales'
 import {priorityCalculator} from '@models/middleware/trafficControl'
-import {defaultRemoteInformation, PARTICIPANT_SIZE, RemoteInformation, TrackStates} from '@models/Participant'
+import {defaultRemoteInformation, PARTICIPANT_SIZE, RemoteInformation, TrackStates, Viewpoint} from '@models/Participant'
 import {urlParameters} from '@models/url'
 import {Mouse, mouse2Str, pose2Str, str2Mouse, str2Pose} from '@models/utils'
 import {normV, subV2} from '@models/utils'
@@ -34,6 +34,7 @@ export const PropertyType = {
   PARTICIPANT_POSE: 'p_pose',                   //  -> update presence once per 5 sec / message immediate value
   PARTICIPANT_ON_STAGE: 'p_onStage',            //  -> presence
   PARTICIPANT_TRACKSTATES: 'p_trackSt',         //  -> presence
+  PARTICIPANT_VIEWPOINT: 'p_viewpoint',         //  -> presence
   MAIN_SCREEN_CARRIER: 'main_screen_carrier',   //  -> presence
   MY_CONTENT: 'my_content',                     //  -> presence
 }
@@ -69,6 +70,7 @@ export class ConferenceSync{
     participants.local.sendInformation()
     this.sendOnStage()
     this.sendTrackStates()
+    this.sendViewpointNow()
     if (contents.tracks.localMainConnection?.localId){ this.sendMainScreenCarrier(true) }
     this.sendMyContents()
     this.sendAfkChanged()
@@ -117,8 +119,17 @@ export class ConferenceSync{
                                                 {...participants.local.trackStates})
     }
   }
+  sendViewpointNow() {
+    if (config.bmRelayServer){
+      this.conference.sendMessage(PropertyType.PARTICIPANT_VIEWPOINT,
+        {...participants.local.viewpoint})
+    }else{
+      this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_VIEWPOINT,
+                                                {...participants.local.viewpoint})
+    }
+  }
   sendAfkChanged(){
-    this.conference.sendMessage(MessageType.PARTICIPANT_AFK, participants.local.awayFromKeyboard)
+    this.conference.sendMessage(MessageType.PARTICIPANT_AFK, participants.local.physics.awayFromKeyboard)
   }
 
   //  Only for test (admin config dialog).
@@ -205,7 +216,7 @@ export class ConferenceSync{
   private onAfkChanged(from:string|undefined, afk: boolean){
     assert(from)
     const remote = participants.find(from)
-    if (remote){ remote.awayFromKeyboard = afk }
+    if (remote){ remote.physics.awayFromKeyboard = afk }
   }
   public onKicked(pid:string|undefined, reason:string){
     assert(pid)
@@ -323,6 +334,15 @@ export class ConferenceSync{
       remote.physics.onStage = onStage
     }
   }
+  private onParticipantViewpoint(from:string|undefined, viewpoint:Viewpoint){
+    assert(from)
+    if (urlParameters.testBot !== null) { return }
+
+    const remote = participants.remote.get(from)
+    if (remote) {
+      Object.assign(remote.viewpoint, viewpoint)
+    }
+  }
   private onYarnPhone(from:string|undefined, connectedPids:string[]){
     assert(from)
     //  console.log(`yarn from ${from} local:${participants.localId}`)
@@ -434,10 +454,12 @@ export class ConferenceSync{
     this.conference.on(MessageType.PARTICIPANT_AFK, this.onAfkChanged)
     this.conference.on(PropertyType.PARTICIPANT_INFO, this.onParticipantInfo)
     this.conference.on(PropertyType.PARTICIPANT_TRACKSTATES, this.onParticipantTrackState)
+    this.conference.on(PropertyType.PARTICIPANT_VIEWPOINT, this.onParticipantViewpoint)
     this.conference.on(MessageType.PARTICIPANT_POSE, this.onParticipantPose)
     this.conference.on(PropertyType.PARTICIPANT_POSE, this.onParticipantPose)
     this.conference.on(MessageType.PARTICIPANT_MOUSE, this.onParticipantMouse)
     this.conference.on(PropertyType.PARTICIPANT_ON_STAGE, this.onParticipantOnStage)
+    this.conference.on(PropertyType.PARTICIPANT_VIEWPOINT, this.onParticipantViewpoint)
     this.conference.on(MessageType.YARN_PHONE, this.onYarnPhone)
     this.conference.on(MessageType.MUTE_VIDEO, this.onMuteVideo)
     this.conference.on(MessageType.MUTE_AUDIO, this.onMuteAudio)
@@ -491,10 +513,9 @@ export class ConferenceSync{
     this.disposers.push(autorun(this.sendParticipantInfo.bind(this)))
     this.disposers.push(autorun(this.sendTrackStates.bind(this)))
     if (config.bmRelayServer){
-      this.disposers.push(autorun(() => {
-        this.sendPoseMessageNow(false)
-        this.sendMouseMessageNow()
-      }))
+      this.disposers.push(autorun(this.sendPoseMessageNow.bind(this, false)))
+      this.disposers.push(autorun(this.sendMouseMessageNow.bind(this)))
+      this.disposers.push(autorun(this.sendViewpointNow.bind(this)))
     }else{
       //  pose via bridge
       const calcWait = () => Math.ceil(Math.max((participants.remote.size / 4) * 50, 50))
@@ -551,6 +572,22 @@ export class ConferenceSync{
         }
       }
       this.disposers.push(autorun(() => { sendMouse('') }))
+
+      //  viewpoint via bridge
+      let sendViewpointMessage = (_viewpoint:Viewpoint) => {}
+      const sendViewpoint = () => {
+        const newWait = calcWait()
+        if (wait !== newWait) {
+          wait = newWait
+          sendViewpointMessage = _.throttle((viewpoint: Viewpoint) => {
+            this.conference.sendMessage(MessageType.PARTICIPANT_VIEWPOINT, viewpoint)
+          },                     wait)
+        }
+        if (this.conference.channelOpened) {
+          sendViewpointMessage({...participants.local.viewpoint})
+        }
+      }
+      this.disposers.push(autorun(() => { sendViewpoint() }))
     }
 
     this.disposers.push(autorun(() => { this.sendOnStage() }))
@@ -613,6 +650,7 @@ export class ConferenceSync{
         case PropertyType.PARTICIPANT_ON_STAGE: this.onParticipantOnStage(msg.p, JSON.parse(msg.v)); break
         case PropertyType.PARTICIPANT_POSE: this.onParticipantPose(msg.p, JSON.parse(msg.v)); break
         case PropertyType.PARTICIPANT_TRACKSTATES: this.onParticipantTrackState(msg.p, JSON.parse(msg.v)); break
+        case PropertyType.PARTICIPANT_VIEWPOINT: this.onParticipantViewpoint(msg.p, JSON.parse(msg.v)); break
         default:
           console.log(`Unhandled message type ${msg.t} from ${msg.p}`)
           break

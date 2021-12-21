@@ -59,7 +59,7 @@ if (DELETE_MIC_TRACK){
 const DELETE_MIC_TRACK = true
 autorun(() => {
   const did = participants.local.devicePreference.audioInputDevice
-  const muted = participants.local.muteAudio || participants.local.awayFromKeyboard
+  const muted = participants.local.muteAudio || participants.local.physics.awayFromKeyboard
   if (participants.localId && !muted && urlParameters.testBot === null) {
     const track = connection.conference.getLocalMicTrack()
     if (track && track.getDeviceId() === did) { return }
@@ -120,7 +120,7 @@ const DELETE_TRACK = true
 autorun(() => {
   const did = participants.local.devicePreference.videoInputDevice
   const muted = participants.local.muteVideo
-    || participants.local.awayFromKeyboard
+    || participants.local.physics.awayFromKeyboard
   if (participants.localId && !muted && urlParameters.testBot === null) {
     const track = connection.conference.getLocalCameraTrack()
     if (track && track.getDeviceId() === did) { return }

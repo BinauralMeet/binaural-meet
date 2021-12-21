@@ -1,7 +1,8 @@
 //  messages forward only when participants are in the range.
 export const ParticipantMessageType = {
   PARTICIPANT_AFK: 'p_afk',                     //  boolean
-  PARTICIPANT_TRACKSTATES: 'p_trackSt',         //  boolean
+  PARTICIPANT_TRACKSTATES: 'p_trackSt',         //  TrackStates
+  PARTICIPANT_VIEWPOINT: 'p_viewpoint',         //  Viewpoint
 }
 export type ParticipantMessageKeys = keyof typeof ParticipantMessageType
 
@@ -30,6 +31,7 @@ export const InstantMessageType = {
   RELOAD_BROWSER: 'm_reload',                   //  not used, ask to reload browser
   KICK: 'm_kick',                               //  reason:string
 }
+export type InstantMessageKeys = keyof typeof InstantMessageType
 export const InstantMessageTypes = new Set(Object.values(InstantMessageType))
 
 

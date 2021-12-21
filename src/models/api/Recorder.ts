@@ -1,6 +1,6 @@
 import {Stores} from '@components/utils'
 import {ISharedContent} from '@models/ISharedContent'
-import {ParticipantBase, RemoteInformation} from '@models/Participant'
+import {ParticipantBase, RemoteInformation, Viewpoint} from '@models/Participant'
 import {mouse2Str, pose2Str, str2Mouse, str2Pose} from '@models/utils'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import { TrackStates } from '@stores/participants/ParticipantBase'
@@ -91,8 +91,8 @@ export class Recorder{
 
   private MessageTypesToRecord = new Set<string>([
     MessageType.PARTICIPANT_INFO, MessageType.PARTICIPANT_POSE, MessageType.PARTICIPANT_MOUSE,
-    MessageType.PARTICIPANT_AFK, MessageType.PARTICIPANT_TRACKSTATES, MessageType.PARTICIPANT_ON_STAGE,
-    MessageType.CONTENT_UPDATE_REQUEST, MessageType.CONTENT_REMOVE_REQUEST])
+    MessageType.PARTICIPANT_AFK, MessageType.PARTICIPANT_TRACKSTATES, MessageType.PARTICIPANT_VIEWPOINT,
+    MessageType.PARTICIPANT_ON_STAGE, MessageType.CONTENT_UPDATE_REQUEST, MessageType.CONTENT_REMOVE_REQUEST])
   private lastMessageValues= new Map<string, string>()
   recordMessage(msg:BMMessage){
     if (this.recording && this.MessageTypesToRecord.has(msg.t)){
@@ -430,8 +430,9 @@ class Player{
         case MessageType.PARTICIPANT_INFO: p.information = v as RemoteInformation; break
         case MessageType.PARTICIPANT_POSE: p.pose = str2Pose(v as string); break
         case MessageType.PARTICIPANT_MOUSE: p.mouse = str2Mouse(v as string); break
-        case MessageType.PARTICIPANT_AFK: p.awayFromKeyboard = v as boolean; break
+        case MessageType.PARTICIPANT_AFK: p.physics.awayFromKeyboard = v as boolean; break
         case MessageType.PARTICIPANT_TRACKSTATES: Object.assign(p.trackStates, v as TrackStates); break
+        case MessageType.PARTICIPANT_VIEWPOINT: Object.assign(p.viewpoint, v as Viewpoint); break
         case MessageType.PARTICIPANT_ON_STAGE: p.physics.onStage = v as boolean; break
         default: notHandled = true; break
       }
