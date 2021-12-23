@@ -21,6 +21,7 @@ export interface MediaSettings{
   device:DevicePreference,
   headphone: boolean,
   soundLocalizationBase: string,
+  uploadPreference: string
 }
 
 interface PhysicsInfo{
@@ -28,12 +29,15 @@ interface PhysicsInfo{
   physics: Physics,
 }
 
+type UploaderPreference = 'gyazo' | 'gdrive'
+
 export class LocalParticipant extends ParticipantBase implements Store<ILocalParticipant> {
   devicePreference = new DevicePreference()
   @observable.shallow tracks = new TracksStore()
   @observable useStereoAudio = false  //  will be override by url switch
   @observable thirdPersonView = config.thirdPersonView as boolean
   @observable soundLocalizationBase = config.soundLocalizationBase ? config.soundLocalizationBase : 'user'
+  @observable uploaderPreference:UploaderPreference = config.uploaderPreference ? config.uploaderPreference : 'gyazo'
   @observable.ref zone:ISharedContent|undefined = undefined    //  The zone on which the local participant located.
   @observable remoteVideoLimit = config.remoteVideoLimit as number || -1
   @observable remoteAudioLimit = config.remoteAudioLimit as number || -1
@@ -126,6 +130,7 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
       device:this.devicePreference,
       headphone: this.useStereoAudio,
       soundLocalizationBase: this.soundLocalizationBase,
+      uploadPreference: this.uploaderPreference,
     }
     //  console.log(storage === localStorage ? 'Save to localStorage' : 'Save to sessionStorage')
     localStorage.setItem('localParticipantStreamControl', JSON.stringify(muteStatus))

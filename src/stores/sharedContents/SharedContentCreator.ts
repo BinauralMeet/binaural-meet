@@ -1,6 +1,6 @@
 import {getProxiedUrl} from '@models/api/CORS'
-import {getImageSize, uploadToGyazo} from '@models/api/Gyazo'
 import GoogleDrive from '@models/api/GoogleDrive'
+import {getImageSize, uploadToGyazo} from '@models/api/Gyazo'
 import {ContentType, isContentWallpaper, ISharedContent, SharedContentData,
   SharedContentId, TEN_YEAR, TextMessages, TIME_RESOLUTION_IN_MS} from '@models/ISharedContent'
 import {Pose2DMap} from '@models/utils'
@@ -11,6 +11,7 @@ import {MapData} from '@stores/Map'
 import {defaultValue as mapObjectDefaultValue} from '@stores/MapObject'
 import {JitsiLocalTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
+import { resourceUsage } from 'process'
 import participants from '../participants/Participants'
 import sharedContents, {contentLog} from './SharedContents'
 
@@ -161,18 +162,29 @@ export function createContentOfText(message: string, map: MapData) {
 
   return pasted
 }
-export async function createContentOfImage(imageFile: File, map: MapData,  offset?:[number, number])
-  : Promise<any> {//Promise<SharedContentImp> {
-  // const promise = new Promise<SharedContentImp>((resolutionFunc, rejectionFunc) => {
-  //   uploadToGyazo(imageFile).then((url) => {
-  //     createContentOfImageUrl(url, map, offset).then(resolutionFunc)
-  //   }).catch(rejectionFunc)
-  // })
+export function createContentOfImage(imageFile: File, map: MapData,  offset?:[number, number])
+  : Promise<SharedContentImp> {
+  const promise = new Promise<SharedContentImp>((resolutionFunc, rejectionFunc) => {
+    if (participants.local.uploaderPreference === 'gyazo'){
+      uploadToGyazo(imageFile).then((url) => {
+        createContentOfImageUrl(url, map, offset).then(resolutionFunc)
+      }).catch((error) => {
+        if (error === 'type'){
+          GoogleDrive.uploadFileToGoogleDrive(imageFile).then((url) => {
+            createContentOfImageUrl(url, map, offset).then(resolutionFunc)
+          }).catch(rejectionFunc)
+        }else{
+          rejectionFunc(error)
+        }
+      })
+    }else{
+      GoogleDrive.uploadFileToGoogleDrive(imageFile).then((url) => {
+        createContentOfImageUrl(url, map, offset).then(resolutionFunc).catch(rejectionFunc)
+      })
+    }
+  })
 
-  // return promise
-
-  const url = await GoogleDrive.uploadFileToGoogleDrive(imageFile)
-  return createContentOfImageUrl(url, map, offset)
+  return promise
 }
 
 export function createContentOfImageUrl(url: string, map: MapData,

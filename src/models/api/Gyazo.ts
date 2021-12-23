@@ -15,8 +15,12 @@ export function uploadToGyazo(imageData: Blob):Promise<string> {
       resolutionFunc(responseJson.url)
     })
     .catch((error) => {
-      console.error(error)
-      rejectionFunc('')
+      if (`${error}` === 'TypeError: Failed to fetch'){
+        rejectionFunc('type')
+      }else{
+        console.error(error)
+        rejectionFunc('')
+      }
     })
   })
 

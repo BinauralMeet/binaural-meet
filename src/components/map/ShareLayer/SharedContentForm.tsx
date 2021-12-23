@@ -184,7 +184,7 @@ export const SharedContentForm: React.FC<SharedContentFormProps> = (props: Share
             }}/>, <Icon icon={imageOutlineBadged} height={TITLE_HEIGHT}/>, t('ctWallpaper')) : undefined}</Fragment>,
           <Fragment key="noFrame">{
             Row(t('ctFrameVisible'), <Icon icon={biImage} height={TITLE_HEIGHT}/>,
-            <Switch color="primary" checked={props.content?.noFrame} onChange={(ev, checked)=>{
+            <Switch color="primary" checked={props.content?.noFrame ? true : false} onChange={(ev, checked)=>{
               if (!props.content) { return }
               props.content.noFrame = checked ? true : undefined
               props.updateOnly(props.content)
