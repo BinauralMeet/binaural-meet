@@ -2,7 +2,7 @@ import {ISharedContent} from '@models/ISharedContent'
 import {MapObject as IMapObject} from '@models/MapObject'
 import { PARTICIPANT_SIZE } from '@models/Participant'
 import {
-  addV2, extractRotation, extractScaleX, mulV2, radian2Degree, rotateVector2D, subV2, transformPoint2D} from '@models/utils'
+  addV2, extractRotation, extractScaleX, radian2Degree, rotateVector2D, subV2, transformPoint2D} from '@models/utils'
 import {TITLE_HEIGHT} from '@stores/sharedContents/SharedContents'
 import {action, computed, makeObservable, observable} from 'mobx'
 import { participants } from '.'

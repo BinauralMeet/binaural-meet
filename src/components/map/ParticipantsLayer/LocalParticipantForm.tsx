@@ -5,7 +5,7 @@ import Checkbox from '@material-ui/core/Checkbox'
 import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
-import Popover, { PopoverProps } from '@material-ui/core/Popover'
+import Popover, { PopoverOrigin, PopoverReference } from '@material-ui/core/Popover'
 import TextField from '@material-ui/core/TextField'
 import {uploadToGyazo} from '@models/api/Gyazo'
 import {useTranslation} from '@models/locales'
@@ -14,9 +14,14 @@ import {isSmartphone} from '@models/utils/utils'
 import {Observer} from 'mobx-react-lite'
 import React, {useState} from 'react'
 import {SketchPicker} from 'react-color'
+import {SignalQualityButton} from './SignalQuality'
 
-export interface LocalParticipantFormProps extends PopoverProps, BMProps{
+export interface LocalParticipantFormProps extends BMProps{
+  open: boolean
+  anchorEl: HTMLElement | null
+  anchorOrigin: PopoverOrigin
   close: () => void,
+  anchorReference?: PopoverReference
 }
 
 const tfIStyle = {fontSize: isSmartphone() ? '2em' : '1em',
@@ -72,6 +77,8 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
       <span  style={{fontSize: isSmartphone() ? '2.5em' : '1em'}}>
         {t('lsTitle')}
       </span>
+      <span style={{float:'right'}}>
+        <SignalQualityButton open={props.open} stats={local.quality} isLocal={true}/></span>
     </DialogTitle>
     <DialogContent>
       <Observer>{ ()=> {

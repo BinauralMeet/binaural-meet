@@ -103,7 +103,7 @@ declare interface StatsTransport {
   type: string
 }
 
-declare interface ConnectionQualityStats{
+export declare interface ConnectionQualityStats{
   connectionQuality?: number
   jvbRTT?: number
   bridgeCount?: number

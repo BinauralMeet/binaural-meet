@@ -141,5 +141,6 @@ export const enTranslate = {
   gdFailed: 'The file in Google Drive could not be accessed.\r\nChange the file-sharing settings so that everyone on the Internet can see it.',
   videoLimit: 'Limit on the number of video streams',
   audioLimit: 'Limit on the number of audio streams',
+  connectionStatus: 'Connection Status',
 }
 export type EnKeyList = keyof typeof enTranslate

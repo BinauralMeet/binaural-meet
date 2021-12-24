@@ -9,6 +9,7 @@ import roomInfo from '@stores/RoomInfo'
 import contents from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
 import JitsiMeetJS, {JitsiLocalTrack, JitsiRemoteTrack, JitsiTrack, JitsiValues, TMediaType} from 'lib-jitsi-meet'
+import {ConnectionQualityStats} from 'lib-jitsi-meet/JitsiConference'
 import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
 import {makeObservable, observable} from 'mobx'
 import {BMMessage} from './BMMessage'
@@ -590,6 +591,14 @@ export class Conference extends EventEmitter {
         eventLog('MESSAGE_RECEIVED', id, text, timeStamp)
         //  this.emit(ConferenceEvents.MESSAGE_RECEIVED, id, text, timeStamp)
     })
+    //  connection quality
+    this._jitsiConference.on(JitsiMeetJS.events.connectionQuality.LOCAL_STATS_UPDATED,
+      (stats:ConnectionQualityStats)=>{participants.local.quality = stats})
+    this._jitsiConference.on(JitsiMeetJS.events.connectionQuality.REMOTE_STATS_UPDATED,
+      (id:string, stats:ConnectionQualityStats)=>{
+        const remote = participants.remote.get(id)
+        if (remote) { remote.quality = stats }
+      })
 
     //  kicked
     this._jitsiConference.on(JitsiMeetJS.events.conference.KICKED,

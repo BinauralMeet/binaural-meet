@@ -13,6 +13,7 @@ import participants from '@stores/participants/Participants'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import contents from '@stores/sharedContents/SharedContents'
 import React from 'react'
+import {SignalQualityButton} from './SignalQuality'
 
 export interface RemoteParticipantFormProps extends PopoverProps, BMProps{
   close: () => void,
@@ -52,6 +53,8 @@ export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (prop
   return <Popover {...popoverProps} onClose={closeConfig}>
     <DialogTitle>
       {props.participant?.information.name}
+      <span style={{float:'right'}}>
+        <SignalQualityButton open={props.open} stats={props.participant?.quality} /></span>
     </DialogTitle>
     <DialogContent>
       <Box mb={2}>

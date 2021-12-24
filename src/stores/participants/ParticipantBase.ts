@@ -8,6 +8,7 @@ import {Mouse} from '@models/utils'
 import {MapObject} from '@stores/MapObject'
 import {Store} from '@stores/utils'
 import {JitsiTrack} from 'lib-jitsi-meet'
+import { ConnectionQualityStats } from 'lib-jitsi-meet/JitsiConference'
 import {action, computed, makeObservable, observable} from 'mobx'
 
 export class TracksStore implements Tracks{
@@ -45,6 +46,7 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
   @observable muteSpeaker = false
   @observable muteVideo = false
   @observable audioLevel = 0
+  @observable.ref quality?:ConnectionQualityStats = undefined
   @action setAudioLevel(a:number) { this.audioLevel = a }
   @observable recording = false
   // determines whether the audio would be rendered

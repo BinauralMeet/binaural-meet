@@ -138,5 +138,6 @@ export const jaTranslate = {
   gdFailed: 'Google Driveのファイルにアクセスできませんでした。\r\nファイルを共有設定を変え、インターネット上の全員が閲覧できるようにしてください。',
   videoLimit: '映像ストリーム数の上限',
   audioLimit: '音声ストリーム数の上限',
+  connectionStatus: '通信状態',
 }
 export type JaKeyList = keyof typeof jaTranslate

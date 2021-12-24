@@ -14,6 +14,7 @@ import { PlaybackParticipant } from '@stores/participants/PlaybackParticipant'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
+import {SignalQualityIcon} from './SignalQuality'
 declare const config:any             //  from ../../config.js included from index.html
 
 interface StyleProps {
@@ -53,6 +54,14 @@ const useStyles = makeStyles({
     height: props.size * 0.4,
     left: props.size * 0.6,
     top: props.size * 0.6,
+    pointerEvents: 'none',
+  }),
+  signalIcon: (props: StyleProps) => ({
+    position: 'absolute',
+    width: props.size * 0.25 ,
+    height: props.size * 0.25,
+    left: props.size * 0.8,
+    top: props.size * 0.8,
     pointerEvents: 'none',
   }),
   more: (props: StyleProps) => ({
@@ -208,6 +217,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
         <Tooltip title={name}>
           <div>
             <Avatar {...props} />
+            <SignalQualityIcon className={classes.signalIcon} quality={participant.quality?.connectionQuality} />
             {headphone ? <HeadsetIcon className={classes.icon} htmlColor="rgba(0, 0, 0, 0.3)" /> : undefined}
             {speakerMuted ? <SpeakerOffIcon className={classes.icon} color="secondary" /> :
               (micMuted ? <MicOffIcon className={classes.icon} color="secondary" /> : undefined)}

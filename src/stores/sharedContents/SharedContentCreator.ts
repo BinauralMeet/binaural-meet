@@ -11,7 +11,6 @@ import {MapData} from '@stores/Map'
 import {defaultValue as mapObjectDefaultValue} from '@stores/MapObject'
 import {JitsiLocalTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
-import { resourceUsage } from 'process'
 import participants from '../participants/Participants'
 import sharedContents, {contentLog} from './SharedContents'
 
