@@ -9,7 +9,7 @@ Binaural Meet was bootstrapped with [create-react-app](https://github.com/facebo
 In the case of Windows environment. Following are recommended.
 
 - NodeJS
-
+- yarn
 - VSCode
 - Git for Windows
 - Tortoise Git (if you prefer)

@@ -4,6 +4,7 @@ const { override, addExternalBabelPlugins, addWebpackAlias} = require('customize
 module.exports = override(
     ...addExternalBabelPlugins(
         '@babel/plugin-proposal-class-properties',
+        '@babel/plugin-proposal-private-methods',
         '@babel/plugin-proposal-export-namespace-from',
         '@babel/plugin-proposal-optional-chaining',
         '@babel/plugin-proposal-nullish-coalescing-operator',
