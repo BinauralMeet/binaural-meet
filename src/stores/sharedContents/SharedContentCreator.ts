@@ -161,10 +161,10 @@ export function createContentOfText(message: string, map: MapData) {
 
   return pasted
 }
-export function createContentOfImage(imageFile: File, map: MapData,  offset?:[number, number])
+export function createContentOfImage(imageFile: File, map: MapData, offset?:[number, number], uploadType?: "gyazo" | "gdrive")
   : Promise<SharedContentImp> {
   const promise = new Promise<SharedContentImp>((resolutionFunc, rejectionFunc) => {
-    if (participants.local.uploaderPreference === 'gyazo'){
+    if (!uploadType || uploadType === 'gyazo'){
       uploadToGyazo(imageFile).then((url) => {
         createContentOfImageUrl(url, map, offset).then(resolutionFunc)
       }).catch((error) => {

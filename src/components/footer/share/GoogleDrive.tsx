@@ -24,38 +24,8 @@ export const GoogleDriveImport: React.FC<GoogleDriveImportProps> = ({ onSelected
   let pickerApiLoaded = false
   let oauthToken: undefined | string
 
-  // Use the Google API Loader script to load the google.picker script.
-  function loadPicker() {
-    gapi.load('auth', {'callback': onAuthApiLoad})
-    gapi.load('picker', {'callback': onPickerApiLoad})
-
-  }
-
-  //Oauth flow with google
-  function onAuthApiLoad() {
-    window.gapi.auth.authorize(
-        {
-          'client_id': clientId,
-          'scope': scope,
-          'immediate': false
-        },
-        handleAuthResult)
-  }
-
-  function onPickerApiLoad() {
-    pickerApiLoaded = true
-    createPicker()
-  }
-
-  function handleAuthResult(authResult: GoogleApiOAuth2TokenObject) {
-    if (authResult && !authResult.error) {
-      oauthToken = authResult.access_token
-      createPicker()
-    }
-  }
-
   // Create and render a Picker object for searching images.
-  function createPicker() {
+  function createPicker(oauthToken:string) {
     if (pickerApiLoaded && oauthToken) {
       const view = new google.picker.DocsView(google.picker.ViewId.DOCS) // LIMIT CONTENT TYPE RESULT
       //view.setMimeTypes("image/png,image/jpeg,image/jpg"); // LIMIT BY MIME TYPE
@@ -107,10 +77,12 @@ export const GoogleDriveImport: React.FC<GoogleDriveImportProps> = ({ onSelected
 
 
   useEffect(() => {
-    if(gapi){
-      loadPicker()
+    if(gapi && window.gapiPickerReady ){
+      const token = sessionStorage.getItem('gdriveToken')
+      if(token)
+      createPicker(token)
     }
-  }, [gapi])
+  }, [gapi,window.gapiPickerReady])
 
   return <>{'loading...'}</>
 }
