@@ -2,7 +2,7 @@ import {useTranslation} from '@models/locales'
 import {createContentOfImage} from '@stores/sharedContents/SharedContentCreator'
 import sharedContents from '@stores/sharedContents/SharedContents'
 import {DropzoneArea} from 'material-ui-dropzone'
-import React, {useState} from 'react'
+import React, {useState, useEffect} from 'react'
 import {DialogPageProps} from './DialogPage'
 import {Input} from './Input'
 import Box from "@material-ui/core/Box";
@@ -22,7 +22,7 @@ export const ImageInput: React.FC<ImageInputProps> = (props) => {
   } = props
 
   const [files, setFiles] = useState<File[]>([])
-  const [uploadType, setUploadType] = useState<"gyazo" | "gdrive">('gyazo')
+  const [uploadType, setUploadType] = useState<"gyazo" | "gdrive">(sessionStorage.getItem("uploadTypePreferences") as "gyazo" | "gdrive" || "gyazo")
 
   const {t} = useTranslation()
   const field = (
@@ -47,6 +47,11 @@ export const ImageInput: React.FC<ImageInputProps> = (props) => {
     })
   }
 
+  useEffect(() => {
+    sessionStorage.setItem("uploadTypePreferences", uploadType);
+  }, [uploadType]);
+
+
   const map = props.stores.map
 
   return (
@@ -61,7 +66,7 @@ export const ImageInput: React.FC<ImageInputProps> = (props) => {
             name="upload-files-to"
             onChange={(e) => {
               setUploadType(e.target.value as typeof uploadType);
-              e.target.value === "gdrve" && authGoogleDrive();
+              //e.target.value === "gdrve" && authGoogleDrive();
             }}
           >
             <FormControlLabel value="gyazo" control={<Radio />} label="Gyazo" />
