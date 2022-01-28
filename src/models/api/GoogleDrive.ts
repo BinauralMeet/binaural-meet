@@ -44,13 +44,20 @@ class GoogleDrive {
 
   private async login() {
     const res = await new Promise((resolve, reject)=>{
+      console.log(gapi.auth);
       gapi.auth.authorize(
         {
           'client_id': this.clientId,
           'scope': this.scopes,
-          'immediate': false
+          'immediate': true
         },
-        (r)=>r.error?reject(r):resolve(r))
+        (r)=>r.error?gapi.auth.authorize(
+          {
+            'client_id': this.clientId,
+            'scope': this.scopes,
+            'immediate': false
+          },
+          (k)=>k.error?reject(k):resolve(k)):resolve(r))
     })
     console.log(res)
   }
