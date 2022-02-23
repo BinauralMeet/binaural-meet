@@ -237,10 +237,6 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
         key="shareImage" text={t('shareImage')} icon={<ImageIcon />} onClick={() => setStep('image')}
       />
       <ShareDialogItem
-        tip = {t('shareGDriveTip')}
-        key="shareGDrive" text={t('shareGDrive')} icon={<InsertDriveFileTwoTone />} onClick={() => setStep('Gdrive')}
-      />
-      <ShareDialogItem
         key="shareText" text={t('shareText')} icon={<SubjectIcon />} onClick={createText}
       />
       <ShareDialogItem
@@ -326,6 +322,10 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
           <ShareDialogItem
             key="shareDownload" text={t('shareDownload')} icon={<DownloadIcon />} onClick={downloadFile}
           />
+          {/*<ShareDialogItem
+            tip = {t('shareGDriveTip')}
+            key="shareGDrive" text={t('shareGDrive')} icon={<InsertDriveFileTwoTone />} onClick={() => setStep('Gdrive')}
+          />*/}
         </div>
       </Collapse>
     </List>
