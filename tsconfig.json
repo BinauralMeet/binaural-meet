@@ -26,6 +26,7 @@
     "isolatedModules": true
   },
   "include": [
-    "src"
+    "src",
+    "libs/lib-jitsi-meet"
   ]
 }
