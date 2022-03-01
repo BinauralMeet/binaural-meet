@@ -1,5 +1,5 @@
 const path = require('path');
-const { override, addExternalBabelPlugins, addWebpackAlias} = require('customize-cra');
+const { override, addExternalBabelPlugins, addWebpackAlias, addWebpackModuleRule } = require('customize-cra');
 
 module.exports = override(
     ...addExternalBabelPlugins(
@@ -15,6 +15,14 @@ module.exports = override(
         '@stores' : path.resolve(__dirname, './src/stores'),
         '@hooks' : path.resolve(__dirname, './src/hooks'),
         '@images' : path.resolve(__dirname, './src/images'),
-    })
+    }),
+    addWebpackModuleRule(
+        {
+            test: /\.(ts|tsx)$/i,
+            include: ['./libs/'],
+            loader: "ts-loader",
+            exclude: ["/node_modules/"],
+        },
+    )
 );
 
