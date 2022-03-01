@@ -25,7 +25,7 @@ import {ShareButton} from './share/ShareButton'
 import {StereoAudioSwitch} from './StereoAudioSwitch'
 
 const useStyles = makeStyles({
-  container:{
+  root:{
     position: 'absolute',
     width: '100%',
     bottom: 0,
@@ -209,7 +209,7 @@ export const Footer: React.FC<BMProps&{height?:number}> = (props) => {
       setShowAdmin(false)
     }
 
-    return <div ref={containerRef} className={classes.container}>
+    return <div ref={containerRef} className={classes.root}>
       <Collapse in={show} classes={classes}>
         <StereoAudioSwitch size={fabSize} iconSize={iconSize} {...props}/>
         <FabMain size={fabSize} color={mute.muteS ? 'primary' : 'secondary' }

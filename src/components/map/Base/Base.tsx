@@ -162,8 +162,9 @@ export const Base: React.FC<MapProps> = (props: MapProps) => {
         mem.mouseDown = true
         //  console.log('Base StartDrag:')
         if (buttons === MOUSE_LEFT) {
+          //  It seems facing and moving to the mouse cursor induce unintended movements of the avatar.
           //  move participant to mouse position
-          moveParticipantPeriodically(false)  //  inital rotation.
+          //  moveParticipantPeriodically(false)
         }
       },
       onDrag: ({down, delta, xy, buttons}) => {

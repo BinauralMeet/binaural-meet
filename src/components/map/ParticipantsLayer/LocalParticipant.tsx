@@ -2,8 +2,9 @@ import {MAP_SIZE} from '@components/Constants'
 import {MoreButton, moreButtonControl, MoreButtonMember} from '@components/utils/MoreButton'
 import {makeStyles} from '@material-ui/core/styles'
 import {addV2, assert, mulV2, rotateVector2DByDegree, subV2, transformPoint2D, transfromAt} from '@models/utils'
+import { autorun } from 'mobx'
 import {useObserver} from 'mobx-react-lite'
-import React, {useEffect, useRef} from 'react'
+import React, {memo, useEffect, useRef} from 'react'
 import {DragHandler, DragState} from '../../utils/DragHandler'
 import {KeyHandlerPlain} from '../../utils/KeyHandler'
 import {LocalParticipantForm} from './LocalParticipantForm'
@@ -122,14 +123,13 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     return relatedKeyPressed
   }
 
-  const scrollMap = () => {
+  const scrollMap = (ratio: number) => {
     const posOnScreen = map.toWindow(participant!.pose.position)
     const target = [posOnScreen[0], posOnScreen[1]]
-    const RATIO = 0.2
-    const left = map.left + map.screenSize[0] * RATIO
-    const right = map.left + map.screenSize[0] * (1 - RATIO)
-    const bottom = map.screenSize[1] * (1 - RATIO)
-    const top = participants.local.thirdPersonView ? map.screenSize[1] * RATIO : bottom
+    const left = map.left + map.screenSize[0] * ratio
+    const right = map.left + map.screenSize[0] * (1 - ratio)
+    const bottom = map.screenSize[1] * (1 - ratio)
+    const top = participants.local.thirdPersonView ? map.screenSize[1] * ratio : bottom
     if (target[0] < left) { target[0] = left }
     if (target[0] > right) { target[0] = right }
     if (target[1] < top) { target[1] = top }
@@ -169,7 +169,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     if (state.dragging) {
       onDrag(state)
     }
-    const rv = scrollMap()
+    const rv = scrollMap(0.2)
     //  console.log(`onTimer: drag:${state.dragging} again:${rv}`)
 
     return rv
@@ -183,22 +183,37 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     const participantMoved = moveParticipantByKey(keys)
 
     if (member.scrollAgain || participantMoved) {
-      return scrollMap()
+      return scrollMap(0.2)
     }
 
     return false
   }
+  const TIMER_INTERVAL = 33
   const keycodesUse = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
     'KeyQ', 'KeyW', 'KeyE', 'KeyA', 'KeyS', 'KeyD'])
-  KeyHandlerPlain(onKeyTimer, 33, keycodesUse, keycodesUse, () => (map.keyInputUsers.size === 0))
+  KeyHandlerPlain(onKeyTimer, TIMER_INTERVAL, keycodesUse, keycodesUse, () => (map.keyInputUsers.size === 0))
 
   //  pointer drag
-  const TIMER_INTERVAL = 33
   const drag = DragHandler<HTMLDivElement>(onDrag, 'dragHandle',
                                                onTimer, TIMER_INTERVAL, () => { setShowConfig(true) })
   useEffect(() => {
     drag.target.current?.focus({preventScroll:true})
   })
+
+  useEffect(()=>{
+    const dispo = autorun(()=>{
+      const mat = map.committedMatrix
+      if (!member.scrollAgain && !drag.memo.timerId){
+        const scroll = ()=>{
+          if (scrollMap(0.01)){
+            setTimeout(scroll, TIMER_INTERVAL)
+          }
+        }
+        scroll()
+      }
+    })
+    return dispo
+  }, [])
 
 /*  rotation changes sound localization and frequent changes are not good to hear.
   //  Rotate participant to look at the pointer

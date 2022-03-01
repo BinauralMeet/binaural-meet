@@ -1,3 +1,4 @@
+import { MemoedAvatar } from '@components/avatar/ConnectedAvatar'
 import {normV, subV2} from '@models/utils'
 import React, {useEffect, useRef} from 'react'
 
@@ -74,6 +75,7 @@ export function DragHandler<ET extends Element>(onDrag:(state:DragState<ET>) => 
   },        [target.current])
   const bindObject = {
     target: target,
+    memo: memo,
     onMouseDown: (e: React.MouseEvent<ET>) => { e.stopPropagation() },
     onTouchStart: (e: React.TouchEvent<ET>) => { e.stopPropagation() },
     onPointerDown: (e: React.PointerEvent<ET>) => {
