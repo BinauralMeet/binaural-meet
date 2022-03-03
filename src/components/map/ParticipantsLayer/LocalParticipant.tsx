@@ -200,6 +200,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     drag.target.current?.focus({preventScroll:true})
   })
 
+/*  //  always forcus on my avatar.
   useEffect(()=>{
     const dispo = autorun(()=>{
       const mat = map.committedMatrix
@@ -214,6 +215,8 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     })
     return dispo
   }, [])
+*/
+
 
 /*  rotation changes sound localization and frequent changes are not good to hear.
   //  Rotate participant to look at the pointer

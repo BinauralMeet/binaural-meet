@@ -1,4 +1,3 @@
-import { MemoedAvatar } from '@components/avatar/ConnectedAvatar'
 import {normV, subV2} from '@models/utils'
 import React, {useEffect, useRef} from 'react'
 

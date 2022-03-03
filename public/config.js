@@ -113,4 +113,4 @@ const config_alpha = {
 }
 Object.assign(config_alpha, Object.assign(common_config, config_alpha))
 
-const config = config_binaural
+const config = config_titech
