@@ -1,4 +1,5 @@
 {
+  "extends": "./tsconfig.paths.json",
   "compilerOptions": {
     "target": "es5",
     "lib": [
@@ -22,14 +23,7 @@
     "downlevelIteration": true,
     "jsx": "react-jsx",
     "baseUrl": "src",
-    "isolatedModules": true,
-    "paths": {  // Only for vscode. see config-override.js
-      "@models/*": [ "models/*" ],
-      "@components/*": [ "components/*"],
-      "@stores/*": [ "stores/*"],
-      "@hooks/*": ["hooks/*"],
-      "@libs/*": ["../../libs/*"],
-    }
+    "isolatedModules": true
   },
   "include": [
     "src",

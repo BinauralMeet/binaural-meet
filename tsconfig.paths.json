@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "@models/*": [ "models/*" ],
+      "@components/*": [ "components/*"],
+      "@stores/*": [ "stores/*"],
+      "@hooks/*": ["hooks/*"],
+      "@libs/*": ["../../libs/*"],
+    },
+  }
+}
