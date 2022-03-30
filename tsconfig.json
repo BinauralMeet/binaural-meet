@@ -22,7 +22,14 @@
     "downlevelIteration": true,
     "jsx": "react-jsx",
     "baseUrl": "src",
-    "isolatedModules": true
+    "isolatedModules": true,
+    "paths": {  // Only for vscode. see config-override.js
+      "@models/*": [ "models/*" ],
+      "@components/*": [ "components/*"],
+      "@stores/*": [ "stores/*"],
+      "@hooks/*": ["hooks/*"],
+      "@libs/*": ["../../libs/*"],
+    }
   },
   "include": [
     "src",

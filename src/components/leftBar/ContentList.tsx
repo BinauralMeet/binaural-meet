@@ -30,7 +30,7 @@ export const ContentLine: React.FC<BMProps & TextLineStyle &
   const [showForm, setShowForm] = React.useState(false)
   const ref = React.useRef<HTMLButtonElement>(null)
   const {lineHeight, content, ...contentProps} = props
-  const targetContent = locatedContentOnly(props.stores.contents.find(props.content.id))
+  let targetContent: ISharedContent|undefined = undefined
   const map = props.stores.map
 
   return <Observer>{()=> {
@@ -39,6 +39,9 @@ export const ContentLine: React.FC<BMProps & TextLineStyle &
 
     if (props.content.color?.length){ colors[0] = rgb2Color(props.content.color) }
     if (props.content.textColor?.length){ colors[1] = rgb2Color(props.content.textColor) }
+    if (showForm){
+      targetContent = locatedContentOnly(props.stores.contents.find(props.content.id))
+    }
 
     return <>
       <Tooltip title={<>{props.content.name}<br />{props.content.ownerName}</>} placement="right">

@@ -39,6 +39,10 @@ export class StereoParameters implements ConfigurableParams {
   // make all participants hearable
   @action
   setBroadcast(bcast:boolean) {
+    //  ---------------------------------------------------
+    //  Do not hear all even when broadcast
+    bcast = false
+
     this.refDistance = bcast ? BROADCAST_DISTANCE - 1 : this.refDistanceNormal
     //  console.log(`setBroadcast is called bcast=${bcast}  distance=${this.refDistanceNormal}`)
   }

@@ -13,7 +13,7 @@ export const defaultValue: IMapObject = {
 }
 
 export class MapObject implements Store<IMapObject> {
-  @observable pose: (Pose2DMap)
+  @observable pose: Pose2DMap
 
   constructor() {
     this.pose = _.cloneDeep(defaultValue.pose)
