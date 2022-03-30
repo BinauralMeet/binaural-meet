@@ -3,9 +3,10 @@ export const enTranslate = {
     + ' It holds multiple conversations in a venue parallelly, and you may walk around between them.'
     + ' Sharing screens, cameras, texts, images, YouTube, and documents on google drive are supported.'
     + ' You may drop or paste on the map.',
+  enNote: 'There remains a bug that you can not hear certain people\'s voices. If you encounter, please reload the the page by the browser to fix it.',
   enTopPageUrl: 'https://scrapbox.io/binaural-meet/Top_page',
   enMoreInfo: '... more info',
-  YourName: 'Your name',
+  YourName: 'Enter your name',
   Venue: 'Venue',
   EnterTheVenue: 'Enter the venue',
   Contents: 'Contents',

@@ -52,7 +52,7 @@ export interface LocalInformation extends BaseInformation{
   notifyYarn: boolean
 }
 export const defaultInformation:LocalInformation = {
-  name: 'Anonymous',
+  name: '',
   email: '',
   avatarSrc: '',
   color: [],
