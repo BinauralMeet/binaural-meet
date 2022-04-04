@@ -119,6 +119,7 @@ export const enTranslate = {
   Clear: 'Clear',
   Cancel: 'Cancel',
   broadcastMyVoice: 'Broadcast my voice',
+  showTrackedFace: 'Show only facial feature points',
   soundLocalizationBasedOn: 'Sound localization based on',
   slAvatar: 'Avatar (avatar\'s direction)',
   slUser: 'User (top is front)',

@@ -144,6 +144,7 @@ export const Base: React.FC<MapProps> = (props: MapProps) => {
       local.savePhysicsToStorage(false)
     }
   }
+  /*
   function moveParticipantPeriodically(move: boolean, target?:[number,number]) {
     moveParticipant(move, target)
     const TIMER_INTERVAL = move ? 33 : 300
@@ -152,7 +153,7 @@ export const Base: React.FC<MapProps> = (props: MapProps) => {
         moveParticipantPeriodically(true)
       }
     }, TIMER_INTERVAL) //  move to mouse position
-  }
+  }*/
 
   const bind = useGesture(
     {

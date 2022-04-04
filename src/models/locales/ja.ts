@@ -116,6 +116,7 @@ export const jaTranslate = {
   Clear: 'クリア',
   Cancel: 'キャンセル',
   broadcastMyVoice: '声を全員に届ける',
+  showTrackedFace: '顔の特徴点のみ表示',
   soundLocalizationBasedOn: '音像定位の向きの基準',
   slAvatar: 'アバターの向き',
   slUser: 'ユーザーの向き(上が前)',

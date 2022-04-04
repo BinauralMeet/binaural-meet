@@ -20,6 +20,7 @@ import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import {AdminConfigForm} from './adminConfig/AdminConfigForm'
 import {BroadcastControl} from './BroadcastControl'
+import {FaceControl} from './FaceControl'
 import {FabMain, FabWithTooltip} from './FabEx'
 import {ShareButton} from './share/ShareButton'
 import {StereoAudioSwitch} from './StereoAudioSwitch'
@@ -153,9 +154,11 @@ export const Footer: React.FC<BMProps&{height?:number}> = (props) => {
         > { (selected ? '✔\u00A0' : '\u2003') + info.label }</MenuItem>  //  \u00A0: NBSP, u2003: EM space.
     }
 
-    const micMenuItems:JSX.Element[] = [<MenuItem  key = {'broadcast'} ><BroadcastControl {...props} /></MenuItem>]
+    const micMenuItems:JSX.Element[] = [
+      <MenuItem  key = {'broadcast'} ><BroadcastControl {...props} /></MenuItem>]
     const speakerMenuItems:JSX.Element[] = []
-    const videoMenuItems:JSX.Element[] = []
+    const videoMenuItems:JSX.Element[] = [
+      <MenuItem  key = {'faceTrack'} ><FaceControl {...props} /></MenuItem>]
     deviceInfos.forEach((info) => {
       if (info.kind === 'audioinput') {
         const broadcastControl = micMenuItems.pop() as JSX.Element
@@ -166,7 +169,9 @@ export const Footer: React.FC<BMProps&{height?:number}> = (props) => {
         speakerMenuItems.push(makeMenuItem(info, closeSpeakerMenu))
       }
       if (info.kind === 'videoinput') {
+        const faceControl = videoMenuItems.pop() as JSX.Element
         videoMenuItems.push(makeMenuItem(info, closeVideoMenu))
+        videoMenuItems.push(faceControl)
       }
     })
     function closeMicMenu(did:string) {

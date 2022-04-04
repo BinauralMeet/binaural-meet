@@ -5,6 +5,7 @@ import {urlParameters} from '@models/url'
 import participants from '@stores/participants/Participants'
 import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'
 import {autorun} from 'mobx'
+import {createLocalCamera} from './faceCamera'
 
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
@@ -99,32 +100,17 @@ autorun(() => {
   }
 })
 
-//  camera device selection
-export function createLocalCamera() {
-  const promise = new Promise<JitsiLocalTrack>((resolutionFunc, rejectionFunc) => {
-    const did = participants.local.devicePreference.videoInputDevice
-    JitsiMeetJS.createLocalTracks({devices:['video'],
-      constraints: config.rtc.videoConstraints, cameraDeviceId: did}).then(
-      (tracks: JitsiLocalTrack[]) => {
-        connection.conference.setLocalCameraTrack(tracks[0])
-        resolutionFunc(tracks[0])
-      },
-    ).catch(rejectionFunc)
-  })
-
-  return promise
-}
-
 //  camera mute and camera device update
 const DELETE_TRACK = true
 autorun(() => {
   const did = participants.local.devicePreference.videoInputDevice
+  const faceTrack = participants.local.information.faceTrack
   const muted = participants.local.muteVideo
     || participants.local.physics.awayFromKeyboard
   if (participants.localId && !muted && urlParameters.testBot === null) {
     const track = connection.conference.getLocalCameraTrack()
     if (track && track.getDeviceId() === did) { return }
-    createLocalCamera().finally(getNotificationPermission)
+    createLocalCamera(faceTrack).finally(getNotificationPermission)
   }else{
     if (DELETE_TRACK){
       connection.conference.setLocalCameraTrack(undefined).then(track => track?.dispose())

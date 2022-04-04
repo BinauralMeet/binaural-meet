@@ -46,6 +46,7 @@ export interface RemoteInformation extends BaseInformation{
 }
 export interface LocalInformation extends BaseInformation{
   email: string
+  faceTrack: boolean
   notifyCall: boolean
   notifyTouch: boolean
   notifyNear: boolean
@@ -57,6 +58,7 @@ export const defaultInformation:LocalInformation = {
   avatarSrc: '',
   color: [],
   textColor: [],
+  faceTrack: true,
   notifyCall: true,
   notifyTouch: false,
   notifyNear: false,
