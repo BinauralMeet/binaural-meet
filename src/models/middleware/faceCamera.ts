@@ -5,6 +5,8 @@ import {createJitisLocalTracksFromStream} from '@models/utils/jitsiTrack'
 import {rgba} from '@models/utils/color'
 import participants from '@stores/participants/Participants'
 import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'
+import {addV2, mulV2, rotateVector2D, rotateVector2DByDegree, subV2} from '@models/utils'
+import { filter } from 'lodash'
 
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
@@ -93,6 +95,33 @@ function drawFace(width:number, height:number,
   ctx2?.drawImage(canvasBufEl, 0, 0)
 }
 
+var lastPos:number[] = []
+var lastWidth:number = -1
+var filteredPos:number[] = []
+var filteredWidth:number = -1
+function moveAvatar(face?: WithFaceLandmarks<{detection:FaceDetection}, FaceLandmarks68>){
+  if (face){
+    const currentPos = [face.detection.relativeBox.x, face.detection.relativeBox.y]
+    const currentWidth = face.detection.relativeBox.width
+    if (filteredPos.length){
+      const alpha = 0.2
+      filteredPos = addV2(mulV2(alpha, currentPos), mulV2(1-alpha, lastPos))
+      filteredWidth = alpha * currentWidth + (1-alpha) * lastWidth
+    }else{
+      filteredPos = currentPos
+      filteredWidth = currentWidth
+    }
+    if (lastPos.length){
+      const diffWorldPos = subV2(filteredPos, lastPos)
+      const diffWidth = filteredWidth - lastWidth
+      const diffAvatarPos = rotateVector2DByDegree(participants.local.pose.orientation, [diffWorldPos[0], diffWidth])
+      participants.local.pose.position = addV2(participants.local.pose.position, mulV2(-100, diffAvatarPos))
+    }
+    lastPos = filteredPos
+    lastWidth = filteredWidth
+  }
+}
+
 var canvasEl: HTMLCanvasElement|undefined
 var loaded = false
 export function createLocalCamera(faceTrack: boolean) {
@@ -121,6 +150,7 @@ export function createLocalCamera(faceTrack: boolean) {
             if (loaded){
               detectSingleFace(videoEl!, ops).withFaceLandmarks(true).then((face) => {
                 drawFace(videoEl!.videoWidth, videoEl!.videoHeight, canvasEl!, face)
+                moveAvatar(face)
                 return face
               }).catch(()=>{
                 drawFace(videoEl!.videoWidth, videoEl!.videoHeight, canvasEl!)
