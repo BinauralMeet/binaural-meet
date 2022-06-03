@@ -34,6 +34,7 @@ const useStyles = makeStyles({
     top: props.position[1],
   }),
   pointerRotate: (props: StyleProps) => ({
+    transformOrigin: `top left`,
     transform: `rotate(${props.orientation}deg)`,
   }),
   pointer: (props: StyleProps) => ({
@@ -47,6 +48,9 @@ const useStyles = makeStyles({
     position: 'absolute',
     left: `-${props.size * HALF}px`,
     top: `-${props.size * HALF}px`,
+    transformOrigin: `top left`,
+    transform: `translate(${props.size * HALF}px, ${props.size * HALF}px) `
+      +`rotate(${-props.orientation}deg) translate(${-props.size * HALF}px, ${-props.size * HALF}px)`,
   }),
   icon: (props: StyleProps) => ({
     position: 'absolute',
@@ -102,7 +106,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
   const speakerMuted = useObserver(() => participant.trackStates.speakerMuted)
   const headphone = useObserver(() => participant.trackStates.headphone)
   const onStage = useObserver(() => participant.physics.onStage)
-  const viewpoint = useObserver(() => ({center:participant.viewpoint.center, height:participant.viewpoint.height}))
+  const viewpoint = useObserver(() => ({center:participant.viewpoint.center, height:participant.viewpoint.height, nodding: participant.viewpoint.nodding}))
 
   const classes = useStyles({
     ...participantProps,
@@ -120,7 +124,16 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
   const eyeOffsetMul = normV(viewpoint.center)/500 * 0.16 + 0.85
 
   const dir = subV2(participantProps.mousePosition, participantProps.position)
-  const eyeDist = 0.4
+  const eyeDist = 0.45
+
+  const nodding = viewpoint.nodding
+  const isNoseUp = nodding ? nodding < -0.01 : false
+  const noseWidth = 0.45
+  const noseStart = 0.9 * (nodding ? Math.cos(nodding * 4) : 1)
+  const noseLength = 0.6 * noseStart
+  const tailStart = noseStart
+  const tailLength = tailStart * 0.9
+  const tailWidth = 0.36
   const eyeOffsets:[[number, number], [number, number]]
     = [[eyeDist * outerRadius, - eyeOffsetMul*outerRadius],
       [-eyeDist * outerRadius, - eyeOffsetMul*outerRadius]]
@@ -148,6 +161,19 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
     onPointerDown: onClickEye,
   }
 
+  const shadow = <svg className={classes.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO}
+    xmlns="http://www.w3.org/2000/svg">{/* Cast shadow to show the height */}
+    <defs>
+      <radialGradient id="grad">
+        <stop offset="0%" stopColor="rgb(0,0,0,0.4)"/>
+        <stop offset="70%" stopColor="rgb(0,0,0,0.4)"/>
+        <stop offset="100%" stopColor="rgb(0,0,0,0)"/>
+      </radialGradient>
+    </defs>
+    <circle r={outerRadius * shadowScale} cy={svgCenter+shadowOffset} cx={svgCenter+shadowOffset}
+      stroke="none" fill={'url(#grad)'} />
+  </svg>
+
   const audioMeterSteps = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
   const audioMeter = audioMeterSteps.map(step => audioLevel > step ?
     <React.Fragment key={step}>
@@ -158,73 +184,78 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
     </React.Fragment>
     : undefined)
 
-  return (
+  const arrow = <g transform={`translate(${svgCenter} ${svgCenter}) rotate(-135) `}>
+    <rect style={{pointerEvents: 'fill'}}
+      height={outerRadius} width={outerRadius} fill={color} />
+    {isLocal ?
+      <path  d={`M 0 ${outerRadius} h ${outerRadius} v ${-outerRadius}` +
+        `a ${outerRadius} ${outerRadius} 0 1 0 ${-outerRadius} ${outerRadius}`}
+        fill="none" stroke={textColor} />
+    : undefined}
+  </g>
+
+  const flog = <g style={{pointerEvents: 'fill'}} >
+    <circle {...eyeClick} r={0.35 * outerRadius} cy={svgCenter + eyeOffsets[0][1]}
+      cx={svgCenter + eyeOffsets[0][0]} fill={color} />
+    <circle {...eyeClick} r={0.35 * outerRadius} cy={svgCenter + eyeOffsets[1][1]}
+      cx={svgCenter + eyeOffsets[1][0]} fill={color} />
+    {participantProps.awayFromKeyboard === true ?
+      undefined
+    :<>
+    <circle {...eyeClick} r={0.25 * outerRadius} cy={svgCenter + eyeOffsets[0][1]}
+      cx={svgCenter + eyeOffsets[0][0]} fill="white" />
+    <circle {...eyeClick} r={0.25 * outerRadius} cy={svgCenter + eyeOffsets[1][1]}
+      cx={svgCenter + eyeOffsets[1][0]} fill="white" />
+    <circle {...eyeClick} r={0.14 * outerRadius} cy={svgCenter + eyeOffsets[0][1] + eyeballs[0][1]}
+      cx={svgCenter + eyeOffsets[0][0] +  eyeballs[0][0]} fill="black" />
+    <circle {...eyeClick} r={0.14 * outerRadius} cy={svgCenter + eyeOffsets[1][1] + eyeballs[1][1]}
+      cx={svgCenter + eyeOffsets[1][0] +  eyeballs[1][0]} fill="black" />
+  </>}
+</g>
+const nose = <path d={`M ${svgCenter-noseWidth*outerRadius/2} ${svgCenter-outerRadius*noseStart} `+
+  `Q ${svgCenter} ${svgCenter-outerRadius*(noseStart+noseLength)}` +
+  ` ${svgCenter+noseWidth*outerRadius/2} ${svgCenter-outerRadius*noseStart}`} stroke={textColor} fill={color} />
+//const tail = <path d={`M ${svgCenter-tailWidth*outerRadius} ${svgCenter+outerRadius*tailStart}` +
+//  ` Q ${svgCenter} ${svgCenter+outerRadius*(tailStart+tailLength)}`+
+//  `  ${svgCenter+tailWidth*outerRadius} ${svgCenter+outerRadius*tailStart}`} stroke={textColor} fill={color} />
+const tail = undefined
+
+const avatarOuter = config.avatar === 'arrow' ?  //  arrow (circle with a corner) type avatar
+  arrow : flog // Frog type (two eyes) avatar
+
+const outerUnder = <svg
+  className={classes.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO} xmlns="http://www.w3.org/2000/svg">
+  {nodding ? (isNoseUp ? tail : nose) : undefined}
+  <circle r={outerRadius} cy={svgCenter} cx={svgCenter} stroke={isLocal ? textColor : 'none'} fill={color} />
+  {audioMeter}
+  {(!nodding || !isNoseUp) ? avatarOuter : undefined}
+</svg>
+
+const outerOver = <svg
+  className={classes.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO} xmlns="http://www.w3.org/2000/svg">
+  {isNoseUp ? avatarOuter: undefined}
+  {nodding ? (isNoseUp ? nose : tail) : undefined}
+</svg>
+
+return (
     <div className={classes.root + ' dragHandle'} onContextMenu={props.onContextMenu}>
-      <svg className={classes.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO}
-        xmlns="http://www.w3.org/2000/svg">{/* Cast shadow to show the height */}
-        <defs>
-          <radialGradient id="grad">
-            <stop offset="0%" stopColor="rgb(0,0,0,0.4)"/>
-            <stop offset="70%" stopColor="rgb(0,0,0,0.4)"/>
-            <stop offset="100%" stopColor="rgb(0,0,0,0)"/>
-          </radialGradient>
-        </defs>
-        <circle r={outerRadius * shadowScale} cy={svgCenter+shadowOffset} cx={svgCenter+shadowOffset}
-          stroke="none" fill={'url(#grad)'} />
-      </svg>
-      <div className={classes.pointerRotate}>{/* The avatar */}
-        <svg
-          className={classes.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO} xmlns="http://www.w3.org/2000/svg">
-          <circle r={outerRadius} cy={svgCenter} cx={svgCenter} stroke="none" fill={color} />
-          {audioMeter}
-          {config.avatar === 'arrow' ?  //  arrow (circle with a corner) type avatar
-            <g transform={`translate(${svgCenter} ${svgCenter}) rotate(-135) `}>
-              <rect style={{pointerEvents: 'fill'}}
-                height={outerRadius} width={outerRadius} fill={color} />
-              {isLocal ?
-                <path  d={`M 0 ${outerRadius} h ${outerRadius} v ${-outerRadius}` +
-                  `a ${outerRadius} ${outerRadius} 0 1 0 ${-outerRadius} ${outerRadius}`}
-                  fill="none" stroke={textColor} />
-                : undefined}
-            </g>
-            : // Frog type (two eyes) avatar
-            <g style={{pointerEvents: 'fill'}} >
-              {isLocal ?
-                <circle r={outerRadius} cy={svgCenter} cx={svgCenter} fill="none" stroke={textColor} />
-                : undefined}
-              <circle {...eyeClick} r={0.35 * outerRadius} cy={svgCenter + eyeOffsets[0][1]}
-                cx={svgCenter + eyeOffsets[0][0]} fill={color} />
-              <circle {...eyeClick} r={0.35 * outerRadius} cy={svgCenter + eyeOffsets[1][1]}
-                cx={svgCenter + eyeOffsets[1][0]} fill={color} />
-              {participantProps.awayFromKeyboard === true ?
-                undefined
-              :<>
-                <circle {...eyeClick} r={0.25 * outerRadius} cy={svgCenter + eyeOffsets[0][1]}
-                  cx={svgCenter + eyeOffsets[0][0]} fill="white" />
-                <circle {...eyeClick} r={0.25 * outerRadius} cy={svgCenter + eyeOffsets[1][1]}
-                  cx={svgCenter + eyeOffsets[1][0]} fill="white" />
-                <circle {...eyeClick} r={0.14 * outerRadius} cy={svgCenter + eyeOffsets[0][1] + eyeballs[0][1]}
-                  cx={svgCenter + eyeOffsets[0][0] +  eyeballs[0][0]} fill="black" />
-                <circle {...eyeClick} r={0.14 * outerRadius} cy={svgCenter + eyeOffsets[1][1] + eyeballs[1][1]}
-                  cx={svgCenter + eyeOffsets[1][0] +  eyeballs[1][0]} fill="black" />
-              </>}
-            </g>
-          }
-        </svg>
-      </div>
-      <div className={classes.avatar}
-        style = {{transform: `rotate(${-mapData.rotation}deg)`}} >
-        <Tooltip title={name}>
-          <div>
-            <Avatar {...props} />
-            <SignalQualityIcon className={classes.signalIcon} quality={participant.quality?.connectionQuality} />
-            {headphone ? <HeadsetIcon className={classes.icon} htmlColor="rgba(0, 0, 0, 0.3)" /> : undefined}
-            {speakerMuted ? <SpeakerOffIcon className={classes.icon} color="secondary" /> :
-              (micMuted ? <MicOffIcon className={classes.icon} color="secondary" /> : undefined)}
-            {!micMuted && onStage ? <Icon className={classes.icon} icon={megaphoneIcon} color="gold" /> : undefined }
-            {props.isPlayback ? <PlayArrowIcon className={classes.icon} htmlColor="#0C0" /> : undefined}
-          </div>
-        </Tooltip>
+      {shadow}
+      <div className={classes.pointerRotate}>
+        {outerUnder}
+        <div className={classes.avatar}>
+          <Tooltip title={name}>
+            <div>
+              <Avatar {...props} />
+              <SignalQualityIcon className={classes.signalIcon} quality={participant.quality?.connectionQuality} />
+              {headphone ? <HeadsetIcon className={classes.icon} htmlColor="rgba(0, 0, 0, 0.3)" /> : undefined}
+              {speakerMuted ? <SpeakerOffIcon className={classes.icon} color="secondary" /> :
+                (micMuted ? <MicOffIcon className={classes.icon} color="secondary" /> : undefined)}
+              {!micMuted && onStage ? <Icon className={classes.icon} icon={megaphoneIcon} color="gold" /> : undefined }
+              {props.isPlayback ? <PlayArrowIcon className={classes.icon} htmlColor="#0C0" /> : undefined}
+            </div>
+          </Tooltip>
+        </div>
+        {outerOver}
       </div>
     </div>
   )

@@ -95,10 +95,11 @@ export const defaultPhysics: Physics = {
 export interface Viewpoint{
   height: number              //  zoom (viewing range) of the map
   center: [number, number]    //  center of the map from the avatar
+  nodding?: number            //  up-down nose direction
 }
 export const defaultViewpoint: Viewpoint = {
   height: 0,
-  center: [0,0]
+  center: [0,0],
 }
 export type SoundLocalizationBase = 'avatar' | 'user'
 

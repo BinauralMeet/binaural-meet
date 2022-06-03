@@ -15,7 +15,7 @@ import FlipToFrontIcon from '@material-ui/icons/FlipToFront'
 import MoreHorizIcon from '@material-ui/icons/MoreHoriz'
 import PlayArrowIcon from '@material-ui/icons/PlayArrow'
 import settings from '@models/api/Settings'
-import {doseContentEditingUseKeyinput, isContentEditable, isContentMaximizable, ISharedContent} from '@models/ISharedContent'
+import {doseContentEditingUseKeyinput, isContentWallpaper, isContentEditable, isContentMaximizable, ISharedContent} from '@models/ISharedContent'
 import {t} from '@models/locales'
 import {Pose2DMap} from '@models/utils'
 import {addV2, extractScaleX, extractScaleY, mulV, rotateVector2DByDegree, subV2} from '@models/utils'
@@ -408,7 +408,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
           />
           <div className={classes.note} onClick={onClickShare} onTouchStart={stop}>Share</div>
           {props.content.playback ? <div className={classes.close} ><PlayArrowIcon htmlColor="#0C0" /></div> :
-            props.content.pinned ? undefined :
+            (props.content.pinned || isContentWallpaper(props.content)) ? undefined :
               <div className={classes.close} onClick={onClickClose} onTouchStart={stop}>
                 <CloseRoundedIcon /></div>}
         </div>

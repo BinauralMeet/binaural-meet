@@ -35,6 +35,7 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
   devicePreference = new DevicePreference()
   @observable.shallow tracks = new TracksStore()
   @observable useStereoAudio = false  //  will be override by url switch
+  @observable headphoneConfirmed = false  //  Ask if really use headphone or not
   @observable thirdPersonView = config.thirdPersonView as boolean
   @observable soundLocalizationBase = config.soundLocalizationBase ? config.soundLocalizationBase : 'user'
   @observable uploaderPreference:UploaderPreference = config.uploaderPreference ? config.uploaderPreference : 'gyazo'

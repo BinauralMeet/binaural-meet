@@ -5,8 +5,7 @@ import {createJitisLocalTracksFromStream} from '@models/utils/jitsiTrack'
 import {rgba} from '@models/utils/color'
 import participants from '@stores/participants/Participants'
 import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'
-import {addV2, mulV2, rotateVector2D, rotateVector2DByDegree, subV2} from '@models/utils'
-import { filter } from 'lodash'
+import {addV2, mulV2, rotateVector2DByDegree, subV2} from '@models/utils'
 
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
@@ -97,19 +96,30 @@ function drawFace(width:number, height:number,
 
 var lastPos:number[] = []
 var lastWidth:number = -1
+var lastNose:number[] = []
 var filteredPos:number[] = []
 var filteredWidth:number = -1
+var filteredNose:number[] = []
 function moveAvatar(face?: WithFaceLandmarks<{detection:FaceDetection}, FaceLandmarks68>){
   if (face){
     const currentPos = [face.detection.relativeBox.x, face.detection.relativeBox.y]
     const currentWidth = face.detection.relativeBox.width
+    const nosePos = [face.landmarks.positions[30].x, face.landmarks.positions[30].y]
+    const currentNose = subV2(nosePos, [face.detection.box.left, face.detection.box.top])
+    currentNose[0] = currentNose[0] / face.detection.box.width
+    currentNose[1] = currentNose[1] / face.detection.box.height
+    //  console.log(`nose: ${currentNose[0]}, ${currentNose[1]}`)
+
     if (filteredPos.length){
       const alpha = 0.2
       filteredPos = addV2(mulV2(alpha, currentPos), mulV2(1-alpha, lastPos))
       filteredWidth = alpha * currentWidth + (1-alpha) * lastWidth
+      const alphaNose = 0.4
+      filteredNose = addV2(mulV2(alphaNose, currentNose), mulV2(1-alphaNose, lastNose))
     }else{
       filteredPos = currentPos
       filteredWidth = currentWidth
+      filteredNose = currentNose
     }
     if (lastPos.length){
       const diffWorldPos = subV2(filteredPos, lastPos)
@@ -117,8 +127,15 @@ function moveAvatar(face?: WithFaceLandmarks<{detection:FaceDetection}, FaceLand
       const diffAvatarPos = rotateVector2DByDegree(participants.local.pose.orientation, [diffWorldPos[0], diffWidth])
       participants.local.pose.position = addV2(participants.local.pose.position, mulV2(-100, diffAvatarPos))
     }
+    if (lastNose.length){
+      const diffNose = subV2(filteredNose, lastNose)
+      participants.local.pose.orientation += -100 * diffNose[0]
+      const newNodding = participants.local.viewpoint.nodding ? participants.local.viewpoint.nodding + diffNose[1] : diffNose[1]
+      participants.local.viewpoint.nodding = 0.99 * newNodding
+    }
     lastPos = filteredPos
     lastWidth = filteredWidth
+    lastNose = filteredNose
   }
 }
 
