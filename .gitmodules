@@ -1,3 +1,0 @@
-[submodule "services/conference/libs/lib-jitsi-meet"]
-	path = libs/lib-jitsi-meet
-	url = https://github.com/binauralMeet/lib-jitsi-meet.git
