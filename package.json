@@ -21,6 +21,7 @@
     "@types/throttle-debounce": "^2.1.0",
     "add": "^2.0.6",
     "customize-cra": "^1.0.0",
+    "deep-equal": "^2.0.5",
     "face-api.js": "^0.22.2",
     "flatted": "^3.1.1",
     "git": "^0.1.5",
@@ -30,6 +31,7 @@
     "lodash": "^4.17.21",
     "material-ui-dropzone": "^3.3.0",
     "md5": "^2.3.0",
+    "mediasoup-client": "github:versatica/mediasoup-client#v3",
     "mobx": "*",
     "mobx-react-lite": "^3.2.0",
     "pdfjs-dist": "2.7.570",
@@ -56,10 +58,7 @@
     "starthttps": "HTTPS=true react-app-rewired start",
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
-    "eject": "react-scripts eject",
-    "link-lib-jitsi-meet": "cd libs/lib-jitsi-meet; yarn link; cd ../../; yarn link lib-jitsi-meet",
-    "link-typing-lib-jitsi-meet": "cd libs/@types/lib-jitsi-meet; yarn link; cd ../../../; yarn link @types/lib-jitsi-meet",
-    "link-lib": "yarn run link-lib-jitsi-meet;yarn run link-typing-lib-jitsi-meet"
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": [
@@ -93,6 +92,7 @@
     "@iconify/icons-fluent": "^1.1.30",
     "@iconify/icons-mdi": "^1.1.13",
     "@iconify/react": "^1.1.4",
+    "@types/deep-equal": "^1.0.1",
     "@types/gapi": "^0.0.41",
     "@types/gapi.client.drive": "^3.0.13",
     "@types/google.picker": "^0.0.39",

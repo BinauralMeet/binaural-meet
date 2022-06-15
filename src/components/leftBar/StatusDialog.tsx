@@ -36,6 +36,7 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
   status.update = update
 
   function updateStatus(){
+    /*  TODO: update status
     const chatRoom = connection.conference._jitsiConference?.room
     if (status.open && chatRoom){
       const sessions = chatRoom.xmpp?.connection?.jingle?.sessions
@@ -78,6 +79,7 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
         status.messageServer = 'prosody'
       }
     }
+    */
   }
   if (props.open){
     if (!status.interval){
@@ -92,33 +94,24 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
     }
   }
   const {close, ...poperProps} = props
-  const stat = connection.conference._jitsiConference?.connectionQuality.getStats()
-  const stats = Array.from(contents.tracks.contentCarriers.values())
-    .filter(c => c&&c.jitsiConference).map(c => c.jitsiConference!.connectionQuality.getStats())
-  if (stat) { stats.unshift(stat) }
-  const bitrates = stats.filter(s=>s.bitrate).map(s=>s.bitrate!)
+  const stats:string[] = [] /*TODO:get stats Array.from(contents.tracks.contentCarriers.values())
+    .filter(c => c&&c.jitsiConference).map(c => c.jitsiConference!.connectionQuality.getStats())*/
+  //const bitrates = stats.filter(s=>s.bitrate).map(s=>s.bitrate!)
   const statSum = {
     audio: {
-      up: bitrates.map(b => b.audio.upload).reduce((a, b) => a+b, 0),
-      down: bitrates.map(b => b.audio.download).reduce((a, b) => a+b, 0),
+//      up: bitrates.map(b => b.audio.upload).reduce((a, b) => a+b, 0),
+//      down: bitrates.map(b => b.audio.download).reduce((a, b) => a+b, 0),
     },
     video: {
-      up: bitrates.map(b => b.video.upload).reduce((a, b) => a+b, 0),
-      down: bitrates.map(b => b.video.download).reduce((a, b) => a+b, 0),
+//      up: bitrates.map(b => b.video.upload).reduce((a, b) => a+b, 0),
+//      down: bitrates.map(b => b.video.download).reduce((a, b) => a+b, 0),
     }
   }
   const loss = {
-    up: stat?.packetLoss?.upload || 0,
-    down: stat?.packetLoss?.download || 0
+    up: 0,
+    down: 0
   }
   const codecSet = new Set<string>()
-  for(const pid in stat?.codec){
-    const p = stat?.codec[pid]
-    for (const ssrc in p){
-      codecSet.add(p[ssrc].audio)
-      codecSet.add(p[ssrc].video)
-    }
-  }
   const codecs = Array.from(codecSet)
 
   return <Popper {...poperProps}>
@@ -130,11 +123,7 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
           WebRTC: {sess.remotes.map((r,k) => <span key={k.toString()}>{r.address} {r.port}/{r.protocol}<br /></span>)}
         </div>)}
         <div> Message: {status.messageServer}</div>
-        <div> Bitrate (kbps): audio: ⇑{statSum.audio.up}&nbsp; ⇓{statSum.audio.down}
-        &nbsp;&nbsp; video: ⇑{statSum.video.up}&nbsp; ⇓{statSum.video.down}</div>
-        <div> Quality:{Math.round((stat?.connectionQuality || 0) * 10) / 10} &nbsp; Loss: ⇑{loss.up}&nbsp; ⇓{loss.down}
-        &nbsp;&nbsp;RTT:{stat?.jvbRTT}
-        {codecs.length ? <>&nbsp;&nbsp;Codecs:{`${codecs}`}</> : undefined}
+        <div>
         </div>
         {/*<div> Quality: {JSON.stringify(stat)}</div>*/}
       </div>

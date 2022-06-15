@@ -8,9 +8,6 @@ import {default as participants} from '@stores/participants/Participants'
 import roomInfo from '@stores/RoomInfo'
 import contents from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
-import JitsiMeetJS, {JitsiLocalTrack, JitsiRemoteTrack, JitsiTrack, JitsiValues, TMediaType} from 'lib-jitsi-meet'
-import {ConnectionQualityStats} from 'lib-jitsi-meet/JitsiConference'
-import JitsiParticipant from 'lib-jitsi-meet/JitsiParticipant'
 import {makeObservable, observable} from 'mobx'
 import {BMMessage} from './BMMessage'
 import {ConferenceSync} from './ConferenceSync'
@@ -32,14 +29,11 @@ export const sendLog = SENDLOG ? console.log : (a:any) => {}
 declare const config:any             //  from ../../config.js included from index.html
 declare const d:any                  //  from index.html
 
-const CONF = JitsiMeetJS.events.conference
 export const ConferenceEvents = {
   USER_JOINED: 'joined',
   USER_LEFT: 'left',
   REMOTE_TRACK_ADDED: 'remote_track_added',
   REMOTE_TRACK_REMOVED: 'remote_track_removed',
-//  MESSAGE_RECEIVED: 'message_received',
-//  PRIVATE_MESSAGE_RECEIVED: 'prev_message_received',
 }
 
 //  Cathegolies of BMMessage's types
@@ -48,7 +42,6 @@ stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.CONTENT_UPDAT
 stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.REQUEST_PARTICIPANT_STATES)
 
 export class Conference extends EventEmitter {
-  public _jitsiConference?: JitsiMeetJS.JitsiConference
   public name=''
   public localId = ''
   sync = new ConferenceSync(this)
@@ -71,7 +64,7 @@ export class Conference extends EventEmitter {
     roomInfo.onUpdateProp(name, value)
   }
 
-  public init(name:string, createJitsiConference:()=>JitsiMeetJS.JitsiConference|undefined){
+  public init(name:string){
     //  check last kicked time
     if (name){
       const str = window.localStorage.getItem('kickTimes')
@@ -92,18 +85,15 @@ export class Conference extends EventEmitter {
 
     //  register event handlers and join
     this.name = name
-    this._jitsiConference = createJitsiConference()
     this.registerJistiConferenceEvents()
     this.sync.bind()
-    this._jitsiConference?.join('')
-    this._jitsiConference?.setSenderVideoConstraint(1080)
+    //TODO: join room here
+
     //  start relayServer communication.
     this.step()
 
     //  To access from debug console, add object d to the window.
     d.conference = this
-    d.jc = this._jitsiConference
-    d.chatRoom = (this._jitsiConference as any).room
     d.showState = () => {
       console.log(`carrierMap: ${JSON.stringify(contents.tracks.carrierMap)}`)
       console.log(`contentCarriers: ${JSON.stringify(contents.tracks.contentCarriers)}`)
@@ -116,31 +106,24 @@ export class Conference extends EventEmitter {
       this.pushOrUpdateMessageViaRelay(MessageType.PARTICIPANT_LEFT, [participants.localId])
       this.sendMessageViaRelay()
     }
+    /*TODO: uninit tracks
     if (participants.local.tracks.audio) {
-      this.removeTrack(participants.local.tracks.audio as JitsiLocalTrack)?.then(()=>{
+      this.removeTrack(participants.local.tracks.audio)?.then(()=>{
         participants.local.tracks.audio?.dispose()
       })
     }
     if (participants.local.tracks.avatar) {
-      this.removeTrack(participants.local.tracks.avatar as JitsiLocalTrack)?.then(()=>{
+      this.removeTrack(participants.local.tracks.avatar)?.then(()=>{
         participants.local.tracks.avatar?.dispose()
       })
     }
+    */
     this.sync.observeEnd()
     //  stop relayServer communication.
     this.stopStep = true
 
     return new Promise((resolve, reject) => {
-      this._jitsiConference?.leave().then((arg) => {
-        let logStr = localStorage.getItem('log') ?? ''
-        logStr += `leave (${arg}). `
-        localStorage.setItem('log', logStr)
-        resolve(arg)
-      }).catch((reason)=>{
-        reject(reason)
-      }).finally(()=>{
-        this._jitsiConference = undefined
-      })
+      //TODO: leave from room
     })
   }
 
@@ -181,33 +164,25 @@ export class Conference extends EventEmitter {
   }
 
   //  Commmands for local tracks --------------------------------------------
-  private localMicTrack?: JitsiLocalTrack
-  private localCameraTrack?: JitsiLocalTrack
-  private doSetLocalMicTrack(track:JitsiLocalTrack) {
+  private localMicTrack?: MediaStreamTrack
+  private localCameraTrack?: MediaStreamTrack
+  private doSetLocalMicTrack(track:MediaStreamTrack) {
     this.localMicTrack = track
-    this.localMicTrack.videoType = 'mic'
-    this._jitsiConference?.addTrack(this.localMicTrack)
+    //TODO: add mic track to the room
   }
-  public setLocalMicTrack(track: JitsiLocalTrack|undefined){
-    const promise = new Promise<JitsiLocalTrack|undefined>((resolveFunc, rejectionFunc) => {
+  public setLocalMicTrack(track: MediaStreamTrack|undefined){
+    const promise = new Promise<MediaStreamTrack|undefined>((resolveFunc, rejectionFunc) => {
       if (track) {
         if (this.localMicTrack) {
           const prev = this.localMicTrack
-          this._jitsiConference?.removeTrack(this.localMicTrack).then(() => {
-            this.doSetLocalMicTrack(track)
-            resolveFunc(prev)
-          })
+          //  TODO: remove mic track
         }else {
           this.doSetLocalMicTrack(track)
           resolveFunc(undefined)
         }
       }else {
         if (this.localMicTrack) {
-          this._jitsiConference?.removeTrack(this.localMicTrack).then(() => {
-            const prev = this.localMicTrack
-            this.localMicTrack = undefined
-            resolveFunc(prev)
-          })
+          //  TODO: remove mic track
         }else {
           resolveFunc(undefined)
         }
@@ -219,32 +194,24 @@ export class Conference extends EventEmitter {
   }
 
 
-  private doSetLocalCameraTrack(track:JitsiLocalTrack) {
+  private doSetLocalCameraTrack(track:MediaStreamTrack) {
     this.localCameraTrack = track
-    this.localCameraTrack.videoType = 'camera'
-    this._jitsiConference?.addTrack(this.localCameraTrack)
+    //TODO:add track to the room
   }
-  public setLocalCameraTrack(track: JitsiLocalTrack|undefined) {
-    const promise = new Promise<JitsiLocalTrack|undefined>((resolveFunc, rejectionFunc) => {
+  public setLocalCameraTrack(track: MediaStreamTrack|undefined) {
+    const promise = new Promise<MediaStreamTrack|undefined>((resolveFunc, rejectionFunc) => {
       if (track) {
         //  this.cameraTrackConverter(track)
         if (this.localCameraTrack) {
           const prev = this.localCameraTrack
-          this._jitsiConference?.removeTrack(this.localCameraTrack).then(() => {
-            this.doSetLocalCameraTrack(track)
-            resolveFunc(prev)
-          })
+          //TODO:remove track from the room
         }else {
           this.doSetLocalCameraTrack(track)
           resolveFunc(undefined)
         }
       }else {
         if (this.localCameraTrack) {
-          this._jitsiConference?.removeTrack(this.localCameraTrack).then(() => {
-            const prev = this.localCameraTrack
-            this.localCameraTrack = undefined
-            resolveFunc(prev)
-          })
+          //TODO:remove track from the room
         }else {
           resolveFunc(undefined)
         }
@@ -260,100 +227,8 @@ export class Conference extends EventEmitter {
     return this.localCameraTrack
   }
 
-  //  Jitsi API Calls ----------------------------------------
-  //  generic send command
-  public sendCommand(name: string, values: JitsiValues) {
-    sendLog(`SEND sendCommand ${name} ${JSON.stringify(values)}`)
-    this._jitsiConference?.sendCommand(name, values)
-  }
-  public removeCommand(name: string) {
-    this._jitsiConference?.removeCommand(name)
-  }
-  public addCommandListener(name: string, handler: (node: JitsiValues, jid:string, path:string) => void) {
-    this._jitsiConference?.addCommandListener(name, handler)
-  }
-  public setLocalParticipantProperty(name: string, value:Object) {
-    sendLog(`SEND setLocalParticipantProperty ${name} ${JSON.stringify(value)}`)
-    this._jitsiConference?.setLocalParticipantProperty(name, JSON.stringify(value))
-  }
-  public getLocalParticipantProperty(name: string): any {
-    return this._jitsiConference?.getLocalParticipantProperty(name)
-  }
-  public kickParticipant(pid: string){
-    this._jitsiConference?.kickParticipant(pid)
-  }
-  //
-  public setSenderVideoConstraint(height: number) {
-    this._jitsiConference?.setSenderVideoConstraint(height)
-  }
-
-  public setReceiverConstraints(videoConstraints: JitsiMeetJS.VideoConstraints){
-    this._jitsiConference?.setReceiverConstraints(videoConstraints)
-  }
-
-  //  send Perceptibles API added by hasevr
-  public setPerceptibles(perceptibles:JitsiMeetJS.BMPerceptibles) {
-    //  console.log(`SEND setPerceptibles ${JSON.stringify(perceptibles)}`)
-    if (this._jitsiConference?.setPerceptibles) {
-      this._jitsiConference.setPerceptibles(perceptibles)
-    }
-  }
-
-  /**
-   * reduce bit rate
-   * peerconnection as TraceablePeerConnection
-   * peerconnection.peerconnection as RTCPeerConnection */
-  private reduceBitrate() {
-    if (config.rtc && this._jitsiConference && this._jitsiConference.jvbJingleSession) {
-      const jingleSession = this._jitsiConference.jvbJingleSession
-      if (!jingleSession.bitRateAlreadyReduced && jingleSession.peerconnection.peerconnection) {
-        jingleSession.bitRateAlreadyReduced = true
-        const pc = jingleSession.peerconnection.peerconnection
-        // console.log('RTCPeerConnect:', pc)
-        pc.getSenders().forEach((sender) => {
-          // console.log(sender)
-          if (sender && sender.track) {
-            const params = sender.getParameters()
-            // console.log('params:', params)
-            if (params.encodings.length === 0) {
-              params.encodings.push({})
-            }
-            params.encodings.forEach((encording) => {
-              const ONE_KILO = 1024
-              if (sender.track!.kind === 'video' && config.rtc.maxBitrateForVideo) {
-                encording.maxBitrate = config.rtc.maxBitrateForVideo * ONE_KILO
-              }else if (sender.track!.kind === 'audio') {
-                encording.maxBitrate = config.rtc.maxBitrateForAudio * ONE_KILO
-              }
-            })
-            sender.setParameters(params)
-          }
-        })
-      }
-    }
-  }
-
   sendMessage(type:string, value:any, to?: string) {
-    if (config.bmRelayServer){
       this.pushOrUpdateMessageViaRelay(type, value, to)
-    }else{
-      this.sendMessageViaJitsi(type, value, to)
-    }
-  }
-  sendMessageViaJitsi(type:string, value:any, to?:string) {
-    const jc = this._jitsiConference as any
-    const viaBridge = jc?.rtc?._channel?.isOpen() ? true : false
-    const connected = jc?.chatRoom?.connection.connected
-    sendLog(`SEND sendMessage type:${type} to:${to} val:${JSON.stringify(value)}`)
-
-    if (viaBridge || connected){
-      const msg = viaBridge ? {type, value} : JSON.stringify({type, value})
-      this._jitsiConference?.sendMessage(msg, to ? to : '', viaBridge)
-    }else{
-      if (participants.remote.size){
-        console.log('Conference.sendMessageViaJitsi() failed: Not connected.')
-      }
-    }
   }
   receivedMessages: BMMessage[] = []
   connectToRelayServer(){
@@ -499,11 +374,7 @@ export class Conference extends EventEmitter {
 
   //  register event handlers
   private registerJistiConferenceEvents() {
-    if (!this._jitsiConference) {
-      console.error('Dose not connected to conference yet.')
-
-      return
-    }
+    /*  TODO: add event handler
     this._jitsiConference.on(CONF.ENDPOINT_MESSAGE_RECEIVED, (participant:JitsiParticipant, msg:any) => {
       eventLog(`ENDPOINT_MESSAGE_RECEIVED from ${participant.getId()}`, msg)
       if (msg.values) {
@@ -603,55 +474,13 @@ export class Conference extends EventEmitter {
     //  kicked
     this._jitsiConference.on(JitsiMeetJS.events.conference.KICKED,
       (p:JitsiParticipant, r:string)=>{this.sync.onKicked(p.getId(),r)})
-
-    //  connection status (bandwidth etc)
-    //	this._jitsiConference.statistics.addConnectionStatsListener(this.onConnectionStats)
+    }
+    */
   }
-//  onConnectionStats(tpc: TraceablePeerConnection, stats:Object){
-//    console.log(`onConnectionStats: ${JSON.stringify(stats)}`)
-//  }
-  /*  Resize the video (May not have any effect on the resolution)
-  private video:undefined | HTMLVideoElement = undefined
-  private canvas:undefined | HTMLCanvasElement = undefined
-  private cameraTrackConverter(track: JitsiLocalTrack) {
-    if (!this.video) {
-      this.video = document.createElement('video')
-    }
-    this.video.srcObject = new MediaStream([track.getTrack()])
-    let aspectRatio = track.getTrack().getSettings().aspectRatio
-    const videoCfg = config.rtc.videoConstraints.video
-    const VIDEO_SIZE = videoCfg.height.ideal ? videoCfg.height.ideal : videoCfg.width.ideal ? videoCfg.width.ideal : 360
-    if (!aspectRatio) { aspectRatio = 1 }
-    let sx = 0
-    let sy = 0
-    if (aspectRatio < 1) {
-      this.video.style.width = `${VIDEO_SIZE}px`
-      sy = (1 / aspectRatio - 1) * VIDEO_SIZE / 2
-    }else {
-      this.video.style.height = `${VIDEO_SIZE}px`
-      sx = (aspectRatio - 1) * VIDEO_SIZE / 2
-    }
-    this.video.autoplay = true
-    if (!this.canvas) {
-      this.canvas = document.createElement('canvas')
-      this.canvas.style.width = `${VIDEO_SIZE}px`
-      this.canvas.style.height = `${VIDEO_SIZE}px`
-      const ctx = this.canvas.getContext('2d')
-      const drawVideo = () => {
-        if (this.video) {
-          ctx?.drawImage(this.video, sx, sy, VIDEO_SIZE, VIDEO_SIZE, 0, 0, VIDEO_SIZE, VIDEO_SIZE)
-        }
-      }
-      const FRAMERATE = 20
-      setInterval(drawVideo, 1000 / FRAMERATE)
-      const stream = (this.canvas as any).captureStream(FRAMERATE) as MediaStream
-      (track as any).track = stream.getVideoTracks()[0]
-    }
-  }
-  */
+  /*  on Joined etc
   private onConferenceJoined() {
     //  set localId
-    this.localId = this._jitsiConference!.myUserId()
+    this.localId = '' //TODO: assign real local id.
     participants.setLocalId(this.localId)
     this.sync.observeStart()
     //  create tracks
@@ -731,4 +560,5 @@ export class Conference extends EventEmitter {
       }
     }
   }
+  */
 }

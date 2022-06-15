@@ -78,7 +78,7 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
         {t('lsTitle')}
       </span>
       <span style={{float:'right'}}>
-        <SignalQualityButton open={props.open} stats={local.quality} isLocal={true}/></span>
+        <SignalQualityButton open={props.open} /></span>
     </DialogTitle>
     <DialogContent>
       <Observer>{ ()=> {

@@ -3,7 +3,6 @@ import {ConnectionForContent} from '@models/api/ConnectionForScreenContent'
 import {ISharedContent} from '@models/ISharedContent'
 import {assert} from '@models/utils'
 import {SharedContents} from '@stores/sharedContents/SharedContents'
-import {JitsiLocalTrack, JitsiRemoteTrack, JitsiTrack} from 'lib-jitsi-meet'
 import {action, computed, makeObservable, observable} from 'mobx'
 
 // config.js

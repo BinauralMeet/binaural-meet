@@ -3,7 +3,6 @@ import {urlParameters} from '@models/url'
 import {diffMap} from '@models/utils'
 import participants from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
-import {JitsiRemoteTrack} from 'lib-jitsi-meet'
 import {autorun} from 'mobx'
 import {ConnectedGroup, ConnectedGroupForPlayback} from './ConnectedGroup'
 import {StereoManager} from './StereoManager'
@@ -16,7 +15,7 @@ export class ConnectedManager {
 
   private remotesMemo = new Map<string, RemoteParticipant>()
   private playbacksMemo = new Map<string, PlaybackParticipant>()
-  private contentsMemo = new Map<string, Set<JitsiRemoteTrack>>()
+  private contentsMemo = new Map<string, Set<MediaStreamTrack>>()
 
   public setAudioOutput(deviceId: string) {
     this.manager.setAudioOutput(deviceId)
@@ -88,11 +87,11 @@ export class ConnectedManager {
     this.connectedGroups[remote.id] = new ConnectedGroup(participants.local_, undefined, remote, group)
   }
 
-  private removeContent = (tracks: Set<JitsiRemoteTrack>) => {
-    const audioTrack = Array.from(tracks.values()).find(track => track.getType() === 'audio')
+  private removeContent = (tracks: Set<MediaStreamTrack>) => {
+    const audioTrack = Array.from(tracks.values()).find(track => track.kind === 'audio')
 
     if (audioTrack) {
-      const carrierId = audioTrack.getParticipantId()
+      const carrierId = '' //TODO:get participant id?  audioTrack.getParticipantId()
       if (carrierId) {
         this.connectedGroups[carrierId].dispose()
         delete this.connectedGroups[carrierId]
@@ -104,10 +103,10 @@ export class ConnectedManager {
     }
   }
 
-  private addContent = (tracks: Set<JitsiRemoteTrack>) => {
-    const audioTrack = Array.from(tracks.values()).find(track => track.getType() === 'audio')
+  private addContent = (tracks: Set<MediaStreamTrack>) => {
+    const audioTrack = Array.from(tracks.values()).find(track => track.kind === 'audio')
     if (audioTrack) {
-      const carrierId = audioTrack.getParticipantId()
+      const carrierId = ''  //TODO:get participant id? audioTrack.getParticipantId()
       if (carrierId) {
         const group = this.manager.addSpeaker(carrierId)
         this.connectedGroups[carrierId] = new ConnectedGroup(participants.local_, audioTrack, undefined, group)

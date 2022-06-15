@@ -1,5 +1,4 @@
 import { PARTICIPANT_SIZE } from '@models/Participant'
-import {JitsiRemoteTrack} from 'lib-jitsi-meet'
 import {action, computed, makeObservable, observable} from 'mobx'
 import {LocalParticipant} from './LocalParticipant'
 import {PlaybackParticipant} from './PlaybackParticipant'
@@ -76,7 +75,8 @@ export class Participants {
     return this.playback.delete(id)
   }
 
-  addRemoteTrack(track: JitsiRemoteTrack):boolean {
+  addRemoteTrack(track: MediaStreamTrack):boolean {
+/*  TODO:
     const remote = this.remote.get(track.getParticipantId())
     if (!remote) { return false }
     if (track.isAudioTrack()) {
@@ -87,10 +87,12 @@ export class Participants {
       track.getTrack().addEventListener('mute', () => { remote.tracks.onMuteChanged(track, true) })
       track.getTrack().addEventListener('unmute', () => { remote.tracks.onMuteChanged(track, false) })
     }
+    */
 
     return true
   }
-  removeRemoteTrack(track: JitsiRemoteTrack):boolean {
+  removeRemoteTrack(track: MediaStreamTrack):boolean {
+    /*  TODO:
     const remote = this.remote.get(track.getParticipantId())
     if (!remote) { return false }
     if (track.isAudioTrack()) {
@@ -98,7 +100,7 @@ export class Participants {
     } else {
       remote.tracks.avatar = undefined
     }
-
+    */
     return true
   }
 

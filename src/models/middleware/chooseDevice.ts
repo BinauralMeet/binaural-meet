@@ -3,7 +3,6 @@ import { getNotificationPermission } from '@models/api/Notification'
 import {manager as audioManager} from '@models/audio'
 import {urlParameters} from '@models/url'
 import participants from '@stores/participants/Participants'
-import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'
 import {autorun} from 'mobx'
 import {createLocalCamera} from './faceCamera'
 
@@ -12,15 +11,16 @@ declare const config:any                  //  from ../../config.js included from
 
 //  mic device selection
 export function createLocalMic() {
-  const promise = new Promise<JitsiLocalTrack>((resolutionFunc, rejectionFunc) => {
+  const promise = new Promise<MediaStreamTrack>((resolutionFunc, rejectionFunc) => {
     const did = participants.local.devicePreference.audioInputDevice
-    JitsiMeetJS.createLocalTracks({devices:['audio'],
+      /* TODO:create local tracks
+      JitsiMeetJS.createLocalTracks({devices:['audio'],
       constraints: config.rtc.audioConstraints, micDeviceId: did}).then(
       (tracks: JitsiLocalTrack[]) => {
         connection.conference.setLocalMicTrack(tracks[0])
         resolutionFunc(tracks[0])
       },
-    ).catch(rejectionFunc)
+    ).catch(rejectionFunc)*/
   })
 
   return promise
@@ -63,17 +63,17 @@ autorun(() => {
   const muted = participants.local.muteAudio || participants.local.physics.awayFromKeyboard
   if (participants.localId && !muted && urlParameters.testBot === null) {
     const track = connection.conference.getLocalMicTrack()
-    if (track && track.getDeviceId() === did) { return }
+    //TODO:  if (track && track.getDeviceId() === did) { return }
     createLocalMic().finally(getNotificationPermission)
   }else{
     if (DELETE_MIC_TRACK){
       connection.conference.setLocalMicTrack(undefined).then(track => {
-        track?.dispose()
+        //TODO:  track?.dispose()
         participants.local.audioLevel = 0
       })
     } else {
       const track = connection.conference.getLocalMicTrack()
-      if (track) { connection.conference.removeTrack(track) }
+      //TODO:  if (track) { connection.conference.removeTrack(track) }
       participants.local.audioLevel = 0
     }
   }
@@ -109,14 +109,14 @@ autorun(() => {
     || participants.local.physics.awayFromKeyboard
   if (participants.localId && !muted && urlParameters.testBot === null) {
     const track = connection.conference.getLocalCameraTrack()
-    if (track && track.getDeviceId() === did) { return }
+    //TODO:  if (track && track.getDeviceId() === did) { return }
     createLocalCamera(faceTrack).finally(getNotificationPermission)
   }else{
     if (DELETE_TRACK){
-      connection.conference.setLocalCameraTrack(undefined).then(track => track?.dispose())
+      //TODO: connection.conference.setLocalCameraTrack(undefined).then(track => track?.dispose())
     } else {
       const track = connection.conference.getLocalCameraTrack()
-      if (track) { connection.conference.removeTrack(track) }
+      //TODO: if (track) { connection.conference.removeTrack(track) }
     }
   }
 })

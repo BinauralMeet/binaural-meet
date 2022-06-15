@@ -11,14 +11,12 @@ import SignalCellular4BarIcon from '@material-ui/icons/SignalCellular4Bar'
 import {connection} from '@models/api'
 import {useTranslation} from '@models/locales'
 import {SharedContents} from '@stores/sharedContents/SharedContents'
-import {ConnectionQualityStats} from 'lib-jitsi-meet/JitsiConference'
 import React from 'react'
 
 declare const config:any             //  from ../../config.js included from index.html
 
 
 export interface ConnectionQualityDialogProps{
-  stats: ConnectionQualityStats
   open: boolean
   contents?: SharedContents
   isLocal?: boolean
@@ -27,11 +25,10 @@ export interface ConnectionQualityDialogProps{
 }
 export const ConnectionQualityDialog: React.FC<ConnectionQualityDialogProps>
   = (props: ConnectionQualityDialogProps) => {
-  const stat = props.stats
-  const stats = Array.from(props.contents ? props.contents.tracks.contentCarriers.values() : [])
+  const stats:string[] = [] /*TODO:get stats Array.from(props.contents ? props.contents.tracks.contentCarriers.values() : [])
     .filter(c => c&&c.jitsiConference).map(c => c.jitsiConference!.connectionQuality.getStats())
-  if (stat) { stats.unshift(stat) }
-  const bitrates = stats.filter(s=>s.bitrate).map(s=>s.bitrate!)
+    */
+  const bitrates:{video:{upload:1, download:2}, audio:{upload:1, download:2}}[] = [] //stats.filter(s=>s.bitrate).map(s=>s.bitrate!)
   const statSum = {
     audio: {
       up: bitrates.map(b => b.audio.upload).reduce((a, b) => a+b, 0),
@@ -43,23 +40,12 @@ export const ConnectionQualityDialog: React.FC<ConnectionQualityDialogProps>
     }
   }
   const loss = {
-    up: stat?.packetLoss?.upload || 0,
-    down: stat?.packetLoss?.download || 0
   }
   const {t} = useTranslation()
 
   let messageServer = ''
   if (props.isLocal){
-    if (connection.conference.bmRelaySocket?.readyState === WebSocket.OPEN) {
-      messageServer = config.bmRelayServer
-    }else{
-      const chatRoom = connection.conference._jitsiConference?.room
-      if (chatRoom){
-        messageServer = 'bridge'
-      }else{
-        messageServer = 'prosody'
-      }
-    }
+    messageServer = config.bmRelayServer
   }
 
 
@@ -68,20 +54,7 @@ export const ConnectionQualityDialog: React.FC<ConnectionQualityDialogProps>
       {t('connectionStatus')}
     </DialogTitle>
     <DialogContent>
-    <div style={{overflowY:'auto'}}>
-      <div> Quality:{Math.round((stat?.connectionQuality || 0) * 10) / 10} &nbsp; Loss: ⇑{loss.up}&nbsp; ⇓{loss.down}
-        &nbsp;&nbsp;RTT:{stat?.jvbRTT}
-      </div>
-      {props.isLocal ?
-        !stat.transport || stat.transport.length===0 ? <div>No WebRTC</div> :
-        stat.transport.map((sess, idx) => <div key={idx}>
-          WebRTC: <span>{sess.ip}/{sess.type}<br /></span>
-        </div>) : undefined}
-      {props.isLocal ? <div> Message: {messageServer}</div> : undefined}
-      <div> Bitrate (kbps): audio: ⇑{statSum.audio.up}&nbsp; ⇓{statSum.audio.down}
-      &nbsp;&nbsp; video: ⇑{statSum.video.up}&nbsp; ⇓{statSum.video.down}</div>
-      {/*<div> Quality: {JSON.stringify(stat)}</div>*/}
-      </div>
+    <div style={{overflowY:'auto'}} />
     <br />
     <Button variant="contained" color="primary" style={{textTransform:'none', marginTop:'0.4em'}}
       onClick={(ev) => {
@@ -118,7 +91,6 @@ export const SignalQualityIcon: React.FC<SignalIconProps> = (props) => {
 }
 
 export interface SignalQualityButtonProps{
-  stats?: ConnectionQualityStats
   open: boolean
   anchorEl?: HTMLElement |  null
   isLocal?:boolean
@@ -129,11 +101,11 @@ export const SignalQualityButton: React.FC<SignalQualityButtonProps> = (props:Si
   const ref = React.useRef<HTMLButtonElement>(null)
 
   return <IconButton ref={ref} onClick={()=>{ setOpen(true) }}>
-    <SignalQualityIcon quality={props.stats?.connectionQuality} />
-    {props.stats ? <ConnectionQualityDialog open={open} stats={props.stats} isLocal={props.isLocal}
+    <SignalQualityIcon quality={4} />
+    <ConnectionQualityDialog open={open}
       anchorEl={ref.current} onClose={()=>{
         setOpen(false)
-      }}/> : undefined }
+    }}/>
   </IconButton>
 }
 

@@ -5,7 +5,6 @@ import {participantsStore as participants} from '@stores/participants'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import contents from '@stores/sharedContents/SharedContents'
-import {JitsiRemoteTrack, JitsiTrack} from 'lib-jitsi-meet'
 import {autorun, IReactionDisposer, makeObservable, observable} from 'mobx'
 import {RemoteTrackInfo, TrackInfo} from './priorityTypes'
 
@@ -13,10 +12,10 @@ export const PRIORITYLOG = false
 export const priorityLog = PRIORITYLOG ? console.log : (a:any) => {}
 export const priorityDebug = PRIORITYLOG ? console.debug : (a:any) => {}
 
-function extractParticipantTrackInfo(participant: RemoteParticipant, track: JitsiTrack): RemoteTrackInfo {
+function extractParticipantTrackInfo(participant: RemoteParticipant, track: MediaStreamTrack): RemoteTrackInfo {
   return {
     endpointId: participant.id,
-    onStage : track.isAudioTrack() &&
+    onStage : track.kind === 'audio' &&
       (participant.physics.onStage || participants.yarnPhones.has(participant.id) || participant.inLocalsZone),
     pose: {
       ...participant.pose,
@@ -24,12 +23,12 @@ function extractParticipantTrackInfo(participant: RemoteParticipant, track: Jits
     size: [0, 0],
     offset: 0,
     priority : 0,
-    muted: track.isAudioTrack() ? participant.muteAudio : participant.muteVideo
+    muted: track.kind === 'audio' ? participant.muteAudio : participant.muteVideo
   }
 }
-function extractContentTrackInfo(content: ISharedContent, track:JitsiTrack): RemoteTrackInfo {
+function extractContentTrackInfo(content: ISharedContent, track:MediaStreamTrack): RemoteTrackInfo {
   return {
-    endpointId: (track as JitsiRemoteTrack).getParticipantId(),
+    endpointId: '', //TODO:somthing needed (track as MediaStreamTrack).getParticipantId(),
     onStage : false,
     pose: {
       ...content.pose,
@@ -40,9 +39,9 @@ function extractContentTrackInfo(content: ISharedContent, track:JitsiTrack): Rem
     muted: false,
   }
 }
-function extractMainTrackInfo(mainTrack:JitsiRemoteTrack): RemoteTrackInfo {
+function extractMainTrackInfo(mainTrack:MediaStreamTrack): RemoteTrackInfo {
   return {
-    endpointId: mainTrack.getParticipantId(),
+    endpointId: '', //TODO: mainTrack.getParticipantId(),
     onStage : true,
     pose: {position:[0, 0], orientation: 0},
     size: [0, 0],
@@ -106,8 +105,8 @@ export class PriorityCalculator {
     this.limitUpdated = true
   }
 
-  onRemoteTrackAdded(track: JitsiRemoteTrack) {
-    this.updateSet.add(track.getParticipantId())
+  onRemoteTrackAdded(track: MediaStreamTrack) {
+    //TODO:  this.updateSet.add(track.getParticipantId())
   }
 
   get enabled(): boolean {
@@ -138,9 +137,9 @@ export class PriorityCalculator {
       //  priorityLog('prioirty remote chagned:', newRemoteParticipants)
     })
 
-    let oldRemoteContents = new Map<string, Set<JitsiRemoteTrack>>()
+    let oldRemoteContents = new Map<string, Set<MediaStreamTrack>>()
     const remoteContentsChangeDisposer = autorun(() => {
-      const newRemoteContents = new Map<string, Set<JitsiRemoteTrack>>(contents.tracks.remoteContents)
+      const newRemoteContents = new Map<string, Set<MediaStreamTrack>>(contents.tracks.remoteContents)
       const added = diffMap(newRemoteContents, oldRemoteContents)
       const removed = diffMap(oldRemoteContents, newRemoteContents)
       removed.forEach(onRemoveContent)
@@ -160,7 +159,7 @@ export class PriorityCalculator {
       this.updateSet.add(rp.id)
       priorityLog('onRemoveParticipant:', rp, this.priorityMaps[0])
     }
-    const onRemoveContent = (tracks: Set<JitsiRemoteTrack>, id:string) => {
+    const onRemoveContent = (tracks: Set<MediaStreamTrack>, id:string) => {
       const disposer = remoteDiposers.get(id)
       if (disposer === undefined) {
         throw new Error(`Cannot find disposer for remote participant with id: ${id}`)
@@ -185,14 +184,14 @@ export class PriorityCalculator {
       }))
       priorityLog('onAddParticipant:', rp, this.priorityMaps[0])
     }
-    const onAddContent = (tracks: Set<JitsiRemoteTrack>, id:string) => {
+    const onAddContent = (tracks: Set<MediaStreamTrack>, id:string) => {
       remoteDiposers.set(id, autorun(() => {
         // tslint:disable-next-line: max-line-length
         //  priorityLog(`prioirty ${id} chagned v=${(rp.tracks.avatar as JitsiRemoteTrack)?.getSSRC()} a=${(rp.tracks.audio as JitsiRemoteTrack)?.getSSRC()}`)
         if (tracks.size) { //  update when number of the tracks changed
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const content = contents.find(id) //  or content changed.
-          this.updateSet.add((tracks.values().next().value as JitsiRemoteTrack).getParticipantId())
+          //TODO:  this.updateSet.add((tracks.values().next().value as MediaStreamTrack).getParticipantId())
         }
       }))
       priorityLog('onAddContent:', id, this.priorityMapForContent)

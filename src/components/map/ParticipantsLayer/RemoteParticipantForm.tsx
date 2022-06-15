@@ -27,7 +27,7 @@ export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (prop
   function onKeyPressKick(ev:React.KeyboardEvent){
     if (ev.key === 'Enter' && kick === 'kick') {
       if (!props.participant) { return }
-      connection.conference.kickParticipant(props.participant.id)
+      //TODO: when kicked
       setTimeout(()=>{connection.conference.sendMessage(
         MessageType.KICK, 'Kicked by administrator.', props.participant!.id)}, 5000)
       props.close()
@@ -54,7 +54,7 @@ export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (prop
     <DialogTitle>
       {props.participant?.information.name}
       <span style={{float:'right'}}>
-        <SignalQualityButton open={props.open} stats={props.participant?.quality} /></span>
+        <SignalQualityButton open={props.open} /></span>
     </DialogTitle>
     <DialogContent>
       <Box mb={2}>

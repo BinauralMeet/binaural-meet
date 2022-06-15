@@ -23,7 +23,6 @@ import UploadIcon from '@material-ui/icons/Publish'
 import ScreenShareIcon from '@material-ui/icons/ScreenShare'
 import StopScreenShareIcon from '@material-ui/icons/StopScreenShare'
 import SubjectIcon from '@material-ui/icons/Subject'
-import {initOptions} from '@models/api/Connection'
 import {connection} from '@models/api/ConnectionDefs'
 import {ISharedContent} from '@models/ISharedContent'
 import {useTranslation} from '@models/locales'
@@ -31,7 +30,6 @@ import {assert} from '@models/utils'
 import {createContent, createContentFromText, createContentOfIframe, createContentOfText,
   createContentOfVideo, extractContentData, extractContentDatas} from '@stores/sharedContents/SharedContentCreator'
 import {SharedContents} from '@stores/sharedContents/SharedContents'
-import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'
 import {isArray} from 'lodash'
 import {Observer, useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
@@ -42,13 +40,8 @@ import {Step} from './Step'
 
 
 function startCapture(props:BMProps) {
-  return new Promise<JitsiLocalTrack[]>((resolve, reject) => {
-    initOptions.desktopSharingFrameRate.max = props.stores.contents.screenFps
-    JitsiMeetJS.createLocalTracks({devices:['desktop']}).then(capturedTracks => {
-      resolve(capturedTracks)
-    }).catch(reason => {
-      console.warn(`Share screen error: ${reason}`)
-    })
+  return new Promise<MediaStream>((resolve, reject) => {
+    //TODO: start desktop sharing and return the track
   })
 }
 
@@ -149,12 +142,12 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
     })
   }
   const createScreen = () => {
-    startCapture(props).then((tracks) => {
-      if (tracks.length) {
-        const content = createContentOfVideo(tracks, map, 'screen')
+    startCapture(props).then((ms) => {
+      if (ms.getTracks().length) {
+        const content = createContentOfVideo(ms.getTracks(), map, 'screen')
         contents.shareContent(content)
         assert(content.id)
-        contents.tracks.addLocalContent(content.id, tracks)
+        contents.tracks.addLocalContent(content.id, ms.getTracks())
       }
     })
     setStep('none')
@@ -172,9 +165,9 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
     if (sharing.main) {
       contents.tracks.clearLocalMains()
     } else {
-      startCapture(props).then((tracks) => {
-        if (tracks.length) {
-          contents.tracks.addLocalMains(tracks)
+      startCapture(props).then((ms) => {
+        if (ms.getTracks().length) {
+          contents.tracks.addLocalMains(ms.getTracks())
         }
       })
     }

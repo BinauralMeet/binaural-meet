@@ -6,7 +6,6 @@ import {priorityCalculator} from '@models/middleware/trafficControl'
 import { defaultInformation } from '@models/Participant'
 import {urlParameters} from '@models/url'
 import {addV2, diffSet, mulV2} from '@models/utils'
-import {createJitisLocalTracksFromStream} from '@models/utils/jitsiTrack'
 import map from '@stores/Map'
 import participants from '@stores/participants/Participants'
 import {action, autorun, computed, makeObservable, observable, when} from 'mobx'
@@ -183,12 +182,13 @@ export class ErrorInfo {
   }
   @action checkChannel() {
     if (participants.remote.size > 0) {
+      /*TODO:
       if (!connection.conference._jitsiConference?.rtc._channel?.isOpen()) {
         this.setType('channel')
         setTimeout(this.checkChannel.bind(this), 5 * 1000)
       }else {
         this.clear('channel')
-      }
+      }*/
     }else {
       this.checkRemote()
     }
@@ -225,7 +225,7 @@ export class ErrorInfo {
       const nearest = priorityCalculator.tracksToAccept[0].length ?
         participants.remote.get(priorityCalculator.tracksToAccept[0][0].endpointId) : undefined
       if (nearest && !nearest?.tracks.avatarOk) { colors[0] = 'yellow' }
-      if (nearest && nearest?.tracks.audio?.getTrack().muted) { colors[1] = 'red' }
+      if (nearest && nearest?.tracks.audio?.muted) { colors[1] = 'red' }
       //if (priorityCalculator.tracksToAccept[0][0]?.track.getTrack()?.muted) { colors[0] = 'yellow' }
       //if (priorityCalculator.tracksToAccept[1][0]?.track.getTrack()?.muted) { colors[1] = 'red' }
       ctx.fillStyle = colors[0]
@@ -280,7 +280,7 @@ export class ErrorInfo {
     const stream = new MediaStream()
     stream.addTrack(audioStream.getAudioTracks()[0])
     stream.addTrack(vidoeStream.getVideoTracks()[0])
-    const tracks = createJitisLocalTracksFromStream(stream)
+    const tracks = stream.getTracks()
     connection.conference.setLocalCameraTrack(tracks[0])
     connection.conference.setLocalMicTrack(tracks[1])
   }

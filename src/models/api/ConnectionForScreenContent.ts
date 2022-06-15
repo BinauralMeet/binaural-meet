@@ -2,21 +2,18 @@ import {connection} from '@models/api'
 import {contentTrackCarrierName} from '@models/api/Constants'
 import {assert} from '@models/utils'
 import {EventEmitter} from 'events'
-import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'
 
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
 
 
 export class ConnectionForContent extends EventEmitter {
-  public jitsiConnection?: JitsiMeetJS.JitsiConnection
-  public jitsiConference?: JitsiMeetJS.JitsiConference
   public localId = ''
 
   public init() {
     return new Promise<string>((resolve, reject) => {
       this.initJitsiConnection().then(() => {
-        if (this.jitsiConnection) {
+/*        if (this.jitsiConnection) {
           this.jitsiConference = this.jitsiConnection.initJitsiConference(connection.conference.name, config)
           this.jitsiConference.on(JitsiMeetJS.events.conference.CONFERENCE_JOINED, () => {
             this.localId = this.jitsiConference!.myUserId()
@@ -31,11 +28,11 @@ export class ConnectionForContent extends EventEmitter {
           this.jitsiConference.setSenderVideoConstraint(1080)
         }else {
           reject('No connection has been established.')
-        }
+        }*/
       })
     })
   }
-
+/*
   public addTrack(track:JitsiLocalTrack) {
     if (this.jitsiConference) {
       this.jitsiConference.addTrack(track)
@@ -51,14 +48,14 @@ export class ConnectionForContent extends EventEmitter {
     console.error('Not joined to conference yet.')
 
     return Promise.reject()
-  }
+  }*/
   public getParticipantId() {
-    assert(this.jitsiConference)
+//    assert(this.jitsiConference)
 
     return this.localId
   }
   public getLocalTracks() {
-    const tracks = this.jitsiConference?.getLocalTracks()
+    const tracks:MediaStreamTrack[] = [] //this.jitsiConference?.getLocalTracks()
 
     return tracks ? tracks : []
   }
@@ -66,6 +63,7 @@ export class ConnectionForContent extends EventEmitter {
   private initJitsiConnection(): Promise < string > {
     return new Promise<string>(
       (resolve, reject) => {
+        /*
         this.jitsiConnection = new JitsiMeetJS.JitsiConnection(null, undefined, config)
         this.jitsiConnection.addEventListener(JitsiMeetJS.events.connection.CONNECTION_ESTABLISHED, () => {
           resolve(JitsiMeetJS.events.connection.CONNECTION_ESTABLISHED)
@@ -74,12 +72,14 @@ export class ConnectionForContent extends EventEmitter {
           reject(JitsiMeetJS.events.connection.CONNECTION_FAILED)
         })
         this.jitsiConnection.connect()
+        */
       },
     )
   }
 
   public disconnect(): Promise < any > {
     const rv = new Promise((resolve, reject)=>{
+      /*
       if (this.jitsiConnection) {
         if (this.jitsiConference){
           this.jitsiConference.leave().then(()=>{
@@ -101,6 +101,7 @@ export class ConnectionForContent extends EventEmitter {
       }else{
         reject('No connection has been established.')
       }
+      */
     })
 
     return rv

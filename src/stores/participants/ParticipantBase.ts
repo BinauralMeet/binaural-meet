@@ -7,20 +7,26 @@ import {findReverseColorRGB, findTextColorRGB, getRandomColorRGB, rgb2Color} fro
 import {Mouse} from '@models/utils'
 import {MapObject} from '@stores/MapObject'
 import {Store} from '@stores/utils'
-import {JitsiTrack} from 'lib-jitsi-meet'
-import { ConnectionQualityStats } from 'lib-jitsi-meet/JitsiConference'
 import {action, computed, makeObservable, observable} from 'mobx'
 
 export class TracksStore implements Tracks{
   constructor(){
     makeObservable(this)
   }
-  @observable.ref audio:JitsiTrack|undefined = undefined
-  @observable.ref avatar:JitsiTrack|undefined = undefined
-  @observable avatarOk = this.avatar ? !this.avatar.getTrack().muted : true
-  @computed get audioStream() { return this.audio?.getOriginalStream() }
-  @computed get avatarStream() { return this.avatarOk ? this.avatar?.getOriginalStream() : undefined }
-  @action onMuteChanged(track: JitsiTrack, mute: boolean) {
+  @observable.ref audio:MediaStreamTrack|undefined = undefined
+  @observable.ref avatar:MediaStreamTrack|undefined = undefined
+  @observable avatarOk = this.avatar ? !this.avatar.muted : true
+  @computed get audioStream() {
+    const ms = new MediaStream()
+    if (this.audio) ms.addTrack(this.audio)
+    return ms
+  }
+  @computed get avatarStream() {
+    const ms = new MediaStream()
+    if (this.avatar) ms.addTrack(this.avatar)
+    return ms
+}
+  @action onMuteChanged(track: MediaStreamTrack, mute: boolean) {
     if (track === this.avatar) {
       this.avatarOk = !mute
     }
@@ -46,7 +52,6 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
   @observable muteSpeaker = false
   @observable muteVideo = false
   @observable audioLevel = 0
-  @observable.ref quality?:ConnectionQualityStats = undefined
   @action setAudioLevel(a:number) { this.audioLevel = a }
   @observable recording = false
   // determines whether the audio would be rendered

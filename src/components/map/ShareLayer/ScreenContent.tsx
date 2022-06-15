@@ -2,7 +2,6 @@ import {makeStyles} from '@material-ui/core/styles'
 import {ISharedContent} from '@models/ISharedContent'
 import {assert, mulV2} from '@models/utils'
 import sharedContents from '@stores/sharedContents/SharedContents'
-import {JitsiLocalTrack, JitsiRemoteTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
@@ -16,8 +15,8 @@ const useStyles = makeStyles({
 })
 
 interface ScreenContentMember{
-  locals: JitsiLocalTrack[]
-  remotes: JitsiRemoteTrack[]
+  locals: MediaStreamTrack[]
+  remotes: MediaStreamTrack[]
   content: ISharedContent
 }
 
@@ -28,9 +27,9 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
   const [muted, setMuted] = React.useState(false)
   const member = useRef<ScreenContentMember>({} as ScreenContentMember)
   member.current = {
-    locals: useObserver<JitsiLocalTrack[]>(() =>
+    locals: useObserver<MediaStreamTrack[]>(() =>
       Array.from(sharedContents.tracks.localContents.get(props.content.id) || [])),
-    remotes: useObserver<JitsiRemoteTrack[]>(() =>
+    remotes: useObserver<MediaStreamTrack[]>(() =>
       Array.from(sharedContents.tracks.remoteContents.get(props.content.id) || [])),
     content: props.content,
   }
@@ -47,16 +46,16 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
     if (ref.current) {
       const ms = new MediaStream()
       member.current.locals.forEach((track) => {
-        if (track.getType() !== 'audio') { //  Never play local audio. It makes echo.
-          ms.addTrack(track.getTrack())
+        if (track.kind !== 'audio') { //  Never play local audio. It makes echo.
+          ms.addTrack(track)
         }
       })
       member.current.remotes.forEach((track) => {
-        if (track.getType() !== 'audio') { //  Remote audio is played by ConnectedMananger
-          ms.addTrack(track.getTrack())
+        if (track.kind !== 'audio') { //  Remote audio is played by ConnectedMananger
+          ms.addTrack(track)
           const onMuteLater = _.debounce(()=>{setMuted(true)}, 3000)
-          track.getTrack().onmute = onMuteLater
-          track.getTrack().onunmute = () => {
+          track.onmute = onMuteLater
+          track.onunmute = () => {
             onMuteLater.cancel()
             setMuted(false)
           }

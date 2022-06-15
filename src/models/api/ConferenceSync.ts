@@ -17,7 +17,6 @@ import participants from '@stores/participants/Participants'
 import roomInfo from '@stores/RoomInfo'
 import {extractContentDataAndIds, makeThemContents} from '@stores/sharedContents/SharedContentCreator'
 import contents from '@stores/sharedContents/SharedContents'
-import JitsiMeetJS from 'lib-jitsi-meet'
 import _ from 'lodash'
 import {autorun, IReactionDisposer} from 'mobx'
 import {BMMessage} from './BMMessage'
@@ -78,11 +77,7 @@ export class ConferenceSync{
   //
   sendPoseMessageNow(bSendRandP: boolean){
     const poseStr = pose2Str(participants.local.pose)
-    if (config.bmRelayServer){
-      this.conference.pushOrUpdateMessageViaRelay(MessageType.PARTICIPANT_POSE, poseStr, undefined, bSendRandP)
-    }else{
-      this.conference.sendMessageViaJitsi(MessageType.PARTICIPANT_POSE, poseStr)
-    }
+    this.conference.pushOrUpdateMessageViaRelay(MessageType.PARTICIPANT_POSE, poseStr, undefined, bSendRandP)
   }
   sendMouseMessageNow(){
     const mouseStr = mouse2Str(participants.local.mouse)
@@ -90,43 +85,20 @@ export class ConferenceSync{
   }
   sendParticipantInfo(){
     if (!participants.local.informationToSend){ return }
-    if (config.bmRelayServer){
-      this.conference.sendMessage(PropertyType.PARTICIPANT_INFO, {...participants.local.informationToSend})
-    }else{
-      this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_INFO,
-        {...participants.local.informationToSend})
-    }
+    this.conference.sendMessage(PropertyType.PARTICIPANT_INFO, {...participants.local.informationToSend})
     let name = participants.local.information.name
     while(name.slice(0,1) === '_'){ name = name.slice(1) }
-    this.conference._jitsiConference?.setDisplayName(name)
   }
   sendOnStage(){
-    if (config.bmRelayServer){
-      this.conference.sendMessage(PropertyType.PARTICIPANT_ON_STAGE, participants.local.physics.onStage)
-    }else{
-      if (this.conference.channelOpened) {
-        this.conference.setLocalParticipantProperty(
-          PropertyType.PARTICIPANT_ON_STAGE, participants.local.physics.onStage)
-      }
-    }
+    this.conference.sendMessage(PropertyType.PARTICIPANT_ON_STAGE, participants.local.physics.onStage)
   }
   sendTrackStates() {
-    if (config.bmRelayServer){
-      this.conference.sendMessage(PropertyType.PARTICIPANT_TRACKSTATES,
-        {...participants.local.trackStates})
-    }else{
-      this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_TRACKSTATES,
-                                                {...participants.local.trackStates})
-    }
+    this.conference.sendMessage(PropertyType.PARTICIPANT_TRACKSTATES,
+      {...participants.local.trackStates})
   }
   sendViewpointNow() {
-    if (config.bmRelayServer){
-      this.conference.sendMessage(PropertyType.PARTICIPANT_VIEWPOINT,
+    this.conference.sendMessage(PropertyType.PARTICIPANT_VIEWPOINT,
         {...participants.local.viewpoint})
-    }else{
-      this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_VIEWPOINT,
-                                                {...participants.local.viewpoint})
-    }
   }
   sendAfkChanged(){
     this.conference.sendMessage(MessageType.PARTICIPANT_AFK, participants.local.physics.awayFromKeyboard)
@@ -158,24 +130,12 @@ export class ConferenceSync{
   sendMainScreenCarrier(enabled: boolean) {
     const carrierId = contents.tracks.localMainConnection?.getParticipantId()
     if (carrierId) {
-      if (config.bmRelayServer){
         this.conference.sendMessage(PropertyType.MAIN_SCREEN_CARRIER, {carrierId, enabled})
-      }else{
-        this.conference.setLocalParticipantProperty(PropertyType.MAIN_SCREEN_CARRIER, {carrierId, enabled})
-      }
     }
   }
   //  send myContents of local to remote participants.
   sendMyContents() {
-    if (config.bmRelayServer){
       this.sendContentUpdateRequest('', Array.from(contents.roomContents.values()))
-    }else{
-      const cs = Array.from(contents.localParticipant.myContents.values())
-      const contentsToSend = extractContentDataAndIds(cs)
-      syncLog(`send all contents ${JSON.stringify(contentsToSend.map(c => c.id))}.`,
-              contentsToSend)
-      this.conference.setLocalParticipantProperty(PropertyType.MY_CONTENT, contentsToSend)
-    }
   }
 
   //  message handler
@@ -416,12 +376,14 @@ export class ConferenceSync{
     //  left/join
     this.conference.on(ConferenceEvents.USER_LEFT, this.onParticipantLeft.bind(this))
     this.conference.on(ConferenceEvents.USER_JOINED, (id) => {
+      /*TODO: display sharing will changes.
       const name = this.conference._jitsiConference?.getParticipantById(id).getDisplayName()
       if (name === contentTrackCarrierName || name === roomInfoPeeperName) {
-        //  do nothing
       }else {
         participants.join(id)
       }
+      */
+      participants.join(id)
     })
 
     //  track
@@ -448,7 +410,7 @@ export class ConferenceSync{
     this.conference.on(MessageType.CALL_REMOTE, this.onCallRemote)
     //  kick
     this.conference.on(MessageType.KICK, (pid:string, reason:string)=>{
-      this.conference._jitsiConference?.room.leave()
+      //TODO:when kicked
       this.onKicked(pid, reason)
     })
     this.conference.on(MessageType.PARTICIPANT_AFK, this.onAfkChanged)
@@ -474,11 +436,6 @@ export class ConferenceSync{
     this.conference.on(MessageType.CONTENT_UPDATE_REQUEST, this.onContentUpdateRequest)
     this.conference.on(MessageType.CONTENT_REMOVE_REQUEST, this.onContentRemoveRequest)
     this.conference.on(MessageType.LEFT_CONTENT_REMOVE_REQUEST, this.onLeftContentRemoveRequest)
-
-    //  Get data channel state
-    this.conference._jitsiConference?.addEventListener(JitsiMeetJS.events.conference.DATA_CHANNEL_OPENED, () => {
-      this.conference.channelOpened = true
-    })
 
     //  fragmented message
     this.conference.on(MessageType.FRAGMENT_HEAD, (from:string, msg:FragmentedMessageHead) => {
@@ -512,84 +469,9 @@ export class ConferenceSync{
     this.disposers.push(autorun(this.sendAfkChanged.bind(this)))
     this.disposers.push(autorun(this.sendParticipantInfo.bind(this)))
     this.disposers.push(autorun(this.sendTrackStates.bind(this)))
-    if (config.bmRelayServer){
-      this.disposers.push(autorun(this.sendPoseMessageNow.bind(this, false)))
-      this.disposers.push(autorun(this.sendMouseMessageNow.bind(this)))
-      this.disposers.push(autorun(this.sendViewpointNow.bind(this)))
-    }else{
-      //  pose via bridge
-      const calcWait = () => Math.ceil(Math.max((participants.remote.size / 4) * 50, 50))
-      let sendPoseMessage: (poseStr:string) => void = ()=>{}
-      let poseWait = 0
-      let lastPoseStr=''
-      this.disposers.push(autorun(() => {
-        const newWait = calcWait()
-        if (newWait !== poseWait) {
-          poseWait = newWait
-          sendPoseMessage = _.throttle((poseStr:string) => {
-            if (this.conference.channelOpened){
-              this.conference.sendMessage(MessageType.PARTICIPANT_POSE, poseStr)
-            }
-          },                           poseWait)  //  30fps
-          //  console.log(`poseWait = ${poseWait}`)
-        }
-
-        const poseStr = pose2Str(participants.local.pose)
-        if (this.conference.channelOpened && lastPoseStr !== poseStr) {
-          sendPoseMessage(poseStr)
-          lastPoseStr = poseStr
-        }
-      }))
-      let updateTimeForProperty = 0
-      let lastPoseStrProprty = ''
-      const setPoseProperty = () => {
-        const now = Date.now()
-        const period = calcWait() * 30 //  (33ms(1 remote) to 1000ms(100 remotes)) * 30
-        if (now - updateTimeForProperty > period) {  //  update period
-          const poseStr = pose2Str(participants.local.pose)
-          if (lastPoseStrProprty !== poseStr){
-            this.conference.setLocalParticipantProperty(PropertyType.PARTICIPANT_POSE, poseStr)
-            updateTimeForProperty = now
-            lastPoseStrProprty = poseStr
-          }
-        }
-      }
-      setPoseProperty()
-      setInterval(setPoseProperty, 2.5 * 1000)
-      //  mouse via bridge
-      let wait = 0
-      let sendMouseMessage = (mouse:Mouse) => {}
-      const sendMouse = (to: string) => {
-        const newWait = calcWait()
-        if (wait !== newWait) {
-          wait = newWait
-          sendMouseMessage = _.throttle((mouse: Mouse) => {
-            this.conference.sendMessage(MessageType.PARTICIPANT_MOUSE, mouse2Str(mouse))
-          },                            wait)
-        }
-        if (this.conference.channelOpened) {
-          sendMouseMessage({...participants.local.mouse})
-        }
-      }
-      this.disposers.push(autorun(() => { sendMouse('') }))
-
-      //  viewpoint via bridge
-      let sendViewpointMessage = (_viewpoint:Viewpoint) => {}
-      const sendViewpoint = () => {
-        const newWait = calcWait()
-        if (wait !== newWait) {
-          wait = newWait
-          sendViewpointMessage = _.throttle((viewpoint: Viewpoint) => {
-            this.conference.sendMessage(MessageType.PARTICIPANT_VIEWPOINT, viewpoint)
-          },                     wait)
-        }
-        if (this.conference.channelOpened) {
-          sendViewpointMessage({...participants.local.viewpoint})
-        }
-      }
-      this.disposers.push(autorun(() => { sendViewpoint() }))
-    }
-
+    this.disposers.push(autorun(this.sendPoseMessageNow.bind(this, false)))
+    this.disposers.push(autorun(this.sendMouseMessageNow.bind(this)))
+    this.disposers.push(autorun(this.sendViewpointNow.bind(this)))
     this.disposers.push(autorun(() => { this.sendOnStage() }))
 
     const sendYarnPhones = () => {

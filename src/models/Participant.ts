@@ -1,6 +1,4 @@
 import { ISharedContent } from '@models/ISharedContent'
-import {JitsiTrack} from 'lib-jitsi-meet'
-import {ConnectionQualityStats} from 'lib-jitsi-meet/JitsiConference'
 import {MapObject} from './MapObject'
 import {findReverseColorRGB, findTextColorRGB, getRandomColorRGB, rgb2Color} from './utils/color'
 import {Mouse} from './utils/coordinates'
@@ -13,7 +11,6 @@ export interface ParticipantBase extends MapObject{
   viewpoint: Viewpoint
   id: string
   information: RemoteInformation|LocalInformation
-  quality?: ConnectionQualityStats
 }
 
 export interface PlaybackParticipant extends ParticipantBase {
@@ -71,8 +68,8 @@ export const defaultRemoteInformation:RemoteInformation = {
   textColor: [],
 }
 export interface Tracks {
-  audio: JitsiTrack | undefined
-  avatar: JitsiTrack | undefined
+  audio: MediaStreamTrack | undefined
+  avatar: MediaStreamTrack | undefined
   audioStream: MediaStream | undefined
   avatarStream: MediaStream | undefined
 }

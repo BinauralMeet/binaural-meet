@@ -1,7 +1,6 @@
 import MenuItem from '@material-ui/core/MenuItem'
 import {assert} from '@models/utils'
 import {createContentOfVideo} from '@stores/sharedContents/SharedContentCreator'
-import JitsiMeetJS, {JitsiLocalTrack} from 'lib-jitsi-meet'
 import {makeObservable, observable} from 'mobx'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect} from 'react'
@@ -34,16 +33,7 @@ export const CameraSelector: React.FC<CameraSelectorProps> = (props) => {
   function closeVideoMenu(did:string) {
     setStep('none')
     if (did) {
-      JitsiMeetJS.createLocalTracks({devices:['video'],
-        cameraDeviceId: did}).then((tracks: JitsiLocalTrack[]) => {
-          if (tracks.length) {
-            const content = createContentOfVideo(tracks, map, 'camera')
-            contents.shareContent(content)
-            assert(content.id)
-            contents.tracks.addLocalContent(content.id, tracks)
-          }
-        },
-      )
+      //TODO: create and add localtrack to room.
     }
   }
 

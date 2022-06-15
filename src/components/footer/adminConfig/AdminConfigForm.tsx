@@ -106,7 +106,6 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
         <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
           disabled={!roomInfo.passMatched} onClick={() => {
           if (roomInfo.passMatched) {
-            connection.conference.sendMessageViaJitsi(MessageType.RELOAD_BROWSER, {})
             if (connection.conference.bmRelaySocket?.readyState === WebSocket.OPEN){
               connection.conference.pushOrUpdateMessageViaRelay(MessageType.RELOAD_BROWSER, {})
             }

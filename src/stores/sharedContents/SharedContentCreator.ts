@@ -9,7 +9,6 @@ import { getMimeType } from '@models/utils'
 import {isSelfUrl} from '@models/utils'
 import {MapData} from '@stores/Map'
 import {defaultValue as mapObjectDefaultValue} from '@stores/MapObject'
-import {JitsiLocalTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
 import participants from '../participants/Participants'
 import sharedContents, {contentLog} from './SharedContents'
@@ -257,14 +256,14 @@ export function createContentOfPdf(file: File, map: MapData, offset?:[number, nu
 }
 
 
-export function createContentOfVideo(tracks: JitsiLocalTrack[], map: MapData, type:ContentType) {
+export function createContentOfVideo(tracks: MediaStreamTrack[], map: MapData, type:ContentType) {
   const pasted = createContent()
   pasted.type = type
   pasted.url = ''
   pasted.pose.position[0] = map.mouseOnMap[0]
   pasted.pose.position[1] = map.mouseOnMap[1]
-  const track = tracks.find(track => track.getType() === 'video')
-  const settings = track?.getTrack().getSettings()
+  const track = tracks.find(track => track.kind === 'video')
+  const settings = track?.getSettings()
   if (settings) {
     pasted.originalSize = [settings.width || 0, settings.height || 0]
   }else {

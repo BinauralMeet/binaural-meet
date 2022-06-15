@@ -7,7 +7,6 @@ import contents from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
 //import {stringify} from 'flatted'
 import jquery from 'jquery'
-import JitsiMeetJS from 'lib-jitsi-meet'
 import {Store} from '../../stores/utils'
 import {Conference} from './Conference'
 import {ConnectionStates, ConnectionStatesType} from './Constants'
@@ -34,6 +33,7 @@ declare const global: any
 global.$ = jquery
 global.jQuery = jquery
 
+/*
 export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
   useIPv6: false,
   disableSimulcast: true,
@@ -60,10 +60,11 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
 
   desktopSharingFrameRate: {min: 0.3, max: 30}  //  override by config.js
 }
+*/
 
 
  export class Connection extends EventEmitter {
-  private _jitsiConnection?: JitsiMeetJS.JitsiConnection
+  //private _jitsiConnection?: JitsiMeetJS.JitsiConnection
   private _store: Store<ConnectionInfo> | undefined
   public conference = new Conference()
   public version = '0.0.1'
@@ -74,13 +75,13 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
   }
 
   public init(): Promise<string> {
-    Object.assign(initOptions, config.rtc.screenOptions)
+//    Object.assign(initOptions, config.rtc.screenOptions)
 
     return new Promise<string>((resolve, reject) => {
-      JitsiMeetJS.init(initOptions)
-      JitsiMeetJS.setLogLevel(JITSILOGLEVEL)
+  //    JitsiMeetJS.init(initOptions)
+    //  JitsiMeetJS.setLogLevel(JITSILOGLEVEL)
 
-      this._jitsiConnection = new JitsiMeetJS.JitsiConnection(null, undefined, config)
+/*      this._jitsiConnection = new JitsiMeetJS.JitsiConnection(null, undefined, config)
       this._jitsiConnection.addEventListener(JitsiMeetJS.events.connection.CONNECTION_ESTABLISHED, () => {
         this.onStateChanged(ConnectionStates.CONNECTED)
         resolve(JitsiMeetJS.events.connection.CONNECTION_ESTABLISHED)
@@ -94,10 +95,12 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
       })
       this._jitsiConnection.connect()
       this.onStateChanged(ConnectionStates.CONNECTING)
+      */
     })
   }
 
   public joinConference(conferenceName: string) {
+    /*
     if (this._jitsiConnection) {
       this.conference.init(conferenceName, () => {
         return this._jitsiConnection?.initJitsiConference(conferenceName.toLowerCase(), config)
@@ -105,6 +108,7 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
 
       return
     }
+    */
     throw new Error('No connection has been established.')
   }
   public leaveConference(){
@@ -112,11 +116,13 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
   }
 
   public disconnect(): Promise < any > {
+    /*
     if (this._jitsiConnection) {
       connLog('Disconnection order has been sent.')
 
       return this._jitsiConnection?.disconnect()
     }
+    */
 
     return Promise.reject('No connection has been established.')
   }
@@ -178,11 +184,13 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
   private onStateChanged(state: ConnectionStatesType) {
     //  console.log(`ConnctionStateChanged: ${this.state} => ${state}`)
     if (this.state !== state && state === ConnectionStates.DISCONNECTED){
+      /*
       setTimeout(()=>{
         this._jitsiConnection!.disconnect().finally(()=>{
           setTimeout(this.reconnect.bind(this), 1000)
         })
       }, 1000)
+      */
     }
     this.state = state
     if (this._store) {

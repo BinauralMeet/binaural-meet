@@ -2,7 +2,6 @@ import {connection} from '@models/api'
 import {PriorityCalculator, priorityLog} from '@models/trafficControl/PriorityCalculator'
 import {connectionInfo} from '@stores/index'
 import {participantsStore} from '@stores/participants'
-import JitsiMeetJS from 'lib-jitsi-meet'
 import _ from 'lodash'
 import {autorun} from 'mobx'
 declare const d:any                  //  from index.html
@@ -44,12 +43,12 @@ const memoedUpdater = (() => {
       priorityCalculator.lastParticipantVideos, priorityCalculator.lastAudios]
     if (!_.isEqual(newList, memo)) {
       // Send res to Jitsi bridge
-      const perceptibles:JitsiMeetJS.BMPerceptibles = {
+      const perceptibles = {
         audibles: priorityCalculator.lastAudios,
         visibleContents: priorityCalculator.lastContentVideos,
         visibleParticipants: priorityCalculator.lastParticipantVideos,
       }
-      connection.conference.setPerceptibles(perceptibles)
+      //TODO: update listing tracks  connection.conference.setPerceptibles(perceptibles)
       priorityLog('setPerceptibles:', newList)
       //console.log(`setPerceptibles:${JSON.stringify(res)}`)
       memo = _.cloneDeep(newList)

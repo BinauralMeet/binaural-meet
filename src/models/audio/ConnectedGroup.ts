@@ -6,7 +6,6 @@ import {convertToAudioCoordinate, getRelativePose, mulV2, normV} from '@models/u
 import {stereoParametersStore} from '@stores/AudioParameters'
 import participants from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
-import {JitsiRemoteTrack, JitsiTrack} from 'lib-jitsi-meet'
 import _ from 'lodash'
 import {autorun, IObservableValue, IReactionDisposer} from 'mobx'
 import {NodeGroup, NodeGroupForPlayback} from './NodeGroup'
@@ -32,11 +31,11 @@ function getRelativePoseFromObject(localPose: Pose2DMap, participant: Participan
 export class ConnectedGroup {
   private readonly disposers: IReactionDisposer[] = []
 
-  constructor(obsLocal: IObservableValue<LocalParticipant>, contentTrack: JitsiRemoteTrack|undefined,
+  constructor(obsLocal: IObservableValue<LocalParticipant>, contentTrack: MediaStreamTrack|undefined,
     remote: RemoteParticipant|undefined, group: NodeGroup) {
     this.disposers.push(autorun(
       () => {
-        const carrierId = contentTrack?.getParticipantId()
+        const carrierId = ''  //TODO: get participant id?  contentTrack?.getParticipantId()
         const cid = carrierId && contents.tracks.carrierMap.get(carrierId)
         const content = cid ? contents.find(cid) : undefined
         const local = obsLocal.get()
@@ -85,8 +84,10 @@ export class ConnectedGroup {
 
     this.disposers.push(autorun(
       () => {
-        const track: JitsiTrack | undefined = remote ? remote.tracks.audio : contentTrack
-        group.updateStream(track?.getOriginalStream())
+        const track: MediaStreamTrack | undefined = remote ? remote.tracks.audio : contentTrack
+        const ms = new MediaStream()
+        if (track) ms.addTrack(track)
+        group.updateStream(ms)
       },
     ))
 
