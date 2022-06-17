@@ -1,6 +1,5 @@
 import {MAP_SIZE} from '@components/Constants'
 import {connection} from '@models/api'
-import {ConnectionStates} from '@models/api/Constants'
 import {t} from '@models/locales'
 import {priorityCalculator} from '@models/middleware/trafficControl'
 import { defaultInformation } from '@models/Participant'
@@ -131,7 +130,7 @@ export class ErrorInfo {
     }
   }
   @action checkConnection() {
-    if (connection.state !== ConnectionStates.CONNECTED) {
+    if (connection.store?.state !== 'connected') {
       this.setType('connection')
       setTimeout(this.checkConnection.bind(this), 5 * 1000)
     }else {

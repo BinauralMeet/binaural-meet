@@ -139,7 +139,7 @@ export class PriorityCalculator {
 
     let oldRemoteContents = new Map<string, Set<MediaStreamTrack>>()
     const remoteContentsChangeDisposer = autorun(() => {
-      const newRemoteContents = new Map<string, Set<MediaStreamTrack>>(contents.tracks.remoteContents)
+      const newRemoteContents = new Map<string, Set<MediaStreamTrack>>()  //  TODO: contents.tracks.remoteContents)
       const added = diffMap(newRemoteContents, oldRemoteContents)
       const removed = diffMap(oldRemoteContents, newRemoteContents)
       removed.forEach(onRemoveContent)
@@ -248,7 +248,7 @@ export class PriorityCalculator {
       const content = cid ? contents.find(cid) : undefined
       if (content && !isContentOutOfRange(content)) {
         const tracks = Array.from(contents.tracks.remoteContents.get(content.id)!)
-        const videoAudio = [tracks.find(track => track.isVideoTrack()), tracks.find(track => track.isAudioTrack())]
+        const videoAudio = [new MediaStreamTrack()] //TODO: [tracks.find(track => track.isVideoTrack()), tracks.find(track => track.isAudioTrack())]
         const trackInfos:RemoteTrackInfo[] = []
         videoAudio.forEach((track, idx) => {
           if (track) {
@@ -272,11 +272,11 @@ export class PriorityCalculator {
     const mainTracks = contents.tracks.remoteMainTrack()
     if (mainTracks){
       if (mainTracks[0]){
-        const mainVideoInfo = extractMainTrackInfo(mainTracks[0])
+        const mainVideoInfo = extractMainTrackInfo(mainTracks[0].getTrack())
         prioritizedContentTrackInfoList.unshift(mainVideoInfo)
       }
       if (mainTracks[1]){
-        const mainAudioInfo = extractMainTrackInfo(mainTracks[1])
+        const mainAudioInfo = extractMainTrackInfo(mainTracks[1].getTrack())
         prioritizedTrackInfoLists[1].unshift(mainAudioInfo)
       }
     }

@@ -1,4 +1,3 @@
-import {contentTrackCarrierName, roomInfoPeeperName} from '@models/api/Constants'
 import {recorder} from '@models/api/Recorder'
 import {ISharedContent} from '@models/ISharedContent'
 import {CONTENT_OUT_OF_RANGE_VALUE} from '@models/ISharedContent'

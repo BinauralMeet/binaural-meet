@@ -64,12 +64,10 @@ function connectConference() {
   })
 
   errorInfo.connectionStart()
-  connection.init().then(
-    () => {
-      when(() => errorInfo.type === '', () => {
-        const conferenceName = urlParameters.room || '_'
-        connection.joinConference(conferenceName)
-      })
-    },
-  )
+  when(() => errorInfo.type === '', () => {
+    connection.connect().then(()=>{
+      const conferenceName = urlParameters.room || '_'
+      connection.joinConference(conferenceName)
+    })
+  })
 }

@@ -27,11 +27,14 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
   const [muted, setMuted] = React.useState(false)
   const member = useRef<ScreenContentMember>({} as ScreenContentMember)
   member.current = {
+/*TODO:
     locals: useObserver<MediaStreamTrack[]>(() =>
       Array.from(sharedContents.tracks.localContents.get(props.content.id) || [])),
     remotes: useObserver<MediaStreamTrack[]>(() =>
-      Array.from(sharedContents.tracks.remoteContents.get(props.content.id) || [])),
-    content: props.content,
+      Array.from(sharedContents.tracks.remoteContents.get(props.content.id) || [])),*/
+      locals: [] as MediaStreamTrack[],
+      remotes: [] as MediaStreamTrack[],
+      content: props.content,
   }
   if (member.current.locals.length > 2) {
     console.error(`content ${props.content.id} has ${member.current.locals.length} local tracks`, member.current.locals)

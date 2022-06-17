@@ -65,6 +65,8 @@ export class Conference extends EventEmitter {
   }
 
   public init(name:string){
+    this.connectToRelayServer()
+
     //  check last kicked time
     if (name){
       const str = window.localStorage.getItem('kickTimes')

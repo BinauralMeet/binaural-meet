@@ -1,5 +1,4 @@
 import {connection} from '@models/api'
-import {contentTrackCarrierName} from '@models/api/Constants'
 import {assert} from '@models/utils'
 import {EventEmitter} from 'events'
 

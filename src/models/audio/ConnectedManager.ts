@@ -58,8 +58,10 @@ export class ConnectedManager {
     const added = diffMap(newRemotes, this.contentsMemo)
     const removed = diffMap(this.contentsMemo, newRemotes)
     removed.forEach(this.removeContent)
+/*TODO:
     added.forEach(this.addContent)
     this.contentsMemo = newRemotes
+    */
   }
 
   private removePlayback = (pp: PlaybackParticipant) => {

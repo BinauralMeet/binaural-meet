@@ -13,6 +13,21 @@ export const CID_MAINSCREEN = 'mainScreen'
 const LOG_CONTENT_TRACK = false
 const contentTrackLog = LOG_CONTENT_TRACK ? console.log : () => {}
 
+class JitsiLocalTrack {
+  getTrack() {
+    return new MediaStreamTrack()
+  }
+  getType(){
+    return ''
+  }
+}
+class JitsiRemoteTrack extends JitsiLocalTrack{
+  getParticipantId(){
+    return 'id'
+  }
+}
+type JitsiTrack = JitsiLocalTrack
+
 export class SharedContentTracks {
   private sharedContents:SharedContents
   //  Map<pid (of content carrier), cid / screen map>
@@ -169,10 +184,10 @@ export class SharedContentTracks {
         this.localMainConnection = new ConnectionForContent()
         this.localMainConnection.init().then(() => {
           connection.conference.sync.sendMainScreenCarrier(true)
-          tracks.forEach(track => this.localMainConnection!.addTrack(track))
+//TODO:          tracks.forEach(track => this.localMainConnection!.addTrack(track))
         })
       }else {
-        tracks.forEach(track => this.localMainConnection!.addTrack(track))
+//TODO:        tracks.forEach(track => this.localMainConnection!.addTrack(track))
       }
       //  set onended
       tracks.forEach(track => track.getTrack().onended = () => {
@@ -190,12 +205,14 @@ export class SharedContentTracks {
       return
     }
     connection.conference.sync.sendMainScreenCarrier(false)
+/*TODO:
     this.localMainConnection!.removeTrack(track).then(() => {
       if (this.localMainConnection!.getLocalTracks().length === 0) {
         this.localMainConnection!.disconnect()
         this.localMainConnection = undefined
       }
     })
+    */
   }
   @action public clearLocalMains() {
     const mains = new Set(this.localMains)
@@ -268,7 +285,7 @@ export class SharedContentTracks {
       assert(content)
       content.url = conn.getParticipantId()
       this.sharedContents.updateByLocal(Object.assign({}, content))
-      tracks.forEach(track => conn.addTrack(track))
+      //TODO:  tracks.forEach(track => conn.addTrack(track))
       tracks[0].getTrack().onended = (ev) => {
         this.sharedContents.removeByLocal(cid)
       }
@@ -279,15 +296,17 @@ export class SharedContentTracks {
     const tracks = this.localContents.get(cid)
     tracks?.forEach((track) => {
       track.getTrack().onended = null
-      track.stopStream()
+      //TODO:  track.stopStream()
     })
     if (tracks) {
       const conn = this.contentCarriers.get(cid)
       assert(conn)
       this.carrierMap.delete(conn.getParticipantId())
+      /*TODO:
       tracks.forEach(track => conn.removeTrack(track).then(() => {
         if (conn.getLocalTracks().length === 0) { conn.disconnect() }
       }))
+      */
     }
     this.localContents.delete(cid)
     this.contentCarriers.delete(cid)
@@ -336,7 +355,7 @@ export class SharedContentTracks {
         if (trackSet) {
           const tracks = Array.from(trackSet)
 
-          return [tracks.find(track => track.isVideoTrack()), tracks.find(track => track.isAudioTrack())]
+          return [] //TODO: [tracks.find(track => track.isVideoTrack()), tracks.find(track => track.isAudioTrack())]
         }
       }
     }

@@ -147,7 +147,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
         const content = createContentOfVideo(ms.getTracks(), map, 'screen')
         contents.shareContent(content)
         assert(content.id)
-        contents.tracks.addLocalContent(content.id, ms.getTracks())
+//TODO:        contents.tracks.addLocalContent(content.id, ms.getTracks())
       }
     })
     setStep('none')
@@ -167,7 +167,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
     } else {
       startCapture(props).then((ms) => {
         if (ms.getTracks().length) {
-          contents.tracks.addLocalMains(ms.getTracks())
+//TODO:          contents.tracks.addLocalMains(ms.getTracks())
         }
       })
     }

@@ -1,15 +1,17 @@
 import {priorityCalculator} from '@models/middleware/trafficControl'
 import { urlParameters } from '@models/url'
-import {ConnectionInfo} from '@stores/ConnectionInfo'
+import {ConnectionInfo, ConnectionStates} from '@stores/ConnectionInfo'
 import errorInfo from '@stores/ErrorInfo'
 import participants from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
 //import {stringify} from 'flatted'
 import jquery from 'jquery'
+import { _allowStateChanges } from 'mobx'
 import {Store} from '../../stores/utils'
 import {Conference} from './Conference'
-import {ConnectionStates, ConnectionStatesType} from './Constants'
+import { connection } from './ConnectionDefs'
+import {MessageType, Message, RoomMessage} from './MediaMessages'
 
 //  import * as TPC from 'lib-jitsi-meet/modules/RTC/TPCUtils'
 // import a global variant $ for lib-jitsi-meet
@@ -64,52 +66,85 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
 
 
  export class Connection extends EventEmitter {
-  //private _jitsiConnection?: JitsiMeetJS.JitsiConnection
   private _store: Store<ConnectionInfo> | undefined
   public conference = new Conference()
-  public version = '0.0.1'
-  public state = ConnectionStates.DISCONNECTED
+  public mainServer?:WebSocket
 
-  public set Store(store: Store<ConnectionInfo>) {
+  public set store(store: Store<ConnectionInfo>|undefined) {
     this._store = store
   }
+  public get store() {
+    return this._store
+  }
 
-  public init(): Promise<string> {
-//    Object.assign(initOptions, config.rtc.screenOptions)
+  public connect(){
+    const promise = new Promise<void>((resolve, reject)=>{
+      if (this.store?.state !== 'disconnected'){
+        console.error(`Already in ${this.store?.state} state`)
+        reject()
+        return
+      }
+      this.store?.changeState('connecting')
 
-    return new Promise<string>((resolve, reject) => {
-  //    JitsiMeetJS.init(initOptions)
-    //  JitsiMeetJS.setLogLevel(JITSILOGLEVEL)
+      this.mainServer = new WebSocket(config.mainServer)
 
-/*      this._jitsiConnection = new JitsiMeetJS.JitsiConnection(null, undefined, config)
-      this._jitsiConnection.addEventListener(JitsiMeetJS.events.connection.CONNECTION_ESTABLISHED, () => {
-        this.onStateChanged(ConnectionStates.CONNECTED)
-        resolve(JitsiMeetJS.events.connection.CONNECTION_ESTABLISHED)
-      })
-      this._jitsiConnection.addEventListener(JitsiMeetJS.events.connection.CONNECTION_FAILED, () => {
-        this.onStateChanged(ConnectionStates.DISCONNECTED)
-        reject(JitsiMeetJS.events.connection.CONNECTION_FAILED)
-      })
-      this._jitsiConnection.addEventListener(JitsiMeetJS.events.connection.CONNECTION_DISCONNECTED, () => {
-        this.onStateChanged(ConnectionStates.DISCONNECTED)
-      })
-      this._jitsiConnection.connect()
-      this.onStateChanged(ConnectionStates.CONNECTING)
-      */
+      const onOpen = () => {
+        if (!participants.local.id){
+          const msg:Message = {type:'connect', peer:participants.local.information.name.substring(0, 4)}
+          this.mainServer?.send(JSON.stringify(msg))
+        }
+      }
+      const onMessage = (ev: MessageEvent<any>)=> {
+        //  console.log(`ws:`, ev)
+        if (typeof ev.data === 'string') {
+          const msg = JSON.parse(ev.data) as Message
+          switch(msg.type){
+            case 'connect':{
+              participants.local.id = msg.peer
+              this._store?.changeState('connected')
+              //console.log('getUniqueId received')
+              resolve()
+            }break
+          }
+        }
+      }
+      const onClose = () => {
+        //console.log('onClose() for mainServer')
+        setTimeout(()=>{
+          this.mainServer = new WebSocket(config.mainServer)
+          setHandler()
+        }, 5 * 1000)
+      }
+      const onError = () => {
+        console.error(`Error in WebSocket for ${config.mainServer}`)
+        this.mainServer?.close(3000, 'onError')
+        onClose()
+      }
+
+      const setHandler = () => {
+        this.mainServer?.addEventListener('error', onError)
+        this.mainServer?.addEventListener('message', onMessage)
+        this.mainServer?.addEventListener('open', onOpen)
+        this.mainServer?.addEventListener('close', onClose)
+      }
+      setHandler()
     })
+    return promise
   }
 
   public joinConference(conferenceName: string) {
-    /*
-    if (this._jitsiConnection) {
-      this.conference.init(conferenceName, () => {
-        return this._jitsiConnection?.initJitsiConference(conferenceName.toLowerCase(), config)
-      })
-
-      return
+    if (this.mainServer){
+      const msg:RoomMessage = {
+        type: 'join',
+        peer: participants.local.id,
+        room: conferenceName
+      }
+      console.log(`join sent ${JSON.stringify(msg)}`)
+      this.mainServer.send(JSON.stringify(msg))
+      this.conference.init(msg.room)
+    }else{
+      throw new Error('No connection has been established.')
     }
-    */
-    throw new Error('No connection has been established.')
   }
   public leaveConference(){
     return this.conference.uninit()
@@ -179,22 +214,5 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
       })
     //  */
     })
-  }
-
-  private onStateChanged(state: ConnectionStatesType) {
-    //  console.log(`ConnctionStateChanged: ${this.state} => ${state}`)
-    if (this.state !== state && state === ConnectionStates.DISCONNECTED){
-      /*
-      setTimeout(()=>{
-        this._jitsiConnection!.disconnect().finally(()=>{
-          setTimeout(this.reconnect.bind(this), 1000)
-        })
-      }, 1000)
-      */
-    }
-    this.state = state
-    if (this._store) {
-      this._store.changeState(this.state)
-    }
   }
 }
