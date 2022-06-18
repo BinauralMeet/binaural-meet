@@ -86,8 +86,10 @@ export class ConnectedGroup {
       () => {
         const track: MediaStreamTrack | undefined = remote ? remote.tracks.audio : contentTrack
         const ms = new MediaStream()
-        if (track) ms.addTrack(track)
-        group.updateStream(ms)
+        if (track){
+          ms.addTrack(track)
+          group.updateStream(ms)
+        }
       },
     ))
 

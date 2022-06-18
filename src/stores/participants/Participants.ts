@@ -39,6 +39,16 @@ export class Participants {
     const newParticipant = new RemoteParticipant(participantId)
     newParticipant.physics.located = false
     this.remote.set(participantId, newParticipant)
+    return newParticipant
+  }
+
+  @action
+  getRemote(participantId: string){
+    let r = this.remote.get(participantId)
+    if (!r){
+      r = this.join(participantId)
+    }
+    return r
   }
 
   @action

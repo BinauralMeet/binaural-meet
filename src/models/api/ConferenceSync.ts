@@ -474,7 +474,7 @@ export class ConferenceSync{
     this.disposers.push(autorun(() => { this.sendOnStage() }))
 
     const sendYarnPhones = () => {
-      if (this.conference.channelOpened && participants.yarnPhoneUpdated) {
+      if (participants.yarnPhoneUpdated) {
         participants.yarnPhoneUpdated = false
         this.conference.sendMessage(MessageType.YARN_PHONE, Array.from(participants.yarnPhones))
       }

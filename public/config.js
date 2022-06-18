@@ -26,6 +26,7 @@ commonConfig = {
   remoteVideoLimit:10,
   remoteAudioLimit:20,
   thirdPersonView: true,
+  rtc: rtcConfig,
 }
 
 const configTitech = {

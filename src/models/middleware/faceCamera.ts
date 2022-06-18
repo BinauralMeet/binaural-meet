@@ -3,7 +3,8 @@ import {loadFaceLandmarkTinyModel, loadTinyFaceDetectorModel, detectSingleFace,
   TinyFaceDetectorOptions, Point, WithFaceLandmarks, FaceLandmarks68, FaceDetection} from 'face-api.js'
 import {rgba} from '@models/utils/color'
 import participants from '@stores/participants/Participants'
-import {addV2, mulV2, rotateVector2DByDegree, subV2} from '@models/utils'
+import {addV2, MSTrack, mulV2, rotateVector2DByDegree, subV2} from '@models/utils'
+import { Height } from '@material-ui/icons'
 
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
@@ -140,56 +141,61 @@ function moveAvatar(face?: WithFaceLandmarks<{detection:FaceDetection}, FaceLand
 var canvasEl: HTMLCanvasElement|undefined
 var loaded = false
 export function createLocalCamera(faceTrack: boolean) {
-  const promise = new Promise<MediaStreamTrack>((resolutionFunc, rejectionFunc) => {
-
-  })
-    /*
-  const promise = new Promise<JitsiLocalTrack>((resolutionFunc, rejectionFunc) => {
+  const promise = new Promise<MSTrack>((resolutionFunc, rejectionFunc) => {
     const did = participants.local.devicePreference.videoInputDevice
-    JitsiMeetJS.createLocalTracks({devices:['video'],
-      constraints: config.rtc.videoConstraints, cameraDeviceId: did}).then(
-      (tracks: JitsiLocalTrack[]) => {
-        if (faceTrack){
-          if (!videoEl){
-            //  face-api
-            loadTinyFaceDetectorModel('/faceApiModels').then(()=>{
-              loadFaceLandmarkTinyModel('/faceApiModels').then(()=>{
-                loaded = true
-              })
+    navigator.mediaDevices.getUserMedia(
+      {video:{
+        deviceId:did,
+        ...config.rtc.video
+      }}
+    ).then((ms)=>{
+      if (faceTrack){
+        if (!videoEl){
+          //  face-api
+          loadTinyFaceDetectorModel('/faceApiModels').then(()=>{
+            loadFaceLandmarkTinyModel('/faceApiModels').then(()=>{
+              loaded = true
             })
-            videoEl = window.document.createElement('video') as HTMLVideoElement
-            videoEl.autoplay = true
-      }
-          if (!canvasEl) canvasEl = window.document.createElement('canvas') as HTMLCanvasElement
-          const stream = tracks[0].getOriginalStream()
-          videoEl.srcObject = stream
-          if (interval){ clearInterval(interval) }
-          const ops = new TinyFaceDetectorOptions({inputSize: 160, scoreThreshold: 0.5})
-          interval = setInterval(()=>{
-            if (loaded){
-              detectSingleFace(videoEl!, ops).withFaceLandmarks(true).then((face) => {
-                drawFace(videoEl!.videoWidth, videoEl!.videoHeight, canvasEl!, face)
-                moveAvatar(face)
-                return face
-              }).catch(()=>{
-                drawFace(videoEl!.videoWidth, videoEl!.videoHeight, canvasEl!)
-              })
-            }else{
-              drawFace(videoEl!.videoWidth, videoEl!.videoHeight, canvasEl!)
-            }
-          }, 1000.0 / FACE_FPS)
-          const mediaStream = canvasEl.captureStream(FACE_FPS)
-          const canvasTracks = createJitisLocalTracksFromStream(mediaStream)
-          connection.conference.setLocalCameraTrack(canvasTracks[0])
-          resolutionFunc(canvasTracks[0]!)
-        }else{
-          connection.conference.setLocalCameraTrack(tracks[0])
-          resolutionFunc(tracks[0])
+          })
+          videoEl = window.document.createElement('video') as HTMLVideoElement
+          videoEl.autoplay = true
         }
-      },
-    ).catch(rejectionFunc)
+        if (!canvasEl) canvasEl = window.document.createElement('canvas') as HTMLCanvasElement
+        videoEl.srcObject = ms
+        if (interval){ clearInterval(interval) }
+        const ops = new TinyFaceDetectorOptions({inputSize: 160, scoreThreshold: 0.5})
+        interval = setInterval(()=>{
+          if (loaded){
+            detectSingleFace(videoEl!, ops).withFaceLandmarks(true).then((face) => {
+              drawFace(videoEl!.videoWidth, videoEl!.videoHeight, canvasEl!, face)
+              moveAvatar(face)
+              return face
+            }).catch(()=>{
+              drawFace(videoEl!.videoWidth, videoEl!.videoHeight, canvasEl!)
+            })
+          }else{
+            drawFace(videoEl!.videoWidth, videoEl!.videoHeight, canvasEl!)
+          }
+        }, 1000.0 / FACE_FPS)
+        const mediaStream = canvasEl.captureStream(FACE_FPS)
+        const track:MSTrack = {
+          track: mediaStream.getVideoTracks()[0],
+          peer: participants.local.id,
+          role: 'camera'
+        }
+        connection.conference.setLocalCameraTrack(track)
+        resolutionFunc(track)
+      }else{
+        const track:MSTrack = {
+          track: ms.getVideoTracks()[0],
+          peer: participants.local.id,
+          role: 'camera'
+        }
+        connection.conference.setLocalCameraTrack(track)
+        resolutionFunc(track)
+      }
+    }).catch(rejectionFunc)
   })
-    */
 
   return promise
 }

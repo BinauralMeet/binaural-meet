@@ -1,17 +1,18 @@
 import {priorityCalculator} from '@models/middleware/trafficControl'
 import { urlParameters } from '@models/url'
-import {ConnectionInfo, ConnectionStates} from '@stores/ConnectionInfo'
+import {ConnectionInfo} from '@stores/ConnectionInfo'
 import errorInfo from '@stores/ErrorInfo'
 import participants from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
-//import {stringify} from 'flatted'
-import jquery from 'jquery'
 import { _allowStateChanges } from 'mobx'
 import {Store} from '../../stores/utils'
 import {Conference} from './Conference'
-import { connection } from './ConnectionDefs'
-import {MessageType, Message, RoomMessage} from './MediaMessages'
+import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSMessageType, MSRoomMessage, MSRTPCapabilitiesReply,
+  MSTransportDirection, MSCreateTransportReply, MSConnectTransportMessage, MSConnectTransportReply,
+  MSProduceTransportMessage, MSProduceTransportReply, MSTrackRole, MSConsumeTransportMessage, MSConsumeTransportReply, MSRemoteUpdateMessage, MSRemoteLeftMessage} from './MediaMessages'
+import * as mediasoup from 'mediasoup-client';
+import { ConsumerOptions } from 'mediasoup-client/lib/Consumer'
 
 //  import * as TPC from 'lib-jitsi-meet/modules/RTC/TPCUtils'
 // import a global variant $ for lib-jitsi-meet
@@ -21,60 +22,94 @@ import {MessageType, Message, RoomMessage} from './MediaMessages'
 declare const config:any                  //  from ../../config.js included from index.html
 
 //  Log level and module log options
-export const JITSILOGLEVEL = 'warn'  // log level for lib-jitsi-meet {debug|log|warn|error}
 export const TRACKLOG = false        // show add, remove... of tracks
 export const CONNECTIONLOG = false
-//  if (TPC.setTPCLogger !== undefined) {
-  //  TPC.setTPCLogger(TRACKLOG ? console.log : (a:any) => {})
-//  }
+
 export const trackLog = TRACKLOG ? console.log : (a:any) => {}
 export const connLog = CONNECTIONLOG ? console.log : (a:any) => {}
 export const connDebug = CONNECTIONLOG ? console.debug : (a:any) => {}
 
 declare const global: any
-global.$ = jquery
-global.jQuery = jquery
 
-/*
-export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
-  useIPv6: false,
-  disableSimulcast: true,
-  enableWindowOnErrorHandler: true,
-  enableAnalyticsLogging: false,
-  disableThiredPartyRequests: false,
-  disableAudioLevels: false,
-
-  // The ID of the jidesha extension for Chrome.
-  desktopSharingChromeExtId: 'mbocklcggfhnbahlnepmldehdhpjfcjp',
-
-  // Whether desktop sharing should be disabled on Chrome.
-  desktopSharingChromeDisabled: false,
-
-  // The media sources to use when using screen sharing with the Chrome
-  // extension.
-  desktopSharingChromeSources: ['screen', 'window'],
-
-  // Required version of Chrome extension
-  desktopSharingChromeMinExtVersion: '0.1',
-
-  // Whether desktop sharing should be disabled on Firefox.
-  desktopSharingFirefoxDisabled: false,
-
-  desktopSharingFrameRate: {min: 0.3, max: 30}  //  override by config.js
-}
-*/
-
-
- export class Connection extends EventEmitter {
+export class Connection extends EventEmitter {
   private _store: Store<ConnectionInfo> | undefined
-  public conference = new Conference()
+  public conference = new Conference(this)
   public mainServer?:WebSocket
-
+  public device?:mediasoup.Device
   public set store(store: Store<ConnectionInfo>|undefined) {
     this._store = store
   }
   public get store() {
     return this._store
+  }
+  private handlers = new Map<MSMessageType, (msg: MSMessage)=>void>()
+  private promises = new Map<number, {resolve:(a:any)=>void, reject?:(a:any)=>void} >()
+  private messageNumber = 1
+  private setMessageSerialNumber(msg: MSMessage){
+    this.messageNumber++;
+    msg.sn = this.messageNumber
+  }
+  private setMessagePromise(msg:MSMessage, resolve:(a:any)=>void, reject?:(reson:any)=>void){
+    this.setMessageSerialNumber(msg)
+    this.promises.set(msg.sn!, {resolve, reject})
+  }
+  private callMessageResolve(m: MSMessage, a?:any){
+    const sn = m.sn
+    if (sn){
+      this.promises.get(sn)?.resolve(a)
+      this.promises.delete(sn)
+    }
+  }
+  private callMessageReject(m: MSMessage, a?:any){
+    const sn = m.sn
+    if (sn){
+      const reject = this.promises.get(sn)?.reject
+      if (reject) reject(a)
+      this.promises.delete(sn)
+    }
+  }
+
+  public constructor(){
+    super()
+    this.setMessageHandlers()
+    try{
+      this.device = new mediasoup.Device();
+    }catch (error:any){
+      if (error.name === 'UnsupportedError')
+        console.warn('browser not supported');
+    }
+  }
+  private setMessageHandlers(){
+    this.handlers.set('connect', this.onConnect)
+    this.handlers.set('createTransport', this.onCreateTransport)
+    this.handlers.set('rtpCapabilities', this.onRtpCapabilities)
+    this.handlers.set('connectTransport', this.onConnectTransport)
+    this.handlers.set('produceTransport', this.onProduceTransport)
+    this.handlers.set('consumeTransport', this.onConsumeTransport)
+    this.handlers.set('remoteUpdate', this.onRemoteUpdate)
+    this.handlers.set('remoteLeft', this.onRemoteLeft)
+  }
+
+  public loadDevice(){
+    const promise = new Promise<void>((resolve, reject)=>{
+      if (!this.mainServer) {
+        reject()
+        return
+      }
+      const msg:MSPeerMessage = {
+        type:'rtpCapabilities',
+        peer: participants.local.id
+      }
+      this.setMessagePromise(msg, resolve, reject)
+      this.mainServer.send(JSON.stringify(msg))
+    })
+    return promise
+  }
+  public onRtpCapabilities(base: MSMessage){
+    const msg = base as MSRTPCapabilitiesReply
+    this.device?.load({routerRtpCapabilities: msg.rtpCapabilities}).then(()=>{
+      this.callMessageResolve(base)
+    })
   }
 
   public connect(){
@@ -88,60 +123,67 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
 
       this.mainServer = new WebSocket(config.mainServer)
 
-      const onOpen = () => {
+      const onOpenEvent = () => {
         if (!participants.local.id){
-          const msg:Message = {type:'connect', peer:participants.local.information.name.substring(0, 4)}
+          const msg:MSPeerMessage = {
+            type:'connect',
+            peer:participants.local.information.name.substring(0, 4),
+          }
+          this.setMessagePromise(msg, resolve, reject)
           this.mainServer?.send(JSON.stringify(msg))
         }
       }
-      const onMessage = (ev: MessageEvent<any>)=> {
-        //  console.log(`ws:`, ev)
-        if (typeof ev.data === 'string') {
-          const msg = JSON.parse(ev.data) as Message
-          switch(msg.type){
-            case 'connect':{
-              participants.local.id = msg.peer
-              this._store?.changeState('connected')
-              //console.log('getUniqueId received')
-              resolve()
-            }break
-          }
+      const onMessageEvent = (ev: MessageEvent<any>)=> {
+        const msg = JSON.parse(ev.data) as MSMessage
+        const func = this.handlers.get(msg.type)
+        if (func){
+          func.bind(this)(msg)
+        }else{
+          console.error(`unhandled message ${msg.type} received`, msg)
         }
       }
-      const onClose = () => {
+      const onCloseEvent = () => {
         //console.log('onClose() for mainServer')
         setTimeout(()=>{
           this.mainServer = new WebSocket(config.mainServer)
-          setHandler()
+          setEventHandler()
         }, 5 * 1000)
       }
-      const onError = () => {
+      const onErrorEvent = () => {
         console.error(`Error in WebSocket for ${config.mainServer}`)
         this.mainServer?.close(3000, 'onError')
-        onClose()
+        onCloseEvent()
       }
 
-      const setHandler = () => {
-        this.mainServer?.addEventListener('error', onError)
-        this.mainServer?.addEventListener('message', onMessage)
-        this.mainServer?.addEventListener('open', onOpen)
-        this.mainServer?.addEventListener('close', onClose)
+      const setEventHandler = () => {
+        this.mainServer?.addEventListener('error', onErrorEvent)
+        this.mainServer?.addEventListener('message', onMessageEvent)
+        this.mainServer?.addEventListener('open', onOpenEvent)
+        this.mainServer?.addEventListener('close', onCloseEvent)
       }
-      setHandler()
+      setEventHandler()
     })
     return promise
+  }
+  private onConnect(base: MSMessage){
+    const msg = base as MSPeerMessage
+    participants.local.id = msg.peer
+    this._store?.changeState('connected')
+    this.callMessageResolve(msg)
   }
 
   public joinConference(conferenceName: string) {
     if (this.mainServer){
-      const msg:RoomMessage = {
+      const msg:MSRoomMessage = {
         type: 'join',
         peer: participants.local.id,
         room: conferenceName
       }
       console.log(`join sent ${JSON.stringify(msg)}`)
       this.mainServer.send(JSON.stringify(msg))
-      this.conference.init(msg.room)
+      this.loadDevice().then(()=>{
+        this.conference.init(msg.room)
+      })
     }else{
       throw new Error('No connection has been established.')
     }
@@ -215,4 +257,117 @@ export const initOptions: JitsiMeetJS.IJitsiMeetJSOptions = {
     //  */
     })
   }
+
+  public createTransport(dir: MSTransportDirection){
+    const promise = new Promise<mediasoup.types.Transport>((resolve, reject) => {
+      if (!this.mainServer) return
+      const msg:MSCreateTransportMessage = {
+        type:'createTransport',
+        peer:participants.local.id,
+        dir
+      }
+      this.setMessagePromise(msg, resolve, reject)
+      this.mainServer.send(JSON.stringify(msg))
+    })
+    return promise
+  }
+  private onCreateTransport(base: MSMessage){
+    const msg = base as MSCreateTransportReply
+    const {type, peer, transport, ...params} = msg
+    let transportObject:mediasoup.types.Transport|undefined
+    if (msg.dir === 'send'){
+      transportObject = this.device?.createSendTransport({...params, id:transport})
+    }else{
+      transportObject = this.device?.createRecvTransport({...params, id:transport})
+    }
+    this.callMessageResolve(msg, transportObject)
+  }
+
+  public connectTransport(transport: mediasoup.types.Transport, dtlsParameters: mediasoup.types.DtlsParameters){
+    const promise = new Promise<string>((resolve, reject) => {
+      if (!this.mainServer) return
+      const msg:MSConnectTransportMessage = {
+        type:'connectTransport',
+        peer:participants.local.id,
+        dtlsParameters,
+        transport: transport.id,
+      }
+      this.setMessagePromise(msg, resolve, reject)
+      this.mainServer.send(JSON.stringify(msg))
+    })
+    return promise
+  }
+  private onConnectTransport(base:MSMessage){
+    const msg = base as MSConnectTransportReply
+    if (msg.error){
+      this.callMessageReject(msg, msg.error)
+    }else{
+      this.callMessageResolve(msg, '')
+    }
+
+  }
+
+  public produceTransport(params:{transport:string, kind:mediasoup.types.MediaKind,
+    role: MSTrackRole|string, rtpParameters:mediasoup.types.RtpParameters,
+    paused:boolean, appData:any}){
+    const promise = new Promise<string>((resolve, reject) => {
+      if (!this.mainServer) return
+      const msg:MSProduceTransportMessage = {
+        type:'produceTransport',
+        peer:participants.local.id,
+        ...params,
+      }
+      this.setMessagePromise(msg, resolve, reject)
+      this.mainServer.send(JSON.stringify(msg))
+    })
+    return promise
+  }
+  private onProduceTransport(base:MSMessage){
+    const msg = base as MSProduceTransportReply
+    if (msg.error){
+      this.callMessageReject(msg, msg.error)
+    }else{
+      this.callMessageResolve(msg, msg.producer)
+    }
+  }
+
+  public consumeTransport(transport: string, producer:string){
+    const promise = new Promise<mediasoup.types.ConsumerOptions>((resolve, reject) => {
+      if (!this.mainServer) return
+      const msg:MSConsumeTransportMessage = {
+        type:'consumeTransport',
+        peer:participants.local.id,
+        rtpCapabilities: this.device!.rtpCapabilities,
+        transport,
+        producer,
+      }
+      this.setMessagePromise(msg, resolve, reject)
+      this.mainServer.send(JSON.stringify(msg))
+    })
+    return promise
+  }
+  private onConsumeTransport(base:MSMessage){
+    const msg = base as MSConsumeTransportReply
+    if (msg.error){
+      this.callMessageReject(msg, msg.error)
+    }else{
+      const consumerOptions: ConsumerOptions = {
+        id: msg.consumer,
+        producerId: msg.producer,
+        kind: msg.kind,
+        rtpParameters: msg.rtpParameters!
+      }
+      this.callMessageResolve(msg, consumerOptions)
+    }
+  }
+
+  private onRemoteUpdate(base: MSMessage){
+    const msg = base as MSRemoteUpdateMessage
+    this.conference.onRemoteUpdate(msg.remotes)
+  }
+  private onRemoteLeft(base: MSMessage){
+    const msg = base as MSRemoteLeftMessage
+    this.conference.onRemoteLeft(msg.remotes)
+  }
+
 }

@@ -1,32 +1,90 @@
 import * as mediasoup from 'mediasoup-client'
-
-export type MessageType = 'connect' | 'join' | 'leave' |
-  'addWorker' | 'deleteWorker' | 
-  'createTransport' | 'connectTransport' | 'closeTransport' |
-  'transportCreated'
-export interface Message{
-  type: MessageType
+export type MSMessageType = 'connect' | 'join' | 'rtpCapabilities' | 'leave' |
+  'remoteUpdate' | 'remoteLeft' |
+  'addWorker' | 'deleteWorker' |
+  'createTransport' | 'connectTransport' | 'produceTransport' | 'consumeTransport' | 'closeTransport'
+export interface MSMessage{
+  type: MSMessageType
+  sn?: number
+}
+export interface MSPeerMessage extends MSMessage{
   peer: string
 }
-export interface RoomMessage extends Message{
-  room: string
+export type MSTrackRole = 'camera' | 'mic' | 'window' | string
+export interface MSRemoteProducer{
+  id: string                      //  producer id
+  role: MSTrackRole               //  role of track for this producer
+  kind: mediasoup.types.MediaKind //  kind of this producer
 }
-//  c->s
-export interface CreateTransportMessage extends Message{
-  direction: string
-}
-//  s->c
-export interface TransportCreatedMessage extends Message{
-  id: string,
-  iceParameters:mediasoup.types.IceParameters, 
-  iceCandidates:mediasoup.types.IceCandidate,
-  dtlsParameters:mediasoup.types.DtlsParameters
+export interface MSRemotePeer{
+  peer: string
+  producers: MSRemoteProducer[]   // producers of the remote peer
 }
 
-export interface ConnectTransportMessage extends Message{
-  transportId: string,
+export interface MSRemoteUpdateMessage extends MSMessage{
+  remotes: MSRemotePeer[]
+}
+export interface MSRemoteLeftMessage extends MSMessage{
+  remotes: string[]
+}
+
+export interface MSRoomMessage extends MSPeerMessage{
+  room: string
+}
+export interface MSRTPCapabilitiesReply extends MSPeerMessage{
+  rtpCapabilities: mediasoup.types.RtpCapabilities
+}
+
+//  direction see from clients
+export type MSTransportDirection = 'send' | 'receive'
+//  c->s
+export interface MSCreateTransportMessage extends MSPeerMessage{
+  dir: MSTransportDirection
+}
+//  s->c
+export interface MSCreateTransportReply extends MSPeerMessage{
+  transport: string
+  iceParameters:mediasoup.types.IceParameters
+  iceCandidates:mediasoup.types.IceCandidate[]
+  dtlsParameters:mediasoup.types.DtlsParameters
+  dir: MSTransportDirection
+}
+
+export interface MSConnectTransportMessage extends MSPeerMessage{
+  transport: string,
   dtlsParameters: mediasoup.types.DtlsParameters,
 }
-export interface CloseTransportMessage extends Message{
-  transportId: string,
+export interface MSConnectTransportReply extends MSPeerMessage{
+  error: string
+}
+
+export interface MSProduceTransportMessage extends MSPeerMessage{
+  transport: string
+  role: MSTrackRole
+  kind: mediasoup.types.MediaKind
+  rtpParameters: mediasoup.types.RtpParameters,
+  paused?: boolean
+}
+export interface MSProduceTransportReply extends MSPeerMessage{
+  producer?: string
+  role: MSTrackRole
+  kind: mediasoup.types.MediaKind
+  error?:string
+}
+
+export interface MSConsumeTransportMessage extends MSPeerMessage{
+  transport: string
+  producer: string
+  rtpCapabilities: mediasoup.types.RtpCapabilities,
+}
+export interface MSConsumeTransportReply extends MSPeerMessage{
+  consumer?: string
+  producer?: string
+  kind?: mediasoup.types.MediaKind
+  rtpParameters?: mediasoup.types.RtpParameters
+  error?:string
+}
+
+export interface MSCloseTransportMessage extends MSMessage{
+  transport: string,
 }

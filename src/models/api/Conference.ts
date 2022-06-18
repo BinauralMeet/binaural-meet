@@ -1,17 +1,18 @@
 import { MAP_SIZE } from '@components/Constants'
 import {recorder} from '@models/api/Recorder'
 import {KickTime} from '@models/KickTime'
-import {assert} from '@models/utils'
+import {assert, MSTrack, Roles} from '@models/utils'
 import map from '@stores/Map'
-import {participantsStore} from '@stores/participants'
 import {default as participants} from '@stores/participants/Participants'
 import roomInfo from '@stores/RoomInfo'
 import contents from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
-import {makeObservable, observable} from 'mobx'
 import {BMMessage} from './BMMessage'
 import {ConferenceSync} from './ConferenceSync'
 import {ClientToServerOnlyMessageType, MessageType, ObjectArrayMessageTypes, StringArrayMessageTypes} from './MessageType'
+import {Connection} from './Connection'
+import * as mediasoup from 'mediasoup-client'
+import { MSRemotePeer, MSTransportDirection, MSRemoteProducer} from './MediaMessages'
 
 //  Log level and module log options
 export const JITSILOGLEVEL = 'warn'  // log level for lib-jitsi-meet {debug|log|warn|error}
@@ -41,11 +42,32 @@ const stringArrayMessageTypesForClient = new Set(StringArrayMessageTypes)
 stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.CONTENT_UPDATE_REQUEST_BY_ID)
 stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.REQUEST_PARTICIPANT_STATES)
 
+export interface RemoteProducer extends MSRemoteProducer{
+  peer: RemotePeer                    //  remote peer
+  consumer?: mediasoup.types.Consumer //  consumer for the remote producer
+}
+export interface RemotePeer{
+  peer: string
+  transport?: mediasoup.types.Transport // receive transport
+  producers: RemoteProducer[]           // producers of the remote peer
+}
+
+export interface LocalProducer{
+  id: string
+  role: string | Roles
+  producer: mediasoup.types.Producer
+}
+export interface ProducerData extends Record<string, unknown>{
+  track: MSTrack
+}
+export interface ConsumerData extends Record<string, unknown>{
+  producer: RemoteProducer
+}
+
 export class Conference extends EventEmitter {
-  public name=''
-  public localId = ''
+  public name=''    //    room name
   sync = new ConferenceSync(this)
-  @observable channelOpened = false     //  is JVB message channel open ?
+  //  relay server related
   bmRelaySocket:WebSocket|undefined = undefined //  Socket for message passing via separate relay server
   private lastRequestTime = Date.now()
   private lastReceivedTime = Date.now()
@@ -53,9 +75,15 @@ export class Conference extends EventEmitter {
   relayRttLast = 50
   relayRttAverage = 50
 
-  constructor(){
+  //  mediasoup related
+  private connection: Connection
+  private remotePeers = new Map<string, RemotePeer>()
+  private localProducers: mediasoup.types.Producer[] = []
+  private sendTransport?: mediasoup.types.Transport
+
+  constructor(c: Connection){
     super()
-    makeObservable(this)
+    this.connection = c
   }
 
   setRoomProp(name:string, value:string){
@@ -65,6 +93,7 @@ export class Conference extends EventEmitter {
   }
 
   public init(name:string){
+    //  relay server
     this.connectToRelayServer()
 
     //  check last kicked time
@@ -165,15 +194,131 @@ export class Conference extends EventEmitter {
     }
   }
 
-  //  Commmands for local tracks --------------------------------------------
-  private localMicTrack?: MediaStreamTrack
-  private localCameraTrack?: MediaStreamTrack
-  private doSetLocalMicTrack(track:MediaStreamTrack) {
-    this.localMicTrack = track
-    //TODO: add mic track to the room
+  // mediasoup
+  private createTransport(dir: MSTransportDirection){
+    const promise = new Promise<mediasoup.types.Transport>((resolve, reject)=>{
+      this.connection.createTransport(dir).then(transport => {
+        transport.on('connect', ({ dtlsParameters }, callback, errback) => {
+          console.log('transport connect event', 'send');
+          this.connection.connectTransport(transport, dtlsParameters).then(()=>{
+            callback()
+          }).catch((error:string)=>{
+            console.error(`error in connecting transport:${error}`);
+            errback()
+            reject()
+          })
+        });
+        if (dir === 'send'){
+          transport.on('produce', ({ kind, rtpParameters, appData }, callback, errback) => {
+            console.log('transport produce event', appData);
+            const track = (appData as ProducerData).track
+            this.connection.produceTransport({
+              transport:transport.id, kind, role:track.role, rtpParameters, paused:false, appData
+            }).then((id)=>{
+              callback({id})
+            }).catch((error)=>{
+              console.error('error setting up server-side producer', error)
+              errback()
+              reject()
+            })
+          })
+        }
+        transport.on('connectionstatechange', (state) => {
+          console.log(`transport ${transport.id} connectionstatechange ${state}`);
+          if (state === 'closed' || state === 'failed' || state === 'disconnected') {
+            console.log('transport closed ... leaving the room and resetting');
+            //TODO: leaveRoom();
+          }
+        });
+        resolve(transport)
+      }).catch(reject)
+    })
+    return promise
   }
-  public setLocalMicTrack(track: MediaStreamTrack|undefined){
-    const promise = new Promise<MediaStreamTrack|undefined>((resolveFunc, rejectionFunc) => {
+  private getSendTransport(){
+    const promise = new Promise<mediasoup.types.Transport>((resolve, reject)=>{
+      if (this.sendTransport){
+        resolve(this.sendTransport)
+      }else{
+        this.createTransport('send').then(transport=>{
+          this.sendTransport = transport
+          resolve(transport)
+        }).catch(reject)
+      }
+    })
+    return promise
+  }
+  private getReceiveTransport(peer: RemotePeer){
+    const promise = new Promise<mediasoup.types.Transport>((resolve, reject)=>{
+      if (peer.transport){
+        resolve(peer.transport)
+      }else{
+        this.createTransport('receive').then(transport => {
+          peer.transport = transport
+          resolve(transport)
+        }).catch(reject)
+      }
+    })
+    return promise
+  }
+  public addOrReplaceLocalTrack(track:MSTrack){
+    const promise = new Promise<mediasoup.types.Producer>((resolve, reject)=>{
+      const producer = this.localProducers.find(p => {
+        const old = (p.appData as ProducerData).track
+        return old.role === track.role && old.track.kind == track.track.kind
+      })
+      if (producer){
+        producer.replaceTrack(track).then(()=>{
+          (producer.appData as ProducerData).track = track
+          resolve(producer)
+        }).catch(reject)
+      }else{
+        this.getSendTransport().then((transport) => {
+          // add track to produce
+          transport.produce({track:track?.track, appData:{track}}).then( producer => {
+            this.localProducers.push(producer)
+            resolve(producer)
+          })
+        })
+      }
+    })
+    return promise
+  }
+  public removeLocalTrack(track:MSTrack){
+    const producer = this.localProducers.find(p => (p.appData as ProducerData).track === track)
+    if (producer){
+      producer.close()
+      this.localProducers = this.localProducers.filter(p => p !== producer)
+    }
+  }
+
+  public getConsumer(producer: RemoteProducer){
+    const promise = new Promise<mediasoup.types.Consumer>((resolve, reject)=>{
+      if (producer.consumer){
+        resolve(producer.consumer)
+      }else{
+        this.getReceiveTransport(producer.peer).then(transport => {
+          this.connection.consumeTransport(transport.id, producer.id).then(consumeParams=>{
+            transport.consume(consumeParams).then(consumer => {
+              producer.consumer = consumer
+              resolve(consumer)
+            }).catch(reject)
+          })
+        }).catch(reject)
+      }
+    })
+    return promise
+  }
+
+  //  Commmands for local tracks --------------------------------------------
+  private localMicTrack?: MSTrack
+  private localCameraTrack?: MSTrack
+  private doSetLocalMicTrack(track:MSTrack) {
+    this.localMicTrack = track
+    this.addOrReplaceLocalTrack(track)
+  }
+  public setLocalMicTrack(track: MSTrack|undefined){
+    const promise = new Promise<MSTrack|undefined>((resolveFunc, rejectionFunc) => {
       if (track) {
         if (this.localMicTrack) {
           const prev = this.localMicTrack
@@ -196,24 +341,23 @@ export class Conference extends EventEmitter {
   }
 
 
-  private doSetLocalCameraTrack(track:MediaStreamTrack) {
+  private doSetLocalCameraTrack(track:MSTrack) {
     this.localCameraTrack = track
-    //TODO:add track to the room
+    this.addOrReplaceLocalTrack(track)
   }
-  public setLocalCameraTrack(track: MediaStreamTrack|undefined) {
-    const promise = new Promise<MediaStreamTrack|undefined>((resolveFunc, rejectionFunc) => {
+  public setLocalCameraTrack(track: MSTrack|undefined) {
+    const promise = new Promise<MSTrack|undefined>((resolveFunc, rejectionFunc) => {
       if (track) {
         //  this.cameraTrackConverter(track)
         if (this.localCameraTrack) {
-          const prev = this.localCameraTrack
-          //TODO:remove track from the room
+          this.removeLocalTrack(this.localCameraTrack)
         }else {
           this.doSetLocalCameraTrack(track)
           resolveFunc(undefined)
         }
       }else {
         if (this.localCameraTrack) {
-          //TODO:remove track from the room
+          this.removeLocalTrack(this.localCameraTrack)
         }else {
           resolveFunc(undefined)
         }
@@ -370,6 +514,47 @@ export class Conference extends EventEmitter {
           }
         }
         waitAndSend()
+      })
+    }
+  }
+
+  //  event
+  onRemoteUpdate(msremotes: MSRemotePeer[]){
+    for (const msr of msremotes){
+      if (msr.peer === participants.localId) continue
+      const remote:RemotePeer = {
+        peer: msr.peer,
+        producers:[]
+      }
+      remote.producers = msr.producers.map(msp => ({...msp, peer:remote}))
+      const old = this.remotePeers.get(msr.peer)
+      if (old){
+        const added = remote.producers.filter(r => !old.producers.find(o => o.id === r.id))
+        this.onProducerAdded(added)
+      }else{
+        this.onProducerAdded(remote.producers)
+      }
+      this.remotePeers.set(msr.peer, remote)
+    }
+  }
+  onRemoteLeft(remoteIds: string[]){
+    for(const id of remoteIds){
+      if (id !== participants.localId){
+        this.remotePeers.delete(id)
+        participants.leave(id)
+      }
+    }
+  }
+
+  onProducerAdded(producers: RemoteProducer[]){
+    for(const producer of producers){
+      this.getConsumer(producer).then((consumer)=>{
+        const participant = participants.getRemote(producer.peer.peer)
+        if (producer.kind === 'audio'){
+          participant.tracks.audio = consumer.rtpReceiver?.track
+        }else{
+          participant.tracks.avatar = consumer.rtpReceiver?.track
+        }
       })
     }
   }
