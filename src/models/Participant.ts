@@ -55,7 +55,7 @@ export const defaultInformation:LocalInformation = {
   avatarSrc: '',
   color: [],
   textColor: [],
-  faceTrack: true,
+  faceTrack: false,
   notifyCall: true,
   notifyTouch: false,
   notifyNear: false,

@@ -231,9 +231,8 @@ export class ConferenceSync{
   private onParticipantInfo(from:string|undefined, info:RemoteInformation){
     assert(from)
     if (urlParameters.testBot !== null) { return }
-
-    const remote = participants.remote.get(from)
-    if (remote) {
+    if (from !== participants.localId){
+      const remote = participants.getOrCreateRemote(from)
       const name = remote.information.name
       Object.assign(remote.information, info)
       if (name !== remote.information.name){

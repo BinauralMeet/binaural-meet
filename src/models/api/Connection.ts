@@ -10,7 +10,7 @@ import {Store} from '../../stores/utils'
 import {Conference} from './Conference'
 import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSMessageType, MSRoomMessage, MSRTPCapabilitiesReply,
   MSTransportDirection, MSCreateTransportReply, MSConnectTransportMessage, MSConnectTransportReply,
-  MSProduceTransportMessage, MSProduceTransportReply, MSTrackRole, MSConsumeTransportMessage, MSConsumeTransportReply, MSRemoteUpdateMessage, MSRemoteLeftMessage} from './MediaMessages'
+  MSProduceTransportMessage, MSProduceTransportReply, MSTrackRole, MSConsumeTransportMessage, MSConsumeTransportReply, MSRemoteUpdateMessage, MSRemoteLeftMessage, MSResumeConsumerMessage, MSResumeConsumerReply, MSCloseProducerMessage, MSCloseProducerReply} from './MediaMessages'
 import * as mediasoup from 'mediasoup-client';
 import { ConsumerOptions } from 'mediasoup-client/lib/Consumer'
 
@@ -53,6 +53,16 @@ export class Connection extends EventEmitter {
     this.setMessageSerialNumber(msg)
     this.promises.set(msg.sn!, {resolve, reject})
   }
+  private sendWithPromise(msg:MSMessage, resolve:(a:any)=>void, reject?:(reson:any)=>void){
+    if (!this.mainServer) {
+      if (reject){
+        reject('no mainServer')
+      }
+    }else{
+      this.setMessagePromise(msg, resolve, reject)
+      this.mainServer.send(JSON.stringify(msg))
+    }
+  }
   private callMessageResolve(m: MSMessage, a?:any){
     const sn = m.sn
     if (sn){
@@ -85,23 +95,20 @@ export class Connection extends EventEmitter {
     this.handlers.set('rtpCapabilities', this.onRtpCapabilities)
     this.handlers.set('connectTransport', this.onConnectTransport)
     this.handlers.set('produceTransport', this.onProduceTransport)
+    this.handlers.set('closeProducer', this.onCloseProducer)
     this.handlers.set('consumeTransport', this.onConsumeTransport)
+    this.handlers.set('resumeConsumer', this.onResumeConsumer)
     this.handlers.set('remoteUpdate', this.onRemoteUpdate)
     this.handlers.set('remoteLeft', this.onRemoteLeft)
   }
 
-  public loadDevice(){
+  public loadDevice(peer: string){
     const promise = new Promise<void>((resolve, reject)=>{
-      if (!this.mainServer) {
-        reject()
-        return
-      }
       const msg:MSPeerMessage = {
         type:'rtpCapabilities',
-        peer: participants.local.id
+        peer
       }
-      this.setMessagePromise(msg, resolve, reject)
-      this.mainServer.send(JSON.stringify(msg))
+      this.sendWithPromise(msg, resolve, reject)
     })
     return promise
   }
@@ -112,7 +119,8 @@ export class Connection extends EventEmitter {
     })
   }
 
-  public connect(){
+  public connect(room: string){
+    this.conference.name = room
     const promise = new Promise<void>((resolve, reject)=>{
       if (this.store?.state !== 'disconnected'){
         console.error(`Already in ${this.store?.state} state`)
@@ -124,13 +132,12 @@ export class Connection extends EventEmitter {
       this.mainServer = new WebSocket(config.mainServer)
 
       const onOpenEvent = () => {
-        if (!participants.local.id){
+        if (!this.conference.peer){
           const msg:MSPeerMessage = {
             type:'connect',
             peer:participants.local.information.name.substring(0, 4),
           }
-          this.setMessagePromise(msg, resolve, reject)
-          this.mainServer?.send(JSON.stringify(msg))
+          this.sendWithPromise(msg, resolve, reject)
         }
       }
       const onMessageEvent = (ev: MessageEvent<any>)=> {
@@ -167,24 +174,22 @@ export class Connection extends EventEmitter {
   }
   private onConnect(base: MSMessage){
     const msg = base as MSPeerMessage
-    participants.local.id = msg.peer
+    this.conference.peer = msg.peer
     this._store?.changeState('connected')
-    this.callMessageResolve(msg)
-  }
-
-  public joinConference(conferenceName: string) {
     if (this.mainServer){
-      const msg:MSRoomMessage = {
+      const roomMsg:MSRoomMessage = {
         type: 'join',
-        peer: participants.local.id,
-        room: conferenceName
+        peer:msg.peer,
+        room: this.conference.name
       }
-      console.log(`join sent ${JSON.stringify(msg)}`)
-      this.mainServer.send(JSON.stringify(msg))
-      this.loadDevice().then(()=>{
-        this.conference.init(msg.room)
+      console.log(`join sent ${JSON.stringify(roomMsg)}`)
+      this.mainServer.send(JSON.stringify(roomMsg))
+      this.loadDevice(msg.peer).then(()=>{
+        this.conference.init()
+        this.callMessageResolve(msg)
       })
     }else{
+      this.callMessageReject(msg)
       throw new Error('No connection has been established.')
     }
   }
@@ -260,14 +265,12 @@ export class Connection extends EventEmitter {
 
   public createTransport(dir: MSTransportDirection){
     const promise = new Promise<mediasoup.types.Transport>((resolve, reject) => {
-      if (!this.mainServer) return
       const msg:MSCreateTransportMessage = {
         type:'createTransport',
-        peer:participants.local.id,
+        peer:this.conference.peer,
         dir
       }
-      this.setMessagePromise(msg, resolve, reject)
-      this.mainServer.send(JSON.stringify(msg))
+      this.sendWithPromise(msg, resolve, reject)
     })
     return promise
   }
@@ -285,15 +288,13 @@ export class Connection extends EventEmitter {
 
   public connectTransport(transport: mediasoup.types.Transport, dtlsParameters: mediasoup.types.DtlsParameters){
     const promise = new Promise<string>((resolve, reject) => {
-      if (!this.mainServer) return
       const msg:MSConnectTransportMessage = {
         type:'connectTransport',
-        peer:participants.local.id,
+        peer:this.conference.peer,
         dtlsParameters,
         transport: transport.id,
       }
-      this.setMessagePromise(msg, resolve, reject)
-      this.mainServer.send(JSON.stringify(msg))
+      this.sendWithPromise(msg, resolve, reject)
     })
     return promise
   }
@@ -311,14 +312,12 @@ export class Connection extends EventEmitter {
     role: MSTrackRole|string, rtpParameters:mediasoup.types.RtpParameters,
     paused:boolean, appData:any}){
     const promise = new Promise<string>((resolve, reject) => {
-      if (!this.mainServer) return
       const msg:MSProduceTransportMessage = {
         type:'produceTransport',
-        peer:participants.local.id,
+        peer:this.conference.peer,
         ...params,
       }
-      this.setMessagePromise(msg, resolve, reject)
-      this.mainServer.send(JSON.stringify(msg))
+      this.sendWithPromise(msg, resolve, reject)
     })
     return promise
   }
@@ -331,18 +330,30 @@ export class Connection extends EventEmitter {
     }
   }
 
+  public closeProducer(producer: string){
+    const promise = new Promise<string>((resolve, reject) => {
+      const msg:MSCloseProducerMessage = {
+        type:'closeProducer',
+        peer:this.conference.peer,
+        producer
+      }
+      this.sendWithPromise(msg, resolve, reject)
+    })
+  }
+  private onCloseProducer(base: MSMessage){
+    const msg = base as MSCloseProducerReply
+
+  }
   public consumeTransport(transport: string, producer:string){
     const promise = new Promise<mediasoup.types.ConsumerOptions>((resolve, reject) => {
-      if (!this.mainServer) return
       const msg:MSConsumeTransportMessage = {
         type:'consumeTransport',
-        peer:participants.local.id,
+        peer:this.conference.peer,
         rtpCapabilities: this.device!.rtpCapabilities,
         transport,
         producer,
       }
-      this.setMessagePromise(msg, resolve, reject)
-      this.mainServer.send(JSON.stringify(msg))
+      this.sendWithPromise(msg, resolve, reject)
     })
     return promise
   }
@@ -358,6 +369,25 @@ export class Connection extends EventEmitter {
         rtpParameters: msg.rtpParameters!
       }
       this.callMessageResolve(msg, consumerOptions)
+    }
+  }
+  public resumeConsumer(consumer: string, ){
+    const promise = new Promise<void>((resolve, reject) => {
+      const msg:MSResumeConsumerMessage = {
+        type:'resumeConsumer',
+        peer:this.conference.peer,
+        consumer
+      }
+      this.sendWithPromise(msg, resolve, reject)
+    })
+    return promise
+  }
+  private onResumeConsumer(base: MSMessage){
+    const reply = base as MSResumeConsumerReply
+    if(reply.error){
+      this.callMessageReject(reply, reply.error)
+    }else{
+      this.callMessageResolve(reply)
     }
   }
 

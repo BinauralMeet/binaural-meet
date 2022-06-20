@@ -6,7 +6,6 @@ import participants from '@stores/participants/Participants'
 import {autorun} from 'mobx'
 import {createLocalCamera} from './faceCamera'
 import {MSTrack} from '@models/utils'
-import { Conference } from '@models/api/Conference'
 
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
@@ -60,20 +59,27 @@ if (DELETE_MIC_TRACK){
 }
 */
 //  mic mute and audio input device selection
+function isMicMuted(){
+  return participants.local.muteAudio || participants.local.physics.awayFromKeyboard ||
+    !participants.localId || urlParameters.testBot !== null
+}
 autorun(() => {
   const did = participants.local.devicePreference.audioInputDevice
-  const muted = participants.local.muteAudio || participants.local.physics.awayFromKeyboard
-  if (participants.localId && !muted && urlParameters.testBot === null) {
-    const track = connection.conference.getLocalMicTrack()
-    //TODO:  if (track && track.getDeviceId() === did) { return }
-    createLocalMic().then((track)=>{
-      connection.conference.setLocalMicTrack(track)
-    }).finally(getNotificationPermission)
-  }else{
+  if (isMicMuted()){
     connection.conference.setLocalMicTrack(undefined).then(track => {
-      //TODO:  track?.dispose()
+      track?.track.stop()
       participants.local.audioLevel = 0
     })
+  }else{
+    const track = connection.conference.getLocalMicTrack()
+    if (track && track.deviceId === did) { return }
+    createLocalMic().then((track)=>{
+      if (isMicMuted()){
+        track.track?.stop()
+      }else{
+        connection.conference.setLocalMicTrack(track)
+      }
+    }).finally(getNotificationPermission)
   }
 })
 
@@ -100,21 +106,29 @@ autorun(() => {
 
 //  camera mute and camera device update
 const DELETE_TRACK = true
+function isCameraMuted(){
+  return participants.local.muteVideo || participants.local.physics.awayFromKeyboard ||
+    !participants.localId || urlParameters.testBot !== null
+}
 autorun(() => {
   const did = participants.local.devicePreference.videoInputDevice
   const faceTrack = participants.local.information.faceTrack
-  const muted = participants.local.muteVideo
-    || participants.local.physics.awayFromKeyboard
-  if (participants.localId && !muted && urlParameters.testBot === null) {
-    const track = connection.conference.getLocalCameraTrack()
-    if (track && track.deviceId === did) { return }
-    createLocalCamera(faceTrack).finally(getNotificationPermission)
-  }else{
+  if (isCameraMuted()) {
     if (DELETE_TRACK){
-      //TODO: connection.conference.setLocalCameraTrack(undefined).then(track => track?.dispose())
+      connection.conference.setLocalCameraTrack(undefined).then(track => track?.track.stop())
     } else {
       const track = connection.conference.getLocalCameraTrack()
-      //TODO: if (track) { connection.conference.removeTrack(track) }
+      if (track) { connection.conference.removeLocalTrack(track) }
     }
+  }else{
+    const track = connection.conference.getLocalCameraTrack()
+    if (track && track.deviceId === did) { return }
+    createLocalCamera(faceTrack).then((track)=>{
+      if (!isCameraMuted()){
+        connection.conference.setLocalCameraTrack(track)
+      }else{
+        track?.track.stop()
+      }
+    }).finally(getNotificationPermission)
   }
 })

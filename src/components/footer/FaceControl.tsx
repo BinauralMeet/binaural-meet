@@ -12,7 +12,7 @@ export const FaceControl: React.FC<BMProps> = (props: BMProps) => {
     <Switch checked={local.information.faceTrack} name="face"
       onChange={event => {
         local.information.faceTrack = !local.information.faceTrack
-        local.saveInformationToStorage(false)
+        local.saveInformationToStorage(true)
         local.sendInformation()
       } } />
   }</Observer>

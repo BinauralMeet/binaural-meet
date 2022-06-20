@@ -65,9 +65,7 @@ function connectConference() {
 
   errorInfo.connectionStart()
   when(() => errorInfo.type === '', () => {
-    connection.connect().then(()=>{
-      const conferenceName = urlParameters.room || '_'
-      connection.joinConference(conferenceName)
-    })
+    const room = urlParameters.room || '_'
+    connection.connect(room)
   })
 }

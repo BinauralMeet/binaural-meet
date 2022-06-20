@@ -17,15 +17,21 @@ export class TracksStore implements Tracks{
   @observable.ref avatar:MediaStreamTrack|undefined = undefined
   @observable avatarOk = this.avatar ? !this.avatar.muted : true
   @computed get audioStream() {
-    const ms = new MediaStream()
-    if (this.audio) ms.addTrack(this.audio)
-    return ms
+    if (this.audio){
+      const ms = new MediaStream()
+      if (this.audio) ms.addTrack(this.audio)
+      return ms
+    }
+    return undefined
   }
   @computed get avatarStream() {
-    const ms = new MediaStream()
-    if (this.avatar) ms.addTrack(this.avatar)
-    return ms
-}
+    if (this.avatar){
+      const ms = new MediaStream()
+      if (this.avatar) ms.addTrack(this.avatar)
+      return ms
+    }
+    return undefined
+  }
   @action onMuteChanged(track: MediaStreamTrack, mute: boolean) {
     if (track === this.avatar) {
       this.avatarOk = !mute

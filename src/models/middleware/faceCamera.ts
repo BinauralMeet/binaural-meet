@@ -183,7 +183,6 @@ export function createLocalCamera(faceTrack: boolean) {
           peer: participants.local.id,
           role: 'camera'
         }
-        connection.conference.setLocalCameraTrack(track)
         resolutionFunc(track)
       }else{
         const track:MSTrack = {
@@ -191,7 +190,6 @@ export function createLocalCamera(faceTrack: boolean) {
           peer: participants.local.id,
           role: 'camera'
         }
-        connection.conference.setLocalCameraTrack(track)
         resolutionFunc(track)
       }
     }).catch(rejectionFunc)

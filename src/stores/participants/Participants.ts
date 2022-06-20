@@ -43,7 +43,7 @@ export class Participants {
   }
 
   @action
-  getRemote(participantId: string){
+  getOrCreateRemote(participantId: string){
     let r = this.remote.get(participantId)
     if (!r){
       r = this.join(participantId)

@@ -13,6 +13,7 @@ import {ClientToServerOnlyMessageType, MessageType, ObjectArrayMessageTypes, Str
 import {Connection} from './Connection'
 import * as mediasoup from 'mediasoup-client'
 import { MSRemotePeer, MSTransportDirection, MSRemoteProducer} from './MediaMessages'
+import { Producer } from 'mediasoup-client/lib/Producer'
 
 //  Log level and module log options
 export const JITSILOGLEVEL = 'warn'  // log level for lib-jitsi-meet {debug|log|warn|error}
@@ -48,8 +49,8 @@ export interface RemoteProducer extends MSRemoteProducer{
 }
 export interface RemotePeer{
   peer: string
-  transport?: mediasoup.types.Transport // receive transport
-  producers: RemoteProducer[]           // producers of the remote peer
+  transport?: mediasoup.types.Transport   // receive transport
+  producers: Map<string, RemoteProducer>  // producers of the remote peer
 }
 
 export interface LocalProducer{
@@ -65,7 +66,8 @@ export interface ConsumerData extends Record<string, unknown>{
 }
 
 export class Conference extends EventEmitter {
-  public name=''    //    room name
+  public name=''    //  room name
+  public peer=''   //  peerId
   sync = new ConferenceSync(this)
   //  relay server related
   bmRelaySocket:WebSocket|undefined = undefined //  Socket for message passing via separate relay server
@@ -92,35 +94,40 @@ export class Conference extends EventEmitter {
     roomInfo.onUpdateProp(name, value)
   }
 
-  public init(name:string){
-    //  relay server
-    this.connectToRelayServer()
+  public init(){
+    //  check last kicked time and stop the operation if recently kicked.
+    const str = window.localStorage.getItem('kickTimes')
+    if (str){
+      const kickTimes = JSON.parse(str) as KickTime[]
+      const found = kickTimes.find(kt => kt.room === this.name)
+      if (found){
+        const diff = Date.now() - found.time
+        const KICK_WAIT_MIN = 15  //  Can not login KICK_WAIT_MIN minutes once kicked.
+        if (diff < KICK_WAIT_MIN * 60 * 1000){
+          window.location.reload()
 
-    //  check last kicked time
-    if (name){
-      const str = window.localStorage.getItem('kickTimes')
-      if (str){
-        const kickTimes = JSON.parse(str) as KickTime[]
-        const found = kickTimes.find(kt => kt.room === name)
-        if (found){
-          const diff = Date.now() - found.time
-          const KICK_WAIT_MIN = 15  //  Can not login KICK_WAIT_MIN minutes once kicked.
-          if (diff < KICK_WAIT_MIN * 60 * 1000){
-            window.location.reload()
-
-            return
-          }
+          return
         }
       }
     }
 
     //  register event handlers and join
-    this.name = name
-    this.registerJistiConferenceEvents()
     this.sync.bind()
-    //TODO: join room here
+    //  set id
+    participants.setLocalId(this.peer)
+    this.sync.observeStart()
+    //  create tracks
+    for (const prop in participants.local.devicePreference) {
+      if (participants.local.devicePreference[prop] === undefined) {
+        participants.local.devicePreference[prop] = ''
+      }
+    }
 
-    //  start relayServer communication.
+    //  connect to relay server for get contents and participants info.
+    if (config.bmRelayServer){
+      this.connectToRelayServer()
+    }
+    //  start periodical communication with relay server.
     this.step()
 
     //  To access from debug console, add object d to the window.
@@ -133,8 +140,8 @@ export class Conference extends EventEmitter {
   }
 
   public uninit(){
-    if (config.bmRelayServer && participants.localId){
-      this.pushOrUpdateMessageViaRelay(MessageType.PARTICIPANT_LEFT, [participants.localId])
+    if (config.bmRelayServer && this.peer){
+      this.pushOrUpdateMessageViaRelay(MessageType.PARTICIPANT_LEFT, [this.peer])
       this.sendMessageViaRelay()
     }
     /*TODO: uninit tracks
@@ -195,7 +202,7 @@ export class Conference extends EventEmitter {
   }
 
   // mediasoup
-  private createTransport(dir: MSTransportDirection){
+  private createTransport(dir: MSTransportDirection, remote?: RemotePeer){
     const promise = new Promise<mediasoup.types.Transport>((resolve, reject)=>{
       this.connection.createTransport(dir).then(transport => {
         transport.on('connect', ({ dtlsParameters }, callback, errback) => {
@@ -225,6 +232,14 @@ export class Conference extends EventEmitter {
         }
         transport.on('connectionstatechange', (state) => {
           console.log(`transport ${transport.id} connectionstatechange ${state}`);
+          if (dir==='receive' && state === 'connected'){
+            assert(remote)
+            const consumers = Array.from(remote.producers.values()).map(p => p.consumer).filter(c => c)
+            for(const consumer of consumers){
+              this.connection.resumeConsumer(consumer!.id)
+              consumer!.resume()
+            }
+          }
           if (state === 'closed' || state === 'failed' || state === 'disconnected') {
             console.log('transport closed ... leaving the room and resetting');
             //TODO: leaveRoom();
@@ -253,7 +268,7 @@ export class Conference extends EventEmitter {
       if (peer.transport){
         resolve(peer.transport)
       }else{
-        this.createTransport('receive').then(transport => {
+        this.createTransport('receive', peer).then(transport => {
           peer.transport = transport
           resolve(transport)
         }).catch(reject)
@@ -288,6 +303,7 @@ export class Conference extends EventEmitter {
     const producer = this.localProducers.find(p => (p.appData as ProducerData).track === track)
     if (producer){
       producer.close()
+      this.connection.closeProducer(producer.id)
       this.localProducers = this.localProducers.filter(p => p !== producer)
     }
   }
@@ -301,9 +317,12 @@ export class Conference extends EventEmitter {
           this.connection.consumeTransport(transport.id, producer.id).then(consumeParams=>{
             transport.consume(consumeParams).then(consumer => {
               producer.consumer = consumer
+              if (transport.connectionState === 'connected'){
+                this.connection.resumeConsumer(consumer.id)
+              }
               resolve(consumer)
             }).catch(reject)
-          })
+          }).catch(reject)
         }).catch(reject)
       }
     })
@@ -316,6 +335,7 @@ export class Conference extends EventEmitter {
   private doSetLocalMicTrack(track:MSTrack) {
     this.localMicTrack = track
     this.addOrReplaceLocalTrack(track)
+    participants.local.tracks.audio = track.track
   }
   public setLocalMicTrack(track: MSTrack|undefined){
     const promise = new Promise<MSTrack|undefined>((resolveFunc, rejectionFunc) => {
@@ -341,25 +361,36 @@ export class Conference extends EventEmitter {
   }
 
 
-  private doSetLocalCameraTrack(track:MSTrack) {
-    this.localCameraTrack = track
-    this.addOrReplaceLocalTrack(track)
+  private doSetLocalCameraTrack(track?:MSTrack) {
+    const promise = new Promise<mediasoup.types.Producer|void>((resolve, reject) => {
+      this.localCameraTrack = track
+      if (this.localCameraTrack){
+        this.addOrReplaceLocalTrack(this.localCameraTrack).then(resolve).catch(reject)
+      }else{
+        resolve()
+      }
+      participants.local.tracks.avatar = this.localCameraTrack?.track
+    })
+    return promise
   }
   public setLocalCameraTrack(track: MSTrack|undefined) {
-    const promise = new Promise<MSTrack|undefined>((resolveFunc, rejectionFunc) => {
-      if (track) {
-        //  this.cameraTrackConverter(track)
-        if (this.localCameraTrack) {
-          this.removeLocalTrack(this.localCameraTrack)
-        }else {
-          this.doSetLocalCameraTrack(track)
-          resolveFunc(undefined)
+    const promise = new Promise<MSTrack|void>((resolve, reject) => {
+      if (track){
+        if (track === this.localCameraTrack) {
+          resolve()
+        }else{
+          //  this.cameraTrackConverter(track)
+          if (this.localCameraTrack) {
+            this.removeLocalTrack(this.localCameraTrack)
+          }
+          this.doSetLocalCameraTrack(track).then(()=>{resolve()})
         }
-      }else {
+      }else{
         if (this.localCameraTrack) {
           this.removeLocalTrack(this.localCameraTrack)
+          this.doSetLocalCameraTrack(track).then(()=>{resolve()})
         }else {
-          resolveFunc(undefined)
+          resolve()
         }
       }
     })
@@ -401,13 +432,6 @@ export class Conference extends EventEmitter {
         if (msgs.length){
           this.relayRttAverage = alpha * this.relayRttLast + (1-alpha) * this.relayRttAverage
         }
-        /*/
-        setTimeout(()=>{
-          if (msgs.length){
-            this.receivedMessages.push(...msgs)
-          }
-          this.lastReceivedTime = Date.now()
-        }, 1000)  //  */
       }
     }
     const onClose = () => {
@@ -426,16 +450,6 @@ export class Conference extends EventEmitter {
       this.bmRelaySocket?.addEventListener('message', onMessage)
       this.bmRelaySocket?.addEventListener('open', onOpen)
       this.bmRelaySocket?.addEventListener('close', onClose)
-
-      /*  Use Idle
-      if ((window as any).requestIdleCallback){
-        const idleFunc = (deadline: IdleDeadline) => {
-          this.onIdle(deadline);
-          (window as any).requestIdleCallback(idleFunc)
-        }
-        (window as any).requestIdleCallback(idleFunc)
-      }*/
-      //  Use timer
     }
     this.bmRelaySocket = new WebSocket(config.bmRelayServer)
     setHandler()
@@ -444,8 +458,8 @@ export class Conference extends EventEmitter {
   pushOrUpdateMessageViaRelay(type:string, value:any, dest?:string, sendRandP?:boolean) {
     assert(config.bmRelayServer)
     if (!this.bmRelaySocket || this.bmRelaySocket.readyState !== WebSocket.OPEN){ return }
-    if (!this.name || !participants.localId){
-      console.warn(`Relay Socket: Not connected. room:${this.name} id:${participants.localId}.`)
+    if (!this.name || !this.peer){
+      console.warn(`Relay Socket: Not connected. room:${this.name} id:${this.peer}.`)
 
       return
     }
@@ -454,7 +468,7 @@ export class Conference extends EventEmitter {
     const msg:BMMessage = {t:type, v:''}
     if (sendRandP) {
       msg.r = this.name
-      msg.p = participants.localId
+      msg.p = this.peer
     }
     if (dest){
       msg.d = dest
@@ -491,7 +505,7 @@ export class Conference extends EventEmitter {
     }
 
     if (recorder.recording){
-      msg.p = participants.localId
+      msg.p = this.peer
       recorder.recordMessage(msg)
     }
   }
@@ -521,25 +535,50 @@ export class Conference extends EventEmitter {
   //  event
   onRemoteUpdate(msremotes: MSRemotePeer[]){
     for (const msr of msremotes){
-      if (msr.peer === participants.localId) continue
-      const remote:RemotePeer = {
-        peer: msr.peer,
-        producers:[]
-      }
-      remote.producers = msr.producers.map(msp => ({...msp, peer:remote}))
-      const old = this.remotePeers.get(msr.peer)
-      if (old){
-        const added = remote.producers.filter(r => !old.producers.find(o => o.id === r.id))
-        this.onProducerAdded(added)
+      if (msr.peer === this.peer) continue
+      const remote = this.remotePeers.get(msr.peer)
+      if (remote){
+        const addeds:MSRemoteProducer[] = []
+        const removeds = new Map(remote.producers)
+        for(const msrp of msr.producers){
+          const current = remote.producers.get(msrp.id)
+          if (current){
+            //  update exsiting producer
+            if (current.id !== msrp.id){  //  producer changed and need to create new producer
+              addeds.push(msrp)
+            }else{                        //  no change
+              removeds.delete(current.id) //  keep this producer and consumer for it
+              current.role = msrp.role
+              current.kind = msrp.kind
+            }
+          }else{
+            addeds.push(msrp)
+          }
+        }
+        removeds.forEach((removed)=>{
+          remote.producers.delete(removed.id)
+        })
+        const addedProducers = addeds.map(added => ({...added, peer:remote}))
+        for(const added of addedProducers){
+          remote.producers.set(added.id, added)
+        }
+        this.onProducerAdded(addedProducers)
+        this.onProducerRemoved(Array.from(removeds.values()))
       }else{
-        this.onProducerAdded(remote.producers)
+        const newRemote:RemotePeer = {
+          peer: msr.peer,
+          producers:new Map<string, RemoteProducer>()
+        }
+        newRemote.producers = new Map<string, RemoteProducer>(
+          msr.producers.map(msp => ([msp.id, {...msp, peer:newRemote}])))
+        this.remotePeers.set(msr.peer, newRemote)
+        this.onProducerAdded(Array.from(newRemote.producers.values()))
       }
-      this.remotePeers.set(msr.peer, remote)
     }
   }
   onRemoteLeft(remoteIds: string[]){
     for(const id of remoteIds){
-      if (id !== participants.localId){
+      if (id !== this.peer){
         this.remotePeers.delete(id)
         participants.leave(id)
       }
@@ -549,16 +588,35 @@ export class Conference extends EventEmitter {
   onProducerAdded(producers: RemoteProducer[]){
     for(const producer of producers){
       this.getConsumer(producer).then((consumer)=>{
-        const participant = participants.getRemote(producer.peer.peer)
+        const participant = participants.getOrCreateRemote(producer.peer.peer)
         if (producer.kind === 'audio'){
           participant.tracks.audio = consumer.rtpReceiver?.track
         }else{
           participant.tracks.avatar = consumer.rtpReceiver?.track
         }
+      }).catch((e) => {
+        console.error(`conference.onProducerAdded(): ${e}`)
       })
     }
   }
-
+  onProducerRemoved(producers: RemoteProducer[]){
+    for(const producer of producers){
+      if (producer.consumer){
+        producer.consumer.close()
+        const participant = participants.remote.get(producer.peer.peer)
+        if (participant){
+          if (producer.role === 'mic'){
+            participant.tracks.audio = undefined
+          }else if (producer.role === 'camera'){
+            participant.tracks.avatar = undefined
+          }else{
+            console.log(`Prorducer with unknown role ${producer.role} is removed from ${participant.id}`)
+            //  TODO:remove content
+          }
+        }
+      }
+    }
+  }
   //  register event handlers
   private registerJistiConferenceEvents() {
     /*  TODO: add event handler
@@ -688,17 +746,6 @@ export class Conference extends EventEmitter {
     }
   }
 
-  private onLocalTrackAdded(track: JitsiLocalTrack) {
-    const local = participants.local
-    if (track.isAudioTrack()) {
-      if (local.muteAudio) { track.mute() }
-      else { track.unmute() }
-      local.tracks.audio = track
-    } else {
-      local.tracks.avatar = track
-      if (local.muteVideo) { this.removeTrack(track) }
-    }
-  }
   private onLocalTrackRemoved(track: JitsiLocalTrack) {
     const local = participants.local
     if (track.isAudioTrack()) {

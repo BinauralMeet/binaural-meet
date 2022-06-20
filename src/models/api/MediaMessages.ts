@@ -2,7 +2,8 @@ import * as mediasoup from 'mediasoup-client'
 export type MSMessageType = 'connect' | 'join' | 'rtpCapabilities' | 'leave' |
   'remoteUpdate' | 'remoteLeft' |
   'addWorker' | 'deleteWorker' |
-  'createTransport' | 'connectTransport' | 'produceTransport' | 'consumeTransport' | 'closeTransport'
+  'createTransport' | 'closeTransport' | 'connectTransport' |
+  'produceTransport' | 'closeProducer' | 'consumeTransport' | 'resumeConsumer'
 export interface MSMessage{
   type: MSMessageType
   sn?: number
@@ -72,6 +73,13 @@ export interface MSProduceTransportReply extends MSPeerMessage{
   error?:string
 }
 
+export interface MSCloseProducerMessage extends MSPeerMessage{
+  producer: string
+}
+export interface MSCloseProducerReply extends MSPeerMessage{
+  error?: string
+}
+
 export interface MSConsumeTransportMessage extends MSPeerMessage{
   transport: string
   producer: string
@@ -83,6 +91,13 @@ export interface MSConsumeTransportReply extends MSPeerMessage{
   kind?: mediasoup.types.MediaKind
   rtpParameters?: mediasoup.types.RtpParameters
   error?:string
+}
+
+export interface MSResumeConsumerMessage extends MSPeerMessage{
+  consumer: string
+}
+export interface MSResumeConsumerReply extends MSPeerMessage{
+  error?: string
 }
 
 export interface MSCloseTransportMessage extends MSMessage{

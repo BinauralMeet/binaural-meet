@@ -40,5 +40,6 @@ export const MemoedAvatar = (props: AvatarProps) =>
     props.participant.information.color,
     props.participant.information.name,
     props.participant.information.textColor,
+    (props.participant as RemoteParticipant).tracks?.avatar,
   ])
 MemoedAvatar.displayName = 'MemorizedAvatar'
