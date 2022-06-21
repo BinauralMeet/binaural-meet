@@ -13,7 +13,6 @@ import {ClientToServerOnlyMessageType, MessageType, ObjectArrayMessageTypes, Str
 import {Connection} from './Connection'
 import * as mediasoup from 'mediasoup-client'
 import { MSRemotePeer, MSTransportDirection, MSRemoteProducer} from './MediaMessages'
-import { Producer } from 'mediasoup-client/lib/Producer'
 
 //  Log level and module log options
 export const JITSILOGLEVEL = 'warn'  // log level for lib-jitsi-meet {debug|log|warn|error}
@@ -42,6 +41,38 @@ export const ConferenceEvents = {
 const stringArrayMessageTypesForClient = new Set(StringArrayMessageTypes)
 stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.CONTENT_UPDATE_REQUEST_BY_ID)
 stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.REQUEST_PARTICIPANT_STATES)
+
+
+
+class AudioMeter{
+  context?: AudioContext
+  analyser?: AnalyserNode
+  source?: MediaStreamAudioSourceNode
+  private BUFFERLEN = 32
+  setSource(track: MSTrack){
+    this.source?.disconnect()
+    this.analyser?.disconnect()
+    this.context?.close()
+    this.context = new AudioContext();
+    this.analyser = this.context.createAnalyser();
+    this.source = this.context.createMediaStreamSource(new MediaStream([track.track]));
+    if (this.analyser && this.source){
+      this.source.connect(this.analyser)
+      this.analyser.connect(this.context.destination)
+      this.analyser.fftSize = this.BUFFERLEN
+    }
+  }
+  getAudioLevel(){
+    if (this.context?.state === 'suspended') {
+      this.context?.resume();
+    }
+    const buffer = new Float32Array(this.BUFFERLEN)
+    this.analyser?.getFloatTimeDomainData(buffer)
+    const volume = buffer.reduce((prev, cur)=>prev+Math.abs(cur), 0) / this.BUFFERLEN
+    //  console.log(`local audio level ${volume}`)
+    return volume
+  }
+}
 
 export interface RemoteProducer extends MSRemoteProducer{
   peer: RemotePeer                    //  remote peer
@@ -82,6 +113,8 @@ export class Conference extends EventEmitter {
   private remotePeers = new Map<string, RemotePeer>()
   private localProducers: mediasoup.types.Producer[] = []
   private sendTransport?: mediasoup.types.Transport
+
+  public audioMeter: AudioMeter = new AudioMeter()
 
   constructor(c: Connection){
     super()
@@ -165,6 +198,15 @@ export class Conference extends EventEmitter {
     })
   }
 
+  private updateAudioLevel(){
+    if (participants.local.trackStates.micMuted){
+      participants.local.setAudioLevel(0)
+    }else{
+      participants.local.setAudioLevel(this.audioMeter.getAudioLevel())
+    }
+    this.sync.sendAudioLevel()
+  }
+
   private stopStep = false
   private step(){
     const period = 50
@@ -190,6 +232,7 @@ export class Conference extends EventEmitter {
           const area = recorder.recording ? [-MAP_SIZE*2, MAP_SIZE*2, MAP_SIZE*2, -MAP_SIZE*2]
             : map.visibleArea()
           this.pushOrUpdateMessageViaRelay(MessageType.REQUEST_RANGE, [area, participants.audibleArea()])
+          this.updateAudioLevel()
           this.sendMessageViaRelay()
       }
       //  console.log(`step RTT:${this.relayRttAverage} remain:${deadline - Date.now()}/${timeToProcess}`)
@@ -334,6 +377,8 @@ export class Conference extends EventEmitter {
   private localCameraTrack?: MSTrack
   private doSetLocalMicTrack(track:MSTrack) {
     this.localMicTrack = track
+    this.audioMeter.setSource(track)
+
     this.addOrReplaceLocalTrack(track)
     participants.local.tracks.audio = track.track
   }
@@ -404,8 +449,8 @@ export class Conference extends EventEmitter {
     return this.localCameraTrack
   }
 
-  sendMessage(type:string, value:any, to?: string) {
-      this.pushOrUpdateMessageViaRelay(type, value, to)
+  sendMessage(type:string, value:any, to?: string, sendRandP?: boolean) {
+      this.pushOrUpdateMessageViaRelay(type, value, to, sendRandP)
   }
   receivedMessages: BMMessage[] = []
   connectToRelayServer(){

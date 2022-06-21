@@ -76,7 +76,7 @@ export class ConferenceSync{
   //
   sendPoseMessageNow(bSendRandP: boolean){
     const poseStr = pose2Str(participants.local.pose)
-    this.conference.pushOrUpdateMessageViaRelay(MessageType.PARTICIPANT_POSE, poseStr, undefined, bSendRandP)
+    this.conference.sendMessage(MessageType.PARTICIPANT_POSE, poseStr, undefined, bSendRandP)
   }
   sendMouseMessageNow(){
     const mouseStr = mouse2Str(participants.local.mouse)
@@ -87,6 +87,9 @@ export class ConferenceSync{
     this.conference.sendMessage(PropertyType.PARTICIPANT_INFO, {...participants.local.informationToSend})
     let name = participants.local.information.name
     while(name.slice(0,1) === '_'){ name = name.slice(1) }
+  }
+  sendAudioLevel(){
+    this.conference.sendMessage(MessageType.AUDIO_LEVEL, participants.local.audioLevel)
   }
   sendOnStage(){
     this.conference.sendMessage(PropertyType.PARTICIPANT_ON_STAGE, participants.local.physics.onStage)
@@ -250,17 +253,17 @@ export class ConferenceSync{
     assert(from)
     if (urlParameters.testBot !== null) { return }
 
-    const remote = participants.remote.get(from)
-    if (remote) {
+    if (from !== participants.localId){
+      const remote = participants.getOrCreateRemote(from)
       Object.assign(remote.trackStates, states)
     }
   }
   private onParticipantPose(from:string|undefined, poseStr:string){
     assert(from)
-    const pose = str2Pose(poseStr)
-    const remote = participants.remote.get(from)
-    const local = participants.local
-    if (remote) {
+    if (from !== participants.localId){
+      const pose = str2Pose(poseStr)
+      const remote = participants.getOrCreateRemote(from)
+      const local = participants.local
       remote.pose.orientation = pose.orientation
       remote.pose.position = pose.position
       remote.physics.located = true
@@ -278,17 +281,25 @@ export class ConferenceSync{
       }
     }
   }
+  private onParticipantAudioLevel(from:string|undefined, l:number){
+    if (from && from !== participants.localId){
+      const remote = participants.getOrCreateRemote(from)
+      remote.audioLevel = l
+    }
+  }
   private onParticipantMouse(from:string|undefined, mouseStr:string){
     assert(from)
     const mouse = str2Mouse(mouseStr)
     if (urlParameters.testBot !== null) { return }
-    const remote = participants.remote.get(from)
-    if (remote) { Object.assign(remote.mouse, mouse) }
+    if (from !== participants.localId){
+      const remote = participants.getOrCreateRemote(from)
+      Object.assign(remote.mouse, mouse)
+    }
   }
   private onParticipantOnStage(from:string|undefined, onStage:boolean){
     assert(from)
-    const remote = participants.remote.get(from)
-    if (remote) {
+    if (from !== participants.localId){
+      const remote = participants.getOrCreateRemote(from)
       remote.physics.onStage = onStage
     }
   }
@@ -296,8 +307,8 @@ export class ConferenceSync{
     assert(from)
     if (urlParameters.testBot !== null) { return }
 
-    const remote = participants.remote.get(from)
-    if (remote) {
+    if (from !== participants.localId){
+      const remote = participants.getOrCreateRemote(from)
       Object.assign(remote.viewpoint, viewpoint)
     }
   }
@@ -335,10 +346,7 @@ export class ConferenceSync{
   //  contents
   private onMainScreenCarrier(from: string|undefined, msg:{carrierId:string, enabled:boolean}){
     assert(from)
-    const remote = participants.remote.get(from)
-    if (remote) {
-      contents.tracks.onMainScreenCarrier(msg.carrierId, msg.enabled)
-    }
+    contents.tracks.onMainScreenCarrier(msg.carrierId, msg.enabled)
   }
   private onMyContent(from:string|undefined, cs_:ISharedContent[]){
     assert(from)
@@ -346,7 +354,6 @@ export class ConferenceSync{
     contents.checkDuplicatedWallpaper(from, cs)
     contents.replaceRemoteContents(cs, from)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const remote = participants.remote.get(from)
     syncLog(`recv remote contents ${JSON.stringify(cs.map(c => c.id))} from ${from}.`, cs)
   }
   private onContentInfoUpdate(cs:ISharedContent[]){
@@ -515,6 +522,7 @@ export class ConferenceSync{
         case MessageType.CONTENT_INFO_UPDATE: this.onContentInfoUpdate(JSON.parse(msg.v)); break
         case MessageType.PARTICIPANT_MOUSE: this.onParticipantMouse(msg.p, JSON.parse(msg.v)); break
         case MessageType.PARTICIPANT_POSE: this.onParticipantPose(msg.p, JSON.parse(msg.v)); break
+        case MessageType.AUDIO_LEVEL: this.onParticipantAudioLevel(msg.p, JSON.parse(msg.v)); break
         case MessageType.PARTICIPANT_TRACKLIMITS: this.onParticipantTrackLimits(JSON.parse(msg.v)); break
         case MessageType.YARN_PHONE: this.onYarnPhone(msg.p, JSON.parse(msg.v)); break
         case MessageType.RELOAD_BROWSER: this.onReloadBrower(); break

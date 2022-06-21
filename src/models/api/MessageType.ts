@@ -28,6 +28,7 @@ export const InstantMessageType = {
   CALL_REMOTE: 'call_remote',                   //  pid:string, give notification to a remote user.
   MUTE_VIDEO: 'm_mute_video',                   //  boolean, ask to mute video
   MUTE_AUDIO: 'm_mute_audio',                   //  boolean, ask to mute audio
+  AUDIO_LEVEL: 'm_audio_level',                 //  audio level notification
   RELOAD_BROWSER: 'm_reload',                   //  not used, ask to reload browser
   KICK: 'm_kick',                               //  reason:string
 }
