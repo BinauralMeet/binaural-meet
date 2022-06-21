@@ -7,12 +7,13 @@ import contents from '@stores/sharedContents/SharedContents'
 import {EventEmitter} from 'events'
 import { _allowStateChanges } from 'mobx'
 import {Store} from '../../stores/utils'
-import {Conference} from './Conference'
+import {Conference, RemotePeer, RemoteProducer} from './Conference'
 import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSMessageType, MSRoomMessage, MSRTPCapabilitiesReply,
   MSTransportDirection, MSCreateTransportReply, MSConnectTransportMessage, MSConnectTransportReply,
   MSProduceTransportMessage, MSProduceTransportReply, MSTrackRole, MSConsumeTransportMessage, MSConsumeTransportReply, MSRemoteUpdateMessage, MSRemoteLeftMessage, MSResumeConsumerMessage, MSResumeConsumerReply, MSCloseProducerMessage, MSCloseProducerReply} from './MediaMessages'
 import * as mediasoup from 'mediasoup-client';
 import { ConsumerOptions } from 'mediasoup-client/lib/Consumer'
+import { Producer } from 'mediasoup-client/lib/Producer'
 
 //  import * as TPC from 'lib-jitsi-meet/modules/RTC/TPCUtils'
 // import a global variant $ for lib-jitsi-meet
@@ -263,11 +264,15 @@ export class Connection extends EventEmitter {
     })
   }
 
-  public createTransport(dir: MSTransportDirection){
+  public createTransport(dir: MSTransportDirection, remote?: string){
+    if (dir === 'receive' && !remote){
+      console.error(`createTransport(): remote must be specified.`)
+    }
     const promise = new Promise<mediasoup.types.Transport>((resolve, reject) => {
       const msg:MSCreateTransportMessage = {
         type:'createTransport',
         peer:this.conference.peer,
+        remote,
         dir
       }
       this.sendWithPromise(msg, resolve, reject)
@@ -286,11 +291,12 @@ export class Connection extends EventEmitter {
     this.callMessageResolve(msg, transportObject)
   }
 
-  public connectTransport(transport: mediasoup.types.Transport, dtlsParameters: mediasoup.types.DtlsParameters){
+  public connectTransport(transport: mediasoup.types.Transport, dtlsParameters: mediasoup.types.DtlsParameters, remote?:string){
     const promise = new Promise<string>((resolve, reject) => {
       const msg:MSConnectTransportMessage = {
         type:'connectTransport',
         peer:this.conference.peer,
+        remote,
         dtlsParameters,
         transport: transport.id,
       }
@@ -344,14 +350,15 @@ export class Connection extends EventEmitter {
     const msg = base as MSCloseProducerReply
 
   }
-  public consumeTransport(transport: string, producer:string){
+  public consumeTransport(transport: string, producer:RemoteProducer){
     const promise = new Promise<mediasoup.types.ConsumerOptions>((resolve, reject) => {
       const msg:MSConsumeTransportMessage = {
         type:'consumeTransport',
         peer:this.conference.peer,
+        remote: producer.peer.peer,
         rtpCapabilities: this.device!.rtpCapabilities,
         transport,
-        producer,
+        producer:producer.id,
       }
       this.sendWithPromise(msg, resolve, reject)
     })
@@ -371,11 +378,12 @@ export class Connection extends EventEmitter {
       this.callMessageResolve(msg, consumerOptions)
     }
   }
-  public resumeConsumer(consumer: string, ){
+  public resumeConsumer(consumer: string, remote: string){
     const promise = new Promise<void>((resolve, reject) => {
       const msg:MSResumeConsumerMessage = {
         type:'resumeConsumer',
         peer:this.conference.peer,
+        remote: remote,
         consumer
       }
       this.sendWithPromise(msg, resolve, reject)

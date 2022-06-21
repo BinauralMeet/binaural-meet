@@ -246,11 +246,14 @@ export class Conference extends EventEmitter {
 
   // mediasoup
   private createTransport(dir: MSTransportDirection, remote?: RemotePeer){
+    if (dir === 'receive' && !remote){
+      console.error(`createTransport(); remote must be specified for receive transport.`)
+    }
     const promise = new Promise<mediasoup.types.Transport>((resolve, reject)=>{
-      this.connection.createTransport(dir).then(transport => {
+      this.connection.createTransport(dir, remote?.peer).then(transport => {
         transport.on('connect', ({ dtlsParameters }, callback, errback) => {
           console.log('transport connect event', 'send');
-          this.connection.connectTransport(transport, dtlsParameters).then(()=>{
+          this.connection.connectTransport(transport, dtlsParameters, remote?.peer).then(()=>{
             callback()
           }).catch((error:string)=>{
             console.error(`error in connecting transport:${error}`);
@@ -279,7 +282,8 @@ export class Conference extends EventEmitter {
             assert(remote)
             const consumers = Array.from(remote.producers.values()).map(p => p.consumer).filter(c => c)
             for(const consumer of consumers){
-              this.connection.resumeConsumer(consumer!.id)
+              this.connection.resumeConsumer(consumer!.id, remote.peer)
+              console.log(`resumeConsumer finished for ${consumer!.id}.`)
               consumer!.resume()
             }
           }
@@ -357,11 +361,13 @@ export class Conference extends EventEmitter {
         resolve(producer.consumer)
       }else{
         this.getReceiveTransport(producer.peer).then(transport => {
-          this.connection.consumeTransport(transport.id, producer.id).then(consumeParams=>{
+          this.connection.consumeTransport(transport.id, producer).then(consumeParams=>{
             transport.consume(consumeParams).then(consumer => {
               producer.consumer = consumer
               if (transport.connectionState === 'connected'){
-                this.connection.resumeConsumer(consumer.id)
+                this.connection.resumeConsumer(consumer.id, producer.peer.peer).then(()=>{
+                  console.log(`resumeConsumer finished for ${consumer.id}.`)
+                })
               }
               resolve(consumer)
             }).catch(reject)

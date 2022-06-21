@@ -1,7 +1,7 @@
 import * as mediasoup from 'mediasoup-client'
 export type MSMessageType = 'connect' | 'join' | 'rtpCapabilities' | 'leave' |
   'remoteUpdate' | 'remoteLeft' |
-  'addWorker' | 'deleteWorker' |
+  'workerAdd' | 'workerDelete' | 'workerUpdate' |
   'createTransport' | 'closeTransport' | 'connectTransport' |
   'produceTransport' | 'closeProducer' | 'consumeTransport' | 'resumeConsumer'
 export interface MSMessage{
@@ -10,6 +10,7 @@ export interface MSMessage{
 }
 export interface MSPeerMessage extends MSMessage{
   peer: string
+  remote?: string
 }
 export type MSTrackRole = 'camera' | 'mic' | 'window' | string
 export interface MSRemoteProducer{
@@ -32,6 +33,10 @@ export interface MSRemoteLeftMessage extends MSMessage{
 export interface MSRoomMessage extends MSPeerMessage{
   room: string
 }
+export interface MSWorkerUpdateMessage extends MSPeerMessage{
+  load: number
+}
+
 export interface MSRTPCapabilitiesReply extends MSPeerMessage{
   rtpCapabilities: mediasoup.types.RtpCapabilities
 }
