@@ -9,8 +9,8 @@ import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import {extractContentDataAndIds} from '@stores/sharedContents/SharedContentCreator'
 import contents from '@stores/sharedContents/SharedContents'
 import {autorun, IReactionDisposer} from 'mobx'
-import {BMMessage} from './BMMessage'
-import {MessageType} from './MessageType'
+import {BMMessage} from './DataMessage'
+import {MessageType} from './DataMessageType'
 
 declare const d:any                  //  from index.html
 

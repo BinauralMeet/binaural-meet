@@ -1,4 +1,3 @@
-import {connection} from '@models/api'
 import {assert} from '@models/utils'
 import {EventEmitter} from 'events'
 

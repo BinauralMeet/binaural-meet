@@ -1,5 +1,4 @@
-import {connection} from '@models/api'
-import {MessageType} from '@models/api/MessageType'
+import {MessageType} from '@models/api/DataMessageType'
 import {extractSharedContentInfo, isContentWallpaper, ISharedContent, SharedContentInfo, WallpaperStore} from '@models/ISharedContent'
 import {PARTICIPANT_SIZE} from '@models/Participant'
 import {diffMap, intersectionMap} from '@models/utils'
@@ -12,6 +11,7 @@ import _ from 'lodash'
 import {action, autorun, computed, makeObservable, observable} from 'mobx'
 import {createContent, extractContentDatas, moveContentToTop} from './SharedContentCreator'
 import {SharedContentTracks} from './SharedContentTracks'
+import { conference } from '@models/api'
 
 export const CONTENTLOG = false      // show manipulations and sharing of content
 export const contentLog = CONTENTLOG ? console.log : (a:any) => {}
@@ -227,7 +227,7 @@ export class SharedContents extends EventEmitter {
       }
     })
     if (changed) {
-      connection.conference.sync.sendMyContents()
+      conference.dataConnection.sync.sendMyContents()
     }
   }
   private updateAll() {
@@ -278,7 +278,7 @@ export class SharedContents extends EventEmitter {
       //  check dupulicated wall papers.
       if (this.removeSameWallpaper(newWallPapers)) { newWallPapers = this.getWallpaper() }
       //  update wallpapers in localStorage
-      const newStore:WallpaperStore = {room:connection.conference.name, contents:extractContentDatas(newWallPapers)}
+      const newStore:WallpaperStore = {room:conference.room, contents:extractContentDatas(newWallPapers)}
       let wpStores:WallpaperStore[] = []
       const oldStr = localStorage.getItem('wallpapers')
       if (oldStr) { wpStores = JSON.parse(oldStr) as WallpaperStore[] }
@@ -302,7 +302,7 @@ export class SharedContents extends EventEmitter {
       this.wallpapers = JSON.stringify([])
     }else {
       const wpStores = JSON.parse(str) as WallpaperStore[]
-      const loaded = wpStores.find(store => store.room === connection.conference.name)
+      const loaded = wpStores.find(store => store.room === conference.room)
       if (loaded) {
         loaded.contents.forEach((lc) => {
           const newContent = createContent()
@@ -330,7 +330,7 @@ export class SharedContents extends EventEmitter {
       this.owner.set(c.id, participantsStore.localId)
       //  console.log('addLocalConent', c)
       this.updateAll()
-      connection.conference.sync.sendMyContents()
+      conference.dataConnection.sync.sendMyContents()
     }
   }
 
@@ -369,7 +369,7 @@ export class SharedContents extends EventEmitter {
         }else{
           //  The participant own the contents is already left but not notified.
           this.takeContentsFromDead(pc)
-          connection.conference.sendMessage(MessageType.PARTICIPANT_LEFT, [pid])
+          conference.dataConnection.sendMessage(MessageType.PARTICIPANT_LEFT, [pid])
 
           return {pid: this.localId, pc: this.participants.get(this.localId), take:true}
         }
@@ -419,7 +419,7 @@ export class SharedContents extends EventEmitter {
   updateByLocal(newContent: ISharedContent) {
     if (config.bmRelayServer){
       this.roomContents.set(newContent.id, newContent)
-      connection.conference.sync.sendContentUpdateRequest('', [newContent])
+      conference.dataConnection.sync.sendContentUpdateRequest('', [newContent])
       this.updateAll()
       this.roomContentsInfo.set(newContent.id, newContent)
     }else{
@@ -428,9 +428,9 @@ export class SharedContents extends EventEmitter {
         if (pid === this.localId) {
           pc.myContents.set(newContent.id, newContent)
           this.updateAll()
-          connection.conference.sync.sendMyContents()
+          conference.dataConnection.sync.sendMyContents()
         }else if (pid) {
-          connection.conference.sync.sendContentUpdateRequest(pid, [newContent])
+          conference.dataConnection.sync.sendContentUpdateRequest(pid, [newContent])
         }
       }
     }
@@ -444,7 +444,7 @@ export class SharedContents extends EventEmitter {
         this.disposeContent(toRemove)
         this.roomContents.delete(cid)
       }
-      connection.conference.sync.sendContentRemoveRequest('', [cid])
+      conference.dataConnection.sync.sendContentRemoveRequest('', [cid])
       this.roomContentsInfo.delete(cid)
       this.updateAll()
     }else{
@@ -454,22 +454,22 @@ export class SharedContents extends EventEmitter {
         if (take){
           //  if take the content from pendToRemoves, remove from pendToRemove in remotes.
           console.log(`sendLeftContentRemoveRequest of ${cid}.`)
-          connection.conference.sync.sendLeftContentRemoveRequest([cid])
+          conference.dataConnection.sync.sendLeftContentRemoveRequest([cid])
         }
 
         //  remove the content
         if (pid === this.localId) {
           this.removeMyContent(cid)
-          connection.conference.sync.sendMyContents()
+          conference.dataConnection.sync.sendMyContents()
         }else if (pid) {
           if (participants.remote.has(pid)){
-            connection.conference.sync.sendContentRemoveRequest(pid, [cid])
+            conference.dataConnection.sync.sendContentRemoveRequest(pid, [cid])
           }
         }
-      } else if (pid && connection.conference.bmRelaySocket?.readyState === WebSocket.OPEN) {
+      } else if (pid && conference.isDataConnected()) {
         //  remove participant remaining in relay server
         if (!participants.remote.has(pid)){
-          connection.conference.pushOrUpdateMessageViaRelay(MessageType.PARTICIPANT_LEFT, [pid])
+          conference.dataConnection.pushOrUpdateMessageViaRelay(MessageType.PARTICIPANT_LEFT, [pid])
         }
       }
     }
@@ -477,7 +477,7 @@ export class SharedContents extends EventEmitter {
   //  request content by id which is not sent yet.
   requestContent(cids: string[]){
     if (config.bmRelayServer){
-      connection.conference.pushOrUpdateMessageViaRelay(MessageType.CONTENT_UPDATE_REQUEST_BY_ID, cids)
+      conference.dataConnection.pushOrUpdateMessageViaRelay(MessageType.CONTENT_UPDATE_REQUEST_BY_ID, cids)
     }
   }
   //  Update request from remote.
@@ -499,7 +499,7 @@ export class SharedContents extends EventEmitter {
           console.error(`Update request of ${c.id} is for ${pid} and not for me.`)
         }
       }
-      connection.conference.sync.sendMyContents()
+      conference.dataConnection.sync.sendMyContents()
     }
     this.updateAll()
   }
@@ -530,7 +530,7 @@ export class SharedContents extends EventEmitter {
           }
         }
       }
-      connection.conference.sync.sendMyContents()
+      conference.dataConnection.sync.sendMyContents()
     }
   }
   removeLeftContentByRemoteRequest(cids: string[]) {
@@ -565,7 +565,7 @@ export class SharedContents extends EventEmitter {
       this.owner.delete(cid)
       this.updateAll()
       if (pid === this.localId){
-        connection.conference.sync.sendMyContents()
+        conference.dataConnection.sync.sendMyContents()
       }
     }else {
       console.log(`I don't have ${cid} to remove.`)
@@ -673,7 +673,7 @@ export class SharedContents extends EventEmitter {
         }
         this.updateAll()
         if (updated){
-          connection.conference.sync.sendMyContents()
+          conference.dataConnection.sync.sendMyContents()
         }
       }
     }
@@ -711,24 +711,24 @@ export class SharedContents extends EventEmitter {
   removeAllContents(){
     if (config.bmRelayServer){
       const cids = Array.from(this.roomContentsInfo.keys())
-      connection.conference.sync.sendContentRemoveRequest('', cids)
+      conference.dataConnection.sync.sendContentRemoveRequest('', cids)
       this.roomContents.clear()
       this.roomContentsInfo.clear()
     }else{
       this.participants.forEach((pc, pid) => {
         if (pid !== this.localId){
           const cs = Array.from(pc.myContents.values())
-          connection.conference.sync.sendContentRemoveRequest(pid, cs.map(c => c.id))
+          conference.dataConnection.sync.sendContentRemoveRequest(pid, cs.map(c => c.id))
         }
       })
       this.pendToRemoves.forEach(pc => {
         const cs = Array.from(pc.myContents.values())
-        connection.conference.sync.sendLeftContentRemoveRequest(cs.map(c => c.id))
+        conference.dataConnection.sync.sendLeftContentRemoveRequest(cs.map(c => c.id))
       })
       this.owner.clear()
       this.participants.clear()
       this.pendToRemoves.clear()
-      connection.conference.sync.sendMyContents()
+      conference.dataConnection.sync.sendMyContents()
       this.roomContentsInfo.clear()
     }
     this.updateAll()

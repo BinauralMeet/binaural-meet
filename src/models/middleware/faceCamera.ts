@@ -1,4 +1,3 @@
-import {connection} from '@models/api'
 import {loadFaceLandmarkTinyModel, loadTinyFaceDetectorModel, detectSingleFace,
   TinyFaceDetectorOptions, Point, WithFaceLandmarks, FaceLandmarks68, FaceDetection} from 'face-api.js'
 import {rgba} from '@models/utils/color'

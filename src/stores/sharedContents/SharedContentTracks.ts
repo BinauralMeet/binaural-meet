@@ -1,9 +1,9 @@
-import {connection} from '@models/api'
 import {ConnectionForContent} from '@models/api/ConnectionForScreenContent'
 import {ISharedContent} from '@models/ISharedContent'
 import {assert} from '@models/utils'
 import {SharedContents} from '@stores/sharedContents/SharedContents'
 import {action, computed, makeObservable, observable} from 'mobx'
+import {conference} from '@models/api'
 
 // config.js
 declare const config:any             //  from ../../config.js included from index.html
@@ -183,7 +183,7 @@ export class SharedContentTracks {
       if (!this.localMainConnection) {
         this.localMainConnection = new ConnectionForContent()
         this.localMainConnection.init().then(() => {
-          connection.conference.sync.sendMainScreenCarrier(true)
+          conference.dataConnection.sync.sendMainScreenCarrier(true)
 //TODO:          tracks.forEach(track => this.localMainConnection!.addTrack(track))
         })
       }else {
@@ -204,7 +204,7 @@ export class SharedContentTracks {
 
       return
     }
-    connection.conference.sync.sendMainScreenCarrier(false)
+    conference.dataConnection.sync.sendMainScreenCarrier(false)
 /*TODO:
     this.localMainConnection!.removeTrack(track).then(() => {
       if (this.localMainConnection!.getLocalTracks().length === 0) {

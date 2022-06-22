@@ -1,5 +1,4 @@
 import {App} from '@components/App'
-import {connection} from '@models/api'
 import '@models/audio'  // init audio manager (DO NOT delete)
 import {i18nInit} from '@models/locales'
 import '@models/middleware'
@@ -11,6 +10,7 @@ import contents from '@stores/sharedContents/SharedContents'
 import {when} from 'mobx'
 import {configure} from "mobx"
 import ReactDOM from 'react-dom'
+import {conference} from '@models/api'
 
 configure({
     enforceActions: "never",
@@ -22,7 +22,7 @@ i18nInit().then(main)
 function main() {
   const startPromise = resolveAtEnd(onStart)()
   startPromise.then(resolveAtEnd(renderDOM))
-  startPromise.then(resolveAtEnd(connectConference))
+  startPromise.then(resolveAtEnd(startConference))
 }
 
 function onStart() {
@@ -37,7 +37,7 @@ function renderDOM() {
 }
 
 let logStr = ''
-function connectConference() {
+function startConference() {
   window.addEventListener('beforeunload', (ev) => {
     logStr = `${logStr}beforeunload called. ${Date()} `
     localStorage.setItem('log', logStr)
@@ -53,19 +53,12 @@ function connectConference() {
 
       return ev.returnValue
     }
-    connection.leaveConference()
-    connection.disconnect().then((arg) => {
-      logStr += `Diconnected (${arg}). `
-      localStorage.setItem('log', logStr)
-    }).catch((reason) => {
-      logStr += `Failed to diconnected (${reason}). `
-      localStorage.setItem('log', logStr)
-    })
+    conference.leave()
   })
 
   errorInfo.connectionStart()
   when(() => errorInfo.type === '', () => {
     const room = urlParameters.room || '_'
-    connection.connect(room)
+    conference.enter(room)
   })
 }

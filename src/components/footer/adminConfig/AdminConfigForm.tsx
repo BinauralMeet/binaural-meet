@@ -3,8 +3,8 @@ import Box from '@material-ui/core/Box'
 import Button from '@material-ui/core/Button'
 import Popover from '@material-ui/core/Popover'
 import TextField from '@material-ui/core/TextField'
-import {connection} from '@models/api'
-import {MessageType} from '@models/api/MessageType'
+import { conference } from '@models/api'
+import {MessageType} from '@models/api/DataMessageType'
 import {BlobHeader, player, recorder} from '@models/api/Recorder'
 import {isDarkColor, rgb2Color} from '@models/utils'
 import {RoomInfo} from '@stores/RoomInfo'
@@ -62,26 +62,26 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
         <Button variant="contained" color={btnColor} disabled={!roomInfo.passMatched} style={{textTransform:'none'}}
           onClick={() => {
             if (roomInfo.passMatched){
-              connection.conference.setRoomProp('password', roomInfo.newPassword)
+              conference.dataConnection.setRoomProp('password', roomInfo.newPassword)
             }
           }}> Update password </Button>&emsp;
       </Box>
       <Box mt={2}>
         <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
           disabled={!roomInfo.passMatched} onClick={() => {
-          if (roomInfo.passMatched) { connection.conference.sendMessage(MessageType.MUTE_VIDEO, true) }
+          if (roomInfo.passMatched) { conference.dataConnection.sendMessage(MessageType.MUTE_VIDEO, true) }
         }}> Mute all videos </Button> &nbsp;
         <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
           disabled={!roomInfo.passMatched} onClick={() => {
-          if (roomInfo.passMatched) { connection.conference.sendMessage(MessageType.MUTE_VIDEO, false) }
+          if (roomInfo.passMatched) { conference.dataConnection.sendMessage(MessageType.MUTE_VIDEO, false) }
         }}> Show all videos </Button>&emsp;
         <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
           disabled={!roomInfo.passMatched} onClick={() => {
-          if (roomInfo.passMatched) { connection.conference.sendMessage(MessageType.MUTE_AUDIO, true) }
+          if (roomInfo.passMatched) { conference.dataConnection.sendMessage(MessageType.MUTE_AUDIO, true) }
         }}> Mute all mics </Button>&nbsp;
         <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
           disabled={!roomInfo.passMatched} onClick={() => {
-          if (roomInfo.passMatched) { connection.conference.sendMessage(MessageType.MUTE_AUDIO, false) }
+          if (roomInfo.passMatched) { conference.dataConnection.sendMessage(MessageType.MUTE_AUDIO, false) }
         }}> Switch on all mics </Button>
       </Box>
       <Box mt={2}>
@@ -106,8 +106,8 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
         <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
           disabled={!roomInfo.passMatched} onClick={() => {
           if (roomInfo.passMatched) {
-            if (connection.conference.bmRelaySocket?.readyState === WebSocket.OPEN){
-              connection.conference.pushOrUpdateMessageViaRelay(MessageType.RELOAD_BROWSER, {})
+            if (conference.isDataConnected()){
+              conference.dataConnection.pushOrUpdateMessageViaRelay(MessageType.RELOAD_BROWSER, {})
             }
           }
         }}> Reload </Button>&emsp;
@@ -121,7 +121,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
         <Popover open={showFillPicker}
           onClose={()=>{
             setShowFillPicker(false)
-            connection.conference.setRoomProp('backgroundFill', JSON.stringify(roomInfo.backgroundFill))
+            conference.dataConnection.setRoomProp('backgroundFill', JSON.stringify(roomInfo.backgroundFill))
           }}
           anchorEl={fillButton.current} anchorOrigin={{vertical:'bottom', horizontal:'right'}}>
           <SketchPicker color = {{r:roomInfo.backgroundFill[0], g:roomInfo.backgroundFill[1],
@@ -142,7 +142,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
         <Popover open={showColorPicker}
           onClose={()=>{
             setShowColorPicker(false)
-            connection.conference.setRoomProp('backgroundColor', JSON.stringify(roomInfo.backgroundColor))
+            conference.dataConnection.setRoomProp('backgroundColor', JSON.stringify(roomInfo.backgroundColor))
           }}
           anchorEl={colorButton.current} anchorOrigin={{vertical:'bottom', horizontal:'right'}}>
           <SketchPicker color = {{r:roomInfo.backgroundColor[0], g:roomInfo.backgroundColor[1],
@@ -158,8 +158,8 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
           if (roomInfo.passMatched) {
             roomInfo.backgroundFill = roomInfo.defaultBackgroundFill
             roomInfo.backgroundColor = roomInfo.defaultBackgroundColor
-            connection.conference.setRoomProp('backgroundFill', JSON.stringify(roomInfo.backgroundFill))
-            connection.conference.setRoomProp('backgroundColor', JSON.stringify(roomInfo.backgroundColor))
+            conference.dataConnection.setRoomProp('backgroundFill', JSON.stringify(roomInfo.backgroundFill))
+            conference.dataConnection.setRoomProp('backgroundColor', JSON.stringify(roomInfo.backgroundColor))
           }
         }}> Default </Button>&emsp;
         <Button variant="contained" color={btnColor} style={{textTransform:'none'}}

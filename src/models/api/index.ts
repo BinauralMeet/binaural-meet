@@ -1,2 +1,1 @@
-export * from './Connection'
-export * from './ConnectionDefs'
+export * from './Conference'

@@ -5,8 +5,8 @@ import {BMProps} from '@components/utils'
 import {Tooltip} from '@material-ui/core'
 import Button from '@material-ui/core/Button'
 import IconButton from '@material-ui/core/IconButton'
-import {connection} from '@models/api'
-import {MessageType} from '@models/api/MessageType'
+import { conference } from '@models/api'
+import {MessageType} from '@models/api/DataMessageType'
 import {getColorOfParticipant} from '@models/Participant'
 import {isDarkColor} from '@models/utils'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
@@ -36,7 +36,7 @@ export const ParticipantLine: React.FC<TextLineStyle&BMProps&{participant: Parti
       map.focusOn(props.participant)
     }else{
       if(config.bmRelayServer){
-        connection.conference.pushOrUpdateMessageViaRelay(
+        conference.dataConnection.pushOrUpdateMessageViaRelay(
           MessageType.REQUEST_PARTICIPANT_STATES, [props.participant.id])
       }
       const disposer = autorun(()=>{
@@ -53,7 +53,7 @@ export const ParticipantLine: React.FC<TextLineStyle&BMProps&{participant: Parti
       map.keyInputUsers.add('participantList')
     }else{
       if(config.bmRelayServer){
-        connection.conference.pushOrUpdateMessageViaRelay(
+        conference.dataConnection.pushOrUpdateMessageViaRelay(
           MessageType.REQUEST_PARTICIPANT_STATES, [props.participant.id])
       }
       const disposer = autorun(()=>{
@@ -123,7 +123,7 @@ export const RawParticipantList: React.FC<BMProps&TextLineStyle&{localId: string
     <div className={classes.container} >
       <div className={classes.title} style={{color:textColor}} ref={ref}
         onClick={()=>{setShowStat(true)}}
-      >{(participants.remote.size + 1).toString()} in {connection.conference.name}</div>
+      >{(participants.remote.size + 1).toString()} in {conference.room}</div>
       <StatusDialog open={showStat}
         close={()=>{setShowStat(false)}} {...statusProps} anchorEl={ref.current}/>
       {localElement}{remoteElements}

@@ -3,7 +3,7 @@ import Button from '@material-ui/core/Button'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
 import Grid from '@material-ui/core/Grid'
 import Slider from '@material-ui/core/Slider'
-import {connection} from '@models/api'
+import { conference } from '@models/api'
 import {t} from '@models/locales'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
@@ -47,7 +47,7 @@ export const RemoteTrackLimitControl: React.FC<Stores> = (props:Stores) => {
       style={{textTransform:'none'}} disabled={!roomInfo.passMatched}
       onClick = { () => {
         if (roomInfo.passMatched){
-          connection.conference.sync.sendTrackLimits('', [local.remoteVideoLimit, local.remoteAudioLimit])
+          conference.dataConnection.sync.sendTrackLimits('', [local.remoteVideoLimit, local.remoteAudioLimit])
         }
       }}
   >Sync limits</Button>

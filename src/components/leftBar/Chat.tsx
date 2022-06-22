@@ -5,8 +5,7 @@ import {Tooltip} from '@material-ui/core'
 import IconButton from '@material-ui/core/IconButton'
 import TextField from '@material-ui/core/TextField'
 import SendIcon from '@material-ui/icons/Send'
-import {connection} from '@models/api/ConnectionDefs'
-import {MessageType} from '@models/api/MessageType'
+import {MessageType} from '@models/api/DataMessageType'
 import {t} from '@models/locales'
 import {isDarkColor} from '@models/utils'
 import chat, {ChatMessage, ChatMessageToSend, ChatMessageType} from '@stores/Chat'
@@ -15,6 +14,7 @@ import React from 'react'
 import {BMProps} from '../utils'
 import {styleForList} from '../utils/styles'
 import {TextLineStyle} from './LeftBar'
+import { conference } from '@models/api'
 
 const colorMapBlack: { [key in ChatMessageType]: string } = {
   text: 'black',
@@ -68,7 +68,7 @@ export const ChatLine: React.FC<BMProps & TextLineStyle &{message: ChatMessage}>
 
 function sendChatMessage(text: string, sendTo: string, props: BMProps){
   const msg:ChatMessageToSend = {msg:text, ts: Date.now(), to: sendTo}
-  connection.conference.sendMessage(MessageType.CHAT_MESSAGE, msg, sendTo)
+  conference.dataConnection.sendMessage(MessageType.CHAT_MESSAGE, msg, sendTo)
   const local = props.stores.participants.local
   if (sendTo) {
     const remote = props.stores.participants.remote.get(sendTo)

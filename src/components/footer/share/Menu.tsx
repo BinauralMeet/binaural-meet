@@ -23,7 +23,6 @@ import UploadIcon from '@material-ui/icons/Publish'
 import ScreenShareIcon from '@material-ui/icons/ScreenShare'
 import StopScreenShareIcon from '@material-ui/icons/StopScreenShare'
 import SubjectIcon from '@material-ui/icons/Subject'
-import {connection} from '@models/api/ConnectionDefs'
 import {ISharedContent} from '@models/ISharedContent'
 import {useTranslation} from '@models/locales'
 import {assert} from '@models/utils'
@@ -37,7 +36,7 @@ import {CameraSelectorMember} from './CameraSelector'
 import {DialogPageProps} from './DialogPage'
 import {ShareDialogItem} from './SharedDialogItem'
 import {Step} from './Step'
-
+import { conference } from '@models/api'
 
 function startCapture(props:BMProps) {
   return new Promise<MediaStream>((resolve, reject) => {
@@ -136,7 +135,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
     let randStr = ''
     rand.forEach(i => randStr += i.toString(16))
     createContentOfIframe(
-      `https://wbo.ophir.dev/boards/BinauralMeet_${connection.conference.name}_${randStr}`, map).then((c) => {
+      `https://wbo.ophir.dev/boards/BinauralMeet_${conference.room}_${randStr}`, map).then((c) => {
       contents.shareContent(c)
        contents.setEditing(c.id)
     })

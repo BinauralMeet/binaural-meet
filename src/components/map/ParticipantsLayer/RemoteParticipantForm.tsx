@@ -5,8 +5,8 @@ import Button from '@material-ui/core/Button'
 import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
 import Popover, { PopoverProps } from '@material-ui/core/Popover'
-import {connection} from '@models/api'
-import {MessageType} from '@models/api/MessageType'
+import { conference } from '@models/api'
+import {MessageType} from '@models/api/DataMessageType'
 import {t} from '@models/locales'
 import chat from '@stores/Chat'
 import participants from '@stores/participants/Participants'
@@ -28,7 +28,7 @@ export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (prop
     if (ev.key === 'Enter' && kick === 'kick') {
       if (!props.participant) { return }
       //TODO: when kicked
-      setTimeout(()=>{connection.conference.sendMessage(
+      setTimeout(()=>{conference.dataConnection.sendMessage(
         MessageType.KICK, 'Kicked by administrator.', props.participant!.id)}, 5000)
       props.close()
     }

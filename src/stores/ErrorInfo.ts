@@ -1,5 +1,4 @@
 import {MAP_SIZE} from '@components/Constants'
-import {connection} from '@models/api'
 import {t} from '@models/locales'
 import {priorityCalculator} from '@models/middleware/trafficControl'
 import { defaultInformation } from '@models/Participant'
@@ -8,6 +7,7 @@ import {addV2, diffSet, mulV2} from '@models/utils'
 import map from '@stores/Map'
 import participants from '@stores/participants/Participants'
 import {action, autorun, computed, makeObservable, observable, when} from 'mobx'
+import { conference } from '@models/api'
 
 export type ErrorType = '' | 'connection' | 'retry' | 'noMic' | 'micPermission' | 'channel' | 'entrance' | 'afk' | 'kicked'
 
@@ -130,7 +130,7 @@ export class ErrorInfo {
     }
   }
   @action checkConnection() {
-    if (connection.store?.state !== 'connected') {
+    if (!conference.isDataConnected() || !conference.isRtcConnected()) {
       this.setType('connection')
       setTimeout(this.checkConnection.bind(this), 5 * 1000)
     }else {
@@ -139,7 +139,7 @@ export class ErrorInfo {
     }
   }
   @action checkMic() {
-    if (participants.localId && !participants.local.muteAudio && !connection.conference.getLocalMicTrack()) {
+    if (participants.localId && !participants.local.muteAudio && !conference.getLocalMicTrack()) {
       if (this.audioInputs.length) {
         this.setType('micPermission')
         //  this.message += 'You have: '
@@ -280,8 +280,8 @@ export class ErrorInfo {
     stream.addTrack(audioStream.getAudioTracks()[0])
     stream.addTrack(vidoeStream.getVideoTracks()[0])
     const tracks = stream.getTracks()
-    connection.conference.setLocalCameraTrack({track:tracks[0], peer:participants.local.id, role:'camera'})
-    connection.conference.setLocalMicTrack({track:tracks[1], peer:participants.local.id, role:'mic'})
+    conference.setLocalCameraTrack({track:tracks[0], peer:participants.local.id, role:'camera'})
+    conference.setLocalMicTrack({track:tracks[1], peer:participants.local.id, role:'mic'})
   }
 }
 

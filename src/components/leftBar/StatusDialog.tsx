@@ -1,7 +1,7 @@
 import Button from '@material-ui/core/Button'
 import Paper from '@material-ui/core/Paper'
 import Popper, { PopperProps } from '@material-ui/core/Popper'
-import { connection } from '@models/api'
+import { conference } from '@models/api'
 import contents from '@stores/sharedContents/SharedContents'
 import React from 'react'
 import {useState} from 'react'

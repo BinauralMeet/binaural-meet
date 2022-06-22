@@ -1,4 +1,3 @@
-import {connection} from '@models/api'
 import {PriorityCalculator, priorityLog} from '@models/trafficControl/PriorityCalculator'
 import {connectionInfo} from '@stores/index'
 import {participantsStore} from '@stores/participants'
