@@ -1,4 +1,5 @@
 import {MAP_SIZE} from '@components/Constants'
+import { conference } from '@models/api'
 import {ISharedContent} from '@models/ISharedContent'
 import {LocalParticipant, ParticipantBase, PARTICIPANT_SIZE, PlaybackParticipant, RemoteParticipant} from '@models/Participant'
 import {getRect, isCircleInRect, Pose2DMap} from '@models/utils'
@@ -31,13 +32,10 @@ function getRelativePoseFromObject(localPose: Pose2DMap, participant: Participan
 export class ConnectedGroup {
   private readonly disposers: IReactionDisposer[] = []
 
-  constructor(obsLocal: IObservableValue<LocalParticipant>, contentTrack: MediaStreamTrack|undefined,
+  //  content or remote will be given.
+  constructor(obsLocal: IObservableValue<LocalParticipant>, content: ISharedContent|undefined,
     remote: RemoteParticipant|undefined, group: NodeGroup) {
-    this.disposers.push(autorun(
-      () => {
-        const carrierId = ''  //TODO: get participant id?  contentTrack?.getParticipantId()
-        const cid = carrierId && contents.tracks.carrierMap.get(carrierId)
-        const content = cid ? contents.find(cid) : undefined
+    this.disposers.push(autorun(()=>{
         const local = obsLocal.get()
         const base = _.clone(local.pose)
         if (local.soundLocalizationBase === 'user') { base.orientation = 0 }
@@ -64,7 +62,7 @@ export class ConnectedGroup {
           // Not located yet or in different clozed zone -> mute audio
           group.updatePose(convertToAudioCoordinate({orientation:0, position:[MAP_SIZE, MAP_SIZE]}))
           audioLog(`mute ${remote.id} loc:${remote.physics.located} other:${inOtherClosedZone} rInL:${remoteInLocalsZone}`)
-        }else{
+        }else if (content){
           // locate sound source.
           const relativePose = getRelativePoseFromObject(base, remote, content)
           if (remote && remoteInLocalsZone){
@@ -78,13 +76,15 @@ export class ConnectedGroup {
           }
           const pose = convertToAudioCoordinate(relativePose)
           group.updatePose(pose)
+        }else{
+          console.error(`participant or content must be specified`)
         }
       },
     ))
 
     this.disposers.push(autorun(
       () => {
-        const track: MediaStreamTrack | undefined = remote ? remote.tracks.audio : contentTrack
+        const track = remote ? remote.tracks.audio : conference.getContentTracks(content!.id, 'audio')[0]
         const ms = new MediaStream()
         if (track){
           ms.addTrack(track)

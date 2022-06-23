@@ -280,8 +280,8 @@ export class ErrorInfo {
     stream.addTrack(audioStream.getAudioTracks()[0])
     stream.addTrack(vidoeStream.getVideoTracks()[0])
     const tracks = stream.getTracks()
-    conference.setLocalCameraTrack({track:tracks[0], peer:participants.local.id, role:'camera'})
-    conference.setLocalMicTrack({track:tracks[1], peer:participants.local.id, role:'mic'})
+    conference.setLocalCameraTrack({track:tracks[0], peer:participants.local.id, role:'avatar'})
+    conference.setLocalMicTrack({track:tracks[1], peer:participants.local.id, role:'avatar'})
   }
 }
 

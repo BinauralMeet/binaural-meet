@@ -34,7 +34,7 @@ export interface MainScreenProps extends BMProps{
 
 export const MainScreen: React.FC<MainScreenProps> = (props) => {
   const classes = useStyles()
-  const stream = useObserver(() => (props.stores.contents.tracks.mainStream))
+  const stream = useObserver(() => (props.stores.contents.mainScreenStream))
   const videoRef = useRef<HTMLVideoElement>(null)
   useEffect(
     () => {

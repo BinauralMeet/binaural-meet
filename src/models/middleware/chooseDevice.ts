@@ -20,7 +20,7 @@ export function createLocalMic() {
     }).then((ms)=>{
       const track = ms.getAudioTracks()[0]
       if (track){
-        resolutionFunc({track, peer:participants.local.id, role:'mic'})
+        resolutionFunc({track, peer:participants.local.id, role:'avatar'})
       }
     }).catch(rejectionFunc)
   })

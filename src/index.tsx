@@ -11,6 +11,7 @@ import {when} from 'mobx'
 import {configure} from "mobx"
 import ReactDOM from 'react-dom'
 import {conference} from '@models/api'
+import { participants } from '@stores/index'
 
 configure({
     enforceActions: "never",
@@ -44,7 +45,7 @@ function startConference() {
 
     //  prevent leaving from and reloading browser, when the user shares screen(s).
     if (!errorInfo.type &&
-      (contents.tracks.localMains.size || contents.tracks.localContents.size)) {
+      (contents.getLocalRtcContents().length || contents.mainScreenOwner === participants.localId)) {
       logStr += 'Ask user. '
       ev.preventDefault()
       ev.stopImmediatePropagation()

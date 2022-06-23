@@ -52,7 +52,6 @@ export class DataSync{
     this.sendOnStage()
     this.sendTrackStates()
     this.sendViewpointNow()
-    if (contents.tracks.localMainConnection?.localId){ this.sendMainScreenCarrier(true) }
     this.sendMyContents()
     this.sendAfkChanged()
   }
@@ -105,13 +104,6 @@ export class DataSync{
   sendLeftContentRemoveRequest(removedIds: string[]) {
     assert(!config.bmRelayServer)
     this.connection.sendMessage(MessageType.LEFT_CONTENT_REMOVE_REQUEST, removedIds)
-  }
-  //  send main screen carrir
-  sendMainScreenCarrier(enabled: boolean) {
-    const carrierId = contents.tracks.localMainConnection?.getParticipantId()
-    if (carrierId) {
-        this.connection.sendMessage(MessageType.MAIN_SCREEN_CARRIER, {carrierId, enabled})
-    }
   }
   //  send myContents of local to remote participants.
   sendMyContents() {
@@ -322,10 +314,6 @@ export class DataSync{
     window.location.reload()
   }
   //  contents
-  private onMainScreenCarrier(from: string|undefined, msg:{carrierId:string, enabled:boolean}){
-    assert(from)
-    contents.tracks.onMainScreenCarrier(msg.carrierId, msg.enabled)
-  }
   private onMyContent(from:string|undefined, cs_:ISharedContent[]){
     assert(from)
     const cs = makeThemContents(cs_)
@@ -409,7 +397,6 @@ export class DataSync{
         case MessageType.PARTICIPANT_OUT: this.onParticipantOut(JSON.parse(msg.v)); break
         case MessageType.MOUSE_OUT: this.onMouseOut(JSON.parse(msg.v)); break
         case MessageType.CONTENT_OUT: this.onContentOut(JSON.parse(msg.v)); break
-        case MessageType.MAIN_SCREEN_CARRIER: this.onMainScreenCarrier(msg.p, JSON.parse(msg.v)); break
         case MessageType.MY_CONTENT: this.onMyContent(msg.p, JSON.parse(msg.v)); break
         case MessageType.PARTICIPANT_INFO: this.onParticipantInfo(msg.p, JSON.parse(msg.v)); break
         case MessageType.PARTICIPANT_ON_STAGE: this.onParticipantOnStage(msg.p, JSON.parse(msg.v)); break

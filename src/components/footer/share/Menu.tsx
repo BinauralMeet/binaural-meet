@@ -25,7 +25,7 @@ import StopScreenShareIcon from '@material-ui/icons/StopScreenShare'
 import SubjectIcon from '@material-ui/icons/Subject'
 import {ISharedContent} from '@models/ISharedContent'
 import {useTranslation} from '@models/locales'
-import {assert} from '@models/utils'
+import {assert, MSTrack} from '@models/utils'
 import {createContent, createContentFromText, createContentOfIframe, createContentOfText,
   createContentOfVideo, extractContentData, extractContentDatas} from '@stores/sharedContents/SharedContentCreator'
 import {SharedContents} from '@stores/sharedContents/SharedContents'
@@ -40,7 +40,7 @@ import { conference } from '@models/api'
 
 function startCapture(props:BMProps) {
   return new Promise<MediaStream>((resolve, reject) => {
-    //TODO: start desktop sharing and return the track
+    navigator.mediaDevices.getDisplayMedia().then(resolve).catch(reject)
   })
 }
 
@@ -85,8 +85,8 @@ interface ShareMenuProps extends DialogPageProps, BMProps {
 export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
   const {t} = useTranslation()
   const {contents, participants, map} = props.stores
-  const sharing = useObserver(() => (
-    {main: contents.tracks.localMains.size, contents: contents.tracks.localContents.size}))
+  const mainScreen = useObserver(() => (
+    {stream: contents.mainScreenStream, owner: contents.mainScreenOwner}))
   const showMouse = useObserver(() => participants.local.mouse.show)
   const fileInput = useRef<HTMLInputElement>(null)
   const [openMore, setOpenMore] = React.useState(false)
@@ -146,7 +146,14 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
         const content = createContentOfVideo(ms.getTracks(), map, 'screen')
         contents.shareContent(content)
         assert(content.id)
-//TODO:        contents.tracks.addLocalContent(content.id, ms.getTracks())
+        ms.getTracks().forEach((track) => {
+          const msTrack:MSTrack = {
+            track,
+            peer: conference.rtcConnection.peer,
+            role: content.id
+          }
+          conference.addOrReplaceLocalTrack(msTrack)
+        })
       }
     })
     setStep('none')
@@ -156,20 +163,25 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
     setStep('none')
   }
   const closeAllScreens = () => {
-    const cids = Array.from(contents.tracks.localContents.keys())
-    cids.forEach(cid => contents.removeByLocal(cid))
+    const rtcContents = contents.getAllRtcContents()
+    rtcContents.forEach(c => contents.removeByLocal(c.id))
     setStep('none')
   }
   const screenAsBackgrouond = () => {
-    if (sharing.main) {
-      contents.tracks.clearLocalMains()
-    } else {
-      startCapture(props).then((ms) => {
-        if (ms.getTracks().length) {
-//TODO:          contents.tracks.addLocalMains(ms.getTracks())
-        }
-      })
-    }
+    startCapture(props).then((ms) => {
+      if (ms.getTracks().length) {
+        ms.getTracks().forEach((track) => {
+          const msTrack:MSTrack = {
+            track,
+            peer: conference.rtcConnection.peer,
+            role: 'mainScreen'
+          }
+          conference.addOrReplaceLocalTrack(msTrack)
+          contents.mainScreenOwner = participants.localId
+          contents.mainScreenStream = ms
+        })
+      }
+    })
     setStep('none')
   }
 
@@ -276,7 +288,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
           }</Observer>
         </FormControl>}
       />
-      {contents.tracks.localContents.size ?
+      {contents.getLocalRtcContents().length ?
         <div style={{paddingLeft:'1em'}}><ShareDialogItem dense key = "stopScreen"
           icon={<Icon icon={bxWindowClose} style={{fontSize:'1.5rem'}}/>}
           text={t('stopScreen')}
@@ -302,8 +314,8 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
           />
           <ShareDialogItem
             key="shareScreenBackground"
-            icon={sharing.main ? <StopScreenShareIcon /> : <ScreenShareIcon />}
-            text={sharing.main ? t('stopScreenBackground') : t('shareScreenBackground')}
+            icon={mainScreen.owner === participants.localId ? <StopScreenShareIcon /> : <ScreenShareIcon />}
+            text={mainScreen.owner === participants.localId ? t('stopScreenBackground') : t('shareScreenBackground')}
             onClick={screenAsBackgrouond}
           />
           <Divider />

@@ -180,14 +180,14 @@ export function createLocalCamera(faceTrack: boolean) {
         const track:MSTrack = {
           track: mediaStream.getVideoTracks()[0],
           peer: participants.local.id,
-          role: 'camera'
+          role: 'avatar'
         }
         resolutionFunc(track)
       }else{
         const track:MSTrack = {
           track: ms.getVideoTracks()[0],
           peer: participants.local.id,
-          role: 'camera'
+          role: 'avatar'
         }
         resolutionFunc(track)
       }

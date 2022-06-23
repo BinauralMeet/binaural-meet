@@ -1,16 +1,15 @@
 import {MessageType} from '@models/api/DataMessageType'
 import {extractSharedContentInfo, isContentWallpaper, ISharedContent, SharedContentInfo, WallpaperStore} from '@models/ISharedContent'
 import {PARTICIPANT_SIZE} from '@models/Participant'
-import {diffMap, intersectionMap} from '@models/utils'
+import {diffMap, intersectionMap, Roles, TrackKind} from '@models/utils'
 import {assert} from '@models/utils'
 import {getRect, isCircleInRect} from '@models/utils'
 import {default as participantsStore} from '@stores/participants/Participants'
 import participants from '@stores/participants/Participants'
 import {EventEmitter} from 'events'
 import _ from 'lodash'
-import {action, autorun, computed, makeObservable, observable} from 'mobx'
+import {action, autorun, computed, IObservableArray, makeObservable, observable} from 'mobx'
 import {createContent, extractContentDatas, moveContentToTop} from './SharedContentCreator'
-import {SharedContentTracks} from './SharedContentTracks'
 import { conference } from '@models/api'
 
 export const CONTENTLOG = false      // show manipulations and sharing of content
@@ -96,7 +95,6 @@ export class SharedContents extends EventEmitter {
   // -----------------------------------------------------------------
   //  Contents
   //  All shared contents in Z order. Observed by component.
-  tracks = new SharedContentTracks(this)
   @observable pasteEnabled = true
   @observable editing = ''                        //  the user editing content
   @observable.shallow all: ISharedContent[] = []  //  all contents to display
@@ -112,6 +110,75 @@ export class SharedContents extends EventEmitter {
   @observable.shallow roomContentsInfo = new Map<string, SharedContentInfo>()
   //  Contents for playback.
   @observable.shallow playbackContents = new Map<string, ISharedContent>()
+
+  //  Tracks
+  @observable.ref mainScreenStream?: MediaStream
+  @observable mainScreenOwner: string | undefined
+  @observable.deep contentTracks = new Map<string, MediaStreamTrack[]>()  //  cid -> stream
+  private getOrCreateContentTrack(cid: string): MediaStreamTrack[]{
+    if(!this.contentTracks.has(cid)){
+      this.contentTracks.set(cid, [])
+    }
+    return this.contentTracks.get(cid)!
+  }
+
+  public addRemoteTrack(peer: string, role: Roles, track: MediaStreamTrack){
+    if (role === 'mainScreen'){
+      const ms = new MediaStream()
+      ms.addTrack(track)
+      if (this.mainScreenOwner !== peer){
+        this.mainScreenOwner = peer
+        this.mainScreenStream = ms
+      }else{
+        this.mainScreenStream?.getTracks().forEach(track => {
+          ms.addTrack(track)
+        })
+        this.mainScreenStream = ms
+      }
+    }else{
+      const tracks = this.getOrCreateContentTrack(role)
+      tracks.push(track)
+    }
+  }
+  public removeRemoteTrack(peer: string, role: Roles, kind: TrackKind){
+    if (role === 'mainScreen'){
+      if (this.mainScreenOwner === peer){
+        const ms = new MediaStream()
+        if (kind === 'audio'){
+          this.mainScreenStream?.getVideoTracks().forEach(ms.addTrack)
+        }else{
+          this.mainScreenStream?.getAudioTracks().forEach(ms.addTrack)
+        }
+        if (ms.getTracks().length){
+          this.mainScreenStream = ms
+        }else{
+          this.mainScreenStream = undefined
+        }
+        this.mainScreenOwner = undefined
+      }
+    }else{
+      const tracks = this.contentTracks.get(role)
+      if (tracks){
+        const i = tracks.findIndex(t=>t.kind === kind)
+        if (i>=0){
+          tracks[i].stop()
+          tracks.splice(i, 1)
+        }
+      }else{
+        console.error(`removeRemoteTrack(): tracks for content ${role} not found.`)
+      }
+    }
+  }
+  public getAllRtcContents(){
+    return this.all.filter(c => c.type === 'screen' || c.type === 'camera')
+  }
+  public getLocalRtcContents(){
+    const contents =  Array.from(this.getParticipant(this.localId).myContents.values())
+    return contents.filter(c => c.type === 'screen' || c.type === 'camera')
+  }
+  public getRemoteRtcContents(){
+    return this.getAllRtcContents().filter(c => this.owner.get(c.id) !== this.localId)
+  }
 
   getParticipant(pid: string) {
     assert(!config.bmRelayServer)
@@ -486,7 +553,7 @@ export class SharedContents extends EventEmitter {
       for (const c of cs) {
         this.roomContents.set(c.id, c)
         if ((c.type === 'screen' || c.type === 'camera')) {
-          this.tracks.onUpdateContent(c)
+          this.onUpdateScreenContent(c)
         }
       }
     }else{
@@ -617,7 +684,7 @@ export class SharedContents extends EventEmitter {
       contents.roomContentsInfo.set(c.id, extractSharedContentInfo(c))
       //  update track in cases of track based contents.
       if (c.type === 'screen' || c.type === 'camera') {
-        this.tracks.onUpdateContent(c)
+        this.onUpdateScreenContent(c)
       }
     })
     this.pendToRemoves.forEach(pc => {
@@ -704,7 +771,7 @@ export class SharedContents extends EventEmitter {
         }
         this.participants.delete(pid)
       })
-      this.tracks.clearConnection()
+      this.clearContentTracks()
     }
   }
 
@@ -735,7 +802,7 @@ export class SharedContents extends EventEmitter {
   }
 
   // create a new unique content id
-  getUniqueId(): string {
+  private getUniqueId(): string {
     const pid = participantsStore.localId
     while (1) {
       this.contentIdCounter += 1
@@ -751,17 +818,34 @@ export class SharedContents extends EventEmitter {
     return ''
   }
 
-  disposeContent(c: ISharedContent) {
+  private disposeContent(c: ISharedContent) {
     if (c.id === this.editing){
       this.setEditing('')
     }
     if (c.type === 'screen' || c.type === 'camera') {
-      if (this.tracks.contentCarriers.has(c.id)){
-        this.tracks.clearLocalContent(c.id)
-      }else{
-        this.tracks.clearRemoteContent(c.id)
+      const peer = this.owner.get(c.id)
+      if (peer) {
+        if (peer === participants.localId){
+          conference.removeLocalTrackByRole(c.id)
+        }else{
+          conference.closeTrack(peer, c.id)
+        }
       }
     }
+  }
+
+  private onUpdateScreenContent(c: ISharedContent){
+    const peer = this.owner.get(c.id)
+    if (peer){
+      if (peer === participants.localId){
+
+      }else{
+
+      }
+    }
+  }
+  private clearContentTracks(){
+
   }
 
   //  screen fps setting

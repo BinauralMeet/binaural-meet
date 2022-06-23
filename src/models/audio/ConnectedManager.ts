@@ -1,3 +1,5 @@
+import { conference } from '@models/api'
+import { ISharedContent } from '@models/ISharedContent'
 import {PlaybackParticipant, RemoteParticipant} from '@models/Participant'
 import {urlParameters} from '@models/url'
 import {diffMap} from '@models/utils'
@@ -15,7 +17,7 @@ export class ConnectedManager {
 
   private remotesMemo = new Map<string, RemoteParticipant>()
   private playbacksMemo = new Map<string, PlaybackParticipant>()
-  private contentsMemo = new Map<string, Set<MediaStreamTrack>>()
+  private contentsMemo = new Map<string, ISharedContent>()
 
   public setAudioOutput(deviceId: string) {
     this.manager.setAudioOutput(deviceId)
@@ -54,14 +56,15 @@ export class ConnectedManager {
   }
 
   private onScreenContentsChange = () => {
-    const newRemotes = new Map(contents.tracks.remoteContents)
+    const pairs = contents.getRemoteRtcContents().map(c => ({id:c.id, track:conference.getContentTracks(c.id, 'audio')[0]})).filter(c=>c.track)
+
+    const audioRemoteContents = contents.getRemoteRtcContents().filter(c => conference.getContentTracks(c.id, 'audio').length)
+    const newRemotes = new Map(audioRemoteContents.map(c => [c.id, c]))
     const added = diffMap(newRemotes, this.contentsMemo)
     const removed = diffMap(this.contentsMemo, newRemotes)
     removed.forEach(this.removeContent)
-/*TODO:
     added.forEach(this.addContent)
     this.contentsMemo = newRemotes
-    */
   }
 
   private removePlayback = (pp: PlaybackParticipant) => {
@@ -89,32 +92,14 @@ export class ConnectedManager {
     this.connectedGroups[remote.id] = new ConnectedGroup(participants.local_, undefined, remote, group)
   }
 
-  private removeContent = (tracks: Set<MediaStreamTrack>) => {
-    const audioTrack = Array.from(tracks.values()).find(track => track.kind === 'audio')
-
-    if (audioTrack) {
-      const carrierId = '' //TODO:get participant id?  audioTrack.getParticipantId()
-      if (carrierId) {
-        this.connectedGroups[carrierId].dispose()
-        delete this.connectedGroups[carrierId]
-
-        this.manager.removeSpeaker(carrierId)
-      }else {
-        console.error('removeContent: track does not have content id.', audioTrack)
-      }
-    }
+  private removeContent = (content: ISharedContent) => {
+    this.connectedGroups[content.id].dispose()
+    delete this.connectedGroups[content.id]
+    this.manager.removeSpeaker(content.id)
   }
 
-  private addContent = (tracks: Set<MediaStreamTrack>) => {
-    const audioTrack = Array.from(tracks.values()).find(track => track.kind === 'audio')
-    if (audioTrack) {
-      const carrierId = ''  //TODO:get participant id? audioTrack.getParticipantId()
-      if (carrierId) {
-        const group = this.manager.addSpeaker(carrierId)
-        this.connectedGroups[carrierId] = new ConnectedGroup(participants.local_, audioTrack, undefined, group)
-      }else {
-        console.error('addContent: track does not have content id.', audioTrack)
-      }
-    }
+  private addContent = (content: ISharedContent) => {
+    const group = this.manager.addSpeaker(content.id)
+    this.connectedGroups[content.id] = new ConnectedGroup(participants.local_, content, undefined, group)
   }
 }

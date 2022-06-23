@@ -232,7 +232,7 @@ export class Recorder{
       const aid = `pa_${p.id}`
       if (p.tracks.audioStream){
         if (!this.medias.has(aid)){
-          const media = new MediaRec(p.tracks.audioStream, 'mic', {pid:p.id})
+          const media = new MediaRec(p.tracks.audioStream, 'avatar', {pid:p.id})
           this.medias.set(aid, media)
           media.start()
         }
@@ -246,19 +246,22 @@ export class Recorder{
       }
     }
     //  Contents
-    const contentStreams = contents.tracks.allContentStreams()
-    for (const cs of contentStreams){
-      const c = contents.find(cs.cid)
+    const rtcContents = contents.getAllRtcContents()
+    for (const rc of rtcContents){
+      const c = contents.find(rc.id)
       if (c && (c.type === 'screen' || c.type === 'camera')){
         const id = `c_${c.id}`
         remains.delete(id)
         if (!this.medias.has(id)){
-          const media = new MediaRec(cs.stream, c.type, {cid:c.id})
+          const stream = new MediaStream()
+          const tracks = contents.contentTracks.get(rc.id)
+          tracks?.forEach(t => stream.addTrack(t))
+          const media = new MediaRec(stream, c.type, {cid:c.id})
           this.medias.set(id, media)
           media.start()
         }
       }else{
-        console.error(`Failed to find content cid=${cs.cid}.`)
+        console.error(`Failed to find content cid=${rc.id}.`)
       }
     }
     //  Remove when participat or content has removed

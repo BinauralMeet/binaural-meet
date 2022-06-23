@@ -62,7 +62,7 @@ export const App: React.FC<{}> = () => {
           <LeftBar stores={stores}/>
           <Fragment>
             <MainScreen showAllTracks = {DEBUG_VIDEO} stores={stores} />
-            <Observer>{() => <Map transparent={sharedContentsStore.tracks.mainStream !== undefined
+            <Observer>{() => <Map transparent={sharedContentsStore.mainScreenStream !== undefined
              || DEBUG_VIDEO} stores={stores} />
             }</Observer>
             <Footer stores={stores} height={(isSmartphone() && isPortrait()) ? 100 : undefined} />
