@@ -21,18 +21,7 @@ import {DataConnection} from './DataConnection'
 import {MessageType} from './DataMessageType'
 import {notification} from './Notification'
 
-// config.js
 declare const config:any             //  from ../../config.js included from index.html
-
-interface FragmentedMessageHead{
-  type: string
-  length: number
-}
-interface FragmentedMessage{
-  c: number
-  s: string
-}
-
 const SYNC_LOG = false
 const syncLog = SYNC_LOG ? console.log : () => {}
 
@@ -101,10 +90,6 @@ export class DataSync{
   sendContentRemoveRequest(pid: string, removedIds: string[]) {
     this.connection.sendMessage(MessageType.CONTENT_REMOVE_REQUEST, removedIds, pid)
   }
-  sendLeftContentRemoveRequest(removedIds: string[]) {
-    assert(!config.bmRelayServer)
-    this.connection.sendMessage(MessageType.LEFT_CONTENT_REMOVE_REQUEST, removedIds)
-  }
   //  send myContents of local to remote participants.
   sendMyContents() {
       this.sendContentUpdateRequest('', Array.from(contents.roomContents.values()))
@@ -119,7 +104,6 @@ export class DataSync{
     participants.local.remoteAudioLimit = limits[1]
   }
   private onParticipantLeft(id: string){
-    contents.onParticipantLeft(id)
     chat.participantLeft(id)
     participants.leave(id)
     if (this.connection.relaySocket?.readyState === WebSocket.OPEN){
@@ -314,14 +298,6 @@ export class DataSync{
     window.location.reload()
   }
   //  contents
-  private onMyContent(from:string|undefined, cs_:ISharedContent[]){
-    assert(from)
-    const cs = makeThemContents(cs_)
-    contents.checkDuplicatedWallpaper(from, cs)
-    contents.replaceRemoteContents(cs, from)
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    syncLog(`recv remote contents ${JSON.stringify(cs.map(c => c.id))} from ${from}.`, cs)
-  }
   private onContentInfoUpdate(cs:ISharedContent[]){
     assert(config.bmRelayServer)
     cs.forEach(c => contents.roomContentsInfo.set(c.id, c))
@@ -333,10 +309,6 @@ export class DataSync{
   }
   private onContentRemoveRequest(cids:string[]){
     contents.removeByRemoteRequest(cids)
-  }
-  private onLeftContentRemoveRequest(cids:string[]){
-    console.log(`onLeftContentRemoveRequest for ${cids}.`)
-    contents.removeLeftContentByRemoteRequest(cids)
   }
 
   observeStart(){
@@ -382,7 +354,6 @@ export class DataSync{
         case MessageType.CALL_REMOTE: this.onCallRemote(msg.p); break
         case MessageType.CHAT_MESSAGE: this.onChatMessage(msg.p, JSON.parse(msg.v)); break
         case MessageType.CONTENT_REMOVE_REQUEST: this.onContentRemoveRequest(JSON.parse(msg.v)); break
-        case MessageType.LEFT_CONTENT_REMOVE_REQUEST: this.onLeftContentRemoveRequest(JSON.parse(msg.v)); break
         case MessageType.CONTENT_UPDATE_REQUEST: this.onContentUpdateRequest(JSON.parse(msg.v)); break
         case MessageType.CONTENT_INFO_UPDATE: this.onContentInfoUpdate(JSON.parse(msg.v)); break
         case MessageType.PARTICIPANT_MOUSE: this.onParticipantMouse(msg.p, JSON.parse(msg.v)); break
@@ -397,7 +368,6 @@ export class DataSync{
         case MessageType.PARTICIPANT_OUT: this.onParticipantOut(JSON.parse(msg.v)); break
         case MessageType.MOUSE_OUT: this.onMouseOut(JSON.parse(msg.v)); break
         case MessageType.CONTENT_OUT: this.onContentOut(JSON.parse(msg.v)); break
-        case MessageType.MY_CONTENT: this.onMyContent(msg.p, JSON.parse(msg.v)); break
         case MessageType.PARTICIPANT_INFO: this.onParticipantInfo(msg.p, JSON.parse(msg.v)); break
         case MessageType.PARTICIPANT_ON_STAGE: this.onParticipantOnStage(msg.p, JSON.parse(msg.v)); break
         case MessageType.PARTICIPANT_POSE: this.onParticipantPose(msg.p, JSON.parse(msg.v)); break

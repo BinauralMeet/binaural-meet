@@ -120,10 +120,8 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
       }
     }
     if (divScroll.current) {
-      const mine = config.bmRelayServer || contents.localParticipant.myContents.has(props.content.id)
       const INTERVAL = 100
-      const sendScroll = mine ? _.throttle(() => setTimeout(doSendScroll, INTERVAL), INTERVAL)
-        : _.debounce(doSendScroll, INTERVAL)
+      const sendScroll = _.throttle(() => setTimeout(doSendScroll, INTERVAL), INTERVAL)
       const endScroll = _.debounce(() => {
         member.scrolling = false
         //  console.log(`scrolling: ${member.current.scrolling}`)
@@ -138,7 +136,7 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
       divScroll.current.onscroll = member.onscroll
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [config.bmRelayServer ? contents.roomContents : contents.localParticipant.myContents, props.content.id])
+  }, [contents.roomContents])
 
   const vscroll = isGDrivePreviewScrollable(mimeType)
 

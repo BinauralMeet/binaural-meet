@@ -7,6 +7,7 @@ import DialogTitle from '@material-ui/core/DialogTitle'
 import Popover, { PopoverProps } from '@material-ui/core/Popover'
 import { conference } from '@models/api'
 import {MessageType} from '@models/api/DataMessageType'
+import { ISharedContent } from '@models/ISharedContent'
 import {t} from '@models/locales'
 import chat from '@stores/Chat'
 import participants from '@stores/participants/Participants'
@@ -36,8 +37,13 @@ export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (prop
   function onKeyPressClear(ev:React.KeyboardEvent){
     if (ev.key === 'Enter' && clear === 'clear') {
       if (!props.participant) { return }
-      const participant = contents.participants.get(props.participant.id)
-      participant?.myContents.forEach(c => contents.removeByLocal(c.id))
+      const remoteId = props.participant.id
+      const remoteContents:string[] = []
+      contents.owner.forEach((pid, cid) => {
+        if (pid === remoteId) remoteContents.push(cid)
+      })
+      remoteContents.forEach(cid => contents.removeByLocal(cid))
+
       props.close()
     }
   }

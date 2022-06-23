@@ -15,7 +15,6 @@ export const PoseMessageType = {
 export const StoredMessageType = {
   ...ParticipantMessageType,
   PARTICIPANT_INFO: 'p_info',                   //  RemoteInformation, -> presence
-  MY_CONTENT: 'my_content',                     //  ISharedContent[] -> presence, used only when no bmRelayServer exist
 }
 
 export type StoredMessageKeys = keyof typeof StoredMessageType
@@ -43,7 +42,6 @@ export const ObjectArrayMessageType = {
 export const ObjectArrayMessageTypes = new Set(Object.values(ObjectArrayMessageType))
 
 export const StringArrayMessageType = {
-  LEFT_CONTENT_REMOVE_REQUEST: 'left_c_remove',   //  ids:string[], only when no bmRelayServer
   CONTENT_REMOVE_REQUEST: 'c_remove',             //  ids:string[]
   PARTICIPANT_OUT: 'p_out',                       //  ids:stirng[], server to client only
   MOUSE_OUT: 'm_out',                             //  ids:stirng[], server to client only
