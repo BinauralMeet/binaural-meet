@@ -1,8 +1,11 @@
 import {makeStyles} from '@material-ui/core/styles'
+import { conference } from '@models/api'
 import {ISharedContent} from '@models/ISharedContent'
 import {assert, mulV2} from '@models/utils'
+import contents from '@stores/sharedContents/SharedContents'
 import sharedContents from '@stores/sharedContents/SharedContents'
 import _ from 'lodash'
+import { autorun } from 'mobx'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import {ContentProps} from './Content'
@@ -15,8 +18,7 @@ const useStyles = makeStyles({
 })
 
 interface ScreenContentMember{
-  locals: MediaStreamTrack[]
-  remotes: MediaStreamTrack[]
+  tracks: MediaStreamTrack[]
   content: ISharedContent
 }
 
@@ -27,59 +29,17 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
   const [muted, setMuted] = React.useState(false)
   const member = useRef<ScreenContentMember>({} as ScreenContentMember)
   member.current = {
-/*TODO:
-    locals: useObserver<MediaStreamTrack[]>(() =>
-      Array.from(sharedContents.tracks.localContents.get(props.content.id) || [])),
-    remotes: useObserver<MediaStreamTrack[]>(() =>
-      Array.from(sharedContents.tracks.remoteContents.get(props.content.id) || [])),*/
-      locals: [] as MediaStreamTrack[],
-      remotes: [] as MediaStreamTrack[],
-      content: props.content,
+    tracks: useObserver<MediaStreamTrack[]>(() => contents.getOrCreateContentTracks(props.content.id)),
+    content: props.content,
   }
-  if (member.current.locals.length > 2) {
-    console.error(`content ${props.content.id} has ${member.current.locals.length} local tracks`, member.current.locals)
-  }
-  if (member.current.remotes.length > 2) {
-    console.error(
-      `content ${props.content.id} has ${member.current.remotes.length} remote tracks`, member.current.remotes)
+  if (member.current.tracks.length > 2) {
+    console.error(`content ${props.content.id} has ${member.current.tracks.length} tracks`, member.current.tracks)
   }
 
-  function setTrack() {
-    assert(member.current.locals.length===0 || member.current.remotes.length===0)
-    if (ref.current) {
-      const ms = new MediaStream()
-      member.current.locals.forEach((track) => {
-        if (track.kind !== 'audio') { //  Never play local audio. It makes echo.
-          ms.addTrack(track)
-        }
-      })
-      member.current.remotes.forEach((track) => {
-        if (track.kind !== 'audio') { //  Remote audio is played by ConnectedMananger
-          ms.addTrack(track)
-          const onMuteLater = _.debounce(()=>{setMuted(true)}, 3000)
-          track.onmute = onMuteLater
-          track.onunmute = () => {
-            onMuteLater.cancel()
-            setMuted(false)
-          }
-        }
-      })
-
-      const old = ref.current.srcObject instanceof MediaStream && ref.current.srcObject.getTracks()
-      const cur = ms.getTracks()
-      if (cur.length) {
-        if (! _.isEqual(old, cur)) {
-          //  console.log('prev-next:', old, cur)
-          ref.current.srcObject = ms
-          ref.current.autoplay = true
-        }
-      }
-    }
-  }
   //  const simulcastRatios = [0.25, 0.5, 0.75, 4.0 / 3, 2, 4]
   const simulcastRatios:number[] = []
   function checkVideoSize() {
-    if (member.current.locals.length && ref.current) {
+    if (member.current.tracks.length && ref.current) {
       const tracks = ref.current.srcObject instanceof MediaStream && ref.current.srcObject.getTracks()
       if (tracks && tracks.length) {
         const video = tracks.find(track => track.kind === 'video')
@@ -101,8 +61,24 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
     }
   }
   useEffect(() => {
-    setTrack()
-  },        [member.current.locals, member.current.remotes])
+    const disposer = autorun(()=>{
+      if (ref.current) {
+        const track = member.current.tracks.find(t => t.kind === 'video')
+        if (track){
+          const oldTrack = ref.current.srcObject instanceof MediaStream ? ref.current.srcObject.getVideoTracks()[0] : undefined
+          if (oldTrack !== track) {
+            const ms = new MediaStream()
+            ms.addTrack(track)
+            ref.current.srcObject = ms
+            ref.current.autoplay = true
+          }
+        }
+      }
+    })
+    return ()=>{
+      disposer()
+    }
+  }, [])
   useEffect(() => {
     const interval = setInterval(checkVideoSize, 333)   //  Notification of exact video size may take time.
 

@@ -204,6 +204,17 @@ export class Conference {
 
   public addOrReplaceLocalTrack(track:MSTrack){
     const promise = new Promise<mediasoup.types.Producer>((resolve, reject)=>{
+      //  add content track to contents
+      if (track.role === 'avatar'){
+        if (track.track.kind === 'audio'){
+          participants.local.tracks.audio = track.track
+        }else{
+          participants.local.tracks.avatar = track.track
+        }
+      }else{
+        contents.addTrack(track.peer, track.role, track.track)
+      }
+      //  create producer
       const producer = this.localProducers.find(p => {
         const old = (p.appData as ProducerData).track
         return old.role === track.role && old.track.kind == track.track.kind
@@ -226,21 +237,24 @@ export class Conference {
     return promise
   }
   public removeLocalTrack(track:MSTrack){
-    const producer = this.localProducers.find(p => (p.appData as ProducerData).track === track)
-    if (producer){
-      producer.close()
-      this.rtcConnection.closeProducer(producer.id)
-      this.localProducers = this.localProducers.filter(p => p !== producer)
-    }
+    assert(track.peer === this.rtcConnection.peer)
+    this.removeLocalTrackByRole(track.role, track.track.kind as mediasoup.types.MediaKind)
   }
   public removeLocalTrackByRole(role:Roles, kind?:mediasoup.types.MediaKind){
-    const producer = this.localProducers.forEach((producer)=>{
+    if (role === 'avatar'){
+      if (kind === 'audio' || !kind) participants.local.tracks.audio = undefined
+      if (kind === 'video' || !kind) participants.local.tracks.avatar = undefined
+    }else{
+      contents.removeTrack(this.rtcConnection.peer, role, kind)
+    }
+    this.localProducers.forEach((producer)=>{
       const track = (producer.appData as ProducerData).track
       if (track.role === role && (!kind || kind == track.track.kind)){
         producer.close()
         this.rtcConnection.closeProducer(producer.id)
         this.localProducers = this.localProducers.filter(p => p !== producer)
       }
+      track.track.stop()
     })
   }
 
@@ -309,7 +323,6 @@ export class Conference {
     this.dataConnection.audioMeter.setSource(track)
 
     this.addOrReplaceLocalTrack(track)
-    participants.local.tracks.audio = track.track
   }
   public setLocalMicTrack(track: MSTrack|undefined){
     const promise = new Promise<MSTrack|undefined>((resolveFunc, rejectionFunc) => {
@@ -343,7 +356,6 @@ export class Conference {
       }else{
         resolve()
       }
-      participants.local.tracks.avatar = this.localCameraTrack?.track
     })
     return promise
   }
@@ -462,7 +474,7 @@ export class Conference {
         if (producer.role === 'avatar'){
           participants.addRemoteTrack(producer.peer.peer, consumer.track)
         }else{
-          contents.addRemoteTrack(producer.peer.peer, producer.role, consumer.track)
+          contents.addTrack(producer.peer.peer, producer.role, consumer.track)
         }
       }).catch((e) => {
         console.error(`conference.onProducerAdded(): ${e}`)
@@ -477,7 +489,7 @@ export class Conference {
         if (producer.role === 'avatar'){
           participants.removeRemoteTrack(producer.peer.peer, producer.kind)
         }else{
-          contents.removeRemoteTrack(producer.peer.peer, producer.role, producer.kind)
+          contents.removeTrack(producer.peer.peer, producer.role, producer.kind)
         }
       }
     }

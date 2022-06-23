@@ -96,14 +96,14 @@ export class SharedContents extends EventEmitter {
   @observable.ref mainScreenStream?: MediaStream
   @observable mainScreenOwner: string | undefined
   @observable.deep contentTracks = new Map<string, MediaStreamTrack[]>()  //  cid -> stream
-  private getOrCreateContentTrack(cid: string): MediaStreamTrack[]{
+  public getOrCreateContentTracks(cid: string): MediaStreamTrack[]{
     if(!this.contentTracks.has(cid)){
       this.contentTracks.set(cid, [])
     }
     return this.contentTracks.get(cid)!
   }
 
-  public addRemoteTrack(peer: string, role: Roles, track: MediaStreamTrack){
+  public addTrack(peer: string, role: Roles, track: MediaStreamTrack){
     if (role === 'mainScreen'){
       const ms = new MediaStream()
       ms.addTrack(track)
@@ -117,18 +117,20 @@ export class SharedContents extends EventEmitter {
         this.mainScreenStream = ms
       }
     }else{
-      const tracks = this.getOrCreateContentTrack(role)
+      const tracks = this.getOrCreateContentTracks(role)
       tracks.push(track)
     }
   }
-  public removeRemoteTrack(peer: string, role: Roles, kind: TrackKind){
+  public removeTrack(peer: string, role: Roles, kind?: TrackKind){
     if (role === 'mainScreen'){
       if (this.mainScreenOwner === peer){
         const ms = new MediaStream()
-        if (kind === 'audio'){
-          this.mainScreenStream?.getVideoTracks().forEach(ms.addTrack)
-        }else{
-          this.mainScreenStream?.getAudioTracks().forEach(ms.addTrack)
+        if (kind){
+          if (kind === 'audio'){
+            this.mainScreenStream?.getVideoTracks().forEach(ms.addTrack)
+          }else{
+            this.mainScreenStream?.getAudioTracks().forEach(ms.addTrack)
+          }
         }
         if (ms.getTracks().length){
           this.mainScreenStream = ms
@@ -140,10 +142,17 @@ export class SharedContents extends EventEmitter {
     }else{
       const tracks = this.contentTracks.get(role)
       if (tracks){
-        const i = tracks.findIndex(t=>t.kind === kind)
-        if (i>=0){
-          tracks[i].stop()
-          tracks.splice(i, 1)
+        if (kind){
+          const i = tracks.findIndex(t=>t.kind === kind)
+          if (i>=0){
+            tracks[i].stop()
+            tracks.splice(i, 1)
+          }
+        }else{
+          tracks.forEach(track => {
+            track.stop()
+          })
+          tracks.length = 0
         }
       }else{
         console.error(`removeRemoteTrack(): tracks for content ${role} not found.`)
@@ -223,6 +232,7 @@ export class SharedContents extends EventEmitter {
   //  add
   addLocalContent(c:ISharedContent) {
     if (!c.id) { c.id = this.getUniqueId() }
+    this.owner.set(c.id, this.localId)
     this.updateByLocal(c)
   }
 
@@ -300,11 +310,7 @@ export class SharedContents extends EventEmitter {
     while (1) {
       this.contentIdCounter += 1
       const id = `${pid}_${this.contentIdCounter}`
-      if (config.bmRelayServer){
-        if (!this.roomContents.has(id)) { return id }
-      }else{
-        if (!this.owner.has(id)) { return id }
-      }
+      if (!this.roomContents.has(id)) { return id }
     }
 
     //  eslint-disable-next-line no-unreachable

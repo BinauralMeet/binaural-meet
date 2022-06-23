@@ -40,7 +40,7 @@ import { conference } from '@models/api'
 
 function startCapture(props:BMProps) {
   return new Promise<MediaStream>((resolve, reject) => {
-    navigator.mediaDevices.getDisplayMedia().then(resolve).catch(reject)
+    navigator.mediaDevices.getDisplayMedia({audio:true, video:true}).then(resolve).catch(reject)
   })
 }
 
