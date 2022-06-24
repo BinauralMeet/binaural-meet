@@ -12,7 +12,7 @@ declare const config:any                  //  from ../../config.js included from
 
 //  mic device selection
 export function createLocalMic() {
-  console.log(`createLocalMic() called`)
+  //  console.log(`createLocalMic() called`)
   const promise = new Promise<MSTrack>((resolutionFunc, rejectionFunc) => {
     const did = participants.local.devicePreference.audioInputDevice
     navigator.mediaDevices.getUserMedia({
@@ -65,9 +65,9 @@ function isMicMuted(){
 }
 autorun(() => {
   const did = participants.local.devicePreference.audioInputDevice
+  //  console.log(`isMicMuted === ${isMicMuted()}`)
   if (isMicMuted()){
-    conference.setLocalMicTrack(undefined).then(track => {
-      track?.track.stop()
+    conference.setLocalMicTrack(undefined).then(()=>{
       participants.local.audioLevel = 0
     })
   }else{

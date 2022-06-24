@@ -51,6 +51,9 @@ export class Participants {
     }
     return r
   }
+  getRemote(participantId: string){
+    return this.remote.get(participantId)
+  }
 
   @action
   leave(participantId: string) {

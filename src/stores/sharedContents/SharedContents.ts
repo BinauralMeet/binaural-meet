@@ -9,7 +9,7 @@ import participants from '@stores/participants/Participants'
 import {EventEmitter} from 'events'
 import _ from 'lodash'
 import {action, autorun, computed, IObservableArray, makeObservable, observable} from 'mobx'
-import {createContent, extractContentDatas, moveContentToTop} from './SharedContentCreator'
+import {createContent, moveContentToTop} from './SharedContentCreator'
 import { conference } from '@models/api'
 
 export const CONTENTLOG = false      // show manipulations and sharing of content
@@ -25,22 +25,16 @@ function zorderComp(a:ISharedContent, b:ISharedContent) {
   return a.zorder - b.zorder
 }
 
+export interface PeerAndTracks {
+  peer: string
+  tracks: MediaStreamTrack[]
+}
+
 export class SharedContents extends EventEmitter {
   private contentIdCounter = 0
-  private localId = ''
   constructor() {
     super()
     makeObservable(this)
-    autorun(() => { //  sync localId to participantsStore
-      const newLocalId = participantsStore.localId
-      Array.from(this.owner.keys()).forEach((key) => {
-        if (this.owner.get(key) === this.localId) {
-          this.owner.set(key, newLocalId)
-        }
-      })
-      this.localId = newLocalId
-      contentLog(`Set new local id ${this.localId}`)
-    })
     const fps = localStorage.getItem('screenFps')
     if (fps){ this.screenFps = JSON.parse(fps) }
     autorun(() => { //  save screen Fps
@@ -95,12 +89,22 @@ export class SharedContents extends EventEmitter {
   //  Tracks
   @observable.ref mainScreenStream?: MediaStream
   @observable mainScreenOwner: string | undefined
-  @observable.deep contentTracks = new Map<string, MediaStreamTrack[]>()  //  cid -> stream
-  public getOrCreateContentTracks(cid: string): MediaStreamTrack[]{
+  @observable.deep contentTracks = new Map<string, PeerAndTracks>()  //  cid -> stream
+  public getContentTracks(cid:string){ return this.contentTracks.get(cid) }
+  public getContentTrack(cid:string, kind:TrackKind){
+    const tracks = this.contentTracks.get(cid)?.tracks
+    return tracks?.find(t => t.kind === kind)
+  }
+  public getOrCreateContentTracks(peer: string, cid: string): PeerAndTracks{
     if(!this.contentTracks.has(cid)){
-      this.contentTracks.set(cid, [])
+      this.contentTracks.set(cid, {peer, tracks:[]})
     }
-    return this.contentTracks.get(cid)!
+    const pat = this.contentTracks.get(cid)!
+    if (peer){
+      assert(!pat.peer || pat.peer === peer)
+      pat.peer = peer
+    }
+    return pat
   }
 
   public addTrack(peer: string, role: Roles, track: MediaStreamTrack){
@@ -117,7 +121,7 @@ export class SharedContents extends EventEmitter {
         this.mainScreenStream = ms
       }
     }else{
-      const tracks = this.getOrCreateContentTracks(role)
+      const tracks = this.getOrCreateContentTracks(peer, role).tracks
       tracks.push(track)
     }
   }
@@ -140,7 +144,7 @@ export class SharedContents extends EventEmitter {
         this.mainScreenOwner = undefined
       }
     }else{
-      const tracks = this.contentTracks.get(role)
+      const tracks = this.contentTracks.get(role)?.tracks
       if (tracks){
         if (kind){
           const i = tracks.findIndex(t=>t.kind === kind)
@@ -154,19 +158,24 @@ export class SharedContents extends EventEmitter {
           })
           tracks.length = 0
         }
+        if (!tracks.length){
+          this.contentTracks.delete(role)
+        }
       }else{
         console.error(`removeRemoteTrack(): tracks for content ${role} not found.`)
       }
     }
   }
-  public getAllRtcContents(){
-    return this.all.filter(c => c.type === 'screen' || c.type === 'camera')
+  public getAllRtcContentIds(){
+    return Array.from(this.contentTracks.keys())
   }
-  public getLocalRtcContents(){
-    return this.getAllRtcContents().filter(c => this.owner.get(c.id) === this.localId)
+  public getLocalRtcContentIds(){
+    return Array.from(this.contentTracks.keys()).
+      filter(cid=>this.contentTracks.get(cid)!.peer === conference.rtcConnection.peer)
   }
-  public getRemoteRtcContents(){
-    return this.getAllRtcContents().filter(c => this.owner.get(c.id) !== this.localId)
+  public getRemoteRtcContentIds(){
+    return Array.from(this.contentTracks.keys()).
+      filter(cid=>this.contentTracks.get(cid)!.peer !== conference.rtcConnection.peer)
   }
 
   //  pasted content
@@ -184,6 +193,11 @@ export class SharedContents extends EventEmitter {
     moveContentToTop(content)
     this.addLocalContent(content)
   }
+  public assignId(c:ISharedContent) {
+    if (!c.id) {
+      c.id = this.getUniqueId()
+    }
+  }
 
   @action updatePlayback(content: ISharedContent){
     content.playback = true
@@ -197,10 +211,6 @@ export class SharedContents extends EventEmitter {
   findPlayback(cid: string){
     return this.playbackContents.get(cid)
   }
-
-  //  Map<cid, pid>, map from contentId to participantId
-  owner: Map<string, string> = new Map<string, string>()
-
   public find(cid: string) {
     return this.roomContents.get(cid)
   }
@@ -231,8 +241,7 @@ export class SharedContents extends EventEmitter {
 
   //  add
   addLocalContent(c:ISharedContent) {
-    if (!c.id) { c.id = this.getUniqueId() }
-    this.owner.set(c.id, this.localId)
+    this.assignId(c)
     this.updateByLocal(c)
   }
 
@@ -322,29 +331,18 @@ export class SharedContents extends EventEmitter {
       this.setEditing('')
     }
     if (c.type === 'screen' || c.type === 'camera') {
-      const peer = this.owner.get(c.id)
-      if (peer) {
-        if (peer === participants.localId){
+      const peerAndTracks = this.contentTracks.get(c.id)
+      if (peerAndTracks?.peer) {
+        if (peerAndTracks.peer === participants.localId){
           conference.removeLocalTrackByRole(c.id)
         }else{
-          conference.closeTrack(peer, c.id)
+          conference.closeTrack(peerAndTracks.peer, c.id)
         }
       }
     }
   }
 
   private onUpdateScreenContent(c: ISharedContent){
-    const peer = this.owner.get(c.id)
-    if (peer){
-      if (peer === participants.localId){
-
-      }else{
-
-      }
-    }
-  }
-  private clearContentTracks(){
-
   }
 
   //  screen fps setting

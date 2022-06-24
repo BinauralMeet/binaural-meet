@@ -23,11 +23,11 @@ import UploadIcon from '@material-ui/icons/Publish'
 import ScreenShareIcon from '@material-ui/icons/ScreenShare'
 import StopScreenShareIcon from '@material-ui/icons/StopScreenShare'
 import SubjectIcon from '@material-ui/icons/Subject'
-import {ISharedContent} from '@models/ISharedContent'
+import {contentsToSave, loadToContents} from '@models/ISharedContent'
 import {useTranslation} from '@models/locales'
 import {assert, MSTrack} from '@models/utils'
 import {createContent, createContentFromText, createContentOfIframe, createContentOfText,
-  createContentOfVideo, extractContentData, extractContentDatas} from '@stores/sharedContents/SharedContentCreator'
+  createContentOfVideo} from '@stores/sharedContents/SharedContentCreator'
 import {SharedContents} from '@stores/sharedContents/SharedContents'
 import {isArray} from 'lodash'
 import {Observer, useObserver} from 'mobx-react-lite'
@@ -45,7 +45,7 @@ function startCapture(props:BMProps) {
 }
 
 function downloadItems(contents:SharedContents) {
-  const content = JSON.stringify(extractContentDatas(contents.all))
+  const content = JSON.stringify(contentsToSave(contents.all))
   const blob = new Blob([content], {type: 'text/plain'})
 
   const a = document.createElement('a')
@@ -63,10 +63,10 @@ function importItems(ev: React.ChangeEvent<HTMLInputElement>, contents: SharedCo
   const files = ev.currentTarget?.files
   if (files && files.length) {
     files[0].text().then((text) => {
-      const items = JSON.parse(text)
-      if (isArray(items)) {
-        items.forEach((item) => {
-          const content = extractContentData(item as ISharedContent)
+      const itemsRecv = JSON.parse(text)
+      if (isArray(itemsRecv)) {
+        const items = loadToContents(itemsRecv)
+        items.forEach(content => {
           if (content.type === 'screen' || content.type === 'camera') { return }
           const newContent = createContent()
           Object.assign(newContent, content)
@@ -144,8 +144,9 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
     startCapture(props).then((ms) => {
       if (ms.getTracks().length) {
         const content = createContentOfVideo(ms.getTracks(), map, 'screen')
+        contents.assignId(content)
+        contents.getOrCreateContentTracks(conference.rtcConnection.peer, content.id)
         contents.shareContent(content)
-        assert(content.id)
         ms.getTracks().forEach((track) => {
           const msTrack:MSTrack = {
             track,
@@ -163,8 +164,8 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
     setStep('none')
   }
   const closeAllScreens = () => {
-    const rtcContents = contents.getAllRtcContents()
-    rtcContents.forEach(c => contents.removeByLocal(c.id))
+    const cids = contents.getAllRtcContentIds()
+    cids.forEach(cid => contents.removeByLocal(cid))
     setStep('none')
   }
   const screenAsBackgrouond = () => {
@@ -288,7 +289,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
           }</Observer>
         </FormControl>}
       />
-      {contents.getLocalRtcContents().length ?
+      {contents.getLocalRtcContentIds().length ?
         <div style={{paddingLeft:'1em'}}><ShareDialogItem dense key = "stopScreen"
           icon={<Icon icon={bxWindowClose} style={{fontSize:'1.5rem'}}/>}
           text={t('stopScreen')}

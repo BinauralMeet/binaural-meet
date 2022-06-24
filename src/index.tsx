@@ -45,7 +45,7 @@ function startConference() {
 
     //  prevent leaving from and reloading browser, when the user shares screen(s).
     if (!errorInfo.type &&
-      (contents.getLocalRtcContents().length || contents.mainScreenOwner === participants.localId)) {
+      (contents.getLocalRtcContentIds().length || contents.mainScreenOwner === participants.localId)) {
       logStr += 'Ask user. '
       ev.preventDefault()
       ev.stopImmediatePropagation()

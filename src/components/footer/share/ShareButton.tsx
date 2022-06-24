@@ -25,7 +25,7 @@ interface ShareButtonProps extends BMProps{
 export const ShareButton: React.FC<ShareButtonProps> = (props) => {
   const classes = useStyles()
   const contents = props.stores.contents
-  const sharing = useObserver(() => contents.getAllRtcContents().length || contents.mainScreenOwner)
+  const sharing = useObserver(() => contents.getLocalRtcContentIds().length || contents.mainScreenOwner)
   const {t} = useTranslation()
 
   return (

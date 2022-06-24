@@ -7,7 +7,6 @@ import {isContentOutOfRange, ISharedContent, SharedContentInfo} from '@models/IS
 import {useTranslation} from '@models/locales'
 import {getRandomColor, rgb2Color} from '@models/utils'
 import {isDarkColor} from '@models/utils'
-import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import contents from '@stores/sharedContents/SharedContents'
 import {autorun} from 'mobx'
 import {Observer} from 'mobx-react-lite'
@@ -24,8 +23,7 @@ function locatedContentOnly(content: ISharedContent|undefined){
   return content
 }
 
-export const ContentLine: React.FC<BMProps & TextLineStyle &
-{participant: ParticipantBase, content: SharedContentInfo}> = (props) => {
+export const ContentLine: React.FC<BMProps & TextLineStyle & {content: SharedContentInfo}>=(props) => {
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
   const [showForm, setShowForm] = React.useState(false)
   const ref = React.useRef<HTMLButtonElement>(null)
@@ -116,8 +114,7 @@ export const ContentList: React.FC<BMProps&TextLineStyle>  = (props) => {
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
   const participants = props.stores.participants
   const elements = all.map(c =>
-    <ContentLine key={c.id} content = {c} {...props}
-      participant={participants.find(contents.owner.get(c.id) as string) as ParticipantBase} />)
+    <ContentLine key={c.id} content = {c} {...props} />)
   const {t} = useTranslation()
   const textColor = useObserver(() => isDarkColor(roomInfo.backgroundFill) ? 'white' : 'black')
 

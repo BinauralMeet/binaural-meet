@@ -37,10 +37,9 @@ export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (prop
   function onKeyPressClear(ev:React.KeyboardEvent){
     if (ev.key === 'Enter' && clear === 'clear') {
       if (!props.participant) { return }
-      const remoteId = props.participant.id
       const remoteContents:string[] = []
-      contents.owner.forEach((pid, cid) => {
-        if (pid === remoteId) remoteContents.push(cid)
+      contents.all.forEach(c => {
+        if (c.ownerName === props.participant?.information.name) remoteContents.push(c.id)
       })
       remoteContents.forEach(cid => contents.removeByLocal(cid))
 

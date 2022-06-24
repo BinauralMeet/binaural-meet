@@ -56,10 +56,10 @@ export class ConnectedManager {
   }
 
   private onScreenContentsChange = () => {
-    const pairs = contents.getRemoteRtcContents().map(c => ({id:c.id, track:conference.getContentTracks(c.id, 'audio')[0]})).filter(c=>c.track)
+    const pairs = contents.getRemoteRtcContentIds().map(cid => ({id:cid, track:contents.getContentTrack(cid, 'audio')})).filter(c=>c.track)
 
-    const audioRemoteContents = contents.getRemoteRtcContents().filter(c => conference.getContentTracks(c.id, 'audio').length)
-    const newRemotes = new Map(audioRemoteContents.map(c => [c.id, c]))
+    const audioRemoteContents = contents.getRemoteRtcContentIds().filter(cid => contents.getContentTrack(cid, 'audio'))
+    const newRemotes = new Map(audioRemoteContents.map(cid => [cid, contents.find(cid)!]))
     const added = diffMap(newRemotes, this.contentsMemo)
     const removed = diffMap(this.contentsMemo, newRemotes)
     removed.forEach(this.removeContent)

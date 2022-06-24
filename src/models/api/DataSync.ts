@@ -1,5 +1,5 @@
 import {recorder} from '@models/api/Recorder'
-import {ISharedContent} from '@models/ISharedContent'
+import {ISharedContent, contentsToSend, ISharedContentToSend, receiveToContents} from '@models/ISharedContent'
 import {CONTENT_OUT_OF_RANGE_VALUE} from '@models/ISharedContent'
 import { KickTime } from '@models/KickTime'
 import {t} from '@models/locales'
@@ -13,7 +13,6 @@ import errorInfo from '@stores/ErrorInfo'
 import {MediaSettings} from '@stores/participants/LocalParticipant'
 import participants from '@stores/participants/Participants'
 import roomInfo from '@stores/RoomInfo'
-import {makeThemContents} from '@stores/sharedContents/SharedContentCreator'
 import contents from '@stores/sharedContents/SharedContents'
 import {autorun, IReactionDisposer} from 'mobx'
 import {BMMessage} from './DataMessage'
@@ -84,6 +83,7 @@ export class DataSync{
   }
   //  Send content update request to pid
   sendContentUpdateRequest(pid: string, updatedContents: ISharedContent[]) {
+    const contentsDataToSend = contentsToSend(updatedContents)
     this.connection.sendMessage(MessageType.CONTENT_UPDATE_REQUEST, updatedContents, pid)
   }
   //  Send content remove request to pid
@@ -190,6 +190,7 @@ export class DataSync{
     if (urlParameters.testBot !== null) { return }
     if (from !== participants.localId){
       const remote = participants.getOrCreateRemote(from)
+      if (!remote) return
       const name = remote.information.name
       Object.assign(remote.information, info)
       if (name !== remote.information.name){
@@ -208,15 +209,17 @@ export class DataSync{
     if (urlParameters.testBot !== null) { return }
 
     if (from !== participants.localId){
-      const remote = participants.getOrCreateRemote(from)
+      const remote = participants.getRemote(from)
+      if (!remote) return
       Object.assign(remote.trackStates, states)
     }
   }
   private onParticipantPose(from:string|undefined, poseStr:string){
     assert(from)
     if (from !== participants.localId){
+      const remote = participants.getRemote(from)
+      if (!remote) return
       const pose = str2Pose(poseStr)
-      const remote = participants.getOrCreateRemote(from)
       const local = participants.local
       remote.pose.orientation = pose.orientation
       remote.pose.position = pose.position
@@ -237,8 +240,8 @@ export class DataSync{
   }
   private onParticipantAudioLevel(from:string|undefined, l:number){
     if (from && from !== participants.localId){
-      const remote = participants.getOrCreateRemote(from)
-      remote.audioLevel = l
+      const remote = participants.getRemote(from)
+      if (remote) remote.audioLevel = l
     }
   }
   private onParticipantMouse(from:string|undefined, mouseStr:string){
@@ -246,15 +249,15 @@ export class DataSync{
     const mouse = str2Mouse(mouseStr)
     if (urlParameters.testBot !== null) { return }
     if (from !== participants.localId){
-      const remote = participants.getOrCreateRemote(from)
-      Object.assign(remote.mouse, mouse)
+      const remote = participants.getRemote(from)
+      if (remote) Object.assign(remote.mouse, mouse)
     }
   }
   private onParticipantOnStage(from:string|undefined, onStage:boolean){
     assert(from)
     if (from !== participants.localId){
-      const remote = participants.getOrCreateRemote(from)
-      remote.physics.onStage = onStage
+      const remote = participants.getRemote(from)
+      if (remote) remote.physics.onStage = onStage
     }
   }
   private onParticipantViewpoint(from:string|undefined, viewpoint:Viewpoint){
@@ -262,8 +265,8 @@ export class DataSync{
     if (urlParameters.testBot !== null) { return }
 
     if (from !== participants.localId){
-      const remote = participants.getOrCreateRemote(from)
-      Object.assign(remote.viewpoint, viewpoint)
+      const remote = participants.getRemote(from)
+      if (remote) Object.assign(remote.viewpoint, viewpoint)
     }
   }
   private onYarnPhone(from:string|undefined, connectedPids:string[]){
@@ -302,9 +305,9 @@ export class DataSync{
     assert(config.bmRelayServer)
     cs.forEach(c => contents.roomContentsInfo.set(c.id, c))
   }
-  private onContentUpdateRequest(cds:ISharedContent[]){
+  private onContentUpdateRequest(cds:ISharedContentToSend[]){
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const cs = makeThemContents(cds)
+    const cs = receiveToContents(cds)
     contents.updateByRemoteRequest(cs)
   }
   private onContentRemoveRequest(cids:string[]){

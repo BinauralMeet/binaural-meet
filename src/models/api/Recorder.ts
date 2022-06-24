@@ -1,12 +1,11 @@
 import {Stores} from '@components/utils'
-import {ISharedContent} from '@models/ISharedContent'
+import {contentsToSend, ISharedContent} from '@models/ISharedContent'
 import {ParticipantBase, RemoteInformation, Viewpoint} from '@models/Participant'
 import {mouse2Str, pose2Str, str2Mouse, str2Pose} from '@models/utils'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import { TrackStates } from '@stores/participants/ParticipantBase'
 import participants from '@stores/participants/Participants'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
-import {extractContentDataAndIds} from '@stores/sharedContents/SharedContentCreator'
 import contents from '@stores/sharedContents/SharedContents'
 import {autorun, IReactionDisposer} from 'mobx'
 import {BMMessage} from './DataMessage'
@@ -128,7 +127,7 @@ export class Recorder{
     }))
 
     //  Record all contents
-    const cs = extractContentDataAndIds(stores.contents.all)
+    const cs = contentsToSend(stores.contents.all)
     this.messages.push({msg:{t:MessageType.CONTENT_UPDATE_REQUEST, v:JSON.stringify(cs)}, time: Date.now()})
     //  Record all participants
     const participants:ParticipantBase[] = Array.from(stores.participants.remote.values())
@@ -246,22 +245,22 @@ export class Recorder{
       }
     }
     //  Contents
-    const rtcContents = contents.getAllRtcContents()
-    for (const rc of rtcContents){
-      const c = contents.find(rc.id)
+    const rtcContents = contents.getAllRtcContentIds()
+    for (const rcid of rtcContents){
+      const c = contents.find(rcid)
       if (c && (c.type === 'screen' || c.type === 'camera')){
         const id = `c_${c.id}`
         remains.delete(id)
         if (!this.medias.has(id)){
           const stream = new MediaStream()
-          const tracks = contents.contentTracks.get(rc.id)
+          const tracks = contents.contentTracks.get(rcid)?.tracks
           tracks?.forEach(t => stream.addTrack(t))
           const media = new MediaRec(stream, c.type, {cid:c.id})
           this.medias.set(id, media)
           media.start()
         }
       }else{
-        console.error(`Failed to find content cid=${rc.id}.`)
+        console.error(`Failed to find content cid=${rcid}.`)
       }
     }
     //  Remove when participat or content has removed

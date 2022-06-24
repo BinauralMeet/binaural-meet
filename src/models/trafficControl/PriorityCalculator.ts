@@ -236,23 +236,21 @@ export class PriorityCalculator {
     }
 
     //  list contents
-    const rtcContents = contents.getRemoteRtcContents().map(c => ({id:c.id, content:c, tracks:conference.getContentTracks(c.id)})).filter(t=>t.tracks.length)
-//    const contentTracks = Array.from(contents.tracks.remoteContents.values())
-
-
+    const rtcContents = contents.getRemoteRtcContentIds().map(cid =>
+      ({id:cid, content:contents.find(cid), tracks:contents.getContentTracks(cid)?.tracks})).filter(t=>t.tracks?.length)
     const recalculateContents = rtcContents.filter(c => c.id && (this.updateAll ? true : this.updateSet.has(c.id)))
     recalculateContents.forEach((c) => {
       if (!isContentOutOfRange(c.content)) {
-        const videoAudio = [c.tracks.find(t => t.kind === 'video'), c.tracks.find(t => t.kind === 'audio')] //TODO: [tracks.find(track => track.isVideoTrack()), tracks.find(track => track.isAudioTrack())]
+        const videoAudio = [c.tracks!.find(t => t.kind === 'video'), c.tracks!.find(t => t.kind === 'audio')]
         const trackInfos:RemoteTrackInfo[] = []
         videoAudio.forEach((track, idx) => {
           if (track) {
-            trackInfos[idx] = extractContentTrackInfo(c.content, track)
+            trackInfos[idx] = extractContentTrackInfo(c.content!, track)
             trackInfos[idx].priority = this.calcPriorityValue(this.local, trackInfos[idx])
           }
         })
-        if (trackInfos[0]){ this.priorityMapForContent.set(c.content.id, trackInfos[0]) }
-        if (trackInfos[1]){ this.priorityMaps[1].set(c.content.id, trackInfos[1]) }
+        if (trackInfos[0]){ this.priorityMapForContent.set(c.id, trackInfos[0]) }
+        if (trackInfos[1]){ this.priorityMaps[1].set(c.id, trackInfos[1]) }
       }
     })
 

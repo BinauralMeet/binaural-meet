@@ -139,9 +139,11 @@ function moveAvatar(face?: WithFaceLandmarks<{detection:FaceDetection}, FaceLand
 
 var canvasEl: HTMLCanvasElement|undefined
 var loaded = false
-export function createLocalCamera(faceTrack: boolean) {
+export function createLocalCamera(faceTrack: boolean, did?:string) {
   const promise = new Promise<MSTrack>((resolutionFunc, rejectionFunc) => {
-    const did = participants.local.devicePreference.videoInputDevice
+    if (!did){
+      did = participants.local.devicePreference.videoInputDevice
+    }
     navigator.mediaDevices.getUserMedia(
       {video:{
         deviceId:did,

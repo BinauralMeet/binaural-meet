@@ -8,7 +8,7 @@ import {extract} from '@models/utils'
 import { getMimeType } from '@models/utils'
 import {isSelfUrl} from '@models/utils'
 import {MapData} from '@stores/Map'
-import {defaultValue as mapObjectDefaultValue} from '@stores/MapObject'
+import {defaultValue as mapObjectDefaultValue, MapObject} from '@stores/MapObject'
 import _ from 'lodash'
 import participants from '../participants/Participants'
 import sharedContents, {contentLog} from './SharedContents'
@@ -25,11 +25,9 @@ export const defaultContent: ISharedContent = Object.assign({}, mapObjectDefault
   id: '',
   zorder: 0,
   pinned: false,
+  overlapZones:[],
+  surroundingZones:[]
 })
-
-export function makeThemContents(them: ISharedContent[]) {
-  return them
-}
 
 class SharedContentImp implements ISharedContent {
   name!: string
@@ -43,6 +41,8 @@ class SharedContentImp implements ISharedContent {
   pinned!: boolean
   pose!: Pose2DMap
   size!: [number, number]
+  overlapZones!: ISharedContent[]
+  surroundingZones!: ISharedContent[]
   originalSize!:[number, number]
   noFrame?: boolean
   opacity?: number
@@ -359,8 +359,8 @@ export function createContentsFromDataTransfer(dataTransfer: DataTransfer, map: 
     }
   })
 }
-
-const extractData = extract<SharedContentData>({
+/*
+const extractData = extract<ISharedContent>({
   zorder: true, name: true, ownerName: true, color: true, textColor:true,
   type: true, url: true, pose: true, size: true, originalSize: true, pinned: true,
   noFrame: true, opacity: true, zone:true, playback:true
@@ -371,7 +371,7 @@ export function extractContentData(c:ISharedContent) {
 export function extractContentDatas(cs:ISharedContent[]) {
   return cs.map(extractContentData)
 }
-const extractDataAndId = extract<SharedContentData&SharedContentId>({
+const extractDataAndId = extract<SharedContentData|SharedContentId|MapObject>({
   zorder: true, name: true, ownerName: true, color: true, textColor:true,
   type: true, url: true, pose: true, size: true, originalSize: true,
   pinned: true, noFrame: true, opacity:true, zone:true, id: true, playback: true
@@ -382,7 +382,7 @@ export function extractContentDataAndId(c: ISharedContent) {
 export function extractContentDataAndIds(cs: ISharedContent[]) {
   return cs.map(extractDataAndId)
 }
-
+*/
 
 function execCopy(str: string){
   const temp = document.createElement('textarea')

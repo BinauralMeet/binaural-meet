@@ -172,7 +172,7 @@ export class RtcConnection{
         peer:msg.peer,
         room
       }
-      console.log(`join sent ${JSON.stringify(roomMsg)}`)
+      //console.log(`join sent ${JSON.stringify(roomMsg)}`)
       this.mainServer.send(JSON.stringify(roomMsg))
       this.loadDevice(msg.peer).then(()=>{
         this.resolveMessage(msg, msg.peer)

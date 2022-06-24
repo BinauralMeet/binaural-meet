@@ -5,6 +5,8 @@ import {makeObservable, observable} from 'mobx'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect} from 'react'
 import {DialogPageProps} from './DialogPage'
+import {createLocalCamera} from '@models/middleware/faceCamera'
+import { conference } from '@models/api'
 
 export class CameraSelectorMember{
   @observable.shallow videos: MediaDeviceInfo[] = []
@@ -33,14 +35,21 @@ export const CameraSelector: React.FC<CameraSelectorProps> = (props) => {
   function closeVideoMenu(did:string) {
     setStep('none')
     if (did) {
-      //TODO: create and add localtrack to room.
+      createLocalCamera(false, did).then((msTrack)=>{
+        const content = createContentOfVideo([msTrack.track], map, 'screen')
+        contents.assignId(content)
+        msTrack.role = content.id
+        contents.getOrCreateContentTracks(conference.rtcConnection.peer, content.id)
+        contents.shareContent(content)
+        conference.addOrReplaceLocalTrack(msTrack)
+      })
     }
   }
 
   //  keyboard shortcut
   useEffect(() => {
     const onKeyPress = (e: KeyboardEvent) => {
-      if (e.code.substr(0, 3) === 'Key') {
+      if (e.code.substring(0, 3) === 'Key') {
         const keyNum = e.code.charCodeAt(3) - 65
         closeVideoMenu(props.cameras.videos[keyNum]?.deviceId)
       }

@@ -1,4 +1,3 @@
-import {Pose2DMap} from '@models/utils/coordinates'
 import {MapObject} from './MapObject'
 const MAXIMIZABLE_IMAGE_MIN_WIDTH = 200
 
@@ -30,21 +29,60 @@ export function extractSharedContentInfo(c: SharedContentInfo){
 
 export type ZoneType = 'open' | 'close'
 
-export interface SharedContentData extends SharedContentInfoData {
+export interface SharedContentDataToSend extends SharedContentInfoData {
   zorder: number                  //  unix timestamp when shared or moved to top.
   url: string                     //  url or text to share
-  pose: Pose2DMap                 //  position and orientation
   size: [number, number]          //  current size of the content
   originalSize: [number, number]  //  original size of the content or [0, 0]
-  pinned: boolean                 //  pinned (not resizable or resizable)
+  pinned: boolean                //  pinned (not resizable or resizable)
   noFrame?: boolean               //  no (invisible) frame
   opacity?: number                //  opacity
   zone?: ZoneType                 //  is this a audio zone is the zone closed or open?
-  playback?: boolean              //  is playback or normal content
+}
+
+export interface SharedContentData extends SharedContentDataToSend {
+  playback?: boolean                  //  is playback or normal content
+  zIndex?: number                     //  zIndex for display
+  overlapZones: ISharedContent[]      //  other zones overlap this
+  surroundingZones: ISharedContent[]  //  surrounded zones
 }
 
 export interface ISharedContent extends MapObject, SharedContentData, SharedContentId {
-  zIndex?: number
+}
+export interface ISharedContentToSend extends MapObject, SharedContentDataToSend, SharedContentId {
+}
+export interface ISharedContentToSave extends MapObject, SharedContentDataToSend{
+}
+
+export function contentsToSend(them: ISharedContent[]) {
+  for(const content of them){
+    const c = content as any
+    delete c.playback
+    delete c.zIndex
+    delete c.zones
+  }
+  return them as ISharedContentToSend[]
+}
+export function receiveToContents(them: ISharedContentToSend[]) {
+  for(const content of them){
+    const c = content as ISharedContent
+    c.overlapZones = []
+    c.surroundingZones = []
+  }
+  return them as ISharedContent[]
+}
+export function contentsToSave(them: ISharedContent[]) {
+  for(const content of them){
+    const c = content as any
+    delete c.playback
+    delete c.zIndex
+    delete c.zones
+    delete c.id
+  }
+  return them as ISharedContentToSave[]
+}
+export function loadToContents(them: ISharedContentToSend[]) {
+  return receiveToContents(them)
 }
 
 export const TIME_RESOLUTION_IN_MS = 100
