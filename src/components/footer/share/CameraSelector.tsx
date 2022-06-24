@@ -1,12 +1,11 @@
 import MenuItem from '@material-ui/core/MenuItem'
-import {assert} from '@models/utils'
 import {createContentOfVideo} from '@stores/sharedContents/SharedContentCreator'
 import {makeObservable, observable} from 'mobx'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect} from 'react'
 import {DialogPageProps} from './DialogPage'
-import {createLocalCamera} from '@models/middleware/faceCamera'
-import { conference } from '@models/api'
+import {createLocalCamera} from '@models/conference/faceCamera'
+import {conference} from '@models/conference'
 
 export class CameraSelectorMember{
   @observable.shallow videos: MediaDeviceInfo[] = []

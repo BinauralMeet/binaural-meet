@@ -1,5 +1,3 @@
-
-import { createReadStream } from "fs"
 /**
  * Abstract class to store base Google credentials
  */

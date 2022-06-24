@@ -1,10 +1,7 @@
 import {BMProps} from '@components/utils'
 import {makeStyles} from '@material-ui/core'
-import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef, useState} from 'react'
-
-declare const d:any                  //  from index.html
 
 const useStyles = makeStyles({
   videoContainer: {

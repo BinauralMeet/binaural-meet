@@ -1,4 +1,3 @@
-import { conference } from '@models/api'
 import { ISharedContent } from '@models/ISharedContent'
 import {PlaybackParticipant, RemoteParticipant} from '@models/Participant'
 import {urlParameters} from '@models/url'
@@ -56,8 +55,6 @@ export class ConnectedManager {
   }
 
   private onScreenContentsChange = () => {
-    const pairs = contents.getRemoteRtcContentIds().map(cid => ({id:cid, track:contents.getContentTrack(cid, 'audio')})).filter(c=>c.track)
-
     const audioRemoteContents = contents.getRemoteRtcContentIds().filter(cid => contents.getContentTrack(cid, 'audio'))
     const newRemotes = new Map(audioRemoteContents.map(cid => [cid, contents.find(cid)!]))
     const added = diffMap(newRemotes, this.contentsMemo)

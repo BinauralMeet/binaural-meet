@@ -1,5 +1,4 @@
 import {MAP_SIZE} from '@components/Constants'
-import { conference } from '@models/api'
 import {ISharedContent} from '@models/ISharedContent'
 import {LocalParticipant, ParticipantBase, PARTICIPANT_SIZE, PlaybackParticipant, RemoteParticipant} from '@models/Participant'
 import {getRect, isCircleInRect, Pose2DMap} from '@models/utils'

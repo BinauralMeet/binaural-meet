@@ -3,7 +3,6 @@ import {loadFaceLandmarkTinyModel, loadTinyFaceDetectorModel, detectSingleFace,
 import {rgba} from '@models/utils/color'
 import participants from '@stores/participants/Participants'
 import {addV2, MSTrack, mulV2, rotateVector2DByDegree, subV2} from '@models/utils'
-import { Height } from '@material-ui/icons'
 
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html

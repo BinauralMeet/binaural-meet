@@ -1,7 +1,6 @@
 import {App} from '@components/App'
 import '@models/audio'  // init audio manager (DO NOT delete)
 import {i18nInit} from '@models/locales'
-import '@models/middleware'
 import {urlParameters} from '@models/url'
 import {resolveAtEnd} from '@models/utils'
 import errorInfo from '@stores/ErrorInfo'
@@ -10,8 +9,8 @@ import contents from '@stores/sharedContents/SharedContents'
 import {when} from 'mobx'
 import {configure} from "mobx"
 import ReactDOM from 'react-dom'
-import {conference} from '@models/api'
-import { participants } from '@stores/index'
+import {conference} from '@models/conference'
+import {participants} from '@stores/index'
 
 configure({
     enforceActions: "never",

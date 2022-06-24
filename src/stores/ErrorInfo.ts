@@ -1,13 +1,13 @@
 import {MAP_SIZE} from '@components/Constants'
 import {t} from '@models/locales'
-import {priorityCalculator} from '@models/middleware/trafficControl'
+import {priorityCalculator} from '@models/trafficControl/trafficControl'
 import { defaultInformation } from '@models/Participant'
 import {urlParameters} from '@models/url'
 import {addV2, diffSet, mulV2} from '@models/utils'
 import map from '@stores/Map'
 import participants from '@stores/participants/Participants'
 import {action, autorun, computed, makeObservable, observable, when} from 'mobx'
-import { conference } from '@models/api'
+import {conference} from '@models/conference'
 
 export type ErrorType = '' | 'connection' | 'retry' | 'noMic' | 'micPermission' | 'channel' | 'entrance' | 'afk' | 'kicked'
 

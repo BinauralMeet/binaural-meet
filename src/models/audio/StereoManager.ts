@@ -1,4 +1,4 @@
-import {priorityCalculator} from '@models/middleware/trafficControl'
+import {priorityCalculator} from '@models/trafficControl/trafficControl'
 import {assert} from '@models/utils'
 import errorInfo from '@stores/ErrorInfo'
 import {autorun} from 'mobx'

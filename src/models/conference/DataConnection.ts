@@ -1,12 +1,12 @@
 import {MAP_SIZE} from '@components/Constants'
-import {recorder} from '@models/api/Recorder'
+import {recorder} from '@models/conference/Recorder'
 import {assert} from '@models/utils'
 import map from '@stores/Map'
 import {default as participants} from '@stores/participants/Participants'
 import roomInfo from '@stores/RoomInfo'
 import {BMMessage} from './DataMessage'
 import {ClientToServerOnlyMessageType, MessageType, ObjectArrayMessageTypes, StringArrayMessageTypes} from './DataMessageType'
-import {DataSync} from '@models/api/DataSync'
+import {DataSync} from '@models/conference/DataSync'
 import {AudioMeter} from '@models/audio/AudioMeter'
 
 

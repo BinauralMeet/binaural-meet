@@ -1,11 +1,11 @@
-import {getNotificationPermission} from '@models/api/Notification'
+import {getNotificationPermission} from '@models/conference/Notification'
 import {manager as audioManager} from '@models/audio'
 import {urlParameters} from '@models/url'
 import participants from '@stores/participants/Participants'
 import {autorun} from 'mobx'
 import {createLocalCamera} from './faceCamera'
 import {MSTrack} from '@models/utils'
-import {conference} from '@models/api'
+import {conference} from '@models/conference'
 
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html

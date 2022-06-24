@@ -1,9 +1,16 @@
+import { conference } from '@models/conference'
 import {PriorityCalculator, priorityLog} from '@models/trafficControl/PriorityCalculator'
 import {connectionInfo} from '@stores/index'
 import {participantsStore} from '@stores/participants'
 import _ from 'lodash'
 import {autorun} from 'mobx'
 declare const d:any                  //  from index.html
+
+export interface Perceptibles{
+  audibles: string[],
+  visibleContents: string[],
+  visibleParticipants: string[],
+}
 
 export const priorityCalculator = new PriorityCalculator()
 d.priorityCalculator = priorityCalculator
@@ -42,14 +49,12 @@ const memoedUpdater = (() => {
       priorityCalculator.lastParticipantVideos, priorityCalculator.lastAudios]
     if (!_.isEqual(newList, memo)) {
       // Send res to Jitsi bridge
-      const perceptibles = {
+      conference.setPerceptibles({
         audibles: priorityCalculator.lastAudios,
         visibleContents: priorityCalculator.lastContentVideos,
         visibleParticipants: priorityCalculator.lastParticipantVideos,
-      }
-      //TODO: update listing tracks  connection.conference.setPerceptibles(perceptibles)
+      })
       priorityLog('setPerceptibles:', newList)
-      //console.log(`setPerceptibles:${JSON.stringify(res)}`)
       memo = _.cloneDeep(newList)
     }
   }

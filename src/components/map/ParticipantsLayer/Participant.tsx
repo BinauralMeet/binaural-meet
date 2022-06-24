@@ -89,8 +89,6 @@ export interface RawParticipantProps extends ParticipantProps{
 }
 
 const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawParticipantProps> = (props, ref) => {
-  const mapData = props.stores.map
-//  const participants = useStore()
   const participant = props.participant
   const participantProps = useObserver(() => ({
     position: participant.pose.position,
@@ -101,7 +99,6 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
   const name = useObserver(() => participant!.information.name)
   const audioLevel = useObserver(() =>
     participant!.trackStates.micMuted ? 0 : Math.pow(participant!.audioLevel, 0.5))
-  // console.log(`audioLevel ${audioLevel}`)
   const micMuted = useObserver(() => participant.trackStates.micMuted)
   const speakerMuted = useObserver(() => participant.trackStates.speakerMuted)
   const headphone = useObserver(() => participant.trackStates.headphone)
@@ -131,9 +128,9 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
   const noseWidth = 0.45
   const noseStart = 0.9 * (nodding ? Math.cos(nodding * 4) : 1)
   const noseLength = 0.6 * noseStart
-  const tailStart = noseStart
-  const tailLength = tailStart * 0.9
-  const tailWidth = 0.36
+  //const tailStart = noseStart
+  //const tailLength = tailStart * 0.9
+  //const tailWidth = 0.36
   const eyeOffsets:[[number, number], [number, number]]
     = [[eyeDist * outerRadius, - eyeOffsetMul*outerRadius],
       [-eyeDist * outerRadius, - eyeOffsetMul*outerRadius]]

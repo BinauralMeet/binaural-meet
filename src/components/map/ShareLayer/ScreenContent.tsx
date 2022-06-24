@@ -1,12 +1,8 @@
 import {makeStyles} from '@material-ui/core/styles'
-import { conference } from '@models/api'
 import {ISharedContent} from '@models/ISharedContent'
 import {assert, mulV2} from '@models/utils'
 import contents from '@stores/sharedContents/SharedContents'
-import sharedContents from '@stores/sharedContents/SharedContents'
-import _ from 'lodash'
 import { autorun } from 'mobx'
-import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import {ContentProps} from './Content'
 
@@ -62,6 +58,7 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
     return ()=>{
       disposer()
     }
+  //  eslint-disable-next-line  react-hooks/exhaustive-deps
   }, [])
   useEffect(() => {
     function checkVideoSize() {
@@ -88,6 +85,7 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
     }
     const interval = setInterval(checkVideoSize, 333)   //  Notification of exact video size may take time.
     return () => clearInterval(interval)
+  //  eslint-disable-next-line  react-hooks/exhaustive-deps
   }, [])
 
   return <video className={classes.video} style={muted ? {filter: 'brightness(80%) sepia(25%)'} : {}} ref={ref} />

@@ -1,14 +1,9 @@
 import {EventEmitter} from 'events'
-import { _allowStateChanges } from 'mobx'
 import {RemoteProducer} from './Conference'
 import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSMessageType, MSRoomMessage, MSRTPCapabilitiesReply,
   MSTransportDirection, MSCreateTransportReply, MSConnectTransportMessage, MSConnectTransportReply,
   MSProduceTransportMessage, MSProduceTransportReply, MSTrackRole, MSConsumeTransportMessage, MSConsumeTransportReply, MSRemoteUpdateMessage, MSRemoteLeftMessage, MSResumeConsumerMessage, MSResumeConsumerReply, MSCloseProducerMessage, MSCloseProducerReply} from './MediaMessages'
 import * as mediasoup from 'mediasoup-client';
-
-//  import * as TPC from 'lib-jitsi-meet/modules/RTC/TPCUtils'
-// import a global variant $ for lib-jitsi-meet
-
 
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
@@ -16,12 +11,9 @@ declare const config:any                  //  from ../../config.js included from
 //  Log level and module log options
 export const TRACKLOG = false        // show add, remove... of tracks
 export const CONNECTIONLOG = false
-
 export const trackLog = TRACKLOG ? console.log : (a:any) => {}
 export const connLog = CONNECTIONLOG ? console.log : (a:any) => {}
 export const connDebug = CONNECTIONLOG ? console.debug : (a:any) => {}
-
-declare const global: any
 
 type RtcConnectionEvent = 'remoteUpdate' | 'remoteLeft'
 
@@ -264,10 +256,15 @@ export class RtcConnection{
       }
       this.sendWithPromise(msg, resolve, reject)
     })
+    return promise
   }
   private onCloseProducer(base: MSMessage){
     const msg = base as MSCloseProducerReply
-
+    if (msg.error){
+      this.rejectMessage(msg, msg.error)
+    }else{
+      this.resolveMessage(msg)
+    }
   }
   public consumeTransport(transport: string, producer:RemoteProducer){
     const promise = new Promise<mediasoup.types.ConsumerOptions>((resolve, reject) => {

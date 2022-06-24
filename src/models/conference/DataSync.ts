@@ -1,4 +1,4 @@
-import {recorder} from '@models/api/Recorder'
+import {recorder} from '@models/conference/Recorder'
 import {ISharedContent, contentsToSend, ISharedContentToSend, receiveToContents} from '@models/ISharedContent'
 import {CONTENT_OUT_OF_RANGE_VALUE} from '@models/ISharedContent'
 import { KickTime } from '@models/KickTime'
@@ -84,7 +84,7 @@ export class DataSync{
   //  Send content update request to pid
   sendContentUpdateRequest(pid: string, updatedContents: ISharedContent[]) {
     const contentsDataToSend = contentsToSend(updatedContents)
-    this.connection.sendMessage(MessageType.CONTENT_UPDATE_REQUEST, updatedContents, pid)
+    this.connection.sendMessage(MessageType.CONTENT_UPDATE_REQUEST, contentsDataToSend, pid)
   }
   //  Send content remove request to pid
   sendContentRemoveRequest(pid: string, removedIds: string[]) {
@@ -359,8 +359,12 @@ export class DataSync{
         case MessageType.CONTENT_REMOVE_REQUEST: this.onContentRemoveRequest(JSON.parse(msg.v)); break
         case MessageType.CONTENT_UPDATE_REQUEST: this.onContentUpdateRequest(JSON.parse(msg.v)); break
         case MessageType.CONTENT_INFO_UPDATE: this.onContentInfoUpdate(JSON.parse(msg.v)); break
+        case MessageType.PARTICIPANT_INFO: this.onParticipantInfo(msg.p, JSON.parse(msg.v)); break
         case MessageType.PARTICIPANT_MOUSE: this.onParticipantMouse(msg.p, JSON.parse(msg.v)); break
         case MessageType.PARTICIPANT_POSE: this.onParticipantPose(msg.p, JSON.parse(msg.v)); break
+        case MessageType.PARTICIPANT_ON_STAGE: this.onParticipantOnStage(msg.p, JSON.parse(msg.v)); break
+        case MessageType.PARTICIPANT_TRACKSTATES: this.onParticipantTrackState(msg.p, JSON.parse(msg.v)); break
+        case MessageType.PARTICIPANT_VIEWPOINT: this.onParticipantViewpoint(msg.p, JSON.parse(msg.v)); break
         case MessageType.AUDIO_LEVEL: this.onParticipantAudioLevel(msg.p, JSON.parse(msg.v)); break
         case MessageType.PARTICIPANT_TRACKLIMITS: this.onParticipantTrackLimits(JSON.parse(msg.v)); break
         case MessageType.YARN_PHONE: this.onYarnPhone(msg.p, JSON.parse(msg.v)); break
@@ -371,11 +375,6 @@ export class DataSync{
         case MessageType.PARTICIPANT_OUT: this.onParticipantOut(JSON.parse(msg.v)); break
         case MessageType.MOUSE_OUT: this.onMouseOut(JSON.parse(msg.v)); break
         case MessageType.CONTENT_OUT: this.onContentOut(JSON.parse(msg.v)); break
-        case MessageType.PARTICIPANT_INFO: this.onParticipantInfo(msg.p, JSON.parse(msg.v)); break
-        case MessageType.PARTICIPANT_ON_STAGE: this.onParticipantOnStage(msg.p, JSON.parse(msg.v)); break
-        case MessageType.PARTICIPANT_POSE: this.onParticipantPose(msg.p, JSON.parse(msg.v)); break
-        case MessageType.PARTICIPANT_TRACKSTATES: this.onParticipantTrackState(msg.p, JSON.parse(msg.v)); break
-        case MessageType.PARTICIPANT_VIEWPOINT: this.onParticipantViewpoint(msg.p, JSON.parse(msg.v)); break
         default:
           console.log(`Unhandled message type ${msg.t} from ${msg.p}`)
           break

@@ -112,7 +112,6 @@ export const ContentList: React.FC<BMProps&TextLineStyle>  = (props) => {
   })
   const editing = useObserver(() => contents.editing)
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
-  const participants = props.stores.participants
   const elements = all.map(c =>
     <ContentLine key={c.id} content = {c} {...props} />)
   const {t} = useTranslation()

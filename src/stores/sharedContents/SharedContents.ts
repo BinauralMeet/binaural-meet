@@ -1,25 +1,21 @@
-import {MessageType} from '@models/api/DataMessageType'
-import {extractSharedContentInfo, isContentWallpaper, ISharedContent, SharedContentInfo, WallpaperStore} from '@models/ISharedContent'
+import {MessageType} from '@models/conference/DataMessageType'
+import {isContentWallpaper, ISharedContent, SharedContentInfo} from '@models/ISharedContent'
 import {PARTICIPANT_SIZE} from '@models/Participant'
-import {diffMap, intersectionMap, Roles, TrackKind} from '@models/utils'
+import {Roles, TrackKind} from '@models/utils'
 import {assert} from '@models/utils'
 import {getRect, isCircleInRect} from '@models/utils'
 import {default as participantsStore} from '@stores/participants/Participants'
 import participants from '@stores/participants/Participants'
 import {EventEmitter} from 'events'
-import _ from 'lodash'
-import {action, autorun, computed, IObservableArray, makeObservable, observable} from 'mobx'
+import {action, autorun, makeObservable, observable} from 'mobx'
 import {createContent, moveContentToTop} from './SharedContentCreator'
-import { conference } from '@models/api'
+import {conference} from '@models/conference'
 
 export const CONTENTLOG = false      // show manipulations and sharing of content
 export const contentLog = CONTENTLOG ? console.log : (a:any) => {}
 export const contentDebug = CONTENTLOG ? console.debug : (a:any) => {}
 
 export const TITLE_HEIGHT = 24
-
-// config.js
-declare const config:any             //  from ../../config.js included from index.html
 
 function zorderComp(a:ISharedContent, b:ISharedContent) {
   return a.zorder - b.zorder
@@ -170,12 +166,12 @@ export class SharedContents extends EventEmitter {
     return Array.from(this.contentTracks.keys())
   }
   public getLocalRtcContentIds(){
-    return Array.from(this.contentTracks.keys()).
-      filter(cid=>this.contentTracks.get(cid)!.peer === conference.rtcConnection.peer)
+    return Array.from(this.contentTracks.keys())
+      .filter(cid=>this.contentTracks.get(cid)!.peer === conference.rtcConnection.peer)
   }
   public getRemoteRtcContentIds(){
-    return Array.from(this.contentTracks.keys()).
-      filter(cid=>this.contentTracks.get(cid)!.peer !== conference.rtcConnection.peer)
+    return Array.from(this.contentTracks.keys())
+      .filter(cid=>this.contentTracks.get(cid)!.peer !== conference.rtcConnection.peer)
   }
 
   //  pasted content

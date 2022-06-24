@@ -25,7 +25,7 @@ import StopScreenShareIcon from '@material-ui/icons/StopScreenShare'
 import SubjectIcon from '@material-ui/icons/Subject'
 import {contentsToSave, loadToContents} from '@models/ISharedContent'
 import {useTranslation} from '@models/locales'
-import {assert, MSTrack} from '@models/utils'
+import {MSTrack} from '@models/utils'
 import {createContent, createContentFromText, createContentOfIframe, createContentOfText,
   createContentOfVideo} from '@stores/sharedContents/SharedContentCreator'
 import {SharedContents} from '@stores/sharedContents/SharedContents'
@@ -36,7 +36,7 @@ import {CameraSelectorMember} from './CameraSelector'
 import {DialogPageProps} from './DialogPage'
 import {ShareDialogItem} from './SharedDialogItem'
 import {Step} from './Step'
-import { conference } from '@models/api'
+import {conference} from '@models/conference'
 
 function startCapture(props:BMProps) {
   return new Promise<MediaStream>((resolve, reject) => {

@@ -1,4 +1,3 @@
-import { conference } from '@models/api'
 import {isContentOutOfRange, ISharedContent} from '@models/ISharedContent'
 import {PARTICIPANT_SIZE} from '@models/Participant'
 import {diffMap} from '@models/utils'

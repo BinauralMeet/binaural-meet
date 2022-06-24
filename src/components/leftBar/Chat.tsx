@@ -5,7 +5,7 @@ import {Tooltip} from '@material-ui/core'
 import IconButton from '@material-ui/core/IconButton'
 import TextField from '@material-ui/core/TextField'
 import SendIcon from '@material-ui/icons/Send'
-import {MessageType} from '@models/api/DataMessageType'
+import {MessageType} from '@models/conference/DataMessageType'
 import {t} from '@models/locales'
 import {isDarkColor} from '@models/utils'
 import chat, {ChatMessage, ChatMessageToSend, ChatMessageType} from '@stores/Chat'
@@ -14,7 +14,7 @@ import React from 'react'
 import {BMProps} from '../utils'
 import {styleForList} from '../utils/styles'
 import {TextLineStyle} from './LeftBar'
-import { conference } from '@models/api'
+import {conference} from '@models/conference'
 
 const colorMapBlack: { [key in ChatMessageType]: string } = {
   text: 'black',

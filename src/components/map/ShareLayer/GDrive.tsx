@@ -8,9 +8,6 @@ import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import {ContentProps} from './Content'
 
-// config.js
-declare const config:any             //  from ../../config.js included from index.html
-
 const useStyles = makeStyles({
   iframe: {
     width: '100%',

@@ -1,5 +1,5 @@
 import {KickTime} from '@models/KickTime'
-import {assert, MSTrack, Roles, TrackKind} from '@models/utils'
+import {assert, MSTrack, Roles} from '@models/utils'
 import {default as participants} from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
 import {ClientToServerOnlyMessageType, StringArrayMessageTypes} from './DataMessageType'
@@ -7,8 +7,7 @@ import {RtcConnection} from './RtcConnection'
 import {DataConnection} from './DataConnection'
 import * as mediasoup from 'mediasoup-client'
 import { MSRemotePeer, MSTransportDirection, MSRemoteProducer} from './MediaMessages'
-import { promises } from 'dns'
-import { Producer } from 'mediasoup-client/lib/Producer'
+import { Perceptibles } from '@models/trafficControl/trafficControl'
 
 //  Log level and module log options
 export const CONNECTIONLOG = false
@@ -22,7 +21,6 @@ export const eventLog = EVENTLOG ? console.log : (a:any) => {}
 export const sendLog = SENDLOG ? console.log : (a:any) => {}
 
 // config.js
-declare const config:any             //  from ../../config.js included from index.html
 declare const d:any                  //  from index.html
 
 //  Cathegolies of BMMessage's types
@@ -66,6 +64,8 @@ export class Conference {
   //  map related
   private dataConnection_ = new DataConnection()
   public get dataConnection(){ return this.dataConnection_ }
+  private perceptibles: Perceptibles = {audibles:[], visibleContents:[], visibleParticipants:[]}
+
   constructor(){
     this.rtcConnection.addListener('remoteUpdate', this.onRemoteUpdate.bind(this))
     this.rtcConnection.addListener('remoteLeft', this.onRemoteLeft.bind(this))
@@ -222,7 +222,7 @@ export class Conference {
       //  create producer
       const producer = this.localProducers.find(p => {
         const old = (p.appData as ProducerData).track
-        return old.role === track.role && old.track.kind == track.track.kind
+        return old.role === track.role && old.track.kind === track.track.kind
       })
       if (producer){
         producer.replaceTrack(track).then(()=>{
@@ -232,11 +232,6 @@ export class Conference {
       }else{
         this.getSendTransport().then((transport) => {
           // add track to produce
-          const enc: RTCRtpEncodingParameters = {
-            active: true,
-            maxBitrate: 1024*128,
-            scaleResolutionDownBy: 1,
-          }
           transport.produce({track:track.track, appData:{track}}).then( producer => {
             this.localProducers.push(producer)
             resolve(producer)
@@ -259,33 +254,13 @@ export class Conference {
     }
     this.localProducers.forEach((producer)=>{
       const track = (producer.appData as ProducerData).track
-      if (track.role === role && (!kind || kind == track.track.kind)){
+      if (track.role === role && (!kind || kind === track.track.kind)){
         producer.close()
         this.rtcConnection.closeProducer(producer.id)
         this.localProducers = this.localProducers.filter(p => p !== producer)
       }
     })
   }
-/*
-  public getTrack(peer: string, role: Roles, kind: mediasoup.types.MediaKind){
-    const promise = new Promise<MSTrack>((resolve, reject)=>{
-      const remote = this.remotePeers.get(peer)
-      if (!remote) {reject(); return}
-      remote.producers.forEach(p => {
-        if (p.role === role && p.kind === kind){
-          this.getConsumer(p).then((consumer)=>{
-            const msTrack:MSTrack = {
-              peer,
-              track:consumer.track,
-              role
-            }
-            resolve(msTrack)
-          })
-        }
-      })
-    })
-    return promise
-  }*/
   public closeTrack(peer:string, role: string, kind?: mediasoup.types.MediaKind){
     const promise = new Promise<void>((resolve, reject)=>{
       const remote = this.remotePeers.get(peer)
@@ -388,32 +363,13 @@ export class Conference {
   public getLocalCameraTrack() {
     return this.localCameraTrack
   }
-/*
-  public getContentTracks(cid: string, kind?: TrackKind){
-    const peer = contents.getContentTracks(cid)?.peer
-    const tracks:MediaStreamTrack[] = []
-    if (peer === this.dataConnection.peer){ //  local
-      for (const lp of this.localProducers){
-        const t = (lp.appData as ProducerData).track
-        if (t.role === cid && (!kind || t.track.kind===kind)){ tracks.push(t.track) }
-      }
-    }else if (peer){
-      const remote = this.remotePeers.get(peer)
-      const rps = remote?.producers?.values()
-      if (rps){
-        for(const rp of rps){
-          if (rp.role === cid && (!kind || rp.kind===kind) && rp.consumer?.track){
-            tracks.push(rp.consumer?.track)
-          }
-        }
-      }
-    }
-    return tracks
+  //
+  public setPerceptibles(ps: Perceptibles){
+    this.perceptibles = ps
   }
-*/
 
   //  event
-  onRemoteUpdate(arg: [MSRemotePeer[]]){
+  private onRemoteUpdate(arg: [MSRemotePeer[]]){
     const msremotes = arg[0]
     for (const msr of msremotes){
       if (msr.peer === this.rtcConnection.peer) continue
@@ -458,7 +414,7 @@ export class Conference {
       }
     }
   }
-  onRemoteLeft(args: [string[]]){
+  private onRemoteLeft(args: [string[]]){
     const remoteIds = args[0]
     for(const id of remoteIds){
       if (id !== this.rtcConnection.peer){
@@ -468,7 +424,7 @@ export class Conference {
     }
   }
 
-  onProducerAdded(producers: RemoteProducer[]){
+  private onProducerAdded(producers: RemoteProducer[]){
     for(const producer of producers){
       this.getConsumer(producer).then((consumer)=>{
         if (producer.role === 'avatar'){
@@ -481,10 +437,9 @@ export class Conference {
       })
     }
   }
-  onProducerRemoved(producers: RemoteProducer[]){
+  private onProducerRemoved(producers: RemoteProducer[]){
     for(const producer of producers){
       if (producer.consumer){
-        const kind = producer.consumer.kind
         producer.consumer.close()
         if (producer.role === 'avatar'){
           participants.removeRemoteTrack(producer.peer.peer, producer.kind)
