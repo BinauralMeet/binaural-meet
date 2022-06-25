@@ -7,7 +7,9 @@ import {RtcConnection} from './RtcConnection'
 import {DataConnection} from './DataConnection'
 import * as mediasoup from 'mediasoup-client'
 import { MSRemotePeer, MSTransportDirection, MSRemoteProducer} from './MediaMessages'
-import { Perceptibles } from '@models/trafficControl/trafficControl'
+import { autorun } from 'mobx'
+import { PriorityCalculator, trackInfoMerege, VideoAudioTrackInfo, videoAudioTrackInfoDiff } from '@models/conference/PriorityCalculator'
+import { isEqualMSRP } from '@models/conference/MediaMessages'
 
 //  Log level and module log options
 export const CONNECTIONLOG = false
@@ -36,7 +38,7 @@ export interface RemoteProducer extends MSRemoteProducer{
 export interface RemotePeer{
   peer: string
   transport?: mediasoup.types.Transport   // receive transport
-  producers: Map<string, RemoteProducer>  // producers of the remote peer
+  producers: RemoteProducer[]             // producers of the remote peer
 }
 
 export interface LocalProducer{
@@ -58,17 +60,27 @@ export class Conference {
   //  rtc (mediasoup) related
   private rtcConnection_ = new RtcConnection()
   public get rtcConnection(){ return this.rtcConnection_ }
-  private remotePeers = new Map<string, RemotePeer>()
+  private remotePeers_ = new Map<string, RemotePeer>()
+  public get remotePeers(){return this.remotePeers_}
   private localProducers: mediasoup.types.Producer[] = []
   private sendTransport?: mediasoup.types.Transport
+  public priorityCalculator
   //  map related
   private dataConnection_ = new DataConnection()
   public get dataConnection(){ return this.dataConnection_ }
-  private perceptibles: Perceptibles = {audibles:[], visibleContents:[], visibleParticipants:[]}
 
   constructor(){
     this.rtcConnection.addListener('remoteUpdate', this.onRemoteUpdate.bind(this))
     this.rtcConnection.addListener('remoteLeft', this.onRemoteLeft.bind(this))
+    this.priorityCalculator = new PriorityCalculator(this)
+    let oldTracks: VideoAudioTrackInfo = {videos:[], audios:[]}
+    autorun(()=>{
+      const added = trackInfoMerege(videoAudioTrackInfoDiff(this.priorityCalculator.tracksToConsume, oldTracks))
+      const removed = trackInfoMerege(videoAudioTrackInfoDiff(oldTracks, this.priorityCalculator.tracksToConsume))
+      for(const info of added){ if(!info.producer.consumer) this.addConsumer(info.producer) }
+      for(const info of removed){ this.removeConsumer(info.producer) }
+      oldTracks = this.priorityCalculator.tracksToConsume
+    })
   }
   public isDataConnected(){
     return this.dataConnection.isConnected()
@@ -265,10 +277,14 @@ export class Conference {
     const promise = new Promise<void>((resolve, reject)=>{
       const remote = this.remotePeers.get(peer)
       if (!remote) {reject(); return}
+      let counter = 0
       remote.producers.forEach(p => {
         if (p.role === role && (!kind || p.kind === kind)){
+          counter ++
           this.getConsumer(p).then((consumer)=>{
             consumer.close()
+            counter --
+            if (counter === 0) resolve()
           })
         }
       })
@@ -363,10 +379,6 @@ export class Conference {
   public getLocalCameraTrack() {
     return this.localCameraTrack
   }
-  //
-  public setPerceptibles(ps: Perceptibles){
-    this.perceptibles = ps
-  }
 
   //  event
   private onRemoteUpdate(arg: [MSRemotePeer[]]){
@@ -376,41 +388,30 @@ export class Conference {
       const remote = this.remotePeers.get(msr.peer)
       if (remote){
         const addeds:MSRemoteProducer[] = []
-        const removeds = new Map(remote.producers)
+        const removeds = remote.producers.filter(p => !msr.producers.find(m => isEqualMSRP(p, m)))
         for(const msrp of msr.producers){
-          const current = remote.producers.get(msrp.id)
+          const current = remote.producers.find(p => isEqualMSRP(p, msrp))
           if (current){
             //  update exsiting producer
             if (current.id !== msrp.id){  //  producer changed and need to create new producer
               addeds.push(msrp)
-            }else{                        //  no change
-              removeds.delete(current.id) //  keep this producer and consumer for it
-              current.role = msrp.role
-              current.kind = msrp.kind
+              removeds.push(current)
             }
           }else{
             addeds.push(msrp)
           }
         }
-        removeds.forEach((removed)=>{
-          remote.producers.delete(removed.id)
-        })
         const addedProducers = addeds.map(added => ({...added, peer:remote}))
-        for(const added of addedProducers){
-          remote.producers.set(added.id, added)
-        }
-        this.onProducerAdded(addedProducers)
-        this.onProducerRemoved(Array.from(removeds.values()))
+        if (removeds.length) this.onProducerRemoved(removeds, remote)
+        if (addedProducers.length) this.onProducerAdded(addedProducers, remote)
       }else{
         const newRemote:RemotePeer = {
           peer: msr.peer,
-          producers:new Map<string, RemoteProducer>()
+          producers:[]
         }
         const producers = msr.producers.map(msp => ({...msp, peer:newRemote}))
-        newRemote.producers = producers.length ? new Map<string, RemoteProducer>(producers.map(p => [p.id, p]))
-          : new Map<string, RemoteProducer>()
         this.remotePeers.set(msr.peer, newRemote)
-        this.onProducerAdded(Array.from(newRemote.producers.values()))
+        this.onProducerAdded(producers, newRemote)
       }
     }
   }
@@ -418,34 +419,49 @@ export class Conference {
     const remoteIds = args[0]
     for(const id of remoteIds){
       if (id !== this.rtcConnection.peer){
+        const remote = this.remotePeers.get(id)
+        if (remote) {
+          this.onProducerRemoved(remote.producers, remote)
+        }
         this.remotePeers.delete(id)
         participants.leave(id)
       }
     }
   }
-
-  private onProducerAdded(producers: RemoteProducer[]){
-    for(const producer of producers){
-      this.getConsumer(producer).then((consumer)=>{
-        if (producer.role === 'avatar'){
-          participants.addRemoteTrack(producer.peer.peer, consumer.track)
-        }else{
-          contents.addTrack(producer.peer.peer, producer.role, consumer.track)
-        }
-      }).catch((e) => {
-        console.error(`conference.onProducerAdded(): ${e}`)
-      })
+  private onProducerAdded(producers: RemoteProducer[], remote: RemotePeer){
+    const ps = [...producers]
+    remote.producers.push(...ps)
+    for(const producer of ps){
+      this.priorityCalculator.onAddProducer(producer)
     }
   }
-  private onProducerRemoved(producers: RemoteProducer[]){
+  private onProducerRemoved(producers: RemoteProducer[], remote: RemotePeer){
+    const removes = [...producers]
+    remote.producers = remote.producers.filter(p => removes.find(r => !isEqualMSRP(p, r)))
     for(const producer of producers){
-      if (producer.consumer){
-        producer.consumer.close()
-        if (producer.role === 'avatar'){
-          participants.removeRemoteTrack(producer.peer.peer, producer.kind)
-        }else{
-          contents.removeTrack(producer.peer.peer, producer.role, producer.kind)
-        }
+      this.removeConsumer(producer)
+      this.priorityCalculator.onRemoveProducer(producer)
+    }
+  }
+  private addConsumer(producer: RemoteProducer){
+    this.getConsumer(producer).then((consumer)=>{
+      if (producer.role === 'avatar'){
+        participants.addRemoteTrack(producer.peer.peer, consumer.track)
+      }else{
+        contents.addTrack(producer.peer.peer, producer.role, consumer.track)
+      }
+    }).catch((e) => {
+      console.error(`conference.onProducerAdded(): ${e}`)
+    })
+  }
+  private removeConsumer(producer: RemoteProducer){
+    if (producer.consumer){
+      producer.consumer.close()
+      producer.consumer = undefined
+      if (producer.role === 'avatar'){
+        participants.removeRemoteTrack(producer.peer.peer, producer.kind)
+      }else{
+        contents.removeTrack(producer.peer.peer, producer.role, producer.kind)
       }
     }
   }

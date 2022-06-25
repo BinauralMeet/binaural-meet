@@ -169,20 +169,24 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
     setStep('none')
   }
   const screenAsBackgrouond = () => {
-    startCapture(props).then((ms) => {
-      if (ms.getTracks().length) {
-        ms.getTracks().forEach((track) => {
-          const msTrack:MSTrack = {
-            track,
-            peer: conference.rtcConnection.peer,
-            role: 'mainScreen'
-          }
-          conference.addOrReplaceLocalTrack(msTrack)
-          contents.mainScreenOwner = participants.localId
-          contents.mainScreenStream = ms
-        })
-      }
-    })
+    if (contents.mainScreenOwner === participants.localId){
+      conference.removeLocalTrackByRole('mainScreen')
+    } else {
+      startCapture(props).then((ms) => {
+        if (ms.getTracks().length) {
+          ms.getTracks().forEach((track) => {
+            const msTrack:MSTrack = {
+              track,
+              peer: conference.rtcConnection.peer,
+              role: 'mainScreen'
+            }
+            conference.addOrReplaceLocalTrack(msTrack)
+            contents.mainScreenOwner = participants.localId
+            contents.mainScreenStream = ms
+          })
+        }
+      })
+    }
     setStep('none')
   }
 

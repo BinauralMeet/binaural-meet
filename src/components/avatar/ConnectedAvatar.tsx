@@ -1,5 +1,5 @@
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
-import { PlaybackParticipant } from '@stores/participants/PlaybackParticipant'
+import {PlaybackParticipant} from '@stores/participants/PlaybackParticipant'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import {Observer} from 'mobx-react-lite'
 import React from 'react'

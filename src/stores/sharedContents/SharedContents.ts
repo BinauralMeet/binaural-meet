@@ -154,9 +154,6 @@ export class SharedContents extends EventEmitter {
           })
           tracks.length = 0
         }
-        if (!tracks.length){
-          this.contentTracks.delete(role)
-        }
       }else{
         console.error(`removeRemoteTrack(): tracks for content ${role} not found.`)
       }
@@ -257,13 +254,19 @@ export class SharedContents extends EventEmitter {
 
   //  removed by local user
   removeByLocal(cid: string) {
-    const toRemove = this.roomContents.get(cid)
-    if (toRemove){
-      this.disposeContent(toRemove)
-      this.roomContents.delete(cid)
+    if (cid === 'mainScreen'){
+      if (this.mainScreenOwner === conference.rtcConnection.peer){
+        conference.removeLocalTrackByRole('mainScreen')
+      }
+    }else{
+      const toRemove = this.roomContents.get(cid)
+      if (toRemove){
+        this.disposeContent(toRemove)
+        this.roomContents.delete(cid)
+      }
+      conference.dataConnection.sync.sendContentRemoveRequest('', [cid])
+      this.roomContentsInfo.delete(cid)
     }
-    conference.dataConnection.sync.sendContentRemoveRequest('', [cid])
-    this.roomContentsInfo.delete(cid)
     this.updateAll()
   }
   //  request content by id which is not sent yet.
@@ -315,7 +318,7 @@ export class SharedContents extends EventEmitter {
     while (1) {
       this.contentIdCounter += 1
       const id = `${pid}_${this.contentIdCounter}`
-      if (!this.roomContents.has(id)) { return id }
+      if (!this.roomContents.has(id) && !participantsStore.remote.has(id)) { return id }
     }
 
     //  eslint-disable-next-line no-unreachable
@@ -334,6 +337,7 @@ export class SharedContents extends EventEmitter {
         }else{
           conference.closeTrack(peerAndTracks.peer, c.id)
         }
+        this.contentTracks.delete(c.id)
       }
     }
   }

@@ -15,7 +15,7 @@ export const trackLog = TRACKLOG ? console.log : (a:any) => {}
 export const connLog = CONNECTIONLOG ? console.log : (a:any) => {}
 export const connDebug = CONNECTIONLOG ? console.debug : (a:any) => {}
 
-type RtcConnectionEvent = 'remoteUpdate' | 'remoteLeft'
+type RtcConnectionEvent = 'remoteUpdate' | 'remoteLeft' | 'connect' | 'disconnect'
 
 export class RtcConnection{
   private peer_=''
@@ -71,6 +71,8 @@ export class RtcConnection{
       }
       const onCloseEvent = () => {
         //console.log('onClose() for mainServer')
+        this.emit('disconnect')
+
         setTimeout(()=>{
           this.mainServer = new WebSocket(config.mainServer)
           setEventHandler()
@@ -168,6 +170,7 @@ export class RtcConnection{
       this.mainServer.send(JSON.stringify(roomMsg))
       this.loadDevice(msg.peer).then(()=>{
         this.resolveMessage(msg, msg.peer)
+        this.emitter.emit('connect')
       })
     }else{
       this.rejectMessage(msg)

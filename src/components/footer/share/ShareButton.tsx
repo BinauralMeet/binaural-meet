@@ -4,6 +4,7 @@ import windowArrowUp from '@iconify/icons-fluent/window-arrow-up-24-regular'
 
 import {Icon} from '@iconify/react'
 import {makeStyles} from '@material-ui/styles'
+import { conference } from '@models/conference'
 import {useTranslation} from '@models/locales'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
@@ -25,7 +26,7 @@ interface ShareButtonProps extends BMProps{
 export const ShareButton: React.FC<ShareButtonProps> = (props) => {
   const classes = useStyles()
   const contents = props.stores.contents
-  const sharing = useObserver(() => contents.getLocalRtcContentIds().length || contents.mainScreenOwner)
+  const sharing = useObserver(() => contents.getLocalRtcContentIds().length || contents.mainScreenOwner === conference.rtcConnection.peer)
   const {t} = useTranslation()
 
   return (

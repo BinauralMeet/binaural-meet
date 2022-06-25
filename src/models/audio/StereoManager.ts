@@ -1,4 +1,4 @@
-import {priorityCalculator} from '@models/trafficControl/trafficControl'
+import { conference } from '@models/conference'
 import {assert} from '@models/utils'
 import errorInfo from '@stores/ErrorInfo'
 import {autorun} from 'mobx'
@@ -97,7 +97,9 @@ export class StereoManager {
     if (this.playMode === 'Pause') {
       //  this occurs only once when valid playMode has been set
       autorun(() => {
-        const accepts = new Set(priorityCalculator.tracksToAccept[1].map(info => info.endpointId))
+        const accepts = new Set(conference.priorityCalculator.tracksToConsume.audios.map(
+          info => info.producer.role === 'avatar' ? info.producer.peer.peer : info.producer.role
+        ))
         for (const id in this.nodes) {
           if (accepts.has(id) || this.nodes[id] instanceof NodeGroupForPlayback) {
             this.nodes[id].setPlayMode(this.playMode)

@@ -12,12 +12,16 @@ export interface MSPeerMessage extends MSMessage{
   peer: string
   remote?: string
 }
-export type MSTrackRole = 'avatar' | 'window' | string
+export type MSTrackRole = 'camera' | 'mic' | 'window' | string
 export interface MSRemoteProducer{
   id: string                      //  producer id
   role: MSTrackRole               //  role of track for this producer
   kind: mediasoup.types.MediaKind //  kind of this producer
 }
+export function isEqualMSRP(a:MSRemoteProducer, b:MSRemoteProducer){
+  return a.kind === b.kind && a.role === b.role
+}
+
 export interface MSRemotePeer{
   peer: string
   producers: MSRemoteProducer[]   // producers of the remote peer

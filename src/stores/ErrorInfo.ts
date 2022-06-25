@@ -1,6 +1,5 @@
 import {MAP_SIZE} from '@components/Constants'
 import {t} from '@models/locales'
-import {priorityCalculator} from '@models/trafficControl/trafficControl'
 import { defaultInformation } from '@models/Participant'
 import {urlParameters} from '@models/url'
 import {addV2, diffSet, mulV2} from '@models/utils'
@@ -221,12 +220,10 @@ export class ErrorInfo {
       this.oscillator?.frequency.setValueAtTime(440 + counter % 440, ctxA.currentTime) // 440HzはA4(4番目のラ)
       //  update camera image
       const colors = ['green', 'blue']
-      const nearest = priorityCalculator.tracksToAccept[0].length ?
-        participants.remote.get(priorityCalculator.tracksToAccept[0][0].endpointId) : undefined
-      if (nearest && !nearest?.tracks.avatarOk) { colors[0] = 'yellow' }
-      if (nearest && nearest?.tracks.audio?.muted) { colors[1] = 'red' }
-      //if (priorityCalculator.tracksToAccept[0][0]?.track.getTrack()?.muted) { colors[0] = 'yellow' }
-      //if (priorityCalculator.tracksToAccept[1][0]?.track.getTrack()?.muted) { colors[1] = 'red' }
+      const nearestVideo = conference.priorityCalculator.tracksToConsume.videos[0]?.producer
+      const nearestAudio = conference.priorityCalculator.tracksToConsume.audios[0]?.producer
+      if (nearestVideo && nearestVideo.consumer?.track.muted) { colors[0] = 'yellow' }
+      if (nearestAudio && nearestAudio.consumer?.track.muted) { colors[1] = 'red' }
       ctx.fillStyle = colors[0]
       ctx.beginPath()
       ctx.ellipse(width * 0.63, height * 0.33, width * 0.1, height * 0.4, counter / 20, 0, Math.PI * 2)
