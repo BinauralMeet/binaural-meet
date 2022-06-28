@@ -195,12 +195,19 @@ export class RtcConnection{
   }
   private onCreateTransport(base: MSMessage){
     const msg = base as MSCreateTransportReply
-    const {type, peer, transport, ...params} = msg
+    const {type, peer, transport, iceServers, ...params} = msg
+    const option: mediasoup.types.TransportOptions = {
+      id:transport,
+      ...params,
+      iceServers,
+      iceTransportPolicy: 'all',
+    }
+
     let transportObject:mediasoup.types.Transport|undefined
     if (msg.dir === 'send'){
-      transportObject = this.device?.createSendTransport({...params, id:transport})
+      transportObject = this.device?.createSendTransport(option)
     }else{
-      transportObject = this.device?.createRecvTransport({...params, id:transport})
+      transportObject = this.device?.createRecvTransport(option)
     }
     this.resolveMessage(msg, transportObject)
   }

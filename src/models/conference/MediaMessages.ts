@@ -58,6 +58,7 @@ export interface MSCreateTransportReply extends MSPeerMessage{
   iceCandidates:mediasoup.types.IceCandidate[]
   dtlsParameters:mediasoup.types.DtlsParameters
   dir: MSTransportDirection
+  iceServers?: RTCIceServer[]
 }
 
 export interface MSConnectTransportMessage extends MSPeerMessage{

@@ -40,6 +40,7 @@ export const MemoedAvatar = (props: AvatarProps) =>
     props.participant.information.color,
     props.participant.information.name,
     props.participant.information.textColor,
+    //  eslint-disable-next-line react-hooks/exhaustive-deps
     (props.participant as RemoteParticipant).tracks?.avatar,
   ])
 MemoedAvatar.displayName = 'MemorizedAvatar'
