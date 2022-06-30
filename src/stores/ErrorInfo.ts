@@ -8,7 +8,7 @@ import participants from '@stores/participants/Participants'
 import {action, autorun, computed, makeObservable, observable, when} from 'mobx'
 import {conference} from '@models/conference'
 
-export type ErrorType = '' | 'connection' | 'retry' | 'noMic' | 'micPermission' | 'channel' | 'entrance' | 'afk' | 'kicked'
+export type ErrorType = '' | 'connection' | 'retry' | 'noMic' | 'micPermission' | 'rtcConnection' | 'dataConnection' | 'entrance' | 'afk' | 'kicked'
 
 export class ErrorInfo {
   @computed get fatal() { return !this.type }
@@ -29,7 +29,8 @@ export class ErrorInfo {
       case 'retry': return t('etRetry')
       case 'noMic': return t('etNoMic')
       case 'micPermission': return t('etMicPermission')
-      case 'channel': return t('etNoChannel')
+      case 'rtcConnection': return t('etRtcConnection')
+      case 'dataConnection': return t('etDataConnection')
       case 'entrance': return ''
       case 'afk': return t('afkTitle')
       case 'kicked': return `Kicked by ${this.name}. ${this.reason}`
@@ -43,7 +44,8 @@ export class ErrorInfo {
       case 'retry': return t('emRetry')
       case 'noMic': return t('emNoMic')
       case 'micPermission': return t('emMicPermission')
-      case 'channel': return t('emNoChannel')
+      case 'rtcConnection': return t('emRtcConnection')
+      case 'dataConnection': return t('emDataConnection')
       case 'entrance': return ''
       case 'afk': return t('afkMessage')
       case 'kicked': return ''
@@ -129,11 +131,15 @@ export class ErrorInfo {
     }
   }
   @action checkConnection() {
-    if (!conference.isDataConnected() || !conference.isRtcConnected()) {
-      this.setType('connection')
+    if (!conference.isRtcConnected()) {
+      this.setType('rtcConnection')
+      setTimeout(this.checkConnection.bind(this), 5 * 1000)
+    }else if (!conference.isDataConnected()){
+      this.setType('dataConnection')
       setTimeout(this.checkConnection.bind(this), 5 * 1000)
     }else {
-      this.clear('connection')
+      this.clear('rtcConnection')
+      this.clear('dataConnection')
       this.checkMic()
     }
   }
@@ -154,44 +160,8 @@ export class ErrorInfo {
       }
       this.clear('noMic')
       this.clear('micPermission')
-      this.checkRemote()
     }
   }
-  checkRemote() {
-    if (participants.remote.size > 0) {
-      /*
-      //console.log(stringify(connection.conference))
-      //console.log(stringify(d.chatRoom.xmpp.connection.jingle.sessions))
-      for(const sid in d.chatRoom.xmpp.connection.jingle.sessions){
-        const sess = d.chatRoom.xmpp.connection.jingle.sessions[sid]
-        const pc = sess.peerconnection.peerconnection as RTCPeerConnection
-        console.log(pc)
-        console.log('currentLocal:', pc.currentLocalDescription?.sdp)
-        console.log('currentRemote:', pc.currentRemoteDescription?.sdp)
-
-        //console.log(pc.remoteDescription?.sdp)
-      }
-      */
-
-      setTimeout(this.checkChannel.bind(this), 3 * 1000)
-    }else {
-      setTimeout(this.checkRemote.bind(this), 1 * 1000)
-    }
-  }
-  @action checkChannel() {
-    if (participants.remote.size > 0) {
-      /*TODO:
-      if (!connection.conference._jitsiConference?.rtc._channel?.isOpen()) {
-        this.setType('channel')
-        setTimeout(this.checkChannel.bind(this), 5 * 1000)
-      }else {
-        this.clear('channel')
-      }*/
-    }else {
-      this.checkRemote()
-    }
-  }
-
   //  testBot
   canvas: HTMLCanvasElement|undefined = undefined
   oscillator: OscillatorNode|undefined = undefined

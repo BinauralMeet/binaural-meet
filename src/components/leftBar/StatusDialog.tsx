@@ -1,136 +1,96 @@
 import Button from '@material-ui/core/Button'
 import Paper from '@material-ui/core/Paper'
 import Popper, { PopperProps } from '@material-ui/core/Popper'
-import {conference} from '@models/conference'
-import contents from '@stores/sharedContents/SharedContents'
+import { StreamStat, TransportStat } from '@models/conference/RtcConnection'
 import React from 'react'
-import {useState} from 'react'
 import {BMProps} from '../utils'
+import {conference} from '@models/conference'
+import { useObserver } from 'mobx-react-lite'
+import errorInfo from '@stores/ErrorInfo'
 
 declare const config:any             //  from ../../config.js included from index.html
 
 export interface StatusDialogProps extends Omit<PopperProps, 'children'>, BMProps{
   close: () => void,
 }
-
-class Remote{
-  address = ''
-  port = 0
-  protocol = ''
-}
-class Session{
-  remotes: Remote[] = []
-}
-class Status{
-  sessions: Session[] = []
-  open = false
-  update = false
-  interval: NodeJS.Timeout|undefined = undefined
-  messageServer = ''
-}
-const status = new Status()
-
 export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogProps) => {
-  const [update,setUpdate] = useState<boolean>(false)
-  status.open = props.open === true
-  status.update = update
-
-  function updateStatus(){
-    /*  TODO: update status
-    const chatRoom = connection.conference._jitsiConference?.room
-    if (status.open && chatRoom){
-      const sessions = chatRoom.xmpp?.connection?.jingle?.sessions
-      const nSessions = Object.keys(sessions).length
-      status.sessions.splice(nSessions)
-      while (status.sessions.length < nSessions){ status.sessions.push(new Session()) }
-      for(const id in sessions){
-        const pc = sessions[id]?.peerconnection?.peerconnection as RTCPeerConnection
-        if (pc){
-          pc.getStats().then((stats) => {
-            const pairs: any[] = []
-            stats.forEach((v, k) => {
-              if (v.type === 'candidate-pair' && (v.bytesReceived > 0 || v.bytesSent > 0)) {
-                pairs.push(v)
-              }
-            })
-            const remoteCandidateIds = pairs.map(p => p.remoteCandidateId)
-            const sess = status.sessions[status.sessions.length-1]
-            sess.remotes=[]
-            remoteCandidateIds.forEach(id => {
-              const remote = new Remote()
-              const v = stats.get(id)
-              remote.address = v.address
-              remote.port = v.port
-              remote.protocol = v.protocol
-              sess.remotes.push(remote)
-            })
-          })
+  const stat = useObserver(()=>{
+    const stats:TransportStat[] = []
+    const senderStat = conference.sendTransport?.appData?.stat as (TransportStat|undefined)
+    if (senderStat) stats.push(senderStat)
+    const receiverStats:TransportStat[] = Array.from(conference.remotePeers.values())
+      .map(remote => remote.transport?.appData?.stat as (TransportStat)).filter(s=>s!==undefined)
+    stats.push(...receiverStats)
+    const servers:[string, string|undefined][] = []
+    const sum = {} as any
+    const streams:StreamStat[] = []
+    for(const ts of stats){
+      for(const key in ts){
+        if (key !== 'turn' && key !== 'server' && key !== 'streams'){
+          if (sum[key]) sum[key] = sum[key] + (ts as any)[key]
+          else sum[key] = (ts as any)[key]
         }
       }
-      setUpdate(status.update ? false : true)
-    }
-    if (connection.conference.bmRelaySocket?.readyState === WebSocket.OPEN) {
-      status.messageServer = config.bmRelayServer
-    }else{
-      const chatRoom = connection.conference._jitsiConference?.room
-      if (status.open && chatRoom){
-        status.messageServer = 'bridge'
-      }else{
-        status.messageServer = 'prosody'
+      if (ts.server){
+        const len = ts.server.lastIndexOf(':') - 1
+        const serverAddr = ts.server!.substring(0,len)
+        if (!servers.find(s=> s[0].substring(0, len) === serverAddr)){
+          servers.push([ts.server, ts.turn])
+        }
+        streams.push(...ts.streams)
       }
     }
-    */
-  }
-  if (props.open){
-    if (!status.interval){
-      status.interval = setInterval(updateStatus, 100)
-      //console.log('setInterval')
+    if (stats.length){
+      const tStatSum = sum as TransportStat
+      tStatSum.fractionLost = tStatSum.fractionLost ? tStatSum.fractionLost/stats.length : undefined
+      tStatSum.jitter = tStatSum.jitter ? tStatSum.jitter/stats.length : undefined
+      tStatSum.quality = tStatSum.quality ? tStatSum.quality/stats.length : undefined
+      tStatSum.roundTripTime  = tStatSum.roundTripTime ? tStatSum.roundTripTime/stats.length : undefined
     }
-  }else{
-    if (status.interval){
-      clearInterval(status.interval)
-      status.interval = undefined
-      //console.log('clearInterval')
+    const data = errorInfo.types.has('dataConnection') ? undefined : config.bmRelayServer
+    return {
+      transport: stats.length ? sum as TransportStat : undefined,
+      streams,
+      servers,
+      data,
     }
-  }
-  const {close, ...poperProps} = props
-  const stats:string[] = [] /*TODO:get stats Array.from(contents.tracks.contentCarriers.values())
-    .filter(c => c&&c.jitsiConference).map(c => c.jitsiConference!.connectionQuality.getStats())*/
-  //const bitrates = stats.filter(s=>s.bitrate).map(s=>s.bitrate!)
-  const statSum = {
-    audio: {
-//      up: bitrates.map(b => b.audio.upload).reduce((a, b) => a+b, 0),
-//      down: bitrates.map(b => b.audio.download).reduce((a, b) => a+b, 0),
-    },
-    video: {
-//      up: bitrates.map(b => b.video.upload).reduce((a, b) => a+b, 0),
-//      down: bitrates.map(b => b.video.download).reduce((a, b) => a+b, 0),
-    }
-  }
-  const loss = {
-    up: 0,
-    down: 0
-  }
-  const codecSet = new Set<string>()
-  const codecs = Array.from(codecSet)
+  })
 
+  const {close, ...poperProps} = props
   return <Popper {...poperProps}>
     <Paper style={{background:'rgba(255,255,255,0.6)', padding:'0.4em'}}>
       <div style={{overflowY:'auto'}}>
         <strong>Servers</strong><br />
-        {status.sessions.length === 0 ? <div>No WebRTC</div> :
-        status.sessions.map((sess, idx) => <div key={idx}>
-          WebRTC: {sess.remotes.map((r,k) => <span key={k.toString()}>{r.address} {r.port}/{r.protocol}<br /></span>)}
-        </div>)}
-        <div> Message: {status.messageServer}</div>
-        <div>
+        <div>{stat.servers.length === 0 ? 'No RTC server' :
+          stat.servers.map((server, idx) => <div key={idx}>
+            RTC:{server[0]}
+            {server[1] ? <><br/>&nbsp; via {server[1]}</> : undefined}
+          </div>)}
+          <div> Data: {stat.data}</div>
         </div>
-        {/*<div> Quality: {JSON.stringify(stat)}</div>*/}
+
+        <div>Up:{((stat.transport?.sentBytePerSec || 0)/1000).toFixed(1)}k&nbsp;
+        Down:{((stat.transport?.receivedBytePerSec || 0)/1000).toFixed(1)}k&nbsp;
+        {stat.transport?.quality!==undefined ? <>Quality:{stat.transport.quality.toFixed(0)}%&nbsp;</> : undefined}
+        {stat.transport?.roundTripTime ? <>RTT:{(stat.transport.roundTripTime*1000).toFixed(0)}ms&nbsp;</> : undefined}
+        {stat.transport?.fractionLost!==undefined ? <>Lost:{(stat.transport?.fractionLost*100).toFixed(2)}%</> : undefined}
+        </div>
+        <ul>
+        {stat.streams.map(s => {
+          return <li key={s.id}>
+            {s.codec && <>{s.codec}&nbsp;</>}
+            {((s.bytesPerSec ? s.bytesPerSec : 0)/1000).toFixed(1)}k
+            {s.roundTripTime ? <>&nbsp; RTT:{(s.roundTripTime*1000).toFixed(0)}ms</> : undefined}
+            {s.fractionLost!==undefined ? <>&nbsp; Lost:{(s.fractionLost*100).toFixed(2)}%</> : undefined}
+            {s.jitter!==undefined ? <>&nbsp; Jitter:{(s.jitter*1000).toFixed(0)}ms</> : undefined}
+          </li>
+        })}
+        </ul>
+
       </div>
       <Button variant="contained" color="primary" style={{textTransform:'none', marginTop:'0.4em'}}
         onClick={close}
         > Close </Button>
-
     </Paper>
   </Popper>
 }

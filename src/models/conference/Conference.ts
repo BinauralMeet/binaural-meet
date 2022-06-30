@@ -3,7 +3,7 @@ import {assert, MSTrack, Roles} from '@models/utils'
 import {default as participants} from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
 import {ClientToServerOnlyMessageType, StringArrayMessageTypes} from './DataMessageType'
-import {RtcConnection} from './RtcConnection'
+import {RtcConnection, TransportStat} from './RtcConnection'
 import {DataConnection} from './DataConnection'
 import * as mediasoup from 'mediasoup-client'
 import { MSRemotePeer, MSTransportDirection, MSRemoteProducer} from './MediaMessages'
@@ -30,7 +30,6 @@ const stringArrayMessageTypesForClient = new Set(StringArrayMessageTypes)
 stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.CONTENT_UPDATE_REQUEST_BY_ID)
 stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.REQUEST_PARTICIPANT_STATES)
 
-
 export interface RemoteProducer extends MSRemoteProducer{
   peer: RemotePeer                    //  remote peer
   consumer?: mediasoup.types.Consumer //  consumer for the remote producer
@@ -39,6 +38,9 @@ export interface RemotePeer{
   peer: string
   transport?: mediasoup.types.Transport   // receive transport
   producers: RemoteProducer[]             // producers of the remote peer
+}
+export function getStatFromRemotePeer(r?: RemotePeer){
+  return r?.transport?.appData.stat as TransportStat
 }
 
 export interface LocalProducer{
@@ -63,7 +65,7 @@ export class Conference {
   private remotePeers_ = new Map<string, RemotePeer>()
   public get remotePeers(){return this.remotePeers_}
   private localProducers: mediasoup.types.Producer[] = []
-  private sendTransport?: mediasoup.types.Transport
+  private sendTransport_?: mediasoup.types.Transport
   public priorityCalculator
   //  map related
   private dataConnection_ = new DataConnection()
@@ -90,42 +92,47 @@ export class Conference {
   }
 
   public enter(room: string){
-    //  check last kicked time and stop the operation if recently kicked.
-    const str = window.localStorage.getItem('kickTimes')
-    if (str){
-      const kickTimes = JSON.parse(str) as KickTime[]
-      const found = kickTimes.find(kt => kt.room === this.room)
-      if (found){
-        const diff = Date.now() - found.time
-        const KICK_WAIT_MIN = 15  //  Can not login KICK_WAIT_MIN minutes once kicked.
-        if (diff < KICK_WAIT_MIN * 60 * 1000){
-          window.location.reload()
-
-          return
+    const promise = new Promise<void>((resolve, reject) => {
+      //  check last kicked time and stop the operation if recently kicked.
+      const str = window.localStorage.getItem('kickTimes')
+      if (str){
+        const kickTimes = JSON.parse(str) as KickTime[]
+        const found = kickTimes.find(kt => kt.room === this.room)
+        if (found){
+          const diff = Date.now() - found.time
+          const KICK_WAIT_MIN = 15  //  Can not login KICK_WAIT_MIN minutes once kicked.
+          if (diff < KICK_WAIT_MIN * 60 * 1000){
+            window.location.reload()
+            reject('kicked')
+            return
+          }
         }
       }
-    }
 
-    //  connect to peer
-    const peer = participants.local.information.name.substring(0, 4)
-    this.rtcConnection.connect(room, peer).then((peer)=>{
-      //  register event handlers and join
-      //  set id
-      participants.setLocalId(peer)
-      //  create tracks
-      for (const prop in participants.local.devicePreference) {
-        if (participants.local.devicePreference[prop] === undefined) {
-          participants.local.devicePreference[prop] = ''
+      //  connect to peer
+      const peer = participants.local.information.name.substring(0, 4)
+      this.rtcConnection.connect(room, peer).then((peer)=>{
+        //  register event handlers and join
+        //  set id
+        participants.setLocalId(peer)
+        //  create tracks
+        for (const prop in participants.local.devicePreference) {
+          if (participants.local.devicePreference[prop] === undefined) {
+            participants.local.devicePreference[prop] = ''
+          }
         }
-      }
-      //  connect to relay server for get contents and participants info.
-      this.dataConnection.connect(room, peer).then(()=>{
-        this.dataConnection.sync.sendAllAboutMe(true)
-      })
+        //  connect to relay server for get contents and participants info.
+        this.dataConnection.connect(room, peer).then(()=>{
+          this.dataConnection.sync.sendAllAboutMe(true)
+          resolve()
+        }).catch(reject)
+      }).catch(reject)
     })
 
     //  To access from debug console, add object d to the window.
     d.conference = this
+
+    return promise
   }
 
   public leave(){
@@ -187,13 +194,14 @@ export class Conference {
     })
     return promise
   }
+
   private getSendTransport(){
     const promise = new Promise<mediasoup.types.Transport>((resolve, reject)=>{
       if (this.sendTransport){
         resolve(this.sendTransport)
       }else{
         this.createTransport('send').then(transport=>{
-          this.sendTransport = transport
+          this.sendTransport_ = transport
           resolve(transport)
         }).catch(reject)
       }
@@ -213,8 +221,14 @@ export class Conference {
     })
     return promise
   }
+  public get sendTransport(){
+    return this.sendTransport_
+  }
+  public get sendTransportStat(){
+    return this.sendTransport_?.appData.stat as TransportStat
+  }
 
-  public addOrReplaceLocalTrack(track:MSTrack){
+  public addOrReplaceLocalTrack(track:MSTrack, maxBitRate?:number){
     const promise = new Promise<mediasoup.types.Producer>((resolve, reject)=>{
       //  add content track to contents
       if (track.role === 'avatar'){
@@ -244,7 +258,11 @@ export class Conference {
       }else{
         this.getSendTransport().then((transport) => {
           // add track to produce
-          transport.produce({track:track.track, appData:{track}}).then( producer => {
+          transport.produce({
+            track:track.track,
+            encodings:maxBitRate ? [{maxBitrate:maxBitRate}] : undefined,
+            appData:{track}
+          }).then( producer => {
             this.localProducers.push(producer)
             resolve(producer)
           })
@@ -329,7 +347,7 @@ export class Conference {
       this.localMicTrack = track
       this.dataConnection.audioMeter.setSource(this.localMicTrack)
       if (track){
-        this.addOrReplaceLocalTrack(track).then(()=>{resolve()}).catch(reject)
+        this.addOrReplaceLocalTrack(track, 96*1024).then(()=>{resolve()}).catch(reject)
       }else{
         resolve()
       }
@@ -342,7 +360,7 @@ export class Conference {
     const promise = new Promise<mediasoup.types.Producer|void>((resolve, reject) => {
       this.localCameraTrack = track
       if (this.localCameraTrack){
-        this.addOrReplaceLocalTrack(this.localCameraTrack).then(resolve).catch(reject)
+        this.addOrReplaceLocalTrack(this.localCameraTrack, 128*1024).then(resolve).catch(reject)
       }else{
         resolve()
       }
@@ -465,5 +483,6 @@ export class Conference {
       }
     }
   }
+
 }
 export const conference = new Conference()

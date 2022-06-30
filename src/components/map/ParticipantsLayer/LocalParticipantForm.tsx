@@ -8,6 +8,7 @@ import FormControlLabel from '@material-ui/core/FormControlLabel'
 import Popover, { PopoverOrigin, PopoverReference } from '@material-ui/core/Popover'
 import TextField from '@material-ui/core/TextField'
 import {uploadToGyazo} from '@models/api/Gyazo'
+import { conference } from '@models/conference'
 import {useTranslation} from '@models/locales'
 import {isDarkColor, rgb2Color} from '@models/utils'
 import {isSmartphone} from '@models/utils/utils'
@@ -78,7 +79,7 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
         {t('lsTitle')}
       </span>
       <span style={{float:'right'}}>
-        <SignalQualityButton open={props.open} /></span>
+        <SignalQualityButton open={props.open} stat={conference.sendTransportStat}/></span>
     </DialogTitle>
     <DialogContent>
       <Observer>{ ()=> {

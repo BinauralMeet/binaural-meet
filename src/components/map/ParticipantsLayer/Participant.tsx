@@ -243,7 +243,7 @@ return (
           <Tooltip title={name}>
             <div>
               <Avatar {...props} />
-              <SignalQualityIcon className={classes.signalIcon} quality={undefined /*TODO: give quality*/} />
+              <SignalQualityIcon className={classes.signalIcon} quality={props.participant.quality} />
               {headphone ? <HeadsetIcon className={classes.icon} htmlColor="rgba(0, 0, 0, 0.3)" /> : undefined}
               {speakerMuted ? <SpeakerOffIcon className={classes.icon} color="secondary" /> :
                 (micMuted ? <MicOffIcon className={classes.icon} color="secondary" /> : undefined)}

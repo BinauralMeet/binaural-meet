@@ -9,60 +9,57 @@ import SignalCellular2BarIcon from '@material-ui/icons/SignalCellular2Bar'
 import SignalCellular3BarIcon from '@material-ui/icons/SignalCellular3Bar'
 import SignalCellular4BarIcon from '@material-ui/icons/SignalCellular4Bar'
 import {useTranslation} from '@models/locales'
-import {SharedContents} from '@stores/sharedContents/SharedContents'
 import React from 'react'
-
-declare const config:any             //  from ../../config.js included from index.html
-
+import {useObserver} from 'mobx-react-lite'
+import { TransportStat } from '@models/conference/RtcConnection'
 
 export interface ConnectionQualityDialogProps{
   open: boolean
-  contents?: SharedContents
+  stat?: TransportStat
   isLocal?: boolean
   anchorEl: null | HTMLElement
   onClose?: ()=>void
 }
+
 export const ConnectionQualityDialog: React.FC<ConnectionQualityDialogProps>
   = (props: ConnectionQualityDialogProps) => {
-  const stats:string[] = [] /*TODO:get stats Array.from(props.contents ? props.contents.tracks.contentCarriers.values() : [])
-    .filter(c => c&&c.jitsiConference).map(c => c.jitsiConference!.connectionQuality.getStats())
-    */
-  const bitrates:{video:{upload:1, download:2}, audio:{upload:1, download:2}}[] = [] //stats.filter(s=>s.bitrate).map(s=>s.bitrate!)
-  const statSum = {
-    audio: {
-      up: bitrates.map(b => b.audio.upload).reduce((a, b) => a+b, 0),
-      down: bitrates.map(b => b.audio.download).reduce((a, b) => a+b, 0),
-    },
-    video: {
-      up: bitrates.map(b => b.video.upload).reduce((a, b) => a+b, 0),
-      down: bitrates.map(b => b.video.download).reduce((a, b) => a+b, 0),
-    }
-  }
-  const loss = {
-  }
   const {t} = useTranslation()
-
-  let messageServer = ''
-  if (props.isLocal){
-    messageServer = config.bmRelayServer
-  }
-
+  const stat = useObserver<TransportStat |undefined>(()=> (props.stat ? {... props.stat} : undefined))
+  const streams = stat?.streams
 
   return <Popover open={props.open} anchorEl={props.anchorEl} >
     <DialogTitle>
       {t('connectionStatus')}
     </DialogTitle>
     <DialogContent>
-    <div style={{overflowY:'auto'}} />
+      {stat?.turn ? <div>RTC via {stat.turn}</div> : undefined}
+      {stat?.server ? <div>RTC server {stat.server}</div> : undefined}
+      <div>Up:{((stat?.sentBytePerSec || 0)/1000).toFixed(1)}k&nbsp;
+        Down:{((stat?.receivedBytePerSec || 0)/1000).toFixed(1)}k&nbsp;
+        {stat?.quality!==undefined ? <>Quality:{stat.quality.toFixed(0)}%&nbsp;</> : undefined}
+        {stat?.roundTripTime ? <>RTT:{(stat.roundTripTime*1000).toFixed(0)}ms&nbsp;</> : undefined}
+        {stat?.fractionLost!==undefined ? <>Lost:{(stat?.fractionLost*100).toFixed(2)}%</> : undefined}
+      </div>
+      <ul>
+        {streams?.map(s => {
+          return <li key={s.id}>
+            {s.codec && <>{s.codec}&nbsp;</>}
+            {((s.bytesPerSec ? s.bytesPerSec : 0)/1000).toFixed(1)}k
+            {s.roundTripTime ? <>&nbsp; RTT:{(s.roundTripTime*1000).toFixed(0)}ms</> : undefined}
+            {s.fractionLost!==undefined ? <>&nbsp; Lost:{(s.fractionLost*100).toFixed(2)}%</> : undefined}
+            {s.jitter!==undefined ? <>&nbsp; Jitter:{(s.jitter*1000).toFixed(0)}ms</> : undefined}
+          </li>
+        })}
+      </ul>
+      <Button variant="contained" color="primary" style={{textTransform:'none', marginTop:'0.4em'}}
+        onClick={(ev) => {
+          ev.stopPropagation()
+          if (props.onClose){props.onClose()}
+        }}
+        >{t('emClose')}
+      </Button>
+    </DialogContent>
     <br />
-    <Button variant="contained" color="primary" style={{textTransform:'none', marginTop:'0.4em'}}
-      onClick={(ev) => {
-        ev.stopPropagation()
-        if (props.onClose){props.onClose()}
-      }}
-      >{t('emClose')}</Button>
-  </DialogContent>
-  <br />
   </Popover>
 }
 
@@ -74,7 +71,7 @@ export interface SignalIconProps{
 export const SignalQualityIcon: React.FC<SignalIconProps> = (props) => {
   let qualityIcon: JSX.Element|undefined = undefined
   const quality = props.quality
-  if (quality){
+  if (quality !== undefined){
     qualityIcon = <SignalCellular0BarIcon className={props.className} style={{color:'red'}} />
     if(quality > 30) { qualityIcon =
       <SignalCellular1BarIcon className={props.className} style={{color:'orange'}} /> }
@@ -93,6 +90,7 @@ export interface SignalQualityButtonProps{
   open: boolean
   anchorEl?: HTMLElement |  null
   isLocal?:boolean
+  stat?: TransportStat
 }
 export const SignalQualityButton: React.FC<SignalQualityButtonProps> = (props:SignalQualityButtonProps) => {
   const [open, setOpen] = React.useState(false)
@@ -100,8 +98,8 @@ export const SignalQualityButton: React.FC<SignalQualityButtonProps> = (props:Si
   const ref = React.useRef<HTMLButtonElement>(null)
 
   return <IconButton ref={ref} onClick={()=>{ setOpen(true) }}>
-    <SignalQualityIcon quality={4} />
-    <ConnectionQualityDialog open={open}
+    <SignalQualityIcon quality={props.stat?.quality} />
+    <ConnectionQualityDialog stat={props.stat} open={open}
       anchorEl={ref.current} onClose={()=>{
         setOpen(false)
     }}/>

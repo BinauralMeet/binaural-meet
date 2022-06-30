@@ -68,6 +68,7 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
   @computed get showVideo () {
     return !this.muteVideo
   }
+  @observable quality:number|undefined = undefined
 
   constructor(isLocal=false) {
     super()

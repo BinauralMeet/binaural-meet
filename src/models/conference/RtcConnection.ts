@@ -4,6 +4,8 @@ import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSMessageType, MSRoo
   MSTransportDirection, MSCreateTransportReply, MSConnectTransportMessage, MSConnectTransportReply,
   MSProduceTransportMessage, MSProduceTransportReply, MSTrackRole, MSConsumeTransportMessage, MSConsumeTransportReply, MSRemoteUpdateMessage, MSRemoteLeftMessage, MSResumeConsumerMessage, MSResumeConsumerReply, MSCloseProducerMessage, MSCloseProducerReply} from './MediaMessages'
 import * as mediasoup from 'mediasoup-client';
+import { observable } from 'mobx';
+import participants from '@stores/participants/Participants';
 
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
@@ -189,7 +191,7 @@ export class RtcConnection{
         remote,
         dir
       }
-      this.sendWithPromise(msg, resolve, reject)
+      this.sendWithPromise(msg, resolve, reject, remote)
     })
     return promise
   }
@@ -209,7 +211,12 @@ export class RtcConnection{
     }else{
       transportObject = this.device?.createRecvTransport(option)
     }
-    this.resolveMessage(msg, transportObject)
+    if (transportObject){
+      const remote = this.getMessageArg(msg)
+      startTransportStatUpdate(transportObject, msg.dir, remote)
+      this.resolveMessage(msg, transportObject)
+    }
+    this.rejectMessage(msg)
   }
 
   public connectTransport(transport: mediasoup.types.Transport, dtlsParameters: mediasoup.types.DtlsParameters, remote?:string){
@@ -347,4 +354,214 @@ export class RtcConnection{
     const msg = base as MSRemoteLeftMessage
     this.emit('remoteLeft', msg.remotes)
   }
+}
+
+
+export interface RTCRemoteInboundRtpStreamStats extends RTCReceivedRtpStreamStats {
+  localId: string
+  roundTripTime: number
+  totalRoundTripTime: number
+  fractionLost: number
+  roundTripTimeMeasurements: number
+}
+export interface RTCRemoteOutboundRtpStreamStats extends RTCSentRtpStreamStats {
+  localId: string
+  roundTripTime: number
+  totalRoundTripTime: number
+  fractionLost: number
+  roundTripTimeMeasurements: number
+}
+
+export interface RTCCodecStats extends RTCStats{
+  payloadType:number
+  trnsportId:string
+  mimeType:string
+  clockRate:number
+  channels:number
+  sdpFmtpLine:string
+}
+export interface RTCIceCandidateEx extends RTCIceCandidate{
+  url?: string
+}
+export interface TransportStat{
+  fractionLost?:number
+  roundTripTime?:number
+  jitter?:number
+  timestamp:number
+  receivedBytePerSec?:number
+  sentBytePerSec?:number
+  bytesSent:number
+  bytesReceived:number
+  turn?: string
+  server?: string
+  streams: StreamStat[]
+  quality?: number  //  0 - 100, 100 is best
+}
+interface RTCOutboundRtpStreamStatsEx extends RTCOutboundRtpStreamStats{
+  targetBitrate?: number
+}
+interface RTCInboundRtpStreamStatsEx extends RTCInboundRtpStreamStats{
+  bytesReceived: number
+
+}
+export const defaultTransportStat:TransportStat={
+  timestamp:0,
+  bytesSent:0,
+  bytesReceived:0,
+  streams:[],
+}
+
+export interface RTCOutStreamStat{
+  id: string
+  local: RTCOutboundRtpStreamStatsEx
+  remote?: RTCRemoteInboundRtpStreamStats
+}
+export interface RTCInStreamStat{
+  id: string
+  local: RTCInboundRtpStreamStatsEx
+  remote?: RTCRemoteOutboundRtpStreamStats
+}
+export interface StreamStat{
+  bytesPerSec?:number
+  codec?: string
+  targetBitrate?: number
+  fractionLost?: number
+  roundTripTime?: number
+  jitter?: number
+  id: string
+}
+
+export function stopTransportStatUpdate(transport: mediasoup.types.Transport){
+  if (transport.appData.interval) window.clearInterval(transport.appData.interval as number)
+  delete transport.appData.interval
+}
+export function startTransportStatUpdate(transport: mediasoup.types.Transport, dir: MSTransportDirection, remote?: string){
+  //  add stat and listener to transport
+  if (!transport.appData.stat){
+    transport.appData.stat = observable({...defaultTransportStat})
+    transport.observer.addListener('close', ()=>{
+      stopTransportStatUpdate(transport)
+    })
+  }
+
+  //  set interval timer
+  let outStreamsPrev = new Map<string, RTCOutStreamStat>()
+  let inStreamsPrev = new Map<string, RTCInStreamStat>()
+  transport.appData.interval = window.setInterval(()=>{
+    const curStats = transport.appData.stat as TransportStat
+    transport?.getStats().then((stats)=>{
+      const keys = Array.from(stats.keys())
+
+      /*
+      //  log all stats
+      let str=''
+      keys.forEach((key)=>{ str = `${str}\n ${key}:${JSON.stringify(stats.get(key))}` })
+      console.log(str)
+      */
+      let streamStats:StreamStat[]
+      if (dir === 'send'){
+        const streamIds = keys.filter(k => k.includes('RTCOutboundRTPVideoStream') || k.includes('RTCOutboundRTPAudioStream'))
+          .map(k => k.substring('RTCOutboundRTP'.length))
+        const streams = streamIds.map(id => ({
+          id,
+          local: stats.get(`RTCOutboundRTP${id}`) as RTCOutboundRtpStreamStatsEx,
+          remote: stats.get(`RTCRemoteInboundRtp${id}`) as RTCRemoteInboundRtpStreamStats|undefined,
+        }))
+        streamStats = streams.map(stream => {
+          const prev = outStreamsPrev.get(stream.id)
+          const dt = prev?.local?.timestamp ? (stream.local.timestamp - prev.local.timestamp)/1000 : 0
+
+          if (stream.local.codecId){
+            stats.get(stream.local.codecId)
+          }
+          const rv:StreamStat = {
+            id: stream.id,
+            bytesPerSec: (dt && stream.local.bytesSent && prev?.local?.bytesSent) ?
+              (stream.local.bytesSent-prev.local.bytesSent)/dt : 0,
+            codec: stream.local.codecId ? (stats.get(stream.local.codecId) as RTCCodecStats).mimeType : undefined,
+            targetBitrate: stream.local.targetBitrate,
+            //jitter: stream.remote?.jitter,
+            fractionLost: stream.remote?.fractionLost,
+            roundTripTime: stream.remote?.roundTripTime
+          }
+          return rv
+        })
+        outStreamsPrev = new Map(streams.map((s) => [s.id, s]))
+      }else{
+        const streamIds = keys.filter(k => k.includes('RTCInboundRTPVideoStream') || k.includes('RTCInboundRTPAudioStream'))
+          .map(k => k.substring('RTCInboundRTP'.length))
+        const streams = streamIds.map(id => ({
+          id,
+          local: stats.get(`RTCInboundRTP${id}`) as RTCInboundRtpStreamStatsEx,
+          remote: stats.get(`RTCRemoteOutboundRTP${id}`) as RTCRemoteOutboundRtpStreamStats,
+        }))
+        //  console.log(JSON.stringify(streams))
+        streamStats = streams.map(stream => {
+          const prev = inStreamsPrev.get(stream.id)
+          const dt = prev?.local?.timestamp ? (stream.local.timestamp - prev.local.timestamp)/1000 : 0
+
+          if (stream.local.codecId){
+            stats.get(stream.local.codecId)
+          }
+          const rv:StreamStat = {
+            id: stream.id,
+            bytesPerSec: (dt && stream.local.bytesReceived && prev?.local?.bytesReceived) ?
+              (stream.local.bytesReceived -prev.local.bytesReceived)/dt : 0,
+            codec: stream.local.codecId ? (stats.get(stream.local.codecId) as RTCCodecStats).mimeType.substring(6) : undefined,
+            jitter: stream.local.jitter,
+            fractionLost: stream.remote?.fractionLost,
+            roundTripTime: stream.remote?.roundTripTime
+          }
+          return rv
+        })
+        inStreamsPrev = new Map(streams.map((s) => [s.id, s]))
+      }
+      streamStats.forEach(s => {if (s.fractionLost !== undefined)
+        curStats.fractionLost = s.fractionLost + (curStats.fractionLost ? curStats.fractionLost : 0)})
+      streamStats.forEach(s => {if (s.roundTripTime !== undefined)
+        curStats.roundTripTime = s.roundTripTime + (curStats.roundTripTime ? curStats.roundTripTime : 0)})
+      streamStats.forEach(s => {if (s.jitter !== undefined)
+        curStats.jitter = s.jitter + (curStats.jitter ? curStats.jitter : 0)})
+      if (curStats.fractionLost) curStats.fractionLost /= streamStats.length
+      if (curStats.roundTripTime) curStats.roundTripTime /= streamStats.length
+      if (curStats.jitter) curStats.jitter /= streamStats.length
+
+      const tkey = keys.find(k => k.substring(0, 'RTCTransport'.length) === 'RTCTransport')
+      if (tkey){
+        const tStat = stats.get(tkey) as RTCTransportStats
+        const delta = (tStat.timestamp - curStats.timestamp)/1000
+        curStats.timestamp = tStat.timestamp
+        if (tStat.bytesReceived){
+          curStats.receivedBytePerSec = Math.floor((tStat.bytesReceived - curStats.bytesReceived) / delta)
+          curStats.bytesReceived = tStat.bytesReceived
+        }
+        if (tStat.bytesSent){
+          curStats.sentBytePerSec = Math.floor((tStat.bytesSent - curStats.bytesSent) / delta)
+          curStats.bytesSent = tStat.bytesSent
+        }
+        const ckey = tStat.selectedCandidatePairId
+        if (ckey){
+          const pair = stats.get(ckey) as RTCIceCandidatePairStats
+          const c = stats.get(pair.localCandidateId) as RTCIceCandidateEx
+          curStats.server = `${c.address}:${c.port}/${c.protocol}`
+          curStats.turn = c.url
+        }
+      }
+      let quality=undefined
+      if (curStats.fractionLost!==undefined || curStats.roundTripTime!==undefined || curStats.jitter !== undefined){
+        const fractionLost = curStats.fractionLost ? curStats.fractionLost : 0
+        const roundTripTime = curStats.roundTripTime ? curStats.roundTripTime : 0
+        const jitter = (!roundTripTime && curStats.jitter) ? curStats.jitter : 0
+        quality = 100 - (fractionLost>1e-10 ? Math.pow(fractionLost, -10) : 0) * 100
+         - roundTripTime * 100 - jitter * 100
+        quality = Math.max(Math.min(quality, 100), 0)
+      }
+      curStats.quality = quality
+      curStats.streams = streamStats
+      const participant = dir==='send' ? participants.local : participants.getRemote(remote!)
+      if (participant){
+        participant.quality = curStats.quality
+      }
+    }).catch()
+  }, 5000)
 }

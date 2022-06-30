@@ -57,8 +57,12 @@ export const enTranslate = {
   emNeverShow: 'Never show this in this session',
   etNoChannel: 'No data channel',
   emNoChannel: 'Please check firewall setting. Binaural Meet connect to https (port 443/TCP) and port 8801-8810/UDP or 80/TCP.',
-//  etRetry: 'Reconnecting',
-//  emRetry: 'The connection had been cut off and trying to reconnect. Please check internet connection.',
+
+  etDataConnection: 'Data connection failed',
+  etRtcConnection: 'Media connection failed',
+  emDataConnection: 'Please check firewall setting. Binaural Meet connect to https (port 443/TCP).',
+  emRtcConnection: 'Please check firewall setting. Binaural Meet connect to https (port 443/TCP).',
+
   etRetry: 'Please reload',
   emRetry: 'The connection had been cut off once. Please click the reload button of the browser.',
   imageDropzoneText:'Drag and drop images here or click',

@@ -39,8 +39,16 @@ import {Step} from './Step'
 import {conference} from '@models/conference'
 
 function startCapture(props:BMProps) {
+  const fps = props.stores.contents.screenFps
   return new Promise<MediaStream>((resolve, reject) => {
-    navigator.mediaDevices.getDisplayMedia({audio:true, video:true}).then(resolve).catch(reject)
+    navigator.mediaDevices.getDisplayMedia({
+      audio:true,
+      video:{
+        frameRate:{
+          ideal: fps
+        }
+      }
+    }).then(resolve).catch(reject)
   })
 }
 
