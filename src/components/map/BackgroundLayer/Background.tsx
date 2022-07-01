@@ -1,6 +1,5 @@
 import {MAP_SIZE} from '@components/Constants'
 import {MapProps} from '@components/utils'
-import jitsiIcon from '@images/jitsi/Poweredby_Jitsi_logo_white_04_2020_white.png'
 import {makeStyles} from '@material-ui/core/styles'
 import {rgb2Color} from '@models/utils'
 import {Observer, useObserver} from 'mobx-react-lite'
@@ -67,9 +66,7 @@ export const Background: React.FC<MapProps> = (props) => {
   const classes = useStyles(styleProps)
 
   return <Observer>{() => {
-    return <div className={classes.img}>
-      <img className={classes.logo} src={jitsiIcon} alt="jitsi icon"/>
-    </div>
+    return <div className={classes.img} />
   }}</Observer>
 }
 Background.displayName = 'Background'
