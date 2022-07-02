@@ -3,7 +3,7 @@ import {manager as audioManager} from '@models/audio'
 import {urlParameters} from '@models/url'
 import participants from '@stores/participants/Participants'
 import {autorun} from 'mobx'
-import {createLocalCamera} from './faceCamera'
+import {clearFaceTrack, createLocalCamera} from './faceCamera'
 import {MSTrack} from '@models/utils'
 import {conference} from '@models/conference'
 
@@ -75,6 +75,7 @@ autorun(() => {
       const track = conference.getLocalCameraTrack()
       if (track) { conference.removeLocalTrack(track) }
     }
+    clearFaceTrack()
   }else{
     const track = conference.getLocalCameraTrack()
     if (track && track.deviceId === did) { return }

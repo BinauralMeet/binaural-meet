@@ -138,6 +138,14 @@ function moveAvatar(face?: WithFaceLandmarks<{detection:FaceDetection}, FaceLand
 
 var canvasEl: HTMLCanvasElement|undefined
 var loaded = false
+export function clearFaceTrack(){
+  if (interval){
+    clearInterval(interval)
+    interval = undefined
+  }
+  if (videoEl) videoEl.srcObject = null
+  participants.local.viewpoint.nodding = undefined
+}
 export function createLocalCamera(faceTrack: boolean, did?:string) {
   const promise = new Promise<MSTrack>((resolutionFunc, rejectionFunc) => {
     if (!did){
@@ -165,6 +173,7 @@ export function createLocalCamera(faceTrack: boolean, did?:string) {
         if (interval){ clearInterval(interval) }
         const ops = new TinyFaceDetectorOptions({inputSize: 160, scoreThreshold: 0.5})
         interval = setInterval(()=>{
+          if (interval === null) return
           if (loaded){
             detectSingleFace(videoEl!, ops).withFaceLandmarks(true).then((face) => {
               drawFace(videoEl!.videoWidth, videoEl!.videoHeight, canvasEl!, face)
@@ -185,6 +194,7 @@ export function createLocalCamera(faceTrack: boolean, did?:string) {
         }
         resolutionFunc(track)
       }else{
+        clearFaceTrack()
         const track:MSTrack = {
           track: ms.getVideoTracks()[0],
           peer: participants.local.id,

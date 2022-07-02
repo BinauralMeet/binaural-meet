@@ -513,7 +513,7 @@ export function startUpdateTransportStat(transport: mediasoup.types.Transport, d
             id: stream.id,
             bytesPerSec: (dt && stream.local.bytesReceived && prev?.local?.bytesReceived) ?
               (stream.local.bytesReceived -prev.local.bytesReceived)/dt : 0,
-            codec: stream.local.codecId ? (stats.get(stream.local.codecId) as RTCCodecStats).mimeType.substring(6) : undefined,
+            codec: stream.local.codecId ? (stats.get(stream.local.codecId) as RTCCodecStats).mimeType : undefined,
             jitter: stream.local.jitter,
             fractionLost: stream.remote?.fractionLost,
             roundTripTime: stream.remote?.roundTripTime
