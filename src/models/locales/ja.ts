@@ -2,7 +2,6 @@ export const jaTranslate = {
   enAbout: '位置に応じて声が届く2Dマップ付きビデオチャットです。'
   + '会場内に複数の会話が並立し、会話間を歩き回ることができます。'
   + '画面、カメラ、テキスト、画像、YouTube、Googleドライブの文書を共有できます。マップにURL等をドロップ/ペーストできます。',
-  enNote: '一部の参加者の声だけ聞こえない場合があるという不具合が残っています。生じた場合はブラウザでページを再読み込みすると直ります。',
   enTopPageUrl: 'https://scrapbox.io/binaural-meet/%E3%83%88%E3%83%83%E3%83%97%E3%83%9A%E3%83%BC%E3%82%B8',
   enMoreInfo: '詳細',
   YourName: 'お名前を入力ください',

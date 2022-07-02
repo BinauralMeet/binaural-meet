@@ -213,7 +213,7 @@ export class RtcConnection{
     }
     if (transportObject){
       const remote = this.getMessageArg(msg)
-      startTransportStatUpdate(transportObject, msg.dir, remote)
+      startUpdateTransportStat(transportObject, msg.dir, remote)
       this.resolveMessage(msg, transportObject)
     }
     this.rejectMessage(msg)
@@ -384,6 +384,7 @@ export interface RTCIceCandidateEx extends RTCIceCandidate{
   url?: string
 }
 export interface TransportStat{
+  dir:MSTransportDirection
   fractionLost?:number
   roundTripTime?:number
   jitter?:number
@@ -409,6 +410,7 @@ export const defaultTransportStat:TransportStat={
   bytesSent:0,
   bytesReceived:0,
   streams:[],
+  dir: 'send',
 }
 
 export interface RTCOutStreamStat{
@@ -422,6 +424,7 @@ export interface RTCInStreamStat{
   remote?: RTCRemoteOutboundRtpStreamStats
 }
 export interface StreamStat{
+  dir: MSTransportDirection
   bytesPerSec?:number
   codec?: string
   targetBitrate?: number
@@ -435,10 +438,11 @@ export function stopTransportStatUpdate(transport: mediasoup.types.Transport){
   if (transport.appData.interval) window.clearInterval(transport.appData.interval as number)
   delete transport.appData.interval
 }
-export function startTransportStatUpdate(transport: mediasoup.types.Transport, dir: MSTransportDirection, remote?: string){
+export function startUpdateTransportStat(transport: mediasoup.types.Transport, dir: MSTransportDirection, remote?: string){
   //  add stat and listener to transport
   if (!transport.appData.stat){
-    transport.appData.stat = observable({...defaultTransportStat})
+    const tStat:TransportStat = {...defaultTransportStat, dir}
+    transport.appData.stat = observable(tStat)
     transport.observer.addListener('close', ()=>{
       stopTransportStatUpdate(transport)
     })
@@ -448,7 +452,7 @@ export function startTransportStatUpdate(transport: mediasoup.types.Transport, d
   let outStreamsPrev = new Map<string, RTCOutStreamStat>()
   let inStreamsPrev = new Map<string, RTCInStreamStat>()
   transport.appData.interval = window.setInterval(()=>{
-    const curStats = transport.appData.stat as TransportStat
+    const curStat = transport.appData.stat as TransportStat
     transport?.getStats().then((stats)=>{
       const keys = Array.from(stats.keys())
 
@@ -475,6 +479,7 @@ export function startTransportStatUpdate(transport: mediasoup.types.Transport, d
             stats.get(stream.local.codecId)
           }
           const rv:StreamStat = {
+            dir,
             id: stream.id,
             bytesPerSec: (dt && stream.local.bytesSent && prev?.local?.bytesSent) ?
               (stream.local.bytesSent-prev.local.bytesSent)/dt : 0,
@@ -504,6 +509,7 @@ export function startTransportStatUpdate(transport: mediasoup.types.Transport, d
             stats.get(stream.local.codecId)
           }
           const rv:StreamStat = {
+            dir,
             id: stream.id,
             bytesPerSec: (dt && stream.local.bytesReceived && prev?.local?.bytesReceived) ?
               (stream.local.bytesReceived -prev.local.bytesReceived)/dt : 0,
@@ -516,52 +522,66 @@ export function startTransportStatUpdate(transport: mediasoup.types.Transport, d
         })
         inStreamsPrev = new Map(streams.map((s) => [s.id, s]))
       }
-      streamStats.forEach(s => {if (s.fractionLost !== undefined)
-        curStats.fractionLost = s.fractionLost + (curStats.fractionLost ? curStats.fractionLost : 0)})
-      streamStats.forEach(s => {if (s.roundTripTime !== undefined)
-        curStats.roundTripTime = s.roundTripTime + (curStats.roundTripTime ? curStats.roundTripTime : 0)})
-      streamStats.forEach(s => {if (s.jitter !== undefined)
-        curStats.jitter = s.jitter + (curStats.jitter ? curStats.jitter : 0)})
-      if (curStats.fractionLost) curStats.fractionLost /= streamStats.length
-      if (curStats.roundTripTime) curStats.roundTripTime /= streamStats.length
-      if (curStats.jitter) curStats.jitter /= streamStats.length
+      //  clear
+      curStat.fractionLost = undefined
+      curStat.roundTripTime = undefined
+      curStat.jitter = undefined
+      setAverageOf('fractionLost', curStat, streamStats)
+      setAverageOf('roundTripTime', curStat, streamStats)
+      setAverageOf('jitter', curStat, streamStats)
 
       const tkey = keys.find(k => k.substring(0, 'RTCTransport'.length) === 'RTCTransport')
       if (tkey){
         const tStat = stats.get(tkey) as RTCTransportStats
-        const delta = (tStat.timestamp - curStats.timestamp)/1000
-        curStats.timestamp = tStat.timestamp
+        const delta = (tStat.timestamp - curStat.timestamp)/1000
+        curStat.timestamp = tStat.timestamp
         if (tStat.bytesReceived){
-          curStats.receivedBytePerSec = Math.floor((tStat.bytesReceived - curStats.bytesReceived) / delta)
-          curStats.bytesReceived = tStat.bytesReceived
+          curStat.receivedBytePerSec = Math.floor((tStat.bytesReceived - curStat.bytesReceived) / delta)
+          curStat.bytesReceived = tStat.bytesReceived
         }
         if (tStat.bytesSent){
-          curStats.sentBytePerSec = Math.floor((tStat.bytesSent - curStats.bytesSent) / delta)
-          curStats.bytesSent = tStat.bytesSent
+          curStat.sentBytePerSec = Math.floor((tStat.bytesSent - curStat.bytesSent) / delta)
+          curStat.bytesSent = tStat.bytesSent
         }
         const ckey = tStat.selectedCandidatePairId
         if (ckey){
           const pair = stats.get(ckey) as RTCIceCandidatePairStats
           const c = stats.get(pair.localCandidateId) as RTCIceCandidateEx
-          curStats.server = `${c.address}:${c.port}/${c.protocol}`
-          curStats.turn = c.url
+          curStat.server = `${c.address}:${c.port}/${c.protocol}`
+          curStat.turn = c.url
         }
       }
       let quality=undefined
-      if (curStats.fractionLost!==undefined || curStats.roundTripTime!==undefined || curStats.jitter !== undefined){
-        const fractionLost = curStats.fractionLost ? curStats.fractionLost : 0
-        const roundTripTime = curStats.roundTripTime ? curStats.roundTripTime : 0
-        const jitter = (!roundTripTime && curStats.jitter) ? curStats.jitter : 0
+      if (curStat.fractionLost!==undefined || curStat.roundTripTime!==undefined || curStat.jitter !== undefined){
+        const fractionLost = curStat.fractionLost ? curStat.fractionLost : 0
+        const roundTripTime = curStat.roundTripTime ? curStat.roundTripTime : 0
+        const jitter = (!roundTripTime && curStat.jitter) ? curStat.jitter : 0
         quality = 100 - (fractionLost>1e-10 ? Math.pow(fractionLost, -10) : 0) * 100
          - roundTripTime * 100 - jitter * 100
         quality = Math.max(Math.min(quality, 100), 0)
       }
-      curStats.quality = quality
-      curStats.streams = streamStats
+      curStat.quality = quality
+      curStat.streams = streamStats
       const participant = dir==='send' ? participants.local : participants.getRemote(remote!)
       if (participant){
-        participant.quality = curStats.quality
+        participant.quality = curStat.quality
       }
     }).catch()
   }, 5000)
+}
+
+function setAverageOf<S,T>(prop: string, curStat:S, stats: T[]){
+  const cs = curStat as any
+  const ss = stats as any[]
+  let count = 0
+  cs[prop] = undefined
+  for(const s of ss){
+    if (s[prop]){
+      cs[prop] = s[prop] + (cs[prop] ? cs[prop] : 0)
+      count ++
+    }
+  }
+  if (cs[prop]){
+    cs[prop] /= count
+  }
 }

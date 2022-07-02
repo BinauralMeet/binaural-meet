@@ -11,7 +11,38 @@ import SignalCellular4BarIcon from '@material-ui/icons/SignalCellular4Bar'
 import {useTranslation} from '@models/locales'
 import React from 'react'
 import {useObserver} from 'mobx-react-lite'
-import { TransportStat } from '@models/conference/RtcConnection'
+import { StreamStat, TransportStat } from '@models/conference/RtcConnection'
+
+
+export interface ConnectionStatProps{
+  stat?: TransportStat
+  streams?: StreamStat[]
+}
+export const ConnectionStat: React.FC<ConnectionStatProps> = (props:ConnectionStatProps) => {
+  const stat = props.stat
+  const streams = props.streams
+  return <>
+    {stat?.turn ? <div>RTC via {stat.turn}</div> : undefined}
+    {stat?.server ? <div>RTC server {stat.server}</div> : undefined}
+    <div>⇑{((stat?.sentBytePerSec || 0)/1000).toFixed(1)}k&nbsp;
+      ⇓{((stat?.receivedBytePerSec || 0)/1000).toFixed(1)}k&nbsp;
+      {stat?.quality!==undefined ? <>Quality:{stat.quality.toFixed(0)}%&nbsp;</> : undefined}
+      {stat?.roundTripTime ? <>RTT:{(stat.roundTripTime*1000).toFixed(0)}ms&nbsp;</> : undefined}
+      {stat?.fractionLost!==undefined ? <>Lost:{(stat?.fractionLost*100).toFixed(2)}%</> : undefined}
+    </div>
+    <div>Streams:</div>
+    {streams?.map(s => {
+      return <div key={s.id}>&nbsp;
+        {s.dir==='send' ? '⇑' : '⇓'}
+        {s.codec && <>{s.codec}&nbsp;</>}
+        {((s.bytesPerSec ? s.bytesPerSec : 0)/1000).toFixed(1)}k
+        {s.roundTripTime ? <>&nbsp; RTT:{(s.roundTripTime*1000).toFixed(0)}ms</> : undefined}
+        {s.fractionLost!==undefined ? <>&nbsp; Lost:{(s.fractionLost*100).toFixed(2)}%</> : undefined}
+        {s.jitter!==undefined ? <>&nbsp; Jitter:{(s.jitter*1000).toFixed(0)}ms</> : undefined}
+      </div>
+    })}
+  </>
+}
 
 export interface ConnectionQualityDialogProps{
   open: boolean
@@ -20,11 +51,10 @@ export interface ConnectionQualityDialogProps{
   anchorEl: null | HTMLElement
   onClose?: ()=>void
 }
-
 export const ConnectionQualityDialog: React.FC<ConnectionQualityDialogProps>
   = (props: ConnectionQualityDialogProps) => {
   const {t} = useTranslation()
-  const stat = useObserver<TransportStat |undefined>(()=> (props.stat ? {... props.stat} : undefined))
+  const stat = useObserver<TransportStat|undefined>(()=> (props.stat ? {...props.stat} : undefined))
   const streams = stat?.streams
 
   return <Popover open={props.open} anchorEl={props.anchorEl} >
@@ -32,25 +62,7 @@ export const ConnectionQualityDialog: React.FC<ConnectionQualityDialogProps>
       {t('connectionStatus')}
     </DialogTitle>
     <DialogContent>
-      {stat?.turn ? <div>RTC via {stat.turn}</div> : undefined}
-      {stat?.server ? <div>RTC server {stat.server}</div> : undefined}
-      <div>Up:{((stat?.sentBytePerSec || 0)/1000).toFixed(1)}k&nbsp;
-        Down:{((stat?.receivedBytePerSec || 0)/1000).toFixed(1)}k&nbsp;
-        {stat?.quality!==undefined ? <>Quality:{stat.quality.toFixed(0)}%&nbsp;</> : undefined}
-        {stat?.roundTripTime ? <>RTT:{(stat.roundTripTime*1000).toFixed(0)}ms&nbsp;</> : undefined}
-        {stat?.fractionLost!==undefined ? <>Lost:{(stat?.fractionLost*100).toFixed(2)}%</> : undefined}
-      </div>
-      <ul>
-        {streams?.map(s => {
-          return <li key={s.id}>
-            {s.codec && <>{s.codec}&nbsp;</>}
-            {((s.bytesPerSec ? s.bytesPerSec : 0)/1000).toFixed(1)}k
-            {s.roundTripTime ? <>&nbsp; RTT:{(s.roundTripTime*1000).toFixed(0)}ms</> : undefined}
-            {s.fractionLost!==undefined ? <>&nbsp; Lost:{(s.fractionLost*100).toFixed(2)}%</> : undefined}
-            {s.jitter!==undefined ? <>&nbsp; Jitter:{(s.jitter*1000).toFixed(0)}ms</> : undefined}
-          </li>
-        })}
-      </ul>
+      <ConnectionStat stat={stat} streams={stat?.streams} />
       <Button variant="contained" color="primary" style={{textTransform:'none', marginTop:'0.4em'}}
         onClick={(ev) => {
           ev.stopPropagation()

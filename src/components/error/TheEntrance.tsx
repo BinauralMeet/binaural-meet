@@ -80,9 +80,6 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
           {t("enAbout")}&nbsp;
           <a href={t("enTopPageUrl")}>{t("enMoreInfo")}</a>
         </p>
-        <p><strong>
-          {t("enNote")}
-        </strong></p>
         <br />
         <TextField
           label={t("YourName")}

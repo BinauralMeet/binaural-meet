@@ -7,6 +7,8 @@ import {BMProps} from '../utils'
 import {conference} from '@models/conference'
 import { useObserver } from 'mobx-react-lite'
 import errorInfo from '@stores/ErrorInfo'
+import {useTranslation} from '@models/locales'
+import {ConnectionStat} from '@components/map/ParticipantsLayer/SignalQuality'
 
 declare const config:any             //  from ../../config.js included from index.html
 
@@ -14,6 +16,7 @@ export interface StatusDialogProps extends Omit<PopperProps, 'children'>, BMProp
   close: () => void,
 }
 export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogProps) => {
+  const {t} = useTranslation()
   const stat = useObserver(()=>{
     const stats:TransportStat[] = []
     const senderStat = conference.sendTransport?.appData?.stat as (TransportStat|undefined)
@@ -57,40 +60,21 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
   })
 
   const {close, ...poperProps} = props
-  return <Popper {...poperProps}>
-    <Paper style={{background:'rgba(255,255,255,0.6)', padding:'0.4em'}}>
+  return <Popper {...poperProps} disablePortal={false} style={{zIndex:2}}>
+    <Paper style={{background:'rgba(255,255,255,1)', padding:'0.4em'}}>
       <div style={{overflowY:'auto'}}>
-        <strong>Servers</strong><br />
-        <div>{stat.servers.length === 0 ? 'No RTC server' :
+        <strong>{t('connectionStatus')}</strong><br />
+        <div> Data: {stat.data}</div>
+        {stat.servers.length === 0 ? <div>'No RTC server'</div> :
           stat.servers.map((server, idx) => <div key={idx}>
             RTC:{server[0]}
             {server[1] ? <><br/>&nbsp; via {server[1]}</> : undefined}
-          </div>)}
-          <div> Data: {stat.data}</div>
-        </div>
-
-        <div>Up:{((stat.transport?.sentBytePerSec || 0)/1000).toFixed(1)}k&nbsp;
-        Down:{((stat.transport?.receivedBytePerSec || 0)/1000).toFixed(1)}k&nbsp;
-        {stat.transport?.quality!==undefined ? <>Quality:{stat.transport.quality.toFixed(0)}%&nbsp;</> : undefined}
-        {stat.transport?.roundTripTime ? <>RTT:{(stat.transport.roundTripTime*1000).toFixed(0)}ms&nbsp;</> : undefined}
-        {stat.transport?.fractionLost!==undefined ? <>Lost:{(stat.transport?.fractionLost*100).toFixed(2)}%</> : undefined}
-        </div>
-        <ul>
-        {stat.streams.map(s => {
-          return <li key={s.id}>
-            {s.codec && <>{s.codec}&nbsp;</>}
-            {((s.bytesPerSec ? s.bytesPerSec : 0)/1000).toFixed(1)}k
-            {s.roundTripTime ? <>&nbsp; RTT:{(s.roundTripTime*1000).toFixed(0)}ms</> : undefined}
-            {s.fractionLost!==undefined ? <>&nbsp; Lost:{(s.fractionLost*100).toFixed(2)}%</> : undefined}
-            {s.jitter!==undefined ? <>&nbsp; Jitter:{(s.jitter*1000).toFixed(0)}ms</> : undefined}
-          </li>
-        })}
-        </ul>
-
+        </div>)}
+        <ConnectionStat stat={stat.transport} streams={stat.streams} />
       </div>
       <Button variant="contained" color="primary" style={{textTransform:'none', marginTop:'0.4em'}}
         onClick={close}
-        > Close </Button>
+        >{t('emClose')}</Button>
     </Paper>
   </Popper>
 }
