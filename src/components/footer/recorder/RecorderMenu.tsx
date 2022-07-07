@@ -93,13 +93,16 @@ export const RecorderMenu: React.FC<RecorderMenuProps> = (props) => {
     return await dbRecords.where('title').notEqual('').toArray()
   }) as DBRecord[] | undefined
 
+  const pass = props.stores.roomInfo.roomProps.get('password')
+  const isAdmin = props.stores.roomInfo.password === (pass ? pass : '')
+
   return (
     <List>
-      <DialogIconItem
+      {isAdmin ? <DialogIconItem
         key="record" text={t(recorder.recording ? 'recorderStop' : 'recorderStart')}
           icon={recorder.recording ? <StopIcon /> : <RecordIcon /> }
           onClick={startStopRecord}
-      />
+      />: undefined}
       {player.playing ? undefined : <>
         <input type="file" accept="application/octet-stream" ref={fileToPlay} style={{display:'none'}}
           onChange={ (ev) => {
