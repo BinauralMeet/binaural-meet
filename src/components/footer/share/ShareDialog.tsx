@@ -1,4 +1,4 @@
-import {BMProps} from '@components/utils'
+import {acceleratorText2El, BMProps} from '@components/utils'
 import Dialog from '@material-ui/core/Dialog'
 import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
@@ -11,7 +11,7 @@ import {CameraSelector} from './CameraSelector'
 import {CameraSelectorMember} from './CameraSelector'
 import { GoogleDriveImport } from './GoogleDrive'
 import {ImageInput} from './ImageInput'
-import {ShareMenu} from './Menu'
+import {ShareMenu} from './ShareMenu'
 import {Step} from './Step'
 import {TextInput} from './TextInput'
 
@@ -20,7 +20,7 @@ interface ShareDialogProps extends BMProps{
   onClose: () => void
 }
 
-export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
+export const ShareDialog: React.FC<ShareDialogProps> = (props:ShareDialogProps) => {
   const {open, onClose} = props
   const {map} = props.stores
 
@@ -82,9 +82,9 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props) => {
 
   const {t} = useTranslation()
   const stepTitle: {
-    [key: string]: string,
+    [key: string]: string|JSX.Element,
   } = {
-    menu: t('Create and Share'),
+    menu: acceleratorText2El(t('createAndShareTitle')),
     text: t('Share Text'),
     iframe: t('Share iframe'),
     image: t('Share image'),

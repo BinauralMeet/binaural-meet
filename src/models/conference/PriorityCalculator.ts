@@ -229,9 +229,11 @@ export class PriorityCalculator {
 
     //  done
     this.tracksToConsume = {videos, audios}
+    /*
     const vstrs = videos.map(i => i.producer.role==='avatar' ? 'p:' + i.producer.peer.peer : 'c:'+i.producer.role)
     const astrs = audios.map(i => i.producer.role==='avatar' ? 'p:' + i.producer.peer.peer : 'c:'+i.producer.role)
     console.log(`Priority: video=${vstrs} audio=${astrs}`)
+    //  */
   }
 
   // lower value means higher priority

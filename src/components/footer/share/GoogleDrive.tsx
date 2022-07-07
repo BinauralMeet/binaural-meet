@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import {DialogPageProps} from './DialogPage'
+import {DialogPageProps} from './Step'
 
 
 interface GoogleDriveImportProps extends DialogPageProps{

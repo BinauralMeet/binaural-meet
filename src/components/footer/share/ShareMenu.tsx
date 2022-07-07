@@ -33,10 +33,10 @@ import {isArray} from 'lodash'
 import {Observer, useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import {CameraSelectorMember} from './CameraSelector'
-import {DialogPageProps} from './DialogPage'
-import {ShareDialogItem} from './SharedDialogItem'
+import {DialogIconItem} from '@components/utils/DialogIconItem'
 import {Step} from './Step'
 import {conference} from '@models/conference'
+import { dateTimeString } from '@models/utils/date'
 
 function startCapture(props:BMProps) {
   const fps = props.stores.contents.screenFps
@@ -59,7 +59,7 @@ function downloadItems(contents:SharedContents) {
   const a = document.createElement('a')
   const url = URL.createObjectURL(blob)
   a.href = url
-  a.download = 'BinauralMeetSharedItems.json'
+  a.download = `BMC_${conference.room}_${dateTimeString()}.json`
   document.body.appendChild(a)
   a.click()
   setTimeout(() => {
@@ -89,6 +89,9 @@ interface ShareMenuProps extends DialogPageProps, BMProps {
   cameras: CameraSelectorMember
 }
 
+export interface DialogPageProps extends BMProps {
+  setStep: (step: Step) => void
+}
 
 export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
   const {t} = useTranslation()
@@ -244,26 +247,26 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
 
   return (
     <List>
-      <ShareDialogItem
+      <DialogIconItem
         tip = {t('sharePasteTip')}
         key="paste" text={t('sharePaste')} icon={<Icon icon={clipboardPaste} style={{fontSize:'1.5rem'}} />}
          onClick={createFromClipboard}
       />
-      <ShareDialogItem
+      <DialogIconItem
         tip = {t('shareImageTip')}
         key="shareImage" text={t('shareImage')} icon={<ImageIcon />} onClick={() => setStep('image')}
       />
-      <ShareDialogItem
+      <DialogIconItem
         key="shareText" text={t('shareText')} icon={<SubjectIcon />} onClick={createText}
       />
-      <ShareDialogItem
+      <DialogIconItem
         tip = {t('shareWhiteboardTip')}
         key="shareWhiteboard" text={t('shareWhiteboard')} icon={<Icon icon={whiteboard24Regular} style={{fontSize:'1.5rem'}} />}
          onClick={createWhiteboard}
       />
 
       <Divider />
-      <ShareDialogItem
+      <DialogIconItem
         tip = {t('shareMouseTip')}
         key="shareMouse"
         icon={<Icon icon={cursorDefaultOutline} style={{fontSize:'1.5rem'}}/>}
@@ -273,10 +276,10 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
           setStep('none')
         }}
       />
-      <ShareDialogItem key="shareCamera" text={t('shareCamera')} icon={<CameraAltIcon />}
+      <DialogIconItem key="shareCamera" text={t('shareCamera')} icon={<CameraAltIcon />}
         onClick={() => setStep('camera')}
       />
-      <ShareDialogItem
+      <DialogIconItem
         tip = {t('shareScreenContentTip')}
         key="shareScreenContent"
         icon={<ScreenShareIcon />}
@@ -302,7 +305,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
         </FormControl>}
       />
       {contents.getLocalRtcContentIds().length ?
-        <div style={{paddingLeft:'1em'}}><ShareDialogItem dense key = "stopScreen"
+        <div style={{paddingLeft:'1em'}}><DialogIconItem dense key = "stopScreen"
           icon={<Icon icon={bxWindowClose} style={{fontSize:'1.5rem'}}/>}
           text={t('stopScreen')}
           onClick={closeAllScreens}
@@ -321,25 +324,25 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
       />
       <Collapse in={openMore} timeout="auto" unmountOnExit>
         <div style={{paddingLeft:'1em'}}>
-          <ShareDialogItem
+          <DialogIconItem
             tip = {t('shareIframeTip')}
             key="shareIframe" text={t('shareIframe')} icon={<HttpIcon />} onClick={() => setStep('iframe')}
           />
-          <ShareDialogItem
+          <DialogIconItem
             key="shareScreenBackground"
             icon={mainScreen.owner === participants.localId ? <StopScreenShareIcon /> : <ScreenShareIcon />}
             text={mainScreen.owner === participants.localId ? t('stopScreenBackground') : t('shareScreenBackground')}
             onClick={screenAsBackgrouond}
           />
           <Divider />
-          <ShareDialogItem
+          <DialogIconItem
             key="shareImport" text={t('shareImport')} icon={<UploadIcon />} onClick={importFile}
             tip = {t('shareImportTip')}
           />
-          <ShareDialogItem
+          <DialogIconItem
             key="shareDownload" text={t('shareDownload')} icon={<DownloadIcon />} onClick={downloadFile}
           />
-          {/*<ShareDialogItem
+          {/*<DialogIconItem
             tip = {t('shareGDriveTip')}
             key="shareGDrive" text={t('shareGDrive')} icon={<InsertDriveFileTwoTone />} onClick={() => setStep('Gdrive')}
           />*/}

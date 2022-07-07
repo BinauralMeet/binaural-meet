@@ -1,8 +1,7 @@
 import Button from '@material-ui/core/Button'
 import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
-import React from 'react'
-import {DialogPageProps} from './DialogPage'
+import {DialogPageProps} from './Step'
 
 interface InputProps<T> extends DialogPageProps{
   inputField: JSX.Element

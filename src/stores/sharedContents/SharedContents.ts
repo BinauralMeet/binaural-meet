@@ -1,6 +1,6 @@
 import {MessageType} from '@models/conference/DataMessageType'
-import {isContentWallpaper, ISharedContent, SharedContentInfo} from '@models/ISharedContent'
-import {PARTICIPANT_SIZE} from '@models/Participant'
+import {IPlaybackContent, isContentWallpaper, ISharedContent, SharedContentInfo} from '@models/ISharedContent'
+import {PARTICIPANT_SIZE, PlaybackContent} from '@models/Participant'
 import {Roles, TrackKind} from '@models/utils'
 import {assert} from '@models/utils'
 import {getRect, isCircleInRect} from '@models/utils'
@@ -8,8 +8,9 @@ import {default as participantsStore} from '@stores/participants/Participants'
 import participants from '@stores/participants/Participants'
 import {EventEmitter} from 'events'
 import {action, autorun, makeObservable, observable} from 'mobx'
-import {createContent, moveContentToTop} from './SharedContentCreator'
+import {createContent, defaultContent, moveContentToTop} from './SharedContentCreator'
 import {conference} from '@models/conference'
+import _ from 'lodash'
 
 export const CONTENTLOG = false      // show manipulations and sharing of content
 export const contentLog = CONTENTLOG ? console.log : (a:any) => {}
@@ -80,7 +81,7 @@ export class SharedContents extends EventEmitter {
   //  Contents info     used only when a relay server exsits.
   @observable.shallow roomContentsInfo = new Map<string, SharedContentInfo>()
   //  Contents for playback.
-  @observable.shallow playbackContents = new Map<string, ISharedContent>()
+  @observable.shallow playbackContents = new Map<string, IPlaybackContent>()
 
   //  Tracks
   @observable.ref mainScreenStream?: MediaStream
@@ -192,7 +193,7 @@ export class SharedContents extends EventEmitter {
     }
   }
 
-  @action updatePlayback(content: ISharedContent){
+  @action updatePlayback(content: IPlaybackContent){
     content.playback = true
     this.playbackContents.set(content.id, content)
     this.updateAll()
@@ -203,6 +204,15 @@ export class SharedContents extends EventEmitter {
   }
   findPlayback(cid: string){
     return this.playbackContents.get(cid)
+  }
+  getOrCreatePlayback(cid: string): PlaybackContent{
+    let rv = this.findPlayback(cid)
+    if (!rv){
+      rv = _.cloneDeep(defaultContent)
+      rv.id = cid
+      this.playbackContents.set(cid, rv)
+    }
+    return rv
   }
   public find(cid: string) {
     return this.roomContents.get(cid)

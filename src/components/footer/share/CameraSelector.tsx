@@ -3,7 +3,7 @@ import {createContentOfVideo} from '@stores/sharedContents/SharedContentCreator'
 import {makeObservable, observable} from 'mobx'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect} from 'react'
-import {DialogPageProps} from './DialogPage'
+import {DialogPageProps} from './Step'
 import {createLocalCamera} from '@models/conference/faceCamera'
 import {conference} from '@models/conference'
 

@@ -76,7 +76,7 @@ export class Participants {
     return res
   }
 
-  getPlayback(id: string){
+  getOrCreatePlayback(id: string){
     let rv = this.playback.get(id)
     if (!rv){
       rv = new PlaybackParticipant(id)

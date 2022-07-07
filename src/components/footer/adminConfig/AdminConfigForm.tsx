@@ -5,7 +5,6 @@ import Popover from '@material-ui/core/Popover'
 import TextField from '@material-ui/core/TextField'
 import {conference} from '@models/conference'
 import {MessageType} from '@models/conference/DataMessageType'
-import {BlobHeader, player, recorder} from '@models/conference/Recorder'
 import {isDarkColor, rgb2Color} from '@models/utils'
 import {RoomInfo} from '@stores/RoomInfo'
 import contents from '@stores/sharedContents/SharedContents'
@@ -13,6 +12,7 @@ import {Observer} from 'mobx-react-lite'
 import React from 'react'
 import {SketchPicker} from 'react-color'
 import {RemoteTrackLimitControl} from './RemoteTrackLimitControl'
+
 
 export interface AdminConfigFormProps{
   close?: () => void,
@@ -28,11 +28,9 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
   const [clearName, setClearName] = React.useState('')
   const [showFillPicker, setShowFillPicker] = React.useState(false)
   const [showColorPicker, setShowColorPicker] = React.useState(false)
-  const [downloadLink, setDownloadLink] = React.useState('')
-  const fileToPlay = React.useRef<HTMLInputElement>(null)
   const fillButton = React.useRef<HTMLButtonElement>(null)
   const colorButton = React.useRef<HTMLButtonElement>(null)
-  const {roomInfo, participants} = props.stores
+  const {roomInfo} = props.stores
 
   return <Observer>{()=>{
     const textForFill = isDarkColor(roomInfo.backgroundFill) ? 'white' : 'black'
@@ -162,44 +160,6 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
             conference.dataConnection.setRoomProp('backgroundColor', JSON.stringify(roomInfo.backgroundColor))
           }
         }}> Default </Button>&emsp;
-        <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
-          disabled={!roomInfo.passMatched} onClick={() => {
-            participants.local.recording = !participants.local.recording
-            if (participants.local.recording){
-              if (props.close) { props.close() }
-              recorder.start(props.stores)
-            }else{
-              recorder.stop().then((all)=>{
-                setDownloadLink(URL.createObjectURL(all))
-                if (false){
-                  all.slice(0, 4).arrayBuffer().then(buffer => {
-                    const view = new Int32Array(buffer)
-                    const headerLen = view[0]
-                    all.slice(4, 4+headerLen).text().then(text => {
-                      const headers = JSON.parse(text) as BlobHeader[]
-                      console.log(JSON.stringify(headers))
-                      for (const header of headers){ console.log(`blob: ${JSON.stringify(header)}`) }
-                    })
-                  })
-                }
-              })
-            }
-          }}>{participants.local.recording ? 'Stop Recorder' : 'Start Recorder'}</Button>&nbsp;
-        {downloadLink ? <><a href={downloadLink} download="BMRecord.bin">Download</a>&nbsp;</> : undefined}
-        <input type="file" accept="application/octet-stream" ref={fileToPlay} style={{display:'none'}}
-          onChange={ (ev) => {
-            const files = ev.currentTarget?.files
-            if (files && files.length) {
-              if (props.close){ props.close() }
-              player.load(files[0]).then(()=>{
-                player.play()
-              })
-            }
-          }}  />
-        <Button variant="contained" color='primary' style={{textTransform:'none'}}
-          onClick={() => {
-            fileToPlay.current?.click()
-          }}>Play</Button>
       </Box>
 
     </Box>}

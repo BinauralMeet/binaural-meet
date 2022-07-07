@@ -125,23 +125,33 @@ export class ConnectedGroup {
 export class ConnectedGroupForPlayback {
   private readonly disposers: IReactionDisposer[] = []
 
-  constructor(obsLocal: IObservableValue<LocalParticipant>, play: PlaybackParticipant, group: NodeGroupForPlayback) {
+  constructor(obsLocal: IObservableValue<LocalParticipant>, group: NodeGroupForPlayback, participant?: PlaybackParticipant, cid?: string) {
     this.disposers.push(autorun(
       () => {
         const local = obsLocal.get()
         const base = _.clone(local.pose)
         if (local.soundLocalizationBase === 'user') { base.orientation = 0 }
+        let content
+        if (!participant && cid){
+          content = contents.findPlayback(cid)
+        }
         // locate sound source.
-        const relativePose = getRelativePoseFromObject(base, play, undefined)
+        const relativePose = getRelativePoseFromObject(base, participant, content)
         const pose = convertToAudioCoordinate(relativePose)
         group.updatePose(pose)
+        //if (content) console.log(`updatePose: ${JSON.stringify(content)}`)
       },
     ))
 
     this.disposers.push(autorun(
       () => {
         //console.log(`playBlob(${play.audioBlob})`)
-        group.playBlob(play.audioBlob)
+        let content
+        if (!participant && cid){
+          content = contents.findPlayback(cid)
+        }
+        group.playBlob(participant ? participant.audioBlob : content?.audioBlob)
+        //if (content) console.log(`playBlob: ${JSON.stringify(content?.audioBlob)} c:${JSON.stringify(content)}`)
       },
     ))
 

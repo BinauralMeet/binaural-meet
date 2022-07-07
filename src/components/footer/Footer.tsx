@@ -21,9 +21,11 @@ import React, {useEffect, useRef} from 'react'
 import {AdminConfigForm} from './adminConfig/AdminConfigForm'
 import {BroadcastControl} from './BroadcastControl'
 import {FaceControl} from './FaceControl'
-import {FabMain, FabWithTooltip} from './FabEx'
+import {FabMain, FabWithTooltip} from '@components/utils/FabEx'
 import {ShareButton} from './share/ShareButton'
+import {RecorderButton} from './recorder/RecorderButton'
 import {StereoAudioSwitch} from './StereoAudioSwitch'
+import { player, recorder } from '@models/conference/Recorder'
 
 const useStyles = makeStyles({
   root:{
@@ -45,9 +47,17 @@ class Member{
 
 export const Footer: React.FC<BMProps&{height?:number}> = (props) => {
   const {map, participants} = props.stores
-  //  showor not
-  const [show, setShow] = React.useState<boolean>(true)
+  //  show or not
+  const [showFooter, setShowFooterRaw] = React.useState<boolean>(true)
   const [showAdmin, setShowAdmin] = React.useState<boolean>(false)
+  function openAdmin(){
+    map.keyInputUsers.add('adminForm')
+    setShowAdmin(true)
+  }
+  function closeAdmin(){
+    map.keyInputUsers.delete('adminForm')
+    setShowAdmin(false)
+  }
   const [showShare, setShowShareRaw] = React.useState<boolean>(false)
   function setShowShare(flag: boolean) {
     if (flag) {
@@ -57,18 +67,21 @@ export const Footer: React.FC<BMProps&{height?:number}> = (props) => {
     }
     setShowShareRaw(flag)
   }
+  const [showRecorder, setShowRecorderRaw] = React.useState<boolean>(false)
+  function setShowRecorder(flag: boolean) {
+    if (flag) {
+      map.keyInputUsers.add('recorderDialog')
+    }else {
+      map.keyInputUsers.delete('recorderDialog')
+    }
+    setShowRecorderRaw(flag)
+  }
 
   const memberRef = useRef<Member>(new Member())
   const member = memberRef.current
   const containerRef = useRef<HTMLDivElement>(null)
   const adminButton = useRef<HTMLDivElement>(null)
-  //  observers
-  const mute = useObserver(() => ({
-    muteA: participants.local.muteAudio,  //  mic
-    muteS: participants.local.muteSpeaker,  //  speaker
-    muteV: participants.local.muteVideo,  //  camera
-    onStage: participants.local.physics.onStage
-  }))
+
   //  Fab state and menu
   const [deviceInfos, setDeviceInfos] = React.useState<MediaDeviceInfo[]>([])
   const [micMenuEl, setMicMenuEl] = React.useState<Element|null>(null)
@@ -88,9 +101,10 @@ export const Footer: React.FC<BMProps&{height?:number}> = (props) => {
     setShowFooter(mouseOnBottom || !member.touched)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },        [mouseOnBottom, member.touched])
-  function setShowFooter(show: boolean) {
-    if (show) {
-      setShow(true)
+
+  function setShowFooter(showFooter: boolean) {
+    if (showFooter) {
+      setShowFooterRaw(true)
       if (member.timeoutOut) {
         clearTimeout(member.timeoutOut)
         member.timeoutOut = undefined
@@ -99,7 +113,7 @@ export const Footer: React.FC<BMProps&{height?:number}> = (props) => {
     }else {
       if (!member.timeoutOut) {
         member.timeoutOut = setTimeout(() => {
-          setShow(false)
+          setShowFooterRaw(false)
           member.timeoutOut = undefined
         },                             500)
       }
@@ -122,6 +136,14 @@ export const Footer: React.FC<BMProps&{height?:number}> = (props) => {
             e.preventDefault()
             e.stopPropagation()
           }
+          if (e.code === 'KeyR') {  //  Recorder dialog
+            setShowFooter(true)
+            setShowRecorder(true)
+            if (recorder.recording) recorder.stop()
+            if (player.playing) player.stop()
+            e.preventDefault()
+            e.stopPropagation()
+          }
           if (e.code === 'KeyL' || e.code === 'Escape') {  //  Leave from keyboard
             participants.local.physics.awayFromKeyboard = true
           }
@@ -136,171 +158,167 @@ export const Footer: React.FC<BMProps&{height?:number}> = (props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },        [])
 
-  //  render footer
-  return React.useMemo(() => {
-    //  Create menu list for device selection
-    function makeMenuItem(info: MediaDeviceInfo, close:(did:string) => void):JSX.Element {
-      let selected = false
-      if (info.kind === 'audioinput') {
-        selected = info.deviceId === participants.local.devicePreference.audioInputDevice
-      }else if (info.kind === 'audiooutput') {
-        selected = info.deviceId === participants.local.devicePreference.audioOutputDevice
-      }else if (info.kind === 'videoinput') {
-        selected = info.deviceId === participants.local.devicePreference.videoInputDevice
-      }
-
-      return <MenuItem key={info.deviceId}
-        onClick={() => { close(info.deviceId) }}
-        > { (selected ? '✔\u00A0' : '\u2003') + info.label }</MenuItem>  //  \u00A0: NBSP, u2003: EM space.
+  //  Create menu list for device selection
+  function makeMenuItem(info: MediaDeviceInfo, close:(did:string) => void):JSX.Element {
+    let selected = false
+    if (info.kind === 'audioinput') {
+      selected = info.deviceId === participants.local.devicePreference.audioInputDevice
+    }else if (info.kind === 'audiooutput') {
+      selected = info.deviceId === participants.local.devicePreference.audioOutputDevice
+    }else if (info.kind === 'videoinput') {
+      selected = info.deviceId === participants.local.devicePreference.videoInputDevice
     }
 
-    const micMenuItems:JSX.Element[] = [
-      <MenuItem  key = {'broadcast'} ><BroadcastControl {...props} /></MenuItem>]
-    const speakerMenuItems:JSX.Element[] = []
-    const videoMenuItems:JSX.Element[] = [
-      <MenuItem  key = {'faceTrack'} ><FaceControl {...props} /></MenuItem>]
-    deviceInfos.forEach((info) => {
-      if (info.kind === 'audioinput') {
-        const broadcastControl = micMenuItems.pop() as JSX.Element
-        micMenuItems.push(makeMenuItem(info, closeMicMenu))
-        micMenuItems.push(broadcastControl)
-      }
-      if (info.kind === 'audiooutput') {
-        speakerMenuItems.push(makeMenuItem(info, closeSpeakerMenu))
-      }
-      if (info.kind === 'videoinput') {
-        const faceControl = videoMenuItems.pop() as JSX.Element
-        videoMenuItems.push(makeMenuItem(info, closeVideoMenu))
-        videoMenuItems.push(faceControl)
-      }
-    })
-    function closeMicMenu(did:string) {
-      if (did) {
-        participants.local.devicePreference.audioInputDevice = did
-        participants.local.saveMediaSettingsToStorage()
-      }
-      setMicMenuEl(null)
+    return <MenuItem key={info.deviceId}
+      onClick={() => { close(info.deviceId) }}
+      > { (selected ? '✔\u00A0' : '\u2003') + info.label }</MenuItem>  //  \u00A0: NBSP, u2003: EM space.
+  }
+  function getMenuItems(kind:'audioinput' | 'audiooutput' | 'videoinput'){
+    const rv = []
+    let closeMenu
+    let bottomItem
+    if (kind === 'audioinput'){
+      closeMenu = closeMicMenu
+      bottomItem = <MenuItem  key = {'broadcast'} ><BroadcastControl {...props} /></MenuItem>
+    }else if (kind === 'audiooutput'){
+      closeMenu = closeSpeakerMenu
+    }else{
+      closeMenu = closeVideoMenu
+      bottomItem = <MenuItem  key = {'faceTrack'} ><FaceControl {...props} /></MenuItem>
     }
-    function closeSpeakerMenu(did:string) {
-      if (did) {
-        participants.local.devicePreference.audioOutputDevice = did
-        participants.local.saveMediaSettingsToStorage()
+    for (const info of deviceInfos){
+      if (info.kind === kind) {
+        rv.push(makeMenuItem(info, closeMenu))
       }
-      setSpeakerMenuEl(null)
     }
-    function closeVideoMenu(did:string) {
-      if (did) {
-        participants.local.devicePreference.videoInputDevice = did
-        participants.local.saveMediaSettingsToStorage()
-      }
-      setVideoMenuEl(null)
+    if (bottomItem) rv.push(bottomItem)
+    return rv
+  }
+  function closeMicMenu(did:string) {
+    if (did) {
+      participants.local.devicePreference.audioInputDevice = did
+      participants.local.saveMediaSettingsToStorage()
     }
+    setMicMenuEl(null)
+  }
+  function closeSpeakerMenu(did:string) {
+    if (did) {
+      participants.local.devicePreference.audioOutputDevice = did
+      participants.local.saveMediaSettingsToStorage()
+    }
+    setSpeakerMenuEl(null)
+  }
+  function closeVideoMenu(did:string) {
+    if (did) {
+      participants.local.devicePreference.videoInputDevice = did
+      participants.local.saveMediaSettingsToStorage()
+    }
+    setVideoMenuEl(null)
+  }
 
-    //  Device list update when the user clicks to show the menu
-    const fabSize = props.height
-    const iconSize = props.height ? props.height * 0.7 : 36
-    function updateDevices(ev:React.PointerEvent | React.MouseEvent | React.TouchEvent) {
-      navigator.mediaDevices.enumerateDevices()
-      .then(setDeviceInfos)
-      .catch(() => { console.log('Device enumeration error') })
-    }
+  //  Device list update when the user clicks to showFooter the menu
+  function updateDevices(ev:React.PointerEvent | React.MouseEvent | React.TouchEvent) {
+    navigator.mediaDevices.enumerateDevices()
+    .then(setDeviceInfos)
+    .catch(() => { console.log('Device enumeration error') })
+  }
 
-    function openAdmin(){
-      map.keyInputUsers.add('adminForm')
-      setShowAdmin(true)
-    }
-    function closeAdmin(){
-      map.keyInputUsers.delete('adminForm')
-      setShowAdmin(false)
-    }
+  //  observer
+  const mute = useObserver(() => ({
+    muteA: participants.local.muteAudio,  //  mic
+    muteS: participants.local.muteSpeaker,  //  speaker
+    muteV: participants.local.muteVideo,  //  camera
+    onStage: participants.local.physics.onStage
+  }))
+  const fabSize = props.height
+  const iconSize = props.height ? props.height * 0.7 : 36
 
-    return <div ref={containerRef} className={classes.root}>
-      <Collapse in={show} classes={classes}>
-        <StereoAudioSwitch size={fabSize} iconSize={iconSize} {...props}/>
-        <FabMain size={fabSize} color={mute.muteS ? 'primary' : 'secondary' }
-          aria-label="speaker" onClick={() => {
-            participants.local.muteSpeaker = !mute.muteS
-            if (participants.local.muteSpeaker) {
-              participants.local.muteAudio = true
-            }
-            participants.local.saveMediaSettingsToStorage()
-          }}
-          onClickMore = { (ev) => {
-            updateDevices(ev)
-            setSpeakerMenuEl(ev.currentTarget)
-          }}
-          >
-          {mute.muteS ? <SpeakerOffIcon style={{width:iconSize, height:iconSize}} />
-            : <SpeakerOnIcon style={{width:iconSize, height:iconSize}} /> }
-        </FabMain>
-        <Menu anchorEl={speakerMenuEl} keepMounted={true}
-          open={Boolean(speakerMenuEl)} onClose={() => { closeSpeakerMenu('') }}>
-          {speakerMenuItems}
-        </Menu>
-
-        <FabWithTooltip size={fabSize} color={mute.muteA ? 'primary' : 'secondary' } aria-label="mic"
-          title = {acceleratorText2El(t('ttMicMute'))}
-          onClick = { () => {
-            participants.local.muteAudio = !mute.muteA
-            if (!participants.local.muteAudio) {
-              participants.local.muteSpeaker = false
-            }
-            participants.local.saveMediaSettingsToStorage()
-          }}
-          onClickMore = { (ev) => {
-            updateDevices(ev)
-            setMicMenuEl(ev.currentTarget)
-          } }
-          >
-          {mute.muteA ? <MicOffIcon style={{width:iconSize, height:iconSize}} /> :
-            mute.onStage ?
-              <Icon icon={megaphoneIcon} style={{width:iconSize, height:iconSize}} color="gold" />
-              : <MicIcon style={{width:iconSize, height:iconSize}} /> }
-        </FabWithTooltip>
-        <Menu anchorEl={micMenuEl} keepMounted={true}
-          open={Boolean(micMenuEl)} onClose={() => { closeMicMenu('') }}>
-          {micMenuItems}
-        </Menu>
-
-        <FabMain size={fabSize} color={mute.muteV ? 'primary' : 'secondary'} aria-label="camera"
-          onClick = { () => {
-            participants.local.muteVideo = !mute.muteV
-            participants.local.saveMediaSettingsToStorage()
-          }}
-          onClickMore = { (ev) => {
-            updateDevices(ev)
-            setVideoMenuEl(ev.currentTarget)
-          } }
+  return <div ref={containerRef} className={classes.root}>
+    <Collapse in={showFooter} classes={classes}>
+      <StereoAudioSwitch size={fabSize} iconSize={iconSize} {...props}/>
+      <FabMain size={fabSize} color={mute.muteS ? 'primary' : 'secondary' }
+        aria-label="speaker" onClick={() => {
+          participants.local.muteSpeaker = !mute.muteS
+          if (participants.local.muteSpeaker) {
+            participants.local.muteAudio = true
+          }
+          participants.local.saveMediaSettingsToStorage()
+        }}
+        onClickMore = { (ev) => {
+          updateDevices(ev)
+          setSpeakerMenuEl(ev.currentTarget)
+        }}
         >
-          {mute.muteV ? <VideoOffIcon style={{width:iconSize, height:iconSize}} />
-            : <VideoIcon style={{width:iconSize, height:iconSize}} /> }
-        </FabMain>
-        <Menu anchorEl={videoMenuEl} keepMounted={true}
-          open={Boolean(videoMenuEl)} onClose={() => { closeVideoMenu('') }}>
-          {videoMenuItems}
-        </Menu>
+        {mute.muteS ? <SpeakerOffIcon style={{width:iconSize, height:iconSize}} />
+          : <SpeakerOnIcon style={{width:iconSize, height:iconSize}} /> }
+      </FabMain>
+      {speakerMenuEl ? <Menu anchorEl={speakerMenuEl} keepMounted={true}
+        open={Boolean(speakerMenuEl)} onClose={() => { closeSpeakerMenu('') }}>
+        {getMenuItems('audiooutput')}
+      </Menu> : undefined}
 
-        <ShareButton {...props} size={fabSize} iconSize={iconSize} showDialog={showShare}
-          setShowDialog={setShowShare} />
+      <FabWithTooltip size={fabSize} color={mute.muteA ? 'primary' : 'secondary' } aria-label="mic"
+        title = {acceleratorText2El(t('ttMicMute'))}
+        onClick = { () => {
+          participants.local.muteAudio = !mute.muteA
+          if (!participants.local.muteAudio) {
+            participants.local.muteSpeaker = false
+          }
+          participants.local.saveMediaSettingsToStorage()
+        }}
+        onClickMore = { (ev) => {
+          updateDevices(ev)
+          setMicMenuEl(ev.currentTarget)
+        } }
+        >
+        {mute.muteA ? <MicOffIcon style={{width:iconSize, height:iconSize}} /> :
+          mute.onStage ?
+            <Icon icon={megaphoneIcon} style={{width:iconSize, height:iconSize}} color="gold" />
+            : <MicIcon style={{width:iconSize, height:iconSize}} /> }
+      </FabWithTooltip>
+      {micMenuEl ? <Menu anchorEl={micMenuEl} keepMounted={true}
+        open={Boolean(micMenuEl)} onClose={() => { closeMicMenu('') }}>
+        {getMenuItems('audioinput')}
+      </Menu> : undefined}
 
-        <ErrorDialog {...props}/>
+      <FabMain size={fabSize} color={mute.muteV ? 'primary' : 'secondary'} aria-label="camera"
+        onClick = { () => {
+          participants.local.muteVideo = !mute.muteV
+          participants.local.saveMediaSettingsToStorage()
+        }}
+        onClickMore = { (ev) => {
+          updateDevices(ev)
+          setVideoMenuEl(ev.currentTarget)
+        } }
+      >
+        {mute.muteV ? <VideoOffIcon style={{width:iconSize, height:iconSize}} />
+          : <VideoIcon style={{width:iconSize, height:iconSize}} /> }
+      </FabMain>
+      {videoMenuEl ? <Menu anchorEl={videoMenuEl} keepMounted={true}
+        open={Boolean(videoMenuEl)} onClose={() => { closeVideoMenu('') }}>
+        {getMenuItems('videoinput')}
+      </Menu> : undefined}
 
-        <FabMain size={fabSize} onClick={openAdmin} divRef={adminButton}
-          style={{marginLeft:'auto', marginRight:10, opacity:0.1}}>
-          <SettingsIcon style={{width:iconSize, height:iconSize}} />
-        </FabMain>
-        <Popover open={showAdmin} onClose={closeAdmin}
-          anchorEl={adminButton.current} anchorOrigin={{vertical:'top', horizontal:'left'}}
-          anchorReference = "anchorEl" >
-          <AdminConfigForm close={closeAdmin} stores={props.stores}/>
-        </Popover>
-      </Collapse>
-    </div >
-  },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [mute.muteA, mute.muteS, mute.muteV, mute.onStage,
-    show, showAdmin, showShare, micMenuEl, speakerMenuEl, videoMenuEl, deviceInfos]
+      <ShareButton {...props} size={fabSize} iconSize={iconSize} showDialog={showShare}
+        setShowDialog={setShowShare} />
 
-    )
+      <ErrorDialog {...props}/>
+
+      <div style={{marginLeft:'auto', marginRight:0, whiteSpace:'nowrap'}}>
+      <RecorderButton {...props} size={fabSize} iconSize={iconSize} showDialog={showRecorder}
+        setShowDialog={setShowRecorder} />
+
+      <FabMain size={fabSize} onClick={openAdmin} divRef={adminButton}
+        style={{marginRight:10, opacity:0.1}}>
+        <SettingsIcon style={{width:iconSize, height:iconSize}} />
+      </FabMain>
+      </div>
+      {showAdmin ? <Popover open={showAdmin} onClose={closeAdmin}
+        anchorEl={adminButton.current} anchorOrigin={{vertical:'top', horizontal:'left'}}
+        anchorReference = "anchorEl" >
+        <AdminConfigForm close={closeAdmin} stores={props.stores}/>
+      </Popover> : undefined}
+    </Collapse>
+  </div>
 }
 Footer.displayName = 'Footer'

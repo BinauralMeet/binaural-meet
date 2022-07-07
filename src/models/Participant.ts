@@ -18,6 +18,11 @@ export interface PlaybackParticipant extends ParticipantBase {
   videoBlob?: Blob
 }
 
+export interface PlaybackContent extends ISharedContent {
+  audioBlob?: Blob
+  videoBlob?: Blob
+}
+
 export interface RemoteParticipant extends ParticipantBase {
   tracks: Tracks
   informationReceived: boolean

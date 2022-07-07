@@ -1,5 +1,6 @@
 import {BMProps} from '@components/utils'
-import {Step} from './Step'
+
+export type Step = 'menu' | 'record' | 'none'
 
 export interface DialogPageProps extends BMProps {
   setStep: (step: Step) => void

@@ -10,7 +10,7 @@ import {isChromium} from '@models/utils'
 import participants from '@stores/participants/Participants'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
-import {FabWithTooltip} from './FabEx'
+import {FabWithTooltip} from '@components/utils/FabEx'
 import Button from '@material-ui/core/Button'
 
 export const SoundLocalizationSetting: React.FC<{}> = () => {

@@ -3,7 +3,7 @@ import {createContentOfImage} from '@stores/sharedContents/SharedContentCreator'
 import sharedContents from '@stores/sharedContents/SharedContents'
 import {DropzoneArea} from 'material-ui-dropzone'
 import React, {useState, useEffect} from 'react'
-import {DialogPageProps} from './DialogPage'
+import {DialogPageProps} from './Step'
 import {Input} from './Input'
 import Box from "@material-ui/core/Box";
 import Radio from "@material-ui/core/Radio";

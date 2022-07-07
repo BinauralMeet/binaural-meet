@@ -55,7 +55,6 @@ export const ConnectionQualityDialog: React.FC<ConnectionQualityDialogProps>
   = (props: ConnectionQualityDialogProps) => {
   const {t} = useTranslation()
   const stat = useObserver<TransportStat|undefined>(()=> (props.stat ? {...props.stat} : undefined))
-  const streams = stat?.streams
 
   return <Popover open={props.open} anchorEl={props.anchorEl} >
     <DialogTitle>

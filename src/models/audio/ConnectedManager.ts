@@ -1,5 +1,5 @@
-import { ISharedContent } from '@models/ISharedContent'
-import {PlaybackParticipant, RemoteParticipant} from '@models/Participant'
+import { IPlaybackContent, ISharedContent } from '@models/ISharedContent'
+import {PlaybackContent, PlaybackParticipant, RemoteParticipant} from '@models/Participant'
 import {urlParameters} from '@models/url'
 import {diffMap} from '@models/utils'
 import participants from '@stores/participants/Participants'
@@ -17,6 +17,7 @@ export class ConnectedManager {
   private remotesMemo = new Map<string, RemoteParticipant>()
   private playbacksMemo = new Map<string, PlaybackParticipant>()
   private contentsMemo = new Map<string, ISharedContent>()
+  private playbackContentsMemo = new Map<string, PlaybackContent>()
 
   public setAudioOutput(deviceId: string) {
     this.manager.setAudioOutput(deviceId)
@@ -26,6 +27,7 @@ export class ConnectedManager {
 
     autorun(this.onRemotesChange)
     autorun(this.onPlaybacksChange)
+    autorun(this.onPlaybackContentsChange)
     autorun(this.onScreenContentsChange)
     autorun(
       () => {
@@ -53,6 +55,15 @@ export class ConnectedManager {
     this.playbacksMemo = newPlaybacks
     //  console.log('Update connectedGroups:', this.connectedGroups)
   }
+  private onPlaybackContentsChange = () => {
+    const newPlaybackContents = new Map(contents.playbackContents)
+    const added = diffMap(newPlaybackContents, this.playbackContentsMemo)
+    const removed = diffMap(this.playbackContentsMemo, newPlaybackContents)
+    removed.forEach(this.removePlayback)
+    added.forEach(this.addPlaybackContent)
+    this.playbackContentsMemo = newPlaybackContents
+    //  console.log('Update connectedGroups:', this.connectedGroups)
+  }
 
   private onScreenContentsChange = () => {
     const audioRemoteContents = contents.getRemoteRtcContentIds().filter(cid => contents.getContentTrack(cid, 'audio'))
@@ -64,7 +75,7 @@ export class ConnectedManager {
     this.contentsMemo = newRemotes
   }
 
-  private removePlayback = (pp: PlaybackParticipant) => {
+  private removePlayback = (pp: PlaybackParticipant | IPlaybackContent) => {
     const id = pp.id
     this.connectedGroups[id].dispose()
     delete this.connectedGroups[id]
@@ -74,7 +85,13 @@ export class ConnectedManager {
   private addPlayback = (pp: PlaybackParticipant) => {
     const id = pp.id
     const group = this.manager.addPlayback(id)
-    this.connectedGroups[id] = new ConnectedGroupForPlayback(participants.local_, pp, group)
+    this.connectedGroups[id] = new ConnectedGroupForPlayback(participants.local_, group, pp)
+  }
+  private addPlaybackContent = (pc: IPlaybackContent) => {
+    //  console.log(`addPlaybackContent: ${JSON.stringify(pc)}`)
+    const id = pc.id
+    const group = this.manager.addPlayback(id)
+    this.connectedGroups[id] = new ConnectedGroupForPlayback(participants.local_, group, undefined, pc.id)
   }
 
   private removeRemote = (rp: RemoteParticipant) => {
@@ -94,7 +111,6 @@ export class ConnectedManager {
     delete this.connectedGroups[content.id]
     this.manager.removeSpeaker(content.id)
   }
-
   private addContent = (content: ISharedContent) => {
     const group = this.manager.addSpeaker(content.id)
     this.connectedGroups[content.id] = new ConnectedGroup(participants.local_, content, undefined, group)

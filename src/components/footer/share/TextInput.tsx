@@ -1,6 +1,6 @@
 import TextField from '@material-ui/core/TextField'
 import React, {useState} from 'react'
-import {DialogPageProps} from './DialogPage'
+import {DialogPageProps} from './Step'
 import {Input} from './Input'
 
 interface TextInputProps extends DialogPageProps{

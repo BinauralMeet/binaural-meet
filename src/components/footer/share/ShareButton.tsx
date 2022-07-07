@@ -8,7 +8,7 @@ import { conference } from '@models/conference'
 import {useTranslation} from '@models/locales'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
-import {FabWithTooltip} from '../FabEx'
+import {FabWithTooltip} from '@components/utils/FabEx'
 import {ShareDialog} from './ShareDialog'
 
 
@@ -36,7 +36,9 @@ export const ShareButton: React.FC<ShareButtonProps> = (props) => {
         aria-label="share" onClick={() => props.setShowDialog(true)}>
         <Icon icon={windowArrowUp} style={{width:props.iconSize, height:props.iconSize}} />
       </FabWithTooltip>
-      <ShareDialog {...props} open={props.showDialog} onClose={() => props.setShowDialog(false)} />
+      {props.showDialog ?
+        <ShareDialog {...props} open={props.showDialog} onClose={() => props.setShowDialog(false)} />
+        : undefined}
     </div>
   )
 }

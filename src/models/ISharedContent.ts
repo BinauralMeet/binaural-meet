@@ -53,6 +53,10 @@ export interface ISharedContentToSend extends MapObject, SharedContentDataToSend
 }
 export interface ISharedContentToSave extends MapObject, SharedContentDataToSend{
 }
+export interface IPlaybackContent extends ISharedContent{
+  audioBlob?: Blob
+  videoBlob?: Blob
+}
 
 export function contentsToSend(them: ISharedContent[]) {
   for(const content of them){
