@@ -47,8 +47,19 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
           if (oldTrack !== track) {
             const ms = new MediaStream()
             ms.addTrack(track)
-            track.onmute = () => {setMuted(true); console.log('video muted.') }
-            track.onunmute = () => {setMuted(false); console.log('video unmuted.')}
+            let timer = 0
+            track.onmute = () => {
+              timer = window.setTimeout(()=>{setMuted(true)}, 5000)
+              //console.log('video muted.')
+            }
+            track.onunmute = () => {
+              if (timer){
+                window.clearTimeout(timer)
+                timer = 0
+              }
+              setMuted(false)
+              //console.log('video unmuted.')
+            }
             ref.current.srcObject = ms
             ref.current.autoplay = true
           }

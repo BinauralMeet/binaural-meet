@@ -180,7 +180,7 @@ export class Conference {
             const consumers = Array.from(remote.producers.values()).map(p => p.consumer).filter(c => c)
             for(const consumer of consumers){
               this.rtcConnection.resumeConsumer(consumer!.id, remote.peer)
-              console.log(`resumeConsumer finished for ${consumer!.id}.`)
+              //console.log(`resumeConsumer finished for ${consumer!.id}.`)
               consumer!.resume()
             }
           }
@@ -321,7 +321,7 @@ export class Conference {
               producer.consumer = consumer
               if (transport.connectionState === 'connected'){
                 this.rtcConnection.resumeConsumer(consumer.id, producer.peer.peer).then(()=>{
-                  console.log(`resumeConsumer finished for ${consumer.id}.`)
+                  //console.log(`resumeConsumer finished for ${consumer.id}.`)
                 })
               }
               resolve(consumer)
