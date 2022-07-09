@@ -98,6 +98,7 @@ export function DragHandler<ET extends Element>(onDrag:(state:DragState<ET>) => 
       //  console.log(`onPointerOut: ${this.memo.state.dragging}`)
     },
     onPointerUp: (e: React.PointerEvent<ET>) => {
+      (e.target as Element).releasePointerCapture(e.pointerId)
       bindObject.onPointerOut(e)
     },
     onTouchEnd:(e: React.TouchEvent<ET>) => {

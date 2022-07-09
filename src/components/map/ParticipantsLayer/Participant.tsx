@@ -15,6 +15,7 @@ import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {SignalQualityIcon} from './SignalQuality'
+import {VRMAvatar} from '../../avatar/VRMAvatar'
 declare const config:any             //  from ../../config.js included from index.html
 
 interface StyleProps {
@@ -32,6 +33,8 @@ const useStyles = makeStyles({
     position: 'absolute',
     left: props.position[0],
     top: props.position[1],
+    width:0,
+    height:0,
   }),
   pointerRotate: (props: StyleProps) => ({
     transformOrigin: `top left`,
@@ -198,64 +201,64 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
       cx={svgCenter + eyeOffsets[1][0]} fill={color} />
     {participantProps.awayFromKeyboard === true ?
       undefined
-    :<>
-    <circle {...eyeClick} r={0.25 * outerRadius} cy={svgCenter + eyeOffsets[0][1]}
-      cx={svgCenter + eyeOffsets[0][0]} fill="white" />
-    <circle {...eyeClick} r={0.25 * outerRadius} cy={svgCenter + eyeOffsets[1][1]}
-      cx={svgCenter + eyeOffsets[1][0]} fill="white" />
-    <circle {...eyeClick} r={0.14 * outerRadius} cy={svgCenter + eyeOffsets[0][1] + eyeballs[0][1]}
-      cx={svgCenter + eyeOffsets[0][0] +  eyeballs[0][0]} fill="black" />
-    <circle {...eyeClick} r={0.14 * outerRadius} cy={svgCenter + eyeOffsets[1][1] + eyeballs[1][1]}
-      cx={svgCenter + eyeOffsets[1][0] +  eyeballs[1][0]} fill="black" />
-  </>}
-</g>
-const nose = <path d={`M ${svgCenter-noseWidth*outerRadius/2} ${svgCenter-outerRadius*noseStart} `+
-  `Q ${svgCenter} ${svgCenter-outerRadius*(noseStart+noseLength)}` +
-  ` ${svgCenter+noseWidth*outerRadius/2} ${svgCenter-outerRadius*noseStart}`} stroke={textColor} fill={color} />
-//const tail = <path d={`M ${svgCenter-tailWidth*outerRadius} ${svgCenter+outerRadius*tailStart}` +
-//  ` Q ${svgCenter} ${svgCenter+outerRadius*(tailStart+tailLength)}`+
-//  `  ${svgCenter+tailWidth*outerRadius} ${svgCenter+outerRadius*tailStart}`} stroke={textColor} fill={color} />
-const tail = undefined
+      :<>
+      <circle {...eyeClick} r={0.25 * outerRadius} cy={svgCenter + eyeOffsets[0][1]}
+        cx={svgCenter + eyeOffsets[0][0]} fill="white" />
+      <circle {...eyeClick} r={0.25 * outerRadius} cy={svgCenter + eyeOffsets[1][1]}
+        cx={svgCenter + eyeOffsets[1][0]} fill="white" />
+      <circle {...eyeClick} r={0.14 * outerRadius} cy={svgCenter + eyeOffsets[0][1] + eyeballs[0][1]}
+        cx={svgCenter + eyeOffsets[0][0] +  eyeballs[0][0]} fill="black" />
+      <circle {...eyeClick} r={0.14 * outerRadius} cy={svgCenter + eyeOffsets[1][1] + eyeballs[1][1]}
+        cx={svgCenter + eyeOffsets[1][0] +  eyeballs[1][0]} fill="black" />
+    </>}
+  </g>
+  const nose = <path d={`M ${svgCenter-noseWidth*outerRadius/2} ${svgCenter-outerRadius*noseStart} `+
+    `Q ${svgCenter} ${svgCenter-outerRadius*(noseStart+noseLength)}` +
+    ` ${svgCenter+noseWidth*outerRadius/2} ${svgCenter-outerRadius*noseStart}`} stroke={textColor} fill={color} />
+  //const tail = <path d={`M ${svgCenter-tailWidth*outerRadius} ${svgCenter+outerRadius*tailStart}` +
+  //  ` Q ${svgCenter} ${svgCenter+outerRadius*(tailStart+tailLength)}`+
+  //  `  ${svgCenter+tailWidth*outerRadius} ${svgCenter+outerRadius*tailStart}`} stroke={textColor} fill={color} />
+  const tail = undefined
 
-const avatarOuter = config.avatar === 'arrow' ?  //  arrow (circle with a corner) type avatar
-  arrow : flog // Frog type (two eyes) avatar
+  const avatarOuter = config.avatar === 'arrow' ?  //  arrow (circle with a corner) type avatar
+    arrow : flog // Frog type (two eyes) avatar
 
-const outerUnder = <svg
-  className={classes.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO} xmlns="http://www.w3.org/2000/svg">
-  {nodding ? (isNoseUp ? tail : nose) : undefined}
-  <circle r={outerRadius} cy={svgCenter} cx={svgCenter} stroke={isLocal ? textColor : 'none'} fill={color} />
-  {audioMeter}
-  {(!nodding || !isNoseUp) ? avatarOuter : undefined}
-</svg>
+  const outerUnder = <svg
+    className={classes.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO} xmlns="http://www.w3.org/2000/svg">
+    {nodding ? (isNoseUp ? tail : nose) : undefined}
+    <circle r={outerRadius} cy={svgCenter} cx={svgCenter} stroke={isLocal ? textColor : 'none'} fill={color} />
+    {audioMeter}
+    {(!nodding || !isNoseUp) ? avatarOuter : undefined}
+  </svg>
 
-const outerOver = <svg
-  className={classes.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO} xmlns="http://www.w3.org/2000/svg">
-  {isNoseUp ? avatarOuter: undefined}
-  {nodding ? (isNoseUp ? nose : tail) : undefined}
-</svg>
+  const outerOver = <svg
+    className={classes.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO} xmlns="http://www.w3.org/2000/svg">
+    {isNoseUp ? avatarOuter: undefined}
+    {nodding ? (isNoseUp ? nose : tail) : undefined}
+  </svg>
 
-return (
-    <div className={classes.root + ' dragHandle'} onContextMenu={props.onContextMenu}>
-      {shadow}
-      <div className={classes.pointerRotate}>
-        {outerUnder}
-        <div className={classes.avatar}>
-          <Tooltip title={name}>
-            <div>
-              <Avatar {...props} />
-              <SignalQualityIcon className={classes.signalIcon} quality={props.participant.quality} />
-              {headphone ? <HeadsetIcon className={classes.icon} htmlColor="rgba(0, 0, 0, 0.3)" /> : undefined}
-              {speakerMuted ? <SpeakerOffIcon className={classes.icon} color="secondary" /> :
-                (micMuted ? <MicOffIcon className={classes.icon} color="secondary" /> : undefined)}
-              {!micMuted && onStage ? <Icon className={classes.icon} icon={megaphoneIcon} color="gold" /> : undefined }
-              {props.isPlayback ? <PlayArrowIcon className={classes.icon} htmlColor="#0C0" /> : undefined}
-            </div>
-          </Tooltip>
-        </div>
-        {outerOver}
+  const useVrm = participant.information.avatarSrc && participant.information.avatarSrc.slice(-4)==='.vrm'
+  return <div className={classes.root}>
+    {shadow}
+    <div className={classes.pointerRotate}>
+      {outerUnder}
+      <div className={classes.avatar + ' dragHandle'} onContextMenu={props.onContextMenu}>
+        <Tooltip title={name}>
+          <div>
+            <Avatar {...props} />
+            <SignalQualityIcon className={classes.signalIcon} quality={props.participant.quality} />
+            {headphone ? <HeadsetIcon className={classes.icon} htmlColor="rgba(0, 0, 0, 0.3)" /> : undefined}
+            {speakerMuted ? <SpeakerOffIcon className={classes.icon} color="secondary" /> :
+              (micMuted ? <MicOffIcon className={classes.icon} color="secondary" /> : undefined)}
+            {!micMuted && onStage ? <Icon className={classes.icon} icon={megaphoneIcon} color="gold" /> : undefined }
+            {props.isPlayback ? <PlayArrowIcon className={classes.icon} htmlColor="#0C0" /> : undefined}
+          </div>
+        </Tooltip>
       </div>
+      {outerOver}
     </div>
-  )
+    {useVrm ? <VRMAvatar {...props} /> : undefined}
+  </div>
 }
 RawParticipant.displayName = 'RawParticipant'
 

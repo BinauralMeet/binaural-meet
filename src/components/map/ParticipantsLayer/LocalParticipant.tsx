@@ -174,7 +174,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     return rv
   }
   const onDrag = (state:DragState<HTMLDivElement>) => {
-    //  console.log('participant onDrag')
+    //console.log(`participant onDrag s:${state.start} xy:${state.xy} b:${state.buttons} d:${state.dragging}`)
     moveParticipant(state)
   }
   const onKeyTimer = (keys:Set<string>) => {

@@ -67,14 +67,15 @@ export const RawImageAvatar: React.FC<ImageAvatarProps> = (props: ImageAvatarPro
     //console.log(`render ImageAvatar src=${props.avatarSrc}`)
 
     let initial = ''
-    if (!props.avatarSrc){
+    const isImage = props.avatarSrc && props.avatarSrc.slice(-4) !== '.vrm'
+    if (!isImage){
       const nameArray = props.name.split(' ')
       nameArray.forEach(s => initial += s ? s.substring(0,1) : '')
       initial = initial.substring(0,2)
     }
     const size = props.border ? props.size * BORDER_CONTENT : props.size
 
-    return props.avatarSrc ?
+    return isImage ?
       <Avatar src={props.avatarSrc} className={classes.imageAvatar} /> :
       <Avatar className={classes.textAvatar} >
         <div style={{height:size, width:size, textAlign:'center',

@@ -41,6 +41,7 @@ export const ParticipantsLayer: React.FC<MapProps> = (props) => {
 
     return remote.physics.located
   }))
+  ids.sort((a,b) => store.remote.get(a)!.pose.position[1] - store.remote.get(b)!.pose.position[1])
   const localId = useObserver(() => store.localId)
   const remoteElements = ids.map(id => <RemoteParticipant key={id} stores={props.stores}
     participant={store.remote.get(id)!} size={PARTICIPANT_SIZE} />)
