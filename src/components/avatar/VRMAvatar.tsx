@@ -33,7 +33,7 @@ export const VRMAvatar: React.FC<RawParticipantProps> = (props: RawParticipantPr
 
   React.useEffect(()=>{
     if (!ref.current) return
-    console.log(`useEffect for 3js called.`)
+    //console.log(`useEffect for 3js called.`)
     // レンダラーの設定
     const renderer = new THREE.WebGLRenderer({
       antialias: true,

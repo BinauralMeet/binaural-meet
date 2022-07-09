@@ -157,7 +157,7 @@ export class MapData {
       newMat.f = ar[5]
       this.setMatrix(newMat)
       this.setCommittedMatrix(newMat)
-      console.log(`loadMatrixFromStorage() loaded.`)
+      //console.log(`loadMatrixFromStorage() loaded.`)
     }
   }
 }
