@@ -1,6 +1,6 @@
 import {Stores} from '@components/utils'
 import {MapProps } from '@components/utils'
-import {PARTICIPANT_SIZE} from '@models/Participant'
+import {Participant, PARTICIPANT_SIZE} from '@models/Participant'
 import {urlParameters} from '@models/url'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
@@ -34,17 +34,25 @@ const Line: React.FC<LineProps> = (props) => {
   </svg>
 }
 
-export const ParticipantsLayer: React.FC<MapProps> = (props) => {
+export const ParticipantLayer: React.FC<MapProps> = (props) => {
   const store = props.stores.participants
-  const ids = useObserver(() => Array.from(store.remote.keys()).filter((id) => {
-    const remote = store.find(id)!
-
-    return remote.physics.located
-  }))
-  ids.sort((a,b) => store.remote.get(a)!.pose.position[1] - store.remote.get(b)!.pose.position[1])
+  const remotes = useObserver(() => {
+    const rs = Array.from(store.remote.values()).filter(r => r.physics.located)
+    //rs.sort((a,b) => a.pose.position[1] - b!.pose.position[1])
+    return rs
+  })
+  const all = useObserver(()=>{
+    const all:Participant[] = Array.from(remotes)
+    all.push(store.local)
+    all.sort((a,b) => a.pose.position[1] - b!.pose.position[1])
+    for(let i=0; i<all.length; ++i){
+      all[i].zIndex = i+1
+    }
+    return all
+  })
   const localId = useObserver(() => store.localId)
-  const remoteElements = ids.map(id => <RemoteParticipant key={id} stores={props.stores}
-    participant={store.remote.get(id)!} size={PARTICIPANT_SIZE} />)
+  const remoteElements = remotes.map(r => <RemoteParticipant key={r.id} stores={props.stores}
+    participant={r} size={PARTICIPANT_SIZE} />)
   const localElement = (<LocalParticipant key={'local'} participant={store.local}
     size={PARTICIPANT_SIZE} stores={props.stores}/>)
   const lines = useObserver(
@@ -84,4 +92,4 @@ export const ParticipantsLayer: React.FC<MapProps> = (props) => {
   )
 }
 
-ParticipantsLayer.displayName = 'ParticipantsLayer'
+ParticipantLayer.displayName = 'ParticipantsLayer'
