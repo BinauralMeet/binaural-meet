@@ -8,7 +8,7 @@ import {conference} from '@models/conference'
 import { useObserver } from 'mobx-react-lite'
 import errorInfo from '@stores/ErrorInfo'
 import {useTranslation} from '@models/locales'
-import {ConnectionStat} from '@components/map/ParticipantsLayer/SignalQuality'
+import {ConnectionStat} from '@components/map/Participant/SignalQuality'
 
 declare const config:any             //  from ../../config.js included from index.html
 

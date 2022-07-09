@@ -11,6 +11,7 @@ export interface ParticipantBase extends MapObject{
   viewpoint: Viewpoint
   id: string
   information: RemoteInformation|LocalInformation
+  zIndex?: number
 }
 
 export interface PlaybackParticipant extends ParticipantBase {

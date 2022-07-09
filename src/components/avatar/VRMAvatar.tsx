@@ -1,4 +1,4 @@
-import {RawParticipantProps} from '../map/ParticipantsLayer/Participant'
+import {RawParticipantProps} from '../map/Participant/Participant'
 import * as THREE from 'three'
 import {GLTF, GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader'
 import {VRM} from '@pixiv/three-vrm'

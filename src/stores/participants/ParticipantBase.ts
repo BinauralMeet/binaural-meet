@@ -50,6 +50,7 @@ export class TrackStates implements Store<ITrackStates>{
 
 export class ParticipantBase extends MapObject implements Store<IParticipantBase> {
   @observable id = ''
+  @observable zIndex = 0
   @observable.shallow physics = defaultPhysics
   @observable.shallow viewpoint = defaultViewpoint
   @observable.shallow mouse:Mouse = {position:[0, 0], show:false}

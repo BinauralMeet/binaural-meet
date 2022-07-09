@@ -238,27 +238,31 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
   </svg>
 
   const useVrm = participant.information.avatarSrc && participant.information.avatarSrc.slice(-4)==='.vrm'
-  return <div className={classes.root}>
-    {shadow}
-    <div className={classes.pointerRotate}>
-      {outerUnder}
-      <div className={classes.avatar + ' dragHandle'} onContextMenu={props.onContextMenu}>
-        <Tooltip title={name}>
-          <div>
-            <Avatar {...props} />
-            <SignalQualityIcon className={classes.signalIcon} quality={props.participant.quality} />
-            {headphone ? <HeadsetIcon className={classes.icon} htmlColor="rgba(0, 0, 0, 0.3)" /> : undefined}
-            {speakerMuted ? <SpeakerOffIcon className={classes.icon} color="secondary" /> :
-              (micMuted ? <MicOffIcon className={classes.icon} color="secondary" /> : undefined)}
-            {!micMuted && onStage ? <Icon className={classes.icon} icon={megaphoneIcon} color="gold" /> : undefined }
-            {props.isPlayback ? <PlayArrowIcon className={classes.icon} htmlColor="#0C0" /> : undefined}
-          </div>
-        </Tooltip>
+
+  return <>
+    <div className={classes.root} style={{zIndex:isLocal ? 5000 : participant.zIndex}}>
+      {shadow}
+      <div className={classes.pointerRotate}>
+        {outerUnder}
+        <div className={classes.avatar + ' dragHandle'} onContextMenu={props.onContextMenu}>
+          <Tooltip title={name}>
+            <div>
+              <Avatar {...props} />
+              <SignalQualityIcon className={classes.signalIcon} quality={props.participant.quality} />
+              {headphone ? <HeadsetIcon className={classes.icon} htmlColor="rgba(0, 0, 0, 0.3)" /> : undefined}
+              {speakerMuted ? <SpeakerOffIcon className={classes.icon} color="secondary" /> :
+                (micMuted ? <MicOffIcon className={classes.icon} color="secondary" /> : undefined)}
+              {!micMuted && onStage ? <Icon className={classes.icon} icon={megaphoneIcon} color="gold" /> : undefined }
+              {props.isPlayback ? <PlayArrowIcon className={classes.icon} htmlColor="#0C0" /> : undefined}
+            </div>
+          </Tooltip>
+        </div>
+        {outerOver}
       </div>
-      {outerOver}
     </div>
-    {useVrm ? <VRMAvatar {...props} /> : undefined}
-  </div>
+    {useVrm ? <div className={classes.root} style={{zIndex:participant.zIndex + 5000}}>
+      <VRMAvatar {...props} /></div> : undefined}
+  </>
 }
 RawParticipant.displayName = 'RawParticipant'
 
