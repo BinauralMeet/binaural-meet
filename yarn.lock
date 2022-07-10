@@ -1577,6 +1577,21 @@
   dependencies:
     "@types/gapi.client" "*"
 
+"@mediapipe/camera_utils@^0.3.1657298508":
+  version "0.3.1657298508"
+  resolved "https://registry.yarnpkg.com/@mediapipe/camera_utils/-/camera_utils-0.3.1657298508.tgz#fdc8611591b2800d7aff811b8b66f7118f8dbabb"
+  integrity sha512-Gji8iszQ6QMyGU1tIxCVxzWeE5p4SbfCQTxJWdv/aqSoEGhfi272nVRwFVUU3xufQk4iJKWENhTxJ82EYSupRw==
+
+"@mediapipe/drawing_utils@^0.3.1657299202":
+  version "0.3.1657299202"
+  resolved "https://registry.yarnpkg.com/@mediapipe/drawing_utils/-/drawing_utils-0.3.1657299202.tgz#dd98094061bb1e27e01646f97feef0f601e370b9"
+  integrity sha512-2Uuvhr67XxMrVtW6B3uwDKdvXCBTNJx9Mvk7dKgOnSLtf/yOFbtH/PXFJYH6YqICtY8OBbh0ZK6bbjBamtWtDQ==
+
+"@mediapipe/holistic@=0.4.1633559476":
+  version "0.4.1633559476"
+  resolved "https://registry.yarnpkg.com/@mediapipe/holistic/-/holistic-0.4.1633559476.tgz#6f64db7c896ece25335ab56309e222e5c1abe75b"
+  integrity sha512-YyXRhjaCHAc0ibKw5SLhOqQyDo6vsbza3N6Sv8sPBMhlkmcWErCGgfzhxEo6s2xGXvMj8TqyU/Xf6nC3axb6rw==
+
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
   resolved "https://registry.yarnpkg.com/@nodelib/fs.scandir/-/fs.scandir-2.1.5.tgz#7619c2eb21b25483f6d167548b4cfd5a7488c3d5"
@@ -7597,6 +7612,11 @@ jss@10.9.0, jss@^10.5.1:
   dependencies:
     array-includes "^3.1.3"
     object.assign "^4.1.2"
+
+kalidokit@^1.1.5:
+  version "1.1.5"
+  resolved "https://registry.yarnpkg.com/kalidokit/-/kalidokit-1.1.5.tgz#2a21faa308233b66c1bfa4e3b01ff578c420d03e"
+  integrity sha512-cLaPfCK5UB1QUesFSF12s1/ZsOz4FMcaZDqfFoIYYAzouAjzreishAKIMuoN4zhz2KLuJudGKYWVjI+VVb0W1Q==
 
 killable@^1.0.1:
   version "1.0.1"

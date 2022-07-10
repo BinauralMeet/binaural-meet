@@ -2,8 +2,16 @@ import { ISharedContent } from '@models/ISharedContent'
 import {MapObject} from './MapObject'
 import {findReverseColorRGB, findTextColorRGB, getRandomColorRGB, rgb2Color} from './utils/color'
 import {Mouse} from './utils/coordinates'
+import * as Kalidokit from 'kalidokit'
 
 export const PARTICIPANT_SIZE = 60
+
+export interface VRMRigs{
+  face?:Kalidokit.TFace,
+  pose?:Kalidokit.TPose,
+  leftHand?: Kalidokit.THand<'Left'>
+  rightHand?: Kalidokit.THand<'Right'>
+}
 
 export interface ParticipantBase extends MapObject{
   physics: Physics
@@ -11,7 +19,8 @@ export interface ParticipantBase extends MapObject{
   viewpoint: Viewpoint
   id: string
   information: RemoteInformation|LocalInformation
-  zIndex?: number
+  zIndex: number
+  vrmRigs?: VRMRigs
 }
 
 export interface PlaybackParticipant extends ParticipantBase {

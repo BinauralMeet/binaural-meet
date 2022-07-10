@@ -15,6 +15,7 @@ export const PoseMessageType = {
 export const StoredMessageType = {
   ...ParticipantMessageType,
   PARTICIPANT_INFO: 'p_info',                   //  RemoteInformation, -> presence
+  PARTICIPANT_VRMRIG: 'p_vrm',
 }
 
 export type StoredMessageKeys = keyof typeof StoredMessageType

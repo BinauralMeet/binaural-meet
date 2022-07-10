@@ -1,7 +1,7 @@
 import {
   defaultInformation, defaultPhysics, defaultRemoteInformation,
   defaultViewpoint, LocalInformation,
-  ParticipantBase as IParticipantBase, Physics, RemoteInformation, Tracks, TrackStates as ITrackStates
+  ParticipantBase as IParticipantBase, Physics, RemoteInformation, Tracks, TrackStates as ITrackStates, VRMRigs
 } from '@models/Participant'
 import {findReverseColorRGB, findTextColorRGB, getRandomColorRGB, rgb2Color} from '@models/utils'
 import {Mouse} from '@models/utils'
@@ -70,6 +70,7 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
     return !this.muteVideo
   }
   @observable quality:number|undefined = undefined
+  @observable.ref vrmRigs:VRMRigs|undefined = undefined
 
   constructor(isLocal=false) {
     super()

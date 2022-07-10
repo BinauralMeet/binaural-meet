@@ -3,6 +3,7 @@ import {manager as audioManager} from '@models/audio'
 import {urlParameters} from '@models/url'
 import participants from '@stores/participants/Participants'
 import {autorun} from 'mobx'
+import {clearFaceTrack as clearMP, createLocalCamera as createCameraMP} from './mediapipeCamera'
 import {clearFaceTrack, createLocalCamera} from './faceCamera'
 import {MSTrack} from '@models/utils'
 import {conference} from '@models/conference'
@@ -65,9 +66,11 @@ function isCameraMuted(){
   return participants.local.muteVideo || participants.local.physics.awayFromKeyboard ||
     !participants.localId || urlParameters.testBot !== null
 }
+let isLastVrm = participants.local.information.avatarSrc.slice(-4) === '.vrm'
 autorun(() => {
   const did = participants.local.devicePreference.videoInputDevice
   const faceTrack = participants.local.information.faceTrack
+  const isVrm = participants.local.information.avatarSrc.slice(-4) === '.vrm'
   if (isCameraMuted()) {
     if (DELETE_TRACK){
       conference.setLocalCameraTrack(undefined).then(track => track?.track.stop())
@@ -75,16 +78,29 @@ autorun(() => {
       const track = conference.getLocalCameraTrack()
       if (track) { conference.removeLocalTrack(track) }
     }
-    clearFaceTrack()
+    if (isLastVrm) clearMP()
+    else clearFaceTrack()
   }else{
     const track = conference.getLocalCameraTrack()
     if (track && track.deviceId === did) { return }
-    createLocalCamera(faceTrack).then((track)=>{
-      if (!isCameraMuted()){
-        conference.setLocalCameraTrack(track)
-      }else{
-        track?.track.stop()
-      }
-    }).finally(getNotificationPermission)
+    if (isVrm){
+      createCameraMP(faceTrack).then((track)=>{
+        if (!isCameraMuted()){
+          conference.setLocalCameraTrack(track)
+          isLastVrm = true
+        }else{
+          track?.track.stop()
+        }
+      }).finally(getNotificationPermission)
+    }else{
+      createLocalCamera(faceTrack).then((track)=>{
+        if (!isCameraMuted()){
+          conference.setLocalCameraTrack(track)
+          isLastVrm = false
+        }else{
+          track?.track.stop()
+        }
+      }).finally(getNotificationPermission)
+    }
   }
 })

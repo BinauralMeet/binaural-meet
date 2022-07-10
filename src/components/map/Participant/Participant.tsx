@@ -237,7 +237,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
     {nodding ? (isNoseUp ? nose : tail) : undefined}
   </svg>
 
-  const useVrm = participant.information.avatarSrc && participant.information.avatarSrc.slice(-4)==='.vrm'
+  const useVrm = participant.information.avatarSrc && participant.information.avatarSrc.slice(-4) === '.vrm'
 
   return <>
     <div className={classes.root} style={{zIndex:isLocal ? 5000 : participant.zIndex}}>

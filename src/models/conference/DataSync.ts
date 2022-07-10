@@ -3,7 +3,7 @@ import {ISharedContent, contentsToSend, ISharedContentToSend, receiveToContents}
 import {CONTENT_OUT_OF_RANGE_VALUE} from '@models/ISharedContent'
 import { KickTime } from '@models/KickTime'
 import {t} from '@models/locales'
-import {defaultRemoteInformation, PARTICIPANT_SIZE, RemoteInformation, TrackStates, Viewpoint} from '@models/Participant'
+import {defaultRemoteInformation, PARTICIPANT_SIZE, RemoteInformation, TrackStates, Viewpoint, VRMRigs} from '@models/Participant'
 import {urlParameters} from '@models/url'
 import {mouse2Str, pose2Str, str2Mouse, str2Pose} from '@models/utils'
 import {normV, subV2} from '@models/utils'
@@ -81,6 +81,10 @@ export class DataSync{
     this.connection.sendMessage(MessageType.PARTICIPANT_TRACKLIMITS, limits ? limits :
       [participants.local.remoteVideoLimit, participants.local.remoteAudioLimit],  to ? to : undefined)
   }
+  //  Send vrm rig
+  private sendVrmRig(){
+    this.connection.sendMessage(MessageType.PARTICIPANT_VRMRIG, participants.local.vrmRigs)
+  }
   //  Send content update request to pid
   sendContentUpdateRequest(pid: string, updatedContents: ISharedContent[]) {
     const contentsDataToSend = contentsToSend(updatedContents)
@@ -102,6 +106,12 @@ export class DataSync{
   private onParticipantTrackLimits(limits:number[]){
     participants.local.remoteVideoLimit = limits[0]
     participants.local.remoteAudioLimit = limits[1]
+  }
+  private onParticipantVrmRig(id:string|undefined, rig:VRMRigs){
+    if (id){
+      const remote = participants.getRemote(id)
+      if (remote) remote.vrmRigs = rig
+    }
   }
   private onParticipantLeft(id: string){
     chat.participantLeft(id)
@@ -330,7 +340,8 @@ export class DataSync{
     this.disposers.push(autorun(this.sendPoseMessageNow.bind(this, false)))
     this.disposers.push(autorun(this.sendMouseMessageNow.bind(this)))
     this.disposers.push(autorun(this.sendViewpointNow.bind(this)))
-    this.disposers.push(autorun(() => { this.sendOnStage() }))
+    this.disposers.push(autorun(this.sendOnStage.bind(this)))
+    this.disposers.push(autorun(this.sendVrmRig.bind(this)))
 
     const sendYarnPhones = () => {
       if (participants.yarnPhoneUpdated) {
@@ -367,6 +378,7 @@ export class DataSync{
         case MessageType.PARTICIPANT_VIEWPOINT: this.onParticipantViewpoint(msg.p, JSON.parse(msg.v)); break
         case MessageType.AUDIO_LEVEL: this.onParticipantAudioLevel(msg.p, JSON.parse(msg.v)); break
         case MessageType.PARTICIPANT_TRACKLIMITS: this.onParticipantTrackLimits(JSON.parse(msg.v)); break
+        case MessageType.PARTICIPANT_VRMRIG: this.onParticipantVrmRig(msg.p, JSON.parse(msg.v)); break
         case MessageType.YARN_PHONE: this.onYarnPhone(msg.p, JSON.parse(msg.v)); break
         case MessageType.RELOAD_BROWSER: this.onReloadBrower(); break
         case MessageType.MUTE_VIDEO: this.onMuteVideo(JSON.parse(msg.v)); break
