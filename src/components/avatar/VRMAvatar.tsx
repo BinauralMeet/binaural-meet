@@ -6,7 +6,6 @@ import React from 'react'
 import { PARTICIPANT_SIZE, VRMRigs } from '@models/Participant'
 import { autorun } from 'mobx'
 import * as Kalidokit from 'kalidokit'
-import {NormalizedLandmarkList} from '@mediapipe/holistic'
 
 
 class PromiseGLTFLoader extends GLTFLoader {
@@ -212,12 +211,12 @@ function rigFace(vrm:VRM, riggedFace:Kalidokit.TFace){
 
     // Simple example without winking. Interpolate based on old blendshape, then stabilize blink with `Kalidokit` helper function.
     // for VRM, 1 is closed, 0 is open.
-    riggedFace.eye.l = lerp(clamp(1 - riggedFace.eye.l, 0, 1),Blendshape.getValue(PresetName.Blink)!, .5)
-    riggedFace.eye.r = lerp(clamp(1 - riggedFace.eye.r, 0, 1),Blendshape.getValue(PresetName.Blink)!, .5)
-    riggedFace.eye = Kalidokit.Face.stabilizeBlink(riggedFace.eye, riggedFace.head.y)
-    //console.log(`face eye:${riggedFace.eye.l},${riggedFace.eye.r}`, riggedFace)
-    //Blendshape.setValue(PresetName.Blink, riggedFace.eye.l);
-    Blendshape.setValue(PresetName.Blink, 0);
+    //console.log(`face eye:${riggedFace.eye.l},${riggedFace.eye.r}`)
+    const eyeL = clamp(1-riggedFace.eye.l, 0, 1)
+    const eyeR = clamp(1-riggedFace.eye.r, 0, 1)
+    // riggedFace.eye = Kalidokit.Face.stabilizeBlink(riggedFace.eye, riggedFace.head.y)
+    Blendshape.setValue(PresetName.BlinkL, eyeL);
+    Blendshape.setValue(PresetName.BlinkR, eyeR);
 
     // Interpolate and set mouth blendshapes
     Blendshape.setValue(PresetName.I, lerp(riggedFace.mouth.shape.I,Blendshape.getValue(PresetName.I)!, .5));
