@@ -170,7 +170,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
         <stop offset="100%" stopColor="rgb(0,0,0,0)"/>
       </radialGradient>
     </defs>
-    <circle r={outerRadius * shadowScale} cy={svgCenter+shadowOffset} cx={svgCenter+shadowOffset}
+    <circle r={outerRadius * shadowScale} cy={svgCenter-shadowOffset} cx={svgCenter-shadowOffset}
       stroke="none" fill={'url(#grad)'} />
   </svg>
 
