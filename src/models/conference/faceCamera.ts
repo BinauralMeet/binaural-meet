@@ -138,7 +138,7 @@ function moveAvatar(face?: WithFaceLandmarks<{detection:FaceDetection}, FaceLand
 
 var canvasEl: HTMLCanvasElement|undefined
 var loaded = false
-export function clearFaceTrack(){
+export function stopFaceTrack(){
   if (interval){
     clearInterval(interval)
     interval = undefined
@@ -194,7 +194,7 @@ export function createLocalCamera(faceTrack: boolean, did?:string) {
         }
         resolutionFunc(track)
       }else{
-        clearFaceTrack()
+        stopFaceTrack()
         const track:MSTrack = {
           track: ms.getVideoTracks()[0],
           peer: participants.local.id,

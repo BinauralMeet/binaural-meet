@@ -276,8 +276,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
 export const MemoedLocalParticipant = (props: ParticipantProps) =>
   React.useMemo(() => <LocalParticipant {...props} />,
   //  eslint-disable-next-line react-hooks/exhaustive-deps
-  [props.size, props.participant.id,
-    props.participant.information.avatarSrc,
+  [props.size, props.participant.information.avatarSrc,
     props.participant.information.color,
     props.participant.information.name,
     props.participant.information.textColor,

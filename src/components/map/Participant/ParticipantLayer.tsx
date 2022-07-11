@@ -38,7 +38,7 @@ export const ParticipantLayer: React.FC<MapProps> = (props) => {
   const store = props.stores.participants
   const remotes = useObserver(() => {
     const rs = Array.from(store.remote.values()).filter(r => r.physics.located)
-    const all:Participant[] = rs
+    const all:Participant[] = Array.from(rs)
     all.push(store.local)
     all.sort((a,b) => a.pose.position[1] - b!.pose.position[1])
     for(let i=0; i<all.length; ++i){

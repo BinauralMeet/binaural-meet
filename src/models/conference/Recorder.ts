@@ -1,6 +1,6 @@
 import {Stores} from '@components/utils'
 import {contentsToSend, IPlaybackContent} from '@models/ISharedContent'
-import {ParticipantBase, RemoteInformation, Viewpoint} from '@models/Participant'
+import {ParticipantBase, RemoteInformation, Viewpoint, VRMRigs} from '@models/Participant'
 import {mouse2Str, pose2Str, str2Mouse, str2Pose} from '@models/utils'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import { TrackStates } from '@stores/participants/ParticipantBase'
@@ -184,7 +184,7 @@ export class Recorder{
     dbRecords.add(dbRec)
     //  list all track related to participants and contents
     this.disposers.push(autorun(()=>{
-      this.updateMediaRecorders()
+      this.observeAndRecordMedia()
     }))
 
     //  Record all contents
@@ -230,6 +230,21 @@ export class Recorder{
 
     return promise
   }
+  //  called by DataConnection.ts
+  public recordMessage(msg:BMMessage){
+    if (this.recording && this.MessageTypesToRecord.has(msg.t)){
+      if (msg.t === MessageType.PARTICIPANT_MOUSE || msg.t === MessageType.PARTICIPANT_POSE){
+        if (this.lastMessageValues.get(msg.t) !== msg.v){
+          this.lastMessageValues.set(msg.t, msg.v)
+          this.messages.push(new Message(msg))
+        }
+      }else{
+        this.messages.push(new Message(msg))
+      }
+    }
+  }
+
+
   //  incremental save to indexedDB
   private saveDiffToDB(){
     const promise = new Promise<void>((resolve)=>{
@@ -365,20 +380,6 @@ export class Recorder{
     return promise
   }
 
-  //  called by DataConnection.ts
-  public recordMessage(msg:BMMessage){
-    if (this.recording && this.MessageTypesToRecord.has(msg.t)){
-      if (msg.t === MessageType.PARTICIPANT_MOUSE || msg.t === MessageType.PARTICIPANT_POSE){
-        if (this.lastMessageValues.get(msg.t) !== msg.v){
-          this.lastMessageValues.set(msg.t, msg.v)
-          this.messages.push(new Message(msg))
-        }
-      }else{
-        this.messages.push(new Message(msg))
-      }
-    }
-  }
-
   private stopMediaRecordings(){
     this.recording = false
     let count = 0
@@ -508,7 +509,7 @@ export class Recorder{
     return promise
   }
 
-  private updateMediaRecorders(){
+  private observeAndRecordMedia(){
     const remains = new Set(this.medias.keys()) //  medias which should be deleted
     //  Participants
     const all:(RemoteParticipant|LocalParticipant)[] = Array.from(participants.remote.values())
@@ -765,6 +766,7 @@ class Player{
         case MessageType.PARTICIPANT_TRACKSTATES: Object.assign(p.trackStates, v as TrackStates); break
         case MessageType.PARTICIPANT_VIEWPOINT: Object.assign(p.viewpoint, v as Viewpoint); break
         case MessageType.PARTICIPANT_ON_STAGE: p.physics.onStage = v as boolean; break
+        case MessageType.PARTICIPANT_VRMRIG: p.vrmRigs = v as VRMRigs; break
         default: notHandled = true; break
       }
     }

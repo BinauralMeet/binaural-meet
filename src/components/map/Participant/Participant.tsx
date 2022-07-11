@@ -10,7 +10,7 @@ import PlayArrowIcon from '@material-ui/icons/PlayArrow'
 import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
 import {addV2, mulV2, normV, rotateVector2DByDegree, subV2} from '@models/utils'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
-import { PlaybackParticipant } from '@stores/participants/PlaybackParticipant'
+import {PlaybackParticipant} from '@stores/participants/PlaybackParticipant'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
@@ -261,7 +261,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
       </div>
     </div>
     {useVrm ? <div className={classes.root} style={{zIndex:participant.zIndex + 5000}}>
-      <VRMAvatar {...props} /></div> : undefined}
+      <VRMAvatar participant={participant} /></div> : undefined}
   </>
 }
 RawParticipant.displayName = 'RawParticipant'

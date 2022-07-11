@@ -1,9 +1,8 @@
-import {RawParticipantProps} from '../map/Participant/Participant'
 import * as THREE from 'three'
 import {GLTF, GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader'
-import {VRM, VRMSchema} from '@pixiv/three-vrm'
+import {VRM, VRMSchema, VRMUtils} from '@pixiv/three-vrm'
 import React from 'react'
-import { PARTICIPANT_SIZE, VRMRigs } from '@models/Participant'
+import { ParticipantBase, PARTICIPANT_SIZE, VRMRigs } from '@models/Participant'
 import { autorun } from 'mobx'
 import * as Kalidokit from 'kalidokit'
 
@@ -19,52 +18,46 @@ class PromiseGLTFLoader extends GLTFLoader {
   }
 }
 interface Member{
+  clock: THREE.Clock
   renderer: THREE.WebGLRenderer
   scene: THREE.Scene
   camera: THREE.Camera
-  orientation: number
-  renderRequest: boolean
   vrm?:VRM
 }
 
 const size = [150,300]
-const resolution = [300,600]
 
-export const VRMAvatar: React.FC<RawParticipantProps> = (props: RawParticipantProps) => {
+
+export const VRMAvatar: React.FC<{participant:ParticipantBase}> = (props: {participant:ParticipantBase}) => {
   const ref = React.useRef<HTMLCanvasElement>(null)
   const memberRef = React.useRef<Member|null>(null)
 
   React.useEffect(()=>{
     if (!ref.current) return
-    //console.log(`useEffect for 3js called.`)
-    // レンダラーの設定
-    const renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: true,
-      canvas: ref.current
-    })
-    renderer.setSize(size[0], size[1])
-    renderer.setPixelRatio(window.devicePixelRatio * 4)
+    memberRef.current = {
+      clock:new THREE.Clock(),
+      renderer : new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+        canvas: ref.current
+      }),
+      camera: new THREE.PerspectiveCamera(
+        35,
+        size[0]/size[1],
+        0.1,
+        1000,
+      ),
+      scene: new THREE.Scene(),
+    }
+    const mem = memberRef.current!
+    mem.renderer.setSize(size[0], size[1])
+    mem.renderer.setPixelRatio(window.devicePixelRatio * 4)
 
-    // カメラの設定
-    const camera = new THREE.PerspectiveCamera(
-      35,
-      size[0]/size[1],
-      0.1,
-      1000,
-    )
-
-    // シーンの設定
-    const scene = new THREE.Scene()
-
-    // ライトの設定
     const light = new THREE.DirectionalLight(0xffffff)
     light.position.set(1, 1, 1).normalize()
-    scene.add(light)
-    memberRef.current = {renderer, camera, scene, orientation:0, renderRequest:false}
+    mem.scene.add(light)
 
-    // グリッドを表示
-    /*
+    /*  //  show grid
     const gridHelper = new THREE.GridHelper(10, 10)
     scene.add(gridHelper)
     gridHelper.visible = true
@@ -74,69 +67,69 @@ export const VRMAvatar: React.FC<RawParticipantProps> = (props: RawParticipantPr
     const cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
     scene.add(cube);
 
-    // 座標軸を表示
+    // show axis
     const axesHelper = new THREE.AxesHelper(0.5)
     scene.add(axesHelper)
     //  */
     const loader = new PromiseGLTFLoader()
-    const dispo = autorun(()=>{
+    const dispo1 = autorun(()=>{  //  update VRM
+      const mem = memberRef.current!
       loader.promiseLoad(
-        props.participant.information.avatarSrc,
-        /*progress => {
-          console.log(
-            'Loading model...',
-            100.0 * (progress.loaded / progress.total),
-            '%',
-          )
-        },*/
+          props.participant.information.avatarSrc,
       ).then(gltf => {
-        if (memberRef.current?.vrm){
-          scene.remove(memberRef.current.vrm.scene)
+        if (mem.vrm){
+          mem.scene?.remove(mem.vrm.scene)
         }
+        VRMUtils.removeUnnecessaryJoints(gltf.scene);
         VRM.from(gltf).then(vrmGot => {
-          scene.add(vrmGot.scene)
+          mem.scene?.add(vrmGot.scene)
           vrmGot.scene.rotation.y = Math.PI
-          if (memberRef.current){
-            memberRef.current.vrm = vrmGot
-            memberRef.current.renderRequest = true
+          if (mem){
+            mem.vrm = vrmGot
           }
         })
+      }).catch((e)=>{
+        console.log('Failed to load VRM', e)
       })
     })
+    const dispo2 = autorun(()=>{
+      const mem = memberRef.current
+      if (props.participant.vrmRigs && mem?.vrm){
+        vrmSetPose(mem.vrm, props.participant.vrmRigs)
+      }
+    })
+    let animate = () => {
+      requestAnimationFrame(animate);
+      const mem = memberRef.current
+      if (mem?.vrm) {
+        // Update model to render physics
+        mem.vrm.update(mem.clock.getDelta());
+        const ori = props.participant.pose.orientation
+        const rad = ori / 180 * Math.PI
+        mem.camera?.position.set(-Math.sin(rad)*3, 2, -Math.cos(rad)*3)
+        mem.camera?.lookAt(0,0.93,0)
+        mem.renderer?.render(mem.scene!, mem.camera!)
+      }
+      mem?.renderer!.render(mem.scene!, mem.camera!);
+    }
+    animate();
+
     return ()=>{
-      dispo()
+      animate = ()=>{}
+      dispo2()
+      dispo1()
     }
   }, [])
-
-  function render(ori:number, forceRerender?: boolean){
-    const mem = memberRef.current
-    if (mem && (Math.abs(mem.orientation - ori) > 5 || forceRerender)){
-      mem.orientation = ori
-      const rad = ori / 180 * Math.PI
-      mem.camera.position.set(-Math.sin(rad)*3, 2, -Math.cos(rad)*3)
-      mem.camera.lookAt(0,0.93,0)
-      mem.renderer.render(mem.scene, mem.camera)
-      mem.renderRequest = false
-      //  console.log('rendered')
-    }
-  }
-  React.useEffect(()=>{
-    if (memberRef.current?.vrm && props.participant.vrmRigs){
-      animateVRM(memberRef.current.vrm, props.participant.vrmRigs)
-    }
-    render(props.participant.pose.orientation, memberRef.current?.renderRequest || props.participant.vrmRigs!==undefined)
-  }, [props.participant.pose.orientation, memberRef.current?.renderRequest, props.participant.vrmRigs])
 
   return <>
     <canvas style={{
       pointerEvents:'none',
       position:'relative',
       width:size[0], height:size[1],
-      left: -size[0]/2, top:-(size[1] - PARTICIPANT_SIZE/2)
+      left: -size[0]/2, top:-(size[1] - PARTICIPANT_SIZE/4)
       }} ref={ref}/>
   </>
 }
-
 
 
 
@@ -239,7 +232,7 @@ function rigFace(vrm:VRM, riggedFace:Kalidokit.TFace){
 }
 
 /* VRM Character Animator */
-function animateVRM (vrm:VRM, rigs:VRMRigs){
+function vrmSetPose (vrm:VRM, rigs:VRMRigs){
   if (!vrm) {
     return;
   }
@@ -325,6 +318,5 @@ function animateVRM (vrm:VRM, rigs:VRMRigs){
     rigRotation(vrm, "RightLittleIntermediate", rigs.rightHand.RightLittleIntermediate);
     rigRotation(vrm, "RightLittleDistal", rigs.rightHand.RightLittleDistal);
   }
-  vrm.springBoneManager?.lateUpdate(0.1)
   vrm.blendShapeProxy?.update()
 };
