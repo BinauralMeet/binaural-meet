@@ -84,6 +84,7 @@ export class DataSync{
   //  Send vrm rig
   private sendVrmRig(){
     this.connection.sendMessage(MessageType.PARTICIPANT_VRMRIG, participants.local.vrmRigs)
+    this.connection.flushSendMessages()
   }
   //  Send content update request to pid
   sendContentUpdateRequest(pid: string, updatedContents: ISharedContent[]) {

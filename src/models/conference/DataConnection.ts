@@ -20,6 +20,7 @@ export const connLog = CONNECTIONLOG ? console.log : (a:any) => {}
 export const connDebug = CONNECTIONLOG ? console.debug : (a:any) => {}
 export const eventLog = EVENTLOG ? console.log : (a:any) => {}
 export const sendLog = SENDLOG ? console.log : (a:any) => {}
+export let dataRequestInterval:number = 100
 
 // config.js
 declare const config:any             //  from ../../config.js included from index.html
@@ -66,7 +67,7 @@ export class DataConnection {
         this.messagesToSendToRelay = []
         this.sync.sendAllAboutMe(true)
         this.pushOrUpdateMessageViaRelay(MessageType.REQUEST_ALL, {})
-        this.sendMessageViaRelay()
+        this.flushSendMessages()
       }
       const onMessage = (ev: MessageEvent<any>)=> {
         //  console.log(`ws:`, ev)
@@ -116,7 +117,7 @@ export class DataConnection {
     if (config.bmRelayServer && this.peer){
       this.sync.observeEnd()
       this.pushOrUpdateMessageViaRelay(MessageType.PARTICIPANT_LEFT, [this.peer])
-      this.sendMessageViaRelay()
+      this.flushSendMessages()
     }
     //  stop relayServer communication.
     this.stopStep = true
@@ -148,13 +149,14 @@ export class DataConnection {
           this.sync.onBmMessage([msg])
         }
       }
-      const REQUEST_INTERVAL = Math.min(
-        Math.max((this.relayRttAverage-20) * participants.remote.size/40, 0) + 20,
-        3*1000)
-      const REQUEST_WAIT_TIMEOUT = REQUEST_INTERVAL + 20 * 1000  //  wait 20 sec when failed to receive message.
+      dataRequestInterval = Math.min(
+        //Math.max((this.relayRttAverage-20) * participants.remote.size/40, 0) + 20, 3*1000)
+        Math.max((this.relayRttAverage-20), 0) + 20, 3*1000)
+        //console.log(`RTTAve:${this.relayRttAverage.toFixed(2)} Last:${this.relayRttLast}  dataRequestInterval=${dataRequestInterval}`)
+        const REQUEST_WAIT_TIMEOUT = dataRequestInterval + 20 * 1000  //  wait 20 sec when failed to receive message.
       const now = Date.now()
       if (now < deadline && this.relaySocket && !this.receivedMessages.length
-        && now - this.lastRequestTime > REQUEST_INTERVAL
+        && now - this.lastRequestTime > dataRequestInterval
         && (this.lastReceivedTime >= this.lastRequestTime
           || now - this.lastRequestTime > REQUEST_WAIT_TIMEOUT)){
           this.lastRequestTime = now
@@ -162,7 +164,7 @@ export class DataConnection {
             : map.visibleArea()
           this.pushOrUpdateMessageViaRelay(MessageType.REQUEST_RANGE, [area, participants.audibleArea()])
           this.updateAudioLevel()
-          this.sendMessageViaRelay()
+          this.flushSendMessages()
       }
       //  console.log(`step RTT:${this.relayRttAverage} remain:${deadline - Date.now()}/${timeToProcess}`)
     }
@@ -232,7 +234,7 @@ export class DataConnection {
       recorder.recordMessage(msg)
     }
   }
-  private sendMessageViaRelay() {
+  public flushSendMessages() {
     if (this.messagesToSendToRelay.length === 0){ return }
 
     if (this.relaySocket?.readyState === WebSocket.OPEN){

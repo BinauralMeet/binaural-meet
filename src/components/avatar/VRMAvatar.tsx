@@ -3,8 +3,10 @@ import {GLTF, GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader'
 import {VRM, VRMSchema, VRMUtils} from '@pixiv/three-vrm'
 import React from 'react'
 import { ParticipantBase, PARTICIPANT_SIZE, VRMRigs } from '@models/Participant'
-import { autorun } from 'mobx'
+import { autorun, IReactionDisposer } from 'mobx'
 import * as Kalidokit from 'kalidokit'
+import { throttle } from 'lodash'
+import Euler from 'kalidokit/dist/utils/euler'
 
 
 class PromiseGLTFLoader extends GLTFLoader {
@@ -72,7 +74,10 @@ export const VRMAvatar: React.FC<{participant:ParticipantBase}> = (props: {parti
     scene.add(axesHelper)
     //  */
     const loader = new PromiseGLTFLoader()
-    const dispo1 = autorun(()=>{  //  update VRM
+    const dispo: IReactionDisposer[] = []
+
+    //  load VRM from avatarSrc
+    dispo.push(autorun(()=>{
       const mem = memberRef.current!
       loader.promiseLoad(
           props.participant.information.avatarSrc,
@@ -86,38 +91,31 @@ export const VRMAvatar: React.FC<{participant:ParticipantBase}> = (props: {parti
           vrmGot.scene.rotation.y = Math.PI
           if (mem){
             mem.vrm = vrmGot
+            render3d(props.participant.pose.orientation, props.participant.vrmRigs)
           }
         })
       }).catch((e)=>{
         console.log('Failed to load VRM', e)
       })
-    })
-    const dispo2 = autorun(()=>{
-      const mem = memberRef.current
-      if (props.participant.vrmRigs && mem?.vrm){
-        vrmSetPose(mem.vrm, props.participant.vrmRigs)
-      }
-    })
-    let animate = () => {
-      requestAnimationFrame(animate);
-      const mem = memberRef.current
+    }))
+
+    //  render when updated
+    const render3d = throttle((ori, rig)=>{
       if (mem?.vrm) {
-        // Update model to render physics
-        mem.vrm.update(mem.clock.getDelta());
-        const ori = props.participant.pose.orientation
+        vrmSetPose(mem.vrm, rig)                //  apply rig
+        mem.vrm.update(mem.clock.getDelta());   //  Update model to render physics
         const rad = ori / 180 * Math.PI
         mem.camera?.position.set(-Math.sin(rad)*3, 2, -Math.cos(rad)*3)
         mem.camera?.lookAt(0,0.93,0)
         mem.renderer?.render(mem.scene!, mem.camera!)
       }
-      mem?.renderer!.render(mem.scene!, mem.camera!);
-    }
-    animate();
+    }, 1000/20)
+    dispo.push(autorun(()=>{
+      render3d(props.participant.pose.orientation, props.participant.vrmRigs)
+    }))
 
     return ()=>{
-      animate = ()=>{}
-      dispo2()
-      dispo1()
+      for(const d of dispo) d()
     }
   }, [])
 
@@ -232,8 +230,11 @@ function rigFace(vrm:VRM, riggedFace:Kalidokit.TFace){
 }
 
 /* VRM Character Animator */
-function vrmSetPose (vrm:VRM, rigs:VRMRigs){
-  if (!vrm) {
+function vrmSetPose (vrm:VRM, rigs?:VRMRigs){
+  if (!vrm) return
+  if (!rigs) {
+    rigRotation(vrm, "RightUpperArm", new Euler(0,0,-Math.PI/2*0.8), 1, 1);
+    rigRotation(vrm, "LeftUpperArm", new Euler(0,0,Math.PI/2*0.8), 1, 1);
     return;
   }
 
@@ -268,7 +269,7 @@ function vrmSetPose (vrm:VRM, rigs:VRMRigs){
   }
 
   // Animate Hands
-  if (rigs.pose && rigs.leftHand){
+  if (rigs?.pose && rigs.leftHand){
     rigRotation(vrm, "LeftHand", {
       // Combine pose rotation Z and hand rotation X Y
       z: rigs.pose.LeftHand.z,
@@ -276,7 +277,7 @@ function vrmSetPose (vrm:VRM, rigs:VRMRigs){
       x: rigs.leftHand.LeftWrist.x
     })
   }
-  if (rigs.leftHand){
+  if (rigs?.leftHand){
     rigRotation(vrm, "LeftRingProximal", rigs.leftHand.LeftRingProximal);
     rigRotation(vrm, "LeftRingIntermediate", rigs.leftHand.LeftRingIntermediate);
     rigRotation(vrm, "LeftRingDistal", rigs.leftHand.LeftRingDistal);

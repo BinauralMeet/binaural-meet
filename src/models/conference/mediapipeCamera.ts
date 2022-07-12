@@ -1,8 +1,8 @@
 import participants from '@stores/participants/Participants'
 import * as Kalidokit from 'kalidokit'
 import {Holistic} from '@mediapipe/holistic'
-import {Camera} from '@mediapipe/camera_utils'
 import {VRMRigs} from '@models/Participant'
+import {dataRequestInterval} from '@models/conference/DataConnection'
 
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
@@ -20,15 +20,14 @@ holistic.setOptions({
 
 //  camera device selection
 let videoEl: HTMLVideoElement|undefined
-let camera: Camera|undefined
+let runMeidaPipe = false
 export function stopHolisticTrack(){
   if (videoEl){
     videoEl.srcObject = null
     videoEl.remove()
     videoEl = undefined
-    if (camera?.stop) camera.stop()
-    camera = undefined
   }
+  runMeidaPipe = false
 }
 export function startHolisticTrack(did?:string) {
   stopHolisticTrack()
@@ -37,13 +36,13 @@ export function startHolisticTrack(did?:string) {
 
     const rtcVideo = {...config.rtc.videoConstraints.video,
       width:{
-        ideal:640,
+        ideal:320,
       },
       height:{
-        ideal:480,
+        ideal:240,
       },
       frameRate: {
-        ideal: 30,
+        ideal: 10,
       },
     }
     navigator.mediaDevices.getUserMedia(
@@ -82,14 +81,15 @@ export function startHolisticTrack(did?:string) {
         }
         participants.local.vrmRigs = vrmRigs
       })
-      camera = new Camera(videoEl, {
-        onFrame: () => {
-          return holistic.send({image: videoEl!})
-        },
-        width: 640,
-        height: 480
-      })
-      camera.start()
+      function timer(){
+        holistic.send({image: videoEl!}).then(()=>{
+          if (runMeidaPipe){
+            window.setTimeout(timer, dataRequestInterval)
+          }
+        })
+      }
+      runMeidaPipe = true
+      timer()
       resolutionFunc()
     }).catch(rejectionFunc)
   })
