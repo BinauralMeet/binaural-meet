@@ -130,6 +130,7 @@ export const enTranslate = {
   Cancel: 'Cancel',
   broadcastMyVoice: 'Broadcast my voice',
   showTrackedFace: 'Show only facial feature points',
+  trackWholeBody: 'Track whole body',
   soundLocalizationBasedOn: 'Sound localization based on',
   stereoNote: 'Are you really using headphones?',
   stereoNoteDesc: 'If you use it with a speaker, it will echo back the other party\'s voice, making it very difficult for the other party to speak.',

@@ -74,12 +74,12 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
 
   constructor(isLocal=false) {
     super()
-    makeObservable(this)
     if (isLocal){
       this.information = defaultInformation
     }else{
       this.information = defaultRemoteInformation
     }
+    makeObservable(this)
   }
 
   getColor() {

@@ -57,7 +57,7 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
       headphone: this.useStereoAudio,
     }
   }
-  get info():LocalInformation { return this.information as LocalInformation}
+//  get info():LocalInformation { return this.information as LocalInformation}
 
   constructor() {
     super(true)

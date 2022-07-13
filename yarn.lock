@@ -1587,6 +1587,11 @@
   resolved "https://registry.yarnpkg.com/@mediapipe/drawing_utils/-/drawing_utils-0.3.1657299202.tgz#dd98094061bb1e27e01646f97feef0f601e370b9"
   integrity sha512-2Uuvhr67XxMrVtW6B3uwDKdvXCBTNJx9Mvk7dKgOnSLtf/yOFbtH/PXFJYH6YqICtY8OBbh0ZK6bbjBamtWtDQ==
 
+"@mediapipe/face_mesh@^0.4.1633559619":
+  version "0.4.1633559619"
+  resolved "https://registry.yarnpkg.com/@mediapipe/face_mesh/-/face_mesh-0.4.1633559619.tgz#f917e4448e25bc375a905d1d910f1bca450c5e23"
+  integrity sha512-Vc8cdjxS5+O2gnjWH9KncYpUCVXT0h714KlWAsyqJvJbIgUJBqpppbIx8yWcAzBDxm/5cYSuBI5p5ySIPxzcEg==
+
 "@mediapipe/holistic@^0.5.1657300018":
   version "0.5.1657300018"
   resolved "https://registry.yarnpkg.com/@mediapipe/holistic/-/holistic-0.5.1657300018.tgz#f03ba1e29246a1c64ffd9f3ec533f1357372bbd8"

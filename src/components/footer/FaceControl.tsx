@@ -21,7 +21,7 @@ export const FaceControl: React.FC<BMProps> = (props: BMProps) => {
   return <Container>
     <FormControlLabel
       control={faceSwitch}
-      label={t('showTrackedFace')}
+      label={local.information.avatarSrc.slice(-4)==='.vrm' ? t('trackWholeBody') :  t('showTrackedFace')}
     />
   </Container>
 }

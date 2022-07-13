@@ -194,7 +194,8 @@ const rigPosition = (vrm: VRM,
 let oldLookTarget = new THREE.Euler()
 function rigFace(vrm:VRM, riggedFace:Kalidokit.TFace){
     if(!vrm){return}
-    rigRotation(vrm, "Neck", riggedFace.head, 0.7);
+    const rot = {x:riggedFace.head.x-0.1, y:riggedFace.head.y, z:riggedFace.head.z}
+    rigRotation(vrm, "Neck", rot, 0.7);
 
     // Blendshapes and Preset Name Schema
     const Blendshape = vrm.blendShapeProxy!
@@ -266,10 +267,23 @@ function vrmSetPose (vrm:VRM, rigs?:VRMRigs){
     rigRotation(vrm, "LeftLowerLeg", rigs.pose.LeftLowerLeg, 1, .3);
     rigRotation(vrm, "RightUpperLeg", rigs.pose.RightUpperLeg, 1, .3);
     rigRotation(vrm, "RightLowerLeg", rigs.pose.RightLowerLeg, 1, .3);
+  }else{
+    if (rigs.face){
+      //console.log(`head: ${JSON.stringify(rigs.face.head)}`)
+      const rot = {x:rigs.face.head.x/3-0.3, y:rigs.face.head.y/2, z:rigs.face.head.z/2}
+      rigRotation(vrm, "Chest", rot, 0.25, .3);
+      rigRotation(vrm, "Spine", rot, 0.45, .3);
+      rigRotation(vrm, "RightUpperArm", {x:-rot.x/4-0.2, y:-rot.y/4, z: -rot.z/4-Math.PI/2*0.8}, 1, 1);
+      rigRotation(vrm, "LeftUpperArm", {x:-rot.x/4-0.2, y:-rot.y/4, z: -rot.z/4+Math.PI/2*0.8}, 1, 1);
+      rigRotation(vrm, "RightLowerArm", new Euler(0,1.8,-0.3), 1, 1);
+      rigRotation(vrm, "LeftLowerArm", new Euler(0,-1.8,0.3), 1, 1);
+      rigRotation(vrm, "RightHand", new Euler(-0.4,0.3,-0.3), 1, 1);
+      rigRotation(vrm, "LeftHand", new Euler(-0.4,-0.3,0.3), 1, 1);
+      }
   }
 
   // Animate Hands
-  if (rigs?.pose && rigs.leftHand){
+  if (rigs.pose && rigs.leftHand){
     rigRotation(vrm, "LeftHand", {
       // Combine pose rotation Z and hand rotation X Y
       z: rigs.pose.LeftHand.z,

@@ -144,10 +144,10 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
                 }} />
                 <input style={iStyle} type="submit" value="Upload" />
               </form>
-              <TextField label={t('lsEmail')} multiline={false} value={local.info.email}
+              <TextField label={t('lsEmail')} multiline={false} value={local.information.email}
                 style={{...tfDivStyle, marginTop:8}}
                 inputProps={{style: tfIStyle, autoFocus:true}} InputLabelProps={{style: tfLStyle}}
-                onChange={event => local.info.email = event.target.value}
+                onChange={event => local.information.email = event.target.value}
                 onKeyPress={onKeyPress} fullWidth={true}
               />
             </Box>

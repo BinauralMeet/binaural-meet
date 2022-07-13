@@ -125,6 +125,7 @@ export const jaTranslate = {
   Cancel: 'キャンセル',
   broadcastMyVoice: '声を全員に届ける',
   showTrackedFace: '顔の特徴点のみ表示',
+  trackWholeBody: '全身をトラック',
   soundLocalizationBasedOn: '音像定位の向きの基準',
   stereoNote: '本当にヘッドフォンを使っていますか？',
   stereoNoteDesc: 'スピーカーで使用すると相手の声をエコーバックしてしまうため、相手がとても話しにくくなります。',

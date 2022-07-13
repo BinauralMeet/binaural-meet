@@ -3,7 +3,7 @@ import {manager as audioManager} from '@models/audio'
 import {urlParameters} from '@models/url'
 import participants from '@stores/participants/Participants'
 import {autorun} from 'mobx'
-import {stopHolisticTrack, startHolisticTrack} from './mediapipeCamera'
+import {stopMpTrack, startMpTrack} from './mediapipeCamera'
 import {stopFaceTrack, createLocalCamera} from './faceCamera'
 import {MSTrack} from '@models/utils'
 import {conference} from '@models/conference'
@@ -66,12 +66,11 @@ function isCameraMuted(){
   return participants.local.muteVideo || participants.local.physics.awayFromKeyboard ||
     !participants.localId || urlParameters.testBot !== null
 }
-let didPrev:string|undefined=undefined
 autorun(() => {
   const did = participants.local.devicePreference.videoInputDevice
   const faceTrack = participants.local.information.faceTrack
   if (isCameraMuted()) {
-    stopHolisticTrack()
+    stopMpTrack()
     stopFaceTrack()
     if (DELETE_TRACK){
       conference.setLocalCameraTrack(undefined).then(track => track?.track.stop())
@@ -79,18 +78,13 @@ autorun(() => {
       const track = conference.getLocalCameraTrack()
       if (track) { conference.removeLocalTrack(track) }
     }
-    didPrev = undefined
   }else{
     const isVrm = participants.local.information.avatarSrc.slice(-4) === '.vrm'
     if (isVrm){
       stopFaceTrack()
-      if (did !== didPrev){
-        startHolisticTrack()
-        didPrev = did
-      }
+      startMpTrack(!faceTrack)
     }else{
-      didPrev = undefined
-      stopHolisticTrack()
+      stopMpTrack()
       const track = conference.getLocalCameraTrack()
       if (track && track.deviceId === did) { return }
       createLocalCamera(faceTrack).then((track)=>{

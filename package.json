@@ -8,6 +8,7 @@
     "@material-ui/styles": "^4.11.3",
     "@mediapipe/camera_utils": "^0.3.1657298508",
     "@mediapipe/drawing_utils": "^0.3.1657299202",
+    "@mediapipe/face_mesh": "^0.4.1633559619",
     "@mediapipe/holistic": "^0.5.1657300018",
     "@pixiv/three-vrm": "^0.6.11",
     "@testing-library/jest-dom": "^5.11.4",
