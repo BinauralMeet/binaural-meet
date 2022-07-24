@@ -242,13 +242,10 @@ export class ErrorInfo {
     }
 
     const vidoeStream = (this.canvas as any).captureStream(20) as MediaStream
-    const audioStream = destination.stream
-    const stream = new MediaStream()
-    stream.addTrack(audioStream.getAudioTracks()[0])
-    stream.addTrack(vidoeStream.getVideoTracks()[0])
-    const tracks = stream.getTracks()
-    conference.setLocalCameraTrack({track:tracks[0], peer:participants.local.id, role:'avatar'})
-    conference.setLocalMicTrack({track:tracks[1], peer:participants.local.id, role:'avatar'})
+    const videoTrack = vidoeStream.getVideoTracks()[0]
+    const audioTrack = destination.stream.getAudioTracks()[0]
+    conference.setLocalCameraTrack({track:videoTrack, peer:participants.local.id, role:'avatar'})
+    conference.setLocalMicTrack({track:audioTrack, peer:participants.local.id, role:'avatar'})
   }
 }
 

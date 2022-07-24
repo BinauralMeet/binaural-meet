@@ -23,7 +23,7 @@ export const ConnectionStat: React.FC<ConnectionStatProps> = (props:ConnectionSt
   const streams = props.streams
   return <>
     {stat?.turn ? <div>RTC via {stat.turn}</div> : undefined}
-    {stat?.server ? <div>RTC server {stat.server}</div> : undefined}
+    {stat?.remoteServer ? <div>RTC⇓:{stat.remoteServer}</div> : undefined}
     <div>⇑{((stat?.sentBytePerSec || 0)/1000).toFixed(1)}k&nbsp;
       ⇓{((stat?.receivedBytePerSec || 0)/1000).toFixed(1)}k&nbsp;
       {stat?.quality!==undefined ? <>Quality:{stat.quality.toFixed(0)}%&nbsp;</> : undefined}

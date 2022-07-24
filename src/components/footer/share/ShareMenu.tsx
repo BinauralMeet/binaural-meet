@@ -175,7 +175,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
     setStep('none')
   }
   const closeAllScreens = () => {
-    const cids = contents.getAllRtcContentIds()
+    const cids = contents.getLocalRtcContentIds()
     cids.forEach(cid => contents.removeByLocal(cid))
     setStep('none')
   }

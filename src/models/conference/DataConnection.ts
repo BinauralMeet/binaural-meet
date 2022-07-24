@@ -11,15 +11,9 @@ import {AudioMeter} from '@models/audio/AudioMeter'
 
 
 //  Log level and module log options
-export const CONNECTIONLOG = false
-export const TRACKLOG = false        // show add, remove... of tracks
-export const EVENTLOG = false
-export const SENDLOG = false
-export const trackLog = TRACKLOG ? console.log : (a:any) => {}
-export const connLog = CONNECTIONLOG ? console.log : (a:any) => {}
-export const connDebug = CONNECTIONLOG ? console.debug : (a:any) => {}
-export const eventLog = EVENTLOG ? console.log : (a:any) => {}
-export const sendLog = SENDLOG ? console.log : (a:any) => {}
+export const DATACONLOG = false
+export const dataLog = DATACONLOG ? console.log : (a:any) => {}
+export const dataDebug = DATACONLOG ? console.debug : (a:any) => {}
 export let dataRequestInterval:number = 100
 
 // config.js
@@ -60,10 +54,13 @@ export class DataConnection {
   public connect(room: string, peer: string){
     this.room_ = room
     this.peer_ = peer
+    dataLog(`connect(${room}, ${peer})`)
+
     const promise = new Promise<void>((resolve, reject)=>{
       if (!config.bmRelayServer){ reject(); return }
       if (this.relaySocket){ resolve(); return }
       const onOpen = () => {
+        dataLog(`dataConn socket onOpen`)
         this.messagesToSendToRelay = []
         this.sync.sendAllAboutMe(true)
         this.pushOrUpdateMessageViaRelay(MessageType.REQUEST_ALL, {})
@@ -133,7 +130,6 @@ export class DataConnection {
     }else{
       participants.local.setAudioLevel(this.audioMeter.getAudioLevel())
     }
-    this.sync.sendAudioLevel()
   }
 
 

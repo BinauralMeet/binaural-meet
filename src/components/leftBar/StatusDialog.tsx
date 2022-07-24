@@ -24,21 +24,25 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
     const receiverStats:TransportStat[] = Array.from(conference.remotePeers.values())
       .map(remote => remote.transport?.appData?.stat as (TransportStat)).filter(s=>s!==undefined)
     stats.push(...receiverStats)
-    const servers:[string, string|undefined][] = []
+    const servers:[string, string, string|undefined][] = []
     const sum = {} as any
     const streams:StreamStat[] = []
     for(const ts of stats){
       for(const key in ts){
-        if (key !== 'turn' && key !== 'server' && key !== 'streams'){
+        if (key !== 'turn' && key !== 'streams' && key !== 'localServer' && key !== 'remoteServer'){
           if (sum[key]) sum[key] = sum[key] + (ts as any)[key]
           else sum[key] = (ts as any)[key]
         }
       }
-      if (ts.server){
-        const len = ts.server.lastIndexOf(':') - 1
-        const serverAddr = ts.server!.substring(0,len)
-        if (!servers.find(s=> s[0].substring(0, len) === serverAddr)){
-          servers.push([ts.server, ts.turn])
+      if (ts.remoteServer){
+        const len = ts.remoteServer.lastIndexOf(':')
+        const serverAddr = ts.remoteServer!.substring(0,len)
+        const sameAddr = servers.find(s => s[0]===ts.dir && s[1].substring(0, len) === serverAddr)
+        if (!sameAddr){
+          servers.push([ts.dir, ts.remoteServer, ts.turn])
+        }else{
+          const port = ts.remoteServer!.substring(len+1)
+          sameAddr[1] += `,${port}`
         }
         streams.push(...ts.streams)
       }
@@ -67,8 +71,8 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
         <div> Data: {stat.data}</div>
         {stat.servers.length === 0 ? <div>'No RTC server'</div> :
           stat.servers.map((server, idx) => <div key={idx}>
-            RTC:{server[0]}
-            {server[1] ? <><br/>&nbsp; via {server[1]}</> : undefined}
+            RTC{server[0]==='send'?'⇑':'⇓'}:{server[1]}
+            {server[2] ? <><br/>&nbsp; via {server[2]}</> : undefined}
         </div>)}
         <ConnectionStat stat={stat.transport} streams={stat.streams} />
       </div>

@@ -240,7 +240,10 @@ export const Base: React.FC<MapProps> = (props: MapProps) => {
       onPinchEnd: () => map.setCommittedMatrix(matrix),
       onMove:({xy}) => {
         map.setMouse(xy)
-        participants.local.mouse.position = Object.assign({}, map.mouseOnMap)
+        if (participants.local.mouse.position[0] !== map.mouseOnMap[0]
+          || participants.local.mouse.position[1] !== map.mouseOnMap[1]){
+          participants.local.mouse.position = Object.assign({}, map.mouseOnMap)
+        }
       },
       onTouchStart:(ev) => {
         map.setMouse([ev.touches[0].clientX, ev.touches[0].clientY])

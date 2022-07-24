@@ -34,8 +34,8 @@ export class DataSync{
   }
   sendAllAboutMe(bSendRandP: boolean){
     syncLog('sendAllAboutMe called.')
-    this.sendPoseMessageNow(bSendRandP)
-    this.sendMouseMessageNow()
+    this.sendPoseMessage(bSendRandP)
+    this.sendMouseMessage()
     participants.local.sendInformation()
     this.sendOnStage()
     this.sendTrackStates()
@@ -44,13 +44,14 @@ export class DataSync{
     this.sendAfkChanged()
   }
   //
-  sendPoseMessageNow(bSendRandP: boolean){
+  sendPoseMessage(bSendRandP: boolean){
     const poseStr = pose2Str(participants.local.pose)
     this.connection.sendMessage(MessageType.PARTICIPANT_POSE, poseStr, undefined, bSendRandP)
   }
-  sendMouseMessageNow(){
+  sendMouseMessage(){
     const mouseStr = mouse2Str(participants.local.mouse)
     this.connection.sendMessage(MessageType.PARTICIPANT_MOUSE, mouseStr)
+    //  console.log(`Mouse: ${mouseStr} sent.`)
   }
   sendParticipantInfo(){
     if (!participants.local.informationToSend){ return }
@@ -114,11 +115,10 @@ export class DataSync{
       if (remote) remote.vrmRigs = rig
     }
   }
-  private onParticipantLeft(id: string){
-    chat.participantLeft(id)
-    participants.leave(id)
-    if (this.connection.relaySocket?.readyState === WebSocket.OPEN){
-      this.connection.sendMessage(MessageType.PARTICIPANT_LEFT, [id])
+  private onParticipantLeft(ids: string[]){
+    for(const id of ids){
+      chat.participantLeft(id)
+      participants.leave(id)
     }
   }
   private onChatMessage(pid: string|undefined, msg: ChatMessageToSend){
@@ -337,9 +337,10 @@ export class DataSync{
     }))
     this.disposers.push(autorun(this.sendAfkChanged.bind(this)))
     this.disposers.push(autorun(this.sendParticipantInfo.bind(this)))
+    this.disposers.push(autorun(this.sendAudioLevel.bind(this)))
     this.disposers.push(autorun(this.sendTrackStates.bind(this)))
-    this.disposers.push(autorun(this.sendPoseMessageNow.bind(this, false)))
-    this.disposers.push(autorun(this.sendMouseMessageNow.bind(this)))
+    this.disposers.push(autorun(this.sendPoseMessage.bind(this, false)))
+    this.disposers.push(autorun(this.sendMouseMessage.bind(this)))
     this.disposers.push(autorun(this.sendViewpointNow.bind(this)))
     this.disposers.push(autorun(this.sendOnStage.bind(this)))
     this.disposers.push(autorun(this.sendVrmRig.bind(this)))
@@ -360,12 +361,14 @@ export class DataSync{
   // tslint:disable-next-line: cyclomatic-complexity
   onBmMessage(msgs: BMMessage[]){
     syncLog(`Recv data msg: ${msgs.map(m => m.t).reduce((p, c)=>`${p} ${c}`,'')}.`)
+    //syncLog(`Recv data msg: ${JSON.stringify(msgs)}.`)
     for(const msg of msgs){
       recorder.recordMessage(msg)
       switch(msg.t){
         case MessageType.ROOM_PROP: this.onRoomProp(...(JSON.parse(msg.v) as [string, string])); break
         case MessageType.REQUEST_TO: this.sendAllAboutMe(false); break
         case MessageType.PARTICIPANT_AFK: this.onAfkChanged(msg.p, JSON.parse(msg.v)); break
+        case MessageType.PARTICIPANT_LEFT: this.onParticipantLeft(JSON.parse(msg.v)); break
         case MessageType.CALL_REMOTE: this.onCallRemote(msg.p); break
         case MessageType.CHAT_MESSAGE: this.onChatMessage(msg.p, JSON.parse(msg.v)); break
         case MessageType.CONTENT_REMOVE_REQUEST: this.onContentRemoveRequest(JSON.parse(msg.v)); break

@@ -11,16 +11,14 @@ import participants from '@stores/participants/Participants';
 declare const config:any                  //  from ../../config.js included from index.html
 
 //  Log level and module log options
-export const TRACKLOG = false        // show add, remove... of tracks
-export const CONNECTIONLOG = false
-export const trackLog = TRACKLOG ? console.log : (a:any) => {}
-export const connLog = CONNECTIONLOG ? console.log : (a:any) => {}
-export const connDebug = CONNECTIONLOG ? console.debug : (a:any) => {}
+export const RTC_CON_LOG = false
+export const rtcLog = RTC_CON_LOG ? console.log : (a:any) => {}
 
 type RtcConnectionEvent = 'remoteUpdate' | 'remoteLeft' | 'connect' | 'disconnect'
 
 export class RtcConnection{
   private peer_=''
+  private connected = false
   get peer() {return this.peer_}
   private mainServer?:WebSocket
   private device?:mediasoup.Device
@@ -48,11 +46,12 @@ export class RtcConnection{
   }
 
   public isConnected(){
-    return this.mainServer?.readyState === WebSocket.OPEN
+    return this.connected && this.mainServer?.readyState === WebSocket.OPEN
   }
 
   //  connect to main server. return my peer id got.
   public connect(room: string, peer: string){
+    rtcLog(`rtcConn connect(${room}, ${peer})`)
     const promise = new Promise<string>((resolve, reject)=>{
       this.mainServer = new WebSocket(config.mainServer)
       const onOpenEvent = () => {
@@ -72,7 +71,8 @@ export class RtcConnection{
         }
       }
       const onCloseEvent = () => {
-        //console.log('onClose() for mainServer')
+        rtcLog('onClose() for mainServer')
+        this.connected = false
         this.emit('disconnect')
 
         setTimeout(()=>{
@@ -159,6 +159,7 @@ export class RtcConnection{
   }
 
   private onConnect(base: MSMessage){
+    rtcLog(`onConnect( ${JSON.stringify(base)}`)
     const msg = base as MSPeerMessage
     this.peer_ = msg.peer
     const room = this.getMessageArg(msg) as string
@@ -168,10 +169,11 @@ export class RtcConnection{
         peer:msg.peer,
         room
       }
-      //console.log(`join sent ${JSON.stringify(roomMsg)}`)
+      rtcLog(`join sent ${JSON.stringify(roomMsg)}`)
       this.mainServer.send(JSON.stringify(roomMsg))
       this.loadDevice(msg.peer).then(()=>{
         this.resolveMessage(msg, msg.peer)
+        this.connected = true
         this.emitter.emit('connect')
       })
     }else{
@@ -394,7 +396,8 @@ export interface TransportStat{
   bytesSent:number
   bytesReceived:number
   turn?: string
-  server?: string
+  localServer?: string
+  remoteServer?: string
   streams: StreamStat[]
   quality?: number  //  0 - 100, 100 is best
 }
@@ -461,7 +464,7 @@ export function startUpdateTransportStat(transport: mediasoup.types.Transport, d
       let str=''
       keys.forEach((key)=>{ str = `${str}\n ${key}:${JSON.stringify(stats.get(key))}` })
       console.log(str)
-      */
+      //  */
       let streamStats:StreamStat[]
       if (dir === 'send'){
         const streamIds = keys.filter(k => k.includes('RTCOutboundRTPVideoStream') || k.includes('RTCOutboundRTPAudioStream'))
@@ -546,9 +549,12 @@ export function startUpdateTransportStat(transport: mediasoup.types.Transport, d
         const ckey = tStat.selectedCandidatePairId
         if (ckey){
           const pair = stats.get(ckey) as RTCIceCandidatePairStats
-          const c = stats.get(pair.localCandidateId) as RTCIceCandidateEx
-          curStat.server = `${c.address}:${c.port}/${c.protocol}`
-          curStat.turn = c.url
+          const lc = stats.get(pair.localCandidateId) as RTCIceCandidateEx
+          //  local server is client's IP address and port. Do not need to show.
+          //  curStat.localServer = `${lc.address}:${lc.port}/${lc.protocol}`
+          curStat.turn = lc.url
+          const rc = stats.get(pair.remoteCandidateId) as RTCIceCandidateEx
+          curStat.remoteServer = `${rc.address}:${rc.port}/${rc.protocol}`
         }
       }
       let quality=undefined
@@ -562,6 +568,7 @@ export function startUpdateTransportStat(transport: mediasoup.types.Transport, d
       }
       curStat.quality = quality
       curStat.streams = streamStats
+      //console.log(`curStat: ${JSON.stringify(curStat)}`)
       const participant = dir==='send' ? participants.local : participants.getRemote(remote!)
       if (participant){
         participant.quality = curStat.quality
