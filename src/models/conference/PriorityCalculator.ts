@@ -7,7 +7,7 @@ import contents from '@stores/sharedContents/SharedContents'
 import {autorun, IReactionDisposer, makeObservable, observable} from 'mobx'
 import {RemoteObjectInfo, LocalObjectInfo} from './priorityTypes'
 
-export const PRIORITYLOG = true
+export const PRIORITYLOG = false
 export const priorityLog = PRIORITYLOG ? console.log : (a:any) => {}
 export const priorityDebug = PRIORITYLOG ? console.debug : (a:any) => {}
 

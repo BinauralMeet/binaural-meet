@@ -96,6 +96,12 @@ export class RtcConnection{
     })
     return promise
   }
+  public leave(){
+    const msg:MSMessage = {
+      type:'leave'
+    }
+    this.mainServer?.send(JSON.stringify(msg))
+  }
   public disconnect(){
     this.mainServer?.close()
     this.peer_ = ''

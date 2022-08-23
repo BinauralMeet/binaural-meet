@@ -135,7 +135,7 @@ export class DataConnection {
 
   private stopStep = false
   private step(){
-    const period = 50
+    const period = 33
     if (this.relaySocket?.readyState === WebSocket.OPEN){
       const timeToProcess = period * 0.8
       const deadline = Date.now() + timeToProcess
@@ -161,6 +161,9 @@ export class DataConnection {
           this.pushOrUpdateMessageViaRelay(MessageType.REQUEST_RANGE, [area, participants.audibleArea()])
           this.updateAudioLevel()
           this.flushSendMessages()
+      }
+      if (now >= deadline){
+        console.warn(`Too heavy to send REQUEST_RANGE. ${(now - deadline).toFixed(0)}ms.`)
       }
       //  console.log(`step RTT:${this.relayRttAverage} remain:${deadline - Date.now()}/${timeToProcess}`)
     }

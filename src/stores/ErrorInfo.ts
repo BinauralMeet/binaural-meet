@@ -68,6 +68,7 @@ export class ErrorInfo {
   constructor() {
     makeObservable(this)
     if (urlParameters['testBot'] !== null) {
+      participants.local.information.name = 'testBot'
       this.clear()
     }
     autorun(() => {

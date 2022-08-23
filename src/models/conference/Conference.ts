@@ -79,9 +79,18 @@ export class Conference {
     autorun(()=>{
       const added = trackInfoMerege(videoAudioTrackInfoDiff(this.priorityCalculator.tracksToConsume, oldTracks))
       const removed = trackInfoMerege(videoAudioTrackInfoDiff(oldTracks, this.priorityCalculator.tracksToConsume))
-      for(const info of added){ if(!info.producer.consumer) this.addConsumer(info.producer) }
-      for(const info of removed){ this.removeConsumer(info.producer) }
       oldTracks = this.priorityCalculator.tracksToConsume
+      for(const info of added){
+        if(!info.producer.consumer){
+          this.addConsumer(info.producer).catch(()=>{
+            //  failed to consume. Try next update.
+            const aidx = oldTracks.audios.findIndex((a)=> info.id === a.id)
+            if (aidx >= 0) oldTracks.audios.splice(aidx, 1)
+            const vidx = oldTracks.videos.findIndex((a)=> info.id === a.id)
+            if (vidx >= 0) oldTracks.videos.splice(vidx, 1)
+          })
+        }}
+      for(const info of removed){ this.removeConsumer(info.producer) }
     })
   }
   public isDataConnected(){
@@ -136,6 +145,7 @@ export class Conference {
   }
 
   public leave(){
+    this.rtcConnection.leave()
     this.dataConnection.disconnect()
     this.rtcConnection.disconnect()
     this.room_ = ''
@@ -245,15 +255,16 @@ export class Conference {
           })
         }
       }
-      //  create producer
-      const producer = this.localProducers.find(p => {
+      //  find old or create a producer
+      const oldProducer = this.localProducers.find(p => {
         const old = (p.appData as ProducerData).track
         return old.role === track.role && old.track.kind === track.track.kind
       })
-      if (producer){
-        producer.replaceTrack(track).then(()=>{
-          (producer.appData as ProducerData).track = track
-          resolve(producer)
+      if (oldProducer){
+        oldProducer.replaceTrack(track).then(()=>{
+          (oldProducer.appData as ProducerData).track = track
+          oldProducer.resume()
+          resolve(oldProducer)
         }).catch(reject)
       }else{
         this.getSendTransport().then((transport) => {
@@ -339,16 +350,13 @@ export class Conference {
   public setLocalMicTrack(track?: MSTrack){
     const promise = new Promise<void>((resolve, reject) => {
       if (track === this.localMicTrack){ resolve(); return}
-      //  remove old
-      if (this.localMicTrack) {
-        this.removeLocalTrack(this.localMicTrack)
-      }
-      //  add new
+      //  Do not call "this.removeLocalTrack(this.localMicTrack)" here. The producer will reused.
       this.localMicTrack = track
       this.dataConnection.audioMeter.setSource(this.localMicTrack)
       if (track){
         this.addOrReplaceLocalTrack(track, 96*1024).then(()=>{resolve()}).catch(reject)
       }else{
+        this.removeLocalTrackByRole('avatar', 'audio')
         resolve()
       }
     })
@@ -374,9 +382,7 @@ export class Conference {
           resolve()
         }else{
           //  this.cameraTrackConverter(track)
-          if (this.localCameraTrack) {
-            this.removeLocalTrack(this.localCameraTrack)
-          }
+          //  Do not call "this.removeLocalTrack(this.localCameraTrack)" here. The producer will reused.
           this.doSetLocalCameraTrack(track).then(()=>{resolve()})
         }
       }else{
@@ -462,15 +468,21 @@ export class Conference {
     }
   }
   private addConsumer(producer: RemoteProducer){
-    this.getConsumer(producer).then((consumer)=>{
-      if (producer.role === 'avatar'){
-        participants.addRemoteTrack(producer.peer.peer, consumer.track)
-      }else{
-        contents.addTrack(producer.peer.peer, producer.role, consumer.track)
-      }
-    }).catch((e) => {
-      console.error(`conference.onProducerAdded(): ${e}`)
+    const promise = new Promise<void>((resolve, reject) => {
+      this.getConsumer(producer).then((consumer)=>{
+        if (producer.role === 'avatar'){
+          participants.addRemoteTrack(producer.peer.peer, consumer.track)
+        }else{
+          contents.addTrack(producer.peer.peer, producer.role, consumer.track)
+        }
+        console.log(`Conference.addConsumer(): p:${producer.id} consumed.`)
+        resolve()
+      }).catch((e) => {
+        console.error(`Conference.addConsumer() p:${producer.id} ${e}`)
+        reject(e)
+      })
     })
+    return promise
   }
   private removeConsumer(producer: RemoteProducer){
     if (producer.consumer){

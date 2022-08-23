@@ -156,7 +156,7 @@ export class SharedContents extends EventEmitter {
           tracks.length = 0
         }
       }else{
-        console.error(`removeRemoteTrack(): tracks for content ${role} not found.`)
+        console.log(`removeRemoteTrack(): tracks for content ${role} not found.`)
       }
     }
   }
