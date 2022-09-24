@@ -83,6 +83,11 @@ export class ErrorInfo {
         this.setType('afk')
       }
     })
+    conference.rtcConnection.addListener('disconnect', this.checkConnection)
+  }
+  public onDestruct(){
+    conference.rtcConnection.removeListener('disconnect', this.checkConnection)
+    this.checkConnection()
   }
 
   //  media devices
@@ -131,13 +136,13 @@ export class ErrorInfo {
       this.type = ''
     }
   }
-  @action checkConnection() {
+  @action checkConnection = () => {
     if (!conference.isRtcConnected()) {
       this.setType('rtcConnection')
-      setTimeout(this.checkConnection.bind(this), 5 * 1000)
+      setTimeout(this.checkConnection.bind(this), 1000)
     }else if (!conference.isDataConnected()){
       this.setType('dataConnection')
-      setTimeout(this.checkConnection.bind(this), 5 * 1000)
+      setTimeout(this.checkConnection.bind(this), 1000)
     }else {
       this.clear('rtcConnection')
       this.clear('dataConnection')

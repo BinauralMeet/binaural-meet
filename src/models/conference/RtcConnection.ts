@@ -6,13 +6,13 @@ import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSMessageType, MSRoo
 import * as mediasoup from 'mediasoup-client';
 import { observable } from 'mobx';
 import participants from '@stores/participants/Participants';
+import {connLog} from './ConferenceLog'
 
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
 
 //  Log level and module log options
-export const RTC_CON_LOG = false
-export const rtcLog = RTC_CON_LOG ? console.log : (a:any) => {}
+const rtcLog = connLog
 
 type RtcConnectionEvent = 'remoteUpdate' | 'remoteLeft' | 'connect' | 'disconnect'
 
@@ -28,6 +28,7 @@ export class RtcConnection{
 
   public constructor(){
     this.handlers.set('connect', this.onConnect)
+    this.handlers.set('ping', this.onPing)
     this.handlers.set('createTransport', this.onCreateTransport)
     this.handlers.set('rtpCapabilities', this.onRtpCapabilities)
     this.handlers.set('connectTransport', this.onConnectTransport)
@@ -49,11 +50,19 @@ export class RtcConnection{
     return this.connected && this.mainServer?.readyState === WebSocket.OPEN
   }
 
+
   //  connect to main server. return my peer id got.
   public connect(room: string, peer: string){
     rtcLog(`rtcConn connect(${room}, ${peer})`)
     const promise = new Promise<string>((resolve, reject)=>{
-      this.mainServer = new WebSocket(config.mainServer)
+      this.connected = true
+      try{
+        this.mainServer = new WebSocket(config.mainServer)
+      }
+      catch(e){
+        this.disconnect(3000, 'e')
+        reject(e)
+      }
       const onOpenEvent = () => {
         const msg:MSPeerMessage = {
           type:'connect',
@@ -72,18 +81,11 @@ export class RtcConnection{
       }
       const onCloseEvent = () => {
         rtcLog('onClose() for mainServer')
-        this.connected = false
-        this.emit('disconnect')
-
-        setTimeout(()=>{
-          this.mainServer = new WebSocket(config.mainServer)
-          setEventHandler()
-        }, 5 * 1000)
+        this.disconnect()
       }
       const onErrorEvent = () => {
         console.error(`Error in WebSocket for ${config.mainServer}`)
-        this.mainServer?.close(3000, 'onError')
-        onCloseEvent()
+        this.disconnect(3000, 'onError')
       }
 
       const setEventHandler = () => {
@@ -100,11 +102,34 @@ export class RtcConnection{
     const msg:MSMessage = {
       type:'leave'
     }
-    this.mainServer?.send(JSON.stringify(msg))
+    if (this.mainServer && this.mainServer.readyState === WebSocket.OPEN){
+      this.mainServer.send(JSON.stringify(msg))
+      return true
+    }
+    return false
   }
-  public disconnect(){
-    this.mainServer?.close()
-    this.peer_ = ''
+  public disconnect(code?:number, msg?:string){
+    const promise = new Promise<void>((resolve)=>{
+      const func = ()=>{
+        if (this.mainServer && this.mainServer.readyState === WebSocket.OPEN && this.mainServer.bufferedAmount){
+          setTimeout(func, 100)
+        }else{
+          if (this.mainServer?.readyState !== WebSocket.CLOSING || this.mainServer?.readyState !== WebSocket.CLOSED){
+            this.mainServer?.close(code, msg)
+          }
+          if (this.connected){
+            this.connected = false
+            this.emit('disconnect')
+            connLog(`mainServer emits 'disconnect'`)
+          }
+          this.mainServer = undefined
+          this.peer_ = ''
+          resolve()
+        }
+      }
+      func()
+    })
+    return promise
   }
 
   private setMessageSerialNumber(msg: MSMessage){
@@ -159,9 +184,13 @@ export class RtcConnection{
   }
   private onRtpCapabilities(base: MSMessage){
     const msg = base as MSRTPCapabilitiesReply
-    this.device?.load({routerRtpCapabilities: msg.rtpCapabilities}).then(()=>{
+    if (this.device?.loaded){
       this.resolveMessage(base)
-    })
+    }else{
+      this.device?.load({routerRtpCapabilities: msg.rtpCapabilities}).then(()=>{
+        this.resolveMessage(base)
+      })
+    }
   }
 
   private onConnect(base: MSMessage){
@@ -170,23 +199,52 @@ export class RtcConnection{
     this.peer_ = msg.peer
     const room = this.getMessageArg(msg) as string
     if (this.mainServer){
-      const roomMsg:MSRoomMessage = {
+      const joinMsg:MSRoomMessage = {
         type: 'join',
         peer:msg.peer,
         room
       }
-      rtcLog(`join sent ${JSON.stringify(roomMsg)}`)
-      this.mainServer.send(JSON.stringify(roomMsg))
+      rtcLog(`join sent ${JSON.stringify(joinMsg)}`)
+      this.mainServer.send(JSON.stringify(joinMsg))
       this.loadDevice(msg.peer).then(()=>{
         this.resolveMessage(msg, msg.peer)
-        this.connected = true
         this.emitter.emit('connect')
+        this.startPingPong()
       })
     }else{
       this.rejectMessage(msg)
       throw new Error('No connection has been established.')
     }
   }
+  readonly pingPongTimeout = 7000
+  private pingCount = 0
+  private startPingPong(){
+    const msg: MSMessage = {type:'ping'}
+    this.mainServer?.send(JSON.stringify(msg))
+    this.pingCount ++
+    const timerFunc = () => {
+      if (this.pingCount <= 0){
+        if (this.mainServer?.readyState === WebSocket.OPEN){
+          this.mainServer!.send(JSON.stringify(msg))
+          this.pingCount = 1
+          setTimeout(timerFunc, this.pingPongTimeout)
+        }else{
+          console.warn('RtcConnection: Not opened and can not send ping.')
+        }
+      }else{
+        console.warn('RtcConnection: Ping pong time out.')
+        this.pingCount = 0
+        if (this.connected){
+          this.disconnect(3000, 'ping pong time out.')
+        }
+      }
+    }
+    setTimeout(timerFunc, this.pingPongTimeout)
+  }
+  private onPing(msg: MSMessage){
+    this.pingCount --
+  }
+
 
   public createTransport(dir: MSTransportDirection, remote?: string){
     if (dir === 'receive' && !remote){

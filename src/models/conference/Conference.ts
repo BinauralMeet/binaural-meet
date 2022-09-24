@@ -10,17 +10,7 @@ import { MSRemotePeer, MSTransportDirection, MSRemoteProducer} from './MediaMess
 import { autorun } from 'mobx'
 import { PriorityCalculator, trackInfoMerege, VideoAudioTrackInfo, videoAudioTrackInfoDiff } from '@models/conference/PriorityCalculator'
 import { isEqualMSRP } from '@models/conference/MediaMessages'
-
-//  Log level and module log options
-export const CONNECTIONLOG = false
-export const TRACKLOG = false        // show add, remove... of tracks
-export const EVENTLOG = false
-export const SENDLOG = false
-export const trackLog = TRACKLOG ? console.log : (a:any) => {}
-export const connLog = CONNECTIONLOG ? console.log : (a:any) => {}
-export const connDebug = CONNECTIONLOG ? console.debug : (a:any) => {}
-export const eventLog = EVENTLOG ? console.log : (a:any) => {}
-export const sendLog = SENDLOG ? console.log : (a:any) => {}
+import {connLog} from './ConferenceLog'
 
 // config.js
 declare const d:any                  //  from index.html
@@ -72,8 +62,9 @@ export class Conference {
   public get dataConnection(){ return this.dataConnection_ }
 
   constructor(){
-    this.rtcConnection.addListener('remoteUpdate', this.onRemoteUpdate.bind(this))
-    this.rtcConnection.addListener('remoteLeft', this.onRemoteLeft.bind(this))
+    this.rtcConnection.addListener('remoteUpdate', this.onRemoteUpdate)
+    this.rtcConnection.addListener('remoteLeft', this.onRemoteLeft)
+
     this.priorityCalculator = new PriorityCalculator(this)
     let oldTracks: VideoAudioTrackInfo = {videos:[], audios:[]}
     autorun(()=>{
@@ -100,7 +91,14 @@ export class Conference {
     return this.rtcConnection.isConnected()
   }
 
-  public enter(room: string){
+  public enter(room: string, retry:boolean = false){
+    this.room_ = room
+    connLog(`enter to room ${room}.`)
+    if (retry){
+      this.rtcConnection.removeListener('disconnect', this.onRtcDisconnect)
+      this.rtcConnection.addListener('disconnect', this.onRtcDisconnect)
+    }
+
     const promise = new Promise<void>((resolve, reject) => {
       //  check last kicked time and stop the operation if recently kicked.
       const str = window.localStorage.getItem('kickTimes')
@@ -121,6 +119,7 @@ export class Conference {
       //  connect to peer
       const peer = participants.local.information.name.substring(0, 4)
       this.rtcConnection.connect(room, peer).then((peer)=>{
+        connLog('rtc connected.')
         //  register event handlers and join
         //  set id
         participants.setLocalId(peer)
@@ -130,25 +129,54 @@ export class Conference {
             participants.local.devicePreference[prop] = ''
           }
         }
+        //  prepare trasport for local tracks
+        this.prepareSendTransport(this.getLocalMicTrack()).catch(()=>{})
+        this.prepareSendTransport(this.getLocalCameraTrack()).catch(()=>{})
+        const cidRtcLocals = contents.getLocalRtcContentIds()
+        for(const cid of cidRtcLocals){
+          const tracks = contents.getContentTracks(cid)
+          const msTracks = tracks?.tracks.map((t)=>({track:t, peer:tracks.peer, role: cid}))
+          msTracks?.forEach((t) => { this.prepareSendTransport(t).catch() })
+        }
+
         //  connect to relay server for get contents and participants info.
         this.dataConnection.connect(room, peer).then(()=>{
-          this.dataConnection.sync.sendAllAboutMe(true)
           resolve()
         }).catch(reject)
       }).catch(reject)
     })
-
     //  To access from debug console, add object d to the window.
     d.conference = this
-
     return promise
   }
 
-  public leave(){
+  private clearRtc(){
+    const rids = Array.from(this.remotePeers.values()).map(r => r.peer)
+    this.onRemoteLeft([rids])
+    this.localProducers = []
+    this.sendTransport_ = undefined
+  }
+  private onRtcDisconnect = () => {
+    this.clearRtc()
     this.rtcConnection.leave()
-    this.dataConnection.disconnect()
-    this.rtcConnection.disconnect()
-    this.room_ = ''
+    this.dataConnection.disconnect().then(()=>{
+      setTimeout(()=>{this.enter(this.room, true)}, 1000)
+    })
+  }
+
+  public leave(){
+    const promise = new Promise<void>((resolve)=>{
+      this.rtcConnection.removeListener('disconnect', this.onRtcDisconnect)
+      this.rtcConnection.leave()
+      this.dataConnection.disconnect().then(()=>{
+        this.rtcConnection.disconnect().then(()=>{
+          this.clearRtc()
+          this.room_ = ''
+          resolve()
+        })
+      })
+    })
+    return promise
   }
 
   // mediasoup
@@ -164,6 +192,8 @@ export class Conference {
             callback()
           }).catch((error:string)=>{
             console.error(`error in connecting transport:${error}`);
+            this.rtcConnection.leave()
+            this.rtcConnection.disconnect(3000, 'Error in setting up server-side producer')
             errback()
             reject()
           })
@@ -177,7 +207,9 @@ export class Conference {
             }).then((id)=>{
               callback({id})
             }).catch((error)=>{
-              console.error('error setting up server-side producer', error)
+              console.error('Error in setting up server-side producer. disconnect.', error)
+              this.rtcConnection.leave()
+              this.rtcConnection.disconnect(3000, 'Error in setting up server-side producer')
               errback()
               reject()
             })
@@ -239,49 +271,57 @@ export class Conference {
   }
 
   public addOrReplaceLocalTrack(track:MSTrack, maxBitRate?:number){
-    const promise = new Promise<mediasoup.types.Producer>((resolve, reject)=>{
-      //  add content track to contents
-      if (track.role === 'avatar'){
-        if (track.track.kind === 'audio'){
-          participants.local.tracks.audio = track.track
-        }else{
-          participants.local.tracks.avatar = track.track
-        }
+    //  add content track to contents
+    if (track.role === 'avatar'){
+      if (track.track.kind === 'audio'){
+        participants.local.tracks.audio = track.track
       }else{
-        contents.addTrack(track.peer, track.role, track.track)
-        if (track.track.kind === 'video'){
-          track.track.addEventListener('ended', ()=>{
-            contents.removeByLocal(track.role)
-          })
-        }
+        participants.local.tracks.avatar = track.track
       }
-      //  find old or create a producer
-      const oldProducer = this.localProducers.find(p => {
-        const old = (p.appData as ProducerData).track
-        return old.role === track.role && old.track.kind === track.track.kind
-      })
-      if (oldProducer){
-        oldProducer.replaceTrack(track).then(()=>{
-          (oldProducer.appData as ProducerData).track = track
-          oldProducer.resume()
-          resolve(oldProducer)
-        }).catch(reject)
-      }else{
-        this.getSendTransport().then((transport) => {
-          // add track to produce
-          transport.produce({
-            track:track.track,
-            encodings:maxBitRate ? [{maxBitrate:maxBitRate}] : undefined,
-            appData:{track}
-          }).then( producer => {
-            this.localProducers.push(producer)
-            resolve(producer)
-          })
+    }else{
+      contents.addTrack(track.peer, track.role, track.track)
+      if (track.track.kind === 'video'){
+        track.track.addEventListener('ended', ()=>{
+          contents.removeByLocal(track.role)
         })
+      }
+    }
+    return this.prepareSendTransport(track, maxBitRate)
+  }
+  public prepareSendTransport(track?:MSTrack, maxBitRate?:number){
+    const promise = new Promise<mediasoup.types.Producer>((resolve, reject)=>{
+      if (!track){
+        reject('track not specified')
+      }else{
+        //  find old or create a producer
+        const oldProducer = this.localProducers.find(p => {
+          const old = (p.appData as ProducerData).track
+          return old.role === track.role && old.track.kind === track.track.kind
+        })
+        if (oldProducer){
+          oldProducer.replaceTrack(track).then(()=>{
+            (oldProducer.appData as ProducerData).track = track
+            oldProducer.resume()
+            resolve(oldProducer)
+          }).catch(reject)
+        }else{
+          this.getSendTransport().then((transport) => {
+            // add track to produce
+            transport.produce({
+              track:track.track,
+              encodings:maxBitRate ? [{maxBitrate:maxBitRate}] : undefined,
+              appData:{track}
+            }).then( producer => {
+              this.localProducers.push(producer)
+              resolve(producer)
+            }).catch(reject)
+          })
+        }
       }
     })
     return promise
   }
+
   public removeLocalTrack(track:MSTrack){
     assert(track.peer === this.rtcConnection.peer)
     this.removeLocalTrackByRole(track.role, track.track.kind as mediasoup.types.MediaKind)
@@ -405,7 +445,7 @@ export class Conference {
   }
 
   //  event
-  private onRemoteUpdate(arg: [MSRemotePeer[]]){
+  private onRemoteUpdate = (arg: [MSRemotePeer[]]) => {
     const msremotes = arg[0]
     for (const msr of msremotes){
       if (msr.peer === this.rtcConnection.peer) continue
@@ -439,7 +479,7 @@ export class Conference {
       }
     }
   }
-  private onRemoteLeft(args: [string[]]){
+  private onRemoteLeft = (args: [string[]]) => {
     const remoteIds = args[0]
     for(const id of remoteIds){
       if (id !== this.rtcConnection.peer){
@@ -475,7 +515,7 @@ export class Conference {
         }else{
           contents.addTrack(producer.peer.peer, producer.role, consumer.track)
         }
-        console.log(`Conference.addConsumer(): p:${producer.id} consumed.`)
+        connLog(`Conference.addConsumer(): p:${producer.id} consumed.`)
         resolve()
       }).catch((e) => {
         console.error(`Conference.addConsumer() p:${producer.id} ${e}`)

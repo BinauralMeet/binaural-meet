@@ -8,12 +8,12 @@ import {BMMessage} from './DataMessage'
 import {ClientToServerOnlyMessageType, MessageType, ObjectArrayMessageTypes, StringArrayMessageTypes} from './DataMessageType'
 import {DataSync} from '@models/conference/DataSync'
 import {AudioMeter} from '@models/audio/AudioMeter'
-
+import {connLog, connDebug} from './ConferenceLog'
 
 //  Log level and module log options
 export const DATACONLOG = false
-export const dataLog = DATACONLOG ? console.log : (a:any) => {}
-export const dataDebug = DATACONLOG ? console.debug : (a:any) => {}
+export const dataLog = connLog
+export const dataDebug = connDebug
 export let dataRequestInterval:number = 100
 
 // config.js
@@ -58,13 +58,24 @@ export class DataConnection {
 
     const promise = new Promise<void>((resolve, reject)=>{
       if (!config.bmRelayServer){ reject(); return }
-      if (this.relaySocket){ resolve(); return }
+      if (this.relaySocket){
+        console.warn(`relaySocket already exists.`)
+      }
       const onOpen = () => {
-        dataLog(`dataConn socket onOpen`)
+        dataLog('data connected.')
         this.messagesToSendToRelay = []
         this.sync.sendAllAboutMe(true)
         this.pushOrUpdateMessageViaRelay(MessageType.REQUEST_ALL, {})
         this.flushSendMessages()
+        //  start periodical communication with relay server.
+        if (this.stepTimeout){
+          clearTimeout(this.stepTimeout)
+          this.stepTimeout = undefined
+        }
+        this.step()
+
+        this.sync.observeStart()
+        resolve()
       }
       const onMessage = (ev: MessageEvent<any>)=> {
         //  console.log(`ws:`, ev)
@@ -84,46 +95,47 @@ export class DataConnection {
           }
         }
       }
-      const onClose = () => {
-        setTimeout(()=>{
-          this.relaySocket = new WebSocket(config.bmRelayServer)
-          setHandler()
-        }, 5 * 1000)
-      }
       const onError = () => {
         console.error(`Error in WebSocket for ${config.bmRelayServer}`)
         this.relaySocket?.close(3000, 'onError')
-        onClose()
       }
       const setHandler = () => {
         this.relaySocket?.addEventListener('error', onError)
         this.relaySocket?.addEventListener('message', onMessage)
         this.relaySocket?.addEventListener('open', onOpen)
-        this.relaySocket?.addEventListener('close', onClose)
       }
       this.relaySocket = new WebSocket(config.bmRelayServer)
       setHandler()
-      //  start periodical communication with relay server.
-      this.step()
-      this.sync.observeStart()
-      this.sync.sendAllAboutMe(true)
     })
     return promise
   }
   public disconnect(){
-    if (config.bmRelayServer && this.peer){
-      this.sync.observeEnd()
-      this.pushOrUpdateMessageViaRelay(MessageType.PARTICIPANT_LEFT, [this.peer])
-      this.flushSendMessages()
-    }
-    //  stop relayServer communication.
-    this.stopStep = true
-    this.room_ = ''
-    this.peer_ = ''
-    this.relaySocket?.close()
-    this.relaySocket = undefined
+    const promise = new Promise<void>((resolve)=>{
+      if (config.bmRelayServer && this.peer){
+        this.sync.observeEnd()
+        this.pushOrUpdateMessageViaRelay(MessageType.PARTICIPANT_LEFT, [this.peer])
+        this.flushSendMessages()
+      }
+      //  stop relayServer communication.
+      if (this.stepTimeout){
+        clearTimeout(this.stepTimeout)
+        this.stepTimeout = undefined
+      }
+      this.room_ = ''
+      this.peer_ = ''
+      const func = ()=>{
+        if (this.relaySocket && this.relaySocket.readyState === WebSocket.OPEN && this.relaySocket.bufferedAmount){
+          setTimeout(func, 100)
+        }else{
+          this.relaySocket?.close()
+          this.relaySocket = undefined
+          resolve()
+        }
+      }
+      func()
+    })
+    return promise
   }
-
   private updateAudioLevel(){
     if (participants.local.trackStates.micMuted){
       participants.local.setAudioLevel(0)
@@ -133,7 +145,7 @@ export class DataConnection {
   }
 
 
-  private stopStep = false
+  private stepTimeout?:NodeJS.Timeout
   private step(){
     const period = 33
     if (this.relaySocket?.readyState === WebSocket.OPEN){
@@ -167,11 +179,7 @@ export class DataConnection {
       }
       //  console.log(`step RTT:${this.relayRttAverage} remain:${deadline - Date.now()}/${timeToProcess}`)
     }
-    if (!this.stopStep){
-      setTimeout(()=>{this.step()}, period)
-    }else{
-      this.stopStep = false
-    }
+    this.stepTimeout = setTimeout(()=>{this.step()}, period)
   }
 
   sendMessage(type:string, value:any, to?: string, sendRandP?: boolean) {

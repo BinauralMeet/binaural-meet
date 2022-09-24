@@ -33,7 +33,7 @@ const configTitech = {
   mainServer: 'wss://main.titech.binaural.me',
   bmRelayServer: 'wss://relay.titech.binaural.me',
   //bmRelayServer: 'ws://localhost:80',
-corsProxyUrl: 'https://binaural.me/cors_proxy/',
+  corsProxyUrl: 'https://binaural.me/cors_proxy/',
 }
 Object.assign(configTitech, Object.assign(commonConfig, configTitech))
 

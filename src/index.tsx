@@ -21,6 +21,10 @@ configure({
 i18nInit().then(main)
 
 function main() {
+  /*  //  Show last log for beforeunload
+    const logStr = localStorage.getItem('log')
+    console.log(`logStr: ${logStr}`)  //  */
+
   const startPromise = resolveAtEnd(onStart)()
   startPromise.then(resolveAtEnd(renderDOM))
   startPromise.then(resolveAtEnd(startConference))
@@ -54,12 +58,17 @@ function startConference() {
 
       return ev.returnValue
     }
+    errorInfo.onDestruct()
+    logStr += `\nBefore call conference.leave().`
+    localStorage.setItem('log', logStr)
     conference.leave()
+    logStr += `\nconference.leave() called.`
+    localStorage.setItem('log', logStr)
   })
 
   errorInfo.connectionStart()
   when(() => errorInfo.type === '', () => {
     const room = urlParameters.room || '_'
-    conference.enter(room)
+    conference.enter(room, true)
   })
 }

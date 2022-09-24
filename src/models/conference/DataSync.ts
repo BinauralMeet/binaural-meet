@@ -19,10 +19,10 @@ import {BMMessage} from './DataMessage'
 import {DataConnection} from './DataConnection'
 import {MessageType} from './DataMessageType'
 import {notification} from './Notification'
+import {connLog} from './ConferenceLog'
 
 declare const config:any             //  from ../../config.js included from index.html
-const SYNC_LOG = false
-const syncLog = SYNC_LOG ? console.log : () => {}
+const syncLog = connLog
 
 export class DataSync{
   connection: DataConnection
@@ -363,6 +363,7 @@ export class DataSync{
     syncLog(`Recv data msg: ${msgs.map(m => m.t).reduce((p, c)=>`${p} ${c}`,'')}.`)
     //syncLog(`Recv data msg: ${JSON.stringify(msgs)}.`)
     for(const msg of msgs){
+      if (msg.v === undefined) continue
       recorder.recordMessage(msg)
       switch(msg.t){
         case MessageType.ROOM_PROP: this.onRoomProp(...(JSON.parse(msg.v) as [string, string])); break

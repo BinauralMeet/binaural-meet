@@ -119,7 +119,7 @@ export class PriorityCalculator {
       )
     })
     this.conference.rtcConnection.addListener('disconnect', ()=>{
-      this.disable()
+      this.clear()
       if (intervalHandle !== undefined) {
         clearInterval(intervalHandle)
       }
@@ -275,10 +275,11 @@ export class PriorityCalculator {
   }
   private onRemoveObject(id: string){
     const disposer = this.remoteDisposers.get(id)
-    if (disposer === undefined) {
-      throw new Error(`Cannot find disposer for remote object with id: ${id}`)
+    if (disposer) {
+      disposer()
+    }else{
+      priorityLog(`Cannot find disposer for remote object with id: ${id}`)
     }
-    disposer()
     this.remoteDisposers.delete(id)
     this.updateSet.add(id)
     priorityLog('onRemoveObject:', id, this.priorityMaps[0])
