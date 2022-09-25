@@ -12,6 +12,9 @@ export interface MSPeerMessage extends MSMessage{
   peer: string
   remote?: string
 }
+export interface MSConnectMessage extends MSPeerMessage{
+  peerJustBefore?: string
+}
 export type MSTrackRole = 'camera' | 'mic' | 'window' | string
 export interface MSRemoteProducer{
   id: string                      //  producer id

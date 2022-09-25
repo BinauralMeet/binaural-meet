@@ -1,6 +1,6 @@
 import {EventEmitter} from 'events'
 import {RemoteProducer} from './Conference'
-import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSMessageType, MSRoomMessage, MSRTPCapabilitiesReply,
+import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSConnectMessage, MSMessageType, MSRoomMessage, MSRTPCapabilitiesReply,
   MSTransportDirection, MSCreateTransportReply, MSConnectTransportMessage, MSConnectTransportReply,
   MSProduceTransportMessage, MSProduceTransportReply, MSTrackRole, MSConsumeTransportMessage, MSConsumeTransportReply, MSRemoteUpdateMessage, MSRemoteLeftMessage, MSResumeConsumerMessage, MSResumeConsumerReply, MSCloseProducerMessage, MSCloseProducerReply} from './MediaMessages'
 import * as mediasoup from 'mediasoup-client';
@@ -18,6 +18,7 @@ type RtcConnectionEvent = 'remoteUpdate' | 'remoteLeft' | 'connect' | 'disconnec
 
 export class RtcConnection{
   private peer_=''
+  private prevPeer=''
   private connected = false
   get peer() {return this.peer_}
   private mainServer?:WebSocket
@@ -64,9 +65,13 @@ export class RtcConnection{
         reject(e)
       }
       const onOpenEvent = () => {
-        const msg:MSPeerMessage = {
+        const msg:MSConnectMessage = {
           type:'connect',
           peer,
+        }
+        if (this.prevPeer) {
+          msg.peerJustBefore = this.prevPeer
+          connLog(`reconnect with previous peer id '${this.prevPeer}'`)
         }
         this.sendWithPromise(msg, resolve, reject, room)
       }
@@ -123,7 +128,10 @@ export class RtcConnection{
             connLog(`mainServer emits 'disconnect'`)
           }
           this.mainServer = undefined
-          this.peer_ = ''
+          if (this.peer_){
+            this.prevPeer = this.peer_
+            this.peer_ = ''
+          }
           resolve()
         }
       }
@@ -219,11 +227,12 @@ export class RtcConnection{
   readonly pingPongTimeout = 7000
   private pingCount = 0
   private startPingPong(){
+    connLog(`startPingPong() called. count=${this.pingCount}.`)
     const msg: MSMessage = {type:'ping'}
     this.mainServer?.send(JSON.stringify(msg))
-    this.pingCount ++
+    this.pingCount = 1
     const timerFunc = () => {
-      if (this.pingCount <= 0){
+      if (this.pingCount === 0){
         if (this.mainServer?.readyState === WebSocket.OPEN){
           this.mainServer!.send(JSON.stringify(msg))
           this.pingCount = 1
@@ -232,7 +241,7 @@ export class RtcConnection{
           console.warn('RtcConnection: Not opened and can not send ping.')
         }
       }else{
-        console.warn('RtcConnection: Ping pong time out.')
+        console.warn(`RtcConnection: Ping pong time out. count=${this.pingCount}`)
         this.pingCount = 0
         if (this.connected){
           this.disconnect(3000, 'ping pong time out.')
