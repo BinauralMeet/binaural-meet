@@ -161,13 +161,7 @@ export const Footer: React.FC<BMProps&{height?:number}> = (props) => {
   //  Create menu list for device selection
   function makeMenuItem(info: MediaDeviceInfo, close:(did:string) => void):JSX.Element {
     let selected = false
-    if (info.kind === 'audioinput') {
-      selected = info.deviceId === participants.local.devicePreference.audioInputDevice
-    }else if (info.kind === 'audiooutput') {
-      selected = info.deviceId === participants.local.devicePreference.audioOutputDevice
-    }else if (info.kind === 'videoinput') {
-      selected = info.deviceId === participants.local.devicePreference.videoInputDevice
-    }
+    selected = info.deviceId === participants.local.devicePreference[info.kind]
 
     return <MenuItem key={info.deviceId}
       onClick={() => { close(info.deviceId) }}
@@ -196,21 +190,21 @@ export const Footer: React.FC<BMProps&{height?:number}> = (props) => {
   }
   function closeMicMenu(did:string) {
     if (did) {
-      participants.local.devicePreference.audioInputDevice = did
+      participants.local.devicePreference.audioinput = did
       participants.local.saveMediaSettingsToStorage()
     }
     setMicMenuEl(null)
   }
   function closeSpeakerMenu(did:string) {
     if (did) {
-      participants.local.devicePreference.audioOutputDevice = did
+      participants.local.devicePreference.audiooutput = did
       participants.local.saveMediaSettingsToStorage()
     }
     setSpeakerMenuEl(null)
   }
   function closeVideoMenu(did:string) {
     if (did) {
-      participants.local.devicePreference.videoInputDevice = did
+      participants.local.devicePreference.videoinput = did
       participants.local.saveMediaSettingsToStorage()
     }
     setVideoMenuEl(null)

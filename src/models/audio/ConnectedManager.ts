@@ -22,6 +22,9 @@ export class ConnectedManager {
   public setAudioOutput(deviceId: string) {
     this.manager.setAudioOutput(deviceId)
   }
+  public getAudioOutput(){
+    return this.manager.getAudioOutput()
+  }
   constructor() {
     if (urlParameters.testBot !== null) { return }
 

@@ -149,7 +149,7 @@ export function stopFaceTrack(){
 export function createLocalCamera(faceTrack: boolean, did?:string) {
   const promise = new Promise<MSTrack>((resolutionFunc, rejectionFunc) => {
     if (!did){
-      did = participants.local.devicePreference.videoInputDevice
+      did = participants.local.devicePreference.videoinput
     }
     navigator.mediaDevices.getUserMedia(
       {video:{

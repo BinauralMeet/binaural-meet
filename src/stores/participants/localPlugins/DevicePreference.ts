@@ -4,8 +4,7 @@ export class DevicePreference {
   constructor() {
     makeObservable(this)
   }
-  [id: string]: string|undefined
-  @observable audioInputDevice:string|undefined = undefined
-  @observable videoInputDevice:string|undefined = undefined
-  @observable audioOutputDevice:string|undefined = undefined
+  @observable audioinput:string|undefined = undefined
+  @observable videoinput:string|undefined = undefined
+  @observable audiooutput:string|undefined = undefined
 }

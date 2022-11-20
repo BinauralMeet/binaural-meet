@@ -43,7 +43,7 @@ export function stopMpTrack(){
 export function startMpTrack(faceOnly: boolean, did?:string) {
   stopMpTrack()
   const promise = new Promise<void>((resolutionFunc, rejectionFunc) => {
-    if (!did) did = participants.local.devicePreference.videoInputDevice
+    if (!did) did = participants.local.devicePreference.videoinput
 
     const rtcVideo = {...config.rtc.videoConstraints.video,
       width:{

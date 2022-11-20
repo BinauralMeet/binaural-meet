@@ -2,7 +2,7 @@ import { conference } from '@models/conference'
 import {assert} from '@models/utils'
 import errorInfo from '@stores/ErrorInfo'
 import {autorun} from 'mobx'
-import {NodeGroup, NodeGroupForPlayback, PlayMode, setAudioOutputDevice} from './NodeGroup'
+import {getAudioOutputDevice, NodeGroup, NodeGroupForPlayback, PlayMode, setAudioOutputDevice} from './NodeGroup'
 
 export class StereoManager {
   private readonly audioContext: AudioContext = new window.AudioContext()
@@ -155,12 +155,14 @@ export class StereoManager {
     this.audioOutputMuted = muted
   }
 
-  setAudioOutput(deviceId:string) {
+  public setAudioOutput(deviceId:string) {
     setAudioOutputDevice(this.audioElement, deviceId)
     for (const node in this.nodes) {
       this.nodes[node].setAudioOutput(deviceId)
     }
-
+  }
+  public getAudioOutput(){
+    return getAudioOutputDevice(this.audioElement)
   }
 
   set audioOutputMuted(muted: boolean) {

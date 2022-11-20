@@ -42,10 +42,6 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
   @observable.ref zone:ISharedContent|undefined = undefined    //  The zone on which the local participant located.
   @observable remoteVideoLimit = config.remoteVideoLimit as number || -1
   @observable remoteAudioLimit = config.remoteAudioLimit as number || -1
-  @observable audioInputDevice:string|undefined = undefined
-  @observable videoInputDevice:string|undefined = undefined
-  @observable audioOutputDevice:string|undefined = undefined
-
 
   information = this.information as LocalInformation
   @observable.ref informationToSend:RemoteInformation|undefined

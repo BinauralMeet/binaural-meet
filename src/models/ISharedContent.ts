@@ -85,7 +85,14 @@ export function contentsToSave(them: ISharedContent[]) {
   }
   return them as ISharedContentToSave[]
 }
+let loadToContentConut = 1
 export function loadToContents(them: ISharedContentToSend[]) {
+  for(const c of them){
+    if (!c.id){
+      c.id = "LD" + loadToContentConut
+      loadToContentConut ++
+    }
+  }
   return receiveToContents(them)
 }
 

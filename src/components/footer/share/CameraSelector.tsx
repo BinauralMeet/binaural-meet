@@ -24,7 +24,7 @@ export const CameraSelector: React.FC<CameraSelectorProps> = (props) => {
     props.cameras.videos.map((info, idx) => makeMenuItem(info, closeVideoMenu, idx)))
   function makeMenuItem(info: MediaDeviceInfo, close:(did:string) => void, key:number):JSX.Element {
     let selected = false
-    selected = info.deviceId === participants.local.devicePreference.videoInputDevice
+    selected = info.deviceId === participants.local.devicePreference.videoinput
     const keyStr = String.fromCharCode(65 + key)
 
     return <MenuItem key={info.deviceId} onClick={() => { close(info.deviceId) }} >

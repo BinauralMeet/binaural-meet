@@ -12,7 +12,7 @@ import {conference} from '@models/conference'
 export function createLocalMic() {
   //  console.log(`createLocalMic() called`)
   const promise = new Promise<MSTrack>((resolutionFunc, rejectionFunc) => {
-    const did = participants.local.devicePreference.audioInputDevice
+    const did = participants.local.devicePreference.audioinput
     navigator.mediaDevices.getUserMedia({
       audio:{deviceId: did}
     }).then((ms)=>{
@@ -32,7 +32,7 @@ function isMicMuted(){
     !participants.localId || urlParameters.testBot !== null
 }
 autorun(() => {
-  const did = participants.local.devicePreference.audioInputDevice
+  const did = participants.local.devicePreference.audioinput
   //  console.log(`isMicMuted === ${isMicMuted()}`)
   if (isMicMuted()){
     conference.setLocalMicTrack(undefined).then(()=>{
@@ -41,11 +41,11 @@ autorun(() => {
   }else{
     const track = conference.getLocalMicTrack()
     if (track && track.deviceId === did) { return }
-    createLocalMic().then((track)=>{
+    createLocalMic().then((newTrack)=>{
       if (isMicMuted()){
-        track.track?.stop()
+        newTrack.track?.stop()
       }else{
-        conference.setLocalMicTrack(track)
+        conference.setLocalMicTrack(newTrack)
       }
     }).finally(getNotificationPermission)
   }
@@ -53,11 +53,22 @@ autorun(() => {
 
 
 //  headphone or audio output device update
+let timeout:NodeJS.Timeout|undefined
 autorun(() => {
-  const did = participants.local.devicePreference.audioOutputDevice
-  if (did) {
-    audioManager.setAudioOutput(did)
+  if (timeout){
+    clearTimeout(timeout)
+    timeout = undefined
   }
+  const setAudioSink = () => {
+    const did = participants.local.devicePreference.audiooutput
+    if (did && did !== audioManager.getAudioOutput()) {
+      audioManager.setAudioOutput(did)
+      if (did !== audioManager.getAudioOutput()){
+        timeout = setTimeout(setAudioSink, 3000)
+      }
+    }
+  }
+  setAudioSink()
 })
 
 //  camera mute and camera device update
@@ -67,7 +78,7 @@ function isCameraMuted(){
     !participants.localId || urlParameters.testBot !== null
 }
 autorun(() => {
-  const did = participants.local.devicePreference.videoInputDevice
+  const did = participants.local.devicePreference.videoinput
   const faceTrack = participants.local.information.faceTrack
   if (isCameraMuted()) {
     stopMpTrack()

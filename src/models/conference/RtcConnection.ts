@@ -77,6 +77,7 @@ export class RtcConnection{
       }
       const onMessageEvent = (ev: MessageEvent<any>)=> {
         const msg = JSON.parse(ev.data) as MSMessage
+        this.onAnyMesageForPing()
         const func = this.handlers.get(msg.type)
         if (func){
           func.bind(this)(msg)
@@ -226,34 +227,41 @@ export class RtcConnection{
   }
   readonly pingPongTimeout = 7000
   private pingCount = 0
-  private startPingPong(){
+  private pingTimeout?:NodeJS.Timeout = undefined
+  private pingTimerFunc = () => {
+    if (this.pingCount === 0){
+      if (this.mainServer?.readyState === WebSocket.OPEN){
+        const msg: MSMessage = {type:'ping'}
+        this.mainServer!.send(JSON.stringify(msg))
+        this.pingCount = 1
+        this.pingTimeout = setTimeout(this.pingTimerFunc, this.pingPongTimeout)
+      }else{
+        console.warn('RtcConnection: Not opened and can not send ping.')
+      }
+    }else{
+      console.warn(`RtcConnection: Ping pong time out. count=${this.pingCount}`)
+      this.pingCount = 0
+      if (this.connected){
+        this.disconnect(3000, 'ping pong time out.')
+      }
+    }
+  }
+private startPingPong(){
     connLog(`startPingPong() called. count=${this.pingCount}.`)
     const msg: MSMessage = {type:'ping'}
     this.mainServer?.send(JSON.stringify(msg))
     this.pingCount = 1
-    const timerFunc = () => {
-      if (this.pingCount === 0){
-        if (this.mainServer?.readyState === WebSocket.OPEN){
-          this.mainServer!.send(JSON.stringify(msg))
-          this.pingCount = 1
-          setTimeout(timerFunc, this.pingPongTimeout)
-        }else{
-          console.warn('RtcConnection: Not opened and can not send ping.')
-        }
-      }else{
-        console.warn(`RtcConnection: Ping pong time out. count=${this.pingCount}`)
-        this.pingCount = 0
-        if (this.connected){
-          this.disconnect(3000, 'ping pong time out.')
-        }
-      }
-    }
-    setTimeout(timerFunc, this.pingPongTimeout)
+    this.pingTimeout = setTimeout(this.pingTimerFunc, this.pingPongTimeout)
   }
   private onPing(msg: MSMessage){
-    this.pingCount --
+    this.pingCount = 0
   }
-
+  private onAnyMesageForPing(){
+    if (this.pingTimeout){
+      clearTimeout(this.pingTimeout)
+      this.pingTimeout = setTimeout(this.pingTimerFunc, this.pingPongTimeout)
+    }
+  }
 
   public createTransport(dir: MSTransportDirection, remote?: string){
     if (dir === 'receive' && !remote){

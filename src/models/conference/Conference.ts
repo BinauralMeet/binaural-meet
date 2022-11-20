@@ -117,36 +117,41 @@ export class Conference {
       }
 
       //  connect to peer
-      const peer = participants.local.information.name.substring(0, 4)
+      const peer = participants.local.information.name.substring(0, 4).replaceAll(' ','_')
       this.rtcConnection.connect(room, peer).then((peer)=>{
         connLog('rtc connected.')
         //  register event handlers and join
         //  set id
         participants.setLocalId(peer)
-        //  create tracks
-        for (const prop in participants.local.devicePreference) {
-          if (participants.local.devicePreference[prop] === undefined) {
-            participants.local.devicePreference[prop] = ''
+        //  Create local tracks
+        navigator.mediaDevices.enumerateDevices().then((infos)=>{
+          //  Enumerate devices and set if no preference is set.
+          for(const info of infos){
+            const pref = participants.local.devicePreference[info.kind]
+            if (!pref || !infos.find(i => i.deviceId === pref)){
+              participants.local.devicePreference[info.kind] = info.deviceId
+            }
           }
-        }
-        //  prepare trasport for local tracks
-        this.prepareSendTransport(this.getLocalMicTrack()).catch(()=>{})
-        this.prepareSendTransport(this.getLocalCameraTrack()).catch(()=>{})
-        const cidRtcLocals = contents.getLocalRtcContentIds()
-        for(const cid of cidRtcLocals){
-          const tracks = contents.getContentTracks(cid)
-          const msTracks = tracks?.tracks.map((t)=>({track:t, peer:tracks.peer, role: cid}))
-          msTracks?.forEach((t) => { this.prepareSendTransport(t).catch() })
-        }
 
-        //  connect to relay server for get contents and participants info.
-        this.dataConnection.connect(room, peer).then(()=>{
-          resolve()
-        }).catch(reject)
+          //  prepare trasport for local tracks
+          this.prepareSendTransport(this.getLocalMicTrack()).catch(()=>{})
+          this.prepareSendTransport(this.getLocalCameraTrack()).catch(()=>{})
+          const cidRtcLocals = contents.getLocalRtcContentIds()
+          for(const cid of cidRtcLocals){
+            const tracks = contents.getContentTracks(cid)
+            const msTracks = tracks?.tracks.map((t)=>({track:t, peer:tracks.peer, role: cid}))
+            msTracks?.forEach((t) => { this.prepareSendTransport(t).catch() })
+          }
+          //  connect to relay server for get contents and participants info.
+          this.dataConnection.connect(room, peer).then(()=>{
+            resolve()
+          }).catch(reject)
+
+          //  To access from debug console, add object d to the window.
+          d.conference = this
+        }).catch(() => { console.log('Device enumeration error') })
       }).catch(reject)
     })
-    //  To access from debug console, add object d to the window.
-    d.conference = this
     return promise
   }
 
@@ -160,7 +165,7 @@ export class Conference {
     this.clearRtc()
     this.rtcConnection.leave()
     this.dataConnection.disconnect().then(()=>{
-      setTimeout(()=>{this.enter(this.room, true)}, 1000)
+      setTimeout(()=>{this.enter(this.room, true)}, 5000)
     })
   }
 
