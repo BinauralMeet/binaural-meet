@@ -27,6 +27,7 @@ export interface RemoteProducer extends MSRemoteProducer{
 export interface RemotePeer{
   peer: string
   transport?: mediasoup.types.Transport   // receive transport
+  transportPromise?: Promise<mediasoup.types.Transport>  // set during creating receive transport
   producers: RemoteProducer[]             // producers of the remote peer
 }
 export function getStatFromRemotePeer(r?: RemotePeer){
@@ -56,6 +57,7 @@ export class Conference {
   public get remotePeers(){return this.remotePeers_}
   private localProducers: mediasoup.types.Producer[] = []
   private sendTransport_?: mediasoup.types.Transport
+  private sendTransportPromise?: Promise<mediasoup.types.Transport>
   public priorityCalculator
   //  map related
   private dataConnection_ = new DataConnection()
@@ -96,8 +98,10 @@ export class Conference {
     connLog(`enter to room ${room}.`)
     if (retry){
       this.rtcConnection.removeListener('disconnect', this.onRtcDisconnect)
-      this.rtcConnection.addListener('disconnect', this.onRtcDisconnect)
+      this.dataConnection.removeListener('disconnect', this.onDataDisconnect)
     }
+    this.rtcConnection.addListener('disconnect', this.onRtcDisconnect)
+    this.dataConnection.addListener('disconnect', this.onDataDisconnect)
 
     const promise = new Promise<void>((resolve, reject) => {
       //  check last kicked time and stop the operation if recently kicked.
@@ -142,10 +146,26 @@ export class Conference {
             const msTracks = tracks?.tracks.map((t)=>({track:t, peer:tracks.peer, role: cid}))
             msTracks?.forEach((t) => { this.prepareSendTransport(t).catch() })
           }
+
           //  connect to relay server for get contents and participants info.
-          this.dataConnection.connect(room, peer).then(()=>{
-            resolve()
-          }).catch(reject)
+          if (this.dataConnection.isConnected()){
+            console.log(`DataConnection is connected.`)
+            if (this.dataConnection.peer !== peer){
+              this.dataConnection.disconnect().then(()=>{
+                setTimeout(()=>{
+                  this.dataConnection.connect(room, peer).then(()=>{
+                    resolve()
+                  }).catch(reject)
+                }, 3000)
+              })
+            }else{
+              console.log(`Reuse the old data connection.`)
+            }
+          }else{
+            this.dataConnection.connect(room, peer).then(()=>{
+              resolve()
+            }).catch(reject)
+          }
 
           //  To access from debug console, add object d to the window.
           d.conference = this
@@ -162,17 +182,30 @@ export class Conference {
     this.sendTransport_ = undefined
   }
   private onRtcDisconnect = () => {
+    console.log(`onRtcDisconnect called.`)
     this.clearRtc()
     this.rtcConnection.leave()
-    this.dataConnection.disconnect().then(()=>{
-      setTimeout(()=>{this.enter(this.room, true)}, 5000)
-    })
+    setTimeout(()=>{this.enter(this.room, true)}, 5000)
   }
+
+  private onDataDisconnect = () => {
+    console.log(`onDataDisconnect called.`)
+    const func = ()=>{
+      if (this.rtcConnection.isConnected()){
+        this.dataConnection.connect(this.room, this.rtcConnection.peer)
+      }else{
+        setTimeout(func, 2000)
+      }
+    }
+    setTimeout(func, 2000)
+}
+
 
   public leave(){
     const promise = new Promise<void>((resolve)=>{
       this.rtcConnection.removeListener('disconnect', this.onRtcDisconnect)
       this.rtcConnection.leave()
+      this.dataConnection.removeListener('disconnect', this.onDataDisconnect)
       this.dataConnection.disconnect().then(()=>{
         this.rtcConnection.disconnect().then(()=>{
           this.clearRtc()
@@ -243,29 +276,37 @@ export class Conference {
   }
 
   private getSendTransport(){
+    if (this.sendTransportPromise){ return this.sendTransportPromise }
     const promise = new Promise<mediasoup.types.Transport>((resolve, reject)=>{
       if (this.sendTransport){
+        delete this.sendTransportPromise
         resolve(this.sendTransport)
       }else{
         this.createTransport('send').then(transport=>{
           this.sendTransport_ = transport
+          delete this.sendTransportPromise
           resolve(transport)
         }).catch(reject)
       }
     })
+    this.sendTransportPromise = promise //  Start to create transport
     return promise
   }
   private getReceiveTransport(peer: RemotePeer){
+    if (peer.transportPromise){ return peer.transportPromise }
     const promise = new Promise<mediasoup.types.Transport>((resolve, reject)=>{
       if (peer.transport){
+        delete peer.transportPromise
         resolve(peer.transport)
       }else{
         this.createTransport('receive', peer).then(transport => {
           peer.transport = transport
-          resolve(transport)
+          delete peer.transportPromise
+          resolve(peer.transport)
         }).catch(reject)
       }
     })
+    peer.transportPromise = promise //  Start to create transport
     return promise
   }
   public get sendTransport(){
@@ -493,7 +534,7 @@ export class Conference {
           this.onProducerRemoved(remote.producers, remote)
         }
         this.remotePeers.delete(id)
-        participants.leave(id)
+        //participants.leave(id)
       }
     }
   }

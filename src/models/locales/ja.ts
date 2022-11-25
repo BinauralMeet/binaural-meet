@@ -59,6 +59,8 @@ export const jaTranslate = {
   etNoMic: 'マイクがありません',
   emNoMic: 'Binaural Meetにはマイクが必要です。パソコンにマイクがついていることを確認してください。',
   emClose: '閉じる',
+  emResetRtc: 'RTCをリセット',
+  emResetData: 'データ接続をリセット',
   emNeverShow: 'このセッションでは表示しない',
   etDataConnection: 'データサーバに接続できません',
   etRtcConnection: 'メディアサーバに通信ができません',

@@ -60,6 +60,8 @@ export const enTranslate = {
   etNoMic: 'No microphone',
   emNoMic: 'Please check if your PC has a microphone. Binaural Meet requires it.',
   emClose: 'Close',
+  emResetRtc: 'Reset RTC',
+  emResetData: 'Reset data connection',
   emNeverShow: 'Never show this in this session',
   etNoChannel: 'No data channel',
   emNoChannel: 'Please check firewall setting. Binaural Meet connect to https (port 443/TCP) and port 8801-8810/UDP or 80/TCP.',

@@ -12,6 +12,13 @@ import {ConnectionStat} from '@components/map/Participant/SignalQuality'
 
 declare const config:any             //  from ../../config.js included from index.html
 
+function resetRtc(){
+  conference.rtcConnection.forceClose()
+}
+function resetDataConnection(){
+  conference.dataConnection.forceClose()
+}
+
 export interface StatusDialogProps extends Omit<PopperProps, 'children'>, BMProps{
   close: () => void,
 }
@@ -67,7 +74,15 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
   return <Popper {...poperProps} disablePortal={false} style={{zIndex:2}}>
     <Paper style={{background:'rgba(255,255,255,1)', padding:'0.4em'}}>
       <div style={{overflowY:'auto'}}>
-        <strong>{t('connectionStatus')}</strong><br />
+        <strong>{t('connectionStatus')}</strong>
+        &nbsp;
+        <Button color="primary" size="small" style={{textTransform:'none'}}
+          onClick={resetRtc}
+        >{t('emResetRtc')}</Button>
+        <Button color="primary" size="small" style={{textTransform:'none'}}
+          onClick={resetDataConnection}
+        >{t('emResetData')}</Button>
+        <br />
         <div> Data: {stat.data}</div>
         {stat.servers.length === 0 ? <div>'No RTC server'</div> :
           stat.servers.map((server, idx) => <div key={idx}>

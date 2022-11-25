@@ -9,6 +9,7 @@ import {ClientToServerOnlyMessageType, MessageType, ObjectArrayMessageTypes, Str
 import {DataSync} from '@models/conference/DataSync'
 import {AudioMeter} from '@models/audio/AudioMeter'
 import {connLog, connDebug} from './ConferenceLog'
+import {EventEmitter} from 'events'
 
 //  Log level and module log options
 export const DATACONLOG = false
@@ -23,6 +24,8 @@ declare const config:any             //  from ../../config.js included from inde
 const stringArrayMessageTypesForClient = new Set(StringArrayMessageTypes)
 stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.CONTENT_UPDATE_REQUEST_BY_ID)
 stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.REQUEST_PARTICIPANT_STATES)
+
+type DataConnectionEvent = 'disconnect'
 
 
 export class DataConnection {
@@ -99,10 +102,15 @@ export class DataConnection {
         console.error(`Error in WebSocket for ${config.bmRelayServer}`)
         this.relaySocket?.close(3000, 'onError')
       }
+      const onClose = () => {
+        dataLog('onClose() for relaySocket')
+        this.disconnect()
+      }
       const setHandler = () => {
         this.relaySocket?.addEventListener('error', onError)
         this.relaySocket?.addEventListener('message', onMessage)
         this.relaySocket?.addEventListener('open', onOpen)
+        this.relaySocket?.addEventListener('close', onClose)
       }
       this.relaySocket = new WebSocket(config.bmRelayServer)
       setHandler()
@@ -134,7 +142,12 @@ export class DataConnection {
       }
       func()
     })
+    this.emit('disconnect')
+    connLog(`relaySocket emits 'disconnect'`)
     return promise
+  }
+  public forceClose(){
+    this.relaySocket?.close()
   }
   private updateAudioLevel(){
     if (participants.local.trackStates.micMuted){
@@ -262,5 +275,19 @@ export class DataConnection {
         waitAndSend()
       })
     }
+  }
+
+  private emitter = new EventEmitter()
+  public addListener(event:DataConnectionEvent, listener:(...args:any[])=>void){
+    this.emitter.addListener(event, listener)
+  }
+  public removeListener(event:DataConnectionEvent, listener:(...args:any[])=>void){
+    this.emitter.removeListener(event, listener)
+  }
+  public removeAllListener(){
+    this.emitter.removeAllListeners()
+  }
+  private emit(event:DataConnectionEvent, ...args: any[]){
+    this.emitter.emit(event, args)
   }
 }
