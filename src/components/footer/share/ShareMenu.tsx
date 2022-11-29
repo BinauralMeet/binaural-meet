@@ -181,7 +181,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
   }
   const screenAsBackgrouond = () => {
     if (contents.mainScreenOwner === participants.localId){
-      conference.removeLocalTrackByRole('mainScreen')
+      conference.removeLocalTrackByRole(true, 'mainScreen')
     } else {
       startCapture(props).then((ms) => {
         if (ms.getTracks().length) {

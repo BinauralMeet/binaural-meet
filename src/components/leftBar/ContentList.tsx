@@ -101,9 +101,9 @@ export const ContentList: React.FC<BMProps&TextLineStyle>  = (props) => {
       Array.from(contents.roomContentsInfo.size ? contents.roomContentsInfo.values() : contents.all)
     all.sort((a,b) => {
       let rv = a.name.localeCompare(b.name)
-      if (rv === 0){ rv = a.ownerName.localeCompare(b.ownerName) }
-      if (rv === 0){ rv = a.type.localeCompare(b.type) }
-      if (rv === 0){ rv = a.id.localeCompare(b.id) }
+      if (rv === 0 && a.ownerName){ rv = a.ownerName.localeCompare(b.ownerName) }
+      if (rv === 0 && a.type){ rv = a.type.localeCompare(b.type) }
+      if (rv === 0 && a.id){ rv = a.id.localeCompare(b.id) }
 
       return rv
     })

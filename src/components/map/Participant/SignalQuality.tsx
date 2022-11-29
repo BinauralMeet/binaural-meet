@@ -11,8 +11,8 @@ import SignalCellular4BarIcon from '@material-ui/icons/SignalCellular4Bar'
 import {useTranslation} from '@models/locales'
 import React from 'react'
 import {useObserver} from 'mobx-react-lite'
-import { StreamStat, TransportStat } from '@models/conference/RtcConnection'
-
+import { getStatFromTransport, StreamStat, TransportStat } from '@models/conference/RtcConnection'
+import * as mediasoup from 'mediasoup-client'
 
 export interface ConnectionStatProps{
   stat?: TransportStat
@@ -46,7 +46,7 @@ export const ConnectionStat: React.FC<ConnectionStatProps> = (props:ConnectionSt
 
 export interface ConnectionQualityDialogProps{
   open: boolean
-  stat?: TransportStat
+  transport?: mediasoup.types.Transport
   isLocal?: boolean
   anchorEl: null | HTMLElement
   onClose?: ()=>void
@@ -54,7 +54,8 @@ export interface ConnectionQualityDialogProps{
 export const ConnectionQualityDialog: React.FC<ConnectionQualityDialogProps>
   = (props: ConnectionQualityDialogProps) => {
   const {t} = useTranslation()
-  const stat = useObserver<TransportStat|undefined>(()=> (props.stat ? {...props.stat} : undefined))
+  const rawStat = getStatFromTransport(props.transport)
+  const stat = useObserver<TransportStat|undefined>(()=> (rawStat ? {...rawStat} : undefined))
 
   return <Popover open={props.open} anchorEl={props.anchorEl} >
     <DialogTitle>
@@ -101,7 +102,7 @@ export interface SignalQualityButtonProps{
   open: boolean
   anchorEl?: HTMLElement |  null
   isLocal?:boolean
-  stat?: TransportStat
+  transport?: mediasoup.types.Transport
 }
 export const SignalQualityButton: React.FC<SignalQualityButtonProps> = (props:SignalQualityButtonProps) => {
   const [open, setOpen] = React.useState(false)
@@ -109,8 +110,8 @@ export const SignalQualityButton: React.FC<SignalQualityButtonProps> = (props:Si
   const ref = React.useRef<HTMLButtonElement>(null)
 
   return <IconButton ref={ref} onClick={()=>{ setOpen(true) }}>
-    <SignalQualityIcon quality={props.stat?.quality} />
-    <ConnectionQualityDialog stat={props.stat} open={open}
+    <SignalQualityIcon quality={getStatFromTransport(props.transport)?.quality} />
+    <ConnectionQualityDialog transport={props.transport} open={open}
       anchorEl={ref.current} onClose={()=>{
         setOpen(false)
     }}/>

@@ -87,7 +87,7 @@ autorun(() => {
       conference.setLocalCameraTrack(undefined).then(track => track?.track.stop())
     } else {
       const track = conference.getLocalCameraTrack()
-      if (track) { conference.removeLocalTrack(track) }
+      if (track) { conference.removeLocalTrack(true, track) }
     }
   }else{
     const isVrm = participants.local.information.avatarSrc.slice(-4) === '.vrm'

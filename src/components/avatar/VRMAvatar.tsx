@@ -117,6 +117,7 @@ export const VRMAvatar: React.FC<{participant:ParticipantBase}> = (props: {parti
     return ()=>{
       for(const d of dispo) d()
     }
+    //  eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return <>
@@ -171,7 +172,7 @@ const rigRotation = (
   Part.quaternion.slerp(quaternion, lerpAmount); // interpolate
 };
 
-// Animate Position Helper Function
+/*  // Animate Position Helper Function
 const rigPosition = (vrm: VRM,
   name:HumanoidBoneName,
   position = { x: 0, y: 0, z: 0 },
@@ -189,7 +190,7 @@ const rigPosition = (vrm: VRM,
     position.z * dampener
   );
   Part.position.lerp(vector, lerpAmount); // interpolate
-};
+};  */
 
 let oldLookTarget = new THREE.Euler()
 function rigFace(vrm:VRM, riggedFace:Kalidokit.TFace){

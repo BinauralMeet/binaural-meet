@@ -266,7 +266,7 @@ export class SharedContents extends EventEmitter {
   removeByLocal(cid: string) {
     if (cid === 'mainScreen'){
       if (this.mainScreenOwner === conference.rtcConnection.peer){
-        conference.removeLocalTrackByRole('mainScreen')
+        conference.removeLocalTrackByRole(true, 'mainScreen')
       }
     }else{
       const toRemove = this.roomContents.get(cid)
@@ -343,7 +343,7 @@ export class SharedContents extends EventEmitter {
       const peerAndTracks = this.contentTracks.get(c.id)
       if (peerAndTracks?.peer) {
         if (peerAndTracks.peer === participants.localId){
-          conference.removeLocalTrackByRole(c.id)
+          conference.removeLocalTrackByRole(true, c.id)
         }else{
           conference.closeTrack(peerAndTracks.peer, c.id)
         }

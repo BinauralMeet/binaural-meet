@@ -217,7 +217,7 @@ export class PriorityCalculator {
       const info = extractRemoteObjectInfo(producer)
       if (info){
         prioritizedTrackInfoLists[producer.kind === 'video' ? 0 : 1].unshift(info)
-        this.conference.removeLocalTrackByRole('mainScreen')
+        this.conference.removeLocalTrackByRole(true, 'mainScreen')
       }
     }
 

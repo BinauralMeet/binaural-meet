@@ -5,7 +5,7 @@ import Button from '@material-ui/core/Button'
 import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
 import Popover, { PopoverProps } from '@material-ui/core/Popover'
-import {conference, getStatFromRemotePeer} from '@models/conference'
+import {conference} from '@models/conference'
 import {MessageType} from '@models/conference/DataMessageType'
 import {t} from '@models/locales'
 import chat from '@stores/Chat'
@@ -59,7 +59,7 @@ export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (prop
     <DialogTitle>
       {props.participant?.information.name}
       <span style={{float:'right'}}>
-        <SignalQualityButton open={props.open} stat={getStatFromRemotePeer(conference.remotePeers.get(pid))} /></span>
+        <SignalQualityButton open={props.open} transport={conference.remotePeers.get(pid)?.transport} /></span>
     </DialogTitle>
     <DialogContent>
       <Box mb={2}>

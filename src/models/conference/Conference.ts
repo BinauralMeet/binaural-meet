@@ -3,7 +3,7 @@ import {assert, MSTrack, Roles} from '@models/utils'
 import {default as participants} from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
 import {ClientToServerOnlyMessageType, StringArrayMessageTypes} from './DataMessageType'
-import {RtcConnection, TransportStat} from './RtcConnection'
+import {RtcConnection, updateTransportStat} from './RtcConnection'
 import {DataConnection} from './DataConnection'
 import * as mediasoup from 'mediasoup-client'
 import { MSRemotePeer, MSTransportDirection, MSRemoteProducer} from './MediaMessages'
@@ -11,6 +11,7 @@ import { autorun } from 'mobx'
 import { PriorityCalculator, trackInfoMerege, VideoAudioTrackInfo, videoAudioTrackInfoDiff } from '@models/conference/PriorityCalculator'
 import { isEqualMSRP } from '@models/conference/MediaMessages'
 import {connLog} from './ConferenceLog'
+import { RemoteObjectInfo } from './priorityTypes'
 
 // config.js
 declare const d:any                  //  from index.html
@@ -29,9 +30,6 @@ export interface RemotePeer{
   transport?: mediasoup.types.Transport   // receive transport
   transportPromise?: Promise<mediasoup.types.Transport>  // set during creating receive transport
   producers: RemoteProducer[]             // producers of the remote peer
-}
-export function getStatFromRemotePeer(r?: RemotePeer){
-  return r?.transport?.appData.stat as TransportStat
 }
 
 export interface LocalProducer{
@@ -73,15 +71,16 @@ export class Conference {
       const added = trackInfoMerege(videoAudioTrackInfoDiff(this.priorityCalculator.tracksToConsume, oldTracks))
       const removed = trackInfoMerege(videoAudioTrackInfoDiff(oldTracks, this.priorityCalculator.tracksToConsume))
       oldTracks = this.priorityCalculator.tracksToConsume
+      const catchHandler = (info: RemoteObjectInfo)=>{
+        //  failed to consume. Try next update.
+        const aidx = oldTracks.audios.findIndex((a)=> info.id === a.id)
+        if (aidx >= 0) oldTracks.audios.splice(aidx, 1)
+        const vidx = oldTracks.videos.findIndex((a)=> info.id === a.id)
+        if (vidx >= 0) oldTracks.videos.splice(vidx, 1)
+      }
       for(const info of added){
         if(!info.producer.consumer){
-          this.addConsumer(info.producer).catch(()=>{
-            //  failed to consume. Try next update.
-            const aidx = oldTracks.audios.findIndex((a)=> info.id === a.id)
-            if (aidx >= 0) oldTracks.audios.splice(aidx, 1)
-            const vidx = oldTracks.videos.findIndex((a)=> info.id === a.id)
-            if (vidx >= 0) oldTracks.videos.splice(vidx, 1)
-          })
+          this.addConsumer(info.producer).catch(()=>{ catchHandler(info) })
         }}
       for(const info of removed){ this.removeConsumer(info.producer) }
     })
@@ -92,6 +91,8 @@ export class Conference {
   public isRtcConnected(){
     return this.rtcConnection.isConnected()
   }
+
+  private updateStatInterval = 0
 
   public enter(room: string, retry:boolean = false){
     this.room_ = room
@@ -160,6 +161,7 @@ export class Conference {
               })
             }else{
               console.log(`Reuse the old data connection.`)
+              resolve()
             }
           }else{
             this.dataConnection.connect(room, peer).then(()=>{
@@ -172,20 +174,37 @@ export class Conference {
         }).catch(() => { console.log('Device enumeration error') })
       }).catch(reject)
     })
+    if (!this.updateStatInterval){
+      this.updateStatInterval = window.setInterval(()=>{
+        conference.updateTransportStat()}, 10000)
+    }
     return promise
   }
 
   private clearRtc(){
     const rids = Array.from(this.remotePeers.values()).map(r => r.peer)
     this.onRemoteLeft([rids])
+    this.remotePeers_.clear()
+    this.localProducers.forEach(p => p.close())
     this.localProducers = []
-    this.sendTransport_ = undefined
+    this.sendTransport_?.close()
+    delete this.sendTransportPromise
+    delete this.sendTransport_
   }
   private onRtcDisconnect = () => {
     console.log(`onRtcDisconnect called.`)
     this.clearRtc()
     this.rtcConnection.leave()
-    setTimeout(()=>{this.enter(this.room, true)}, 5000)
+    setTimeout(()=>{
+      this.enter(this.room, true).then(()=>{
+/*        const v = participants.local.devicePreference.videoinput
+        participants.local.devicePreference.videoinput = undefined
+        participants.local.devicePreference.videoinput = v
+        const a = participants.local.devicePreference.audioinput
+        participants.local.devicePreference.audioinput = undefined
+        participants.local.devicePreference.audioinput = a  */
+      })
+    }, 5000)
   }
 
   private onDataDisconnect = () => {
@@ -214,6 +233,7 @@ export class Conference {
         })
       })
     })
+    if (this.updateStatInterval) window.clearInterval(this.updateStatInterval)
     return promise
   }
 
@@ -312,9 +332,6 @@ export class Conference {
   public get sendTransport(){
     return this.sendTransport_
   }
-  public get sendTransportStat(){
-    return this.sendTransport_?.appData.stat as TransportStat
-  }
 
   public addOrReplaceLocalTrack(track:MSTrack, maxBitRate?:number){
     //  add content track to contents
@@ -355,6 +372,7 @@ export class Conference {
             // add track to produce
             transport.produce({
               track:track.track,
+              stopTracks:false,
               encodings:maxBitRate ? [{maxBitrate:maxBitRate}] : undefined,
               appData:{track}
             }).then( producer => {
@@ -368,11 +386,11 @@ export class Conference {
     return promise
   }
 
-  public removeLocalTrack(track:MSTrack){
+  public removeLocalTrack(stopTrack: boolean, track:MSTrack){
     assert(track.peer === this.rtcConnection.peer)
-    this.removeLocalTrackByRole(track.role, track.track.kind as mediasoup.types.MediaKind)
+    this.removeLocalTrackByRole(stopTrack, track.role, track.track.kind as mediasoup.types.MediaKind)
   }
-  public removeLocalTrackByRole(role:Roles, kind?:mediasoup.types.MediaKind){
+  public removeLocalTrackByRole(stopTrack:boolean, role:Roles, kind?:mediasoup.types.MediaKind){
     if (role === 'avatar'){
       if (kind === 'audio' || !kind) participants.local.tracks.audio = undefined
       if (kind === 'video' || !kind) participants.local.tracks.avatar = undefined
@@ -383,6 +401,9 @@ export class Conference {
       const track = (producer.appData as ProducerData).track
       if (track.role === role && (!kind || kind === track.track.kind)){
         producer.close()
+        if (stopTrack){
+          producer.track?.stop()
+        }
         this.rtcConnection.closeProducer(producer.id)
         this.localProducers = this.localProducers.filter(p => p !== producer)
       }
@@ -430,6 +451,13 @@ export class Conference {
     return promise
   }
 
+  public updateTransportStat(){
+    if (this.sendTransport) updateTransportStat(this.sendTransport)
+    this.remotePeers.forEach(r => {
+      if (r.transport) updateTransportStat(r.transport)
+    })
+  }
+
   //  Commmands for local tracks --------------------------------------------
   private localMicTrack?: MSTrack
   private localCameraTrack?: MSTrack
@@ -442,7 +470,7 @@ export class Conference {
       if (track){
         this.addOrReplaceLocalTrack(track, 96*1024).then(()=>{resolve()}).catch(reject)
       }else{
-        this.removeLocalTrackByRole('avatar', 'audio')
+        this.removeLocalTrackByRole(true, 'avatar', 'audio')
         resolve()
       }
     })
@@ -473,7 +501,7 @@ export class Conference {
         }
       }else{
         if (this.localCameraTrack) {
-          this.removeLocalTrack(this.localCameraTrack)
+          this.removeLocalTrack(true, this.localCameraTrack)
           this.doSetLocalCameraTrack(track).then(()=>{resolve()})
         }else {
           resolve()
