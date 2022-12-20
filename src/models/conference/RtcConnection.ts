@@ -29,7 +29,7 @@ export class RtcConnection{
 
   public constructor(){
     this.handlers.set('connect', this.onConnect)
-    this.handlers.set('ping', this.onPing)
+    this.handlers.set('ping', ()=>{})
     this.handlers.set('createTransport', this.onCreateTransport)
     this.handlers.set('rtpCapabilities', this.onRtpCapabilities)
     this.handlers.set('connectTransport', this.onConnectTransport)
@@ -77,7 +77,7 @@ export class RtcConnection{
       }
       const onMessageEvent = (ev: MessageEvent<any>)=> {
         const msg = JSON.parse(ev.data) as MSMessage
-        this.onAnyMesageForPing()
+        this.onAnyMessageForPing()
         const func = this.handlers.get(msg.type)
         if (func){
           func.bind(this)(msg)
@@ -228,20 +228,23 @@ export class RtcConnection{
       throw new Error('No connection has been established.')
     }
   }
-  readonly pingPongTimeout = 20000
+  readonly pingPongTimeout = 5000
   private pingCount = 0
   private pingTimeout?:NodeJS.Timeout = undefined
   private pingTimerFunc = () => {
-    if (this.pingCount === 0){
+    this.pingTimeout = undefined
+    if (this.pingCount <= 1){
       if (this.mainServer?.readyState === WebSocket.OPEN){
         const msg: MSMessage = {type:'ping'}
         this.mainServer!.send(JSON.stringify(msg))
-        this.pingCount = 1
+        this.pingCount += 1
         this.pingTimeout = setTimeout(this.pingTimerFunc, this.pingPongTimeout)
+        connLog(`pingTimerFunc() ping sent. count=${this.pingCount}.`)
       }else{
         console.warn('RtcConnection: Not opened and can not send ping.')
+        this.pingCount = 0
       }
-    }else{
+    }else{  //  Did not receive any message after sending two ping messages.
       console.warn(`RtcConnection: Ping pong time out. count=${this.pingCount}`)
       this.pingCount = 0
       if (this.connected){
@@ -249,17 +252,18 @@ export class RtcConnection{
       }
     }
   }
-private startPingPong(){
-    connLog(`startPingPong() called. count=${this.pingCount}.`)
+  private startPingPong(){
     const msg: MSMessage = {type:'ping'}
     this.mainServer?.send(JSON.stringify(msg))
     this.pingCount = 1
+    if (this.pingTimeout){
+      console.error(`this.pingTimeout already set to ${this.pingTimeout}`)
+    }
     this.pingTimeout = setTimeout(this.pingTimerFunc, this.pingPongTimeout)
+    connLog(`startPingPong() called. ping sent. count=${this.pingCount}.`)
   }
-  private onPing(msg: MSMessage){
+  private onAnyMessageForPing(){
     this.pingCount = 0
-  }
-  private onAnyMesageForPing(){
     if (this.pingTimeout){
       clearTimeout(this.pingTimeout)
       this.pingTimeout = setTimeout(this.pingTimerFunc, this.pingPongTimeout)

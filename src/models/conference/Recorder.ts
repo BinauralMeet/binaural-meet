@@ -154,7 +154,9 @@ export class Recorder{
   private MessageTypesToRecord = new Set<string>([
     MessageType.PARTICIPANT_INFO, MessageType.PARTICIPANT_POSE, MessageType.PARTICIPANT_MOUSE,
     MessageType.PARTICIPANT_AFK, MessageType.PARTICIPANT_TRACKSTATES, MessageType.PARTICIPANT_VIEWPOINT,
-    MessageType.PARTICIPANT_ON_STAGE, MessageType.CONTENT_UPDATE_REQUEST, MessageType.CONTENT_REMOVE_REQUEST])
+    MessageType.PARTICIPANT_ON_STAGE, MessageType.CONTENT_UPDATE_REQUEST, MessageType.CONTENT_REMOVE_REQUEST,
+    MessageType.AUDIO_LEVEL
+  ])
   private lastMessageValues= new Map<string, string>()
 
   constructor(){
