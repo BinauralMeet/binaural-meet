@@ -160,7 +160,8 @@ export class Conference {
                 }, 3000)
               })
             }else{
-              console.log(`Reuse the old data connection.`)
+              this.dataConnection.sync.sendAllAboutMe(true)
+              console.log('Reuse the old data connection.')
               resolve()
             }
           }else{
@@ -197,12 +198,6 @@ export class Conference {
     this.rtcConnection.leave()
     setTimeout(()=>{
       this.enter(this.room, true).then(()=>{
-/*        const v = participants.local.devicePreference.videoinput
-        participants.local.devicePreference.videoinput = undefined
-        participants.local.devicePreference.videoinput = v
-        const a = participants.local.devicePreference.audioinput
-        participants.local.devicePreference.audioinput = undefined
-        participants.local.devicePreference.audioinput = a  */
       })
     }, 5000)
   }
@@ -547,6 +542,9 @@ export class Conference {
           peer: msr.peer,
           producers:[]
         }
+        if (!participants.remote.has(newRemote.peer)){
+          participants.join(newRemote.peer)
+        }
         const producers = msr.producers.map(msp => ({...msp, peer:newRemote}))
         this.remotePeers.set(msr.peer, newRemote)
         this.onProducerAdded(producers, newRemote)
@@ -562,7 +560,9 @@ export class Conference {
           this.onProducerRemoved(remote.producers, remote)
         }
         this.remotePeers.delete(id)
-        //participants.leave(id)
+        if (this.rtcConnection.isConnected()){
+          participants.leave(id)
+        }
       }
     }
   }

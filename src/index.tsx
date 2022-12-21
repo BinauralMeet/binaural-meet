@@ -69,6 +69,6 @@ function startConference() {
   errorInfo.connectionStart()
   when(() => errorInfo.type === '', () => {
     const room = urlParameters.room || '_'
-    conference.enter(room, true)
+    conference.enter(room, false)
   })
 }

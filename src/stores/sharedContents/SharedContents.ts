@@ -344,15 +344,20 @@ export class SharedContents extends EventEmitter {
       if (peerAndTracks?.peer) {
         if (peerAndTracks.peer === participants.localId){
           conference.removeLocalTrackByRole(true, c.id)
+          this.contentTracks.delete(c.id)
         }else{
-          conference.closeTrack(peerAndTracks.peer, c.id)
+          //  Track will removed via rtcConnection
+          //  conference.closeTrack(peerAndTracks.peer, c.id)
+          //  this.contentTracks.delete(c.id)
         }
-        this.contentTracks.delete(c.id)
       }
     }
   }
 
   private onUpdateScreenContent(c: ISharedContent){
+    //console.log(`onUpdateScreenContent(${JSON.stringify(c)})`)
+    //const peerAndTracks = this.contentTracks.get(c.id)
+    //console.log(`peerAndTracks = ${JSON.stringify(peerAndTracks)}`)
   }
 
   //  screen fps setting

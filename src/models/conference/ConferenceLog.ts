@@ -1,4 +1,4 @@
-export const CONNECTIONLOG = true
+export const CONNECTIONLOG = false
 export const TRACKLOG = false        // show add, remove... of tracks
 export const EVENTLOG = false
 export const SENDLOG = false

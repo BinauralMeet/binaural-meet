@@ -54,6 +54,13 @@ export class DataConnection {
     roomInfo.onUpdateProp(name, value)
   }
 
+  private requestAll(){
+    this.pushOrUpdateMessageViaRelay(MessageType.REQUEST_ALL, {})
+  }
+  private requestRange(area:number[], range:number[]){
+    this.pushOrUpdateMessageViaRelay(MessageType.REQUEST_RANGE, [area, range])
+  }
+
   public connect(room: string, peer: string){
     this.room_ = room
     this.peer_ = peer
@@ -68,7 +75,7 @@ export class DataConnection {
         dataLog('data connected.')
         this.messagesToSendToRelay = []
         this.sync.sendAllAboutMe(true)
-        this.pushOrUpdateMessageViaRelay(MessageType.REQUEST_ALL, {})
+        this.requestAll()
         this.flushSendMessages()
         //  start periodical communication with relay server.
         if (this.stepTimeout){
@@ -183,7 +190,7 @@ export class DataConnection {
           this.lastRequestTime = now
           const area = recorder.recording ? [-MAP_SIZE*2, MAP_SIZE*2, MAP_SIZE*2, -MAP_SIZE*2]
             : map.visibleArea()
-          this.pushOrUpdateMessageViaRelay(MessageType.REQUEST_RANGE, [area, participants.audibleArea()])
+          this.requestRange(area, participants.audibleArea())
           this.updateAudioLevel()
           this.flushSendMessages()
       }
