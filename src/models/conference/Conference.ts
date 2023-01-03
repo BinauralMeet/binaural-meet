@@ -139,13 +139,13 @@ export class Conference {
           }
 
           //  prepare trasport for local tracks
-          this.prepareSendTransport(this.getLocalMicTrack()).catch(()=>{})
-          this.prepareSendTransport(this.getLocalCameraTrack()).catch(()=>{})
+          this.addOrReplaceLocalTrack(this.getLocalMicTrack()).catch(()=>{})
+          this.addOrReplaceLocalTrack(this.getLocalCameraTrack()).catch(()=>{})
           const cidRtcLocals = contents.getLocalRtcContentIds()
           for(const cid of cidRtcLocals){
             const tracks = contents.getContentTracks(cid)
             const msTracks = tracks?.tracks.map((t)=>({track:t, peer:tracks.peer, role: cid}))
-            msTracks?.forEach((t) => { this.prepareSendTransport(t).catch() })
+            msTracks?.forEach((t) => { this.addOrReplaceLocalTrack(t).catch() })
           }
 
           //  connect to relay server for get contents and participants info.
@@ -328,20 +328,22 @@ export class Conference {
     return this.sendTransport_
   }
 
-  public addOrReplaceLocalTrack(track:MSTrack, maxBitRate?:number){
+  public addOrReplaceLocalTrack(track?:MSTrack, maxBitRate?:number){
     //  add content track to contents
-    if (track.role === 'avatar'){
-      if (track.track.kind === 'audio'){
-        participants.local.tracks.audio = track.track
+    if (track){
+      if (track.role === 'avatar'){
+        if (track.track.kind === 'audio'){
+          participants.local.tracks.audio = track.track
+        }else{
+          participants.local.tracks.avatar = track.track
+        }
       }else{
-        participants.local.tracks.avatar = track.track
-      }
-    }else{
-      contents.addTrack(track.peer, track.role, track.track)
-      if (track.track.kind === 'video'){
-        track.track.addEventListener('ended', ()=>{
-          contents.removeByLocal(track.role)
-        })
+        contents.addTrack(track.peer, track.role, track.track)
+        if (track.track.kind === 'video'){
+          track.track.addEventListener('ended', ()=>{
+            contents.removeByLocal(track.role)
+          })
+        }
       }
     }
     return this.prepareSendTransport(track, maxBitRate)
