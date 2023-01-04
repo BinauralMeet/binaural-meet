@@ -5,7 +5,7 @@ import Button from '@material-ui/core/Button'
 import DoneIcon from '@material-ui/icons/CheckCircle'
 import {isContentOutOfRange, ISharedContent, SharedContentInfo} from '@models/ISharedContent'
 import {useTranslation} from '@models/locales'
-import {getRandomColor, rgb2Color} from '@models/utils'
+import {getRandomColor, mulV2, rgb2Color} from '@models/utils'
 import {isDarkColor} from '@models/utils'
 import contents from '@stores/sharedContents/SharedContents'
 import {autorun} from 'mobx'
@@ -48,13 +48,13 @@ export const ContentLine: React.FC<BMProps & TextLineStyle & {content: SharedCon
           onClick={() => {
             const found = contents.find(props.content.id)
             if (found){
-              map.focusOn(found)
+              map.focusOn(found, mulV2(0.5, found.size))
             }else{
               contents.requestContent([props.content.id])
               const disposer = autorun(()=>{
                 const found = contents.find(props.content.id)
                 if (found){
-                  map.focusOn(found)
+                  map.focusOn(found, mulV2(0.5, found.size))
                   disposer()
                 }
               })

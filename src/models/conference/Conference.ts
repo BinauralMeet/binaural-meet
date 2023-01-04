@@ -132,15 +132,19 @@ export class Conference {
         navigator.mediaDevices.enumerateDevices().then((infos)=>{
           //  Enumerate devices and set if no preference is set.
           for(const info of infos){
-            const pref = participants.local.devicePreference[info.kind]
-            if (!pref || !infos.find(i => i.deviceId === pref)){
-              participants.local.devicePreference[info.kind] = info.deviceId
+            const kind = info.kind
+            if (kind){
+              const pref = participants.local.devicePreference[kind]
+              const found = infos.find(i => i.deviceId === pref)
+              if (pref===undefined || found===undefined){
+                participants.local.devicePreference[kind] = info.deviceId
+              }
             }
           }
 
           //  prepare trasport for local tracks
-          this.addOrReplaceLocalTrack(this.getLocalMicTrack()).catch(()=>{})
-          this.addOrReplaceLocalTrack(this.getLocalCameraTrack()).catch(()=>{})
+          this.setLocalMicTrack(this.getLocalMicTrack()).catch(()=>{})
+          this.setLocalCameraTrack(this.getLocalCameraTrack()).catch(()=>{})
           const cidRtcLocals = contents.getLocalRtcContentIds()
           for(const cid of cidRtcLocals){
             const tracks = contents.getContentTracks(cid)

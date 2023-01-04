@@ -1,13 +1,14 @@
 import {MAP_SIZE} from '@components/Constants'
 import {MoreButton, moreButtonControl, MoreButtonMember} from '@components/utils/MoreButton'
 import {makeStyles} from '@material-ui/core/styles'
-import {addV2, assert, mulV2, rotateVector2DByDegree, subV2, transformPoint2D, transfromAt} from '@models/utils'
+import {addV2, assert, extractScaleX, mulV2, rotateVector2DByDegree, subV2, transformPoint2D, transfromAt} from '@models/utils'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import {DragHandler, DragState} from '../../utils/DragHandler'
 import {KeyHandlerPlain} from '../../utils/KeyHandler'
 import {LocalParticipantForm} from './LocalParticipantForm'
 import {Participant, ParticipantProps} from './Participant'
+import { PARTICIPANT_SIZE } from '@models/Participant'
 
 const AVATAR_SPEED_LIMIT = 50
 const MAP_SPEED_LIMIT = 600
@@ -122,13 +123,17 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     return relatedKeyPressed
   }
 
-  const scrollMap = (ratio: number) => {
+  const scrollMap = () => {
+    const participantSize = 0.7 *  PARTICIPANT_SIZE * extractScaleX(map.matrix)
+    //console.log(`scale: ${extractScaleX(map.matrix)}, psize:${participantSize}`)
+    const ratioX = Math.min(participantSize / map.screenSize[0], 0.3)
+    const ratioY = Math.min(participantSize / map.screenSize[1], 0.3)
     const posOnScreen = map.toWindow(participant!.pose.position)
     const target = [posOnScreen[0], posOnScreen[1]]
-    const left = map.left + map.screenSize[0] * ratio
-    const right = map.left + map.screenSize[0] * (1 - ratio)
-    const bottom = map.screenSize[1] * (1 - ratio)
-    const top = participants.local.thirdPersonView ? map.screenSize[1] * ratio : bottom
+    const left = map.left + map.screenSize[0] * ratioX
+    const right = map.left + map.screenSize[0] * (1 - ratioX)
+    const bottom = map.screenSize[1] * (1 - ratioY)
+    const top = participants.local.thirdPersonView ? map.screenSize[1] * ratioY : bottom
     if (target[0] < left) { target[0] = left }
     if (target[0] > right) { target[0] = right }
     if (target[1] < top) { target[1] = top }
@@ -168,7 +173,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     if (state.dragging) {
       onDrag(state)
     }
-    const rv = scrollMap(0.2)
+    const rv = scrollMap()
     //  console.log(`onTimer: drag:${state.dragging} again:${rv}`)
 
     return rv
@@ -182,7 +187,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     const participantMoved = moveParticipantByKey(keys)
 
     if (member.scrollAgain || participantMoved) {
-      return scrollMap(0.2)
+      return scrollMap()
     }
 
     return false

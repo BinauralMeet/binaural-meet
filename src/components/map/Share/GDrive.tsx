@@ -136,15 +136,14 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
   }, [contents.roomContents])
 
   const vscroll = isGDrivePreviewScrollable(mimeType)
-
+  //  console.log(`vscroll=${vscroll}  mimeType=${mimeType}`)
   return <div className={mimeType ? classes.divClip : classes.divError} >
     {mimeType ?
       <div className={(editing || !vscroll) ? classes.divClip : classes.divScroll} ref={divScroll}
-        onWheel = {ev => ev.ctrlKey || ev.stopPropagation() } >
+        onWheel = {ev => vscroll && (ev.ctrlKey || ev.stopPropagation()) }>
         <iframe src={url} title={props.content.url}
-          className={editing ? classes.iframeEdit : vscroll ? classes.iframeVScrool : classes.iframe}
-        />
-    </div> :
+          className={editing ? classes.iframeEdit : vscroll ? classes.iframeVScrool : classes.iframe}/>
+      </div> :
     !editing ? <div style={{margin:'1em', whiteSpace:'pre-wrap'}}>{t('gdFailed')}</div> :
       <div className={classes.divClip} onWheel = {ev => ev.ctrlKey || ev.stopPropagation() } >
       <iframe src={url} title={props.content.url}

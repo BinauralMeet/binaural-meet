@@ -65,9 +65,10 @@ export class MapData {
     this.mouse = addV2(m, this.offset)
     this.mouseOnMap = transformPoint2D(this.matrix.inverse(), this.mouse)
   }
-  @action focusOn(obj: IMapObject) {
+  @action focusOn(obj: IMapObject, offset?:number[]) {
     const im = this.matrix.inverse()
-    const diff = subV2(obj.pose.position, [im.e, im.f])
+    const pos = offset ? addV2(obj.pose.position, offset) :  obj.pose.position
+    const diff = subV2(pos, [im.e, im.f])
     const trn = new DOMMatrix().translate(-diff[0], -diff[1])
     const newMat = trn.preMultiplySelf(this.matrix)
     this.setMatrix(newMat)
