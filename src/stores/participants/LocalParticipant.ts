@@ -71,7 +71,7 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
     this.loadPhysicsFromStorage()
     autorun(() => { //  image avatar
       const gravatar = 'https://www.gravatar.com/avatar/'
-      const vrm = 'https://binaural.me/public_packages/uploader/vrm'
+      const vrm = 'https://'
       let src = this.information.avatarSrc
       if ((!src || src.includes(gravatar, 0) || src.includes(vrm, 0)) && this.information.email){
         const email = this.information.email.trim()

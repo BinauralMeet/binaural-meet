@@ -12,6 +12,7 @@ import { PriorityCalculator, trackInfoMerege, VideoAudioTrackInfo, videoAudioTra
 import { isEqualMSRP } from '@models/conference/MediaMessages'
 import {connLog} from './ConferenceLog'
 import { RemoteObjectInfo } from './priorityTypes'
+import { inputChangeObservationStart, inputChangeObservationStop } from './observeInputDevice'
 
 // config.js
 declare const d:any                  //  from index.html
@@ -94,10 +95,10 @@ export class Conference {
 
   private updateStatInterval = 0
 
-  public enter(room: string, retry:boolean = false){
+  public enter(room: string, reconnect:boolean = false){
     this.room_ = room
     connLog(`enter to room ${room}.`)
-    if (retry){
+    if (reconnect){
       this.rtcConnection.removeListener('disconnect', this.onRtcDisconnect)
       this.dataConnection.removeListener('disconnect', this.onDataDisconnect)
     }
@@ -143,14 +144,19 @@ export class Conference {
           }
 
           //  prepare trasport for local tracks
-          this.setLocalMicTrack(this.getLocalMicTrack()).catch(()=>{})
-          this.setLocalCameraTrack(this.getLocalCameraTrack()).catch(()=>{})
+          const mic = this.getLocalMicTrack()
+          this.setLocalMicTrack(undefined).catch(()=>{})
+          this.setLocalMicTrack(mic).catch(()=>{})
+          const camera = this.getLocalCameraTrack()
+          this.setLocalCameraTrack(undefined).catch(()=>{})
+          this.setLocalCameraTrack(camera).catch(()=>{})
           const cidRtcLocals = contents.getLocalRtcContentIds()
           for(const cid of cidRtcLocals){
             const tracks = contents.getContentTracks(cid)
             const msTracks = tracks?.tracks.map((t)=>({track:t, peer:tracks.peer, role: cid}))
             msTracks?.forEach((t) => { this.addOrReplaceLocalTrack(t).catch() })
           }
+          inputChangeObservationStart()
 
           //  connect to relay server for get contents and participants info.
           if (this.dataConnection.isConnected()){
@@ -198,6 +204,7 @@ export class Conference {
   }
   private onRtcDisconnect = () => {
     console.log(`onRtcDisconnect called.`)
+    inputChangeObservationStop()
     this.clearRtc()
     this.rtcConnection.leave()
     setTimeout(()=>{
@@ -462,9 +469,13 @@ export class Conference {
   //  Commmands for local tracks --------------------------------------------
   private localMicTrack?: MSTrack
   private localCameraTrack?: MSTrack
-  public setLocalMicTrack(track?: MSTrack){
+  public setLocalMicTrack(track: MSTrack|undefined){
     const promise = new Promise<void>((resolve, reject) => {
-      if (track === this.localMicTrack){ resolve(); return}
+      if (track===this.localMicTrack
+         || (track?.track === this.localMicTrack?.track && track?.role === this.localMicTrack?.role)){
+          resolve()
+          return
+      }
       //  Do not call "this.removeLocalTrack(this.localMicTrack)" here. The producer will reused.
       this.localMicTrack = track
       this.dataConnection.audioMeter.setSource(this.localMicTrack)
@@ -479,7 +490,7 @@ export class Conference {
   }
 
 
-  private doSetLocalCameraTrack(track?:MSTrack) {
+  private doSetLocalCameraTrack(track:MSTrack|undefined) {
     const promise = new Promise<mediasoup.types.Producer|void>((resolve, reject) => {
       this.localCameraTrack = track
       if (this.localCameraTrack){
@@ -490,7 +501,7 @@ export class Conference {
     })
     return promise
   }
-  public setLocalCameraTrack(track: MSTrack|undefined) {
+  public setLocalCameraTrack(track?: MSTrack) {
     const promise = new Promise<MSTrack|void>((resolve, reject) => {
       if (track){
         if (track === this.localCameraTrack) {

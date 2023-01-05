@@ -105,8 +105,10 @@ export const VRMAvatar: React.FC<{participant:ParticipantBase}> = (props: {parti
         vrmSetPose(mem.vrm, rig)                //  apply rig
         mem.vrm.update(mem.clock.getDelta());   //  Update model to render physics
         const rad = ori / 180 * Math.PI
-        mem.camera?.position.set(-Math.sin(rad)*3, 2, -Math.cos(rad)*3)
-        mem.camera?.lookAt(0,0.93,0)
+        //mem.camera?.position.set(-Math.sin(rad)*3, 2, -Math.cos(rad)*3)
+        //mem.camera?.lookAt(0,0.93,0)
+        mem.camera?.position.set(-Math.sin(rad)*3, 0.8, -Math.cos(rad)*3)
+        mem.camera?.lookAt(0,0.8,0)
         mem.renderer?.render(mem.scene!, mem.camera!)
       }
     }, 1000/20)
