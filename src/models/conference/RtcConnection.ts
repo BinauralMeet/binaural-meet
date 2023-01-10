@@ -228,7 +228,7 @@ export class RtcConnection{
       throw new Error('No connection has been established.')
     }
   }
-  readonly pingPongTimeout = 5000
+  readonly pingPongTimeout = 3000
   private pingCount = 0
   private pingTimeout?:NodeJS.Timeout = undefined
   private pingTimerFunc = () => {

@@ -16,6 +16,7 @@ import {Observer} from 'mobx-react-lite'
 import React, {useState} from 'react'
 import {SketchPicker} from 'react-color'
 import {SignalQualityButton} from './SignalQuality'
+import {Choose3DAvatar} from './LocalParticipant3DAvatarForm'
 
 export interface LocalParticipantFormProps extends BMProps{
   open: boolean
@@ -72,8 +73,10 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
   const colorButton = React.useRef<HTMLButtonElement>(null)
   const textColorButton = React.useRef<HTMLButtonElement>(null)
   const {close, ...popoverProps} = props
+  const [show3D, setShow3D] = useState<boolean>(false)
 
   return <Popover {...popoverProps} onClose={closeConfig}>
+    {show3D ? <Choose3DAvatar {...popoverProps} close={()=>{setShow3D(false)}} /> : undefined}
     <DialogTitle>
       <span  style={{fontSize: isSmartphone() ? '2.5em' : '1em'}}>
         {t('lsTitle')}
@@ -130,10 +133,10 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
             </Box>
           </Box>
           <Box mt={3}>
-            <div style={{fontSize:12}}>{t('lsImage')}</div>
+            <div style={{fontSize:12}}>{t('lsAvatar')}</div>
             <Box mt={-1} ml={2}>
               <form key="information" onSubmit = {uploadAvatarSrc}
-                style={{lineHeight:'2em', fontSize: isSmartphone() ? '2.5em' : '1em'}}>
+                style={{display:'inline', lineHeight:'2em', fontSize: isSmartphone() ? '2.5em' : '1em'}}>
                 <div style={{fontSize:12, marginTop:8}}>{t('lsImageFile')}</div>
                 {local.information.avatarSrc ? <>
                   <img src={local.information.avatarSrc} style={{height:'1.5em', verticalAlign:'middle'}} alt="avatar"/>
@@ -143,7 +146,12 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
                   setFile(ev.target.files?.item(0))
                 }} />
                 <input style={iStyle} type="submit" value="Upload" />
-              </form>
+              </form> &nbsp;
+              <input style={iStyle} type="submit" value={t('ls3D')} onClick={()=>{
+                setShow3D(true)
+              }}/>
+              </Box>
+              <Box ml={2}>
               <TextField label={t('lsEmail')} multiline={false} value={local.information.email}
                 style={{...tfDivStyle, marginTop:8}}
                 inputProps={{style: tfIStyle, autoFocus:true}} InputLabelProps={{style: tfLStyle}}

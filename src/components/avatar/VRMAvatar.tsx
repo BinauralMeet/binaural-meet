@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import {GLTF, GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader'
 import {VRM, VRMSchema, VRMUtils} from '@pixiv/three-vrm'
 import React from 'react'
 import { ParticipantBase, PARTICIPANT_SIZE, VRMRigs } from '@models/Participant'
@@ -7,18 +6,8 @@ import { autorun, IReactionDisposer } from 'mobx'
 import * as Kalidokit from 'kalidokit'
 import { throttle } from 'lodash'
 import Euler from 'kalidokit/dist/utils/euler'
+import {GetPromiseGLTFLoader} from '@models/api/GLTF'
 
-
-class PromiseGLTFLoader extends GLTFLoader {
-  promiseLoad(
-    url: string,
-    onProgress?: ((event: ProgressEvent<EventTarget>) => void) | undefined,
-  ) {
-    return new Promise<GLTF>((resolve, reject) => {
-      super.load(url, resolve, onProgress, reject)
-    })
-  }
-}
 interface Member{
   clock: THREE.Clock
   renderer: THREE.WebGLRenderer
@@ -73,7 +62,7 @@ export const VRMAvatar: React.FC<{participant:ParticipantBase}> = (props: {parti
     const axesHelper = new THREE.AxesHelper(0.5)
     scene.add(axesHelper)
     //  */
-    const loader = new PromiseGLTFLoader()
+    const loader = GetPromiseGLTFLoader()
     const dispo: IReactionDisposer[] = []
 
     //  load VRM from avatarSrc
