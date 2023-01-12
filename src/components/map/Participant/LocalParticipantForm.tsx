@@ -16,7 +16,21 @@ import {Observer} from 'mobx-react-lite'
 import React, {useState} from 'react'
 import {SketchPicker} from 'react-color'
 import {SignalQualityButton} from './SignalQuality'
-import {Choose3DAvatar} from './LocalParticipant3DAvatarForm'
+import {Choose3DAvatar, vrmUrlBase} from './LocalParticipant3DAvatarForm'
+
+function isVrm(url: string){
+  const ext = url.substring(url.lastIndexOf('.'))
+  return ext.toLowerCase() === '.vrm'
+}
+function makeEmailDisp(email: string){
+  const lastSlashIdx = email.lastIndexOf('/')+1
+  const base = email.substring(0, lastSlashIdx)
+  if (base === vrmUrlBase){
+    const file = email.substring(lastSlashIdx)
+    return file
+  }
+  return email
+}
 
 export interface LocalParticipantFormProps extends BMProps{
   open: boolean
@@ -137,8 +151,9 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
             <Box mt={-1} ml={2}>
               <form key="information" onSubmit = {uploadAvatarSrc}
                 style={{display:'inline', lineHeight:'2em', fontSize: isSmartphone() ? '2.5em' : '1em'}}>
-                <div style={{fontSize:12, marginTop:8}}>{t('lsImageFile')}</div>
-                {local.information.avatarSrc ? <>
+                <div style={{fontSize:12, marginTop:8}}>{t('lsImageFile')}
+                </div>
+                {local.information.avatarSrc && !isVrm(local.information.avatarSrc) ? <>
                   <img src={local.information.avatarSrc} style={{height:'1.5em', verticalAlign:'middle'}} alt="avatar"/>
                   <input style={iStyle} type="submit" onClick={clearAvatarSrc} value="✕" /> &nbsp;
                 </> : undefined}
@@ -146,18 +161,22 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
                   setFile(ev.target.files?.item(0))
                 }} />
                 <input style={iStyle} type="submit" value="Upload" />
-              </form> &nbsp;
-              <input style={iStyle} type="submit" value={t('ls3D')} onClick={()=>{
-                setShow3D(true)
-              }}/>
+              </form>
               </Box>
-              <Box ml={2}>
-              <TextField label={t('lsEmail')} multiline={false} value={local.information.email}
-                style={{...tfDivStyle, marginTop:8}}
-                inputProps={{style: tfIStyle, autoFocus:true}} InputLabelProps={{style: tfLStyle}}
-                onChange={event => local.information.email = event.target.value}
-                onKeyPress={onKeyPress} fullWidth={true}
-              />
+              <Box ml={2} style={{display:'flex', alignItems:'flex-end'}}>
+                <TextField label={t('lsEmail')} multiline={false}
+                  value={makeEmailDisp(local.information.email)}
+                  style={{...tfDivStyle, marginTop:8}}
+                  inputProps={{style: tfIStyle, autoFocus:true}} InputLabelProps={{style: tfLStyle}}
+                  onChange={event => local.information.email = event.target.value}
+                  onKeyPress={onKeyPress} fullWidth={true}
+                />
+                <Button variant="contained" size="small"
+                  style={{marginLeft:5, textTransform:'none', minWidth:15}}
+                  onClick={()=>{
+                    setShow3D(true)
+                  }}>{t('ls3D')}
+                </Button>
             </Box>
           </Box>
           <Box mt={3}>

@@ -13,7 +13,7 @@ export class PromiseGLTFLoader extends GLTFLoader {
 let loader: PromiseGLTFLoader | undefined = undefined
 export function GetPromiseGLTFLoader(){
   if (!loader){
-    loader = new PromiseGLTFLoader
+    loader = new PromiseGLTFLoader()
   }
   return loader
 }

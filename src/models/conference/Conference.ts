@@ -204,6 +204,7 @@ export class Conference {
   }
   private onRtcDisconnect = () => {
     console.log(`onRtcDisconnect called.`)
+    //*
     inputChangeObservationStop()
     this.clearRtc()
     this.rtcConnection.leave()
@@ -211,10 +212,12 @@ export class Conference {
       this.enter(this.room, true).then(()=>{
       })
     }, 5000)
+    //  */
   }
 
   private onDataDisconnect = () => {
     console.log(`onDataDisconnect called.`)
+    //*
     const func = ()=>{
       if (this.rtcConnection.isConnected()){
         this.dataConnection.connect(this.room, this.rtcConnection.peer)
@@ -223,6 +226,7 @@ export class Conference {
       }
     }
     setTimeout(func, 2000)
+    //  */
 }
 
 

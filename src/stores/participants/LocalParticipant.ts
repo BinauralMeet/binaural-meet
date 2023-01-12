@@ -83,7 +83,7 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
         }
       }
       if (src){
-        if (src.slice(-4)==='.vrm'){
+        if (src.slice(-4).toLowerCase()==='.vrm'){
           this.information.avatarSrc = src
         }else{
           checkImageUrl(src).then((src)=>{
