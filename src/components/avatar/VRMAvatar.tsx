@@ -10,13 +10,73 @@ import {GetPromiseGLTFLoader} from '@models/api/GLTF'
 
 interface Member{
   clock: THREE.Clock
-  renderer: THREE.WebGLRenderer
-  scene: THREE.Scene
-  camera: THREE.Camera
+  renderer?: THREE.WebGLRenderer
+  scene?: THREE.Scene
+  camera?: THREE.Camera
   vrm?:VRM
 }
 
 const size = [150,300]
+
+/*  was very slow.
+let canvas:HTMLCanvasElement|undefined
+let renderer:THREE.WebGLRenderer|undefined
+function getImage(ctx:Member, size: number[], ori: number, rig:VRMRigs){
+  if (!canvas){
+    canvas = document.createElement('canvas')
+    canvas.width = size[0]
+    canvas.height = size[1]
+    renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      canvas
+    })
+  }
+  if(ctx.vrm && ctx.scene && ctx.camera && renderer){
+    vrmSetPose(ctx.vrm, rig)                //  apply rig
+    ctx.vrm.update(ctx.clock.getDelta());   //  Update model to render physics
+    const rad = ori / 180 * Math.PI
+    //mem.camera?.position.set(-Math.sin(rad)*3, 2, -Math.cos(rad)*3)
+    //mem.camera?.lookAt(0,0.93,0)
+    ctx.camera?.position.set(-Math.sin(rad)*3, 0.8, -Math.cos(rad)*3)
+    ctx.camera?.lookAt(0,0.8,0)
+    renderer.setSize(size[0], size[1])
+    renderer.setPixelRatio(window.devicePixelRatio * 4)
+    renderer.render(ctx.scene, ctx.camera)
+  }
+  return canvas.toDataURL()
+}
+*/
+
+function createMember(ref: React.MutableRefObject<Member|null>, canvas: HTMLCanvasElement):Member{
+  const mem = {
+    clock:new THREE.Clock(),
+    renderer : new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      canvas: canvas
+    }),
+    camera: new THREE.PerspectiveCamera(
+      35,
+      size[0]/size[1],
+      0.1,
+      1000,
+    ),
+    scene: new THREE.Scene(),
+    vrm: ref.current?.vrm
+  }
+  ref.current = mem
+  canvas.addEventListener('webglcontextlost', (ev)=>{
+    ev.preventDefault();
+    createMember(ref, canvas)
+  })
+  mem.renderer.setSize(size[0], size[1])
+  mem.renderer.setPixelRatio(window.devicePixelRatio * 4)
+  const light = new THREE.DirectionalLight(0xffffff)
+  light.position.set(1, 1, 1).normalize()
+  mem.scene.add(light)
+  return mem
+}
 
 
 export const VRMAvatar: React.FC<{participant:ParticipantBase}> = (props: {participant:ParticipantBase}) => {
@@ -25,28 +85,7 @@ export const VRMAvatar: React.FC<{participant:ParticipantBase}> = (props: {parti
 
   React.useEffect(()=>{
     if (!ref.current) return
-    memberRef.current = {
-      clock:new THREE.Clock(),
-      renderer : new THREE.WebGLRenderer({
-        antialias: true,
-        alpha: true,
-        canvas: ref.current
-      }),
-      camera: new THREE.PerspectiveCamera(
-        35,
-        size[0]/size[1],
-        0.1,
-        1000,
-      ),
-      scene: new THREE.Scene(),
-    }
-    const mem = memberRef.current!
-    mem.renderer.setSize(size[0], size[1])
-    mem.renderer.setPixelRatio(window.devicePixelRatio * 4)
-
-    const light = new THREE.DirectionalLight(0xffffff)
-    light.position.set(1, 1, 1).normalize()
-    mem.scene.add(light)
+    if (!memberRef.current){ createMember(memberRef, ref.current) }
 
     /*  //  show grid
     const gridHelper = new THREE.GridHelper(10, 10)
@@ -78,10 +117,7 @@ export const VRMAvatar: React.FC<{participant:ParticipantBase}> = (props: {parti
         VRM.from(gltf).then(vrmGot => {
           mem.scene?.add(vrmGot.scene)
           vrmGot.scene.rotation.y = Math.PI
-          if (mem){
-            mem.vrm = vrmGot
-            render3d(props.participant.pose.orientation, props.participant.vrmRigs)
-          }
+          if (mem){ mem.vrm = vrmGot }
         })
       }).catch((e)=>{
         console.log('Failed to load VRM', e)
@@ -90,7 +126,10 @@ export const VRMAvatar: React.FC<{participant:ParticipantBase}> = (props: {parti
 
     //  render when updated
     const render3d = throttle((ori, rig)=>{
-      if (mem?.vrm) {
+      //  /*
+      const mem = memberRef.current!
+      const glCtx = mem.renderer?.getContext()
+      if (mem.vrm && glCtx && !glCtx.isContextLost()) {
         vrmSetPose(mem.vrm, rig)                //  apply rig
         mem.vrm.update(mem.clock.getDelta());   //  Update model to render physics
         const rad = ori / 180 * Math.PI
@@ -100,9 +139,17 @@ export const VRMAvatar: React.FC<{participant:ParticipantBase}> = (props: {parti
         mem.camera?.lookAt(0,0.8,0)
         mem.renderer?.render(mem.scene!, mem.camera!)
       }
+      /*/
+      if (memberRef.current && ref.current){
+        const url = getImage(memberRef.current, size, ori, rig)
+        ref.current.src = url
+      } */
     }, 1000/20)
     dispo.push(autorun(()=>{
-      render3d(props.participant.pose.orientation, props.participant.vrmRigs)
+      //render3d(props.participant.pose.orientation, props.participant.vrmRigs)
+      const ori = (props.participant.pose.orientation+720) % 360 - 180
+      //console.log(`ori: ${ori}`)
+      render3d(180 + ori / 2, props.participant.vrmRigs)
     }))
 
     return ()=>{
@@ -111,6 +158,7 @@ export const VRMAvatar: React.FC<{participant:ParticipantBase}> = (props: {parti
     //  eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  //  /*
   return <>
     <canvas style={{
       pointerEvents:'none',
@@ -119,6 +167,16 @@ export const VRMAvatar: React.FC<{participant:ParticipantBase}> = (props: {parti
       left: -size[0]/2, top:-(size[1] - PARTICIPANT_SIZE/4)
       }} ref={ref}/>
   </>
+  /*/
+  return <>
+    <img style={{
+      pointerEvents:'none',
+      position:'relative',
+      width:size[0], height:size[1],
+      left: -size[0]/2, top:-(size[1] - PARTICIPANT_SIZE/4)
+      }} ref={ref}/>
+  </>
+  //  */
 }
 
 

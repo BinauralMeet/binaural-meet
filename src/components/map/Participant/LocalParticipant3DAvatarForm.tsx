@@ -15,6 +15,7 @@ import { participants } from '@stores/index'
 const FORMLOG = false
 const formLog = FORMLOG ? console.log : ()=>{}
 
+
 export interface LocalParticipantFormProps extends BMProps{
   open: boolean
   anchorEl: HTMLElement | null
@@ -25,10 +26,7 @@ export interface LocalParticipantFormProps extends BMProps{
 
 class VRMContext{
   id: string
-  @observable.shallow canvasRef: React.RefObject<HTMLCanvasElement> = React.createRef<HTMLCanvasElement>()
-  scene?: THREE.Scene
-  camera? : THREE.Camera
-  renderer?: THREE.WebGLRenderer
+  @observable.shallow imgRef: React.RefObject<HTMLImageElement> = React.createRef<HTMLImageElement>()
   @observable.ref vrm?: VRM
   disposer?: IReactionDisposer
   constructor(file:string){
@@ -41,9 +39,46 @@ interface Member{
   contexts: VRMContext[]
 }
 
+let canvas:HTMLCanvasElement|undefined
+let renderer:THREE.WebGLRenderer|undefined
+function getImage(ctx:VRMContext, size: number[]){
+  if (!canvas){
+    canvas = document.createElement('canvas')
+    canvas.width = size[0]
+    canvas.height = size[1]
+    renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      canvas
+    })
+  }
+
+  if(ctx.vrm && renderer){
+    const scene = new THREE.Scene()
+    const light = new THREE.DirectionalLight(0xffffff)
+    light.position.set(1, 1, 1).normalize()
+    scene.add(light)
+    scene.add(ctx.vrm.scene)
+
+    const rad = (180 + 20) / 180 * Math.PI
+    const camera = new THREE.PerspectiveCamera(
+      35,
+      avatarSize[0]/avatarSize[1],
+      0.1,
+      1000,
+    )
+    camera.position.set(-Math.sin(rad)*3, 0.8, -Math.cos(rad)*3)
+    camera.lookAt(0,0.8,0)
+    renderer.setSize(size[0], size[1])
+    renderer.setPixelRatio(window.devicePixelRatio * 4)
+    renderer.render(scene, camera)
+    formLog(`render ${ctx.id}`)
+  }
+  return canvas.toDataURL()
+}
+
 export const vrmUrlBase = 'https://binaural.me/public_packages/uploader/vrm/avatar/'
 const avatarSize = [150,200]
-
 function loadFile(mem: Member, size: number[]){
   const loader = GetPromiseGLTFLoader()
   formLog(`files: ${mem.files}`)
@@ -52,30 +87,18 @@ function loadFile(mem: Member, size: number[]){
     let ctx:VRMContext|undefined = mem.contexts.find(c => c.id === file)
     if (ctx) continue
     ctx = new VRMContext(file)
-    ctx.camera = new THREE.PerspectiveCamera(
-        35,
-        avatarSize[0]/avatarSize[1],
-        0.1,
-        1000,
-      )
-    ctx.scene = new THREE.Scene()
     ctx.disposer = autorun(()=>{
       if (ctx){
         render3d(ctx, avatarSize)
       }
     })
-    const light = new THREE.DirectionalLight(0xffffff)
-    light.position.set(1, 1, 1).normalize()
-    ctx.scene.add(light)
     loader.promiseLoad(`${vrmUrlBase}${file}`).then(gltf => {
       formLog(`${file} loaded.`)
       if (!ctx) return
-      if (ctx.vrm){ ctx!.scene?.remove(ctx.vrm.scene) }
       VRMUtils.removeUnnecessaryJoints(gltf.scene);
       VRM.from(gltf).then(vrmGot => {
         if (!ctx) return
         formLog(`${file} vrm got.`)
-        ctx.scene?.add(vrmGot.scene)
         vrmGot.scene.rotation.y = Math.PI
         ctx.vrm = vrmGot
       })
@@ -84,22 +107,9 @@ function loadFile(mem: Member, size: number[]){
   }
 }
 function render3d(ctx: VRMContext, size: number[]){
-  formLog(`render3d ${ctx.id}`)
-  if(ctx.canvasRef.current && ctx.vrm && ctx.scene && ctx.camera){
-    if (!ctx.renderer){
-      ctx.renderer = new THREE.WebGLRenderer({
-        antialias: true,
-        alpha: true,
-        canvas: ctx.canvasRef.current
-      })
-    }
-    const rad = (180 + 20) / 180 * Math.PI
-    ctx.camera.position.set(-Math.sin(rad)*3, 0.8, -Math.cos(rad)*3)
-    ctx.camera.lookAt(0,0.8,0)
-    ctx.renderer.setSize(size[0], size[1])
-    ctx.renderer.setPixelRatio(window.devicePixelRatio * 4)
-    ctx.renderer.render(ctx.scene, ctx.camera)
-    formLog(`render ${ctx.id}`)
+  const img = ctx.imgRef.current
+  if (img){
+    img.src = getImage(ctx, size)
   }
 }
 
@@ -110,6 +120,12 @@ export const Choose3DAvatar: React.FC<LocalParticipantFormProps> = (props: Local
     if (reason === 'enter' || reason==='backdropClick'){
     }
     props.close()
+    /*  Not worked.
+    memberRef.current?.contexts.forEach(ctx => {
+      if (ctx.imgRef.current){
+        ctx.imgRef.current.src='data:image/svg+xml,%3Csvg%3E%3Ctext%3Enow loading...%3C/text%3E%3C/svg%3E'
+      }
+    })*/
   }
 
   const [list, setList] = React.useState<JSX.Element[]|undefined>()
@@ -139,10 +155,10 @@ export const Choose3DAvatar: React.FC<LocalParticipantFormProps> = (props: Local
               local.information.email=`${vrmUrlBase}${ctx.id}`
               close3D(ev, 'enter')
             }}>
-            <canvas style={{
+            <img alt='loading' style={{
               pointerEvents:'none',
               width:avatarSize[0], height:avatarSize[1],
-            }} ref={ctx.canvasRef}/><br />
+            }} ref={ctx.imgRef}/><br />
           </Button>
           {ctx.id}
         </div>
