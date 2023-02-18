@@ -10,6 +10,7 @@ import {DataSync} from '@models/conference/DataSync'
 import {AudioMeter} from '@models/audio/AudioMeter'
 import {connLog, connDebug} from './ConferenceLog'
 import {EventEmitter} from 'events'
+import { MSMessage } from './MediaMessages'
 
 //  Log level and module log options
 export const DATACONLOG = false
@@ -74,6 +75,8 @@ export class DataConnection {
       const onOpen = () => {
         dataLog('data connected.')
         this.messagesToSendToRelay = []
+        const msg:MSMessage = { type: 'dataConnect' }
+        this.relaySocket?.send(JSON.stringify(msg))
         this.sync.sendAllAboutMe(true)
         this.requestAll()
         this.flushSendMessages()

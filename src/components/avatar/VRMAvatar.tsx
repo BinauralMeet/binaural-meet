@@ -118,6 +118,7 @@ export const VRMAvatar: React.FC<{participant:ParticipantBase}> = (props: {parti
           mem.scene?.add(vrmGot.scene)
           vrmGot.scene.rotation.y = Math.PI
           if (mem){ mem.vrm = vrmGot }
+          render3d(props.participant.pose.orientation, props.participant.vrmRigs)
         })
       }).catch((e)=>{
         console.log('Failed to load VRM', e)
@@ -125,8 +126,12 @@ export const VRMAvatar: React.FC<{participant:ParticipantBase}> = (props: {parti
     }))
 
     //  render when updated
-    const render3d = throttle((ori, rig)=>{
+    const render3d = throttle((oriIn, rig)=>{
       //  /*
+      const oriOffset = (oriIn+720) % 360 - 180
+      const ori = 180 + oriOffset / 2
+      //console.log(`ori: ${ori}`)
+
       const mem = memberRef.current!
       const glCtx = mem.renderer?.getContext()
       if (mem.vrm && glCtx && !glCtx.isContextLost()) {
@@ -146,10 +151,7 @@ export const VRMAvatar: React.FC<{participant:ParticipantBase}> = (props: {parti
       } */
     }, 1000/20)
     dispo.push(autorun(()=>{
-      //render3d(props.participant.pose.orientation, props.participant.vrmRigs)
-      const ori = (props.participant.pose.orientation+720) % 360 - 180
-      //console.log(`ori: ${ori}`)
-      render3d(180 + ori / 2, props.participant.vrmRigs)
+      render3d(props.participant.pose.orientation, props.participant.vrmRigs)
     }))
 
     return ()=>{
