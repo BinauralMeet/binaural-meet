@@ -1,6 +1,5 @@
 import {MAP_SIZE} from '@components/Constants'
 import {recorder} from '@models/conference/Recorder'
-import {assert} from '@models/utils'
 import map from '@stores/Map'
 import {default as participants} from '@stores/participants/Participants'
 import roomInfo from '@stores/RoomInfo'
@@ -68,15 +67,18 @@ export class DataConnection {
     dataLog(`connect(${room}, ${peer})`)
 
     const promise = new Promise<void>((resolve, reject)=>{
-      if (!config.bmRelayServer){ reject(); return }
+      const server = config.dataServer || config.bmRelayServer
+      if (!server){ reject(); return }
       if (this.relaySocket){
         console.warn(`relaySocket already exists.`)
       }
       const onOpen = () => {
         dataLog('data connected.')
         this.messagesToSendToRelay = []
-        const msg:MSMessage = { type: 'dataConnect' }
-        this.relaySocket?.send(JSON.stringify(msg))
+        if (config.dataServer){
+          const msg:MSMessage = { type: 'dataConnect' }
+          this.relaySocket?.send(JSON.stringify(msg))
+        }
         this.sync.sendAllAboutMe(true)
         this.requestAll()
         this.flushSendMessages()
@@ -109,7 +111,7 @@ export class DataConnection {
         }
       }
       const onError = () => {
-        console.error(`Error in WebSocket for ${config.bmRelayServer}`)
+        console.error(`Error in WebSocket for ${server}`)
         this.relaySocket?.close(3000, 'onError')
       }
       const onClose = () => {
@@ -122,7 +124,7 @@ export class DataConnection {
         this.relaySocket?.addEventListener('open', onOpen)
         this.relaySocket?.addEventListener('close', onClose)
       }
-      this.relaySocket = new WebSocket(config.bmRelayServer)
+      this.relaySocket = new WebSocket(server)
       setHandler()
     })
     return promise
@@ -211,7 +213,6 @@ export class DataConnection {
   receivedMessages: BMMessage[] = []
 
   pushOrUpdateMessageViaRelay(type:string, value:any, dest?:string, sendRandP?:boolean) {
-    assert(config.bmRelayServer)
     if (!this.relaySocket || this.relaySocket.readyState !== WebSocket.OPEN){ return }
     if (!this.room || !this.peer){
       console.warn(`Relay Socket: Not connected. room:${this.room} id:${this.peer}.`)
