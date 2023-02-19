@@ -382,11 +382,24 @@ export class Conference {
         }else{
           this.getSendTransport().then((transport) => {
             // add track to produce
+            let codecOptions=undefined
+            if (track.track.kind === 'audio'){
+              //console.log(`getSendTransport audio settings:`,track.track.getSettings())
+              const settings = track.track.getSettings() as any
+              codecOptions =
+              {
+                opusStereo: !(settings.channelCount===1),
+                opusDtx: true
+              }
+              //console.log('codec options:', codecOptions)
+            }
+
             transport.produce({
               track:track.track,
               stopTracks:false,
               encodings:maxBitRate ? [{maxBitrate:maxBitRate}] : undefined,
-              appData:{track}
+              appData:{track},
+              codecOptions,
             }).then( producer => {
               this.localProducers.push(producer)
               resolve(producer)
