@@ -42,13 +42,40 @@ function startCapture(props:BMProps) {
   const fps = props.stores.contents.screenFps
   return new Promise<MediaStream>((resolve, reject) => {
     navigator.mediaDevices.getDisplayMedia({
-      audio:true,
+      audio:{
+        channelCount:{
+          ideal: 2
+        },
+        echoCancellation: false
+      },
       video:{
         frameRate:{
           ideal: fps
         }
       }
-    }).then(resolve).catch(reject)
+    }).then((ms)=>{
+      const audios = ms.getAudioTracks()
+      let count = audios.length
+      audios.forEach(track => {
+        const ec = track.getCapabilities().echoCancellation
+        if (ec && ec.findIndex(v => v===false) >= 0){
+          const constraint:MediaTrackConstraints ={
+            echoCancellation: false
+          }
+          track.applyConstraints(constraint).then(()=>{
+            count --
+            if (count === 0) resolve(ms)
+          }).catch(e => {
+            console.warn(`applyConstraints failed: ${e}`)
+            count --
+            if (count === 0) resolve(ms)
+          })
+        }else{
+          count --
+        }
+      })
+      if (count === 0) resolve(ms)
+    }).catch(reject)
   })
 }
 

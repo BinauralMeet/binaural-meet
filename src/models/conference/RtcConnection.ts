@@ -120,7 +120,8 @@ export class RtcConnection{
         if (this.mainServer && this.mainServer.readyState === WebSocket.OPEN && this.mainServer.bufferedAmount){
           setTimeout(func, 100)
         }else{
-          if (this.mainServer?.readyState !== WebSocket.CLOSING || this.mainServer?.readyState !== WebSocket.CLOSED){
+          if (this.mainServer?.readyState !== WebSocket.CLOSING
+            && this.mainServer?.readyState !== WebSocket.CLOSED){
             this.mainServer?.close(code, msg)
           }
           if (this.connected){
