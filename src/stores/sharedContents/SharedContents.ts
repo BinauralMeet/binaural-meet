@@ -1,7 +1,7 @@
 import {MessageType} from '@models/conference/DataMessageType'
 import {IPlaybackContent, isContentWallpaper, ISharedContent, SharedContentInfo} from '@models/ISharedContent'
 import {PARTICIPANT_SIZE, PlaybackContent} from '@models/Participant'
-import {Roles, TrackKind} from '@models/utils'
+import {TrackRoles, TrackKind} from '@models/conference/RtcConnection'
 import {assert} from '@models/utils'
 import {getRect, isCircleInRect} from '@models/utils'
 import {default as participantsStore} from '@stores/participants/Participants'
@@ -104,7 +104,7 @@ export class SharedContents extends EventEmitter {
     return pat
   }
 
-  public addTrack(peer: string, role: Roles, track: MediaStreamTrack){
+  public addTrack(peer: string, role: TrackRoles, track: MediaStreamTrack){
     if (role === 'mainScreen'){
       const ms = new MediaStream()
       ms.addTrack(track)
@@ -122,7 +122,7 @@ export class SharedContents extends EventEmitter {
       tracks.push(track)
     }
   }
-  public removeTrack(peer: string, role: Roles, kind?: TrackKind){
+  public removeTrack(peer: string, role: TrackRoles, kind?: TrackKind){
     if (role === 'mainScreen'){
       if (this.mainScreenOwner === peer){
         const ms = new MediaStream()
@@ -165,11 +165,11 @@ export class SharedContents extends EventEmitter {
   }
   public getLocalRtcContentIds(){
     return Array.from(this.contentTracks.keys())
-      .filter(cid=>this.contentTracks.get(cid)!.peer === conference.rtcConnection.peer)
+      .filter(cid=>this.contentTracks.get(cid)!.peer === conference.rtcTransports.peer)
   }
   public getRemoteRtcContentIds(){
     return Array.from(this.contentTracks.keys())
-      .filter(cid=>this.contentTracks.get(cid)!.peer !== conference.rtcConnection.peer)
+      .filter(cid=>this.contentTracks.get(cid)!.peer !== conference.rtcTransports.peer)
   }
 
   //  pasted content
@@ -265,7 +265,7 @@ export class SharedContents extends EventEmitter {
   //  removed by local user
   removeByLocal(cid: string) {
     if (cid === 'mainScreen'){
-      if (this.mainScreenOwner === conference.rtcConnection.peer){
+      if (this.mainScreenOwner === conference.rtcTransports.peer){
         conference.removeLocalTrackByRole(true, 'mainScreen')
       }
     }else{
@@ -346,7 +346,7 @@ export class SharedContents extends EventEmitter {
           conference.removeLocalTrackByRole(true, c.id)
           this.contentTracks.delete(c.id)
         }else{
-          //  Track will removed via rtcConnection
+          //  Track will removed via rtcTransports
           //  conference.closeTrack(peerAndTracks.peer, c.id)
           //  this.contentTracks.delete(c.id)
         }

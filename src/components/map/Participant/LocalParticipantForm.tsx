@@ -96,7 +96,7 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
         {t('lsTitle')}
       </span>
       <span style={{float:'right'}}>
-        <SignalQualityButton open={props.open} transport={conference.sendTransport}/></span>
+        <SignalQualityButton open={props.open} transport={conference.rtcTransports.sendTransport}/></span>
     </DialogTitle>
     <DialogContent>
       <Observer>{ ()=> {

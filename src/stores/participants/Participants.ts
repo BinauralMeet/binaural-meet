@@ -1,5 +1,5 @@
-import { PARTICIPANT_SIZE } from '@models/Participant'
-import { TrackKind } from '@models/utils'
+import {PARTICIPANT_SIZE} from '@models/Participant'
+import {TrackKind} from '@models/conference/RtcConnection'
 import {action, computed, makeObservable, observable} from 'mobx'
 import {LocalParticipant} from './LocalParticipant'
 import {PlaybackParticipant} from './PlaybackParticipant'

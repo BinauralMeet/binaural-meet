@@ -1,18 +1,20 @@
 import {KickTime} from '@models/KickTime'
-import {assert, MSTrack, Roles} from '@models/utils'
+import {assert} from '@models/utils'
 import {default as participants} from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
 import {ClientToServerOnlyMessageType, StringArrayMessageTypes} from './DataMessageType'
-import {RtcConnection, updateTransportStat} from './RtcConnection'
+import {MSTrack, TrackRoles, RemoteProducer, RemotePeer} from './RtcConnection'
+import {RtcTransportStatsGot} from './RtcTransportStatsGot'
+import {RtcTransports} from './RtcTransports'
 import {DataConnection} from './DataConnection'
 import * as mediasoup from 'mediasoup-client'
-import { MSRemotePeer, MSTransportDirection, MSRemoteProducer} from './MediaMessages'
+import { MSRemotePeer, MSRemoteProducer} from './MediaMessages'
 import { autorun } from 'mobx'
 import { PriorityCalculator, trackInfoMerege, VideoAudioTrackInfo, videoAudioTrackInfoDiff } from '@models/conference/PriorityCalculator'
 import { isEqualMSRP } from '@models/conference/MediaMessages'
 import {connLog} from './ConferenceLog'
-import { RemoteObjectInfo } from './priorityTypes'
-import { inputChangeObservationStart, inputChangeObservationStop } from './observeInputDevice'
+import {RemoteObjectInfo } from './priorityTypes'
+import {inputChangeObservationStart, inputChangeObservationStop } from './observeInputDevice'
 
 // config.js
 declare const d:any                  //  from index.html
@@ -22,49 +24,23 @@ const stringArrayMessageTypesForClient = new Set(StringArrayMessageTypes)
 stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.CONTENT_UPDATE_REQUEST_BY_ID)
 stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.REQUEST_PARTICIPANT_STATES)
 
-export interface RemoteProducer extends MSRemoteProducer{
-  peer: RemotePeer                    //  remote peer
-  consumer?: mediasoup.types.Consumer //  consumer for the remote producer
-}
-export interface RemotePeer{
-  peer: string
-  transport?: mediasoup.types.Transport   // receive transport
-  transportPromise?: Promise<mediasoup.types.Transport>  // set during creating receive transport
-  producers: RemoteProducer[]             // producers of the remote peer
-}
-
-export interface LocalProducer{
-  id: string
-  role: string | Roles
-  producer: mediasoup.types.Producer
-}
-export interface ProducerData extends Record<string, unknown>{
-  track: MSTrack
-}
-export interface ConsumerData extends Record<string, unknown>{
-  producer: RemoteProducer
-}
 
 export class Conference {
   private room_=''    //  room name
   public get room(){ return this.room_ }
 
   //  rtc (mediasoup) related
-  private rtcConnection_ = new RtcConnection()
-  public get rtcConnection(){ return this.rtcConnection_ }
-  private remotePeers_ = new Map<string, RemotePeer>()
-  public get remotePeers(){return this.remotePeers_}
-  private localProducers: mediasoup.types.Producer[] = []
-  private sendTransport_?: mediasoup.types.Transport
-  private sendTransportPromise?: Promise<mediasoup.types.Transport>
+  private rtcTransports_ = new RtcTransports()
+  public get rtcTransports(){ return this.rtcTransports_ }
+  public get remotePeers(){return this.rtcTransports_.remotePeers}
   public priorityCalculator
   //  map related
   private dataConnection_ = new DataConnection()
   public get dataConnection(){ return this.dataConnection_ }
 
   constructor(){
-    this.rtcConnection.addListener('remoteUpdate', this.onRemoteUpdate)
-    this.rtcConnection.addListener('remoteLeft', this.onRemoteLeft)
+    this.rtcTransports.addListener('remoteUpdate', this.onRemoteUpdate)
+    this.rtcTransports.addListener('remoteLeft', this.onRemoteLeft)
 
     this.priorityCalculator = new PriorityCalculator(this)
     let oldTracks: VideoAudioTrackInfo = {videos:[], audios:[]}
@@ -90,7 +66,7 @@ export class Conference {
     return this.dataConnection.isConnected()
   }
   public isRtcConnected(){
-    return this.rtcConnection.isConnected()
+    return this.rtcTransports.isConnected()
   }
 
   private updateStatInterval = 0
@@ -99,10 +75,10 @@ export class Conference {
     this.room_ = room
     connLog(`enter to room ${room}.`)
     if (reconnect){
-      this.rtcConnection.removeListener('disconnect', this.onRtcDisconnect)
+      this.rtcTransports.removeListener('disconnect', this.onRtcDisconnect)
       this.dataConnection.removeListener('disconnect', this.onDataDisconnect)
     }
-    this.rtcConnection.addListener('disconnect', this.onRtcDisconnect)
+    this.rtcTransports.addListener('disconnect', this.onRtcDisconnect)
     this.dataConnection.addListener('disconnect', this.onDataDisconnect)
 
     const promise = new Promise<void>((resolve, reject) => {
@@ -124,7 +100,7 @@ export class Conference {
 
       //  connect to peer
       const peer = participants.local.information.name.substring(0, 4).replaceAll(' ','_').replaceAll(':','_')
-      this.rtcConnection.connect(room, peer).then((peer)=>{
+      this.rtcTransports.connect(room, peer).then((peer)=>{
         connLog('rtc connected.')
         //  register event handlers and join
         //  set id
@@ -187,27 +163,21 @@ export class Conference {
     })
     if (!this.updateStatInterval){
       this.updateStatInterval = window.setInterval(()=>{
-        conference.updateTransportStat()}, 10000)
+        conference.updateAllTransportStats()}, 10000)
     }
     return promise
   }
-
   private clearRtc(){
     const rids = Array.from(this.remotePeers.values()).map(r => r.peer)
     this.onRemoteLeft([rids])
-    this.remotePeers_.clear()
-    this.localProducers.forEach(p => p.close())
-    this.localProducers = []
-    this.sendTransport_?.close()
-    delete this.sendTransportPromise
-    delete this.sendTransport_
+    this.rtcTransports.clear()
   }
   private onRtcDisconnect = () => {
     console.log(`onRtcDisconnect called.`)
     //*
     inputChangeObservationStop()
     this.clearRtc()
-    this.rtcConnection.leave()
+    this.rtcTransports.leave()
     setTimeout(()=>{
       this.enter(this.room, true).then(()=>{
       })
@@ -219,8 +189,8 @@ export class Conference {
     console.log(`onDataDisconnect called.`)
     //*
     const func = ()=>{
-      if (this.rtcConnection.isConnected()){
-        this.dataConnection.connect(this.room, this.rtcConnection.peer)
+      if (this.rtcTransports.isConnected()){
+        this.dataConnection.connect(this.room, this.rtcTransports.peer)
       }else{
         setTimeout(func, 2000)
       }
@@ -232,11 +202,11 @@ export class Conference {
 
   public leave(){
     const promise = new Promise<void>((resolve)=>{
-      this.rtcConnection.removeListener('disconnect', this.onRtcDisconnect)
-      this.rtcConnection.leave()
+      this.rtcTransports.removeListener('disconnect', this.onRtcDisconnect)
+      this.rtcTransports.leave()
       this.dataConnection.removeListener('disconnect', this.onDataDisconnect)
       this.dataConnection.disconnect().then(()=>{
-        this.rtcConnection.disconnect().then(()=>{
+        this.rtcTransports.disconnect().then(()=>{
           this.clearRtc()
           this.room_ = ''
           resolve()
@@ -248,100 +218,6 @@ export class Conference {
   }
 
   // mediasoup
-  private createTransport(dir: MSTransportDirection, remote?: RemotePeer){
-    if (dir === 'receive' && !remote){
-      console.error(`createTransport(); remote must be specified for receive transport.`)
-    }
-    const promise = new Promise<mediasoup.types.Transport>((resolve, reject)=>{
-      this.rtcConnection.createTransport(dir, remote?.peer).then(transport => {
-        transport.on('connect', ({ dtlsParameters }, callback, errback) => {
-          //  console.log('transport connect event', 'send');
-          this.rtcConnection.connectTransport(transport, dtlsParameters, remote?.peer).then(()=>{
-            callback()
-          }).catch((error:string)=>{
-            console.error(`error in connecting transport:${error}`);
-            this.rtcConnection.leave()
-            this.rtcConnection.disconnect(3000, 'Error in setting up server-side producer')
-            errback()
-            reject()
-          })
-        });
-        if (dir === 'send'){
-          transport.on('produce', ({ kind, rtpParameters, appData }, callback, errback) => {
-            //  console.log('transport produce event', appData);
-            const track = (appData as ProducerData).track
-            this.rtcConnection.produceTransport({
-              transport:transport.id, kind, role:track.role, rtpParameters, paused:false, appData
-            }).then((id)=>{
-              callback({id})
-            }).catch((error)=>{
-              console.error('Error in setting up server-side producer. disconnect.', error)
-              this.rtcConnection.leave()
-              this.rtcConnection.disconnect(3000, 'Error in setting up server-side producer')
-              errback()
-              reject()
-            })
-          })
-        }
-        transport.on('connectionstatechange', (state) => {
-          //  console.log(`transport ${transport.id} connectionstatechange ${state}`);
-          if (dir==='receive' && state === 'connected'){
-            assert(remote)
-            const consumers = Array.from(remote.producers.values()).map(p => p.consumer).filter(c => c)
-            for(const consumer of consumers){
-              this.rtcConnection.resumeConsumer(consumer!.id, remote.peer)
-              //console.log(`resumeConsumer finished for ${consumer!.id}.`)
-              consumer!.resume()
-            }
-          }
-          if (state === 'closed' || state === 'failed' || state === 'disconnected') {
-            //  console.log('transport closed ... leaving the room and resetting');
-            //TODO: leaveRoom();
-          }
-        });
-        resolve(transport)
-      }).catch(reject)
-    })
-    return promise
-  }
-
-  private getSendTransport(){
-    if (this.sendTransportPromise){ return this.sendTransportPromise }
-    const promise = new Promise<mediasoup.types.Transport>((resolve, reject)=>{
-      if (this.sendTransport){
-        delete this.sendTransportPromise
-        resolve(this.sendTransport)
-      }else{
-        this.createTransport('send').then(transport=>{
-          this.sendTransport_ = transport
-          delete this.sendTransportPromise
-          resolve(transport)
-        }).catch(reject)
-      }
-    })
-    this.sendTransportPromise = promise //  Start to create transport
-    return promise
-  }
-  private getReceiveTransport(peer: RemotePeer){
-    if (peer.transportPromise){ return peer.transportPromise }
-    const promise = new Promise<mediasoup.types.Transport>((resolve, reject)=>{
-      if (peer.transport){
-        delete peer.transportPromise
-        resolve(peer.transport)
-      }else{
-        this.createTransport('receive', peer).then(transport => {
-          peer.transport = transport
-          delete peer.transportPromise
-          resolve(peer.transport)
-        }).catch(reject)
-      }
-    })
-    peer.transportPromise = promise //  Start to create transport
-    return promise
-  }
-  public get sendTransport(){
-    return this.sendTransport_
-  }
 
   public addOrReplaceLocalTrack(track?:MSTrack, maxBitRate?:number){
     //  add content track to contents
@@ -361,126 +237,31 @@ export class Conference {
         }
       }
     }
-    return this.prepareSendTransport(track, maxBitRate)
-  }
-  public prepareSendTransport(track?:MSTrack, maxBitRate?:number){
-    const promise = new Promise<mediasoup.types.Producer>((resolve, reject)=>{
-      if (!track){
-        reject('track not specified')
-      }else{
-        //  find old or create a producer
-        const oldProducer = this.localProducers.find(p => {
-          const old = (p.appData as ProducerData).track
-          return old.role === track.role && old.track.kind === track.track.kind
-        })
-        if (oldProducer){
-          oldProducer.replaceTrack(track).then(()=>{
-            (oldProducer.appData as ProducerData).track = track
-            oldProducer.resume()
-            resolve(oldProducer)
-          }).catch(reject)
-        }else{
-          this.getSendTransport().then((transport) => {
-            // add track to produce
-            let codecOptions=undefined
-            if (track.track.kind === 'audio'){
-              //console.log(`getSendTransport audio settings:`,track.track.getSettings())
-              const settings = track.track.getSettings() as any
-              codecOptions =
-              {
-                opusStereo: !(settings.channelCount===1),
-                opusDtx: true
-              }
-              //console.log('codec options:', codecOptions)
-            }
-
-            transport.produce({
-              track:track.track,
-              stopTracks:false,
-              encodings:maxBitRate ? [{maxBitrate:maxBitRate}] : undefined,
-              appData:{track},
-              codecOptions,
-            }).then( producer => {
-              this.localProducers.push(producer)
-              resolve(producer)
-            }).catch(reject)
-          })
-        }
-      }
-    })
-    return promise
+    return this.rtcTransports.prepareSendTransport(track, maxBitRate)
   }
 
   public removeLocalTrack(stopTrack: boolean, track:MSTrack){
-    assert(track.peer === this.rtcConnection.peer)
+    assert(track.peer === this.rtcTransports.peer)
     this.removeLocalTrackByRole(stopTrack, track.role, track.track.kind as mediasoup.types.MediaKind)
   }
-  public removeLocalTrackByRole(stopTrack:boolean, role:Roles, kind?:mediasoup.types.MediaKind){
+  public removeLocalTrackByRole(stopTrack:boolean, role:TrackRoles, kind?:mediasoup.types.MediaKind){
     if (role === 'avatar'){
       if (kind === 'audio' || !kind) participants.local.tracks.audio = undefined
       if (kind === 'video' || !kind) participants.local.tracks.avatar = undefined
     }else{
-      contents.removeTrack(this.rtcConnection.peer, role, kind)
+      contents.removeTrack(this.rtcTransports.peer, role, kind)
     }
-    this.localProducers.forEach((producer)=>{
-      const track = (producer.appData as ProducerData).track
-      if (track.role === role && (!kind || kind === track.track.kind)){
-        producer.close()
-        if (stopTrack){
-          producer.track?.stop()
-        }
-        this.rtcConnection.closeProducer(producer.id)
-        this.localProducers = this.localProducers.filter(p => p !== producer)
-      }
-    })
-  }
-  public closeTrack(peer:string, role: string, kind?: mediasoup.types.MediaKind){
-    const promise = new Promise<void>((resolve, reject)=>{
-      const remote = this.remotePeers.get(peer)
-      if (!remote) {reject(); return}
-      let counter = 0
-      remote.producers.forEach(p => {
-        if (p.role === role && (!kind || p.kind === kind)){
-          counter ++
-          this.getConsumer(p).then((consumer)=>{
-            consumer.close()
-            counter --
-            if (counter === 0) resolve()
-          })
-        }
-      })
-    })
-    return promise
+    this.rtcTransports.RemoveTrackByRole(stopTrack, role, kind)
   }
 
-  private getConsumer(producer: RemoteProducer){
-    const promise = new Promise<mediasoup.types.Consumer>((resolve, reject)=>{
-      if (producer.consumer){
-        resolve(producer.consumer)
-      }else{
-        this.getReceiveTransport(producer.peer).then(transport => {
-          this.rtcConnection.consumeTransport(transport.id, producer).then(consumeParams=>{
-            transport.consume(consumeParams).then(consumer => {
-              producer.consumer = consumer
-              if (transport.connectionState === 'connected'){
-                this.rtcConnection.resumeConsumer(consumer.id, producer.peer.peer).then(()=>{
-                  //console.log(`resumeConsumer finished for ${consumer.id}.`)
-                })
-              }
-              resolve(consumer)
-            }).catch(reject)
-          }).catch(reject)
-        }).catch(reject)
+  public updateAllTransportStats(){
+    function setQuality(tStat:RtcTransportStatsGot){
+      const participant = tStat.dir==='send' ? participants.local : participants.getRemote(tStat.remote!)
+      if (participant){
+        participant.quality = tStat.quality
       }
-    })
-    return promise
-  }
-
-  public updateTransportStat(){
-    if (this.sendTransport) updateTransportStat(this.sendTransport)
-    this.remotePeers.forEach(r => {
-      if (r.transport) updateTransportStat(r.transport)
-    })
+    }
+    this.rtcTransports.updateAllTransportStats(setQuality)
   }
 
   //  Commmands for local tracks --------------------------------------------
@@ -551,7 +332,7 @@ export class Conference {
   private onRemoteUpdate = (arg: [MSRemotePeer[]]) => {
     const msremotes = arg[0]
     for (const msr of msremotes){
-      if (msr.peer === this.rtcConnection.peer) continue
+      if (msr.peer === this.rtcTransports.peer) continue
       const remote = this.remotePeers.get(msr.peer)
       if (remote){
         const addeds:MSRemoteProducer[] = []
@@ -588,13 +369,13 @@ export class Conference {
   private onRemoteLeft = (args: [string[]]) => {
     const remoteIds = args[0]
     for(const id of remoteIds){
-      if (id !== this.rtcConnection.peer){
+      if (id !== this.rtcTransports.peer){
         const remote = this.remotePeers.get(id)
         if (remote) {
           this.onProducerRemoved(remote.producers, remote)
         }
         this.remotePeers.delete(id)
-        if (this.rtcConnection.isConnected()){
+        if (this.rtcTransports.isConnected()){
           participants.leave(id)
         }
       }
@@ -617,7 +398,7 @@ export class Conference {
   }
   private addConsumer(producer: RemoteProducer){
     const promise = new Promise<void>((resolve, reject) => {
-      this.getConsumer(producer).then((consumer)=>{
+      this.rtcTransports.getConsumer(producer).then((consumer)=>{
         if (producer.role === 'avatar'){
           participants.addRemoteTrack(producer.peer.peer, consumer.track)
         }else{

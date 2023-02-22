@@ -1,12 +1,39 @@
 import {EventEmitter} from 'events'
-import {RemoteProducer} from './Conference'
-import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSConnectMessage, MSMessageType, MSRoomMessage, MSRTPCapabilitiesReply,
-  MSTransportDirection, MSCreateTransportReply, MSConnectTransportMessage, MSConnectTransportReply,
-  MSProduceTransportMessage, MSProduceTransportReply, MSTrackRole, MSConsumeTransportMessage, MSConsumeTransportReply, MSRemoteUpdateMessage, MSRemoteLeftMessage, MSResumeConsumerMessage, MSResumeConsumerReply, MSCloseProducerMessage, MSCloseProducerReply} from './MediaMessages'
+import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSConnectMessage, MSMessageType, MSRoomMessage,
+  MSRTPCapabilitiesReply, MSTransportDirection, MSCreateTransportReply, MSConnectTransportMessage,
+  MSConnectTransportReply, MSProduceTransportMessage, MSProduceTransportReply, MSTrackRole,
+  MSConsumeTransportMessage, MSConsumeTransportReply, MSRemoteUpdateMessage, MSRemoteLeftMessage,
+  MSResumeConsumerMessage, MSResumeConsumerReply, MSCloseProducerMessage, MSRemoteProducer,
+  MSCloseProducerReply} from './MediaMessages'
 import * as mediasoup from 'mediasoup-client';
-import { makeObservable, observable } from 'mobx';
-import participants from '@stores/participants/Participants';
 import {connLog} from './ConferenceLog'
+import {RtcTransportStatsGot} from './RtcTransportStatsGot'
+
+export type TrackRoles = 'avatar' | 'mainScreen' | string
+export type TrackKind = 'audio' | 'video'
+
+export interface MSTrack{
+  track: MediaStreamTrack,
+  peer: string,
+  role: TrackRoles,
+  deviceId?: string,
+}
+
+export interface LocalProducer{
+  id: string
+  role: string | TrackRoles
+  producer: mediasoup.types.Producer
+}
+export interface RemoteProducer extends MSRemoteProducer{
+  peer: RemotePeer                    //  remote peer
+  consumer?: mediasoup.types.Consumer //  consumer for the remote producer
+}
+export interface RemotePeer{
+  peer: string
+  transport?: mediasoup.types.Transport   // receive transport
+  transportPromise?: Promise<mediasoup.types.Transport>  // set during creating receive transport
+  producers: RemoteProducer[]             // producers of the remote peer
+}
 
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
@@ -71,7 +98,7 @@ export class RtcConnection{
         }
         if (this.prevPeer) {
           msg.peerJustBefore = this.prevPeer
-          connLog(`reconnect with previous peer id '${this.prevPeer}'`)
+          rtcLog(`reconnect with previous peer id '${this.prevPeer}'`)
         }
         this.sendWithPromise(msg, resolve, reject, room)
       }
@@ -127,7 +154,7 @@ export class RtcConnection{
           if (this.connected){
             this.connected = false
             this.emit('disconnect')
-            connLog(`mainServer emits 'disconnect'`)
+            rtcLog(`mainServer emits 'disconnect'`)
           }
           this.mainServer = undefined
           if (this.peer_){
@@ -184,7 +211,6 @@ export class RtcConnection{
     }
   }
 
-
   private loadDevice(peer: string){
     const promise = new Promise<void>((resolve, reject)=>{
       const msg:MSPeerMessage = {
@@ -240,7 +266,7 @@ export class RtcConnection{
         this.mainServer!.send(JSON.stringify(msg))
         this.pingCount += 1
         this.pingTimeout = setTimeout(this.pingTimerFunc, this.pingPongTimeout)
-        connLog(`pingTimerFunc() ping sent. count=${this.pingCount}.`)
+        rtcLog(`pingTimerFunc() ping sent. count=${this.pingCount}.`)
       }else{
         console.warn('RtcConnection: Not opened and can not send ping.')
         this.pingCount = 0
@@ -261,7 +287,7 @@ export class RtcConnection{
       console.error(`this.pingTimeout already set to ${this.pingTimeout}`)
     }
     this.pingTimeout = setTimeout(this.pingTimerFunc, this.pingPongTimeout)
-    connLog(`startPingPong() called. ping sent. count=${this.pingCount}.`)
+    rtcLog(`startPingPong() called. ping sent. count=${this.pingCount}.`)
   }
   private onAnyMessageForPing(){
     this.pingCount = 0
@@ -271,7 +297,7 @@ export class RtcConnection{
     }
   }
 
-  public createTransport(dir: MSTransportDirection, remote?: string){
+  public createTransport(dir: MSTransportDirection, remote?: RemotePeer){
     if (dir === 'receive' && !remote){
       console.error(`createTransport(): remote must be specified.`)
     }
@@ -279,7 +305,7 @@ export class RtcConnection{
       const msg:MSCreateTransportMessage = {
         type:'createTransport',
         peer:this.peer,
-        remote,
+        remote:remote?.peer,
         dir
       }
       this.sendWithPromise(msg, resolve, reject, remote)
@@ -305,7 +331,7 @@ export class RtcConnection{
     if (transportObject){
       const remote = this.getMessageArg(msg)
       if (!transportObject.appData.stat){
-        transportObject.appData.stat = new TransportStat(msg.dir, remote)
+        transportObject.appData.stat = new RtcTransportStatsGot(msg.dir, remote)
       }
       this.resolveMessage(msg, transportObject)
     }
@@ -446,251 +472,5 @@ export class RtcConnection{
   private onRemoteLeft(base: MSMessage){
     const msg = base as MSRemoteLeftMessage
     this.emit('remoteLeft', msg.remotes)
-  }
-}
-
-
-export interface RTCRemoteInboundRtpStreamStats extends RTCReceivedRtpStreamStats {
-  localId: string
-  roundTripTime: number
-  totalRoundTripTime: number
-  fractionLost: number
-  roundTripTimeMeasurements: number
-}
-export interface RTCRemoteOutboundRtpStreamStats extends RTCSentRtpStreamStats {
-  localId: string
-  roundTripTime: number
-  totalRoundTripTime: number
-  fractionLost: number
-  roundTripTimeMeasurements: number
-}
-
-export interface RTCCodecStats extends RTCStats{
-  payloadType:number
-  trnsportId:string
-  mimeType:string
-  clockRate:number
-  channels:number
-  sdpFmtpLine:string
-}
-export interface RTCIceCandidateEx extends RTCIceCandidate{
-  url?: string
-}
-
-export class StreamStat{
-  id: string=''
-  dir: MSTransportDirection='send'
-  @observable bytesPerSec?:number
-  @observable codec?: string
-  @observable targetBitrate?: number
-  @observable fractionLost?: number
-  @observable roundTripTime?: number
-  @observable jitter?: number
-  constructor(){
-    makeObservable(this)
-  }
-}
-export class TransportStat{
-  id=''
-  dir:MSTransportDirection
-  remote?:string
-  @observable fractionLost?:number
-  @observable roundTripTime?:number
-  @observable jitter?:number
-  @observable timestamp:number=0
-  @observable receivedBytePerSec?:number
-  @observable sentBytePerSec?:number
-  @observable bytesSent:number=0
-  @observable bytesReceived:number=0
-  @observable turn?: string
-  @observable localServer?: string
-  @observable remoteServer?: string
-  @observable streams: StreamStat[]=[]
-  @observable quality?: number  //  0 - 100, 100 is best
-  outStreamsPrev = new Map<string, RTCOutStreamStat>()
-  inStreamsPrev = new Map<string, RTCInStreamStat>()
-  constructor(dir_:MSTransportDirection, remote_?:string){
-    this.dir = dir_
-    this.remote = remote_
-    makeObservable(this)
-  }
-}
-
-interface RTCOutboundRtpStreamStatsEx extends RTCOutboundRtpStreamStats{
-  targetBitrate?: number
-}
-interface RTCInboundRtpStreamStatsEx extends RTCInboundRtpStreamStats{
-  bytesReceived: number
-
-}
-
-export interface RTCOutStreamStat{
-  id: string
-  local: RTCOutboundRtpStreamStatsEx
-  remote?: RTCRemoteInboundRtpStreamStats
-}
-export interface RTCInStreamStat{
-  id: string
-  local: RTCInboundRtpStreamStatsEx
-  remote?: RTCRemoteOutboundRtpStreamStats
-}
-
-export function getStatFromTransport(transport?: mediasoup.types.Transport){
-  return transport?.appData.stat as TransportStat|undefined
-}
-
-export function updateTransportStat(transport: mediasoup.types.Transport){
-  const tStat = transport.appData.stat as TransportStat
-  transport?.getStats().then((stats)=>{
-    const types = new Map<string, Map<string, any> >()
-    stats.forEach((val)=>{
-      if (val.type){
-        if (types.has(val.type)){
-          types.get(val.type)!.set(val.id, val)
-        }else{
-          types.set(val.type, new Map<string, any>([[val.id, val]]))
-        }
-      }
-    })
-    /*
-    const keys = Array.from(stats.keys())
-    //  log all stats
-    if (dir !== 'send'){
-      let str=''
-      keys.forEach((key)=>{ str = `${str}\n${key}:${JSON.stringify(stats.get(key))}` })
-      console.log(str)
-    }
-    //  */
-    let streamStats:StreamStat[]=[]
-    if (tStat.dir === 'send'){
-      const outRtps = types.get('outbound-rtp')
-      const streams:{id:string, local:RTCOutboundRtpStreamStatsEx, remote: RTCRemoteInboundRtpStreamStats|undefined}[] = []
-      outRtps?.forEach((r)=>{
-        const outRtp = r as RTCOutboundRtpStreamStatsEx
-        const remoteId = outRtp.remoteId
-        const remoteInRtp = remoteId && stats.get(remoteId)
-        streams.push({id:`${outRtp.id}_${transport.id}`, local:outRtp, remote: remoteInRtp})
-      })
-      streamStats = streams.map(stream => {
-        const prev = tStat.outStreamsPrev.get(stream.id)
-        const dt = prev?.local?.timestamp ? (stream.local.timestamp - prev.local.timestamp)/1000 : 0
-
-        if (stream.local.codecId){
-          stats.get(stream.local.codecId)
-        }
-        const rv:StreamStat = {
-          dir: tStat.dir,
-          id: stream.id,
-          bytesPerSec: (dt && stream.local.bytesSent && prev?.local?.bytesSent) ?
-            (stream.local.bytesSent-prev.local.bytesSent)/dt : 0,
-          codec: stream.local.codecId ? (stats.get(stream.local.codecId) as RTCCodecStats).mimeType : undefined,
-          targetBitrate: stream.local.targetBitrate,
-          //jitter: stream.remote?.jitter,
-          fractionLost: stream.remote?.fractionLost,
-          roundTripTime: stream.remote?.roundTripTime
-        }
-        return rv
-      })
-      tStat.outStreamsPrev = new Map(streams.map((s) => [s.id, s]))
-    }else{
-      const inRtps = types.get('inbound-rtp')
-      //console.log(`inRtps:keys=${inRtps && Array.from(inRtps.keys())}`)
-      const streams:{id:string, local:RTCInboundRtpStreamStatsEx, remote: RTCRemoteOutboundRtpStreamStats|undefined}[] = []
-      inRtps?.forEach((inRtp:RTCInboundRtpStreamStatsEx)=>{
-        const remoteId = inRtp.remoteId
-        const remoteOutRtp = remoteId && stats.get(remoteId)
-        streams.push({id:`${inRtp.id}_${transport.id}`, local:inRtp, remote: remoteOutRtp})
-      })
-      streamStats = streams.map(stream => {
-        const prev = tStat.inStreamsPrev.get(stream.id)
-        const dt = prev?.local?.timestamp ? (stream.local.timestamp - prev.local.timestamp)/1000 : 0
-
-        if (stream.local.codecId){
-          stats.get(stream.local.codecId)
-        }
-        const rv:StreamStat = {
-          dir: tStat.dir,
-          id: stream.id,
-          bytesPerSec: (dt && stream.local.bytesReceived && prev?.local?.bytesReceived) ?
-            (stream.local.bytesReceived -prev.local.bytesReceived)/dt : 0,
-          codec: stream.local.codecId ? (stats.get(stream.local.codecId) as RTCCodecStats).mimeType : undefined,
-          jitter: stream.local.jitter,
-          fractionLost: stream.remote?.fractionLost,
-          roundTripTime: stream.remote?.roundTripTime
-        }
-        return rv
-      })
-      tStat.inStreamsPrev = new Map(streams.map((s) => [s.id, s]))
-    }
-
-    //  clear
-    tStat.fractionLost = undefined
-    tStat.roundTripTime = undefined
-    tStat.jitter = undefined
-    setAverageOf('fractionLost', tStat, streamStats)
-    setAverageOf('roundTripTime', tStat, streamStats)
-    setAverageOf('jitter', tStat, streamStats)
-
-    const transports = types.get('transport')
-    if (transports?.size === 1){
-      const transportStat = transports.values().next().value as RTCTransportStats
-      const delta = (transportStat.timestamp - tStat.timestamp)/1000
-      tStat.id = transportStat.id
-      tStat.timestamp = transportStat.timestamp
-      if (transportStat.bytesReceived){
-        tStat.receivedBytePerSec = Math.floor((transportStat.bytesReceived - tStat.bytesReceived) / delta)
-        tStat.bytesReceived = transportStat.bytesReceived
-      }
-      if (transportStat.bytesSent){
-        tStat.sentBytePerSec = Math.floor((transportStat.bytesSent - tStat.bytesSent) / delta)
-        tStat.bytesSent = transportStat.bytesSent
-      }
-      const candidatePairId = transportStat.selectedCandidatePairId
-      if (candidatePairId){
-        const pair = stats.get(candidatePairId) as RTCIceCandidatePairStats
-        const lc = stats.get(pair.localCandidateId) as RTCIceCandidateEx
-        //  local server is client's IP address and port. Do not need to show.
-        //  tStat.localServer = `${lc.address}:${lc.port}/${lc.protocol}`
-        tStat.turn = lc.url
-        const rc = stats.get(pair.remoteCandidateId) as RTCIceCandidateEx
-        tStat.remoteServer = `${rc.address}:${rc.port}/${rc.protocol}`
-      }
-    }else{
-      if (transports?.size && transports.size > 1){
-        console.error(`${transports.size} transports in stats for ${transport}`)
-      }
-    }
-    let quality=undefined
-    if (tStat.fractionLost!==undefined || tStat.roundTripTime!==undefined || tStat.jitter !== undefined){
-      const fractionLost = tStat.fractionLost ? tStat.fractionLost : 0
-      const roundTripTime = tStat.roundTripTime ? tStat.roundTripTime : 0
-      const jitter = (!roundTripTime && tStat.jitter) ? tStat.jitter : 0
-      quality = 100 - (fractionLost>1e-10 ? Math.pow(fractionLost, -10) : 0) * 100
-       - roundTripTime * 100 - jitter * 100
-      quality = Math.max(Math.min(quality, 100), 0)
-    }
-    tStat.quality = quality
-    tStat.streams = streamStats
-    //console.log(`tStat: ${JSON.stringify(tStat)}`)
-    const participant = tStat.dir==='send' ? participants.local : participants.getRemote(tStat.remote!)
-    if (participant){
-      participant.quality = tStat.quality
-    }
-  }).catch()
-}
-
-function setAverageOf<S,T>(prop: string, tStat:S, stats: T[]){
-  const cs = tStat as any
-  const ss = stats as any[]
-  let count = 0
-  cs[prop] = undefined
-  for(const s of ss){
-    if (s[prop]){
-      cs[prop] = s[prop] + (cs[prop] ? cs[prop] : 0)
-      count ++
-    }
-  }
-  if (cs[prop]){
-    cs[prop] /= count
   }
 }

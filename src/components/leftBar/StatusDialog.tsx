@@ -1,7 +1,7 @@
 import Button from '@material-ui/core/Button'
 import Paper from '@material-ui/core/Paper'
 import Popper, { PopperProps } from '@material-ui/core/Popper'
-import { StreamStat, TransportStat } from '@models/conference/RtcConnection'
+import { StreamStat, RtcTransportStatsGot } from '@models/conference/RtcTransportStatsGot'
 import React from 'react'
 import {BMProps} from '../utils'
 import {conference} from '@models/conference'
@@ -13,7 +13,7 @@ import {ConnectionStat} from '@components/map/Participant/SignalQuality'
 declare const config:any             //  from ../../config.js included from index.html
 
 function resetRtc(){
-  conference.rtcConnection.forceClose()
+  conference.rtcTransports.forceClose()
 }
 function resetDataConnection(){
   conference.dataConnection.forceClose()
@@ -25,11 +25,11 @@ export interface StatusDialogProps extends Omit<PopperProps, 'children'>, BMProp
 export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogProps) => {
   const {t} = useTranslation()
   const stat = useObserver(()=>{
-    const stats:TransportStat[] = []
-    const senderStat = conference.sendTransport?.appData?.stat as (TransportStat|undefined)
+    const stats:RtcTransportStatsGot[] = []
+    const senderStat = conference.rtcTransports.sendTransport?.appData?.stat as (RtcTransportStatsGot|undefined)
     if (senderStat) stats.push(senderStat)
-    const receiverStats:TransportStat[] = Array.from(conference.remotePeers.values())
-      .map(remote => remote.transport?.appData?.stat as (TransportStat)).filter(s=>s!==undefined)
+    const receiverStats:RtcTransportStatsGot[] = Array.from(conference.remotePeers.values())
+      .map(remote => remote.transport?.appData?.stat as (RtcTransportStatsGot)).filter(s=>s!==undefined)
     stats.push(...receiverStats)
     const servers:[string, string, string|undefined][] = []
     const sum = {} as any
@@ -55,7 +55,7 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
       }
     }
     if (stats.length){
-      const tStatSum = sum as TransportStat
+      const tStatSum = sum as RtcTransportStatsGot
       tStatSum.fractionLost = tStatSum.fractionLost ? tStatSum.fractionLost/stats.length : undefined
       tStatSum.jitter = tStatSum.jitter ? tStatSum.jitter/stats.length : undefined
       tStatSum.quality = tStatSum.quality ? tStatSum.quality/stats.length : undefined
@@ -63,7 +63,7 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
     }
     const data = errorInfo.types.has('dataConnection') ? undefined : config.bmRelayServer
     return {
-      transport: stats.length ? sum as TransportStat : undefined,
+      transport: stats.length ? sum as RtcTransportStatsGot : undefined,
       streams,
       servers,
       data,

@@ -25,7 +25,7 @@ import StopScreenShareIcon from '@material-ui/icons/StopScreenShare'
 import SubjectIcon from '@material-ui/icons/Subject'
 import {contentsToSave, loadToContents} from '@models/ISharedContent'
 import {useTranslation} from '@models/locales'
-import {MSTrack} from '@models/utils'
+import {MSTrack} from '@models/conference/RtcConnection'
 import {createContent, createContentFromText, createContentOfIframe, createContentOfText,
   createContentOfVideo} from '@stores/sharedContents/SharedContentCreator'
 import {SharedContents} from '@stores/sharedContents/SharedContents'
@@ -183,12 +183,12 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
       if (ms.getTracks().length) {
         const content = createContentOfVideo(ms.getTracks(), map, 'screen')
         contents.assignId(content)
-        contents.getOrCreateContentTracks(conference.rtcConnection.peer, content.id)
+        contents.getOrCreateContentTracks(conference.rtcTransports.peer, content.id)
         contents.shareContent(content)
         ms.getTracks().forEach((track) => {
           const msTrack:MSTrack = {
             track,
-            peer: conference.rtcConnection.peer,
+            peer: conference.rtcTransports.peer,
             role: content.id
           }
           conference.addOrReplaceLocalTrack(msTrack)
@@ -215,7 +215,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
           ms.getTracks().forEach((track) => {
             const msTrack:MSTrack = {
               track,
-              peer: conference.rtcConnection.peer,
+              peer: conference.rtcTransports.peer,
               role: 'mainScreen'
             }
             conference.addOrReplaceLocalTrack(msTrack)

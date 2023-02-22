@@ -38,7 +38,7 @@ export const CameraSelector: React.FC<CameraSelectorProps> = (props) => {
         const content = createContentOfVideo([msTrack.track], map, 'screen')
         contents.assignId(content)
         msTrack.role = content.id
-        contents.getOrCreateContentTracks(conference.rtcConnection.peer, content.id)
+        contents.getOrCreateContentTracks(conference.rtcTransports.peer, content.id)
         contents.shareContent(content)
         conference.addOrReplaceLocalTrack(msTrack)
       })

@@ -11,11 +11,11 @@ import SignalCellular4BarIcon from '@material-ui/icons/SignalCellular4Bar'
 import {useTranslation} from '@models/locales'
 import React from 'react'
 import {useObserver} from 'mobx-react-lite'
-import { getStatFromTransport, StreamStat, TransportStat } from '@models/conference/RtcConnection'
+import { getStatFromTransport, StreamStat, RtcTransportStatsGot } from '@models/conference/RtcTransportStatsGot'
 import * as mediasoup from 'mediasoup-client'
 
 export interface ConnectionStatProps{
-  stat?: TransportStat
+  stat?: RtcTransportStatsGot
   streams?: StreamStat[]
 }
 export const ConnectionStat: React.FC<ConnectionStatProps> = (props:ConnectionStatProps) => {
@@ -55,7 +55,7 @@ export const ConnectionQualityDialog: React.FC<ConnectionQualityDialogProps>
   = (props: ConnectionQualityDialogProps) => {
   const {t} = useTranslation()
   const rawStat = getStatFromTransport(props.transport)
-  const stat = useObserver<TransportStat|undefined>(()=> (rawStat ? {...rawStat} : undefined))
+  const stat = useObserver<RtcTransportStatsGot|undefined>(()=> (rawStat ? {...rawStat} : undefined))
 
   return <Popover open={props.open} anchorEl={props.anchorEl} >
     <DialogTitle>

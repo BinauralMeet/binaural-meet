@@ -1,4 +1,5 @@
-import {Conference, RemoteProducer} from '@models/conference'
+import {Conference} from '@models/conference'
+import {RemoteProducer} from './RtcConnection'
 import {isContentRtc} from '@models/ISharedContent'
 import {PARTICIPANT_SIZE} from '@models/Participant'
 import {participantsStore as participants} from '@stores/participants'
@@ -111,14 +112,14 @@ export class PriorityCalculator {
     const recalculateInterval = 500
     this.conference = conf
     let intervalHandle: number | undefined = undefined
-    this.conference.rtcConnection.addListener('connect', ()=>{
+    this.conference.rtcTransports.addListener('connect', ()=>{
       this.enable()
       intervalHandle = window.setInterval(
         () => {this.update()},
         recalculateInterval,
       )
     })
-    this.conference.rtcConnection.addListener('disconnect', ()=>{
+    this.conference.rtcTransports.addListener('disconnect', ()=>{
       this.clear()
       if (intervalHandle !== undefined) {
         clearInterval(intervalHandle)

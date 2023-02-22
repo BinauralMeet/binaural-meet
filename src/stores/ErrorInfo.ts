@@ -8,7 +8,7 @@ import participants from '@stores/participants/Participants'
 import {action, autorun, computed, makeObservable, observable, when} from 'mobx'
 import {conference} from '@models/conference'
 
-export type ErrorType = '' | 'connection' | 'retry' | 'noMic' | 'micPermission' | 'rtcConnection' | 'dataConnection' | 'entrance' | 'afk' | 'kicked'
+export type ErrorType = '' | 'connection' | 'retry' | 'noMic' | 'micPermission' | 'rtcTransports' | 'dataConnection' | 'entrance' | 'afk' | 'kicked'
 
 export class ErrorInfo {
   @computed get fatal() { return !this.type }
@@ -29,7 +29,7 @@ export class ErrorInfo {
       case 'retry': return t('etRetry')
       case 'noMic': return t('etNoMic')
       case 'micPermission': return t('etMicPermission')
-      case 'rtcConnection': return t('etRtcConnection')
+      case 'rtcTransports': return t('etRtcConnection')
       case 'dataConnection': return t('etDataConnection')
       case 'entrance': return ''
       case 'afk': return t('afkTitle')
@@ -44,7 +44,7 @@ export class ErrorInfo {
       case 'retry': return t('emRetry')
       case 'noMic': return t('emNoMic')
       case 'micPermission': return t('emMicPermission')
-      case 'rtcConnection': return t('emRtcConnection')
+      case 'rtcTransports': return t('emRtcConnection')
       case 'dataConnection': return t('emDataConnection')
       case 'entrance': return ''
       case 'afk': return t('afkMessage')
@@ -83,10 +83,10 @@ export class ErrorInfo {
         this.setType('afk')
       }
     })
-    conference.rtcConnection.addListener('disconnect', this.checkConnection)
+    conference.rtcTransports.addListener('disconnect', this.checkConnection)
   }
   public onDestruct(){
-    conference.rtcConnection.removeListener('disconnect', this.checkConnection)
+    conference.rtcTransports.removeListener('disconnect', this.checkConnection)
     this.checkConnection()
   }
 
@@ -138,13 +138,13 @@ export class ErrorInfo {
   }
   @action checkConnection = () => {
     if (!conference.isRtcConnected()) {
-      this.setType('rtcConnection')
+      this.setType('rtcTransports')
       setTimeout(this.checkConnection.bind(this), 1000)
     }else if (!conference.isDataConnected()){
       this.setType('dataConnection')
       setTimeout(this.checkConnection.bind(this), 1000)
     }else {
-      this.clear('rtcConnection')
+      this.clear('rtcTransports')
       this.clear('dataConnection')
       this.checkMic()
     }

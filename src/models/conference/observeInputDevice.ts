@@ -4,7 +4,7 @@ import participants from '@stores/participants/Participants'
 import {IReactionDisposer, autorun} from 'mobx'
 import {stopMpTrack, startMpTrack} from './mediapipeCamera'
 import {stopFaceTrack, createLocalCamera} from './faceCamera'
-import {MSTrack} from '@models/utils'
+import {MSTrack} from '@models/conference/RtcConnection'
 import {conference} from '@models/conference'
 
 //  mic device selection

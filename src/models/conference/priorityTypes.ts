@@ -1,4 +1,4 @@
-import {RemoteProducer} from '@models/conference';
+import {RemoteProducer} from '@models/conference/RtcConnection';
 import {Pose2DMap} from '@models/utils'
 
 export interface LocalObjectInfo {
