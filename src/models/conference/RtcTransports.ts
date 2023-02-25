@@ -1,8 +1,13 @@
 import {MSTransportDirection} from './MediaMessages'
 import {RtcConnection, RemotePeer, MSTrack, RemoteProducer, TrackRoles} from './RtcConnection'
 import {RtcTransportStatsGot, updateTransportStat} from './RtcTransportStatsGot'
-import {assert} from '@models/utils'
 import * as mediasoup from 'mediasoup-client'
+
+function assert(input: any): asserts input {
+  if (!input) {
+    throw new Error('Not a truthy value')
+  }
+}
 
 export interface ProducerData extends Record<string, unknown>{
   track: MSTrack

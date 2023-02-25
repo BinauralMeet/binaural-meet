@@ -41,7 +41,7 @@
     "md5": "^2.3.0",
     "mediasoup-client": "github:versatica/mediasoup-client#v3",
     "mobx": "*",
-    "mobx-react-lite": "^3.2.0",
+    "mobx-react-lite": "^3.4.0",
     "pdfjs-dist": "2.7.570",
     "react": "^17.0.2",
     "react-color": "^2.19.3",
