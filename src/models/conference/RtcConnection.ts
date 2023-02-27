@@ -4,7 +4,8 @@ import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSConnectMessage, MS
   MSConnectTransportReply, MSProduceTransportMessage, MSProduceTransportReply, MSTrackRole,
   MSConsumeTransportMessage, MSConsumeTransportReply, MSRemoteUpdateMessage, MSRemoteLeftMessage,
   MSResumeConsumerMessage, MSResumeConsumerReply, MSCloseProducerMessage, MSRemoteProducer,
-  MSCloseProducerReply} from './MediaMessages'
+  MSCloseProducerReply,
+  MSStreamingStartMessage} from './MediaMessages'
 import * as mediasoup from 'mediasoup-client';
 import {connLog} from './ConferenceLog'
 import {RtcTransportStatsGot} from './RtcTransportStatsGot'
@@ -449,6 +450,23 @@ export class RtcConnection{
     }else{
       this.resolveMessage(reply)
     }
+  }
+
+  public streamingStart(id: string, producers: mediasoup.types.Producer[]){
+    const msg:MSStreamingStartMessage = {
+      type: 'streamingStart',
+      peer: this.peer,
+      producers: producers.map(p => p.id),
+      id
+    }
+    this.mainServer?.send(JSON.stringify(msg))
+  }
+  public streamingStop(){
+    const msg:MSPeerMessage = {
+      type: 'streamingStop',
+      peer: this.peer,
+    }
+    this.mainServer?.send(JSON.stringify(msg))
   }
 
   private emitter = new EventEmitter()

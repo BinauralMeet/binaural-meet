@@ -45,11 +45,11 @@ export class RtcTransports extends RtcConnection{
           //  console.log('transport connect event', 'send');
           super.connectTransport(transport, dtlsParameters, remote?.peer).then(()=>{
             callback()
-          }).catch((error:string)=>{
-            console.error(`error in connecting transport:${error}`);
+          }).catch((error:Error)=>{
+            console.error(`error in connecting transport:${error.message}`);
             super.leave()
             super.disconnect(3000, 'Error in setting up server-side producer')
-            errback()
+            errback(error)
             reject()
           })
         });
@@ -65,7 +65,7 @@ export class RtcTransports extends RtcConnection{
               console.error('Error in setting up server-side producer. disconnect.', error)
               super.leave()
               super.disconnect(3000, 'Error in setting up server-side producer')
-              errback()
+              errback(error)
               reject()
             })
           })

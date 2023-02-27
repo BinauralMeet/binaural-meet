@@ -5,7 +5,8 @@ export type MSMessageType =
   'remoteUpdate' | 'remoteLeft' |
   'workerAdd' | 'workerDelete' | 'workerUpdate' |
   'createTransport' | 'closeTransport' | 'connectTransport' |
-  'produceTransport' | 'closeProducer' | 'consumeTransport' | 'resumeConsumer'
+  'produceTransport' | 'closeProducer' | 'consumeTransport' | 'resumeConsumer' |
+  'streamingStart' | 'streamingStop'
 export interface MSMessage{
   type: MSMessageType
   sn?: number
@@ -117,4 +118,9 @@ export interface MSResumeConsumerReply extends MSPeerMessage{
 
 export interface MSCloseTransportMessage extends MSMessage{
   transport: string,
+}
+
+export interface MSStreamingStartMessage extends MSPeerMessage{
+  id: string
+  producers: string[]
 }
