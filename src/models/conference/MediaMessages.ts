@@ -124,3 +124,6 @@ export interface MSStreamingStartMessage extends MSPeerMessage{
   id: string
   producers: string[]
 }
+export interface MSStreamingStopMessage extends MSPeerMessage{
+  id: string
+}

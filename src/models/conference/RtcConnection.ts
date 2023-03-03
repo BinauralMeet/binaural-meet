@@ -5,7 +5,8 @@ import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSConnectMessage, MS
   MSConsumeTransportMessage, MSConsumeTransportReply, MSRemoteUpdateMessage, MSRemoteLeftMessage,
   MSResumeConsumerMessage, MSResumeConsumerReply, MSCloseProducerMessage, MSRemoteProducer,
   MSCloseProducerReply,
-  MSStreamingStartMessage} from './MediaMessages'
+  MSStreamingStartMessage,
+  MSStreamingStopMessage} from './MediaMessages'
 import * as mediasoup from 'mediasoup-client';
 import {connLog} from './ConferenceLog'
 import {RtcTransportStatsGot} from './RtcTransportStatsGot'
@@ -50,7 +51,7 @@ export class RtcConnection{
   private connected = false
   get peer() {return this.peer_}
   private mainServer?:WebSocket
-  private device?:mediasoup.Device
+  public device?:mediasoup.Device
   private handlers = new Map<MSMessageType, (msg: MSMessage)=>void>()
   private promises = new Map<number, {resolve:(a:any)=>void, reject?:(a:any)=>void, arg?:any} >()
   private messageNumber = 1
@@ -224,6 +225,7 @@ export class RtcConnection{
   }
   private onRtpCapabilities(base: MSMessage){
     const msg = base as MSRTPCapabilitiesReply
+    //console.log('Device cap:', msg.rtpCapabilities)
     if (this.device?.loaded){
       this.resolveMessage(base)
     }else{
@@ -461,10 +463,11 @@ export class RtcConnection{
     }
     this.mainServer?.send(JSON.stringify(msg))
   }
-  public streamingStop(){
-    const msg:MSPeerMessage = {
+  public streamingStop(id: string){
+    const msg:MSStreamingStopMessage = {
       type: 'streamingStop',
       peer: this.peer,
+      id
     }
     this.mainServer?.send(JSON.stringify(msg))
   }

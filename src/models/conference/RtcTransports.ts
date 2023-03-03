@@ -55,7 +55,7 @@ export class RtcTransports extends RtcConnection{
         });
         if (dir === 'send'){
           transport.on('produce', ({ kind, rtpParameters, appData }, callback, errback) => {
-            //  console.log('transport produce event', appData);
+            //console.log('transport produce event', rtpParameters);
             const track = (appData as ProducerData).track
             super.produceTransport({
               transport:transport.id, kind, role:track.role, rtpParameters, paused:false, appData
@@ -127,7 +127,7 @@ export class RtcTransports extends RtcConnection{
     return promise
   }
 
-  public prepareSendTransport(track?:MSTrack, maxBitRate?:number){
+  public prepareSendTransport(track?:MSTrack, maxBitRate?:number, codec?:mediasoup.types.RtpCodecCapability){
     const promise = new Promise<mediasoup.types.Producer>((resolve, reject)=>{
       if (!track){
         reject('track not specified')
@@ -164,6 +164,7 @@ export class RtcTransports extends RtcConnection{
               encodings:maxBitRate ? [{maxBitrate:maxBitRate}] : undefined,
               appData:{track},
               codecOptions,
+              codec
             }).then( producer => {
               this.localProducers.push(producer)
               resolve(producer)
