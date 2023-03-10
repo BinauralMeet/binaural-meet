@@ -61,7 +61,8 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
       tStatSum.quality = tStatSum.quality ? tStatSum.quality/stats.length : undefined
       tStatSum.roundTripTime  = tStatSum.roundTripTime ? tStatSum.roundTripTime/stats.length : undefined
     }
-    const data = errorInfo.types.has('dataConnection') ? undefined : config.bmRelayServer
+    const dataServer = config.dataServer || config.bmRelayServer
+    const data = errorInfo.types.has('dataConnection') ? undefined : dataServer
     return {
       transport: stats.length ? sum as RtcTransportStatsGot : undefined,
       streams,

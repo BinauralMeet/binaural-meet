@@ -35,23 +35,21 @@ const configTitech = {
   bmRelayServer: 'wss://relay.titech.binaural.me',
   //dataServer: 'ws://localhost:80',
   corsProxyUrl: 'https://binaural.me/cors_proxy/',
+  positionServer: 'wss://localhost:3100',   //  position server
 }
-Object.assign(configTitech, Object.assign(commonConfig, configTitech))
 
 const configVrc = {
   mainServer: 'wss://vrc.jp/main',
   dataServer: 'wss://vrc.jp/main',
+  positionServer: 'wss://localhost:3100',   //  position server
   corsProxyUrl: 'https://binaural.me/cors_proxy/',
 }
-Object.assign(configVrc, Object.assign(commonConfig, configVrc))
-
 
 const configLocal = {
   mainServer: 'wss://localhost:3100',
   dataServer: 'wss://localhost:3100',
+  positionServer: 'wss://localhost:3100',   //  position server
   corsProxyUrl: 'https://binaural.me/cors_proxy/',
 }
-Object.assign(configLocal, Object.assign(commonConfig, configLocal))
 
-const config = configVrc
-
+const config = Object.assign(Object.assign({}, commonConfig), configVrc)

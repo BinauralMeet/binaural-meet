@@ -14,7 +14,8 @@ import { PriorityCalculator, trackInfoMerege, VideoAudioTrackInfo, videoAudioTra
 import { isEqualMSRP } from '@models/conference/MediaMessages'
 import {connLog} from './ConferenceLog'
 import {RemoteObjectInfo } from './priorityTypes'
-import {inputChangeObservationStart, inputChangeObservationStop } from './observeInputDevice'
+import {inputChangeObservationStart, inputChangeObservationStop} from './observeInputDevice'
+import { PositionConnection } from './PositionConnection'
 
 // config.js
 declare const d:any                  //  from index.html
@@ -37,6 +38,9 @@ export class Conference {
   //  map related
   private dataConnection_ = new DataConnection()
   public get dataConnection(){ return this.dataConnection_ }
+  //  position server
+  private positionConnection_ = new PositionConnection()
+  public get positionConnection(){ return this.positionConnection_ }
 
   constructor(){
     this.rtcTransports.addListener('remoteUpdate', this.onRemoteUpdate)
@@ -154,6 +158,15 @@ export class Conference {
             this.dataConnection.connect(room, peer).then(()=>{
               resolve()
             }).catch(reject)
+          }
+
+          //  positoin server
+          if (this.positionConnection.isConnected()){
+            this.positionConnection.disconnect().then(()=>{
+              this.positionConnection.connect(room, peer, participants.local.information.name)
+            })
+          }else{
+            this.positionConnection.connect(room, peer, participants.local.information.name)
           }
 
           //  To access from debug console, add object d to the window.

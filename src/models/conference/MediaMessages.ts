@@ -1,6 +1,6 @@
 import * as mediasoup from 'mediasoup-client'
 export type MSMessageType =
-  'dataConnect' |
+  'dataConnect' | 'positionConnect' | 'position' |
   'connect' | 'join' | 'ping' | 'rtpCapabilities' | 'leave' |
   'remoteUpdate' | 'remoteLeft' |
   'workerAdd' | 'workerDelete' | 'workerUpdate' |
@@ -126,4 +126,13 @@ export interface MSStreamingStartMessage extends MSPeerMessage{
 }
 export interface MSStreamingStopMessage extends MSPeerMessage{
   id: string
+}
+
+export interface MSPositionConnectMessage extends MSPeerMessage{
+  name: string
+  room: string
+}
+export interface MSPositionMessage extends MSMessage{
+  position: number[]
+  orientation: number
 }
