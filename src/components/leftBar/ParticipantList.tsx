@@ -17,9 +17,6 @@ import {styleForList} from '../utils/styles'
 import {TextLineStyle} from './LeftBar'
 import {StatusDialog} from './StatusDialog'
 
-// config.js
-declare const config:any             //  from ../../config.js included from index.html
-
 export const ParticipantLine: React.FC<TextLineStyle&BMProps&{participant: ParticipantBase}> = (props) => {
   const map = props.stores.map
   const name = useObserver(() => (props.participant.information.name))
@@ -35,10 +32,8 @@ export const ParticipantLine: React.FC<TextLineStyle&BMProps&{participant: Parti
     if (props.participant.physics.located){
       map.focusOn(props.participant)
     }else{
-      if(config.bmRelayServer){
-        conference.dataConnection.pushOrUpdateMessageViaRelay(
-          MessageType.REQUEST_PARTICIPANT_STATES, [props.participant.id])
-      }
+      conference.dataConnection.pushOrUpdateMessageViaRelay(
+        MessageType.REQUEST_PARTICIPANT_STATES, [props.participant.id])
       const disposer = autorun(()=>{
         if (props.participant.physics.located){
           map.focusOn(props.participant)
@@ -52,10 +47,8 @@ export const ParticipantLine: React.FC<TextLineStyle&BMProps&{participant: Parti
       setShowForm(true)
       map.keyInputUsers.add('participantList')
     }else{
-      if(config.bmRelayServer){
-        conference.dataConnection.pushOrUpdateMessageViaRelay(
-          MessageType.REQUEST_PARTICIPANT_STATES, [props.participant.id])
-      }
+      conference.dataConnection.pushOrUpdateMessageViaRelay(
+        MessageType.REQUEST_PARTICIPANT_STATES, [props.participant.id])
       const disposer = autorun(()=>{
         if (props.participant.physics.located){
           setShowForm(true)

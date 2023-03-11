@@ -313,7 +313,6 @@ export class DataSync{
   }
   //  contents
   private onContentInfoUpdate(cs:ISharedContent[]){
-    assert(config.bmRelayServer)
     cs.forEach(c => contents.roomContentsInfo.set(c.id, c))
   }
   private onContentUpdateRequest(cds:ISharedContentToSend[]){

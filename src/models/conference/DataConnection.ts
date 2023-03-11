@@ -27,6 +27,7 @@ stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.REQUEST_PARTI
 
 type DataConnectionEvent = 'disconnect'
 
+const dataServer = config.dataServer || config.bmRelayServer
 
 export class DataConnection {
   relaySocket:WebSocket|undefined = undefined //  Socket for message passing via separate relay server
@@ -65,73 +66,73 @@ export class DataConnection {
     this.room_ = room
     this.peer_ = peer
     dataLog(`connect(${room}, ${peer})`)
+    const self = this as DataConnection
 
     const promise = new Promise<void>((resolve, reject)=>{
-      const server = config.dataServer || config.bmRelayServer
-      if (!server){ reject(); return }
+      if (!dataServer){ reject(); return }
       if (this.relaySocket){
         console.warn(`relaySocket already exists.`)
       }
-      const onOpen = () => {
+      function onOpen(){
         dataLog('data connected.')
-        this.messagesToSendToRelay = []
+        self.messagesToSendToRelay = []
         if (config.dataServer){
           const msg:MSMessage = { type: 'dataConnect' }
-          this.relaySocket?.send(JSON.stringify(msg))
+          self.relaySocket?.send(JSON.stringify(msg))
         }
-        this.sync.sendAllAboutMe(true)
-        this.requestAll()
-        this.flushSendMessages()
+        self.sync.sendAllAboutMe(true)
+        self.requestAll()
+        self.flushSendMessages()
         //  start periodical communication with relay server.
-        if (this.stepTimeout){
-          clearTimeout(this.stepTimeout)
-          this.stepTimeout = undefined
+        if (self.stepTimeout){
+          clearTimeout(self.stepTimeout)
+          self.stepTimeout = undefined
         }
-        this.step()
+        self.step()
 
-        this.sync.observeStart()
+        self.sync.observeStart()
         resolve()
       }
-      const onMessage = (ev: MessageEvent<any>)=> {
+      function onMessage(ev: MessageEvent<any>){
         //  console.log(`ws:`, ev)
         if (typeof ev.data === 'string') {
-          this.lastReceivedTime = Date.now()
-          this.relayRttLast = this.lastReceivedTime - this.lastRequestTime
+          self.lastReceivedTime = Date.now()
+          self.relayRttLast = self.lastReceivedTime - self.lastRequestTime
 
           const msgs = JSON.parse(ev.data) as BMMessage[]
           //  console.log(`Relay sock onMessage len:${msgs.length}`)
           //*
           if (msgs.length){
-            this.receivedMessages.push(...msgs)
+            self.receivedMessages.push(...msgs)
           }
           const alpha = 0.3
           if (msgs.length){
-            this.relayRttAverage = alpha * this.relayRttLast + (1-alpha) * this.relayRttAverage
+            self.relayRttAverage = alpha * self.relayRttLast + (1-alpha) * self.relayRttAverage
           }
         }
       }
-      const onError = () => {
-        console.error(`Error in WebSocket for ${server}`)
-        this.relaySocket?.close(3000, 'onError')
+      function onError(){
+        console.error(`Error in WebSocket for ${dataServer}`)
+        self.relaySocket?.close(3000, 'onError')
       }
-      const onClose = () => {
+      function onClose(){
         dataLog('onClose() for relaySocket')
-        this.disconnect()
+        self.disconnect()
       }
-      const setHandler = () => {
-        this.relaySocket?.addEventListener('error', onError)
-        this.relaySocket?.addEventListener('message', onMessage)
-        this.relaySocket?.addEventListener('open', onOpen)
-        this.relaySocket?.addEventListener('close', onClose)
+      function setHandler(){
+        self.relaySocket?.addEventListener('error', onError)
+        self.relaySocket?.addEventListener('message', onMessage)
+        self.relaySocket?.addEventListener('open', onOpen)
+        self.relaySocket?.addEventListener('close', onClose)
       }
-      this.relaySocket = new WebSocket(server)
+      this.relaySocket = new WebSocket(dataServer)
       setHandler()
     })
     return promise
   }
   public disconnect(){
     const promise = new Promise<void>((resolve)=>{
-      if (config.bmRelayServer && this.peer){
+      if (dataServer && this.peer){
         this.sync.observeEnd()
         this.pushOrUpdateMessageViaRelay(MessageType.PARTICIPANT_LEFT, [this.peer])
         this.flushSendMessages()
