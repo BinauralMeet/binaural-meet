@@ -160,15 +160,6 @@ export class Conference {
             }).catch(reject)
           }
 
-          //  positoin server
-          if (this.positionConnection.isConnected()){
-            this.positionConnection.disconnect().then(()=>{
-              this.positionConnection.connect(room, peer, participants.local.information.name)
-            })
-          }else{
-            this.positionConnection.connect(room, peer, participants.local.information.name)
-          }
-
           //  To access from debug console, add object d to the window.
           d.conference = this
         }).catch(() => { console.log('Device enumeration error') })

@@ -12,7 +12,7 @@ import {Observer} from 'mobx-react-lite'
 import React from 'react'
 import {SketchPicker} from 'react-color'
 import {RemoteTrackLimitControl} from './RemoteTrackLimitControl'
-
+import { PositionServerForm } from './PositionServerForm'
 
 export interface AdminConfigFormProps{
   close?: () => void,
@@ -32,6 +32,12 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
   const colorButton = React.useRef<HTMLButtonElement>(null)
   const {roomInfo} = props.stores
 
+  const [showPosition, setShowPosition] = React.useState(false)
+  const anchor = React.useRef<HTMLDivElement>(null)
+  function closePosition(){
+    setShowPosition(false)
+  }
+
   return <Observer>{()=>{
     const textForFill = isDarkColor(roomInfo.backgroundFill) ? 'white' : 'black'
     const textForColor = isDarkColor(roomInfo.backgroundColor) ? 'white' : 'black'
@@ -40,6 +46,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
     return  <Box m={2}>
       <Box m={2}>
         <RemoteTrackLimitControl key="remotelimitcontrol" {...props.stores}/>
+        <div ref={anchor} />
       </Box>
       <Box mt={2} mb={2}>
         <TextField autoFocus label="Admin password" type="password" style={{marginTop:-12}}
@@ -52,6 +59,9 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
           roomInfo.passMatched = roomInfo?.password === pass
         }}> Check </Button>&emsp;
         {roomInfo.passMatched ? 'OK': 'Not matched'}
+        <span style={{backgroundColor:'rgba(0,0,0,0.1)', color:'white', position:'absolute', right:'1.5em',}} onClick={()=>{
+          setShowPosition(true)
+        }}>&nbsp;LPS&nbsp;</span>
       </Box>
       <Box mt={2} mb={2}>
         <TextField label="New password to update" type="text" style={{marginTop:-12}}
@@ -161,6 +171,9 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
           }
         }}> Default </Button>&emsp;
       </Box>
+      {showPosition ? <Popover open={showPosition} onClose={closePosition} anchorEl={anchor.current}>
+        <PositionServerForm stores={props.stores} close={closePosition}/>
+      </Popover> : undefined}
 
     </Box>}
   }</Observer>

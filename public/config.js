@@ -35,20 +35,17 @@ const configTitech = {
   bmRelayServer: 'wss://relay.titech.binaural.me',
   //dataServer: 'ws://localhost:80',
   corsProxyUrl: 'https://binaural.me/cors_proxy/',
-  positionServer: 'wss://localhost:3100',   //  position server
 }
 
 const configVrc = {
   mainServer: 'wss://vrc.jp/main',
   dataServer: 'wss://vrc.jp/main',
-  positionServer: 'wss://localhost:3100',   //  position server
   corsProxyUrl: 'https://binaural.me/cors_proxy/',
 }
 
 const configLocal = {
   mainServer: 'wss://localhost:3100',
   dataServer: 'wss://localhost:3100',
-  positionServer: 'wss://localhost:3100',   //  position server
   corsProxyUrl: 'https://binaural.me/cors_proxy/',
 }
 

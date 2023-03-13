@@ -1,13 +1,10 @@
 import {default as participants} from '@stores/participants/Participants'
-import {connLog, connDebug} from './ConferenceLog'
+import {connLog} from './ConferenceLog'
 import {MSMessage, MSPositionConnectMessage, MSPositionMessage } from './MediaMessages'
 
 //  Log level and module log options
 export const DATACONLOG = false
 export const positionLog = connLog
-
-// config.js
-declare const config:any             //  from ../../config.js included from index.html
 
 
 export class PositionConnection {
@@ -22,15 +19,17 @@ export class PositionConnection {
   public isConnected(){
     return this.positionSocket?.readyState === WebSocket.OPEN
   }
-  public connect(room: string, peer: string, name:string){
+  public isDisconnected(){
+    return !this.positionSocket || this.positionSocket.readyState === WebSocket.CLOSED
+  }
+  public connect(url: string, room: string, peer: string, name:string){
     this.room_ = room
     this.peer_ = peer
     this.name_ = name
     positionLog(`connect to position server(${room}, ${peer}, ${name})`)
 
     const promise = new Promise<void>((resolve, reject)=>{
-      const server = config.positionServer
-      if (!server){ reject(); return }
+      if (!url){ reject(); return }
       if (this.positionSocket){
         console.warn(`positionSocket already exists.`)
       }
@@ -43,12 +42,12 @@ export class PositionConnection {
           peer: this.peer
         }
         const sendText = JSON.stringify(msg)
-        console.log(`sendText=${sendText}`)
+        console.debug(`sendText=${sendText}`)
         this.positionSocket?.send(sendText)
         resolve()
       }
       const onMessage = (ev: MessageEvent<any>)=> {
-        console.log(`position socket:`, ev)
+        console.debug(`position socket:`, ev)
         if (typeof ev.data === 'string') {
           const base = JSON.parse(ev.data) as MSMessage
           //console.log(`position sock onMessage`, JSON.stringify(base))
@@ -59,7 +58,7 @@ export class PositionConnection {
         }
       }
       const onError = () => {
-        console.warn(`Error in position socket: ${server}`)
+        console.warn(`Error in position socket: ${url}`)
         this.positionSocket?.close(3000, 'onError')
       }
       const onClose = () => {
@@ -73,7 +72,7 @@ export class PositionConnection {
         this.positionSocket?.addEventListener('close', onClose)
       }
       try{
-        this.positionSocket = new WebSocket(server)
+        this.positionSocket = new WebSocket(url)
       }catch(e){
         console.warn('Failed to connect to position sensor server', e)
       }
