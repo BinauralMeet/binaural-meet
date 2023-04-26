@@ -48,8 +48,11 @@ export interface LocalParticipant extends ParticipantBase {
 }
 export type Participant = LocalParticipant | RemoteParticipant
 
+export type AvatarType = 'frog' | 'arrow' | 'circle' | ''
+
 export interface BaseInformation {
   name: string
+  avatar: AvatarType
   avatarSrc: string
   color: number[]
   textColor: number[]
@@ -67,6 +70,7 @@ export interface LocalInformation extends BaseInformation{
 export const defaultInformation:LocalInformation = {
   name: '',
   email: '',
+  avatar: 'frog',
   avatarSrc: '',
   color: [],
   textColor: [],
@@ -78,6 +82,7 @@ export const defaultInformation:LocalInformation = {
 }
 export const defaultRemoteInformation:RemoteInformation = {
   name: '',
+  avatar: 'frog',
   avatarSrc: '',
   color: [],
   textColor: [],

@@ -31,8 +31,8 @@ commonConfig = {
 
 const configTitech = {
   mainServer: 'wss://main.titech.binaural.me',
-  //dataServer: 'wss://main.titech.binaural.me',
-  bmRelayServer: 'wss://relay.titech.binaural.me',
+  dataServer: 'wss://main.titech.binaural.me',
+  //bmRelayServer: 'wss://relay.titech.binaural.me',
   //dataServer: 'ws://localhost:80',
   corsProxyUrl: 'https://binaural.me/cors_proxy/',
 }
@@ -49,4 +49,4 @@ const configLocal = {
   corsProxyUrl: 'https://binaural.me/cors_proxy/',
 }
 
-const config = Object.assign(Object.assign({}, commonConfig), configVrc)
+const config = Object.assign(Object.assign({}, commonConfig), configTitech)

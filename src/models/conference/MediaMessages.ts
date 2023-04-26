@@ -129,6 +129,7 @@ export interface MSStreamingStopMessage extends MSPeerMessage{
 }
 
 export interface MSPositionConnectMessage extends MSPeerMessage{
+  id: string
   name: string
   room: string
 }

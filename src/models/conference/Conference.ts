@@ -160,6 +160,11 @@ export class Conference {
             }).catch(reject)
           }
 
+          //  Connect to local positioning system server
+          if (!this.positionConnection.isConnected()){
+            this.positionConnection.connect()
+          }
+
           //  To access from debug console, add object d to the window.
           d.conference = this
         }).catch(() => { console.log('Device enumeration error') })

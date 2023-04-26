@@ -22,7 +22,7 @@ export const PastedContent: React.FC<BMProps> = (props:BMProps) => {
     //  console.log('onDrop', evt)
     evt.preventDefault()
     evt.stopPropagation()
-    if (evt.dataTransfer) {
+    if (map.keyInputUsers.size === 0 && evt.dataTransfer) {
       setContent(evt.dataTransfer)
     }
   }

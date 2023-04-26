@@ -1,6 +1,9 @@
 import {default as participants} from '@stores/participants/Participants'
 import {connLog} from './ConferenceLog'
 import {MSMessage, MSPositionConnectMessage, MSPositionMessage } from './MediaMessages'
+import { autorun } from 'mobx'
+import settings from '@stores/Settings'
+import {conference} from '@models/conference'
 
 //  Log level and module log options
 export const DATACONLOG = false
@@ -15,6 +18,19 @@ export class PositionConnection {
   public get room(){ return this.room_ }
   private name_=''
   public get name(){ return this.name_ }
+  private id_=''
+  public get id(){ return this.id_ }
+
+  constructor(){
+    autorun(()=>{
+      if (!this.isDisconnected()){
+        this.disconnect().then(()=>{ this.connect() })
+      }else{
+        this.connect()
+      }
+    })
+
+  }
 
   public isConnected(){
     return this.positionSocket?.readyState === WebSocket.OPEN
@@ -22,7 +38,13 @@ export class PositionConnection {
   public isDisconnected(){
     return !this.positionSocket || this.positionSocket.readyState === WebSocket.CLOSED
   }
-  public connect(url: string, room: string, peer: string, name:string){
+  public connect(){
+    if (settings.lpsUrl && settings.lpsId && conference && participants){
+      this.connectToWS(settings.lpsUrl, settings.lpsId, conference.room, conference.rtcTransports.peer, participants.local.information.name)
+    }
+  }
+  public connectToWS(url: string, id:string, room: string, peer: string, name:string){
+    this.id_ = id
     this.room_ = room
     this.peer_ = peer
     this.name_ = name
@@ -37,6 +59,7 @@ export class PositionConnection {
         positionLog('position connected.')
         const msg:MSPositionConnectMessage = {
           type: 'positionConnect',
+          id: this.id,
           name: this.name,
           room: this.room,
           peer: this.peer
@@ -54,6 +77,10 @@ export class PositionConnection {
           if (base.type === 'position'){
             const msg = base as MSPositionMessage
             participants.local.pose = {position: msg.position as [number, number], orientation: msg.orientation}
+            if (participants.local.information.avatar !== 'circle'){
+              participants.local.information.avatar = 'circle'
+              participants.local.sendInformation()
+            }
           }
         }
       }

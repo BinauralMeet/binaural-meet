@@ -21,7 +21,6 @@ import {MessageType} from './DataMessageType'
 import {notification} from './Notification'
 import {connLog} from './ConferenceLog'
 
-declare const config:any             //  from ../../config.js included from index.html
 const syncLog = connLog
 
 export class DataSync{

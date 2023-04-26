@@ -258,17 +258,18 @@ export class RtcConnection{
       throw new Error('No connection has been established.')
     }
   }
-  readonly pingPongTimeout = 3000
+  readonly pingpongDuration = 3000
+  readonly pingpongFailCount = 4
   private pingCount = 0
   private pingTimeout?:NodeJS.Timeout = undefined
   private pingTimerFunc = () => {
     this.pingTimeout = undefined
-    if (this.pingCount <= 1){
+    if (this.pingCount < this.pingpongFailCount){
       if (this.mainServer?.readyState === WebSocket.OPEN){
         const msg: MSMessage = {type:'ping'}
         this.mainServer!.send(JSON.stringify(msg))
         this.pingCount += 1
-        this.pingTimeout = setTimeout(this.pingTimerFunc, this.pingPongTimeout)
+        this.pingTimeout = setTimeout(this.pingTimerFunc, this.pingpongDuration)
         rtcLog(`pingTimerFunc() ping sent. count=${this.pingCount}.`)
       }else{
         console.warn('RtcConnection: Not opened and can not send ping.')
@@ -289,14 +290,14 @@ export class RtcConnection{
     if (this.pingTimeout){
       console.error(`this.pingTimeout already set to ${this.pingTimeout}`)
     }
-    this.pingTimeout = setTimeout(this.pingTimerFunc, this.pingPongTimeout)
+    this.pingTimeout = setTimeout(this.pingTimerFunc, this.pingpongDuration)
     rtcLog(`startPingPong() called. ping sent. count=${this.pingCount}.`)
   }
   private onAnyMessageForPing(){
     this.pingCount = 0
     if (this.pingTimeout){
       clearTimeout(this.pingTimeout)
-      this.pingTimeout = setTimeout(this.pingTimerFunc, this.pingPongTimeout)
+      this.pingTimeout = setTimeout(this.pingTimerFunc, this.pingpongDuration)
     }
   }
 

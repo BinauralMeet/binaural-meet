@@ -184,7 +184,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
     </React.Fragment>
     : undefined)
 
-  const arrow = <g transform={`translate(${svgCenter} ${svgCenter}) rotate(-135) `}>
+  const arrowOuter = <g transform={`translate(${svgCenter} ${svgCenter}) rotate(-135) `}>
     <rect style={{pointerEvents: 'fill'}}
       height={outerRadius} width={outerRadius} fill={color} />
     {isLocal ?
@@ -194,7 +194,9 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
     : undefined}
   </g>
 
-  const flog = <g style={{pointerEvents: 'fill'}} >
+  const circleOuter = undefined
+
+  const frogOuter = <g style={{pointerEvents: 'fill'}} >
     <circle {...eyeClick} r={0.35 * outerRadius} cy={svgCenter + eyeOffsets[0][1]}
       cx={svgCenter + eyeOffsets[0][0]} fill={color} />
     <circle {...eyeClick} r={0.35 * outerRadius} cy={svgCenter + eyeOffsets[1][1]}
@@ -220,8 +222,9 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
   //  `  ${svgCenter+tailWidth*outerRadius} ${svgCenter+outerRadius*tailStart}`} stroke={textColor} fill={color} />
   const tail = undefined
 
-  const avatarOuter = config.avatar === 'arrow' ?  //  arrow (circle with a corner) type avatar
-    arrow : flog // Frog type (two eyes) avatar
+  const avatarOuter =
+    participant.information.avatar === 'arrow' ? arrowOuter: //  arrow (circle with a corner) type avatar
+    participant.information.avatar === 'circle' ? circleOuter: frogOuter // Frog type (two eyes) avatar
 
   const outerUnder = <svg
     className={classes.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO} xmlns="http://www.w3.org/2000/svg">

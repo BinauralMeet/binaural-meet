@@ -1,5 +1,5 @@
 import { ISharedContent } from '@models/ISharedContent'
-import {LocalInformation, LocalParticipant as ILocalParticipant, Physics, RemoteInformation, TrackStates} from '@models/Participant'
+import {LocalInformation, LocalParticipant as ILocalParticipant, Physics, RemoteInformation, TrackStates, AvatarType} from '@models/Participant'
 import {urlParameters} from '@models/url'
 import {checkImageUrl, mulV2, Pose2DMap, subV2} from '@models/utils'
 import {MapData} from '@stores/Map'
@@ -118,6 +118,9 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
     const infoInStr = storage.getItem('localParticipantInformation')
     if (infoInStr) {
       Object.assign(this.information, JSON.parse(infoInStr))
+      if (this.information.avatar === 'circle'){
+        this.information.avatar = config.avatar as AvatarType
+      }
     }
   }
 

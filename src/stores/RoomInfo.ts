@@ -26,18 +26,6 @@ export class RoomInfo{
     switch(key){
       case 'backgroundFill': this.backgroundFill = val ? JSON.parse(val) : this.defaultBackgroundFill; break
       case 'backgroundColor': this.backgroundColor = val ? JSON.parse(val) : this.defaultBackgroundColor; break
-      case 'positionServer':
-        const connect = () => {
-          if (val){
-            conference.positionConnection.connect(val, conference.room, conference.rtcTransports.peer, participants.local.information.name)
-          }
-        }
-        if (!conference.positionConnection.isDisconnected()){
-          conference.positionConnection.disconnect().then(()=>{ connect() })
-        }else{
-          connect()
-        }
-      break
     }
   }
 }
