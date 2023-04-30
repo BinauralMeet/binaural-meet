@@ -2,7 +2,6 @@ import {acceleratorText2El} from '@components/utils/formatter'
 import {Tooltip} from '@material-ui/core'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemAvatar from '@material-ui/core/ListItemAvatar'
-import {isSmartphone} from '@models/utils'
 import React from 'react'
 
 interface DialogIconItemProps {
@@ -15,6 +14,9 @@ interface DialogIconItemProps {
   onClick?: () => void
 }
 
+const fontSize = '1.3em'
+const height = '1em'
+
 export const DialogIconItem: React.FC<DialogIconItemProps> = (props) => {
   const {
     icon,
@@ -26,11 +28,11 @@ export const DialogIconItem: React.FC<DialogIconItemProps> = (props) => {
     onClick,
   } = props
   const textEl = text ? acceleratorText2El(text) : undefined
-  const fontSize = isSmartphone() ? '2.5em' : '1em'
   const item = <ListItem button={true} dense={dense} onClick={onClick} style={{alignItems:'start'}}>
-    {icon ? <ListItemAvatar style={{fontSize: fontSize, height:fontSize}}>{icon}</ListItemAvatar>
-     : undefined }
-    <div style={{fontSize: isSmartphone() ? '2.5em' : '1em', verticalAlign: 'middle'}}>
+    {icon ? <ListItemAvatar style={{fontSize, height}}>{icon}
+    </ListItemAvatar>
+     : undefined } &nbsp;
+    <div style={{verticalAlign: 'middle'}}>
       {textEl ? textEl : plain}
       {secondEl ? <><br/>{secondEl}</> : undefined}
     </div>
@@ -56,13 +58,12 @@ export const DialogItem: React.FC<DialogItemProps> = (props) => {
     tip,
     dense,
   } = props
-  const fontSize = isSmartphone() ? '2.5em' : '1em'
   const textEl = text ? acceleratorText2El(text) : undefined
   const item = <ListItem dense={dense} button={false} style={{alignItems:'start'}}>
-    {icon ? <ListItemAvatar style={{fontSize: fontSize, height:fontSize}}>
+    {icon ? <ListItemAvatar style={{fontSize, height}}>
       {icon}
     </ListItemAvatar> : undefined }
-    <div style={{fontSize: isSmartphone() ? '2.5em' : '1em', verticalAlign: 'middle'}}>
+    <div style={{verticalAlign: 'middle'}}>
       {textEl ? textEl : plain}
       {secondEl ? <><br/>{secondEl}</> : undefined}
     </div>

@@ -64,7 +64,7 @@ export const RawImageAvatar: React.FC<ImageAvatarProps> = (props: ImageAvatarPro
   const classes = useStyles(props)
 
   return <Observer>{()=>{
-    //console.log(`render ImageAvatar src=${props.avatarSrc}`)
+    //console.log(`render ImageAvatar src=${props.avatarSrc} size=${props.size}`)
 
     let initial = ''
     const isImage = props.avatarSrc && props.avatarSrc.slice(-4) !== '.vrm'
@@ -78,7 +78,7 @@ export const RawImageAvatar: React.FC<ImageAvatarProps> = (props: ImageAvatarPro
     return isImage ?
       <Avatar src={props.avatarSrc} className={classes.imageAvatar} /> :
       <Avatar className={classes.textAvatar} >
-        <div style={{height:size, width:size, textAlign:'center',
+        <div style={{height:size, width:size, fontSize: Math.floor(size*0.33),textAlign:'center',
           verticalAlign:'middle', display:'table-cell', whiteSpace:'nowrap'}}>
         {initial}</div></Avatar>
     }

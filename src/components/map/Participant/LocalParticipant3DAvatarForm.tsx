@@ -1,10 +1,9 @@
-import { BMProps } from '@components/utils'
+import { BMProps, dialogStyle, titleStyle } from '@components/utils'
 import Button from '@material-ui/core/Button'
 import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
 import Popover, { PopoverOrigin, PopoverReference } from '@material-ui/core/Popover'
 import {useTranslation} from '@models/locales'
-import {isSmartphone} from '@models/utils/utils'
 import React, {useEffect} from 'react'
 import {VRM, VRMUtils} from '@pixiv/three-vrm'
 import * as THREE from 'three'
@@ -169,9 +168,9 @@ export const Choose3DAvatar: React.FC<LocalParticipantFormProps> = (props: Local
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  return <Popover {...popoverProps} onWheelCapture={(ev)=>{ev.stopPropagation()}}>
-    <DialogTitle>
-      <span  style={{fontSize: isSmartphone() ? '2.5em' : '1em'}}>
+  return <Popover {...popoverProps} style={dialogStyle} onWheelCapture={(ev)=>{ev.stopPropagation()}}>
+    <DialogTitle >
+      <span style={titleStyle}>
         {t('lsTitle3D')}
       </span>&nbsp;
       <Button variant="contained" color="primary"

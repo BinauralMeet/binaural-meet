@@ -79,7 +79,7 @@ export const jaTranslate = {
   lsName: 'お名前',
   lsAvatar: 'アバター',
   lsFile:'ファイルを選択',
-  lsEmail: 'GravatarはEmail、3DはvrmのURLか選択',
+  lsEmail: 'GravatarのEmailかvrmのURL',
   lsImageFile: '画像ファイルの場合はファイルをアップロード',
   ls3D: '3D',
   btSave: '保存して閉じる',

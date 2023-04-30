@@ -32,3 +32,4 @@ export function formatTimestamp(stamp: number){
 }
 
 export * from './formatter'
+export * from './styles'

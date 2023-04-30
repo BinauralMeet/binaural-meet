@@ -1,4 +1,4 @@
-import {BMProps} from '@components/utils'
+import {BMProps, RadioWithLabel, dialogStyle} from '@components/utils'
 import bxWindowClose from '@iconify-icons/bx/bx-window-close'
 import clipboardPaste from '@iconify/icons-fluent/clipboard-arrow-right-24-regular'
 import whiteboard24Regular from '@iconify/icons-fluent/whiteboard-24-regular'
@@ -12,17 +12,21 @@ import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
 import Radio from '@material-ui/core/Radio'
 import RadioGroup from '@material-ui/core/RadioGroup'
-import CameraAltIcon from '@material-ui/icons/CameraAlt'
-import ExpandLess from '@material-ui/icons/ExpandLess'
-import ExpandMore from '@material-ui/icons/ExpandMore'
-import DownloadIcon from '@material-ui/icons/GetApp'
-import HttpIcon from '@material-ui/icons/Http'
-import ImageIcon from '@material-ui/icons/Image'
+import cameraAltIcon from '@iconify/icons-ic/round-camera-alt'
+import expandLess from '@iconify/icons-material-symbols/expand-less-rounded'
+import expandMore from '@iconify/icons-material-symbols/expand-more-rounded'
+import uploadIcon from '@iconify/icons-ic/round-upload'
+import downloadIcon from '@iconify/icons-ic/round-get-app'
+import httpIcon from '@iconify/icons-material-symbols/http-rounded'
+import imageRounded from '@iconify/icons-material-symbols/image-rounded'
+
 import InsertDriveFileTwoTone from '@material-ui/icons/InsertDriveFileTwoTone';
-import UploadIcon from '@material-ui/icons/Publish'
-import ScreenShareIcon from '@material-ui/icons/ScreenShare'
-import StopScreenShareIcon from '@material-ui/icons/StopScreenShare'
-import SubjectIcon from '@material-ui/icons/Subject'
+import radioButtonCheckedIcon from '@iconify/icons-ic/round-radio-button-checked'
+import radioButtonUncheckedIcon from '@iconify/icons-ic/round-radio-button-unchecked'
+import screenShareIcon from '@iconify/icons-material-symbols/screen-share'
+import stopScreenShareIcon from '@iconify/icons-material-symbols/stop-screen-share'
+import subjectIcon from '@iconify/icons-material-symbols/subject'
+
 import {contentsToSave, loadToContents} from '@models/ISharedContent'
 import {useTranslation} from '@models/locales'
 import {MSTrack} from '@models/conference/RtcConnection'
@@ -271,24 +275,23 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
     //  eslint-disable-next-line react-hooks/exhaustive-deps
   },        [])
 
-
   return (
     <List>
       <DialogIconItem
         tip = {t('sharePasteTip')}
-        key="paste" text={t('sharePaste')} icon={<Icon icon={clipboardPaste} style={{fontSize:'1.5rem'}} />}
+        key="paste" text={t('sharePaste')} icon={<Icon icon={clipboardPaste}/>}
          onClick={createFromClipboard}
       />
       <DialogIconItem
         tip = {t('shareImageTip')}
-        key="shareImage" text={t('shareImage')} icon={<ImageIcon />} onClick={() => setStep('image')}
+        key="shareImage" text={t('shareImage')} icon={<Icon icon={imageRounded}/>} onClick={() => setStep('image')}
       />
       <DialogIconItem
-        key="shareText" text={t('shareText')} icon={<SubjectIcon />} onClick={createText}
+        key="shareText" text={t('shareText')} icon={<Icon icon={subjectIcon}/>} onClick={createText}
       />
       <DialogIconItem
         tip = {t('shareWhiteboardTip')}
-        key="shareWhiteboard" text={t('shareWhiteboard')} icon={<Icon icon={whiteboard24Regular} style={{fontSize:'1.5rem'}} />}
+        key="shareWhiteboard" text={t('shareWhiteboard')} icon={<Icon icon={whiteboard24Regular} />}
          onClick={createWhiteboard}
       />
 
@@ -296,20 +299,20 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
       <DialogIconItem
         tip = {t('shareMouseTip')}
         key="shareMouse"
-        icon={<Icon icon={cursorDefaultOutline} style={{fontSize:'1.5rem'}}/>}
+        icon={<Icon icon={cursorDefaultOutline} />}
         text={showMouse ?  t('stopMouse') : t('shareMouse')}
         onClick={() => {
           participants.local.mouse.show = !showMouse
           setStep('none')
         }}
       />
-      <DialogIconItem key="shareCamera" text={t('shareCamera')} icon={<CameraAltIcon />}
+      <DialogIconItem key="shareCamera" text={t('shareCamera')} icon={<Icon icon={cameraAltIcon} />}
         onClick={() => setStep('camera')}
       />
       <DialogIconItem
         tip = {t('shareScreenContentTip')}
         key="shareScreenContent"
-        icon={<ScreenShareIcon />}
+        icon={<Icon icon={screenShareIcon} />}
         text={t('shareScreenContent')}
         onClick={createScreen}
         secondEl = {<FormControl component="fieldset">
@@ -321,11 +324,11 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
                 setTimeout(createScreen, 100)
               }}
             >
-              <FormControlLabel value={1} control={<Radio />} label="1" />
-              <FormControlLabel value={5} control={<Radio />} label="5" />
-              <FormControlLabel value={15} control={<Radio />} label="15" />
-              <FormControlLabel value={30} control={<Radio />} label="30" />
-              <FormControlLabel value={60} control={<Radio />}
+              <RadioWithLabel value="1" checked={props.stores.contents.screenFps===1}/>
+              <RadioWithLabel value="5" checked={props.stores.contents.screenFps===5}/>
+              <RadioWithLabel value="15" checked={props.stores.contents.screenFps===15}/>
+              <RadioWithLabel value="30" checked={props.stores.contents.screenFps===30}/>
+              <RadioWithLabel value="60" checked={props.stores.contents.screenFps===60}
                 label={<span>60&nbsp;&nbsp;&nbsp;&nbsp;{t('fps')}</span>} />
             </RadioGroup>
           }</Observer>
@@ -333,13 +336,13 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
       />
       {contents.getLocalRtcContentIds().length ?
         <div style={{paddingLeft:'1em'}}><DialogIconItem dense key = "stopScreen"
-          icon={<Icon icon={bxWindowClose} style={{fontSize:'1.5rem'}}/>}
+          icon={<Icon icon={bxWindowClose} />}
           text={t('stopScreen')}
           onClick={closeAllScreens}
           /></div> : undefined}
       <Divider />
       <ListItem button dense onClick={()=>{ setOpenMore(!openMore) }}>
-        {openMore ? <ExpandLess /> : <ExpandMore />}
+        {openMore ? <Icon icon={expandLess} /> : <Icon icon={expandMore} />}
       </ListItem>
       <input type="file" accept="application/json" ref={fileInput} style={{display:'none'}}
         onChange={
@@ -353,21 +356,21 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
         <div style={{paddingLeft:'1em'}}>
           <DialogIconItem
             tip = {t('shareIframeTip')}
-            key="shareIframe" text={t('shareIframe')} icon={<HttpIcon />} onClick={() => setStep('iframe')}
+            key="shareIframe" text={t('shareIframe')} icon={<Icon icon={httpIcon} />} onClick={() => setStep('iframe')}
           />
           <DialogIconItem
             key="shareScreenBackground"
-            icon={mainScreen.owner === participants.localId ? <StopScreenShareIcon /> : <ScreenShareIcon />}
+            icon={mainScreen.owner === participants.localId ? <Icon icon={stopScreenShareIcon} /> : <Icon icon={screenShareIcon} />}
             text={mainScreen.owner === participants.localId ? t('stopScreenBackground') : t('shareScreenBackground')}
             onClick={screenAsBackgrouond}
           />
           <Divider />
           <DialogIconItem
-            key="shareImport" text={t('shareImport')} icon={<UploadIcon />} onClick={importFile}
+            key="shareImport" text={t('shareImport')} icon={<Icon icon={uploadIcon} />} onClick={importFile}
             tip = {t('shareImportTip')}
           />
           <DialogIconItem
-            key="shareDownload" text={t('shareDownload')} icon={<DownloadIcon />} onClick={downloadFile}
+            key="shareDownload" text={t('shareDownload')} icon={<Icon icon={downloadIcon} />} onClick={downloadFile}
           />
           {/*<DialogIconItem
             tip = {t('shareGDriveTip')}

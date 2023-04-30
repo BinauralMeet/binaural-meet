@@ -1,4 +1,4 @@
-import { BMProps } from '@components/utils'
+import { BMProps, CheckWithLabel, buttonStyle, dialogStyle, inputStyle, tfDivStyle, tfIStyle, tfLStyle, titleStyle } from '@components/utils'
 import Box from '@material-ui/core/Box'
 import Button from '@material-ui/core/Button'
 import Checkbox from '@material-ui/core/Checkbox'
@@ -11,7 +11,6 @@ import {uploadToGyazo} from '@models/api/Gyazo'
 import { conference } from '@models/conference'
 import {useTranslation} from '@models/locales'
 import {isDarkColor, rgb2Color} from '@models/utils'
-import {isSmartphone} from '@models/utils/utils'
 import {Observer} from 'mobx-react-lite'
 import React, {useState} from 'react'
 import {SketchPicker} from 'react-color'
@@ -39,12 +38,6 @@ export interface LocalParticipantFormProps extends BMProps{
   close: () => void,
   anchorReference?: PopoverReference
 }
-
-const tfIStyle = {fontSize: isSmartphone() ? '2em' : '1em',
-height: isSmartphone() ? '2em' : '1.5em'}
-const tfDivStyle = {height: isSmartphone() ? '4em' : '3em'}
-const tfLStyle = {fontSize: isSmartphone() ? '1em' : '1em'}
-const iStyle = {fontSize: isSmartphone() ? '2.5rem' : '1rem'}
 
 export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props: LocalParticipantFormProps) => {
   const {participants, map} = props.stores
@@ -89,10 +82,10 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
   const {close, ...popoverProps} = props
   const [show3D, setShow3D] = useState<boolean>(false)
 
-  return <Popover {...popoverProps} onClose={closeConfig}>
+  return <Popover {...popoverProps} style={dialogStyle} onClose={closeConfig}>
     {show3D ? <Choose3DAvatar {...popoverProps} close={()=>{setShow3D(false)}} /> : undefined}
     <DialogTitle>
-      <span  style={{fontSize: isSmartphone() ? '2.5em' : '1em'}}>
+      <span style={titleStyle}>
         {t('lsTitle')}
       </span>
       <span style={{float:'right'}}>
@@ -116,7 +109,7 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
             <div style={{fontSize:12}}>{t('lsColor')}</div>
             <Box ml={2}>
               <Button variant="contained"
-                style={{backgroundColor:rgb2Color(rgb), color:textColor, textTransform:'none'}}
+                style={{backgroundColor:rgb2Color(rgb), color:textColor, ...buttonStyle}}
                 onClick={()=>{setShowColorPicker(true)}} ref={colorButton}>
                 {t('lsColorAvatar')}</Button>
               <Popover open={showColorPicker} onClose={()=>{setShowColorPicker(false)}}
@@ -129,7 +122,7 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
                   />
               </Popover>
               <Button variant="contained"
-                style={{color:rgb2Color(textRgb), backgroundColor:backColor, marginLeft:15, textTransform:'none'}}
+                style={{color:rgb2Color(textRgb), backgroundColor:backColor, marginLeft:15, ...buttonStyle}}
                 onClick={()=>{setShowTextColorPicker(true)}} ref={textColorButton}>
                 {t('lsColorText')}</Button>
               <Popover open={showTextColorPicker} anchorOrigin={{vertical:'bottom', horizontal:'right'}}
@@ -141,7 +134,7 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
                   }}
                 />
               </Popover>
-              <Button variant="contained" style={{marginLeft:15, textTransform:'none'}}
+              <Button variant="contained" style={{marginLeft:15, ...buttonStyle}}
                 onClick={()=>{local.information.color=[]; local.information.textColor=[]}} >
                 {t('lsAutoColor')}</Button>
             </Box>
@@ -150,17 +143,17 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
             <div style={{fontSize:12}}>{t('lsAvatar')}</div>
             <Box mt={-1} ml={2}>
               <form key="information" onSubmit = {uploadAvatarSrc}
-                style={{display:'inline', lineHeight:'2em', fontSize: isSmartphone() ? '2.5em' : '1em'}}>
+                style={{display:'inline', lineHeight:'2em'}}>
                 <div style={{fontSize:12, marginTop:8}}>{t('lsImageFile')}
                 </div>
                 {local.information.avatarSrc && !isVrm(local.information.avatarSrc) ? <>
                   <img src={local.information.avatarSrc} style={{height:'1.5em', verticalAlign:'middle'}} alt="avatar"/>
-                  <input style={iStyle} type="submit" onClick={clearAvatarSrc} value="✕" /> &nbsp;
+                  <input style={inputStyle} type="submit" onClick={clearAvatarSrc} value="✕" /> &nbsp;
                 </> : undefined}
-                <input style={iStyle} type="file" onChange={(ev) => {
+                <input style={inputStyle} type="file" onChange={(ev) => {
                   setFile(ev.target.files?.item(0))
                 }} />
-                <input style={iStyle} type="submit" value="Upload" />
+                <input style={inputStyle} type="submit" value="Upload" />
               </form>
               </Box>
               <Box ml={2} style={{display:'flex', alignItems:'flex-end'}}>
@@ -172,7 +165,7 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
                   onKeyPress={onKeyPress} fullWidth={true}
                 />
                 <Button variant="contained" size="small"
-                  style={{marginLeft:5, textTransform:'none', minWidth:15}}
+                  style={{marginLeft:5, textTransform:'none', minWidth:15, ...buttonStyle}}
                   onClick={()=>{
                     setShow3D(true)
                   }}>{t('ls3D')}
@@ -182,34 +175,30 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
           <Box mt={3}>
             <div style={{fontSize:12}}>{t('lsNotification')}</div>
             <Box mt={-1} ml={2}>
-            <FormControlLabel control={
-              <Checkbox color="primary" checked={local.information.notifyCall}
-              onChange={(ev)=>{local.information.notifyCall = ev.target.checked}} />
-              } label={t('lsNotifyCall')} />
-            <FormControlLabel control={
-              <Checkbox color="primary" checked={local.information.notifyTouch}
-                onChange={(ev)=>{local.information.notifyTouch = ev.target.checked}} />
-              } label={t('lsNotifyTouch')} />
-            <FormControlLabel control={
-              <Checkbox color="primary" checked={local.information.notifyNear}
-                onChange={(ev)=>{local.information.notifyNear = ev.target.checked}} />
-              } label={t('lsNotifyNear')} />
-            <FormControlLabel control={
-              <Checkbox color="primary" checked={local.information.notifyYarn}
-                onChange={(ev)=>{local.information.notifyYarn = ev.target.checked}} />
-              } label={t('lsNotifyYarn')} />
+            <CheckWithLabel checked={local.information.notifyCall}
+              onChange={(ev)=>{local.information.notifyCall = ev.target.checked}}
+              label={t('lsNotifyCall')} />
+            <CheckWithLabel checked={local.information.notifyTouch}
+              onChange={(ev)=>{local.information.notifyTouch = ev.target.checked}}
+              label={t('lsNotifyTouch')} />
+            <CheckWithLabel checked={local.information.notifyNear}
+              onChange={(ev)=>{local.information.notifyNear = ev.target.checked}}
+              label={t('lsNotifyNear')} />
+            <CheckWithLabel checked={local.information.notifyYarn}
+              onChange={(ev)=>{local.information.notifyYarn = ev.target.checked}}
+              label={t('lsNotifyYarn')} />
             </Box>
           </Box>
         </>}}
       </Observer>
       <Box mt={4} mb={3}>
-        <Button variant="contained" color="primary" style={{textTransform:'none'}}
+        <Button variant="contained" color="primary" style={{...buttonStyle}}
           onClick={()=>{
             closeConfig({}, 'enter')
           }}>{t('btSave')}</Button>
-        <Button variant="contained" color="secondary" style={{marginLeft:15, textTransform:'none'}}
+        <Button variant="contained" color="secondary" style={{marginLeft:15, ...buttonStyle}}
           onClick={()=>{ local.loadInformationFromStorage()}}>{t('btCancel')}</Button>
-        <Button variant="contained" style={{marginLeft:15, textTransform:'none'}}
+        <Button variant="contained" style={{marginLeft:15, ...buttonStyle}}
           onClick={()=>{
             map.focusOn(local)
           }}>{t('ctFocus')}</Button>

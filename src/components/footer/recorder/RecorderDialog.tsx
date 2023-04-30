@@ -1,9 +1,8 @@
-import {acceleratorText2El, BMProps} from '@components/utils'
+import {acceleratorText2El, BMProps, dialogStyle, titleStyle} from '@components/utils'
 import Dialog from '@material-ui/core/Dialog'
 import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
 import {useTranslation} from '@models/locales'
-import {isSmartphone} from '@models/utils'
 import sharedContents from '@stores/sharedContents/SharedContents'
 import React, {useState} from 'react'
 import {RecorderMenu} from './RecorderMenu'
@@ -47,13 +46,14 @@ export const RecorderDialog: React.FC<RecorderDialogProps> = (props:RecorderDial
   const title = stepTitle[step]
   const page: JSX.Element | undefined = getPage(step, setStep)
 
-  return  <Dialog open={open} onClose={onClose} TransitionProps={{onExited:() => setStep('menu')}} maxWidth="lg"
-      onPointerMove = {(ev) => {
-        map.setMouse([ev.clientX, ev.clientY])
-      }}
-    >
-    <DialogTitle id="simple-dialog-title" style={{fontSize: isSmartphone() ? '2.5em' : '1em'}}>
-      {title}</DialogTitle>
+  return  <Dialog style={dialogStyle}
+    open={open} onClose={onClose} TransitionProps={{onExited:() => setStep('menu')}} maxWidth="lg"
+    onPointerMove = {(ev) => {
+      map.setMouse([ev.clientX, ev.clientY])
+    }}
+  >
+    <DialogTitle id="simple-dialog-title">
+      <span style={titleStyle}>{title}</span></DialogTitle>
     <DialogContent>{page}</DialogContent>
   </Dialog>
 }

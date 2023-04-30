@@ -1,4 +1,4 @@
-import {BMProps} from '@components/utils'
+import {BMProps, dialogStyle, titleStyle} from '@components/utils'
 import {TextField} from '@material-ui/core'
 import Box from '@material-ui/core/Box'
 import Button from '@material-ui/core/Button'
@@ -55,9 +55,11 @@ export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (prop
   delete (popoverProps as Partial<RemoteParticipantFormProps>).close
   const pid = props.participant ? props.participant.id : ''
 
-  return <Popover {...popoverProps} onClose={closeConfig}>
+  return <Popover {...popoverProps} style={dialogStyle} onClose={closeConfig}>
     <DialogTitle>
-      {props.participant?.information.name}
+      <span style={titleStyle}>
+        {props.participant?.information.name}
+      </span>
       <span style={{float:'right'}}>
         <SignalQualityButton open={props.open} transport={conference.remotePeers.get(pid)?.transport} /></span>
     </DialogTitle>

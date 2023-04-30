@@ -1,7 +1,7 @@
 import Button from '@material-ui/core/Button'
 import DialogContent from '@material-ui/core/DialogContent'
 import {t} from '@models/locales'
-import {isSmartphone} from '@models/utils'
+import {buttonStyle, dialogStyle} from '@components/utils'
 import errorInfo from '@stores/ErrorInfo'
 import map from '@stores/Map'
 import React, { useEffect } from 'react'
@@ -22,9 +22,9 @@ export const AfkDialog: React.FC<{}> = () => {
     errorInfo.clear()
   }
 
-  return <ErrorDialogFrame onClose={onClose}>
-    <DialogContent style={{fontSize: isSmartphone() ? '2em' : '1em'}}>
-      <Button color="primary" variant="contained" style={{textTransform:'none'}} autoFocus={true}
+  return <ErrorDialogFrame style={dialogStyle} onClose={onClose}>
+    <DialogContent>
+      <Button color="primary" variant="contained" style={buttonStyle} autoFocus={true}
         onKeyDown={onClose} onClick={onClose}>
         {t('afkMessage')}
       </Button>

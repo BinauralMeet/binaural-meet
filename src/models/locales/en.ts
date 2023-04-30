@@ -82,7 +82,7 @@ export const enTranslate = {
   lsAutoColor:'Auto',
   lsAvatar: 'Avatar',
   lsFile:'Select a file',
-  lsEmail: 'Input email for Gravatar\'s image, URL for VRM',
+  lsEmail: 'Gravatar\'s email or VRM\'s URL',
   lsImageFile: 'Upload file to use image file',
   ls3D: '3D',
   btSave: 'Save and close',

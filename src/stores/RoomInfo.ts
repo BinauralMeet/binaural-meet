@@ -1,6 +1,4 @@
-import { conference } from '@models/conference'
 import {action, makeObservable, observable} from 'mobx'
-import { participants } from '.'
 
 
 export class RoomInfo{

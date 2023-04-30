@@ -1,4 +1,4 @@
-import { BMProps } from "@components/utils";
+import { BMProps, buttonStyle, dialogStyle, translateIconStyle } from "@components/utils";
 import usageEn from "@images/usage.en.png";
 import usageJa from "@images/usage.ja.png";
 import Box from "@material-ui/core/Box";
@@ -8,10 +8,11 @@ import TextField from "@material-ui/core/TextField";
 import TranslateIcon from "@material-ui/icons/Translate";
 import { i18nSupportedLngs, useTranslation } from "@models/locales";
 import { urlParameters } from "@models/url";
-import { isSmartphone } from "@models/utils";
+import { isPortrait, isSmartphone } from "@models/utils";
 import errorInfo from "@stores/ErrorInfo";
 import React, { useState } from "react";
 import { ErrorDialogFrame } from "./ErrorDialog";
+import {tfDivStyle, tfIStyle, tfLStyle} from '@components/utils'
 
 export const TheEntrance: React.FC<BMProps> = (props) => {
   const { participants } = props.stores;
@@ -47,18 +48,11 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
 
   const { t, i18n } = useTranslation();
 
-  const tfIStyle = {
-    fontSize: isSmartphone() ? "2em" : "1em",
-    height: isSmartphone() ? "2em" : "1.5em",
-  };
-  const tfLStyle = { fontSize: isSmartphone() ? "1em" : "1em" };
-  const tfDivStyle = { height: isSmartphone() ? "4em" : "3em" };
-
   return (
     <ErrorDialogFrame
       onClose={() => { onClose(false) }}
     >
-      <DialogContent style={{ fontSize: isSmartphone() ? "2em" : "1em" }}>
+      <DialogContent style={dialogStyle}>
         <Button
           style={{ position: "absolute", top: 30, right: 20 }}
           onClick={() => {
@@ -68,12 +62,12 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
             i18n.changeLanguage(i18nSupportedLngs[idx]);
           }}
         >
-          <TranslateIcon />
+          <TranslateIcon style={translateIconStyle}/>
         </Button>
         <h2>Binaural Meet</h2>
         <p>
           <img
-            style={{ float: "right", width: "28em" }}
+            style={{ float: "right", width: isSmartphone()&&isPortrait() ? "14em" : "28em" }}
             src={i18n.language === "ja" ? usageJa : usageEn}
             alt="usage"
           />
@@ -111,7 +105,7 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
             color="primary"
             disabled={name.length===0}
             onClick={() => onClose(true)}
-            style={{ fontSize: isSmartphone() ? "1.25em" : "1em" }}
+            style={buttonStyle}
           >
             {t("EnterTheVenue")}
           </Button>

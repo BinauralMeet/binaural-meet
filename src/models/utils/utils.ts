@@ -71,21 +71,6 @@ export function extract<T>(properties: Record<keyof T, true>) {
   }
 }
 
-export function isSmartphone() {
-  if (navigator.userAgent.match(/iPhone|Android.+Mobile/)) {
-    return true
-  }
-
-  return false
-}
-
-export function isPortrait() {
-  if (window.parent.screen.width < window.parent.screen.height) {
-    return true
-  }
-
-  return false
-}
 
 export function isSelfUrl(url: URL){
   return (url.host === window.location.host && url.pathname === window.location.pathname)
@@ -100,4 +85,22 @@ export function checkImageUrl(url: string){
   })
 
   return promise
+}
+
+
+export function isSmartphone() {
+  return true
+  if (navigator.userAgent.match(/iPhone|Android.+Mobile/)) {
+    return true
+  }
+
+  return false
+}
+
+export function isPortrait() {
+  if (window.parent.screen.width < window.parent.screen.height) {
+    return true
+  }
+
+  return false
 }

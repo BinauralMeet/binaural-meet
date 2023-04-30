@@ -1,7 +1,7 @@
-import {BMProps} from '@components/utils'
+import {BMProps, titleStyle} from '@components/utils'
 import Box from '@material-ui/core/Box'
 import Button from '@material-ui/core/Button'
-import Dialog from '@material-ui/core/Dialog'
+import Dialog, {DialogProps} from '@material-ui/core/Dialog'
 import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
 import {t} from '@models/locales'
@@ -15,11 +15,11 @@ export const dialogs = new Map<ErrorType, (props:BMProps)=>JSX.Element>()
 dialogs.set('entrance', (props: BMProps) => <TheEntrance {...props}/>)
 dialogs.set('afk', (props: BMProps) => <AfkDialog />)
 
-export const ErrorDialogFrame: React.FC<{onClose:(event:{}, reason:string)=>void}> = (props) => {
+export const ErrorDialogFrame: React.FC<DialogProps | {onClose:(event:{}, reason:string)=>void}> = (props) => {
   return <Dialog {...props} open={errorInfo.show()}
     onClose={props.onClose} maxWidth="md" fullWidth={false} >
   {errorInfo.title ?
-    <DialogTitle id="simple-dialog-title">{errorInfo.title}</DialogTitle>
+    <DialogTitle id="simple-dialog-title"><span  style={titleStyle}>{errorInfo.title}</span></DialogTitle>
     : undefined }
   {props.children}
 </Dialog>

@@ -68,7 +68,7 @@ export const ParticipantLine: React.FC<TextLineStyle&BMProps&{participant: Parti
         <Button variant="contained" className={classes.line} ref={ref}
           style={{backgroundColor:colors[0], color:colors[1], textTransform:'none'}}
           onClick={onClick} onContextMenu={onContextMenu}>
-            {name}
+            <span className={classes.line}>{name}</span>
         </Button>
       </div>
     </Tooltip>

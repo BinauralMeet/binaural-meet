@@ -16,7 +16,6 @@ import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {SignalQualityIcon} from './SignalQuality'
 import {VRMAvatar} from '../../avatar/VRMAvatar'
-declare const config:any             //  from ../../config.js included from index.html
 
 interface StyleProps {
   position: [number, number],
