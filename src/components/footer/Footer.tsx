@@ -1,5 +1,5 @@
 import {ErrorDialog} from '@components/error/ErrorDialog'
-import {BMProps} from '@components/utils'
+import {BMProps, dialogStyle} from '@components/utils'
 import {acceleratorText2El} from '@components/utils/formatter'
 import megaphoneIcon from '@iconify/icons-mdi/megaphone'
 import {Icon} from '@iconify/react'
@@ -163,7 +163,7 @@ export const Footer: React.FC<BMProps&{height?:number}> = (props) => {
     let selected = false
     selected = info.deviceId === participants.local.devicePreference[info.kind]
 
-    return <MenuItem key={info.deviceId}
+    return <MenuItem key={info.deviceId} style={dialogStyle}
       onClick={() => { close(info.deviceId) }}
       > { (selected ? '✔\u00A0' : '\u2003') + info.label }</MenuItem>  //  \u00A0: NBSP, u2003: EM space.
   }

@@ -1,4 +1,4 @@
-import {BMProps} from '@components/utils'
+import {BMProps, dialogStyle} from '@components/utils'
 import Container from '@material-ui/core/Container'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
 import Switch from '@material-ui/core/Switch'
@@ -9,7 +9,7 @@ import React from 'react'
 export const FaceControl: React.FC<BMProps> = (props: BMProps) => {
   const local = props.stores.participants.local
   const faceSwitch = <Observer>{ () =>
-    <Switch checked={local.information.faceTrack} name="face"
+    <Switch checked={local.information.faceTrack} name="face" style={dialogStyle}
       onChange={event => {
         local.information.faceTrack = !local.information.faceTrack
         local.saveInformationToStorage(true)
@@ -21,8 +21,9 @@ export const FaceControl: React.FC<BMProps> = (props: BMProps) => {
   return <Container>
     <FormControlLabel
       control={faceSwitch}
-      label={local.information.avatarSrc.slice(-4)==='.vrm' ? t('trackWholeBody') :  t('showTrackedFace')}
-    />
+      label={<span style={dialogStyle}>
+        {local.information.avatarSrc.slice(-4)==='.vrm' ? t('trackWholeBody') :  t('showTrackedFace')}
+      </span>}/>
   </Container>
 }
 FaceControl.displayName = 'FaceControl'

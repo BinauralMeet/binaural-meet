@@ -2,7 +2,8 @@ import {sharedContentHandler} from '@components/map/Share/SharedContent'
 import {SharedContentForm} from '@components/map/Share/SharedContentForm'
 import {Tooltip} from '@material-ui/core'
 import Button from '@material-ui/core/Button'
-import DoneIcon from '@material-ui/icons/CheckCircle'
+import {Icon} from '@iconify/react'
+import doneIcon from '@iconify/icons-material-symbols/check-circle-rounded'
 import {isContentOutOfRange, ISharedContent, SharedContentInfo} from '@models/ISharedContent'
 import {useTranslation} from '@models/locales'
 import {getRandomColor, mulV2, rgb2Color} from '@models/utils'
@@ -44,7 +45,7 @@ export const ContentLine: React.FC<BMProps & TextLineStyle & {content: SharedCon
     return <>
       <Tooltip title={<>{props.content.name}<br />{props.content.ownerName}</>} placement="right">
         <Button ref={ref} variant="contained" className={classes.line}
-          style={{backgroundColor:colors[0], color:colors[1], margin: '1px 0 1px 0', textTransform:'none'}}
+          style={{backgroundColor:colors[0], color:colors[1], margin: '1px 0 1px 0', padding:0, textTransform:'none'}}
           onClick={() => {
             const found = contents.find(props.content.id)
             if (found){
@@ -77,7 +78,7 @@ export const ContentLine: React.FC<BMProps & TextLineStyle & {content: SharedCon
               })
             }
           }}
-        >{typeIcon}{props.content.name}
+        >{typeIcon}<span className={classes.line}>{props.content.name}</span>
         </Button>
       </Tooltip>
       <SharedContentForm {...contentProps} content={targetContent}
@@ -118,11 +119,12 @@ export const ContentList: React.FC<BMProps&TextLineStyle>  = (props) => {
   const textColor = useObserver(() => isDarkColor(roomInfo.backgroundFill) ? 'white' : 'black')
 
   return <div className={classes.container} >
-    <div className={classes.title} style={{color:textColor}}>{t('Contents')}
+    <div className={classes.title} style={{color:textColor, height:props.lineHeight}}>{t('Contents')}
       {editing ? <Button variant="contained" size="small" color="primary"
-        style={{marginLeft:4, padding:3, height:'1.4em', fontSize:'0.8'}}
+        style={{marginLeft:4, padding:2, height:props.lineHeight}}
         onClick={()=>{ contents.setEditing('')}}>
-          <DoneIcon style={{fontSize:'1em'}}/>&nbsp;{t('shareEditEnd')}</Button>: undefined}
+          <Icon icon={doneIcon} className={classes.line} style={{width:props.fontSize*1.2}}/>
+          <span className={classes.line} style={{paddingTop:props.fontSize*0.1}}>{t('shareEditEnd')}</span></Button>: undefined}
     </div>
     {elements}
   </div>

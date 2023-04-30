@@ -1,4 +1,4 @@
-import {BMProps} from '@components/utils'
+import {BMProps, dialogStyle} from '@components/utils'
 import Container from '@material-ui/core/Container'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
 import Switch from '@material-ui/core/Switch'
@@ -9,7 +9,7 @@ import React from 'react'
 export const BroadcastControl: React.FC<BMProps> = (props: BMProps) => {
   const local = props.stores.participants.local
   const audioBroadcastSwitch = <Observer>{ () =>
-    <Switch checked={local.physics.onStage} name="broadcast"
+    <Switch checked={local.physics.onStage} name="broadcast" style={dialogStyle}
       onChange={event => local.setPhysics({onStage: event.target.checked})} />
   }</Observer>
   const {t} = useTranslation()
@@ -17,7 +17,7 @@ export const BroadcastControl: React.FC<BMProps> = (props: BMProps) => {
   return <Container>
     <FormControlLabel
       control={audioBroadcastSwitch}
-      label={t('broadcastMyVoice')}
+      label={<span style={dialogStyle}>{t('broadcastMyVoice')}</span>}
     />
   </Container>
 }

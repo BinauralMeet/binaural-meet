@@ -268,6 +268,9 @@ export class RtcConnection{
       if (this.mainServer?.readyState === WebSocket.OPEN){
         const msg: MSMessage = {type:'ping'}
         this.mainServer!.send(JSON.stringify(msg))
+        if (this.pingCount > 1){
+          console.warn(`RtcConnection: ping send count:${this.pingCount} > 0.`)
+        }
         this.pingCount += 1
         this.pingTimeout = setTimeout(this.pingTimerFunc, this.pingpongDuration)
         rtcLog(`pingTimerFunc() ping sent. count=${this.pingCount}.`)

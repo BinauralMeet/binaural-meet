@@ -6,6 +6,7 @@ import React, {useEffect} from 'react'
 import {DialogPageProps} from './Step'
 import {createLocalCamera} from '@models/conference/faceCamera'
 import {conference} from '@models/conference'
+import { dialogStyle } from '@components/utils'
 
 export class CameraSelectorMember{
   @observable.shallow videos: MediaDeviceInfo[] = []
@@ -27,7 +28,7 @@ export const CameraSelector: React.FC<CameraSelectorProps> = (props) => {
     selected = info.deviceId === participants.local.devicePreference.videoinput
     const keyStr = String.fromCharCode(65 + key)
 
-    return <MenuItem key={info.deviceId} onClick={() => { close(info.deviceId) }} >
+    return <MenuItem key={info.deviceId} style={dialogStyle} onClick={() => { close(info.deviceId) }} >
         { `${keyStr}\u00A0${(selected ? '🙂\u00A0' : '\u00A0\u00A0\u2003')}${info.label}` }
       </MenuItem>  //  \u00A0: NBSP, u2003: EM space.
   }

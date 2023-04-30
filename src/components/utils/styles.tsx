@@ -91,7 +91,7 @@ export const styleForList = makeStyles({
     height: props.height,
     width: '100%',
     padding: 0,
-  }),
+  })
 })
 
 

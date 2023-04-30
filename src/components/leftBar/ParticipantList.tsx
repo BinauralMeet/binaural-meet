@@ -66,7 +66,7 @@ export const ParticipantLine: React.FC<TextLineStyle&BMProps&{participant: Parti
           <ImageAvatar border={true} colors={colors} size={size} name={name} avatarSrc={avatarSrc} />
         </IconButton>
         <Button variant="contained" className={classes.line} ref={ref}
-          style={{backgroundColor:colors[0], color:colors[1], textTransform:'none'}}
+          style={{backgroundColor:colors[0], color:colors[1], textTransform:'none', padding:0}}
           onClick={onClick} onContextMenu={onContextMenu}>
             <span className={classes.line}>{name}</span>
         </Button>
