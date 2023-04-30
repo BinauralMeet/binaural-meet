@@ -37,6 +37,7 @@ import {DialogIconItem} from '@components/utils/DialogIconItem'
 import {Step} from './Step'
 import {conference} from '@models/conference'
 import { dateTimeString } from '@models/utils/date'
+import { isSmartphone } from '@models/utils'
 
 function startCapture(props:BMProps) {
   const fps = props.stores.contents.screenFps
@@ -305,6 +306,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
       <DialogIconItem key="shareCamera" text={t('shareCamera')} icon={<Icon icon={cameraAltIcon} />}
         onClick={() => setStep('camera')}
       />
+      {isSmartphone() ? undefined :
       <DialogIconItem
         tip = {t('shareScreenContentTip')}
         key="shareScreenContent"
@@ -329,7 +331,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
             </RadioGroup>
           }</Observer>
         </FormControl>}
-      />
+      />}
       {contents.getLocalRtcContentIds().length ?
         <div style={{paddingLeft:'1em'}}><DialogIconItem dense key = "stopScreen"
           icon={<Icon icon={bxWindowClose} />}
@@ -354,12 +356,13 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
             tip = {t('shareIframeTip')}
             key="shareIframe" text={t('shareIframe')} icon={<Icon icon={httpIcon} />} onClick={() => setStep('iframe')}
           />
+          {isSmartphone()?undefined:
           <DialogIconItem
             key="shareScreenBackground"
             icon={mainScreen.owner === participants.localId ? <Icon icon={stopScreenShareIcon} /> : <Icon icon={screenShareIcon} />}
             text={mainScreen.owner === participants.localId ? t('stopScreenBackground') : t('shareScreenBackground')}
             onClick={screenAsBackgrouond}
-          />
+          />}
           <Divider />
           <DialogIconItem
             key="shareImport" text={t('shareImport')} icon={<Icon icon={uploadIcon} />} onClick={importFile}

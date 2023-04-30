@@ -98,7 +98,7 @@ export const styleForList = makeStyles({
 const smartphoneScale = 1.5
 export const fontScale = isSmartphone() ? smartphoneScale : 1
 export const dialogStyle:React.CSSProperties = {fontSize: fontScale*18}
-export const titleStyle:React.CSSProperties = {fontSize:'1.2em'}
+export const titleStyle:React.CSSProperties = {fontSize:fontScale*22}
 
 export const tfIStyle:React.CSSProperties = {
   fontSize: `1.5em`,
