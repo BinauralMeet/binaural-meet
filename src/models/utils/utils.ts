@@ -89,7 +89,7 @@ export function checkImageUrl(url: string){
 
 
 export function isSmartphone() {
-  return true
+  //return true
   if (navigator.userAgent.match(/iPhone|Android.+Mobile/)) {
     return true
   }
