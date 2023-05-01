@@ -51,15 +51,15 @@ export class DataConnection {
   }
   public setRoomProp(name:string, value:string){
     //  console.log(`setRoomProp(${name}, ${value})`)
-    this.pushOrUpdateMessageViaRelay(MessageType.ROOM_PROP, [name, value])
+    this.sendMessage(MessageType.ROOM_PROP, [name, value])
     roomInfo.onUpdateProp(name, value)
   }
 
-  private requestAll(){
-    this.pushOrUpdateMessageViaRelay(MessageType.REQUEST_ALL, {})
+  private requestAll(sendRandP:boolean){
+    this.sendMessage(MessageType.REQUEST_ALL, {}, undefined, sendRandP)
   }
   private requestRange(area:number[], range:number[]){
-    this.pushOrUpdateMessageViaRelay(MessageType.REQUEST_RANGE, [area, range])
+    this.sendMessage(MessageType.REQUEST_RANGE, [area, range])
   }
 
   public connect(room: string, peer: string){
@@ -80,8 +80,7 @@ export class DataConnection {
           const msg:MSMessage = { type: 'dataConnect' }
           self.relaySocket?.send(JSON.stringify(msg))
         }
-        self.sync.sendAllAboutMe(true)
-        self.requestAll()
+        self.requestAll(true)
         self.flushSendMessages()
         //  start periodical communication with relay server.
         if (self.stepTimeout){
@@ -134,7 +133,7 @@ export class DataConnection {
     const promise = new Promise<void>((resolve)=>{
       if (dataServer && this.peer){
         this.sync.observeEnd()
-        this.pushOrUpdateMessageViaRelay(MessageType.PARTICIPANT_LEFT, [this.peer])
+        this.sendMessage(MessageType.PARTICIPANT_LEFT, [this.peer])
         this.flushSendMessages()
       }
       //  stop relayServer communication.
@@ -208,12 +207,9 @@ export class DataConnection {
     this.stepTimeout = setTimeout(()=>{this.step()}, period)
   }
 
-  sendMessage(type:string, value:any, to?: string, sendRandP?: boolean) {
-      this.pushOrUpdateMessageViaRelay(type, value, to, sendRandP)
-  }
   receivedMessages: BMMessage[] = []
 
-  pushOrUpdateMessageViaRelay(type:string, value:any, dest?:string, sendRandP?:boolean) {
+  sendMessage(type:string, value:any, dest?: string, sendRandP?: boolean) {
     if (!this.relaySocket || this.relaySocket.readyState !== WebSocket.OPEN){ return }
     if (!this.room || !this.peer){
       console.warn(`Relay Socket: Not connected. room:${this.room} id:${this.peer}.`)

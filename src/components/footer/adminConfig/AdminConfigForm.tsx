@@ -115,7 +115,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
           disabled={!roomInfo.passMatched} onClick={() => {
           if (roomInfo.passMatched) {
             if (conference.isDataConnected()){
-              conference.dataConnection.pushOrUpdateMessageViaRelay(MessageType.RELOAD_BROWSER, {})
+              conference.dataConnection.sendMessage(MessageType.RELOAD_BROWSER, {})
             }
           }
         }}> Reload </Button>&emsp;

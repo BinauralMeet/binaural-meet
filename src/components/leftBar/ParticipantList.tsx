@@ -32,7 +32,7 @@ export const ParticipantLine: React.FC<TextLineStyle&BMProps&{participant: Parti
     if (props.participant.physics.located){
       map.focusOn(props.participant)
     }else{
-      conference.dataConnection.pushOrUpdateMessageViaRelay(
+      conference.dataConnection.sendMessage(
         MessageType.REQUEST_PARTICIPANT_STATES, [props.participant.id])
       const disposer = autorun(()=>{
         if (props.participant.physics.located){
@@ -47,7 +47,7 @@ export const ParticipantLine: React.FC<TextLineStyle&BMProps&{participant: Parti
       setShowForm(true)
       map.keyInputUsers.add('participantList')
     }else{
-      conference.dataConnection.pushOrUpdateMessageViaRelay(
+      conference.dataConnection.sendMessage(
         MessageType.REQUEST_PARTICIPANT_STATES, [props.participant.id])
       const disposer = autorun(()=>{
         if (props.participant.physics.located){

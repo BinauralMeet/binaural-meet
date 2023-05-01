@@ -281,7 +281,7 @@ export class SharedContents extends EventEmitter {
   }
   //  request content by id which is not sent yet.
   requestContent(cids: string[]){
-    conference.dataConnection.pushOrUpdateMessageViaRelay(MessageType.CONTENT_UPDATE_REQUEST_BY_ID, cids)
+    conference.dataConnection.sendMessage(MessageType.CONTENT_UPDATE_REQUEST_BY_ID, cids)
   }
   //  Update request from remote.
   updateByRemoteRequest(cs: ISharedContent[]) {

@@ -31,7 +31,7 @@ export class DataSync{
     this.connection = c
     //  setInterval(()=>{ this.checkRemoteAlive() }, 1000)
   }
-  sendAllAboutMe(bSendRandP: boolean){
+  sendAllAboutMe(bSendRandP: boolean, bSendContents:boolean=true){
     syncLog('sendAllAboutMe called.')
     this.sendPoseMessage(bSendRandP)
     this.sendMouseMessage()
@@ -39,7 +39,7 @@ export class DataSync{
     this.sendOnStage()
     this.sendTrackStates()
     this.sendViewpointNow()
-    this.sendMyContents()
+    if (bSendContents) this.sendMyContents()
     this.sendAfkChanged()
   }
   //
@@ -103,6 +103,9 @@ export class DataSync{
   //  message handler
   private onRoomProp(key: string, value: string){
     roomInfo.onUpdateProp(key, value)
+  }
+  private onRequestAllProcessed(){
+    this.sendAllAboutMe(true)
   }
   private onParticipantTrackLimits(limits:number[]){
     participants.local.remoteVideoLimit = limits[0]
@@ -365,6 +368,7 @@ export class DataSync{
       recorder.recordMessage(msg)
       switch(msg.t){
         case MessageType.ROOM_PROP: this.onRoomProp(...(JSON.parse(msg.v) as [string, string])); break
+        case MessageType.REQUEST_ALL: this.onRequestAllProcessed(); break
         case MessageType.REQUEST_TO: this.sendAllAboutMe(false); break
         case MessageType.PARTICIPANT_AFK: this.onAfkChanged(msg.p, JSON.parse(msg.v)); break
         case MessageType.PARTICIPANT_LEFT: this.onParticipantLeft(JSON.parse(msg.v)); break
@@ -402,7 +406,7 @@ export class DataSync{
     const ids = remotes.filter(remote => !remote.informationReceived).map(remote => remote.id)
     if (ids.length){
       syncLog(`checkInfo sent ${ids}`)
-      this.connection.pushOrUpdateMessageViaRelay(MessageType.REQUEST_TO, ids)
+      this.connection.sendMessage(MessageType.REQUEST_TO, ids)
     }
   }
 }
