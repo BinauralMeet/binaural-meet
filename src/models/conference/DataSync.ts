@@ -31,7 +31,7 @@ export class DataSync{
     this.connection = c
     //  setInterval(()=>{ this.checkRemoteAlive() }, 1000)
   }
-  sendAllAboutMe(bSendRandP: boolean, bSendContents:boolean=true){
+  sendAllAboutMe(bSendRandP: boolean, bSendContents:boolean){
     syncLog('sendAllAboutMe called.')
     this.sendPoseMessage(bSendRandP)
     this.sendMouseMessage()
@@ -105,7 +105,7 @@ export class DataSync{
     roomInfo.onUpdateProp(key, value)
   }
   private onRequestAllProcessed(){
-    this.sendAllAboutMe(true)
+    this.sendAllAboutMe(false, false) //  send participant and contents
   }
   private onParticipantTrackLimits(limits:number[]){
     participants.local.remoteVideoLimit = limits[0]
@@ -369,7 +369,7 @@ export class DataSync{
       switch(msg.t){
         case MessageType.ROOM_PROP: this.onRoomProp(...(JSON.parse(msg.v) as [string, string])); break
         case MessageType.REQUEST_ALL: this.onRequestAllProcessed(); break
-        case MessageType.REQUEST_TO: this.sendAllAboutMe(false); break
+        case MessageType.REQUEST_TO: this.sendAllAboutMe(false, false); break
         case MessageType.PARTICIPANT_AFK: this.onAfkChanged(msg.p, JSON.parse(msg.v)); break
         case MessageType.PARTICIPANT_LEFT: this.onParticipantLeft(JSON.parse(msg.v)); break
         case MessageType.CALL_REMOTE: this.onCallRemote(msg.p); break
