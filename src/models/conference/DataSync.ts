@@ -82,8 +82,9 @@ export class DataSync{
   }
   //  Send vrm rig
   private sendVrmRig(){
-    if (participants.local.vrmRigs){
-      this.connection.sendMessage(MessageType.PARTICIPANT_VRMRIG, participants.local.vrmRigs)
+    const rig = participants.local.vrmRigs ? participants.local.vrmRigs : null
+    if (rig){
+      this.connection.sendMessage(MessageType.PARTICIPANT_VRMRIG, rig)
       this.connection.flushSendMessages()
     }
   }
