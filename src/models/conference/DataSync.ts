@@ -31,7 +31,7 @@ export class DataSync{
     this.connection = c
     //  setInterval(()=>{ this.checkRemoteAlive() }, 1000)
   }
-  sendAllAboutMe(bSendRandP: boolean, bSendContents:boolean){
+  sendAllAboutMe(bSendRandP: boolean){
     syncLog('sendAllAboutMe called.')
     this.sendPoseMessage(bSendRandP)
     this.sendMouseMessage()
@@ -39,7 +39,6 @@ export class DataSync{
     this.sendOnStage()
     this.sendTrackStates()
     this.sendViewpointNow()
-    if (bSendContents) this.sendMyContents()
     this.sendAfkChanged()
   }
   //
@@ -83,8 +82,10 @@ export class DataSync{
   }
   //  Send vrm rig
   private sendVrmRig(){
-    this.connection.sendMessage(MessageType.PARTICIPANT_VRMRIG, participants.local.vrmRigs)
-    this.connection.flushSendMessages()
+    if (participants.local.vrmRigs){
+      this.connection.sendMessage(MessageType.PARTICIPANT_VRMRIG, participants.local.vrmRigs)
+      this.connection.flushSendMessages()
+    }
   }
   //  Send content update request to pid
   sendContentUpdateRequest(pid: string, updatedContents: ISharedContent[]) {
@@ -95,17 +96,10 @@ export class DataSync{
   sendContentRemoveRequest(pid: string, removedIds: string[]) {
     this.connection.sendMessage(MessageType.CONTENT_REMOVE_REQUEST, removedIds, pid)
   }
-  //  send myContents of local to remote participants.
-  sendMyContents() {
-      this.sendContentUpdateRequest('', Array.from(contents.roomContents.values()))
-  }
 
   //  message handler
   private onRoomProp(key: string, value: string){
     roomInfo.onUpdateProp(key, value)
-  }
-  private onRequestAllProcessed(){
-    this.sendAllAboutMe(false, false) //  send participant and contents
   }
   private onParticipantTrackLimits(limits:number[]){
     participants.local.remoteVideoLimit = limits[0]
@@ -360,47 +354,51 @@ export class DataSync{
 
 
   // tslint:disable-next-line: cyclomatic-complexity
-  onBmMessage(msgs: BMMessage[]){
-    syncLog(`Recv data msg: ${msgs.map(m => m.t).reduce((p, c)=>`${p} ${c}`,'')}.`)
-    //syncLog(`Recv data msg: ${JSON.stringify(msgs)}.`)
-    for(const msg of msgs){
-      if (msg.v === undefined) continue
-      recorder.recordMessage(msg)
-      switch(msg.t){
-        case MessageType.ROOM_PROP: this.onRoomProp(...(JSON.parse(msg.v) as [string, string])); break
-        case MessageType.REQUEST_ALL: this.onRequestAllProcessed(); break
-        case MessageType.REQUEST_TO: this.sendAllAboutMe(false, false); break
-        case MessageType.PARTICIPANT_AFK: this.onAfkChanged(msg.p, JSON.parse(msg.v)); break
-        case MessageType.PARTICIPANT_LEFT: this.onParticipantLeft(JSON.parse(msg.v)); break
-        case MessageType.CALL_REMOTE: this.onCallRemote(msg.p); break
-        case MessageType.CHAT_MESSAGE: this.onChatMessage(msg.p, JSON.parse(msg.v)); break
-        case MessageType.CONTENT_REMOVE_REQUEST: this.onContentRemoveRequest(JSON.parse(msg.v)); break
-        case MessageType.CONTENT_UPDATE_REQUEST: this.onContentUpdateRequest(JSON.parse(msg.v)); break
-        case MessageType.CONTENT_INFO_UPDATE: this.onContentInfoUpdate(JSON.parse(msg.v)); break
-        case MessageType.PARTICIPANT_INFO: this.onParticipantInfo(msg.p, JSON.parse(msg.v)); break
-        case MessageType.PARTICIPANT_MOUSE: this.onParticipantMouse(msg.p, JSON.parse(msg.v)); break
-        case MessageType.PARTICIPANT_POSE: this.onParticipantPose(msg.p, JSON.parse(msg.v)); break
-        case MessageType.PARTICIPANT_ON_STAGE: this.onParticipantOnStage(msg.p, JSON.parse(msg.v)); break
-        case MessageType.PARTICIPANT_TRACKSTATES: this.onParticipantTrackState(msg.p, JSON.parse(msg.v)); break
-        case MessageType.PARTICIPANT_VIEWPOINT: this.onParticipantViewpoint(msg.p, JSON.parse(msg.v)); break
-        case MessageType.AUDIO_LEVEL: this.onParticipantAudioLevel(msg.p, JSON.parse(msg.v)); break
-        case MessageType.PARTICIPANT_TRACKLIMITS: this.onParticipantTrackLimits(JSON.parse(msg.v)); break
-        case MessageType.PARTICIPANT_VRMRIG: this.onParticipantVrmRig(msg.p, JSON.parse(msg.v)); break
-        case MessageType.YARN_PHONE: this.onYarnPhone(msg.p, JSON.parse(msg.v)); break
-        case MessageType.RELOAD_BROWSER: this.onReloadBrower(); break
-        case MessageType.MUTE_VIDEO: this.onMuteVideo(JSON.parse(msg.v)); break
-        case MessageType.MUTE_AUDIO: this.onMuteAudio(JSON.parse(msg.v)); break
-        case MessageType.KICK: this.onKicked(msg.p, JSON.parse(msg.v)); break
-        case MessageType.PARTICIPANT_OUT: this.onParticipantOut(JSON.parse(msg.v)); break
-        case MessageType.MOUSE_OUT: this.onMouseOut(JSON.parse(msg.v)); break
-        case MessageType.CONTENT_OUT: this.onContentOut(JSON.parse(msg.v)); break
-        default:
-          console.log(`Unhandled message type ${msg.t} from ${msg.p}`)
-          break
-      }
+  onBmMessage(msg: BMMessage){
+    if (msg.t!==MessageType.AUDIO_LEVEL && msg.t!==MessageType.PARTICIPANT_MOUSE){
+      syncLog(`Recv data msg: ${msg.t}: ${msg.v}`)
     }
-    this.checkInfo()
+    //syncLog(`Recv data msg: ${JSON.stringify(msgs)}.`)
+    if (msg.v === undefined) {
+      console.error(`Recv data msg ${msg.t} with value of undefined.`)
+      return
+    }
+    recorder.recordMessage(msg)
+    switch(msg.t){
+      case MessageType.ROOM_PROP: this.onRoomProp(...(JSON.parse(msg.v) as [string, string])); break
+      case MessageType.REQUEST_ALL: this.sendAllAboutMe(false); break
+      case MessageType.REQUEST_TO: this.sendAllAboutMe(false); break
+      case MessageType.PARTICIPANT_AFK: this.onAfkChanged(msg.p, JSON.parse(msg.v)); break
+      case MessageType.PARTICIPANT_LEFT: this.onParticipantLeft(JSON.parse(msg.v)); break
+      case MessageType.CALL_REMOTE: this.onCallRemote(msg.p); break
+      case MessageType.CHAT_MESSAGE: this.onChatMessage(msg.p, JSON.parse(msg.v)); break
+      case MessageType.CONTENT_REMOVE_REQUEST: this.onContentRemoveRequest(JSON.parse(msg.v)); break
+      case MessageType.CONTENT_UPDATE_REQUEST: this.onContentUpdateRequest(JSON.parse(msg.v)); break
+      case MessageType.CONTENT_INFO_UPDATE: this.onContentInfoUpdate(JSON.parse(msg.v)); break
+      case MessageType.PARTICIPANT_INFO: this.onParticipantInfo(msg.p, JSON.parse(msg.v)); break
+      case MessageType.PARTICIPANT_MOUSE: this.onParticipantMouse(msg.p, JSON.parse(msg.v)); break
+      case MessageType.PARTICIPANT_POSE: this.onParticipantPose(msg.p, JSON.parse(msg.v)); break
+      case MessageType.PARTICIPANT_ON_STAGE: this.onParticipantOnStage(msg.p, JSON.parse(msg.v)); break
+      case MessageType.PARTICIPANT_TRACKSTATES: this.onParticipantTrackState(msg.p, JSON.parse(msg.v)); break
+      case MessageType.PARTICIPANT_VIEWPOINT: this.onParticipantViewpoint(msg.p, JSON.parse(msg.v)); break
+      case MessageType.AUDIO_LEVEL: this.onParticipantAudioLevel(msg.p, JSON.parse(msg.v)); break
+      case MessageType.PARTICIPANT_TRACKLIMITS: this.onParticipantTrackLimits(JSON.parse(msg.v)); break
+      case MessageType.PARTICIPANT_VRMRIG: this.onParticipantVrmRig(msg.p, JSON.parse(msg.v)); break
+      case MessageType.YARN_PHONE: this.onYarnPhone(msg.p, JSON.parse(msg.v)); break
+      case MessageType.RELOAD_BROWSER: this.onReloadBrower(); break
+      case MessageType.MUTE_VIDEO: this.onMuteVideo(JSON.parse(msg.v)); break
+      case MessageType.MUTE_AUDIO: this.onMuteAudio(JSON.parse(msg.v)); break
+      case MessageType.KICK: this.onKicked(msg.p, JSON.parse(msg.v)); break
+      case MessageType.PARTICIPANT_OUT: this.onParticipantOut(JSON.parse(msg.v)); break
+      case MessageType.MOUSE_OUT: this.onMouseOut(JSON.parse(msg.v)); break
+      case MessageType.CONTENT_OUT: this.onContentOut(JSON.parse(msg.v)); break
+      default:
+        console.log(`Unhandled message type ${msg.t} from ${msg.p}`)
+        break
+    }
+    //this.checkInfo()
   }
+/*
   checkInfo(){
     const remotes = Array.from(participants.remote.values())
     const ids = remotes.filter(remote => !remote.informationReceived).map(remote => remote.id)
@@ -408,5 +406,5 @@ export class DataSync{
       syncLog(`checkInfo sent ${ids}`)
       this.connection.sendMessage(MessageType.REQUEST_TO, ids)
     }
-  }
+  } */
 }

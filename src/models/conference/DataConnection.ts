@@ -179,7 +179,7 @@ export class DataConnection {
       while(Date.now() < deadline && this.receivedMessages.length){
         const msg = this.receivedMessages.shift()
         if (msg){
-          this.sync.onBmMessage([msg])
+          this.sync.onBmMessage(msg)
         }
       }
       dataRequestInterval = Math.min(

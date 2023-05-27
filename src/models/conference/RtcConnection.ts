@@ -106,7 +106,7 @@ export class RtcConnection{
       }
       const onMessageEvent = (ev: MessageEvent<any>)=> {
         const msg = JSON.parse(ev.data) as MSMessage
-        this.onAnyMessageForPing()
+        //this.onAnyMessageForPing()
         const func = this.handlers.get(msg.type)
         if (func){
           func.bind(this)(msg)
@@ -251,7 +251,7 @@ export class RtcConnection{
       this.loadDevice(msg.peer).then(()=>{
         this.resolveMessage(msg, msg.peer)
         this.emitter.emit('connect')
-        this.startPingPong()
+        //  this.startPingPong()
       })
     }else{
       this.rejectMessage(msg)

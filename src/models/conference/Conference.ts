@@ -150,7 +150,7 @@ export class Conference {
                 }, 3000)
               })
             }else{
-              this.dataConnection.sync.sendAllAboutMe(true, false)  //  send paritipant info but not contents
+              this.dataConnection.sync.sendAllAboutMe(true)  //  send paritipant info
               console.log('Reuse the old data connection.')
               resolve()
             }

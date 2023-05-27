@@ -309,10 +309,6 @@ export class SharedContents extends EventEmitter {
     }
     this.updateAll()
   }
-  clearAllRemotes(){
-    this.roomContents.clear()
-    this.roomContentsInfo.clear()
-  }
 
   removeAllContents(){
     const cids = Array.from(this.roomContentsInfo.keys())
