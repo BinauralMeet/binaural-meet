@@ -138,7 +138,7 @@ export class Conference {
           }
           inputChangeObservationStart()
 
-          //  connect to relay server for get contents and participants info.
+          //  connect to data server to get contents and participants info.
           if (this.dataConnection.isConnected()){
             console.log(`DataConnection is connected.`)
             if (this.dataConnection.peer !== peer){

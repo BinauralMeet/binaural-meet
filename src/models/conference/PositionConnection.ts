@@ -11,7 +11,7 @@ export const positionLog = connLog
 
 
 export class PositionConnection {
-  positionSocket:WebSocket|undefined = undefined //  Socket for message passing via separate relay server
+  positionSocket:WebSocket|undefined = undefined //  Socket to connect LPS
   private peer_=''
   public get peer(){ return this.peer_ }
   private room_=''

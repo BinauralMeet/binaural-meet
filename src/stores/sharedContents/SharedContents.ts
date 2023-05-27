@@ -76,9 +76,9 @@ export class SharedContents extends EventEmitter {
   sorted: ISharedContent[] = []                   //  all contents sorted by zorder (bottom to top)
   @observable.shallow zones: ISharedContent[] = []        //  audio zones sorted by zorder (top to bottom)
   @observable.shallow closedZones: ISharedContent[] = []  //  closed audio zones sorted by zorder (top to bottom)
-  //  Contents by room  used only when a relay server exsits.
+  //  The contents. Only visible contents are received.
   @observable.shallow roomContents = new Map<string, ISharedContent>()
-  //  Contents info     used only when a relay server exsits.
+  //  Info of the contents. All contents are listed.
   @observable.shallow roomContentsInfo = new Map<string, SharedContentInfo>()
   //  Contents for playback.
   @observable.shallow playbackContents = new Map<string, IPlaybackContent>()

@@ -5,14 +5,9 @@
   - Contents has id, type, text (URL), pose, size, name and owner_name properties.
 
 - Way to sync
-  - Via Jitsi
-    - Each participant's property has contents.
-    - When leave, the contents are owned by the next participant.
-    - When update, the packet will sent to the owner.
-  - Via relay
-    - Contents are owned by relayServer and properties are not used.
-    - Relayserver does not distinguish owners.
-    - When update, packet will update the content on the server and relayed.
+  - Contents are owned by dataServer.
+  - The dataServer does not distinguish owner.
+  - When updated, the packet will update the server's content, and it will be relayed to necessary participants.
 
 ```tsx
 class MapObject{
