@@ -1,7 +1,7 @@
 import {BMProps} from '@components/utils'
 import {ISharedContent} from '@models/ISharedContent'
 import {SharedContentInfo} from '@models/ISharedContent'
-import {contentLog} from '@stores/sharedContents/SharedContents'
+import {contentLog} from '@models/utils'
 import React from 'react'
 import {MouseOrTouch, RndContent} from './RndContent'
 export interface ISharedContentProps extends BMProps{

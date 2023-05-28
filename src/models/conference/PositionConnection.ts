@@ -1,13 +1,10 @@
 import {default as participants} from '@stores/participants/Participants'
-import {connLog} from './ConferenceLog'
+import {connLog} from '@models/utils'
 import {MSMessage, MSPositionConnectMessage, MSPositionMessage } from './MediaMessages'
 import { autorun } from 'mobx'
 import settings from '@stores/Settings'
 import {conference} from '@models/conference'
-
-//  Log level and module log options
-export const DATACONLOG = false
-export const positionLog = connLog
+import {positionLog} from '@models/utils'
 
 
 export class PositionConnection {

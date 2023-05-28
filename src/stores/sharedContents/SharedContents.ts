@@ -12,10 +12,6 @@ import {createContent, defaultContent, moveContentToTop} from './SharedContentCr
 import {conference} from '@models/conference'
 import _ from 'lodash'
 
-export const CONTENTLOG = false      // show manipulations and sharing of content
-export const contentLog = CONTENTLOG ? console.log : (a:any) => {}
-export const contentDebug = CONTENTLOG ? console.debug : (a:any) => {}
-
 export const TITLE_HEIGHT = 24
 
 function zorderComp(a:ISharedContent, b:ISharedContent) {

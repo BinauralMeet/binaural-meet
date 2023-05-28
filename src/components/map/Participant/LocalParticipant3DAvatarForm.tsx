@@ -10,10 +10,7 @@ import * as THREE from 'three'
 import {GetPromiseGLTFLoader} from '@models/api/GLTF'
 import {IReactionDisposer, autorun, makeObservable, observable} from 'mobx'
 import { participants } from '@stores/index'
-
-const FORMLOG = false
-const formLog = FORMLOG ? console.log : ()=>{}
-
+import {formLog} from '@models/utils'
 
 export interface LocalParticipantFormProps extends BMProps{
   open: boolean

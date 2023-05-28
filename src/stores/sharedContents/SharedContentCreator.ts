@@ -10,7 +10,9 @@ import {MapData} from '@stores/Map'
 import {defaultValue as mapObjectDefaultValue} from '@stores/MapObject'
 import _ from 'lodash'
 import participants from '../participants/Participants'
-import sharedContents, {contentLog} from './SharedContents'
+import sharedContents from './SharedContents'
+import {contentLog} from '@models/utils'
+
 
 export const defaultContent: ISharedContent = Object.assign({}, mapObjectDefaultValue, {
   name: '',

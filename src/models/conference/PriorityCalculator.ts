@@ -7,10 +7,7 @@ import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import contents from '@stores/sharedContents/SharedContents'
 import {autorun, IReactionDisposer, makeObservable, observable} from 'mobx'
 import {RemoteObjectInfo, LocalObjectInfo} from './priorityTypes'
-
-export const PRIORITYLOG = false
-export const priorityLog = PRIORITYLOG ? console.log : (a:any) => {}
-export const priorityDebug = PRIORITYLOG ? console.debug : (a:any) => {}
+import {priorityLog, priorityDebug, PRIORITYLOG} from '@models/utils'
 
 function getIdFromProducer(p: RemoteProducer){
   if (p.role === 'avatar') return p.peer.peer
@@ -230,11 +227,11 @@ export class PriorityCalculator {
 
     //  done
     this.tracksToConsume = {videos, audios}
-    /*
-    const vstrs = videos.map(i => i.producer.role==='avatar' ? 'p:' + i.producer.peer.peer : 'c:'+i.producer.role)
-    const astrs = audios.map(i => i.producer.role==='avatar' ? 'p:' + i.producer.peer.peer : 'c:'+i.producer.role)
-    console.log(`Priority: video=${vstrs} audio=${astrs}`)
-    //  */
+    if (PRIORITYLOG()){
+      const vstrs = videos.map(i => i.producer.role==='avatar' ? 'p:' + i.producer.peer.peer : 'c:'+i.producer.role)
+      const astrs = audios.map(i => i.producer.role==='avatar' ? 'p:' + i.producer.peer.peer : 'c:'+i.producer.role)
+      console.log(`Priority: video=${vstrs} audio=${astrs}`)
+    }
   }
 
   // lower value means higher priority

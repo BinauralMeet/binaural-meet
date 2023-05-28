@@ -7,12 +7,11 @@ import {BMMessage} from './DataMessage'
 import {ClientToServerOnlyMessageType, MessageType, ObjectArrayMessageTypes, StringArrayMessageTypes} from './DataMessageType'
 import {DataSync} from '@models/conference/DataSync'
 import {AudioMeter} from '@models/audio/AudioMeter'
-import {connLog, connDebug} from './ConferenceLog'
+import {connLog, connDebug} from '@models/utils'
 import {EventEmitter} from 'events'
 import { MSMessage } from './MediaMessages'
 
 //  Log level and module log options
-export const DATACONLOG = false
 export const dataLog = connLog
 export const dataDebug = connDebug
 export let dataRequestInterval:number = 100

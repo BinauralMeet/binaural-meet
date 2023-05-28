@@ -19,7 +19,7 @@ import {BMMessage} from './DataMessage'
 import {DataConnection} from './DataConnection'
 import {MessageType} from './DataMessageType'
 import {notification} from './Notification'
-import {connLog} from './ConferenceLog'
+import {connLog} from '@models/utils'
 
 const syncLog = connLog
 
