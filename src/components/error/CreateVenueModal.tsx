@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, TextField, Button, IconButton, FormControlLabel, Checkbox } from '@material-ui/core';
+import { Dialog, DialogTitle, DialogContent, TextField, Button, IconButton, FormControlLabel, Checkbox, Typography } from '@material-ui/core';
 import CloseIcon from '@material-ui/icons/Close';
 import { makeStyles } from '@material-ui/core/styles';
 
@@ -30,15 +30,27 @@ const useStyles = makeStyles((theme) => ({
         justifyContent: 'center',
         alignItems: 'center',
         width: '100%',
-    }
+    },
+    warningText: {
+        color: 'red',
+        margin: theme.spacing(2),
+    },
 }));
 
 interface CreateVenueModalProps {
     open: boolean;
     onClose: () => void;
+    onSubmit: () => void;
+    warningText?: string;
+    showWarning?: boolean;
+    showPassword?: boolean;
+    room: string;
+    setRoom: (value: string) => void;
+    password: string;
+    setPassword: (value: string) => void;
 }
 
-const CreateVenueModal: React.FC<CreateVenueModalProps> = ({ open, onClose }) => {
+const CreateVenueModal: React.FC<CreateVenueModalProps> = ({ open, onClose, onSubmit, warningText, showWarning, showPassword, room, setRoom, password, setPassword }) => {
     const classes = useStyles();
     const [checked, setChecked] = useState(false);
 
@@ -63,6 +75,7 @@ const CreateVenueModal: React.FC<CreateVenueModalProps> = ({ open, onClose }) =>
                     label="Venue Name"
                     type="text"
                     fullWidth
+                    onChange={(event) => setRoom(event.target.value)}
                 />
                 <TextField
                     className={classes.textField}
@@ -72,6 +85,7 @@ const CreateVenueModal: React.FC<CreateVenueModalProps> = ({ open, onClose }) =>
                     type="password"
                     fullWidth
                     disabled={!checked}
+                    onChange={(event) => setPassword(event.target.value)}
                 />
                 <div className={classes.checkboxContainer}>
                     <FormControlLabel
@@ -79,7 +93,10 @@ const CreateVenueModal: React.FC<CreateVenueModalProps> = ({ open, onClose }) =>
                         label="Enable password"
                     />
                 </div>
-                <Button variant="contained" color="primary" className={classes.submitButton}>
+
+                {showWarning && <Typography className={classes.warningText}>{warningText}</Typography>}
+
+                <Button variant="contained" color="primary" className={classes.submitButton} onClick={() => onSubmit()}>
                     Create Room
                 </Button>
             </DialogContent>

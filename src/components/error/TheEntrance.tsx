@@ -24,6 +24,7 @@ import { tfDivStyle, tfIStyle, tfLStyle } from '@components/utils'
 import JoinVenueModal from './JoinVenueModal';
 import CreateVenueModal from './CreateVenueModal';
 import { fetchRoomById } from '../../models/conference/roomServices';
+import Spinner from './LoadingScreen';
 
 // Define your styles
 const useStyles = makeStyles(() => ({
@@ -70,34 +71,161 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
     urlParameters.room ? urlParameters.room : savedRoom ? savedRoom : ""
   );
 
+  const [isLoading, setIsLoading] = useState(false);
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [warningText, setWarningText] = useState("");
+  const [showWarning, setShowWarning] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [isRequiredPassword, setIsRequiredPassword] = useState(false);
   const [password, setPassword] = useState("");
+  const [roomInfo, setRoomInfo] = useState({} as any);
 
   // Join Modal Component
   const handleOpenJoinDialog = () => {
       setJoinDialogOpen(true);
   };
 
-  const handleCloseJoinDialog = async () => {
+  const handleCloseJoinDialog = () => {
     setJoinDialogOpen(false);
+  };
 
-    const roomId = 'ConferensceRoom1';
 
+
+  async function checkPassword(roomId: string, password: string): Promise<void> {
+    const response = await fetch('http://localhost:3200/checkPassword', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ roomId, password }),
+    });
+
+    const result = await response.json();
+    console.log('Result:', result);
+    if (result.success) {
+      console.log('Password is correct');
+    } else {
+      console.log('Password is incorrect');
+    }
+  }
+
+
+
+  const fetchRoom = async (roomId: string) => {
+    setIsLoading(true);
     try {
       const roomFetched = await fetchRoomById(roomId);
-      //console.log("Room Found: ", roomFetched);
-
-      if (Object.keys(roomFetched).length === 0) {
-        console.log("The room doesn't exist.");
+      console.log("OBJ:", roomFetched);
+      if (roomFetched && roomFetched.error && roomFetched.error === "Room not found") {
+        setWarningText("The room doesn't exist.");
+        setShowWarning(true);
       } else {
         console.log("Room Founded:", roomFetched);
+        setRoomInfo(roomFetched);
+
+        if (roomFetched.RoomPassword !== "") {
+          if (password !== "" && password === roomFetched.RoomPassword) {
+            setWarningText("Password is correct. Connecting");
+            setShowWarning(true);
+            onClose(true);
+            handleCloseJoinDialog();
+          }else if(password !== "" && password !== roomFetched.RoomPassword){
+            setWarningText("Password is incorrect.");
+            setShowWarning(true);
+          }else{
+            setWarningText("This Room requires a password.");
+            setShowWarning(true);
+            setShowPassword(true);
+          }
+        }else{
+          onClose(true);
+          setShowWarning(false);
+          handleCloseJoinDialog();
+        }
       }
     } catch (error) {
       console.log('Error:', error);
     }
+    setIsLoading(false);
   };
+
+
+  const handleSubmitJoinDialog = async () => {
+    //const roomId = 'ConferenceRoom1';
+    fetchRoom(room);
+
+    /*checkPassword('demo', 'demo')
+    .then(() => {
+      // Handle success here
+    })
+    .catch((error) => {
+      // Handle error here
+      console.log("Can't connect to the Room");
+      console.error(error);
+    });*/
+  };
+
+  const handleSubmitCreateDialog = async () => {
+
+    createRoom(room, room, "Miguel", password, false);
+
+    /*if (roomInfo.RoomName === room) {
+      setWarningText("The room already exists.");
+      setShowWarning(true);
+    }*/
+
+    //createRoom(room, room, name, password, false);
+  };
+
+  async function createRoom(roomId: string, roomName: string, roomOwner: string, roomPassword: string, requiredLogin: boolean) {
+    setIsLoading(true);
+    const roomFetched = await fetchRoomById(roomId);
+    if (roomFetched.RoomName === roomName) {
+      setWarningText("The room already exist.");
+      setShowWarning(true);
+      console.log("Room Founded:", roomFetched);
+    } else {
+      setShowWarning(false);
+      const response = await fetch('http://localhost:3200/rooms', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: roomId,
+          RoomName: roomName,
+          RoomOwner: roomOwner,
+          RoomPassword: roomPassword,
+          requiredLogin: requiredLogin,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }else{
+        const room = await response.json();
+        console.log('Room created:', room);
+        onClose(true);
+      }
+    }
+
+    setIsLoading(false);
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -112,16 +240,6 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
   const handlePasswordCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setIsRequiredPassword(event.target.checked);
   };
-
-  /*const onKeyPress = (ev: React.KeyboardEvent) => {
-    if (ev.key === "Enter") {
-      handleCloseJoinDialog();
-      handleCloseCreateDialog();
-    } else if (ev.key === "Esc" || ev.key === "Escape") {
-      handleCloseJoinDialog();
-      handleCloseCreateDialog();
-    }
-  };*/
 
   const onClose = (save: boolean) => {
     if (name.length !== 0 || participants.local.information.name.length !== 0){
@@ -152,7 +270,7 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
 
 
   return (
-    <ErrorDialogFrame onClose={() => { handleCloseJoinDialog(); handleCloseCreateDialog(); onClose(false);}}>
+    <ErrorDialogFrame onClose={() => {onClose(false);}}>
 
     <DialogContent style={dialogStyle}>
             <Button
@@ -185,9 +303,10 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
               inputProps={{ style: tfIStyle, autoFocus: true }}
               InputLabelProps={{ style: tfLStyle }}
               onChange={(event) => setName(event.target.value)}
-              onKeyPress={onKeyPress}
+              //onKeyPress={onKeyPress}
               fullWidth={true}
             />
+            {/*
             <Box mt={4}>
               <TextField
                 label={t("Venue")}
@@ -214,6 +333,7 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
                 {t("EnterTheVenue")}
               </Button>
             </Box>
+            */}
 
 
             <Box mt={4} display="flex" justifyContent="center" alignItems="center">
@@ -240,11 +360,33 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
 
     </DialogContent>
 
-    {/* Join Venue Modal */}
-    <JoinVenueModal open={joinDialogOpen} onClose={handleCloseJoinDialog} />
+    <Spinner isVisible={isLoading}/>
 
     {/* Join Venue Modal */}
-    <CreateVenueModal open={createDialogOpen} onClose={handleCloseCreateDialog} />
+    <JoinVenueModal key={warningText} open={joinDialogOpen}
+      onClose={handleCloseJoinDialog}
+      onSubmit={handleSubmitJoinDialog}
+      showWarning={showWarning}
+      warningText={warningText}
+      showPassword={showPassword}
+      room={room}
+      setRoom={setRoom}
+      password={password}
+      setPassword={setPassword}/>
+
+    {/* Join Venue Modal */}
+    <CreateVenueModal
+      //key={warningText}
+      open={createDialogOpen}
+      onClose={handleCloseCreateDialog}
+      onSubmit={handleSubmitCreateDialog}
+      showWarning={showWarning}
+      warningText={warningText}
+      showPassword={showPassword}
+      room={room}
+      setRoom={setRoom}
+      password={password}
+      setPassword={setPassword} />
 
     </ErrorDialogFrame>
   );
