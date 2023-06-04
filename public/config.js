@@ -49,4 +49,5 @@ const configLocal = {
   corsProxyUrl: 'https://binaural.me/cors_proxy/',
 }
 
-const config = Object.assign(Object.assign({}, commonConfig), configTitech)
+//const config = Object.assign(Object.assign({}, commonConfig), configTitech)
+const config = Object.assign(Object.assign({}, commonConfig), configLocal)

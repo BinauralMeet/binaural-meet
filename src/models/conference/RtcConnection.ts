@@ -6,10 +6,12 @@ import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSConnectMessage, MS
   MSResumeConsumerMessage, MSResumeConsumerReply, MSCloseProducerMessage, MSRemoteProducer,
   MSCloseProducerReply,
   MSStreamingStartMessage,
-  MSStreamingStopMessage} from './MediaMessages'
+  MSStreamingStopMessage,
+  MSRoomJoinMessage} from './MediaMessages'
 import * as mediasoup from 'mediasoup-client';
 import {connLog} from './ConferenceLog'
 import {RtcTransportStatsGot} from './RtcTransportStatsGot'
+import { fetchRoomById, createRoom } from './roomServices';
 
 export type TrackRoles = 'avatar' | 'mainScreen' | string
 export type TrackKind = 'audio' | 'video'
@@ -87,6 +89,7 @@ export class RtcConnection{
     const promise = new Promise<string>((resolve, reject)=>{
       this.connected = true
       try{
+        console.log("Data: ", config.mainServer)
         this.mainServer = new WebSocket(config.mainServer)
       }
       catch(e){
@@ -94,10 +97,22 @@ export class RtcConnection{
         reject(e)
       }
       const onOpenEvent = () => {
+
+        const msg2:MSRoomJoinMessage = {
+          type:'connect',
+          peer,
+          RoomName: "roomName",
+          RoomOwner: "roomOwner",
+          RoomPassword: "roomPassword",
+          requiredLogin: false
+        }
+
         const msg:MSConnectMessage = {
           type:'connect',
           peer,
         }
+
+
         if (this.prevPeer) {
           msg.peerJustBefore = this.prevPeer
           rtcLog(`reconnect with previous peer id '${this.prevPeer}'`)
@@ -235,17 +250,72 @@ export class RtcConnection{
     }
   }
 
+
+
+
+  //Connect to Relay Server
   private onConnect(base: MSMessage){
     rtcLog(`onConnect( ${JSON.stringify(base)}`)
-    const msg = base as MSPeerMessage
+    const msg = base as MSRoomJoinMessage
     this.peer_ = msg.peer
+
+
+
+    // Fetch a room by its ID
+    /*fetch('http://your-backend-url/rooms/someRoomId')
+      .then(response => response.json())
+      .then(room => console.log(room));
+
+    // Create a new room
+    fetch('localhost:3200/rooms', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(newRoom),
+      })
+      .then(response => response.json())
+      .then(newRoom => console.log(newRoom));*/
+
+
+    const newRoom:MSRoomJoinMessage = {
+      type: 'join',
+      peer:msg.peer,
+      RoomName: "Room Name Testing Text",
+      RoomOwner: msg.peer,
+      RoomPassword: "Room Password Testing",
+      requiredLogin: false,
+    }
+
+    // [PUT METHOD] - Create a new room
+
+    // [GET METHOD] - Get all the rooms list
+    /*const roomId = 'ConferenceRoom1';
+    const roomFetched = fetchRoomById(roomId)
+    .then(room => console.log("Room Founded: ", room))
+      .catch(error => console.log('Error:', error));
+
+    if (Object.keys(roomFetched).length === 0) {
+      console.log("The room is empty.");
+    } else {
+      console.log("The room is not empty:", roomFetched);
+    }*/
+
+
+
+
+
     const room = this.getMessageArg(msg) as string
     if (this.mainServer){
-      const joinMsg:MSRoomMessage = {
+      const joinMsg:MSRoomJoinMessage = {
         type: 'join',
         peer:msg.peer,
-        room
+        RoomName: msg.RoomName,
+        RoomOwner: msg.RoomOwner,
+        RoomPassword: msg.RoomPassword,
+        requiredLogin: false,
       }
+
       rtcLog(`join sent ${JSON.stringify(joinMsg)}`)
       this.mainServer.send(JSON.stringify(joinMsg))
       this.loadDevice(msg.peer).then(()=>{
@@ -258,6 +328,8 @@ export class RtcConnection{
       throw new Error('No connection has been established.')
     }
   }
+
+
   readonly pingpongDuration = 3000
   readonly pingpongFailCount = 4
   private pingCount = 0

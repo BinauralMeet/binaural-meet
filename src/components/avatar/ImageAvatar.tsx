@@ -1,93 +1,120 @@
-import Avatar from '@material-ui/core/Avatar'
-import {makeStyles} from '@material-ui/core/styles'
-import {Property} from 'csstype'
-import { Observer } from 'mobx-react-lite'
-import React from 'react'
+import Avatar from '@material-ui/core/Avatar';
+import { makeStyles } from '@material-ui/core/styles';
+import { TextAlignProperty } from 'csstype';
+import { Observer } from 'mobx-react-lite';
+import React from 'react';
 
 export interface ImageAvatarProps {
-  name: string
-  avatarSrc: string
-  colors: string[]
-  size: number
-  style?: any
-  border?: boolean
+  name: string;
+  avatarSrc: string;
+  colors: string[];
+  size: number;
+  style?: any;
+  border?: boolean;
 }
 
-function avatarCommon(props: ImageAvatarProps){
+function avatarCommon(props: ImageAvatarProps) {
   const style = {
     width: props.size,
     height: props.size,
-    color:props.colors[1],
-    backgroundColor:props.colors[0],
-    pointerEvents: 'none' as Property.PointerEvents,
-    userDrag: 'none',
+    color: props.colors[1],
+    backgroundColor: props.colors[0],
+    pointerEvents: 'none' as const,
+    userDrag: 'none' as const,
     fontSize: props.size * 0.3,
-    display:'inline-block',
-  }
+    display: 'inline-block',
+  };
 
-  return style
+  return style;
 }
-const BORDER_WIDTH = 0.04
-const BORDER_CONTENT = 1 - BORDER_WIDTH*2
 
-function addBoarder(style:Object, props:ImageAvatarProps){
+const BORDER_WIDTH = 0.04;
+const BORDER_CONTENT = 1 - BORDER_WIDTH * 2;
+
+function addBorder(style: Object, props: ImageAvatarProps) {
   const border = {
     width: props.size * BORDER_CONTENT,
     height: props.size * BORDER_CONTENT,
-    borderStyle: 'solid',
+    borderStyle: 'solid' as const,
     borderWidth: props.size * BORDER_WIDTH,
     borderColor: props.colors[0],
-  }
+  };
 
-  return Object.assign(style, border)
+  return Object.assign(style, border);
 }
 
 const useStyles = makeStyles({
   imageAvatar: (props: ImageAvatarProps) => {
-    const style = avatarCommon(props)
-    Object.assign(style, {textAlign:'right' as Property.TextAlign,
-      verticalAlign: 'top' as Property.VerticalAlign})
-    if (props.border){ addBoarder(style, props) }
+    const style = avatarCommon(props);
+    Object.assign(style, {
+      textAlign: 'right' as TextAlignProperty,
+      verticalAlign: 'top' as 'top',
+    });
+    if (props.border) {
+      addBorder(style, props);
+    }
 
-    return style
+    return style;
   },
   textAvatar: (props: ImageAvatarProps) => {
-    const style = avatarCommon(props)
-    if (props.border){ addBoarder(style, props) }
+    const style = avatarCommon(props);
+    if (props.border) {
+      addBorder(style, props);
+    }
 
-    return style
-  }
-})
-
+    return style;
+  },
+});
 
 export const RawImageAvatar: React.FC<ImageAvatarProps> = (props: ImageAvatarProps) => {
-  const classes = useStyles(props)
+  const classes = useStyles(props);
 
-  return <Observer>{()=>{
-    //console.log(`render ImageAvatar src=${props.avatarSrc} size=${props.size}`)
+  return (
+    <Observer>
+      {() => {
+        //console.log(`render ImageAvatar src=${props.avatarSrc} size=${props.size}`)
 
-    let initial = ''
-    const isImage = props.avatarSrc && props.avatarSrc.slice(-4) !== '.vrm'
-    if (!isImage){
-      const nameArray = props.name.split(' ')
-      nameArray.forEach(s => initial += s ? s.substring(0,1) : '')
-      initial = initial.substring(0,2)
-    }
-    const size = props.border ? props.size * BORDER_CONTENT : props.size
+        let initial = '';
+        const isImage = props.avatarSrc && props.avatarSrc.slice(-4) !== '.vrm';
+        if (!isImage) {
+          const nameArray = props.name.split(' ');
+          nameArray.forEach((s) => (initial += s ? s.substring(0, 1) : ''));
+          initial = initial.substring(0, 2);
+        }
+        const size = props.border ? props.size * BORDER_CONTENT : props.size;
 
-    return isImage ?
-      <Avatar src={props.avatarSrc} className={classes.imageAvatar} /> :
-      <Avatar className={classes.textAvatar} >
-        <div style={{height:size, width:size, fontSize: Math.floor(size*0.33),textAlign:'center',
-          verticalAlign:'middle', display:'table-cell', whiteSpace:'nowrap'}}>
-        {initial}</div></Avatar>
-    }
-  }</Observer>
-}
-RawImageAvatar.displayName = 'RawImageAvatar'
+        return isImage ? (
+          <Avatar src={props.avatarSrc} className={classes.imageAvatar} />
+        ) : (
+          <Avatar className={classes.textAvatar}>
+            <div
+              style={{
+                height: size,
+                width: size,
+                fontSize: Math.floor(size * 0.33),
+                textAlign: 'center',
+                verticalAlign: 'middle',
+                display: 'table-cell',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {initial}
+            </div>
+          </Avatar>
+        );
+      }}
+    </Observer>
+  );
+};
+RawImageAvatar.displayName = 'RawImageAvatar';
 
 export const ImageAvatar = (props: ImageAvatarProps) =>
-  React.useMemo(() => <RawImageAvatar {...props} />,
-  //  eslint-disable-next-line react-hooks/exhaustive-deps
-  [props.avatarSrc, props.border, props.colors, props.name, props.size, props.style])
-ImageAvatar.displayName = 'ImageAvatar'
+  React.useMemo(() => <RawImageAvatar {...props} />, [
+    props.avatarSrc,
+    props.border,
+    props.colors,
+    props.name,
+    props.size,
+    props.style,
+  ]);
+ImageAvatar.displayName = 'ImageAvatar';

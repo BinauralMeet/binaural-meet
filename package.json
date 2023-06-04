@@ -64,7 +64,7 @@
     "yt-player": "https://github.com/BinauralMeet/yt-player.git"
   },
   "scripts": {
-    "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider react-app-rewired start",
+    "start": "react-app-rewired start",
     "starthttps": "cross-env NODE_OPTIONS=--openssl-legacy-provider HTTPS=true react-app-rewired start",
     "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider react-app-rewired build",
     "test": "cross-env NODE_OPTIONS=--openssl-legacy-provider react-app-rewired test",
@@ -101,8 +101,8 @@
     "@iconify/icons-bi": "^1.1.6",
     "@iconify/icons-fluent": "^1.1.30",
     "@iconify/icons-ic": "^1.2.13",
-    "@iconify/icons-mdi": "^1.1.13",
     "@iconify/icons-material-symbols": "^1.2.13",
+    "@iconify/icons-mdi": "^1.1.13",
     "@iconify/react": "^4.1.0",
     "@types/deep-equal": "^1.0.1",
     "@types/gapi": "^0.0.41",

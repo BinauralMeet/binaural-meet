@@ -41,7 +41,9 @@ import React, {Fragment} from 'react'
 import {contentTypeIcons, editButtonTip} from './Content'
 import {RndContentProps} from './RndContent'
 
-type PopoverPropsNoOnClose = Omit<PopoverProps, 'onClose'>
+//type PopoverPropsNoOnClose = Omit<PopoverProps, 'onClose'>
+type PopoverPropsNoOnClose = Omit<PopoverProps, 'onClose' | 'content'>;
+
 export interface SharedContentFormProps extends Omit<RndContentProps, 'content'>, PopoverPropsNoOnClose{
   close: () => void,
   content?: ISharedContent
@@ -111,10 +113,15 @@ export const SharedContentForm: React.FC<SharedContentFormProps> = (props: Share
     }
   }
 
-  const extractPopoverProps = ({onClose, autoHideTitle, updateAndSend, updateOnly, close, ...reminder}
+  /*const extractPopoverProps = ({onClose, autoHideTitle, updateAndSend, updateOnly, close, ...reminder}
     : SharedContentFormProps) => reminder
     const {contents, map} = props.stores
-    const popoverProps:PopoverPropsNoOnClose = extractPopoverProps(props)
+    const popoverProps:PopoverPropsNoOnClose = extractPopoverProps(props)*/
+
+  const extractPopoverProps = ({onClose, autoHideTitle, updateAndSend, updateOnly, close, content, ...reminder}
+      : SharedContentFormProps) => reminder;
+  const popoverProps:PopoverPropsNoOnClose = extractPopoverProps(props);
+
 
   return <Popover onClose={closeForm} {...popoverProps} onMouseDown={(ev)=>{
     ev.stopPropagation()
@@ -157,10 +164,10 @@ export const SharedContentForm: React.FC<SharedContentFormProps> = (props: Share
               copyContentToClipboard(props.content)
             }}><Icon icon={clipboardCopy} height={TITLE_HEIGHT}/>&nbsp; {t('ctCopyToClipboard')}</Button> &nbsp;
           <Button variant="contained" style={{textTransform:'none'}}
-            onClick={()=>{
-              if (!props.content) { return }
-              map.focusOn(props.content)
-            }}>{t('ctFocus')}</Button>
+          onClick={()=>{
+            if (!props.content) { return }
+            props.stores.map.focusOn(props.content)
+          }}>{t('ctFocus')}</Button>
         </Box>
         <Table size="small" ><TableBody>{[
           Row(t('ctUnpin'),<Icon icon={pinOffIcon} height={TITLE_HEIGHT} />,
@@ -171,9 +178,9 @@ export const SharedContentForm: React.FC<SharedContentFormProps> = (props: Share
             }}/>, <Icon icon={pinIcon} height={TITLE_HEIGHT} />, t('ctPin'), 'pin'),
           <Fragment key="edit">{isContentEditable(props.content) ?
             Row(editButtonTip(true, props.content),<DoneIcon />,
-            <Switch color="primary" checked={props.content?.id === contents.editing} onChange={(ev, checked)=>{
+            <Switch color="primary" checked={props.content?.id === props.stores.contents.editing} onChange={(ev, checked)=>{
               if (!props.content) { return }
-              contents.setEditing(checked ? props.content.id : '')
+              props.stores.contents.setEditing(checked ? props.content.id : '')
             }}/>, <EditIcon />, editButtonTip(false, props.content)) : undefined}</Fragment>,
           <Fragment key="wall">{canContentBeAWallpaper(props.content) ?
             Row(t('ctUnWallpaper'), <Icon icon={imageLine} height={TITLE_HEIGHT}/>,

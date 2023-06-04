@@ -18,6 +18,14 @@ export interface MSPeerMessage extends MSMessage{
 export interface MSConnectMessage extends MSPeerMessage{
   peerJustBefore?: string
 }
+
+export interface MSRoomJoinMessage extends MSPeerMessage {
+  peerJustBefore?: string
+  RoomName: string;
+  RoomOwner: string;
+  RoomPassword: string;
+  requiredLogin?: boolean;
+}
 export type MSTrackRole = 'camera' | 'mic' | 'window' | string
 export interface MSRemoteProducer{
   id: string                      //  producer id
