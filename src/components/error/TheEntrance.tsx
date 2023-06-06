@@ -168,7 +168,7 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
 
   const handleSubmitCreateDialog = async () => {
 
-    createRoom(room, room, "Miguel", password, false);
+    createRoom(room, room, name, password, false);
 
     /*if (roomInfo.RoomName === room) {
       setWarningText("The room already exists.");
