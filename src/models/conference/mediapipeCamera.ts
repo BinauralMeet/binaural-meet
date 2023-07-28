@@ -85,8 +85,8 @@ export function startMpTrack(faceOnly: boolean, did?:string) {
           const facelm = results.faceLandmarks
           const poselm = results.poseLandmarks
           const poselm3d = (results as any).za
-          const rightHandlm = results.rightHandLandmarks
-          const leftHandlm = results.leftHandLandmarks
+          const rightHandlm = results.leftHandLandmarks
+          const leftHandlm = results.rightHandLandmarks
           const vrmRigs: VRMRigs = {
             face:facelm && Kalidokit.Face.solve(facelm,{
               runtime:'mediapipe',
