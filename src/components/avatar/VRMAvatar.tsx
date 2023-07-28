@@ -7,6 +7,7 @@ import * as Kalidokit from 'kalidokit'
 import { throttle } from 'lodash'
 import Euler from 'kalidokit/dist/utils/euler'
 import {GetPromiseGLTFLoader} from '@models/api/GLTF'
+import { participants } from '@stores/index'
 
 interface Member{
   clock: THREE.Clock
@@ -126,6 +127,7 @@ export const VRMAvatar: React.FC<{participant:ParticipantBase}> = (props: {parti
     }))
 
     //  render when updated
+    let lastLocalOri = 0
     const render3d = throttle((oriIn, rig)=>{
       //  /*
       const oriOffset = (oriIn+720) % 360 - 180
@@ -133,6 +135,17 @@ export const VRMAvatar: React.FC<{participant:ParticipantBase}> = (props: {parti
       //console.log(`ori: ${ori}`)
 
       const mem = memberRef.current!
+      if (props.participant === participants.local && rig && rig.face){
+        const face = rig.face as Kalidokit.TFace
+        //console.log(`Local Face Ori:${face.head.y}`)
+        //const pose = rig.pose as Kalidokit.TPose
+        //const cur = (pose.Hips?.rotation?.y || 0) + pose.Spine.y + face.head.y
+        const cur = face.head.y
+        const diff = cur - lastLocalOri
+        lastLocalOri = cur
+        participants.local.pose.orientation += diff * (180/Math.PI)
+      }
+
       const glCtx = mem.renderer?.getContext()
       if (mem.vrm && glCtx && !glCtx.isContextLost()) {
         vrmSetPose(mem.vrm, rig)                //  apply rig
@@ -247,6 +260,7 @@ let oldLookTarget = new THREE.Euler()
 function rigFace(vrm:VRM, riggedFace:Kalidokit.TFace){
     if(!vrm){return}
     const rot = {x:riggedFace.head.x-0.1, y:riggedFace.head.y, z:riggedFace.head.z}
+    //console.log(`rigRot: ${JSON.stringify(rot)}`)
     rigRotation(vrm, "Neck", rot, 0.7);
 
     // Blendshapes and Preset Name Schema
