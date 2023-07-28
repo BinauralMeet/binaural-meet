@@ -43,7 +43,6 @@ export class NodeGroup {
   protected sourceNode: MediaStreamAudioSourceNode | MediaElementAudioSourceNode | undefined = undefined
   protected audioElement: HTMLAudioElement | undefined = undefined
 
-  protected readonly gainNode: GainNode
   protected readonly pannerNode: PannerNode
   protected readonly destination: MediaStreamAudioDestinationNode
 
@@ -58,13 +57,8 @@ export class NodeGroup {
               playMode: PlayMode|undefined, audibility: boolean) {
     this.context = context
     this.destination = destination
-
-    this.gainNode = this.createGainNode(context)
     this.pannerNode = this.createPannerNode(context)
-
-    this.gainNode.connect(this.pannerNode)
     this.pannerNode.connect(this.destination)
-
     this.playMode = playMode
     this.updateAudibility(audibility)
   }
@@ -90,7 +84,7 @@ export class NodeGroup {
         break
       }
       case 'Context': {
-        this.sourceNode?.connect(this.gainNode)
+        this.sourceNode?.connect(this.pannerNode)
         //  this.pannerNode.connect(this.destination)
         if (this.interval) {
           clearInterval(this.interval)
@@ -214,9 +208,9 @@ export class NodeGroup {
 
   updateAudibility(audibility: boolean) {
     if (audibility) {
-      this.gainNode.connect(this.pannerNode)
+      this.pannerNode.connect(this.destination)
     } else {
-      this.gainNode.disconnect()
+      this.pannerNode.disconnect()
     }
 
     if (this.audioElement) {
@@ -231,7 +225,6 @@ export class NodeGroup {
       this.sourceNode.disconnect()
     }
 
-    this.gainNode.disconnect()
     this.pannerNode.disconnect()
     if (this.audioElement) {
       this.audioElement.volume = 0
@@ -316,7 +309,7 @@ export class NodeGroupForPlayback extends NodeGroup {
     this.audioElementForBlob = this.createAudioElement()
     this.audioElementForBlob.src = url
     this.sourceNode = this.context.createMediaElementSource(this.audioElementForBlob)
-    this.sourceNode.connect(this.gainNode)
+    this.sourceNode.connect(this.pannerNode)
     this.audioElementForBlob.muted = false
     function playAgain(group: NodeGroupForPlayback){
       group.audioElementForBlob?.play().catch(()=>{

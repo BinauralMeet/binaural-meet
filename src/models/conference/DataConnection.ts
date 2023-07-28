@@ -62,10 +62,14 @@ export class DataConnection {
   }
 
   public connect(room: string, peer: string){
+
     this.room_ = room
-    this.peer_ = peer
+    this.peer_ = peer //This is the username
+
+
     dataLog(`connect(${room}, ${peer})`)
     const self = this as DataConnection
+
 
     const promise = new Promise<void>((resolve, reject)=>{
       if (!dataServer){ reject(); return }
