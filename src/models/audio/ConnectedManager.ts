@@ -88,13 +88,13 @@ export class ConnectedManager {
   private addPlayback = (pp: PlaybackParticipant) => {
     const id = pp.id
     const group = this.manager.addPlayback(id)
-    this.connectedGroups[id] = new ConnectedGroupForPlayback(participants.local_, group, pp)
+    this.connectedGroups[id] = new ConnectedGroupForPlayback(group, pp)
   }
   private addPlaybackContent = (pc: IPlaybackContent) => {
     //  console.log(`addPlaybackContent: ${JSON.stringify(pc)}`)
     const id = pc.id
     const group = this.manager.addPlayback(id)
-    this.connectedGroups[id] = new ConnectedGroupForPlayback(participants.local_, group, undefined, pc.id)
+    this.connectedGroups[id] = new ConnectedGroupForPlayback(group, undefined, pc.id)
   }
 
   private removeRemote = (rp: RemoteParticipant) => {
@@ -106,7 +106,7 @@ export class ConnectedManager {
   }
   private addRemote = (remote: RemoteParticipant) => {
     const group = this.manager.addSpeaker(remote.id)
-    this.connectedGroups[remote.id] = new ConnectedGroup(participants.local_, undefined, remote, group)
+    this.connectedGroups[remote.id] = new ConnectedGroup(undefined, remote, group)
   }
 
   private removeContent = (content: ISharedContent) => {
@@ -116,6 +116,6 @@ export class ConnectedManager {
   }
   private addContent = (content: ISharedContent) => {
     const group = this.manager.addSpeaker(content.id)
-    this.connectedGroups[content.id] = new ConnectedGroup(participants.local_, content, undefined, group)
+    this.connectedGroups[content.id] = new ConnectedGroup(content, undefined, group)
   }
 }

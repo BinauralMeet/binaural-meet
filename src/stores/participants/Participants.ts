@@ -10,8 +10,10 @@ export class Participants {
     makeObservable(this)
   }
 
+  @observable readonly local = new LocalParticipant()
+
   @observable.shallow readonly remote = new Map<string, RemoteParticipant>()
-  local_ = observable.box(new LocalParticipant())
+
   @observable.shallow readonly playback = new Map<string, PlaybackParticipant>()
 
   @observable readonly yarnPhones = new Set<string>()
@@ -19,10 +21,6 @@ export class Participants {
 
   @computed get count(): number {
     return this.remote.size
-  }
-
-  @computed get local(): LocalParticipant {
-    return this.local_.get()
   }
 
   @computed get localId(): string {

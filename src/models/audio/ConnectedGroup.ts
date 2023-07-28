@@ -32,10 +32,10 @@ export class ConnectedGroup {
   private readonly disposers: IReactionDisposer[] = []
 
   //  content or remote will be given.
-  constructor(obsLocal: IObservableValue<LocalParticipant>, content: ISharedContent|undefined,
+  constructor(content: ISharedContent|undefined,
     remote: RemoteParticipant|undefined, group: NodeGroup) {
-    this.disposers.push(autorun(()=>{
-        const local = obsLocal.get()
+      const local = participants.local
+      this.disposers.push(autorun(()=>{
         const base = _.clone(local.pose)
         if (local.soundLocalizationBase === 'user') { base.orientation = 0 }
         const relativePose = getRelativePoseFromObject(base, remote, content)
@@ -125,10 +125,10 @@ export class ConnectedGroup {
 export class ConnectedGroupForPlayback {
   private readonly disposers: IReactionDisposer[] = []
 
-  constructor(obsLocal: IObservableValue<LocalParticipant>, group: NodeGroupForPlayback, participant?: PlaybackParticipant, cid?: string) {
+  constructor(group: NodeGroupForPlayback, participant?: PlaybackParticipant, cid?: string) {
+    const local = participants.local
     this.disposers.push(autorun(
       () => {
-        const local = obsLocal.get()
         const base = _.clone(local.pose)
         if (local.soundLocalizationBase === 'user') { base.orientation = 0 }
         let content
