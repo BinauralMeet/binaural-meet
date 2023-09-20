@@ -30,8 +30,8 @@ commonConfig = {
 }
 
 const configTitech = {
-  mainServer: 'wss://main.titech.binaural.me',
-  dataServer: 'wss://main.titech.binaural.me',
+  mainServer: 'wss://localhost:3100',
+  dataServer: 'wss://localhost:3100',
   //bmRelayServer: 'wss://data.titech.binaural.me',
   //dataServer: 'ws://localhost:80',
   corsProxyUrl: 'https://binaural.me/cors_proxy/',

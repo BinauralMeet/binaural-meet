@@ -22,22 +22,32 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
     urlParameters.room ? urlParameters.room : savedRoom ? savedRoom : ""
   );
 
-  const onClose = (save: boolean) => {
-    if (name.length !== 0 || participants.local.information.name.length !== 0){
+  const onClose = async (save: boolean) => { // Note the `async`
+    if (name.length !== 0 || participants.local.information.name.length !== 0) {
       if (save || participants.local.information.name.length === 0) {
         if (name.length && participants.local.information.name !== name) {
-          participants.local.information.name = name
-          participants.local.sendInformation()
-          participants.local.saveInformationToStorage(true)
+          participants.local.information.name = name;
+          participants.local.sendInformation();
+          participants.local.saveInformationToStorage(true);
         }
       }
-      if (save){
+      if (save) {
         urlParameters.room = room;
-        sessionStorage.setItem("room", room)
+        sessionStorage.setItem("room", room);
+
+        try {
+          // Call Google Drive authentication here and await its completion
+          await authGoogleDrive();
+        } catch (error) {
+          console.error('An error occurred:', error);
+          // Handle the error case here
+        }
       }
-      errorInfo.clear()
+      errorInfo.clear();
     }
   };
+
+
   const onKeyPress = (ev: React.KeyboardEvent) => {
     if (ev.key === "Enter") {
       onClose(true);
@@ -47,6 +57,35 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
   };
 
   const { t, i18n } = useTranslation();
+
+
+  //Google OAuth
+  const authGoogleDrive = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if (window.authorizeGdrive) {
+        window.authorizeGdrive((authResult) => {
+          if (authResult && !authResult.error) {
+            const oauthToken = authResult.access_token;
+            sessionStorage.setItem('gdriveToken', oauthToken);
+            /* setTimeout(() => {
+              sessionStorage.removeItem('gdriveToken');
+            }, authResult.expires_in * 1000); */
+            alert("You're authenticated");
+            resolve(); // Signal completion
+          } else {
+            alert('Error authenticating Google Drive');
+            reject(new Error('Authentication failed')); // Signal error
+          }
+        });
+      } else {
+        alert('window.authorizeGdrive is not defined');
+        reject(new Error('window.authorizeGdrive is not defined')); // Signal error
+      }
+    });
+  };
+
+
+
 
   return (
     <ErrorDialogFrame
