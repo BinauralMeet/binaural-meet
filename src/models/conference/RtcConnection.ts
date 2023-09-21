@@ -104,6 +104,8 @@ export class RtcConnection{
         }
         this.sendWithPromise(msg, resolve, reject, room)
       }
+
+      //HERE CLIENT RECIEVES BACKEND SOCKET MESSAGE
       const onMessageEvent = (ev: MessageEvent<any>)=> {
         const msg = JSON.parse(ev.data) as MSMessage
         //this.onAnyMessageForPing()

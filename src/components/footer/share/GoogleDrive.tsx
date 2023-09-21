@@ -12,8 +12,8 @@ export const GoogleDriveImport: React.FC<GoogleDriveImportProps> = ({ onSelected
   const developerKey = 'AIzaSyAADCXxUujmh0VqXIzJofwl03MA5O8v8EQ'
 
   // The Client ID obtained from the Google API Console. Replace with your own Client ID.
-  //const clientId = "858773398697-vki2lito392c5dlss9s31ap077nn0qbd.apps.googleusercontent.com"
-  const clientId = "188672642721-3f8u1671ecugbl2ukhjmb18nv283upm0.apps.googleusercontent.com"
+  const clientId = "858773398697-vki2lito392c5dlss9s31ap077nn0qbd.apps.googleusercontent.com"
+  // const clientId = "188672642721-3f8u1671ecugbl2ukhjmb18nv283upm0.apps.googleusercontent.com"
 
   // Replace with your own project number from console.developers.google.com.
   // See "Project number" under "IAM & Admin" > "Settings"

@@ -38,12 +38,12 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
         try {
           // Call Google Drive authentication here and await its completion
           await authGoogleDrive();
+          errorInfo.clear();
         } catch (error) {
           console.error('An error occurred:', error);
-          // Handle the error case here
         }
       }
-      errorInfo.clear();
+      //errorInfo.clear();
     }
   };
 
@@ -64,6 +64,9 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
     return new Promise((resolve, reject) => {
       if (window.authorizeGdrive) {
         window.authorizeGdrive((authResult) => {
+
+          console.log("authResult",authResult)
+
           if (authResult && !authResult.error) {
             const oauthToken = authResult.access_token;
             sessionStorage.setItem('gdriveToken', oauthToken);
@@ -88,9 +91,7 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
 
 
   return (
-    <ErrorDialogFrame
-      onClose={() => { onClose(false) }}
-    >
+    <ErrorDialogFrame onClose={() => { onClose(false) }} disableBackdropClick={true}>
       <DialogContent style={dialogStyle}>
         <Button
           style={{ position: "absolute", top: 30, right: 20 }}
