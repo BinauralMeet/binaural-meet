@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import {DialogPageProps} from './Step'
 
 
@@ -25,6 +25,41 @@ export const GoogleDriveImport: React.FC<GoogleDriveImportProps> = ({ onSelected
 
   let pickerApiLoaded = false
   let oauthToken: undefined | string
+
+  const [userSubId, setUserSubId] = useState<string | null>(null);
+
+  //OAUTH Logic
+  function handleClientLoad() {
+    gapi.load('client:auth2', initClient);
+  }
+
+  function initClient() {
+    (gapi as any).client.init({
+      clientId: clientId,
+      scope: scope.join(' ')
+    }).then(() => {
+      (gapi as any).auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+      updateSigninStatus((gapi as any).auth2.getAuthInstance().isSignedIn.get());
+    });
+  }
+
+
+  function updateSigninStatus(isSignedIn: boolean) {
+    if (isSignedIn) {
+      let user = (gapi as any).auth2.getAuthInstance().currentUser.get();
+      let id_token = user.getAuthResponse().id_token;
+
+      // Decode the ID token to fetch user's unique "sub" value
+      try {
+        let decoded = JSON.parse(atob(id_token.split('.')[1]));
+        setUserSubId(decoded.sub);
+      } catch (e) {
+        console.error("Error parsing ID Token: ", e);
+      }
+    }
+  }
+
+
 
   // Create and render a Picker object for searching images.
   function createPicker(oauthToken:string) {
@@ -79,14 +114,25 @@ export const GoogleDriveImport: React.FC<GoogleDriveImportProps> = ({ onSelected
 
 
   useEffect(() => {
-    if(gapi && window.gapiPickerReady ){
-      const token = sessionStorage.getItem('gdriveToken')
-      if(token)
-      createPicker(token)
+    handleClientLoad();  // Initialize Google OAuth
+    if (gapi && window.gapiPickerReady) {
+      const token = sessionStorage.getItem('gdriveToken');
+      if (token) {
+        createPicker(token);
+      }
     }
-  }, [gapi,window.gapiPickerReady])
+  }, [gapi, window.gapiPickerReady]);
 
-  return <>{'loading...'}</>
+  // Button to initiate Google sign-in
+  return (
+    <>
+      <button onClick={() => (gapi as any).auth2.getAuthInstance().signIn()}>Sign in with Google</button>
+      {'loading...'}
+      {userSubId && <div>Unique User Sub ID: {userSubId}</div>}
+    </>
+  );
+
+
 }
 GoogleDriveImport.displayName = 'GoogleDriveImport'
 

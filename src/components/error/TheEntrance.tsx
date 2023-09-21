@@ -22,7 +22,7 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
     urlParameters.room ? urlParameters.room : savedRoom ? savedRoom : ""
   );
 
-  const onClose = async (save: boolean) => { // Note the `async`
+  const onClose = async (save: boolean) => {
     if (name.length !== 0 || participants.local.information.name.length !== 0) {
       if (save || participants.local.information.name.length === 0) {
         if (name.length && participants.local.information.name !== name) {
@@ -34,7 +34,6 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
       if (save) {
         urlParameters.room = room;
         sessionStorage.setItem("room", room);
-
         try {
           // Call Google Drive authentication here and await its completion
           await authGoogleDrive();
@@ -59,33 +58,84 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
   const { t, i18n } = useTranslation();
 
 
-  //Google OAuth
+  interface AuthResult {
+    access_token?: string;
+    expires_in?: number;
+    id_token?: string;
+    error?: string;
+    id?: string; // Assuming the user ID is available as "id" within authResult
+  }
+
   const authGoogleDrive = (): Promise<void> => {
     return new Promise((resolve, reject) => {
-      if (window.authorizeGdrive) {
-        window.authorizeGdrive((authResult) => {
+      (window as any).authorizeGdrive(async (authResult: AuthResult) => {
+        if (authResult && !authResult.error) {
 
-          console.log("authResult",authResult)
+          console.log("Access token ", authResult);
 
-          if (authResult && !authResult.error) {
+          // Access token
+          if (authResult.access_token) {
             const oauthToken = authResult.access_token;
             sessionStorage.setItem('gdriveToken', oauthToken);
-            /* setTimeout(() => {
-              sessionStorage.removeItem('gdriveToken');
-            }, authResult.expires_in * 1000); */
-            alert("You're authenticated");
-            resolve(); // Signal completion
+
+            // Using getUserInfo function
+            try {
+              await getUserInfo(oauthToken);  // Now it's using await
+            } catch (error) {
+              console.error('Error fetching user info:', error);
+              reject(new Error('Error fetching user info.'));
+              return;
+            }
+
           } else {
-            alert('Error authenticating Google Drive');
-            reject(new Error('Authentication failed')); // Signal error
+            console.error("No access token found.");
+            reject(new Error('No access token found.'));
+            return;
           }
-        });
-      } else {
-        alert('window.authorizeGdrive is not defined');
-        reject(new Error('window.authorizeGdrive is not defined')); // Signal error
-      }
+          resolve();
+        } else {
+          reject(new Error('Authentication failed')); // Signal error
+        }
+      });
     });
   };
+
+
+  /*function getUserInfo(accessToken: any) {
+    fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      const userId = data.sub;
+      console.log('User ID:', userId);
+    })
+    .catch(error => {
+      console.error('Error fetching user info:', error);
+    });
+  }*/
+
+  async function getUserInfo(accessToken: any): Promise<void> {
+    try {
+      const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const userId = data.sub;
+      console.log('User ID:', userId);
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+    }
+  }
 
 
 
