@@ -13,6 +13,7 @@ import React from 'react'
 import {SketchPicker} from 'react-color'
 import {RemoteTrackLimitControl} from './RemoteTrackLimitControl'
 import { PositionServerForm } from './PositionServerForm'
+import { useState } from 'react'
 import CrownIcon from '../../../images/crown.png'
 
 export interface AdminConfigFormProps{
@@ -82,6 +83,8 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
     id?: string; // Assuming the user ID is available as "id" within authResult
   }
 
+  const [userGoogleID, setuserGoogleID] = useState()
+  const currentUserId = "";
   async function getUserInfo(accessToken: any): Promise<void> {
     try {
       const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
@@ -96,6 +99,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
 
       const data = await response.json();
       const userId = data.sub;
+      setuserGoogleID(userId);
       console.log('User ID:', userId);
     } catch (error) {
       console.error('Error fetching user info:', error);
@@ -116,6 +120,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
       <Box m={2}>
         <Button variant="contained" color={btnColor} style={{ textTransform: 'none' }} onClick={() => {
             authGoogleDrive();
+            if (roomInfo.passMatched) { conference.dataConnection.sendMessage('dataConnect', {userId: userGoogleID}) }
           }}
         >
            Become Admin
