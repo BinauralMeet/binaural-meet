@@ -9,7 +9,7 @@ import {DataSync} from '@models/conference/DataSync'
 import {AudioMeter} from '@models/audio/AudioMeter'
 import {connLog, connDebug} from '@models/utils'
 import {EventEmitter} from 'events'
-import { MSMessage } from './MediaMessages'
+import { MSMessage, MSAuthMessage } from './MediaMessages'
 
 //  Log level and module log options
 export const dataLog = connLog
@@ -61,6 +61,7 @@ export class DataConnection {
     this.sendMessage(MessageType.REQUEST_RANGE, [area, range])
   }
 
+  //Connect user to the room
   public connect(room: string, peer: string){
 
     this.room_ = room
@@ -81,6 +82,7 @@ export class DataConnection {
         self.messagesToSendToRelay = []
         if (config.dataServer){
           const msg:MSMessage = { type: 'dataConnect' }
+          //const msg:MSAuthMessage = { type: 'dataConnect', userId: 'x5121x54x5' }
           self.dataSocket?.send(JSON.stringify(msg))
         }
         self.requestAll(true)

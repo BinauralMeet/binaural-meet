@@ -6,11 +6,25 @@ export type MSMessageType =
   'workerAdd' | 'workerDelete' | 'workerUpdate' |
   'createTransport' | 'closeTransport' | 'connectTransport' |
   'produceTransport' | 'closeProducer' | 'consumeTransport' | 'resumeConsumer' |
-  'streamingStart' | 'streamingStop'
+  'streamingStart' | 'streamingStop' | 'SendID' | 'verifyRoomStatus' | 'sendRoomPassword'
 export interface MSMessage{
   type: MSMessageType
   sn?: number
 }
+
+export interface MSAuthMessage extends MSMessage{
+  userId?: string
+}
+
+export interface MSVerifyRoom extends MSMessage{
+  requiredPassword?: boolean
+  userValidated?: boolean
+}
+
+export interface MSSendRoomPassword extends MSMessage{
+  roomPassword?: string
+}
+
 export interface MSPeerMessage extends MSMessage{
   peer: string
   remote?: string

@@ -34,7 +34,8 @@ export class Participants {
 
   @action
   join(participantId: string) {
-    //  console.debug(`${participantId} join`)
+    console.log("participantId:", participantId)
+    console.debug(`${participantId} join`)
     const newParticipant = new RemoteParticipant(participantId)
     newParticipant.physics.located = false
     this.remote.set(participantId, newParticipant)

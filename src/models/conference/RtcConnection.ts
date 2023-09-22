@@ -6,7 +6,8 @@ import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSConnectMessage, MS
   MSResumeConsumerMessage, MSResumeConsumerReply, MSCloseProducerMessage, MSRemoteProducer,
   MSCloseProducerReply,
   MSStreamingStartMessage,
-  MSStreamingStopMessage} from './MediaMessages'
+  MSStreamingStopMessage,
+  MSAuthMessage} from './MediaMessages'
 import * as mediasoup from 'mediasoup-client';
 import {connLog} from '@models/utils'
 import {RtcTransportStatsGot} from './RtcTransportStatsGot'
@@ -68,6 +69,7 @@ export class RtcConnection{
     this.handlers.set('resumeConsumer', this.onResumeConsumer)
     this.handlers.set('remoteUpdate', this.onRemoteUpdate)
     this.handlers.set('remoteLeft', this.onRemoteLeft)
+    this.handlers.set('SendID', this.onRemoteLeft)
     try{
       this.device = new mediasoup.Device();
     }catch (error:any){
@@ -84,6 +86,7 @@ export class RtcConnection{
   //  connect to main server. return my peer id got.
   public connect(room: string, peer: string){
     rtcLog(`rtcConn connect(${room}, ${peer})`)
+    console.log()
     const promise = new Promise<string>((resolve, reject)=>{
       this.connected = true
       try{
@@ -238,6 +241,7 @@ export class RtcConnection{
   }
 
   private onConnect(base: MSMessage){
+    console.log("base", base)
     rtcLog(`onConnect( ${JSON.stringify(base)}`)
     const msg = base as MSPeerMessage
     this.peer_ = msg.peer
