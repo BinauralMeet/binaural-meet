@@ -39,7 +39,7 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
         sessionStorage.setItem("room", room);
         try {
           // Call Google Drive authentication here and await its completion
-          await authGoogleDrive();
+          //await authGoogleDrive();
           errorInfo.clear();
         } catch (error) {
           console.error('An error occurred:', error);
@@ -59,87 +59,6 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
   };
 
   const { t, i18n } = useTranslation();
-
-
-  interface AuthResult {
-    access_token?: string;
-    expires_in?: number;
-    id_token?: string;
-    error?: string;
-    id?: string; // Assuming the user ID is available as "id" within authResult
-  }
-
-  const authGoogleDrive = (): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      (window as any).authorizeGdrive(async (authResult: AuthResult) => {
-        if (authResult && !authResult.error) {
-
-          console.log("Access token ", authResult);
-
-          // Access token
-          if (authResult.access_token) {
-            const oauthToken = authResult.access_token;
-            sessionStorage.setItem('gdriveToken', oauthToken);
-
-            // Using getUserInfo function
-            try {
-              await getUserInfo(oauthToken);  // Now it's using await
-            } catch (error) {
-              console.error('Error fetching user info:', error);
-              reject(new Error('Error fetching user info.'));
-              return;
-            }
-
-          } else {
-            console.error("No access token found.");
-            reject(new Error('No access token found.'));
-            return;
-          }
-          resolve();
-        } else {
-          reject(new Error('Authentication failed')); // Signal error
-        }
-      });
-    });
-  };
-
-
-  /*function getUserInfo(accessToken: any) {
-    fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`
-      }
-    })
-    .then(response => response.json())
-    .then(data => {
-      const userId = data.sub;
-      console.log('User ID:', userId);
-    })
-    .catch(error => {
-      console.error('Error fetching user info:', error);
-    });
-  }*/
-
-  async function getUserInfo(accessToken: any): Promise<void> {
-    try {
-      const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const userId = data.sub;
-      console.log('User ID:', userId);
-    } catch (error) {
-      console.error('Error fetching user info:', error);
-    }
-  }
-
 
 
 

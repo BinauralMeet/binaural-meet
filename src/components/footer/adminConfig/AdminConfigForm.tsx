@@ -13,6 +13,7 @@ import React from 'react'
 import {SketchPicker} from 'react-color'
 import {RemoteTrackLimitControl} from './RemoteTrackLimitControl'
 import { PositionServerForm } from './PositionServerForm'
+import CrownIcon from '../../../images/crown.png'
 
 export interface AdminConfigFormProps{
   close?: () => void,
@@ -38,6 +39,69 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
     setShowPosition(false)
   }
 
+  //Google OAuth
+  const authGoogleDrive = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      (window as any).authorizeGdrive(async (authResult: AuthResult) => {
+        if (authResult && !authResult.error) {
+
+          console.log("Access token ", authResult);
+
+          // Access token
+          if (authResult.access_token) {
+            const oauthToken = authResult.access_token;
+            sessionStorage.setItem('gdriveToken', oauthToken);
+
+            // Using getUserInfo function
+            try {
+              await getUserInfo(oauthToken);  // Now it's using await
+            } catch (error) {
+              console.error('Error fetching user info:', error);
+              reject(new Error('Error fetching user info.'));
+              return;
+            }
+
+          } else {
+            console.error("No access token found.");
+            reject(new Error('No access token found.'));
+            return;
+          }
+          resolve();
+        } else {
+          reject(new Error('Authentication failed')); // Signal error
+        }
+      });
+    });
+  };
+
+  interface AuthResult {
+    access_token?: string;
+    expires_in?: number;
+    id_token?: string;
+    error?: string;
+    id?: string; // Assuming the user ID is available as "id" within authResult
+  }
+
+  async function getUserInfo(accessToken: any): Promise<void> {
+    try {
+      const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const userId = data.sub;
+      console.log('User ID:', userId);
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+    }
+  }
+
   return <Observer>{()=>{
     const textForFill = isDarkColor(roomInfo.backgroundFill) ? 'white' : 'black'
     const textForColor = isDarkColor(roomInfo.backgroundColor) ? 'white' : 'black'
@@ -48,6 +112,16 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
         <RemoteTrackLimitControl key="remotelimitcontrol" {...props.stores}/>
         <div ref={anchor} />
       </Box>
+
+      <Box m={2}>
+        <Button variant="contained" color={btnColor} style={{ textTransform: 'none' }} onClick={() => {
+            authGoogleDrive();
+          }}
+        >
+           Become Admin
+        </Button>
+      </Box>
+
       <Box mt={2} mb={2}>
         <TextField autoFocus label="Admin password" type="password" style={{marginTop:-12}}
           value={roomInfo?.password} onChange={(ev)=>{ roomInfo.password=ev.currentTarget.value}}
