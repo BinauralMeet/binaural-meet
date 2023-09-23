@@ -11,7 +11,7 @@ export interface ISharedContentProps extends BMProps{
 export const sharedContentHandler = (props: BMProps&{content:SharedContentInfo}) => {
   return {
     onClose: (evt: MouseOrTouch) => {
-      contentLog('RndContent onClose for ', props.content.id)
+      contentLog()('RndContent onClose for ', props.content.id)
       evt.stopPropagation()
       props.stores.map.keyInputUsers.delete(props.content.id)
       props.stores.map.keyInputUsers.delete('contentForm')

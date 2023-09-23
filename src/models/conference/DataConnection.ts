@@ -10,6 +10,7 @@ import {AudioMeter} from '@models/audio/AudioMeter'
 import {connLog, connDebug} from '@models/utils'
 import {EventEmitter} from 'events'
 import { MSMessage } from './MediaMessages'
+import {messageLoads} from '@stores/MessageLoads'
 
 //  Log level and module log options
 export const dataLog = connLog
@@ -67,7 +68,7 @@ export class DataConnection {
     this.peer_ = peer //This is the username
 
 
-    dataLog(`connect(${room}, ${peer})`)
+    dataLog()(`connect(${room}, ${peer})`)
     const self = this as DataConnection
 
 
@@ -77,7 +78,7 @@ export class DataConnection {
         console.warn(`dataSocket already exists.`)
       }
       function onOpen(){
-        dataLog('data connected.')
+        dataLog()('data connected.')
         self.messagesToSendToRelay = []
         if (config.dataServer){
           const msg:MSMessage = { type: 'dataConnect' }
@@ -118,7 +119,7 @@ export class DataConnection {
         self.dataSocket?.close(3000, 'onError')
       }
       function onClose(){
-        dataLog('onClose() for dataSocket')
+        dataLog()('onClose() for dataSocket')
         self.disconnect()
       }
       function setHandler(){
@@ -158,7 +159,7 @@ export class DataConnection {
       func()
     })
     this.emit('disconnect')
-    connLog(`dataSocket emits 'disconnect'`)
+    connLog()(`dataSocket emits 'disconnect'`)
     return promise
   }
   public forceClose(){
@@ -177,20 +178,22 @@ export class DataConnection {
   private step(){
     const period = 33
     if (this.dataSocket?.readyState === WebSocket.OPEN){
-      const timeToProcess = period * 0.8
-      const deadline = Date.now() + timeToProcess
-      while(Date.now() < deadline && this.receivedMessages.length){
+      const timeToProcess = period * 0.5
+      let now = Date.now()
+      const deadline = now + timeToProcess
+      while(now < deadline && this.receivedMessages.length){
         const msg = this.receivedMessages.shift()
         if (msg){
           this.sync.onBmMessage(msg)
         }
+        now = Date.now()
       }
+      messageLoads.dataLoad = (now - (deadline-timeToProcess)) / timeToProcess
       dataRequestInterval = Math.min(
         //Math.max((this.relayRttAverage-20) * participants.remote.size/40, 0) + 20, 3*1000)
         Math.max((this.relayRttAverage-20), 0) + 20, 3*1000)
         //console.log(`RTTAve:${this.relayRttAverage.toFixed(2)} Last:${this.relayRttLast}  dataRequestInterval=${dataRequestInterval}`)
         const REQUEST_WAIT_TIMEOUT = dataRequestInterval + 20 * 1000  //  wait 20 sec when failed to receive message.
-      const now = Date.now()
       if (now < deadline && this.dataSocket && !this.receivedMessages.length
         && now - this.lastRequestTime > dataRequestInterval
         && (this.lastReceivedTime >= this.lastRequestTime

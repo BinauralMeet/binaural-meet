@@ -68,7 +68,7 @@ function getImage(ctx:VRMContext, size: number[]){
     renderer.setSize(size[0], size[1])
     renderer.setPixelRatio(window.devicePixelRatio * 4)
     renderer.render(scene, camera)
-    formLog(`render ${ctx.id}`)
+    formLog()(`render ${ctx.id}`)
   }
   return canvas.toDataURL()
 }
@@ -77,7 +77,7 @@ export const vrmUrlBase = 'https://binaural.me/public_packages/uploader/vrm/avat
 const avatarSize = [150,200]
 function loadFile(mem: Member, size: number[]){
   const loader = GetPromiseGLTFLoader()
-  formLog(`files: ${mem.files}`)
+  formLog()(`files: ${mem.files}`)
 
   for(const file of mem.files){
     let ctx:VRMContext|undefined = mem.contexts.find(c => c.id === file)
@@ -89,12 +89,12 @@ function loadFile(mem: Member, size: number[]){
       }
     })
     loader.promiseLoad(`${vrmUrlBase}${file}`).then(gltf => {
-      formLog(`${file} loaded.`)
+      formLog()(`${file} loaded.`)
       if (!ctx) return
       VRMUtils.removeUnnecessaryJoints(gltf.scene);
       VRM.from(gltf).then(vrmGot => {
         if (!ctx) return
-        formLog(`${file} vrm got.`)
+        formLog()(`${file} vrm got.`)
         vrmGot.scene.rotation.y = Math.PI
         ctx.vrm = vrmGot
       })
@@ -139,7 +139,7 @@ export const Choose3DAvatar: React.FC<LocalParticipantFormProps> = (props: Local
     const req = new XMLHttpRequest();
     req.onload = (e) => {
       const text = req.responseText
-      //  formLog(`onload ${text}`)
+      //  formLog()(`onload ${text}`)
       mem.files = JSON.parse(text)
       loadFile(mem, avatarSize)
       setList(mem?.contexts.map((ctx)=>{

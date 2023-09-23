@@ -10,6 +10,8 @@ import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSConnectMessage, MS
 import * as mediasoup from 'mediasoup-client';
 import {connLog} from '@models/utils'
 import {RtcTransportStatsGot} from './RtcTransportStatsGot'
+import { setInterval } from 'timers';
+import {messageLoads} from '../../stores/MessageLoads'
 
 export type TrackRoles = 'avatar' | 'mainScreen' | string
 export type TrackKind = 'audio' | 'video'
@@ -41,7 +43,7 @@ export interface RemotePeer{
 declare const config:any                  //  from ../../config.js included from index.html
 
 //  Log level and module log options
-const rtcLog = connLog
+const rtcLog = connLog()
 
 type RtcConnectionEvent = 'remoteUpdate' | 'remoteLeft' | 'connect' | 'disconnect'
 
@@ -80,12 +82,42 @@ export class RtcConnection{
     return this.connected && this.mainServer?.readyState === WebSocket.OPEN
   }
 
+  rtcQueue = Array<MSMessage>()
+  readonly INTERVAL = 100
+  private interval:NodeJS.Timeout|undefined
+  private startProcessMessage(){  //  start interval timer to process message queue.
+    this.interval = setInterval(this.processMessage.bind(this), this.INTERVAL)
+  }
+  private processMessage(){
+    let now = Date.now()
+    const timeToProcess = this.INTERVAL * 0.5
+    const deadline = now + timeToProcess
+    while(this.rtcQueue.length && now < deadline){
+      const msg = this.rtcQueue.shift()!
+      rtcLog(`processMessag(${msg.type})`)
+      const func = this.handlers.get(msg.type)
+      if (func){
+        func.bind(this)(msg)
+      }else{
+        console.error(`unhandled message ${msg.type} received`, msg)
+      }
+      now = Date.now()
+    }
+    messageLoads.rtcLoad = (now - (deadline-timeToProcess)) / timeToProcess
+
+    //  Stop interval timer when disconnected and no messages in queue.
+    if (!this.isConnected() && this.rtcQueue.length===0 && this.interval){
+      clearInterval(this.interval)
+      this.interval = undefined
+    }
+  }
 
   //  connect to main server. return my peer id got.
   public connect(room: string, peer: string){
     rtcLog(`rtcConn connect(${room}, ${peer})`)
     const promise = new Promise<string>((resolve, reject)=>{
       this.connected = true
+      this.startProcessMessage()
       try{
         this.mainServer = new WebSocket(config.mainServer)
       }
@@ -106,13 +138,8 @@ export class RtcConnection{
       }
       const onMessageEvent = (ev: MessageEvent<any>)=> {
         const msg = JSON.parse(ev.data) as MSMessage
-        //this.onAnyMessageForPing()
-        const func = this.handlers.get(msg.type)
-        if (func){
-          func.bind(this)(msg)
-        }else{
-          console.error(`unhandled message ${msg.type} received`, msg)
-        }
+        //rtcLog(`onMessage(${msg.type})`)
+        this.rtcQueue.push(msg)
       }
       const onCloseEvent = () => {
         rtcLog('onClose() for mainServer')

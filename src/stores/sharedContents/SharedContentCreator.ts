@@ -134,7 +134,7 @@ export function createContentOfIframe(urlStr: string, map: MapData) {
     }
     if (pasted.type){
       resolve(pasted)
-      contentLog(`${pasted.type} created url = ${pasted.url}`)
+      contentLog()(`${pasted.type} created url = ${pasted.url}`)
     }
 })
 }

@@ -32,7 +32,7 @@ export class DataSync{
     //  setInterval(()=>{ this.checkRemoteAlive() }, 1000)
   }
   sendAllAboutMe(bSendRandP: boolean){
-    syncLog('sendAllAboutMe called.')
+    syncLog()('sendAllAboutMe called.')
     this.sendPoseMessage(bSendRandP)
     this.sendMouseMessage()
     participants.local.sendInformation()
@@ -209,7 +209,7 @@ export class DataSync{
         }
       }
       remote.informationReceived = true
-      syncLog(`Info of ${from} received.`)
+      syncLog()(`Info of ${from} received.`)
     }
   }
   private onParticipantTrackState(from:string|undefined, states:TrackStates){
@@ -357,9 +357,9 @@ export class DataSync{
   // tslint:disable-next-line: cyclomatic-complexity
   onBmMessage(msg: BMMessage){
     if (msg.t!==MessageType.AUDIO_LEVEL && msg.t!==MessageType.PARTICIPANT_MOUSE){
-      syncLog(`Recv data msg: ${msg.t}: ${msg.v}`)
+      syncLog()(`Recv data msg: ${msg.t}: ${msg.v}`)
     }
-    //syncLog(`Recv data msg: ${JSON.stringify(msgs)}.`)
+    //syncLog()(`Recv data msg: ${JSON.stringify(msgs)}.`)
     if (msg.v === undefined) {
       console.error(`Recv data msg ${msg.t} with value of undefined.`)
       return
@@ -404,7 +404,7 @@ export class DataSync{
     const remotes = Array.from(participants.remote.values())
     const ids = remotes.filter(remote => !remote.informationReceived).map(remote => remote.id)
     if (ids.length){
-      syncLog(`checkInfo sent ${ids}`)
+      syncLog()(`checkInfo sent ${ids}`)
       this.connection.sendMessage(MessageType.REQUEST_TO, ids)
     }
   } */

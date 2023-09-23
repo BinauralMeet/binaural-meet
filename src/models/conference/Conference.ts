@@ -77,7 +77,7 @@ export class Conference {
 
   public enter(room: string, reconnect:boolean = false){
     this.room_ = room
-    connLog(`enter to room ${room}.`)
+    connLog()(`enter to room ${room}.`)
     if (reconnect){
       this.rtcTransports.removeListener('disconnect', this.onRtcDisconnect)
       this.dataConnection.removeListener('disconnect', this.onDataDisconnect)
@@ -105,7 +105,7 @@ export class Conference {
       //  connect to peer
       const peer = participants.local.information.name.substring(0, 4).replaceAll(' ','_').replaceAll(':','_')
       this.rtcTransports.connect(room, peer).then((peer)=>{
-        connLog('rtc connected.')
+        connLog()('rtc connected.')
         //  register event handlers and join
         //  set id
         participants.setLocalId(peer)
@@ -413,7 +413,7 @@ export class Conference {
         }else{
           contents.addTrack(producer.peer.peer, producer.role, consumer.track)
         }
-        connLog(`Conference.addConsumer(): p:${producer.id} consumed.`)
+        connLog()(`Conference.addConsumer(): p:${producer.id} consumed.`)
         resolve()
       }).catch((e) => {
         console.error(`Conference.addConsumer() p:${producer.id} ${e}`)

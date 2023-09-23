@@ -108,7 +108,7 @@ export const ChatInBar: React.FC<BMProps&TextLineStyle>  = (props) => {
         const nameTo = chat.sendTo ? participants?.find(chat.sendTo)?.information?.name : undefined
         const textColor = isDarkColor(roomInfo.backgroundFill) ? 'white' : 'black'
 
-        return <TextField label={nameTo ? t('cmToName', {name: nameTo}) : t('cmToAll')} multiline={true} value={text}
+        return <TextField label={<>{nameTo ? t('cmToName', {name: nameTo}) : t('cmToAll')}</>} multiline={true} value={text}
           style={{width:'100%', userSelect:'none'}} size={props.lineHeight > 20 ? 'medium' : 'small'}
           InputProps={{style:{color:textColor}}}
           InputLabelProps={{style:{color:textColor}}}

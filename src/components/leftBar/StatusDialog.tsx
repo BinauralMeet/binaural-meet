@@ -9,6 +9,7 @@ import { useObserver } from 'mobx-react-lite'
 import errorInfo from '@stores/ErrorInfo'
 import {useTranslation} from '@models/locales'
 import {ConnectionStat} from '@components/map/Participant/SignalQuality'
+import {messageLoads} from '@stores/MessageLoads'
 
 declare const config:any             //  from ../../config.js included from index.html
 
@@ -70,6 +71,9 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
       data,
     }
   })
+  const loads = useObserver(()=>{
+    return {rtcLoad: messageLoads.rtcLoad, dataLoad: messageLoads.dataLoad}
+  })
 
   const {close, ...poperProps} = props
   return <Popper {...poperProps} disablePortal={false} style={{zIndex:2}}>
@@ -84,6 +88,7 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
           onClick={resetDataConnection}
         >{t('emResetData')}</Button>
         <br />
+        <div> Load: rtc={loads.rtcLoad.toPrecision(3)} data={loads.dataLoad.toPrecision(3)}</div>
         <div> Data: {stat.data}</div>
         {stat.servers.length === 0 ? <div>'No RTC server'</div> :
           stat.servers.map((server, idx) => <div key={idx}>

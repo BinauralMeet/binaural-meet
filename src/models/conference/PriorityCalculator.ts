@@ -7,7 +7,7 @@ import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import contents from '@stores/sharedContents/SharedContents'
 import {autorun, IReactionDisposer, makeObservable, observable} from 'mobx'
 import {RemoteObjectInfo, LocalObjectInfo} from './priorityTypes'
-import {priorityLog, priorityDebug, PRIORITYLOG} from '@models/utils'
+import {priorityLog, PRIORITYLOG} from '@models/utils'
 
 function getIdFromProducer(p: RemoteProducer){
   if (p.role === 'avatar') return p.peer.peer
@@ -276,11 +276,11 @@ export class PriorityCalculator {
     if (disposer) {
       disposer()
     }else{
-      priorityLog(`Cannot find disposer for remote object with id: ${id}`)
+      priorityLog()(`Cannot find disposer for remote object with id: ${id}`)
     }
     this.remoteDisposers.delete(id)
     this.updateSet.add(id)
-    priorityLog('onRemoveObject:', id, this.priorityMaps[0])
+    priorityLog()('onRemoveObject:', id, this.priorityMaps[0])
   }
   public onAddProducer(producer: RemoteProducer){
     const id = getIdFromProducer(producer)

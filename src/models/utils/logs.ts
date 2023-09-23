@@ -1,7 +1,7 @@
 // config.js
 declare const d:any               //  from index.html
 
-d.CONNECTIONLOG = false
+d.CONNECTIONLOG = true
 d.CONTENTLOG = false
 d.EVENTLOG = false
 d.FORMLOG = false
@@ -13,44 +13,36 @@ d.TRACKLOG = false                // show add, remove... of tracks
 
 export function CONNECTIONLOG(){ return d.CONNECTIONLOG as boolean}
 export function CONTENTLOG() { return d.CONTENTLOG as boolean}
-export function EVENTLOG(){ return d.EVENTLOG as boolean}
 export function FORMLOG(){ return d.FORMLOG as boolean}
 export function POSITIONLOG(){ return d.POSITIONLOG as boolean}
 export function PRIORITYLOG() { return d.PRIORITYLOG as boolean}
 export function SENDLOG(){ return d.SENDLOG as boolean}
-export function TRACKLOG(){ return d.TRACKLOG as boolean }
 
-export function trackLog(...data:any[]){
-  d.TRACKLOG && console.log(data)
+function noLog(..._data:any[]){}
+export function connLog(){
+  return d.CONNECTIONLOG ? console.log : noLog
 }
-export function connLog(...data:any[]){
-  d.CONNECTIONLOG && console.log(data)
+export function connDebug(){
+  return d.CONNECTIONLOG ? console.debug : noLog
 }
-export function connDebug(...data:any[]){
-  d.CONNECTIONLOG && console.debug(data)
+export function sendLog(){
+  return d.SENDLOG ? console.log : noLog
 }
-export function eventLog(...data:any[]){
-  d.EVENTLOG && console.log(data)
+export function formLog(){
+  return d.FORMLOG ? console.log : noLog
 }
-export function sendLog(...data:any[]){
-  d.SENDLOG && console.log(data)
+export function positionLog(){
+  return d.POSITIONLOG ? console.log : noLog
 }
-export function formLog(...data:any[]){
-  d.FORMLOG && console.log(data)
+export function priorityLog(){
+  return d.PRIORITYLOG ? console.log : noLog
 }
-export function positionLog(...data:any[]){
-  d.POSITIONLOG && console.log(data)
+export function priorityDebug(){
+  return d.PRIORITYLOG ? console.debug : noLog
 }
-export function priorityLog(...data:any[]){
-  d.PRIORITYLOG && console.log(data)
+export function contentLog(){
+  return d.CONTENTLOG ? console.log : noLog
 }
-export function priorityDebug(...data:any[]){
-  d.PRIORITYLOG && console.debug(data)
-}
-
-export function contentLog(...data:any[]){
-  d.CONTENTLOG && console.log(data)
-}
-export function contentDebug(...data:any[]){
-  d.CONTENTLOG && console.debug(data)
+export function contentDebug(){
+  return d.CONTENTLOG ? console.debug : noLog
 }
