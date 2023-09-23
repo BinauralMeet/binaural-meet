@@ -1,7 +1,7 @@
 // config.js
 declare const d:any               //  from index.html
 
-d.CONNECTIONLOG = true
+d.CONNECTIONLOG = false
 d.CONTENTLOG = false
 d.EVENTLOG = false
 d.FORMLOG = false
