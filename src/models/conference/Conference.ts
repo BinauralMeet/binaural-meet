@@ -16,6 +16,7 @@ import {connLog} from '@models/utils'
 import {RemoteObjectInfo } from './priorityTypes'
 import {inputChangeObservationStart, inputChangeObservationStop} from './observeInputDevice'
 import { PositionConnection } from './PositionConnection'
+import { ISharedContent } from '@models/ISharedContent'
 
 // config.js
 declare const d:any                  //  from index.html
@@ -24,7 +25,6 @@ declare const d:any                  //  from index.html
 const stringArrayMessageTypesForClient = new Set(StringArrayMessageTypes)
 stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.CONTENT_UPDATE_REQUEST_BY_ID)
 stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.REQUEST_PARTICIPANT_STATES)
-
 
 export class Conference {
   private room_=''    //  room name
@@ -200,6 +200,9 @@ export class Conference {
     const func = ()=>{
       if (this.rtcTransports.isConnected()){
         this.dataConnection.connect(this.room, this.rtcTransports.peer)
+        setTimeout(()=>{
+          this.sendLocalRtcContents()
+        }, 2000)
       }else{
         setTimeout(func, 2000)
       }
@@ -434,5 +437,15 @@ export class Conference {
     }
   }
 
+  private sendLocalRtcContents(){
+    const localRtcCids = contents.getLocalRtcContentIds()
+    const localRtcContents:ISharedContent[]  = []
+    for (const cid of localRtcCids){
+      const c = contents.find(cid)
+      if (c) localRtcContents.push(c)
+    }
+    //console.log(`sendLocalRtcContents called for ${participants.localId} ${JSON.stringify(localRtcContents)}`)
+    this.dataConnection.sync.sendContentUpdateRequest(participants.localId, localRtcContents)
+  }
 }
 export const conference = new Conference()

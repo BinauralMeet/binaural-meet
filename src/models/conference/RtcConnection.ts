@@ -45,6 +45,8 @@ declare const config:any                  //  from ../../config.js included from
 //  Log level and module log options
 const rtcLog = connLog()
 
+const SEND_INTERVAL = 10 * 1000
+
 type RtcConnectionEvent = 'remoteUpdate' | 'remoteLeft' | 'connect' | 'disconnect'
 
 export class RtcConnection{
@@ -57,10 +59,11 @@ export class RtcConnection{
   private handlers = new Map<MSMessageType, (msg: MSMessage)=>void>()
   private promises = new Map<number, {resolve:(a:any)=>void, reject?:(a:any)=>void, arg?:any} >()
   private messageNumber = 1
+  private lastSendTime = 0
 
   public constructor(){
     this.handlers.set('connect', this.onConnect)
-    this.handlers.set('ping', ()=>{})
+    this.handlers.set('pong', ()=>{})
     this.handlers.set('createTransport', this.onCreateTransport)
     this.handlers.set('rtpCapabilities', this.onRtpCapabilities)
     this.handlers.set('connectTransport', this.onConnectTransport)
@@ -90,6 +93,13 @@ export class RtcConnection{
   }
   private processMessage(){
     let now = Date.now()
+    if (now > this.lastSendTime + SEND_INTERVAL && this.mainServer){
+      const msg:MSMessage = {
+        type: 'pong'
+      }
+      this.mainServer.send(JSON.stringify(msg))
+      this.lastSendTime = now
+    }
     const timeToProcess = this.INTERVAL * 0.5
     const deadline = now + timeToProcess
     while(this.rtcQueue.length && now < deadline){
@@ -126,6 +136,7 @@ export class RtcConnection{
         reject(e)
       }
       const onOpenEvent = () => {
+        this.lastSendTime = Date.now()
         const msg:MSConnectMessage = {
           type:'connect',
           peer,
@@ -142,7 +153,8 @@ export class RtcConnection{
         this.rtcQueue.push(msg)
       }
       const onCloseEvent = () => {
-        rtcLog('onClose() for mainServer')
+        //rtcLog('onClose() for mainServer')
+        console.warn('onClose() for mainServer')
         this.disconnect()
       }
       const onErrorEvent = () => {
@@ -171,6 +183,7 @@ export class RtcConnection{
     return false
   }
   public disconnect(code?:number, msg?:string){
+    console.warn(`RTCConnection disconnect() called.`)
     const promise = new Promise<void>((resolve)=>{
       const func = ()=>{
         if (this.mainServer && this.mainServer.readyState === WebSocket.OPEN && this.mainServer.bufferedAmount){
@@ -222,6 +235,7 @@ export class RtcConnection{
     }else{
       this.setMessagePromise(msg, resolve, reject, arg)
       this.mainServer.send(JSON.stringify(msg))
+      this.lastSendTime = Date.now()
     }
   }
   private resolveMessage(m: MSMessage, a?:any){
@@ -275,6 +289,7 @@ export class RtcConnection{
       }
       rtcLog(`join sent ${JSON.stringify(joinMsg)}`)
       this.mainServer.send(JSON.stringify(joinMsg))
+      this.lastSendTime = Date.now()
       this.loadDevice(msg.peer).then(()=>{
         this.resolveMessage(msg, msg.peer)
         this.emitter.emit('connect')
@@ -285,52 +300,6 @@ export class RtcConnection{
       throw new Error('No connection has been established.')
     }
   }
-  readonly pingpongDuration = 3000
-  readonly pingpongFailCount = 4
-  private pingCount = 0
-  private pingTimeout?:NodeJS.Timeout = undefined
-  private pingTimerFunc = () => {
-    this.pingTimeout = undefined
-    if (this.pingCount < this.pingpongFailCount){
-      if (this.mainServer?.readyState === WebSocket.OPEN){
-        const msg: MSMessage = {type:'ping'}
-        this.mainServer!.send(JSON.stringify(msg))
-        if (this.pingCount > 1){
-          console.warn(`RtcConnection: ping send count:${this.pingCount} > 0.`)
-        }
-        this.pingCount += 1
-        this.pingTimeout = setTimeout(this.pingTimerFunc, this.pingpongDuration)
-        rtcLog(`pingTimerFunc() ping sent. count=${this.pingCount}.`)
-      }else{
-        console.warn('RtcConnection: Not opened and can not send ping.')
-        this.pingCount = 0
-      }
-    }else{  //  Did not receive any message after sending two ping messages.
-      console.warn(`RtcConnection: Ping pong time out. count=${this.pingCount}`)
-      this.pingCount = 0
-      if (this.connected){
-        this.disconnect(3000, 'ping pong time out.')
-      }
-    }
-  }
-  private startPingPong(){
-    const msg: MSMessage = {type:'ping'}
-    this.mainServer?.send(JSON.stringify(msg))
-    this.pingCount = 1
-    if (this.pingTimeout){
-      console.error(`this.pingTimeout already set to ${this.pingTimeout}`)
-    }
-    this.pingTimeout = setTimeout(this.pingTimerFunc, this.pingpongDuration)
-    rtcLog(`startPingPong() called. ping sent. count=${this.pingCount}.`)
-  }
-  private onAnyMessageForPing(){
-    this.pingCount = 0
-    if (this.pingTimeout){
-      clearTimeout(this.pingTimeout)
-      this.pingTimeout = setTimeout(this.pingTimerFunc, this.pingpongDuration)
-    }
-  }
-
   public createTransport(dir: MSTransportDirection, remote?: RemotePeer){
     if (dir === 'receive' && !remote){
       console.error(`createTransport(): remote must be specified.`)
@@ -493,6 +462,7 @@ export class RtcConnection{
       id
     }
     this.mainServer?.send(JSON.stringify(msg))
+    this.lastSendTime = Date.now()
   }
   public streamingStop(id: string){
     const msg:MSStreamingStopMessage = {
@@ -501,6 +471,7 @@ export class RtcConnection{
       id
     }
     this.mainServer?.send(JSON.stringify(msg))
+    this.lastSendTime = Date.now()
   }
 
   private emitter = new EventEmitter()
