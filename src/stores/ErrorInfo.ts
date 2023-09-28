@@ -146,7 +146,9 @@ export class ErrorInfo {
     }else {
       this.clear('rtcTransports')
       this.clear('dataConnection')
-      this.checkMic()
+      if (urlParameters.testBot === null)  {
+        this.checkMic()
+      }
     }
   }
   @action checkMic() {
@@ -171,7 +173,7 @@ export class ErrorInfo {
   //  testBot
   canvas: HTMLCanvasElement|undefined = undefined
   oscillator: OscillatorNode|undefined = undefined
-  startTestBot () {
+  startTestBot() {
     participants.local.muteAudio = false
     participants.local.muteVideo = false
     let counter = 0
@@ -234,6 +236,7 @@ export class ErrorInfo {
       }
       */
     }
+    /*
     const win = window as any
     if (win.requestIdleCallback) {
       const moveTask = () => {  //  onIdle, wait 50ms and run move()
@@ -245,7 +248,8 @@ export class ErrorInfo {
       moveTask()
     }else {
       setInterval(move, 1000)
-    }
+    }*/
+    setInterval(move, 500)
 
     const vidoeStream = (this.canvas as any).captureStream(20) as MediaStream
     const videoTrack = vidoeStream.getVideoTracks()[0]
