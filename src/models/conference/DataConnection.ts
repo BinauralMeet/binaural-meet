@@ -9,7 +9,7 @@ import {DataSync} from '@models/conference/DataSync'
 import {AudioMeter} from '@models/audio/AudioMeter'
 import {connLog, connDebug} from '@models/utils'
 import {EventEmitter} from 'events'
-import { MSMessage } from './MediaMessages'
+import {MSMessage} from './MediaMessages'
 import {messageLoads} from '@stores/MessageLoads'
 
 //  Log level and module log options
@@ -35,6 +35,7 @@ export class DataConnection {
   public get peer(){ return this.peer_ }
   private room_=''
   public get room(){ return this.room_ }
+  private lastSentTime = Date.now()
   private lastRequestTime = Date.now()
   private lastReceivedTime = Date.now()
   private messagesToSendToRelay: BMMessage[] = []
@@ -193,20 +194,28 @@ export class DataConnection {
         //Math.max((this.relayRttAverage-20) * participants.remote.size/40, 0) + 20, 3*1000)
         Math.max((this.relayRttAverage-20), 0) + 20, 3*1000)
         //console.log(`RTTAve:${this.relayRttAverage.toFixed(2)} Last:${this.relayRttLast}  dataRequestInterval=${dataRequestInterval}`)
-        const REQUEST_WAIT_TIMEOUT = dataRequestInterval + 20 * 1000  //  wait 20 sec when failed to receive message.
+        const REQUEST_WAIT_TIMEOUT = dataRequestInterval + 10 * 1000  //  wait 10 sec when failed to receive message.
       if (now < deadline && this.dataSocket && !this.receivedMessages.length
         && now - this.lastRequestTime > dataRequestInterval
-        && (this.lastReceivedTime >= this.lastRequestTime
-          || now - this.lastRequestTime > REQUEST_WAIT_TIMEOUT)){
+        && (this.lastReceivedTime >= this.lastRequestTime || now - this.lastRequestTime > REQUEST_WAIT_TIMEOUT)){
           this.lastRequestTime = now
           const area = recorder.recording ? [-MAP_SIZE*2, MAP_SIZE*2, MAP_SIZE*2, -MAP_SIZE*2]
             : map.visibleArea()
           this.requestRange(area, participants.audibleArea())
           this.updateAudioLevel()
           this.flushSendMessages()
-      }
-      if (now >= deadline){
-        console.warn(`Too heavy to send REQUEST_RANGE. ${(now - deadline).toFixed(0)}ms.`)
+      }else{
+        if (now >= deadline){
+          console.debug(`Too heavy to send REQUEST_RANGE. ${(now - deadline).toFixed(0)}ms.`)
+        }
+        if (now - this.lastSentTime > 3 * 1000){
+          const msg:BMMessage = {
+            t:MessageType.PONG,
+            v:''
+          }
+          this.messagesToSendToRelay.push(msg)
+          this.flushSendMessages()
+        }
       }
       //  console.log(`step RTT:${this.relayRttAverage} remain:${deadline - Date.now()}/${timeToProcess}`)
     }
@@ -273,6 +282,7 @@ export class DataConnection {
 
     if (this.dataSocket?.readyState === WebSocket.OPEN){
       this.dataSocket.send(JSON.stringify(this.messagesToSendToRelay))
+      this.lastSentTime = Date.now()
       //  console.log(`Sent bmMessages: ${JSON.stringify(this.messagesToSendToRelay)}`)
       this.messagesToSendToRelay = []
     }else{
@@ -283,6 +293,7 @@ export class DataConnection {
             setTimeout(waitAndSend, 100)
           }else{
             this.dataSocket?.send(JSON.stringify(this.messagesToSendToRelay))
+            this.lastSentTime = Date.now()
             this.messagesToSendToRelay = []
           }
         }

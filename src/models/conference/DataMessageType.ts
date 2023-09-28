@@ -69,6 +69,7 @@ export const MessageType = {
   PARTICIPANT_LEFT: 'm_participant_left',       //  id:string,  remove info
   ROOM_PROP:  'room_prop',                      //  [name:string, value:string], set room property
   REQUEST_TO: 'req_to',                         //  ids:string[], request for info of specific participant
+  PONG: 'o',                                    //  pong message
 
   //  only for JVB
   FRAGMENT_HEAD: 'frag_head',
