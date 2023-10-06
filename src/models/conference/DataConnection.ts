@@ -208,7 +208,8 @@ export class DataConnection {
         if (now >= deadline){
           console.debug(`Too heavy to send REQUEST_RANGE. ${(now - deadline).toFixed(0)}ms.`)
         }
-        if (now - this.lastSentTime > 3 * 1000){
+        const TIME_TO_SEND_PONG = config.websocketTimeout / 3
+        if (now - this.lastSentTime > TIME_TO_SEND_PONG){
           const msg:BMMessage = {
             t:MessageType.PONG,
             v:''
@@ -216,6 +217,11 @@ export class DataConnection {
           this.messagesToSendToRelay.push(msg)
           this.flushSendMessages()
         }
+      }
+      const TIMEOUT = config.websocketTimeout
+      if (now - this.lastReceivedTime > TIMEOUT){
+        console.warn(`Data socket time out by client (${TIMEOUT} msec).`)
+        this.forceClose()
       }
       //  console.log(`step RTT:${this.relayRttAverage} remain:${deadline - Date.now()}/${timeToProcess}`)
     }

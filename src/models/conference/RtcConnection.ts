@@ -10,7 +10,7 @@ import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSConnectMessage, MS
 import * as mediasoup from 'mediasoup-client';
 import {connLog} from '@models/utils'
 import {RtcTransportStatsGot} from './RtcTransportStatsGot'
-import { setInterval } from 'timers';
+import {setInterval} from 'timers';
 import {messageLoads} from '../../stores/MessageLoads'
 
 export type TrackRoles = 'avatar' | 'mainScreen' | string
@@ -45,8 +45,6 @@ declare const config:any                  //  from ../../config.js included from
 //  Log level and module log options
 const rtcLog = connLog()
 
-const SEND_INTERVAL = 10 * 1000
-
 type RtcConnectionEvent = 'remoteUpdate' | 'remoteLeft' | 'connect' | 'disconnect'
 
 export class RtcConnection{
@@ -59,7 +57,8 @@ export class RtcConnection{
   private handlers = new Map<MSMessageType, (msg: MSMessage)=>void>()
   private promises = new Map<number, {resolve:(a:any)=>void, reject?:(a:any)=>void, arg?:any} >()
   private messageNumber = 1
-  private lastSendTime = 0
+  private lastSendTime = Date.now()
+  private lastReceivedTime = Date.now()
 
   public constructor(){
     this.handlers.set('connect', this.onConnect)
@@ -93,12 +92,18 @@ export class RtcConnection{
   }
   private processMessage(){
     let now = Date.now()
+    const TIMEOUT = config.websocketTimeout
+    const SEND_INTERVAL = TIMEOUT / 2
     if (now > this.lastSendTime + SEND_INTERVAL && this.mainServer){
       const msg:MSMessage = {
         type: 'pong'
       }
       this.mainServer.send(JSON.stringify(msg))
       this.lastSendTime = now
+    }
+    if (now - this.lastReceivedTime > TIMEOUT){
+      console.warn(`RTC socket time out by client (${TIMEOUT} msec).`)
+      this.forceClose()
     }
     const timeToProcess = this.INTERVAL * 0.5
     const deadline = now + timeToProcess
@@ -148,6 +153,7 @@ export class RtcConnection{
         this.sendWithPromise(msg, resolve, reject, room)
       }
       const onMessageEvent = (ev: MessageEvent<any>)=> {
+        this.lastReceivedTime = Date.now()
         const msg = JSON.parse(ev.data) as MSMessage
         //rtcLog(`onMessage(${msg.type})`)
         this.rtcQueue.push(msg)
