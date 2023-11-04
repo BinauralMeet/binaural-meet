@@ -27,7 +27,7 @@ commonConfig = {
   remoteAudioLimit:20,
   thirdPersonView: true,
   rtc: rtcConfig,
-  websocketTimeout: 15 * 1000,
+  websocketTimeout: 60 * 1000,
 }
 
 const configTitech = {
