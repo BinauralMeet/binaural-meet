@@ -35,6 +35,7 @@ function onStart() {
 }
 
 function renderDOM() {
+  // program start
   ReactDOM.render(
       <App />,
     document.getElementById('root')
