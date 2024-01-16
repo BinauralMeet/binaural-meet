@@ -1,6 +1,7 @@
 import { BMProps, buttonStyle, dialogStyle, translateIconStyle } from "@components/utils";
-import usageEn from "@images/usage.en.png";
-import usageJa from "@images/usage.ja.png";
+// move images to public folder
+import usageEn from "../../../public/images/usage.en.png";
+import usageJa from "../../../public/images/usage.ja.png";
 import Box from "@material-ui/core/Box";
 import Button from "@material-ui/core/Button";
 import DialogContent from "@material-ui/core/DialogContent";
