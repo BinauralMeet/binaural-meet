@@ -52,7 +52,6 @@
     "react-i18next": "^11.8.8",
     "react-resize-observer": "^1.1.1",
     "react-rnd": "https://github.com/hasevr/react-rnd.git",
-    "react-scripts": "4.0.3",
     "react-split-pane": "^0.1.92",
     "react-use-gesture": "^7.0.15",
     "sass": "^1.26.11",
