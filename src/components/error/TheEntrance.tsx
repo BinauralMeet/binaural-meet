@@ -14,6 +14,7 @@ import errorInfo from "@stores/ErrorInfo";
 import React, { useState } from "react";
 import { ErrorDialogFrame } from "./ErrorDialog";
 import {tfDivStyle, tfIStyle, tfLStyle} from '@components/utils'
+import Image from "next/image"
 
 export const TheEntrance: React.FC<BMProps> = (props) => {
   const { participants } = props.stores;
@@ -67,8 +68,8 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
         </Button>
         <h2>Binaural Meet</h2>
         <p>
-          <img
-            style={{ float: "right", width: isSmartphone()&&isPortrait() ? "14em" : "28em" }}
+          <Image
+            style={{ float: "right", width: isSmartphone()&&isPortrait() ? "14em" : "28em", height: "19em"}}
             src={i18n.language === "ja" ? usageJa : usageEn}
             alt="usage"
           />
