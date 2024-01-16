@@ -11,11 +11,30 @@ import { participants } from '../src/stores/index';
 import {urlParameters} from '../src/models/url';
 import '../src/models/audio' // init audio manager (DO NOT delete)
 import '../src/stores/index';
+import { developerKey, clientId, appId, scope, loadGoogleDrive, authorizeGdrive } from '../public/gapi';
 
 
 
 
 export const Mid: React.FC<{}> = () => {
+
+
+    // init google drive
+
+
+    // This function will be called when the component mounts
+    loadGoogleDrive();
+    authorizeGdrive((authResult) => {
+      if (authResult && !authResult.error) {
+        // Authorization was successful
+        console.log('Authorization was successful');
+      } else {
+        // Authorization failed
+        console.log('Authorization failed');
+      }
+    });
+
+  
 
 
     i18nInit().then(main)
@@ -62,15 +81,6 @@ export const Mid: React.FC<{}> = () => {
         conference.enter(room, false)
       })
     }
-
-  //   window.addEventListener('touchmove', (ev) => {
-  //     ev.preventDefault();
-  // }, { passive: false, capture: false });
-
-  // window.addEventListener('contextmenu', (ev) => {
-  //     ev.preventDefault();
-  // }, { passive: false, capture: false });
-
 
   return <App />;
 }
