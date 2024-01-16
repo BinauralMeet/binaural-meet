@@ -9,6 +9,7 @@ import { when } from 'mobx';
 import { conference } from '../src/models/conference';
 import { participants } from '../src/stores/index';
 import {urlParameters} from '../src/models/url';
+import '../src/models/audio' // init audio manager (DO NOT delete)
 
 
 
