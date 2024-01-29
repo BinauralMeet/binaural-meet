@@ -28,12 +28,23 @@
     "baseUrl": "src",
     "isolatedModules": true,
     "useDefineForClassFields": true,
-    //TODO: need to confirm
-    "paths": {           // ・・・・追加
-      "@/*": [           // ・・・・追加
-        "./*"            // ・・・・追加
-      ]                  // ・・・・追加
-    }                    // ・・・・追加
+    "paths": {
+      "@component*": [
+        "./component*"
+      ],
+      "@models*": [
+      "./models*"
+      ],
+      "@stores*": [
+      "./stores*"
+      ],
+      "@hooks*": [
+      "./hooks*"
+      ],
+      "@images*": [
+      "./images*"
+      ]
+    }
   },
   "include": [
     "src",
