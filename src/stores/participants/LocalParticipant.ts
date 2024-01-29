@@ -42,8 +42,13 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
   @observable.ref zone:ISharedContent|undefined = undefined    //  The zone on which the local participant located.
   @observable remoteVideoLimit = config.remoteVideoLimit as number || -1
   @observable remoteAudioLimit = config.remoteAudioLimit as number || -1
-
-  information = this.information as LocalInformation
+  // init information
+  get information(): LocalInformation {
+    return this.information_ as LocalInformation;
+  }
+  set information(value: LocalInformation) {
+      this.information_ = value;
+  }
   @observable.ref informationToSend:RemoteInformation|undefined
   @action setThirdPersonView(tpv: boolean) { this.thirdPersonView = tpv }
   @computed get trackStates():TrackStates {

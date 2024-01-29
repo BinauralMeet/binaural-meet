@@ -8,13 +8,11 @@ const path = require("path");
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  // This changes the out put dir from dist to build
-  // comment this out if that isn't relevant for your project
-  resolve: {                                // ・・・・追加
-    alias: {                                // ・・・・追加
-      '@': path.resolve(__dirname, './src') // ・・・・追加
-    }                                       // ・・・・追加
-  },                                        // ・・・・追加
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src')
+    }
+  },
   build: {
     outDir: "build",
   },
