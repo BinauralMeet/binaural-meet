@@ -113,6 +113,7 @@ export class DataConnection {
           if (msgs.length){
             self.relayRttAverage = alpha * self.relayRttLast + (1-alpha) * self.relayRttAverage
           }
+          console.log(`RTT data: ${self.relayRttAverage}   ${self.relayRttLast}`)
         }
       }
       function onError(){

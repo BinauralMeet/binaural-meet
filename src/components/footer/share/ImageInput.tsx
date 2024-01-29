@@ -34,7 +34,7 @@ export const ImageInput: React.FC<ImageInputProps> = (props) => {
   )
 
   const authGoogleDrive = ()=>{
-    window.authorizeGdrive && window.authorizeGdrive((authResult: GoogleApiOAuth2TokenObject)=>{
+    window.authorizeGdrive && window.authorizeGdrive((authResult: any)=>{
       console.log(authResult);
       if (authResult && !authResult.error) {
         const oauthToken = authResult.access_token

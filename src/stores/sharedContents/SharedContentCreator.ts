@@ -491,7 +491,7 @@ export function getStringFromParams(params: Map<string, string>){
   return url
 }
 export function getInformationOfGDriveContent(fileId: string){
-  //  console.log('GAPI try to get mimeType')
+  //  console.log('gapi try to get mimeType')
   const API_KEY = 'AIzaSyCE4B2cKycH0fVmBznwfr1ynnNf2qNEU9M'
   const rv = new Promise<{name:string, mimeType:string}>((resolve, reject)=>{
     if (gapi){
@@ -503,10 +503,10 @@ export function getInformationOfGDriveContent(fileId: string){
         })
         .then((result:any) => {
           const body = JSON.parse(result.body)
-          //  console.log(`GAPI mimeType:${body.mimeType}  name:${body.name}`)
+          //  console.log(`gapi mimeType:${body.mimeType}  name:${body.name}`)
           resolve({mimeType:body.mimeType, name: body.name})
         }).catch((reason:any) => {
-          console.debug('GAPI error', reason)
+          console.debug('gapi error', reason)
           reject(reason)
         })
       })
