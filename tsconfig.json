@@ -7,12 +7,15 @@
       "dom.iterable",
       "esnext"
     ],
+    "types": ["vite/client", "vite-plugin-svgr/client"],
+    //TODO: need to confirm
+    "strict": true,
+    "strictPropertyInitialization": false,
     "allowJs": true,
     "checkJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "module": "esnext",
@@ -23,7 +26,14 @@
     "downlevelIteration": true,
     "jsx": "react-jsx",
     "baseUrl": "src",
-    "isolatedModules": true
+    "isolatedModules": true,
+    "useDefineForClassFields": true,
+    //TODO: need to confirm
+    "paths": {           // ・・・・追加
+      "@/*": [           // ・・・・追加
+        "./*"            // ・・・・追加
+      ]                  // ・・・・追加
+    }                    // ・・・・追加
   },
   "include": [
     "src",
