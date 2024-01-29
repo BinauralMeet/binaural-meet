@@ -1,5 +1,4 @@
 {
-  "extends": "./tsconfig.paths.json",
   "compilerOptions": {
     "target": "es5",
     "lib": [
@@ -8,7 +7,6 @@
       "esnext"
     ],
     "types": ["vite/client"],
-    //TODO: need to confirm
     "strict": true,
     "strictPropertyInitialization": false,
     "allowJs": true,
