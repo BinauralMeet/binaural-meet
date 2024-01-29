@@ -6,7 +6,13 @@ import {ParticipantBase, TrackStates} from './ParticipantBase'
 
 
 export class PlaybackParticipant extends ParticipantBase implements Store<IPlaybackParticipant> {
-  information:RemoteInformation = this.information as RemoteInformation
+  // init information
+  get information(): RemoteInformation {
+    return this.information_ as RemoteInformation;
+  }
+  set information(value: RemoteInformation) {
+      this.information_ = value;
+  }
   informationReceived = false
   @observable trackStates = new TrackStates()
   @observable called = false

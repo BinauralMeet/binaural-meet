@@ -54,7 +54,14 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
   @observable.shallow physics = defaultPhysics
   @observable.shallow viewpoint = defaultViewpoint
   @observable.shallow mouse:Mouse = {position:[0, 0], show:false}
-  @observable.shallow information: LocalInformation | RemoteInformation
+  @observable.shallow information_: LocalInformation | RemoteInformation
+  // Add getter and setter to avoid information redifined in LocalParticipant and RemoteParticipant
+  get information(): LocalInformation | RemoteInformation {
+      return this.information_;
+  }
+  set information(value: LocalInformation | RemoteInformation) {
+      this.information_ = value;
+  }
   @observable muteAudio = false
   @observable muteSpeaker = false
   @observable muteVideo = false
@@ -75,23 +82,23 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
   constructor(isLocal=false) {
     super()
     if (isLocal){
-      this.information = defaultInformation
+      this.information_ = defaultInformation
     }else{
-      this.information = defaultRemoteInformation
+      this.information_ = defaultRemoteInformation
     }
     makeObservable(this)
   }
 
   getColor() {
-    let color = this.information.color
+    let color = this.information_.color
     if (!color.length) {
-      if (this.information.name.length){
-        color = getRandomColorRGB(this.information.name)
+      if (this.information_.name.length){
+        color = getRandomColorRGB(this.information_.name)
       }else{
         color = [0xD0, 0xD0, 0xE0]
       }
     }
-    let textColor = this.information.textColor
+    let textColor = this.information_.textColor
     if (!textColor.length) {
       textColor = findTextColorRGB(color)
     }
@@ -102,14 +109,14 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
   }
 
   getColorRGB() {
-    return this.information.color.length ? this.information.color : getRandomColorRGB(this.information.name)
+    return this.information_.color.length ? this.information_.color : getRandomColorRGB(this.information_.name)
   }
   getTextColorRGB() {
-    let textColor = this.information.textColor
+    let textColor = this.information_.textColor
     if (!textColor.length) {
-      let color = this.information.color
+      let color = this.information_.color
       if (!color.length) {
-        color = getRandomColorRGB(this.information.name)
+        color = getRandomColorRGB(this.information_.name)
       }
       textColor = findTextColorRGB(color)
     }

@@ -29,15 +29,15 @@ export const GoogleDriveImport: React.FC<GoogleDriveImportProps> = ({ onSelected
   // Create and render a Picker object for searching images.
   function createPicker(oauthToken:string) {
     if (pickerApiLoaded && oauthToken) {
-      const view = new google.picker.DocsView(google.picker.ViewId.DOCS) // LIMIT CONTENT TYPE RESULT
+      const view = new (window as any).google.picker.DocsView((window as any).google.picker.ViewId.DOCS) // LIMIT CONTENT TYPE RESULT
       //view.setMimeTypes("image/png,image/jpeg,image/jpg"); // LIMIT BY MIME TYPE
-      const picker = new google.picker.PickerBuilder()
-          .enableFeature(google.picker.Feature.NAV_HIDDEN)
+      const picker = new (window as any).google.picker.PickerBuilder()
+          .enableFeature((window as any).google.picker.Feature.NAV_HIDDEN)
           // .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
           .setAppId(appId)
           .setOAuthToken(oauthToken)
           .addView(view)
-          .addView(new google.picker.DocsUploadView())
+          .addView(new (window as any).google.picker.DocsUploadView())
           .setDeveloperKey(developerKey)
           .setCallback(pickerCallback)
           .build()
@@ -46,8 +46,8 @@ export const GoogleDriveImport: React.FC<GoogleDriveImportProps> = ({ onSelected
   }
 
   // A simple callback implementation.
-  function pickerCallback(data: google.picker.ResponseObject) {
-    if (data.action === google.picker.Action.PICKED) {
+  function pickerCallback(data:any) {
+    if (data.action === (window as any).google.picker.Action.PICKED) {
       const fileId = data.docs[0].id
       //TODO: if wanted change permissiosn to public but his could be a security issue
       //insertPermission(fileId,undefined,'anyone', 'reader')
@@ -66,25 +66,25 @@ export const GoogleDriveImport: React.FC<GoogleDriveImportProps> = ({ onSelected
    */
   function insertPermission(fileId:string, value:string | undefined, type:string, role:'owner' | 'writer' | 'reader') {
     var body = { value, type, role}
-    if(gapi.client.drive){
-      var request = gapi.client.drive.permissions.create({
+    if((window as any).gapi.client.drive){
+      var request = (window as any).gapi.client.drive.permissions.create({
         fileId,
         'resource': body
       })
-      request.execute(function(resp) { console.log({resp}) })
+      request.execute(function(resp:any) { console.log({resp}) })
     }else{
-      gapi.client.load('drive','v3').then(()=>insertPermission(fileId,value,type,role))
+      (window as any).gapi.client.load('drive','v3').then(()=>insertPermission(fileId,value,type,role))
     }
   }
 
 
   useEffect(() => {
-    if(gapi && window.gapiPickerReady ){
+    if((window as any).gapi && window.gapiPickerReady ){
       const token = sessionStorage.getItem('gdriveToken')
       if(token)
       createPicker(token)
     }
-  }, [gapi,window.gapiPickerReady])
+  }, [(window as any).gapi,window.gapiPickerReady])
 
   return <>{'loading...'}</>
 }

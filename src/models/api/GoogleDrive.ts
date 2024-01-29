@@ -19,22 +19,22 @@ class GoogleDrive {
     this.clientSecret = clientSecret
     this.appId = appId
     this.apiToken=apiToken
-    this.scopes = scopes
-    // while (!gapi) {
-    //   //gapi is loading lock until done
-    //   console.log('D: loading gapi')
+    this.scopes = scopes;
+    // while (!(window as any).gapi) {
+    //   //(window as any).gapi is loading lock until done
+    //   console.log('D: loading (window as any).gapi')
     // }
-    gapi.load('auth', {'callback': this.onAuthApiLoad.bind(this)})
+    (window as any).gapi.load('auth', {'callback': this.onAuthApiLoad.bind(this)})
     // while (this.loadState<2) {
     //   //apis still loading
-    //   console.log('D: loading gapi APIs')
+    //   console.log('D: loading (window as any).gapi APIs')
     // }
   }
 
 
   private onAuthApiLoad() {
     this.loadState++
-    gapi.client.load('drive', 'v3',this.onDriveLoad.bind(this))
+    (window as any).gapi.client.load('drive', 'v3',this.onDriveLoad.bind(this))
   }
   private onDriveLoad() {
     this.loadState++
@@ -42,20 +42,20 @@ class GoogleDrive {
 
   private async login() {
     const res = await new Promise((resolve, reject)=>{
-      console.log(gapi.auth);
-      gapi.auth.authorize(
+      console.log((window as any).gapi.auth);
+      (window as any).gapi.auth.authorize(
         {
           'client_id': this.clientId,
           'scope': this.scopes,
           'immediate': true
         },
-        (r)=>r.error?gapi.auth.authorize(
+        (r:any)=>r.error?(window as any).gapi.auth.authorize(
           {
             'client_id': this.clientId,
             'scope': this.scopes,
             'immediate': false
           },
-          (k)=>k.error?reject(k):resolve(k)):resolve(r))
+          (k:any)=>k.error?reject(k):resolve(k)):resolve(r))
     })
     console.log(res)
   }
@@ -67,7 +67,7 @@ class GoogleDrive {
     await this.login()
 
     //upsert custom folder (to be a little more organized 😊)
-    const {result:{files}} = await gapi.client.drive.files.list({
+    const {result:{files}} = await (window as any).gapi.client.drive.files.list({
       q:"name='Binaural Meet Files' and mimeType='application/vnd.google-apps.folder' and not trashed=true"
     })
 
@@ -77,7 +77,7 @@ class GoogleDrive {
         'name' : 'Binaural Meet Files',
         'mimeType' : 'application/vnd.google-apps.folder',
       }
-      const directoryResponse = await gapi.client.drive.files.create({
+      const directoryResponse = await (window as any).gapi.client.drive.files.create({
         resource: fileMetadata,
       })
       dirId =JSON.parse(directoryResponse.body).id
@@ -98,13 +98,13 @@ class GoogleDrive {
     form.append('file', file)
     const fileUploadResponse = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
       method: 'POST',
-      headers: new Headers({'Authorization': 'Bearer ' + gapi.auth.getToken().access_token}),
+      headers: new Headers({'Authorization': 'Bearer ' + (window as any).gapi.auth.getToken().access_token}),
       body: form
     }).then((res) => {
       return res.json()
     })
 
-    await gapi.client.drive.permissions.create({
+    await (window as any).gapi.client.drive.permissions.create({
       fileId: fileUploadResponse.id,
       resource: {
         role: 'reader',
@@ -112,7 +112,7 @@ class GoogleDrive {
       }
     } as any)
 
-  //   const webViewLink = await gapi.client.drive.files.get({
+  //   const webViewLink = await (window as any).gapi.client.drive.files.get({
   //     fileId: res.id,
   //     fields: 'webViewLink'
   // }).then(response =>
