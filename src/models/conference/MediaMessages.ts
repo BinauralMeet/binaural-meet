@@ -1,7 +1,7 @@
 import * as mediasoup from 'mediasoup-client'
 export type MSMessageType =
   'dataConnect' | 'positionConnect' | 'position' |
-  'connect' | 'join' | 'pong' | 'rtpCapabilities' | 'leave' |
+  'connect' | 'auth' | 'join' | 'pong' | 'rtpCapabilities' | 'leave' |
   'remoteUpdate' | 'remoteLeft' |
   'workerAdd' | 'workerDelete' | 'workerUpdate' |
   'createTransport' | 'closeTransport' | 'connectTransport' |
@@ -14,6 +14,11 @@ export interface MSMessage{
 export interface MSPeerMessage extends MSMessage{
   peer: string
   remote?: string
+}
+export interface MSAuthMessage extends MSPeerMessage{
+  room: string
+  email: string
+  error?: string
 }
 export interface MSConnectMessage extends MSPeerMessage{
   peerJustBefore?: string

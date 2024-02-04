@@ -75,7 +75,32 @@ export class Conference {
 
   private updateStatInterval = 0
 
-  public enter(room: string, reconnect:boolean = false){
+  public auth(room: string, reconnect:boolean = false, emali:string):Promise<string>{
+    if (reconnect){
+      this.rtcTransports.removeListener('disconnect', this.onRtcDisconnect)
+      this.dataConnection.removeListener('disconnect', this.onDataDisconnect)
+    }
+    this.rtcTransports.addListener('disconnect', this.onRtcDisconnect)
+    this.dataConnection.addListener('disconnect', this.onDataDisconnect)
+
+    const promise = new Promise<string>((resolve, reject) => {
+      //  connect to peer
+      const peer = participants.local.information.name.substring(0, 4).replaceAll(' ','_').replaceAll(':','_')
+      this.rtcTransports.auth(room, peer, emali).then((peer)=>{
+        console.log("peer:" + peer)
+        if(peer) {
+          console.log("peer:success")
+          resolve("success")
+        } else {
+          console.log("peer:reject")
+          resolve("reject")
+        }
+      })
+    })
+    return promise
+  }
+
+  public enter(room: string, reconnect:boolean = false):Promise<string>{
     this.room_ = room
     connLog()(`enter to room ${room}.`)
     if (reconnect){
@@ -85,7 +110,7 @@ export class Conference {
     this.rtcTransports.addListener('disconnect', this.onRtcDisconnect)
     this.dataConnection.addListener('disconnect', this.onDataDisconnect)
 
-    const promise = new Promise<void>((resolve, reject) => {
+    const promise = new Promise<string>((resolve, reject) => {
       //  check last kicked time and stop the operation if recently kicked.
       const str = window.localStorage.getItem('kickTimes')
       if (str){
@@ -145,18 +170,18 @@ export class Conference {
               this.dataConnection.disconnect().then(()=>{
                 setTimeout(()=>{
                   this.dataConnection.connect(room, peer).then(()=>{
-                    resolve()
+                    resolve("success")
                   }).catch(reject)
                 }, 3000)
               })
             }else{
               this.dataConnection.sync.sendAllAboutMe(true)  //  send paritipant info
               console.log('Reuse the old data connection.')
-              resolve()
+              resolve("success")
             }
           }else{
             this.dataConnection.connect(room, peer).then(()=>{
-              resolve()
+              resolve("success")
             }).catch(reject)
           }
 

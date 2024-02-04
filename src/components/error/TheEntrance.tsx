@@ -13,6 +13,8 @@ import errorInfo from "@stores/ErrorInfo";
 import React, { useState } from "react";
 import { ErrorDialogFrame } from "./ErrorDialog";
 import {tfDivStyle, tfIStyle, tfLStyle} from '@components/utils'
+import {conference} from '@models/conference'
+import {GoogleAuthComponentLogin as GoogleAuthComponent } from '../GoogleAuthComponentLogin';
 
 export const TheEntrance: React.FC<BMProps> = (props) => {
   const { participants } = props.stores;
@@ -21,7 +23,7 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
   const [room, setRoom] = useState(
     urlParameters.room ? urlParameters.room : savedRoom ? savedRoom : ""
   );
-
+  const [doGoogleAuth, setDoGoogleAuth] = useState(false);
   const onClose = (save: boolean) => {
     if (name.length !== 0 || participants.local.information.name.length !== 0){
       if (save || participants.local.information.name.length === 0) {
@@ -35,9 +37,20 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
         urlParameters.room = room;
         sessionStorage.setItem("room", room)
       }
-      errorInfo.clear()
+      // room auth
+      conference.auth(room, false, '').then((result) => {
+        if(result == "success") {
+          conference.enter(room, false).then((result) => {
+            errorInfo.type = ''
+          })
+        } else {
+          // do google auth
+          setDoGoogleAuth(true)
+        }
+      })
     }
   };
+
   const onKeyPress = (ev: React.KeyboardEvent) => {
     if (ev.key === "Enter") {
       onClose(true);
@@ -110,6 +123,8 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
             {t("EnterTheVenue")}
           </Button>
         </Box>
+        <GoogleAuthComponent room={room} doGoogleAuth={doGoogleAuth}></GoogleAuthComponent>
+
       </DialogContent>
     </ErrorDialogFrame>
   );

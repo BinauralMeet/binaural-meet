@@ -24,7 +24,6 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
   const ref = useRef<HTMLVideoElement>(null)
   const [muted, setMuted] = React.useState(false)
   const member = useRef<ScreenContentMember>({} as ScreenContentMember)
-  member.current.content = props.content
 
   const simulcastRatios = [0.25, 0.5, 0.75, 4.0 / 3, 2, 4]
   //const simulcastRatios:number[] = []

@@ -1,5 +1,5 @@
 import {EventEmitter} from 'events'
-import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSConnectMessage, MSMessageType, MSRoomMessage,
+import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSAuthMessage, MSConnectMessage, MSMessageType, MSRoomMessage,
   MSRTPCapabilitiesReply, MSTransportDirection, MSCreateTransportReply, MSConnectTransportMessage,
   MSConnectTransportReply, MSProduceTransportMessage, MSProduceTransportReply, MSTrackRole,
   MSConsumeTransportMessage, MSConsumeTransportReply, MSRemoteUpdateMessage, MSRemoteLeftMessage,
@@ -10,7 +10,7 @@ import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSConnectMessage, MS
 import * as mediasoup from 'mediasoup-client';
 import {connLog} from '@models/utils'
 import {RtcTransportStatsGot} from './RtcTransportStatsGot'
-import {setInterval} from 'timers';
+import { setInterval } from 'timers';
 import {messageLoads} from '../../stores/MessageLoads'
 
 export type TrackRoles = 'avatar' | 'mainScreen' | string
@@ -45,6 +45,8 @@ declare const config:any                  //  from ../../config.js included from
 //  Log level and module log options
 const rtcLog = connLog()
 
+const SEND_INTERVAL = 10 * 1000
+
 type RtcConnectionEvent = 'remoteUpdate' | 'remoteLeft' | 'connect' | 'disconnect'
 
 export class RtcConnection{
@@ -57,8 +59,7 @@ export class RtcConnection{
   private handlers = new Map<MSMessageType, (msg: MSMessage)=>void>()
   private promises = new Map<number, {resolve:(a:any)=>void, reject?:(a:any)=>void, arg?:any} >()
   private messageNumber = 1
-  private lastSendTime = Date.now()
-  private lastReceivedTime = Date.now()
+  private lastSendTime = 0
 
   public constructor(){
     this.handlers.set('connect', this.onConnect)
@@ -72,6 +73,7 @@ export class RtcConnection{
     this.handlers.set('resumeConsumer', this.onResumeConsumer)
     this.handlers.set('remoteUpdate', this.onRemoteUpdate)
     this.handlers.set('remoteLeft', this.onRemoteLeft)
+    this.handlers.set('auth', this.onAuth)
     try{
       this.device = new mediasoup.Device();
     }catch (error:any){
@@ -92,18 +94,12 @@ export class RtcConnection{
   }
   private processMessage(){
     let now = Date.now()
-    const TIMEOUT = config.websocketTimeout
-    const SEND_INTERVAL = TIMEOUT / 2
     if (now > this.lastSendTime + SEND_INTERVAL && this.mainServer){
       const msg:MSMessage = {
         type: 'pong'
       }
       this.mainServer.send(JSON.stringify(msg))
       this.lastSendTime = now
-    }
-    if (now - this.lastReceivedTime > TIMEOUT){
-      console.warn(`RTC socket time out by client (${TIMEOUT} msec).`)
-      this.forceClose()
     }
     const timeToProcess = this.INTERVAL * 0.5
     const deadline = now + timeToProcess
@@ -125,6 +121,57 @@ export class RtcConnection{
       clearInterval(this.interval)
       this.interval = undefined
     }
+  }
+
+  // room auth
+  public auth(room: string, peer: string, email: string):Promise<boolean>{
+    console.log("auth called")
+    const promise = new Promise<boolean>((resolve, reject)=>{
+      this.connected = true
+      this.startProcessMessage()
+      try{
+        this.mainServer = new WebSocket(config.mainServer)
+      }
+      catch(e){
+        this.disconnect(3000, 'e')
+        reject(e)
+      }
+      const onOpenEvent = () => {
+        const msg:MSAuthMessage = {
+          type:'auth',
+          room: room,
+          email: email,
+          peer,
+        }
+        if (this.mainServer && this.mainServer.readyState === WebSocket.OPEN){
+          this.setMessagePromise(msg, resolve, reject, room)
+          this.mainServer.send(JSON.stringify(msg))
+        }
+      }
+      const onMessageEvent = (ev: MessageEvent<any>)=> {
+        const msg = JSON.parse(ev.data) as MSMessage
+        //rtcLog(`onMessage(${msg.type})`)
+        this.rtcQueue.push(msg)
+      }
+      const onCloseEvent = () => {
+        //rtcLog('onClose() for mainServer')
+        console.warn('onClose() for mainServer')
+        this.disconnect()
+      }
+      const onErrorEvent = () => {
+        console.error(`Error in WebSocket for ${config.mainServer}`)
+        this.disconnect(3000, 'onError')
+      }
+
+      const setEventHandler = () => {
+        this.mainServer?.addEventListener('error', onErrorEvent)
+        this.mainServer?.addEventListener('message', onMessageEvent)
+        this.mainServer?.addEventListener('open', onOpenEvent)
+        this.mainServer?.addEventListener('close', onCloseEvent)
+      }
+      setEventHandler()
+    });
+    return promise
   }
 
   //  connect to main server. return my peer id got.
@@ -153,7 +200,6 @@ export class RtcConnection{
         this.sendWithPromise(msg, resolve, reject, room)
       }
       const onMessageEvent = (ev: MessageEvent<any>)=> {
-        this.lastReceivedTime = Date.now()
         const msg = JSON.parse(ev.data) as MSMessage
         //rtcLog(`onMessage(${msg.type})`)
         this.rtcQueue.push(msg)
@@ -368,6 +414,17 @@ export class RtcConnection{
       this.resolveMessage(msg, '')
     }
 
+  }
+
+  private onAuth(base:MSMessage){
+    const msg = base as MSAuthMessage
+    console.log("onAuth")
+    console.log(msg)
+    if (msg.error){
+      this.resolveMessage(msg, false)
+    }else{
+      this.resolveMessage(msg, true)
+    }
   }
 
   public produceTransport(params:{transport:string, kind:mediasoup.types.MediaKind,
