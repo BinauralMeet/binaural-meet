@@ -10,7 +10,7 @@ import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSAuthMessage, MSCon
 import * as mediasoup from 'mediasoup-client';
 import {connLog} from '@models/utils'
 import {RtcTransportStatsGot} from './RtcTransportStatsGot'
-import { setInterval } from 'timers';
+import {setInterval} from 'timers';
 import {messageLoads} from '../../stores/MessageLoads'
 
 export type TrackRoles = 'avatar' | 'mainScreen' | string
