@@ -16,6 +16,7 @@ import {MainScreen} from './map/MainScreen'
 import {Map} from './map/map'
 import {Stores} from './utils'
 import {styleCommon, styleForSplit} from './utils/styles'
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 export const App: React.FC<{}> = () => {
   const clsSplit = styleForSplit()
@@ -57,6 +58,7 @@ export const App: React.FC<{}> = () => {
 
   return <Observer>{()=>{
     return <div ref={refDiv} className={classes.back} style={{backgroundColor: rgb2Color(roomInfo.backgroundFill)}}>
+      <GoogleOAuthProvider clientId="XXXXXXXXXXXX.apps.googleusercontent.com">
         <SplitPane className={classes.fill} split="vertical" resizerClassName={clsSplit.resizerVertical}
           minSize={0} defaultSize="7em">
           <LeftBar stores={stores}/>
@@ -68,6 +70,7 @@ export const App: React.FC<{}> = () => {
             <Footer stores={stores} height={(isSmartphone() && isPortrait()) ? 100 : undefined} />
           </Fragment>
         </SplitPane>
+      </GoogleOAuthProvider>
       </div>
   }}</Observer>
 }
