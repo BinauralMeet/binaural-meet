@@ -23,6 +23,9 @@ export default defineConfig({
     mediapipe(),
     mediapipe_workaround(),
   ],
+  server: {
+    port: 3000
+  }
 
 
 
