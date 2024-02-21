@@ -58,7 +58,7 @@ export const App: React.FC<{}> = () => {
 
   return <Observer>{()=>{
     return <div ref={refDiv} className={classes.back} style={{backgroundColor: rgb2Color(roomInfo.backgroundFill)}}>
-      <GoogleOAuthProvider clientId="XXXXXXXXXXXX.apps.googleusercontent.com">
+      <GoogleOAuthProvider clientId="188672642721-3f8u1671ecugbl2ukhjmb18nv283upm0.apps.googleusercontent.com">
         <SplitPane className={classes.fill} split="vertical" resizerClassName={clsSplit.resizerVertical}
           minSize={0} defaultSize="7em">
           <LeftBar stores={stores}/>
