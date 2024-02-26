@@ -41,7 +41,7 @@
       ],
       "@images*": [
       "./images*"
-      ]
+      ],
     }
   },
   "include": [

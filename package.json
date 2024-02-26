@@ -26,6 +26,7 @@
     "@types/throttle-debounce": "^2.1.0",
     "@vitejs/plugin-react": "^4.2.1",
     "add": "^2.0.6",
+    "axios": "1.6.7",
     "cross-env": "^7.0.3",
     "customize-cra": "^1.0.0",
     "deep-equal": "^2.0.5",
@@ -63,8 +64,8 @@
     "vite": "^5.0.12",
     "vite-tsconfig-paths": "^4.3.1",
     "web-vitals": "^1.0.1",
-    "yt-player": "https://github.com/BinauralMeet/yt-player.git",
-    "axios": "1.6.7"
+    "yt-player": "https://github.com/BinauralMeet/yt-player.git"
+
   },
   "scripts": {
     "start": "vite",
@@ -117,5 +118,8 @@
     "import": "^0.0.6",
     "react-app-rewired": "^2.1.8",
     "vite-plugin-mediapipe": "^0.1.0"
+  },
+  "resolutions": {
+    "@types/react": "^17.0.34"
   }
 }
