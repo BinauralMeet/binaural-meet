@@ -41,7 +41,7 @@
     "lodash": "^4.17.21",
     "material-ui-dropzone": "^3.3.0",
     "md5": "^2.3.0",
-    "mediasoup-client": "github:versatica/mediasoup-client#v3",
+    "mediasoup-client": "^3.7.4",
     "mobx": "*",
     "mobx-react-lite": "^3.4.0",
     "pdfjs-dist": "2.7.570",
@@ -63,7 +63,8 @@
     "vite": "^5.0.12",
     "vite-tsconfig-paths": "^4.3.1",
     "web-vitals": "^1.0.1",
-    "yt-player": "https://github.com/BinauralMeet/yt-player.git"
+    "yt-player": "https://github.com/BinauralMeet/yt-player.git",
+    "axios": "1.6.7"
   },
   "scripts": {
     "start": "vite",
@@ -112,6 +113,7 @@
     "@types/pdfjs-dist": "2.7.2",
     "@types/three": "^0.141.0",
     "@vitejs/plugin-react": "^4.2.1",
+    "@react-oauth/google": "0.12.1",
     "import": "^0.0.6",
     "react-app-rewired": "^2.1.8",
     "vite-plugin-mediapipe": "^0.1.0"
