@@ -65,7 +65,6 @@
     "vite-tsconfig-paths": "^4.3.1",
     "web-vitals": "^1.0.1",
     "yt-player": "https://github.com/BinauralMeet/yt-player.git"
-
   },
   "scripts": {
     "start": "vite",
@@ -106,6 +105,7 @@
     "@iconify/icons-material-symbols": "^1.2.13",
     "@iconify/icons-mdi": "^1.1.13",
     "@iconify/react": "^4.1.0",
+    "@react-oauth/google": "0.12.1",
     "@types/deep-equal": "^1.0.1",
     "@types/gapi": "^0.0.41",
     "@types/gapi.client.drive": "^3.0.13",
@@ -114,9 +114,7 @@
     "@types/pdfjs-dist": "2.7.2",
     "@types/three": "^0.141.0",
     "@vitejs/plugin-react": "^4.2.1",
-    "@react-oauth/google": "0.12.1",
     "import": "^0.0.6",
-    "react-app-rewired": "^2.1.8",
     "vite-plugin-mediapipe": "^0.1.0"
   },
   "resolutions": {

@@ -113,7 +113,7 @@ export class RtcConnection{
       }
       now = Date.now()
     }
-    messageLoads.rtcLoad = (now - (deadline-timeToProcess)) / timeToProcess
+    messageLoads.loadRtc = (now - (deadline-timeToProcess)) / timeToProcess
 
     //  Stop interval timer when disconnected and no messages in queue.
     if (!this.isConnected() && this.rtcQueue.length===0 && this.interval){

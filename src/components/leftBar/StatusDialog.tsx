@@ -72,7 +72,7 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
     }
   })
   const loads = useObserver(()=>{
-    return {rtcLoad: messageLoads.rtcLoad, dataLoad: messageLoads.dataLoad}
+    return {loadRtc: messageLoads.loadRtc, loadData: messageLoads.loadData, rttData: messageLoads.rttData}
   })
 
   const {close, ...poperProps} = props
@@ -88,7 +88,7 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
           onClick={resetDataConnection}
         >{t('emResetData')}</Button>
         <br />
-        <div> Load: rtc={loads.rtcLoad.toPrecision(3)} data={loads.dataLoad.toPrecision(3)}</div>
+        <div> Load: rtc  {(loads.loadRtc*100).toPrecision(3)}%  data {(loads.loadData*100).toPrecision(3)}% &nbsp; RTT:{loads.rttData}ms</div>
         <div> Data: {stat.data}</div>
         {stat.servers.length === 0 ? <div>'No RTC server'</div> :
           stat.servers.map((server, idx) => <div key={idx}>

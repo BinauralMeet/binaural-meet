@@ -113,7 +113,8 @@ export class DataConnection {
           if (msgs.length){
             self.relayRttAverage = alpha * self.relayRttLast + (1-alpha) * self.relayRttAverage
           }
-          console.log(`RTT data: ${self.relayRttAverage}   ${self.relayRttLast}`)
+          messageLoads.rttData = self.relayRttLast
+          //console.log(`RTT data: ${self.relayRttAverage}   ${self.relayRttLast}`)
         }
       }
       function onError(){
@@ -190,7 +191,7 @@ export class DataConnection {
         }
         now = Date.now()
       }
-      messageLoads.dataLoad = (now - (deadline-timeToProcess)) / timeToProcess
+      messageLoads.loadData = (now - (deadline-timeToProcess)) / timeToProcess
       dataRequestInterval = Math.min(
         //Math.max((this.relayRttAverage-20) * participants.remote.size/40, 0) + 20, 3*1000)
         Math.max((this.relayRttAverage-20), 0) + 20, 3*1000)

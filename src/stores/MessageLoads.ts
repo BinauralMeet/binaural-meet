@@ -1,7 +1,8 @@
 import {makeObservable, observable} from 'mobx'
 class Loads{
-  @observable rtcLoad=0
-  @observable dataLoad=0
+  @observable loadData=0
+  @observable loadRtc=0
+  @observable rttData=0
   constructor(){
     makeObservable(this)
   }
