@@ -5,7 +5,7 @@ import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSAuthMessage, MSCon
   MSConsumeTransportMessage, MSConsumeTransportReply, MSRemoteUpdateMessage, MSRemoteLeftMessage,
   MSResumeConsumerMessage, MSResumeConsumerReply, MSCloseProducerMessage, MSRemoteProducer,
   MSCloseProducerReply,
-  MSStreamingStartMessage,
+  MSStreamingStartMessage,MSUploadFileMessage,
   MSStreamingStopMessage} from './MediaMessages'
 import * as mediasoup from 'mediasoup-client';
 import {connLog} from '@models/utils'
@@ -73,6 +73,7 @@ export class RtcConnection{
     this.handlers.set('remoteUpdate', this.onRemoteUpdate)
     this.handlers.set('remoteLeft', this.onRemoteLeft)
     this.handlers.set('auth', this.onAuth)
+    this.handlers.set('uploadFile', this.onUploadFile)
     try{
       this.device = new mediasoup.Device();
     }catch (error:any){
@@ -97,6 +98,7 @@ export class RtcConnection{
       const msg:MSMessage = {
         type: 'pong'
       }
+      console.log("send pong")
       this.mainServer.send(JSON.stringify(msg))
       this.lastSendTime = now
     }
@@ -121,6 +123,76 @@ export class RtcConnection{
       this.interval = undefined
     }
   }
+
+  public fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        resolve(reader.result as string);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // public fileToBase64M2(file: File){
+  //   const reader = new FileReader()
+  //   reader.readAsDataURL(file)
+  //   reader.onload = () => {
+  //     const base64 = reader.result as string
+  //     console.log(base64)
+  //     return base64
+  //   }
+  //   return "no data in file"
+  // }
+
+  public uploadFile(file:File):Promise<string>{
+
+    const promise = new Promise<string>(async (resolve, reject)=>{
+      this.connected = true
+      if (this.mainServer && this.mainServer.readyState === WebSocket.OPEN){
+        const fileBase64 = await this.fileToBase64(file);
+        const msg: MSUploadFileMessage = {
+          type:'uploadFile',
+          file: fileBase64,
+          fileName: file.name,
+        }
+        this.setMessagePromise(msg, resolve, reject)
+        this.mainServer.send(JSON.stringify(msg))
+      }
+      else{
+        console.log("mainServer not open")
+      }
+      const onOpenEvent = async () => {
+      }
+      const onMessageEvent = (ev: MessageEvent<any>)=> {
+        const msg = JSON.parse(ev.data) as MSMessage
+        //rtcLog(`onMessage(${msg.type})`)
+        this.rtcQueue.push(msg)
+      }
+      const onCloseEvent = () => {
+        //rtcLog('onClose() for mainServer')
+        console.log('onClose() for mainServer')
+        this.disconnect()
+      }
+      const onErrorEvent = () => {
+        console.error(`Error in WebSocket for ${config.mainServer}`)
+        this.disconnect(3000, 'onError')
+      }
+
+      const setEventHandler = () => {
+        this.mainServer?.addEventListener('error', onErrorEvent)
+        this.mainServer?.addEventListener('message', onMessageEvent)
+        this.mainServer?.addEventListener('open', onOpenEvent)
+        this.mainServer?.addEventListener('close', onCloseEvent)
+      }
+      setEventHandler()
+    });
+    return promise
+
+  }
+
+
 
   // room auth
   public auth(room: string, peer: string, email: string):Promise<boolean>{
@@ -154,7 +226,7 @@ export class RtcConnection{
       }
       const onCloseEvent = () => {
         //rtcLog('onClose() for mainServer')
-        console.warn('onClose() for mainServer')
+        console.log('onClose() for mainServer')
         this.disconnect()
       }
       const onErrorEvent = () => {
@@ -186,6 +258,7 @@ export class RtcConnection{
         this.disconnect(3000, 'e')
         reject(e)
       }
+
       const onOpenEvent = () => {
         this.lastSendTime = Date.now()
         const msg:MSConnectMessage = {
@@ -423,6 +496,19 @@ export class RtcConnection{
       this.resolveMessage(msg, false)
     }else{
       this.resolveMessage(msg, true)
+    }
+  }
+
+  private onUploadFile(base:MSMessage){
+    const msg = base as MSUploadFileMessage
+    console.log("onUploadFile")
+    console.log(msg)
+    if (msg.error){
+      console.log("onUploadFile error")
+      this.resolveMessage(msg, false)
+    }else{
+      console.log("onUploadFile success")
+      this.resolveMessage(msg, msg.fileID)
     }
   }
 

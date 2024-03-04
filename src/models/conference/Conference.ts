@@ -201,6 +201,21 @@ export class Conference {
     }
     return promise
   }
+
+  //upload file to google drive
+  public uploadFiletoGoogleDrive(file:File, reconnect:boolean = false,):Promise<string>{
+    const promise = new Promise<string>((resolve, reject) => {
+      this.rtcTransports.uploadFile(file).then((result)=>{
+        if(result) {
+          resolve(result)
+        } else {
+          resolve("reject")
+        }
+      })
+    })
+    return promise
+  }
+
   private clearRtc(){
     const rids = Array.from(this.remotePeers.values()).map(r => r.peer)
     this.onRemoteLeft([rids])

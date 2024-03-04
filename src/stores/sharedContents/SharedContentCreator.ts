@@ -99,6 +99,7 @@ export function createContentOfIframe(urlStr: string, map: MapData) {
       const fileIdStart = url.pathname.slice(url.pathname.indexOf('/d/') + 3)
       const fileId = fileIdStart.slice(0, fileIdStart.indexOf('/'))
       pasted.url = `id=${fileId}`
+      console.log('gdrive url:', pasted.url)
       pasted.pose.position[0] = map.mouseOnMap[0]
       pasted.pose.position[1] = map.mouseOnMap[1]
       pasted.size[0] = 900
@@ -170,7 +171,9 @@ export function createContentOfImage(imageFile: File, map: MapData, offset?:[num
       }).catch((error) => {
         if (error === 'type'){
           GoogleDrive.uploadFileToGoogleDrive(imageFile).then((url) => {
-            createContentOfImageUrl(url, map, offset).then(resolutionFunc)
+            if(typeof url === 'string'){
+              createContentOfImageUrl(url, map, offset).then(resolutionFunc)
+            }
           }).catch(rejectionFunc)
         }else{
           rejectionFunc(error)
@@ -178,7 +181,9 @@ export function createContentOfImage(imageFile: File, map: MapData, offset?:[num
       })
     }else{
       GoogleDrive.uploadFileToGoogleDrive(imageFile).then((url) => {
-        createContentOfImageUrl(url, map, offset).then(resolutionFunc).catch(rejectionFunc)
+        if(typeof url === 'string'){
+          createContentOfImageUrl(url, map, offset).then(resolutionFunc).catch(rejectionFunc)
+        }
       })
     }
   })
@@ -188,10 +193,12 @@ export function createContentOfImage(imageFile: File, map: MapData, offset?:[num
 
 export function createContentOfImageUrl(url: string, map: MapData,
   offset?:[number, number]): Promise<SharedContentImp> {
+  console.log('createContentOfImageUrl called : ' + url)
   const IMAGESIZE_LIMIT = 500
   const promise = new Promise<SharedContentImp>((resolutionFunc, rejectionFunc) => {
     getImageSize(url).then((size) => {
       // console.log("mousePos:" + (global as any).mousePositionOnMap)
+      console.log('size:', size)
       const pasted = createContent()
       pasted.type = 'img'
       pasted.url = url
@@ -465,6 +472,7 @@ export function getGDriveUrl(editing: boolean, params: Map<string, string>){
     } else if (mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
       const app = 'spreadsheets'
       url = `https://docs.google.com/${app}/d/${fileId}/edit`
+      console.log('edit url in share content creator:', url)
     }
   }
 

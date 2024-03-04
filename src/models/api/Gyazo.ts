@@ -29,10 +29,12 @@ export function uploadToGyazo(imageData: Blob):Promise<string> {
 
 export function getImageSize(url: string) {
   const promise = new Promise<[number, number]>((resolutionFunc, rejectionFunc) => {
+    console.log("getImageSize url = " + url)
     const img = new Image()
     img.src = url
     img.onload = () => {
       const size:[number, number] = [img.width, img.height]
+      console.log("size = " + size)
       resolutionFunc(size)
     }
     img.onerror = () => { rejectionFunc([0, 0]) }
