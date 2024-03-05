@@ -54,10 +54,7 @@ export const GoogleAuthComponentLogin: React.FC<GoogleAuthComponentLoginProps> =
         }
         else{
           // when the result is not success, it will show the error message in the dialog
-          // TODO: show error message
-          console.log("auth failed, your email is not in the list of the room's email list. Please contact the room owner to add your email to the list.")
           errorInfo.type = 'noEnterPremission'
-
         }
       });
     },
@@ -66,25 +63,5 @@ export const GoogleAuthComponentLogin: React.FC<GoogleAuthComponentLoginProps> =
     onError: errorResponse => {
     }
   })
-
-  const onClose = (ev:{}) => {
-    const evKey = ev as React.KeyboardEvent
-    if (evKey.code){
-      //  console.log(`onClose code=${evKey.code}`)
-      evKey.preventDefault()
-      evKey.stopPropagation()
-    }
-    errorInfo.clear()
-  }
   return(<></>)
-  // return (
-  // <ErrorDialogFrame style={dialogStyle} onClose={onClose}>
-  //   <DialogContent>
-  //     <Button color="primary" variant="contained" style={buttonStyle} autoFocus={true}
-  //       onKeyDown={onClose} onClick={onClose}>
-  //       {'Google Auth fail'}
-  //     </Button>
-  //     </DialogContent>
-  // </ErrorDialogFrame>);
-
 }

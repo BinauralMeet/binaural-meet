@@ -138,13 +138,6 @@ export class ErrorInfo {
       this.type = ''
     }
   }
-  @action reEnter(type?: ErrorType) {
-    if(this.type === 'noEnterPremission'){
-      console.log('user need to reEnter the email')
-      errorInfo.setType('entrance')
-    }
-
-  }
   @action checkConnection = () => {
     if (!conference.isRtcConnected()) {
       this.setType('rtcTransports')
