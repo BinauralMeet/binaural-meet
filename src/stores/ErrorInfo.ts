@@ -8,7 +8,7 @@ import participants from '@stores/participants/Participants'
 import {action, autorun, computed, makeObservable, observable, when} from 'mobx'
 import {conference} from '@models/conference'
 
-export type ErrorType = '' | 'connection' | 'retry' | 'noMic' | 'micPermission' | 'rtcTransports' | 'dataConnection' | 'entrance' | 'afk' | 'kicked'
+export type ErrorType = '' | 'connection' | 'retry' | 'noMic' | 'micPermission' | 'rtcTransports' | 'dataConnection' | 'entrance' | 'afk' | 'kicked' | 'noEnterPremission'
 
 export class ErrorInfo {
   @computed get fatal() { return !this.type }
@@ -34,6 +34,7 @@ export class ErrorInfo {
       case 'entrance': return ''
       case 'afk': return t('afkTitle')
       case 'kicked': return `Kicked by ${this.name}. ${this.reason}`
+      case 'noEnterPremission': return 'No permission'
     }
 
     return this.type
@@ -49,6 +50,7 @@ export class ErrorInfo {
       case 'entrance': return ''
       case 'afk': return t('afkMessage')
       case 'kicked': return ''
+      case 'noEnterPremission': return 'No permission'
     }
 
     return `no message defined for ${this.type}`
@@ -135,6 +137,13 @@ export class ErrorInfo {
       this.types.clear()
       this.type = ''
     }
+  }
+  @action reEnter(type?: ErrorType) {
+    if(this.type === 'noEnterPremission'){
+      console.log('user need to reEnter the email')
+      errorInfo.setType('entrance')
+    }
+
   }
   @action checkConnection = () => {
     if (!conference.isRtcConnected()) {

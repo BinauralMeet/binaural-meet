@@ -28,7 +28,11 @@ export const ErrorDialogFrame: React.FC<DialogProps | {onClose:(event:{}, reason
 
 export const ErrorDialog: React.FC<BMProps> = (props) => {
   function close(){
-    if (errorInfo.type !== 'retry'){
+    if (errorInfo.type === 'noEnterPremission'){
+      console.log("noEnterPremission need to enter email again")
+      errorInfo.type = 'entrance'
+    }
+    else if (errorInfo.type !== 'retry'){
       errorInfo.clear()
     }
   }

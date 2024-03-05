@@ -38,13 +38,16 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
         sessionStorage.setItem("room", room)
       }
       // room auth
+      // the first conference.auth check if user need to use google auth. If not, it will enter the room use conference.enter
+      console.log("first conference.auth")
       conference.auth(room, false, '').then((result) => {
         if(result == "success") {
+          // don't need google auth, enter the room without email
           conference.enter(room, false).then((result) => {
             errorInfo.type = ''
           })
         } else {
-          // do google auth
+          // do google auth, will cann conference.auth again after google auth
           setDoGoogleAuth(true)
         }
       })

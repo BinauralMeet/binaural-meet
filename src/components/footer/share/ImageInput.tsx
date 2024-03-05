@@ -30,6 +30,7 @@ export const ImageInput: React.FC<ImageInputProps> = (props) => {
       acceptedFiles={['image/*']}
       dropzoneText={t('imageDropzoneText')}
       onChange={setFiles}
+      maxFileSize={50000000}
     />
   )
 

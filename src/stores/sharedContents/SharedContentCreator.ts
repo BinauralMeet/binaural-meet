@@ -193,7 +193,6 @@ export function createContentOfImage(imageFile: File, map: MapData, offset?:[num
 
 export function createContentOfImageUrl(url: string, map: MapData,
   offset?:[number, number]): Promise<SharedContentImp> {
-  console.log('createContentOfImageUrl called : ' + url)
   const IMAGESIZE_LIMIT = 500
   const promise = new Promise<SharedContentImp>((resolutionFunc, rejectionFunc) => {
     getImageSize(url).then((size) => {
