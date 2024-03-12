@@ -14,6 +14,7 @@ import {t} from '@models/locales'
 export interface GoogleAuthComponentLoginProps {
   doGoogleAuth: boolean;
   room: string;
+  onTokenReceived?: (token: string) => void;
 }
 
 export const GoogleAuthComponentLogin: React.FC<GoogleAuthComponentLoginProps> = (props: GoogleAuthComponentLoginProps) => {
@@ -41,10 +42,8 @@ export const GoogleAuthComponentLogin: React.FC<GoogleAuthComponentLoginProps> =
         'https://www.googleapis.com/oauth2/v3/userinfo',
         { headers: { Authorization: 'Bearer ' + tokenResponse.access_token } },
       )
-      console.log(userInfo.data);
-      console.log(userInfo.data.email);
-      // second time use conference.auth to check if the mail address match the room mail address list
-      console.log("second conference.auth")
+      // pass the token to local storage
+      props.onTokenReceived && props.onTokenReceived(tokenResponse.access_token);
       conference.auth(props.room, true, userInfo.data.email).then((result) => {
         if(result == "success") {
           conference.enter(props.room, true).then((result) => {

@@ -54,6 +54,12 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
     }
   };
 
+  const onTokenReceived = (token: string) => {
+    participants.local.information.token = token
+    participants.local.sendInformation()
+    participants.local.saveInformationToStorage(true)
+  };
+
   const onKeyPress = (ev: React.KeyboardEvent) => {
     if (ev.key === "Enter") {
       onClose(true);
@@ -126,7 +132,7 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
             {t("EnterTheVenue")}
           </Button>
         </Box>
-        <GoogleAuthComponent room={room} doGoogleAuth={doGoogleAuth}></GoogleAuthComponent>
+        <GoogleAuthComponent room={room} doGoogleAuth={doGoogleAuth} onTokenReceived={onTokenReceived} ></GoogleAuthComponent>
 
       </DialogContent>
     </ErrorDialogFrame>
