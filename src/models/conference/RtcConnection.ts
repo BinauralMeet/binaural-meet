@@ -6,7 +6,8 @@ import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSAuthMessage, MSCon
   MSResumeConsumerMessage, MSResumeConsumerReply, MSCloseProducerMessage, MSRemoteProducer,
   MSCloseProducerReply,
   MSStreamingStartMessage,MSUploadFileMessage,
-  MSStreamingStopMessage} from './MediaMessages'
+  MSStreamingStopMessage,
+  MSSaveAdminMessage} from './MediaMessages'
 import * as mediasoup from 'mediasoup-client';
 import {connLog} from '@models/utils'
 import {RtcTransportStatsGot} from './RtcTransportStatsGot'
@@ -146,6 +147,23 @@ export class RtcConnection{
   //   return "no data in file"
   // }
 
+  public saveAdminInfo(room: string,  email: string, token: string):Promise<string>{
+    const promise = new Promise<string>((resolve, reject)=>{
+    console.log("saveAdminInfo called in rtcconnection")
+    const msg:MSSaveAdminMessage = {
+      type:'saveAdminInfo',
+      room: room,
+      email: email,
+      token: token,
+    }
+    this.mainServer?.send(JSON.stringify(msg))
+    resolve("success")
+    });
+    return promise
+  }
+
+
+
   public uploadFile(file:File):Promise<string>{
 
     const promise = new Promise<string>(async (resolve, reject)=>{
@@ -195,9 +213,9 @@ export class RtcConnection{
 
 
   // room auth
-  public auth(room: string, peer: string, email: string):Promise<boolean>{
+  public auth(room: string, peer: string, email: string):Promise<string>{
     console.log("auth called")
-    const promise = new Promise<boolean>((resolve, reject)=>{
+    const promise = new Promise<string>((resolve, reject)=>{
       this.connected = true
       this.startProcessMessage()
       try{
@@ -221,6 +239,7 @@ export class RtcConnection{
       }
       const onMessageEvent = (ev: MessageEvent<any>)=> {
         const msg = JSON.parse(ev.data) as MSMessage
+        console.log("onMessageEvent call" + msg.type)
         //rtcLog(`onMessage(${msg.type})`)
         this.rtcQueue.push(msg)
       }
@@ -490,12 +509,12 @@ export class RtcConnection{
 
   private onAuth(base:MSMessage){
     const msg = base as MSAuthMessage
-    console.log("onAuth")
+    console.log("onAuth called")
     console.log(msg)
     if (msg.error){
       this.resolveMessage(msg, false)
     }else{
-      this.resolveMessage(msg, true)
+      this.resolveMessage(msg, msg.role)
     }
   }
 

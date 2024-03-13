@@ -41,7 +41,8 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
       // the first conference.auth check if user need to use google auth. If not, it will enter the room use conference.enter
       console.log("first conference.auth")
       conference.auth(room, false, '').then((result) => {
-        if(result == "success") {
+        console.log("first conference.auth result: " + result)
+        if(result == "guest" || result == "admin") {
           // don't need google auth, enter the room without email
           conference.enter(room, false).then((result) => {
             errorInfo.type = ''
@@ -51,11 +52,16 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
           setDoGoogleAuth(true)
         }
       })
+      // conference.saveAdmin(room, participants.local.information.email , participants.local.information.token).then((result) => {});
     }
   };
 
-  const onTokenReceived = (token: string) => {
+  const onTokenReceived = (token: string, role: string, email: string) => {
+    console.log("onTokenReceived: " + token);
+    console.log("onTokenReceived: " + role);
     participants.local.information.token = token
+    participants.local.information.role = role
+    participants.local.information.email = email
     participants.local.sendInformation()
     participants.local.saveInformationToStorage(true)
   };

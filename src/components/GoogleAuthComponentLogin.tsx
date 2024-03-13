@@ -14,7 +14,7 @@ import {t} from '@models/locales'
 export interface GoogleAuthComponentLoginProps {
   doGoogleAuth: boolean;
   room: string;
-  onTokenReceived?: (token: string) => void;
+  onTokenReceived?: (token: string, role:string, email: string) => void;
 }
 
 export const GoogleAuthComponentLogin: React.FC<GoogleAuthComponentLoginProps> = (props: GoogleAuthComponentLoginProps) => {
@@ -43,10 +43,22 @@ export const GoogleAuthComponentLogin: React.FC<GoogleAuthComponentLoginProps> =
         { headers: { Authorization: 'Bearer ' + tokenResponse.access_token } },
       )
       // pass the token to local storage
-      props.onTokenReceived && props.onTokenReceived(tokenResponse.access_token);
+
       conference.auth(props.room, true, userInfo.data.email).then((result) => {
-        if(result == "success") {
+        console.log("second time conference.auth result: " + result)
+        const role = result
+        if(result == "guest") {
           conference.enter(props.room, true).then((result) => {
+            props.onTokenReceived && props.onTokenReceived(tokenResponse.access_token, role, userInfo.data.email);
+            // hide dialog and clear error
+            errorInfo.type = ''
+          });
+        }
+        else if(result == "admin") {
+          conference.enter(props.room, true).then((result) => {
+            props.onTokenReceived && props.onTokenReceived(tokenResponse.access_token, role, userInfo.data.email);
+            // save the admin info to server
+            conference.saveAdmin(props.room, userInfo.data.email , tokenResponse.access_token).then((result) => {});
             // hide dialog and clear error
             errorInfo.type = ''
           });
