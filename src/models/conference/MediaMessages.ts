@@ -2,7 +2,7 @@ import * as mediasoup from 'mediasoup-client'
 export type MSMessageType =
   'dataConnect' | 'positionConnect' | 'position' |
   'connect' | 'auth' | 'join' | 'pong' | 'rtpCapabilities' | 'leave' |
-  'remoteUpdate' | 'remoteLeft' | 'saveAdminInfo'|
+  'remoteUpdate' | 'remoteLeft' | 'saveAdminInfo'|'checkAdmin'|
   'workerAdd' | 'workerDelete' | 'workerUpdate' |
   'createTransport' | 'closeTransport' | 'connectTransport' |
   'produceTransport' | 'closeProducer' | 'consumeTransport' | 'resumeConsumer' |
@@ -27,6 +27,7 @@ export interface MSSaveAdminMessage extends MSMessage{
   email: string
   token: string
   error?: string
+  result?: string
 }
 
 export interface MSUploadFileMessage extends MSMessage{

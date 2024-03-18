@@ -87,17 +87,13 @@ export class Conference {
       //  connect to peer
       const peer = participants.local.information.name.substring(0, 4).replaceAll(' ','_').replaceAll(':','_')
       this.rtcTransports.auth(room, peer, emali).then((role)=>{
-        console.log("role:" + role)
         if(role == "guest") {
-          console.log("user is guest.")
           resolve("guest")
         }
         else if(role == "admin"){
-          console.log("user is admin.")
           resolve("admin")
         }
         else {
-          console.log("peer:reject")
           resolve("reject")
         }
       })
@@ -225,6 +221,20 @@ export class Conference {
     const promise = new Promise<string>((resolve, reject) => {
       console.log("saveAdmin called in conference.")
       this.rtcTransports.saveAdminInfo(room, email,token).then((result)=>{
+        if(result) {
+          resolve(result)
+        } else {
+          resolve("reject")
+        }
+      })
+    })
+    return promise
+  }
+
+  public checkAdmin(room: string, email: string, token: string):Promise<string>{
+    const promise = new Promise<string>((resolve, reject) => {
+      console.log("check if the user is admin")
+      this.rtcTransports.checkAdmin(room, email,token).then((result)=>{
         if(result) {
           resolve(result)
         } else {

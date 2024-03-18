@@ -75,6 +75,7 @@ export class RtcConnection{
     this.handlers.set('remoteLeft', this.onRemoteLeft)
     this.handlers.set('auth', this.onAuth)
     this.handlers.set('uploadFile', this.onUploadFile)
+    this.handlers.set('checkAdmin', this.onAdminCheck)
     try{
       this.device = new mediasoup.Device();
     }catch (error:any){
@@ -162,6 +163,45 @@ export class RtcConnection{
     return promise
   }
 
+  public checkAdmin(room: string, email: string, token: string):Promise<string>{
+    const promise = new Promise<string>((resolve, reject)=>{
+      console.log("check admin called in rtcconnection")
+      const msg:MSSaveAdminMessage = {
+        type:'checkAdmin',
+        room: room,
+        email: email,
+        token: token,
+      }
+      this.setMessagePromise(msg, resolve, reject)
+      this.mainServer?.send(JSON.stringify(msg))
+      const onOpenEvent = async () => {
+      }
+      const onMessageEvent = (ev: MessageEvent<any>)=> {
+        const msg = JSON.parse(ev.data) as MSMessage
+        //rtcLog(`onMessage(${msg.type})`)
+        this.rtcQueue.push(msg)
+      }
+      const onCloseEvent = () => {
+        //rtcLog('onClose() for mainServer')
+        console.log('onClose() for mainServer')
+        this.disconnect()
+      }
+      const onErrorEvent = () => {
+        console.error(`Error in WebSocket for ${config.mainServer}`)
+        this.disconnect(3000, 'onError')
+      }
+
+      const setEventHandler = () => {
+        this.mainServer?.addEventListener('error', onErrorEvent)
+        this.mainServer?.addEventListener('message', onMessageEvent)
+        this.mainServer?.addEventListener('open', onOpenEvent)
+        this.mainServer?.addEventListener('close', onCloseEvent)
+      }
+      setEventHandler()
+      });
+      return promise
+  }
+
 
 
   public uploadFile(file:File):Promise<string>{
@@ -214,7 +254,6 @@ export class RtcConnection{
 
   // room auth
   public auth(room: string, peer: string, email: string):Promise<string>{
-    console.log("auth called")
     const promise = new Promise<string>((resolve, reject)=>{
       this.connected = true
       this.startProcessMessage()
@@ -239,7 +278,6 @@ export class RtcConnection{
       }
       const onMessageEvent = (ev: MessageEvent<any>)=> {
         const msg = JSON.parse(ev.data) as MSMessage
-        console.log("onMessageEvent call" + msg.type)
         //rtcLog(`onMessage(${msg.type})`)
         this.rtcQueue.push(msg)
       }
@@ -509,8 +547,6 @@ export class RtcConnection{
 
   private onAuth(base:MSMessage){
     const msg = base as MSAuthMessage
-    console.log("onAuth called")
-    console.log(msg)
     if (msg.error){
       this.resolveMessage(msg, false)
     }else{
@@ -520,14 +556,20 @@ export class RtcConnection{
 
   private onUploadFile(base:MSMessage){
     const msg = base as MSUploadFileMessage
-    console.log("onUploadFile")
-    console.log(msg)
     if (msg.error){
       console.log("onUploadFile error")
       this.resolveMessage(msg, false)
     }else{
-      console.log("onUploadFile success")
       this.resolveMessage(msg, msg.fileID)
+    }
+  }
+
+  private onAdminCheck(base:MSMessage){
+    const msg = base as MSSaveAdminMessage
+    if (msg.error){
+      this.resolveMessage(msg, false)
+    }else{
+      this.resolveMessage(msg, msg.result)
     }
   }
 

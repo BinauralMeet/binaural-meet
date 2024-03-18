@@ -8,7 +8,7 @@ import participants from '@stores/participants/Participants'
 import {action, autorun, computed, makeObservable, observable, when} from 'mobx'
 import {conference} from '@models/conference'
 
-export type ErrorType = '' | 'connection' | 'retry' | 'noMic' | 'micPermission' | 'rtcTransports' | 'dataConnection' | 'entrance' | 'afk' | 'kicked' | 'noEnterPremission'
+export type ErrorType = '' | 'connection' | 'retry' | 'noMic' | 'micPermission' | 'rtcTransports' | 'dataConnection' | 'entrance' | 'afk' | 'kicked' | 'noEnterPremission' | 'notAdmin'
 
 export class ErrorInfo {
   @computed get fatal() { return !this.type }
@@ -35,6 +35,7 @@ export class ErrorInfo {
       case 'afk': return t('afkTitle')
       case 'kicked': return `Kicked by ${this.name}. ${this.reason}`
       case 'noEnterPremission': return 'No permission'
+      case 'notAdmin': return 'Not admin'
     }
 
     return this.type
@@ -51,6 +52,7 @@ export class ErrorInfo {
       case 'afk': return t('afkMessage')
       case 'kicked': return ''
       case 'noEnterPremission': return 'No permission'
+      case 'notAdmin': return 'Not admin'
     }
 
     return `no message defined for ${this.type}`
