@@ -14,6 +14,12 @@ import {SketchPicker} from 'react-color'
 import {RemoteTrackLimitControl} from './RemoteTrackLimitControl'
 import { PositionServerForm } from './PositionServerForm'
 
+
+import { BMProps, buttonStyle, dialogStyle, translateIconStyle } from "@components/utils";
+import { urlParameters } from "@models/url";
+import {ParticipantList} from '../../leftBar/ParticipantList'
+
+
 export interface AdminConfigFormProps{
   close?: () => void,
   stores: Stores,
@@ -30,13 +36,40 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
   const [showColorPicker, setShowColorPicker] = React.useState(false)
   const fillButton = React.useRef<HTMLButtonElement>(null)
   const colorButton = React.useRef<HTMLButtonElement>(null)
-  const {roomInfo} = props.stores
+  const {roomInfo,participants} = props.stores
 
   const [showPosition, setShowPosition] = React.useState(false)
   const anchor = React.useRef<HTMLDivElement>(null)
+
+  const defaultTextLineHeight = {
+    lineHeight:20,
+    fontSize:16,
+  }
+
+  const textLineStyle = Object.assign({}, defaultTextLineHeight)
+
   function closePosition(){
     setShowPosition(false)
   }
+
+  const onPrint = () => {
+    console.log('admin buttom click')
+    console.log(urlParameters.room)
+    if(participants.local.information.role === 'guest'){
+      console.log('admin buttom click: guest, you are not admin')
+    }
+    else{
+      conference.checkAdmin(urlParameters.room as string, participants.local.information.email, participants.local.information.token).then((result:any) => {
+        if(result === 'approve'){
+        console.log("admin buttom click result: " + result)
+          roomInfo.passMatched = true
+        }
+        else{
+          console.log("admin buttom click result: " + result)
+        }
+      });
+    }
+  };
 
   return <Observer>{()=>{
     const textForFill = isDarkColor(roomInfo.backgroundFill) ? 'white' : 'black'
@@ -44,6 +77,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
     const btnColor = roomInfo.passMatched ? 'primary' : 'default'
 
     return  <Box m={2}>
+      <ParticipantList {...props} {...textLineStyle} />
       <Box m={2}>
         <RemoteTrackLimitControl key="remotelimitcontrol" {...props.stores}/>
         <div ref={anchor} />
@@ -53,6 +87,14 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
           value={roomInfo?.password} onChange={(ev)=>{ roomInfo.password=ev.currentTarget.value}}
           onKeyPress={(ev)=>onKeyPress(ev, roomInfo)}/>
         &emsp;
+        <Button
+            variant="contained"
+            color="primary"
+            onClick={() => onPrint()}
+            style={buttonStyle}
+          >
+            {"information test"}
+          </Button>
         <Button variant="contained" color="primary" style={{textTransform:'none'}} onClick={() => {
           let pass = roomInfo.roomProps.get('password')
           if (!pass){ pass = '' }

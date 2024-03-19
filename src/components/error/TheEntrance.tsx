@@ -15,6 +15,7 @@ import { ErrorDialogFrame } from "./ErrorDialog";
 import {tfDivStyle, tfIStyle, tfLStyle} from '@components/utils'
 import {conference} from '@models/conference'
 import {GoogleAuthComponentLogin as GoogleAuthComponent } from '../GoogleAuthComponentLogin';
+import CircularProgress from "@material-ui/core/CircularProgress";
 
 export const TheEntrance: React.FC<BMProps> = (props) => {
   const { participants } = props.stores;
@@ -24,7 +25,9 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
     urlParameters.room ? urlParameters.room : savedRoom ? savedRoom : ""
   );
   const [doGoogleAuth, setDoGoogleAuth] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const onClose = (save: boolean) => {
+    setIsLoading(true);
     if (name.length !== 0 || participants.local.information.name.length !== 0){
       if (save || participants.local.information.name.length === 0) {
         if (name.length && participants.local.information.name !== name) {
@@ -38,17 +41,28 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
         sessionStorage.setItem("room", room)
       }
       // room auth
+      // the first conference.auth check if user need to use google auth. If not, it will enter the room use conference.enter
       conference.auth(room, false, '').then((result) => {
-        if(result == "success") {
+        if(result == "guest" || result == "admin") {
+          // don't need google auth, enter the room without email
           conference.enter(room, false).then((result) => {
             errorInfo.type = ''
           })
         } else {
-          // do google auth
+          // do google auth, will cann conference.auth again after google auth
           setDoGoogleAuth(true)
         }
       })
+      // conference.saveAdmin(room, participants.local.information.email , participants.local.information.token).then((result) => {});
     }
+  };
+
+  const onTokenReceived = (token: string, role: string, email: string) => {
+    participants.local.information.token = token
+    participants.local.information.role = role
+    participants.local.information.email = email
+    participants.local.sendInformation()
+    participants.local.saveInformationToStorage(true)
   };
 
   const onKeyPress = (ev: React.KeyboardEvent) => {
@@ -122,8 +136,10 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
           >
             {t("EnterTheVenue")}
           </Button>
+        {isLoading && <CircularProgress style={{ color: 'blue', marginTop: '2%', marginLeft: '5%' }}/>}
         </Box>
-        <GoogleAuthComponent room={room} doGoogleAuth={doGoogleAuth}></GoogleAuthComponent>
+
+        <GoogleAuthComponent room={room} doGoogleAuth={doGoogleAuth} onTokenReceived={onTokenReceived} ></GoogleAuthComponent>
 
       </DialogContent>
     </ErrorDialogFrame>

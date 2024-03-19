@@ -27,6 +27,10 @@ import {RecorderButton} from './recorder/RecorderButton'
 import {StereoAudioSwitch} from './StereoAudioSwitch'
 import { player, recorder } from '@models/conference/Recorder'
 
+import errorInfo from "@stores/ErrorInfo";
+import { urlParameters } from "@models/url";
+import {conference} from '@models/conference'
+
 const useStyles = makeStyles({
   root:{
     position: 'absolute',
@@ -46,15 +50,37 @@ class Member{
 }
 
 export const Footer: React.FC<BMProps&{height?:number}> = (props) => {
-  const {map, participants} = props.stores
+  const {roomInfo, map, participants} = props.stores
   //  show or not
   const [showFooter, setShowFooterRaw] = React.useState<boolean>(true)
   const [showAdmin, setShowAdmin] = React.useState<boolean>(false)
   function openAdmin(){
-    map.keyInputUsers.add('adminForm')
-    setShowAdmin(true)
+    // check if the user is admin
+    console.log('admin buttom click')
+    console.log(urlParameters.room)
+    if(participants.local.information.role === 'guest'){
+      console.log('admin buttom click: guest, you are not admin')
+      errorInfo.type = 'notAdmin'
+    }
+    else{
+      conference.checkAdmin(urlParameters.room as string, participants.local.information.email, participants.local.information.token).then((result:any) => {
+        if(result === 'approve'){
+          console.log("admin buttom click result: " + result)
+          console.log('openAdmin')
+          map.keyInputUsers.add('adminForm')
+          setShowAdmin(true)
+          }
+        else{
+          console.log("admin buttom click result: " + result)
+          errorInfo.type = 'notAdmin'
+        }
+      });
+    }
+
+
   }
   function closeAdmin(){
+    console.log('closeAdmin')
     map.keyInputUsers.delete('adminForm')
     setShowAdmin(false)
   }

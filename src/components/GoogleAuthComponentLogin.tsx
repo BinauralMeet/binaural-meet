@@ -6,19 +6,19 @@ import errorInfo from "@stores/ErrorInfo";
 import axios from 'axios';
 import React, { useState, useEffect } from "react";
 
+
 export interface GoogleAuthComponentLoginProps {
   doGoogleAuth: boolean;
   room: string;
+  onTokenReceived?: (token: string, role:string, email: string) => void;
 }
 
 export const GoogleAuthComponentLogin: React.FC<GoogleAuthComponentLoginProps> = (props: GoogleAuthComponentLoginProps) => {
   const [doGoogleAuth, setDoGoogleAuth] = useState(false);
 
   useEffect(() => {
-    console.log("useEffect")
+    console.log("doGoogleAuth", props.doGoogleAuth)
     setDoGoogleAuth(props.doGoogleAuth)
-    console.log(props.doGoogleAuth)
-    console.log(doGoogleAuth)
     if (props.doGoogleAuth) {
       setDoGoogleAuth(false)
       sessionStorage.setItem("googleAuth", "true")
@@ -30,19 +30,32 @@ export const GoogleAuthComponentLogin: React.FC<GoogleAuthComponentLoginProps> =
   // Google Aauth2 Login AND Get User Info
   const login = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
-      console.log(tokenResponse);
       const userInfo = await axios.get(
         'https://www.googleapis.com/oauth2/v3/userinfo',
         { headers: { Authorization: 'Bearer ' + tokenResponse.access_token } },
       )
-      console.log(userInfo.data);
-      console.log(userInfo.data.email);
+      // pass the token to local storage
       conference.auth(props.room, true, userInfo.data.email).then((result) => {
-        if(result == "success") {
+        const role = result
+        if(result == "guest") {
           conference.enter(props.room, true).then((result) => {
+            props.onTokenReceived && props.onTokenReceived(tokenResponse.access_token, role, userInfo.data.email);
             // hide dialog and clear error
             errorInfo.type = ''
           });
+        }
+        else if(result == "admin") {
+          conference.enter(props.room, true).then((result) => {
+            props.onTokenReceived && props.onTokenReceived(tokenResponse.access_token, role, userInfo.data.email);
+            // save the admin info to server
+            conference.saveAdmin(props.room, userInfo.data.email , tokenResponse.access_token).then((result) => {});
+            // hide dialog and clear error
+            errorInfo.type = ''
+          });
+        }
+        else{
+          // when the result is not success, it will show the error message in the dialog
+          errorInfo.type = 'noEnterPremission'
         }
       });
     },
@@ -51,7 +64,5 @@ export const GoogleAuthComponentLogin: React.FC<GoogleAuthComponentLoginProps> =
     onError: errorResponse => {
     }
   })
-  return (
-    <></>
-  )
+  return(<></>)
 }

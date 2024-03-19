@@ -28,7 +28,11 @@ export const ErrorDialogFrame: React.FC<DialogProps | {onClose:(event:{}, reason
 
 export const ErrorDialog: React.FC<BMProps> = (props) => {
   function close(){
-    if (errorInfo.type !== 'retry'){
+    // close login failed dialog. start the enter process again
+    if (errorInfo.type === 'noEnterPremission'){
+      errorInfo.type = 'entrance'
+    }
+    else if (errorInfo.type !== 'retry'){
       errorInfo.clear()
     }
   }

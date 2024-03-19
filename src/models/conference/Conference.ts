@@ -86,13 +86,14 @@ export class Conference {
     const promise = new Promise<string>((resolve, reject) => {
       //  connect to peer
       const peer = participants.local.information.name.substring(0, 4).replaceAll(' ','_').replaceAll(':','_')
-      this.rtcTransports.auth(room, peer, emali).then((peer)=>{
-        console.log("peer:" + peer)
-        if(peer) {
-          console.log("peer:success")
-          resolve("success")
-        } else {
-          console.log("peer:reject")
+      this.rtcTransports.auth(room, peer, emali).then((role)=>{
+        if(role == "guest") {
+          resolve("guest")
+        }
+        else if(role == "admin"){
+          resolve("admin")
+        }
+        else {
           resolve("reject")
         }
       })
@@ -201,6 +202,49 @@ export class Conference {
     }
     return promise
   }
+
+  //upload file to google drive
+  public uploadFiletoGoogleDrive(file:File, reconnect:boolean = false,):Promise<string>{
+    const promise = new Promise<string>((resolve, reject) => {
+      this.rtcTransports.uploadFile(file).then((result)=>{
+        if(result) {
+          resolve(result)
+        } else {
+          resolve("reject")
+        }
+      })
+    })
+    return promise
+  }
+
+  public saveAdmin(room: string, email: string, token: string, reconnect:boolean = false):Promise<string>{
+    const promise = new Promise<string>((resolve, reject) => {
+      console.log("saveAdmin called in conference.")
+      this.rtcTransports.saveAdminInfo(room, email,token).then((result)=>{
+        if(result) {
+          resolve(result)
+        } else {
+          resolve("reject")
+        }
+      })
+    })
+    return promise
+  }
+
+  public checkAdmin(room: string, email: string, token: string):Promise<string>{
+    const promise = new Promise<string>((resolve, reject) => {
+      console.log("check if the user is admin")
+      this.rtcTransports.checkAdmin(room, email,token).then((result)=>{
+        if(result) {
+          resolve(result)
+        } else {
+          resolve("reject")
+        }
+      })
+    })
+    return promise
+  }
+
   private clearRtc(){
     const rids = Array.from(this.remotePeers.values()).map(r => r.peer)
     this.onRemoteLeft([rids])

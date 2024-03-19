@@ -2,11 +2,11 @@ import * as mediasoup from 'mediasoup-client'
 export type MSMessageType =
   'dataConnect' | 'positionConnect' | 'position' |
   'connect' | 'auth' | 'join' | 'pong' | 'rtpCapabilities' | 'leave' |
-  'remoteUpdate' | 'remoteLeft' |
+  'remoteUpdate' | 'remoteLeft' | 'saveAdminInfo'|'checkAdmin'|
   'workerAdd' | 'workerDelete' | 'workerUpdate' |
   'createTransport' | 'closeTransport' | 'connectTransport' |
   'produceTransport' | 'closeProducer' | 'consumeTransport' | 'resumeConsumer' |
-  'streamingStart' | 'streamingStop'
+  'streamingStart' | 'streamingStop' | 'uploadFile'
 export interface MSMessage{
   type: MSMessageType
   sn?: number
@@ -19,6 +19,24 @@ export interface MSAuthMessage extends MSPeerMessage{
   room: string
   email: string
   error?: string
+  role?: string
+}
+
+export interface MSSaveAdminMessage extends MSMessage{
+  room: string
+  email: string
+  token: string
+  error?: string
+  result?: string
+}
+
+export interface MSUploadFileMessage extends MSMessage{
+  room?: string
+  error?: string
+  email?: string
+  file:string
+  fileID?: string
+  fileName: string
 }
 export interface MSConnectMessage extends MSPeerMessage{
   peerJustBefore?: string
