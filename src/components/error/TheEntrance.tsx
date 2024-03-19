@@ -15,6 +15,7 @@ import { ErrorDialogFrame } from "./ErrorDialog";
 import {tfDivStyle, tfIStyle, tfLStyle} from '@components/utils'
 import {conference} from '@models/conference'
 import {GoogleAuthComponentLogin as GoogleAuthComponent } from '../GoogleAuthComponentLogin';
+import CircularProgress from "@material-ui/core/CircularProgress";
 
 export const TheEntrance: React.FC<BMProps> = (props) => {
   const { participants } = props.stores;
@@ -24,7 +25,9 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
     urlParameters.room ? urlParameters.room : savedRoom ? savedRoom : ""
   );
   const [doGoogleAuth, setDoGoogleAuth] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const onClose = (save: boolean) => {
+    setIsLoading(true);
     if (name.length !== 0 || participants.local.information.name.length !== 0){
       if (save || participants.local.information.name.length === 0) {
         if (name.length && participants.local.information.name !== name) {
@@ -55,8 +58,6 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
   };
 
   const onTokenReceived = (token: string, role: string, email: string) => {
-    console.log("onTokenReceived: " + token);
-    console.log("onTokenReceived: " + role);
     participants.local.information.token = token
     participants.local.information.role = role
     participants.local.information.email = email
@@ -135,7 +136,9 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
           >
             {t("EnterTheVenue")}
           </Button>
+        {isLoading && <CircularProgress style={{ color: 'blue', marginTop: '2%', marginLeft: '5%' }}/>}
         </Box>
+
         <GoogleAuthComponent room={room} doGoogleAuth={doGoogleAuth} onTokenReceived={onTokenReceived} ></GoogleAuthComponent>
 
       </DialogContent>
