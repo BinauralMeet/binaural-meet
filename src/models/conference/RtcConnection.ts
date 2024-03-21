@@ -7,7 +7,8 @@ import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSAuthMessage, MSCon
   MSCloseProducerReply,
   MSStreamingStartMessage,MSUploadFileMessage,
   MSStreamingStopMessage,
-  MSSaveAdminMessage} from './MediaMessages'
+  MSSaveAdminMessage,
+  MSRoomsListMessage} from './MediaMessages'
 import * as mediasoup from 'mediasoup-client';
 import {connLog} from '@models/utils'
 import {RtcTransportStatsGot} from './RtcTransportStatsGot'
@@ -76,6 +77,7 @@ export class RtcConnection{
     this.handlers.set('auth', this.onAuth)
     this.handlers.set('uploadFile', this.onUploadFile)
     this.handlers.set('checkAdmin', this.onAdminCheck)
+    this.handlers.set('roomsList',this.onRoomsList)
     try{
       this.device = new mediasoup.Device();
     }catch (error:any){
@@ -250,6 +252,54 @@ export class RtcConnection{
 
   }
 
+  //  Rooms list
+  // room auth
+  public getRoomList():Promise<string>{
+    const promise = new Promise<string>((resolve, reject)=>{
+      this.connected = true
+      this.startProcessMessage()
+      try{
+        this.mainServer = new WebSocket(config.mainServer)
+      }
+      catch(e){
+        this.disconnect(3000, 'e')
+        reject(e)
+      }
+      const onOpenEvent = () => {
+        const msg:MSRoomsListMessage = {
+          type:'roomsList',
+          rooms: []
+        }
+        if (this.mainServer && this.mainServer.readyState === WebSocket.OPEN){
+          this.setMessagePromise(msg, resolve, reject)
+          this.mainServer.send(JSON.stringify(msg))
+        }
+      }
+      const onMessageEvent = (ev: MessageEvent<any>)=> {
+        const msg = JSON.parse(ev.data) as MSMessage
+        //rtcLog(`onMessage(${msg.type})`)
+        this.rtcQueue.push(msg)
+      }
+      const onCloseEvent = () => {
+        //rtcLog('onClose() for mainServer')
+        console.log('onClose() for mainServer')
+        this.disconnect()
+      }
+      const onErrorEvent = () => {
+        console.error(`Error in WebSocket for ${config.mainServer}`)
+        this.disconnect(3000, 'onError')
+      }
+
+      const setEventHandler = () => {
+        this.mainServer?.addEventListener('error', onErrorEvent)
+        this.mainServer?.addEventListener('message', onMessageEvent)
+        this.mainServer?.addEventListener('open', onOpenEvent)
+        this.mainServer?.addEventListener('close', onCloseEvent)
+      }
+      setEventHandler()
+    });
+    return promise
+  }
 
 
   // room auth
@@ -571,6 +621,12 @@ export class RtcConnection{
     }else{
       this.resolveMessage(msg, msg.result)
     }
+  }
+
+  private onRoomsList(base:MSMessage){
+    const msg = base as MSRoomsListMessage
+    console.log("onRoomsList", msg)
+    this.resolveMessage(msg, msg.rooms)
   }
 
   public produceTransport(params:{transport:string, kind:mediasoup.types.MediaKind,

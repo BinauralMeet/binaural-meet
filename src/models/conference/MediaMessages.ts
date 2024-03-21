@@ -6,7 +6,7 @@ export type MSMessageType =
   'workerAdd' | 'workerDelete' | 'workerUpdate' |
   'createTransport' | 'closeTransport' | 'connectTransport' |
   'produceTransport' | 'closeProducer' | 'consumeTransport' | 'resumeConsumer' |
-  'streamingStart' | 'streamingStop' | 'uploadFile'
+  'streamingStart' | 'streamingStop' | 'uploadFile' | 'roomsList'
 export interface MSMessage{
   type: MSMessageType
   sn?: number
@@ -15,6 +15,10 @@ export interface MSPeerMessage extends MSMessage{
   peer: string
   remote?: string
 }
+export interface MSRoomsListMessage extends MSMessage{
+  rooms: string[]
+}
+
 export interface MSAuthMessage extends MSPeerMessage{
   room: string
   email: string
