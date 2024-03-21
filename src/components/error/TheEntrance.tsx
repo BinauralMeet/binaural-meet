@@ -10,7 +10,7 @@ import { i18nSupportedLngs, useTranslation } from "@models/locales";
 import { urlParameters } from "@models/url";
 import { isPortrait, isSmartphone } from "@models/utils";
 import errorInfo from "@stores/ErrorInfo";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ErrorDialogFrame } from "./ErrorDialog";
 import {tfDivStyle, tfIStyle, tfLStyle} from '@components/utils'
 import {conference} from '@models/conference'
@@ -26,6 +26,10 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
   );
   const [doGoogleAuth, setDoGoogleAuth] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  useEffect(() => {
+    getRoomsList();
+  }, []);
+
   const onClose = (save: boolean) => {
     setIsLoading(true);
     if (name.length !== 0 || participants.local.information.name.length !== 0){
@@ -53,6 +57,7 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
           setDoGoogleAuth(true)
         }
       })
+
       // conference.saveAdmin(room, participants.local.information.email , participants.local.information.token).then((result) => {});
     }
   };
@@ -71,6 +76,14 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
     } else if (ev.key === "Esc" || ev.key === "Escape") {
       onClose(false);
     }
+  };
+
+  const getRoomsList = async () => {
+    // Here you can fetch data, or perform other asynchronous operations
+    conference.getRoomList().then((result:string[]) => {
+      console.log("getRoomsList", result);
+    });
+    console.log("Asynchronous operation on component mount");
   };
 
   const { t, i18n } = useTranslation();
