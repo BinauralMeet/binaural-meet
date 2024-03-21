@@ -128,6 +128,8 @@ export class RtcConnection{
     }
   }
 
+
+  // Converts a File object to a base64 string.
   public fileToBase64(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -138,21 +140,9 @@ export class RtcConnection{
       reader.readAsDataURL(file);
     });
   }
-
-  // public fileToBase64M2(file: File){
-  //   const reader = new FileReader()
-  //   reader.readAsDataURL(file)
-  //   reader.onload = () => {
-  //     const base64 = reader.result as string
-  //     console.log(base64)
-  //     return base64
-  //   }
-  //   return "no data in file"
-  // }
-
+  // save the admin info to server after login
   public saveAdminInfo(room: string,  email: string, token: string):Promise<string>{
     const promise = new Promise<string>((resolve, reject)=>{
-    console.log("saveAdminInfo called in rtcconnection")
     const msg:MSSaveAdminMessage = {
       type:'saveAdminInfo',
       room: room,
@@ -165,9 +155,9 @@ export class RtcConnection{
     return promise
   }
 
+  // double check if the user is admin
   public checkAdmin(room: string, email: string, token: string):Promise<string>{
     const promise = new Promise<string>((resolve, reject)=>{
-      console.log("check admin called in rtcconnection")
       const msg:MSSaveAdminMessage = {
         type:'checkAdmin',
         room: room,
@@ -205,7 +195,7 @@ export class RtcConnection{
   }
 
 
-
+  // Upload file to google drive
   public uploadFile(file:File):Promise<string>{
 
     const promise = new Promise<string>(async (resolve, reject)=>{
@@ -253,7 +243,6 @@ export class RtcConnection{
   }
 
   //  Rooms list
-  // room auth
   public getRoomList():Promise<string>{
     const promise = new Promise<string>((resolve, reject)=>{
       this.connected = true
@@ -625,7 +614,6 @@ export class RtcConnection{
 
   private onRoomsList(base:MSMessage){
     const msg = base as MSRoomsListMessage
-    console.log("onRoomsList", msg)
     this.resolveMessage(msg, msg.rooms)
   }
 

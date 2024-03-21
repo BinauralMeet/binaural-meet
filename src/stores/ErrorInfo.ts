@@ -34,8 +34,8 @@ export class ErrorInfo {
       case 'entrance': return ''
       case 'afk': return t('afkTitle')
       case 'kicked': return `Kicked by ${this.name}. ${this.reason}`
-      case 'noEnterPremission': return 'No permission'
-      case 'notAdmin': return 'Not admin'
+      case 'noEnterPremission': return t('enterRoom')
+      case 'notAdmin': return t('eAdmin')
     }
 
     return this.type

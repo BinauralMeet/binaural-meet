@@ -66,7 +66,10 @@ export const jaTranslate = {
   etRtcConnection: 'メディアサーバに通信ができません',
   emDataConnection: 'ファイアウォールの設定を確認してください。Binaural Meet は https(443番)ポートに接続します。',
   emRtcConnection: 'ファイアウォールの設定を確認してください。Binaural Meet は https(443番)ポートに接続します。',
-//  etRetry: '再接続中',
+  enterRoom: 'この部屋に入る権限がありません。',
+  eAdmin: 'この部屋の管理者ではありません。',
+
+  //  etRetry: '再接続中',
 //  emRetry: '接続が切れたので、再接続を試みています。インターネット接続を確認してください。',
   etRetry: 'ブラウザの更新ボタンを押してください',
   emRetry: '一度接続が切れました。ブラウザの更新(リロード)ボタンを押してください。',

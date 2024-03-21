@@ -34,11 +34,12 @@ export const GoogleAuthComponentLogin: React.FC<GoogleAuthComponentLoginProps> =
         'https://www.googleapis.com/oauth2/v3/userinfo',
         { headers: { Authorization: 'Bearer ' + tokenResponse.access_token } },
       )
-      // pass the token to local storage
+      // second time call conference.auth to check if the user has the permission to enter the room
       conference.auth(props.room, true, userInfo.data.email).then((result) => {
         const role = result
         if(result == "guest") {
           conference.enter(props.room, true).then((result) => {
+            // pass the token to local storage
             props.onTokenReceived && props.onTokenReceived(tokenResponse.access_token, role, userInfo.data.email);
             // hide dialog and clear error
             errorInfo.type = ''
