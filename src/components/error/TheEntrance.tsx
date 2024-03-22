@@ -16,6 +16,7 @@ import {tfDivStyle, tfIStyle, tfLStyle} from '@components/utils'
 import {conference} from '@models/conference'
 import {GoogleAuthComponentLogin as GoogleAuthComponent } from '../GoogleAuthComponentLogin';
 import CircularProgress from "@material-ui/core/CircularProgress";
+import { set } from "lodash";
 
 export const TheEntrance: React.FC<BMProps> = (props) => {
   const { participants } = props.stores;
@@ -81,6 +82,9 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
 
     conference.getRoomList().then((result) => {
       // get success
+    }).catch((error) => {
+      console.error("download json file error", error);
+      errorInfo.type = 'roomInfo'
     });
   };
 

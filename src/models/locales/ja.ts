@@ -68,6 +68,7 @@ export const jaTranslate = {
   emRtcConnection: 'ファイアウォールの設定を確認してください。Binaural Meet は https(443番)ポートに接続します。',
   enterRoom: 'この部屋に入る権限がありません。',
   eAdmin: 'この部屋の管理者ではありません。',
+  eRoomInfo: '部屋情報のダウンロードに失敗しました。',
 
   //  etRetry: '再接続中',
 //  emRetry: '接続が切れたので、再接続を試みています。インターネット接続を確認してください。',

@@ -614,7 +614,14 @@ export class RtcConnection{
 
   private onRoomsList(base:MSMessage){
     const msg = base as MSRoomsListMessage
-    this.resolveMessage(msg, msg.rooms)
+    console.log("onRoomsList", msg)
+    if (msg.error){
+      this.rejectMessage(msg, msg.error)
+    }
+    else{
+      this.resolveMessage(msg, msg.rooms)
+    }
+
   }
 
   public produceTransport(params:{transport:string, kind:mediasoup.types.MediaKind,

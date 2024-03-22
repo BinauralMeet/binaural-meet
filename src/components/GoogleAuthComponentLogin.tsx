@@ -17,7 +17,6 @@ export const GoogleAuthComponentLogin: React.FC<GoogleAuthComponentLoginProps> =
   const [doGoogleAuth, setDoGoogleAuth] = useState(false);
 
   useEffect(() => {
-    console.log("doGoogleAuth", props.doGoogleAuth)
     setDoGoogleAuth(props.doGoogleAuth)
     if (props.doGoogleAuth) {
       setDoGoogleAuth(false)
@@ -61,8 +60,10 @@ export const GoogleAuthComponentLogin: React.FC<GoogleAuthComponentLoginProps> =
       });
     },
     onNonOAuthError: errorResponse => {
+      errorInfo.type = 'noEnterPremission'
     },
     onError: errorResponse => {
+      errorInfo.type = 'noEnterPremission'
     }
   })
   return(<></>)

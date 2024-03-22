@@ -253,7 +253,10 @@ export class Conference {
         } else {
           resolve([])
         }
-      })
+      }).catch((error) => {
+        console.error("download json file error", error);
+        reject(error)
+    });
     })
     return promise
   }

@@ -17,6 +17,7 @@ export interface MSPeerMessage extends MSMessage{
 }
 export interface MSRoomsListMessage extends MSMessage{
   rooms: string[]
+  error?: string
 }
 
 export interface MSAuthMessage extends MSPeerMessage{
