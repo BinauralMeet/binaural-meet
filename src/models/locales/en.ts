@@ -65,6 +65,9 @@ export const enTranslate = {
   emNeverShow: 'Never show this in this session',
   etNoChannel: 'No data channel',
   emNoChannel: 'Please check firewall setting. Binaural Meet connect to https (port 443/TCP) and port 8801-8810/UDP or 80/TCP.',
+  enterRoom: 'You do not have permission to enter this room.',
+  eAdmin: 'you are not the admin of this room',
+  eRoomInfo: 'Fail to download room information',
 
   etDataConnection: 'Data connection failed',
   etRtcConnection: 'Media connection failed',

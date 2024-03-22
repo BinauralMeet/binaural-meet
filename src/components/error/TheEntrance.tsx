@@ -16,6 +16,7 @@ import {tfDivStyle, tfIStyle, tfLStyle} from '@components/utils'
 import {conference} from '@models/conference'
 import {GoogleAuthComponentLogin as GoogleAuthComponent } from '../GoogleAuthComponentLogin';
 import CircularProgress from "@material-ui/core/CircularProgress";
+import { set } from "lodash";
 
 export const TheEntrance: React.FC<BMProps> = (props) => {
   const { participants } = props.stores;
@@ -53,15 +54,14 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
             errorInfo.type = ''
           })
         } else {
-          // do google auth, will cann conference.auth again after google auth
+          // do google auth, will call conference.auth again after google Oauth2
           setDoGoogleAuth(true)
         }
       })
-
-      // conference.saveAdmin(room, participants.local.information.email , participants.local.information.token).then((result) => {});
     }
   };
 
+  //save the token and email to local storage and participants information
   const onTokenReceived = (token: string, role: string, email: string) => {
     participants.local.information.token = token
     participants.local.information.role = role
@@ -79,11 +79,13 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
   };
 
   const getRoomsList = async () => {
-    // Here you can fetch data, or perform other asynchronous operations
-    conference.getRoomList().then((result:string[]) => {
-      console.log("getRoomsList", result);
+
+    conference.getRoomList().then((result) => {
+      // get success
+    }).catch((error) => {
+      console.error("download json file error", error);
+      errorInfo.type = 'roomInfo'
     });
-    console.log("Asynchronous operation on component mount");
   };
 
   const { t, i18n } = useTranslation();
@@ -139,7 +141,7 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
             fullWidth={true}
           />
         </Box>
-        <Box mt={4}>
+        <Box display="flex" mt={4}>
           <Button
             variant="contained"
             color="primary"
@@ -149,7 +151,7 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
           >
             {t("EnterTheVenue")}
           </Button>
-        {isLoading && <CircularProgress style={{ color: 'blue', marginTop: '2%', marginLeft: '5%' }}/>}
+        {isLoading && <CircularProgress style={{ color: 'blue', marginTop: '1%', marginLeft: '2%' }}/>}
         </Box>
 
         <GoogleAuthComponent room={room} doGoogleAuth={doGoogleAuth} onTokenReceived={onTokenReceived} ></GoogleAuthComponent>
