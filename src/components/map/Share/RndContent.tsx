@@ -358,10 +358,11 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
           <div className={classes.type}>
             {contentTypeIcons(props.content.type, TITLE_HEIGHT, TITLE_HEIGHT*1.1)}
           </div>
-          <Tooltip placement="top" title={props.content.pinned ? t('ctUnpin') : t('ctPin')} >
-          <div className={classes.pin} onClick={onClickPin} onTouchStart={stop}>
-            <Icon icon={props.content.pinned ? pinIcon : pinOffIcon} height={TITLE_HEIGHT} width={TITLE_HEIGHT*1.1} />
-          </div></Tooltip>
+          <Tooltip placement="top" title={props.content.pinned ? t('ctUnpin') : t('ctPin')}>
+            <div className={classes.pin} onClick={onClickPin} onTouchStart={stop}>
+              <Icon style={{pointerEvents: 'none'}} icon={props.content.pinned ? pinIcon : pinOffIcon} height={TITLE_HEIGHT} width={TITLE_HEIGHT*1.1} />
+            </div>
+          </Tooltip>
           <Tooltip placement="top" title={editButtonTip(editing, props.content)} >
             <div className={classes.edit} onClick={onClickEdit} onTouchStart={stop}>
              {

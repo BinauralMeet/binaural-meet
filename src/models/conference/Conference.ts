@@ -76,6 +76,7 @@ export class Conference {
   private updateStatInterval = 0
 
   public auth(room: string, reconnect:boolean = false, emali:string):Promise<string>{
+    if (!room) room = '_'
     if (reconnect){
       this.rtcTransports.removeListener('disconnect', this.onRtcDisconnect)
       this.dataConnection.removeListener('disconnect', this.onDataDisconnect)
@@ -102,6 +103,7 @@ export class Conference {
   }
 
   public enter(room: string, reconnect:boolean = false):Promise<string>{
+    if (!room) room = '_'
     this.room_ = room
     connLog()(`enter to room ${room}.`)
     if (reconnect){
