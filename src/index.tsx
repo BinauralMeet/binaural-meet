@@ -67,9 +67,4 @@ function startConference() {
   })
 
   errorInfo.connectionStart()
-  when(() => errorInfo.type === '', () => {
-    const room = urlParameters.room || '_'
-    // moved to TheEntrance
-    // conference.enter(room, false)
-  })
 }
