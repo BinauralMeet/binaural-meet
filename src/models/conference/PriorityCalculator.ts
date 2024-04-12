@@ -221,9 +221,9 @@ export class PriorityCalculator {
 
     //  limit length
     const videos = prioritizedTrackInfoLists[0].filter(info => !info.muted)
-    if (videos.length > this.limits[0]) videos.length = this.limits[0]
+    if (this.limits[0] >= 0 && videos.length > this.limits[0]) videos.length = this.limits[0]
     const audios = prioritizedTrackInfoLists[1].filter(info => !info.muted)
-    if (videos.length > this.limits[1]) videos.length = this.limits[1]
+    if (this.limits[1] >= 0 && audios.length > this.limits[1]) audios.length = this.limits[1]
 
     //  done
     this.tracksToConsume = {videos, audios}

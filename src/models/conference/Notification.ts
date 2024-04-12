@@ -4,8 +4,11 @@ export function getNotificationPermission(){
   }
 }
 export function notification(title: string, options?: NotificationOptions){
+  if (Notification.permission !== "granted") {
+    getNotificationPermission()
+  }
   if (Notification.permission === "granted") {
-    // tslint:disable-next-line: no-unused-expression
+      // tslint:disable-next-line: no-unused-expression
     new Notification(title, options)
   }
 }
