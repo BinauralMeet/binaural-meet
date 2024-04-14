@@ -2,6 +2,7 @@ import {Stores} from '@components/utils'
 import Button from '@material-ui/core/Button'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
 import Grid from '@material-ui/core/Grid'
+import Box from '@material-ui/core/Box'
 import Slider from '@material-ui/core/Slider'
 import {conference} from '@models/conference'
 import {t} from '@models/locales'
@@ -35,6 +36,7 @@ export const RemoteTrackLimitControl: React.FC<Stores> = (props:Stores) => {
     } } />
 
   return <>
+  <Box sx={{mt:4}}>
   <FormControlLabel
     control={videoSlider}
     label={t('videoLimit')}
@@ -42,7 +44,9 @@ export const RemoteTrackLimitControl: React.FC<Stores> = (props:Stores) => {
   <FormControlLabel
     control={audioSlider}
     label={t('audioLimit')}
-  /><br />
+  />
+  </Box>
+  <Grid container justify="flex-end">
   <Button variant="contained" color={roomInfo.passMatched ? 'primary' : 'default'}
       style={{textTransform:'none'}} disabled={!roomInfo.passMatched}
       onClick = { () => {
@@ -50,7 +54,7 @@ export const RemoteTrackLimitControl: React.FC<Stores> = (props:Stores) => {
           conference.dataConnection.sync.sendTrackLimits('', [local.remoteVideoLimit, local.remoteAudioLimit])
         }
       }}
-  >Sync limits</Button>
+  >Sync limits</Button> </Grid>
   </>
 }
 RemoteTrackLimitControl.displayName = 'RemoteTrackLimitControl'

@@ -77,7 +77,6 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
     const btnColor = roomInfo.passMatched ? 'primary' : 'default'
 
     return  <Box m={2}>
-      <ParticipantList {...props} {...textLineStyle} />
       <Box m={2}>
         <RemoteTrackLimitControl key="remotelimitcontrol" {...props.stores}/>
         <div ref={anchor} />
@@ -87,14 +86,6 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
           value={roomInfo?.password} onChange={(ev)=>{ roomInfo.password=ev.currentTarget.value}}
           onKeyPress={(ev)=>onKeyPress(ev, roomInfo)}/>
         &emsp;
-        <Button
-            variant="contained"
-            color="primary"
-            onClick={() => onPrint()}
-            style={buttonStyle}
-          >
-            {"information test"}
-          </Button>
         <Button variant="contained" color="primary" style={{textTransform:'none'}} onClick={() => {
           let pass = roomInfo.roomProps.get('password')
           if (!pass){ pass = '' }
@@ -115,6 +106,14 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
               conference.dataConnection.setRoomProp('password', roomInfo.newPassword)
             }
           }}> Update password </Button>&emsp;
+        <Button
+            variant="contained"
+            color="primary"
+            onClick={() => onPrint()}
+            style={{textTransform:'none'}}
+          >
+          {"information test"}
+          </Button>
       </Box>
       <Box mt={2}>
         <Button variant="contained" color={btnColor} style={{textTransform:'none'}}

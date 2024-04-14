@@ -111,8 +111,8 @@ export function createContentOfIframe(urlStr: string, map: MapData) {
       pasted.pose.position[1] = map.mouseOnMap[1]
       pasted.size[0] = 700
       pasted.size[1] = 740
-    }else if (url.pathname.substring(url.pathname.length-4) === '.pdf' ||
-      url.pathname.substring(url.pathname.length-4) === '.PDF' ){  //  pdf
+    }else if (url.pathname.substring(url.pathname.length-3) === 'pdf' ||
+      url.pathname.substring(url.pathname.length-3) === 'PDF' ){  //  pdf
       makeItPdf(pasted, urlStr, map)
     }else {  //  generic iframe
       //  get mime type first
