@@ -38,17 +38,35 @@ function isCameraMuted(){
 }
 
 const disposes:IReactionDisposer[] = []
+function onDeviceChange(ev: Event){
+  //console.log('onDeviceChange called', ev)
+  const old = {
+    audioinput: participants.local.devicePreference.audioinput,
+    videoinput: participants.local.devicePreference.videoinput,
+    audiooutput: participants.local.devicePreference.audiooutput
+  }
+  participants.local.devicePreference.audioinput = ''
+  participants.local.devicePreference.videoinput = ''
+  participants.local.devicePreference.audiooutput = ''
+  for(const prop in old){
+    Object.assign(participants.local.devicePreference, old)
+  }
+}
 export function inputChangeObservationStart(){
+  navigator.mediaDevices.addEventListener('devicechange', onDeviceChange)
   disposes.push(autorun(() => {
     const did = participants.local.devicePreference.audioinput
-    //  console.log(`isMicMuted === ${isMicMuted()}`)
-    if (isMicMuted()){
+
+    //console.log('autorun for audioinput called.')
+    if (isMicMuted() || did===''){
       conference.setLocalMicTrack(undefined).then(()=>{
         participants.local.audioLevel = 0
       })
     }else{
       const track = conference.getLocalMicTrack()
+      //console.log(`Check mic:now:${track?.deviceId} pref:${did}}`)
       if (track && track.deviceId === did) { return }
+      //console.log(`Create mic:now:${track?.deviceId} pref:${did}}`)
       createLocalMic().then((newTrack)=>{
         if (isMicMuted()){
           newTrack.track?.stop()
@@ -93,4 +111,5 @@ export function inputChangeObservationStart(){
 export function inputChangeObservationStop(){
   for(const d of disposes){ d() }
   disposes.length = 0
+  navigator.mediaDevices.removeEventListener('devicechange', onDeviceChange)
 }

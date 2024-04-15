@@ -672,6 +672,12 @@ class Player{
     this.playing = true
     const messages = Array.from(this.messages)
     const medias = Array.from(this.medias)
+    console.log(`Play ${medias.length} medias.`)
+    for(const media of medias){
+      const m = Object.assign({}, media) as any
+      delete m.blob
+      console.log(`${JSON.stringify(m)}`)
+    }
     messages.sort((a,b) => a.time - b.time)
     medias.sort((a,b) => a.time - b.time)
     let time = this.startTime
@@ -769,6 +775,7 @@ class Player{
         case MessageType.PARTICIPANT_VIEWPOINT: Object.assign(p.viewpoint, v as Viewpoint); break
         case MessageType.PARTICIPANT_ON_STAGE: p.physics.onStage = v as boolean; break
         case MessageType.PARTICIPANT_VRMRIG: p.vrmRigs = v as VRMRigs; break
+        case MessageType.AUDIO_LEVEL: p.audioLevel = v as number; break
         default: notHandled = true; break
       }
     }

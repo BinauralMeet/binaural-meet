@@ -302,7 +302,7 @@ export class NodeGroupForPlayback extends NodeGroup {
       return
     }
     const url = URL.createObjectURL(blob)
-    //  console.log(`playSourceBlob t:${blob.type} sz:${blob.size} ${url}`)
+    console.log(`playSourceBlob t:${blob.type} sz:${blob.size} ${url}`)
 
     //  For the context mode
     if (this.audioElementForBlob){ this.audioElementForBlob.remove() }
