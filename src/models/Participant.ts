@@ -23,14 +23,15 @@ export interface ParticipantBase extends MapObject{
   vrmRigs?: VRMRigs
 }
 
-export interface PlaybackParticipant extends ParticipantBase {
-  audioBlob?: Blob
+export interface MediaClip{
   videoBlob?: Blob
+  audioBlob?: Blob
+  rate: number
+  from: number
 }
 
-export interface PlaybackContent extends ISharedContent {
-  audioBlob?: Blob
-  videoBlob?: Blob
+export interface PlaybackParticipant extends ParticipantBase {
+  clip?: MediaClip
 }
 
 export interface RemoteParticipant extends ParticipantBase {

@@ -126,7 +126,7 @@ class Member{
     this.mainUrl = url.hash ? url.href.substring(0, url.href.length - url.hash.length) : url.href
     let pageNum = this.pageNum
     if (url.hash.substr(0,6) === '#page='){
-      pageNum = Number(url.hash.substr(6)) - 1 ?? 0
+      pageNum = Number(url.hash.substring(6)) - 1
       if (pageNum < 0){ pageNum = 0 }
       if (this.numPages && pageNum >= this.numPages){ pageNum = this.numPages-1 }
     }

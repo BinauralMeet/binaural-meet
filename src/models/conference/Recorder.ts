@@ -1,6 +1,6 @@
 import {Stores} from '@components/utils'
 import {contentsToSend, IPlaybackContent} from '@models/ISharedContent'
-import {ParticipantBase, RemoteInformation, Viewpoint, VRMRigs} from '@models/Participant'
+import {MediaClip, ParticipantBase, RemoteInformation, Viewpoint, VRMRigs} from '@models/Participant'
 import {mouse2Str, pose2Str, str2Mouse, str2Pose} from '@models/utils'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import { TrackStates } from '@stores/participants/ParticipantBase'
@@ -484,13 +484,13 @@ export class Recorder{
   private saveMediaRecordings(){
     let count = 0
     const promise = new Promise<MediaRec[]>((resolve, reject)=>{
+      const medias = Array.from(this.medias.values())
       function resolveAll(){
         count ++
         if (count === medias.length){
           resolve(medias)
         }
       }
-      const medias = Array.from(this.medias.values())
       if (medias.length){
         for(const media of medias) {
           if (media.state === 'inactive'){
@@ -613,6 +613,7 @@ class Player{
   medias: MediaPlay[] = []
   startTime = 0
   endTime = 0
+  rate = 1.0
   @observable playing = false
   constructor(){
     makeObservable(this)
@@ -668,7 +669,13 @@ class Player{
 
     return promise
   }
-  play(){
+  setRate(rate: number){
+    if (this.playing && this. rate !== rate){
+      //  TODO hase
+    }
+    this.rate = rate
+  }
+  play(offset: number){
     this.playing = true
     const messages = Array.from(this.messages)
     const medias = Array.from(this.medias)
@@ -680,17 +687,19 @@ class Player{
     }
     messages.sort((a,b) => a.time - b.time)
     medias.sort((a,b) => a.time - b.time)
-    let time = this.startTime
-    const timeDiff = Date.now() - this.startTime
+    let time = this.startTime + offset
+    const timeDiff = Date.now() - (this.startTime + offset)
     const step = () => {
       time = Date.now() - timeDiff
       while (messages.length && messages[0].time < time){
         const message = messages.shift()!
-        player.playMessage(message.msg)
+        const from = time - message.time
+        player.playMessage(message.msg, from)
       }
       while (medias.length && medias[0].time < time){
         const media = medias.shift()!
-        player.playMedia(media)
+        const from = time - media.time
+        player.playMedia(media, from)
         if (media.duration) {
           setTimeout(()=>{
             this.stopMedia(media)
@@ -724,40 +733,52 @@ class Player{
     if (media.pid && media.role === 'avatar'){
       const pid = `p_${media.pid}`
       const p = participants.playback.get(pid)
-      if (p){
-        p.videoBlob = undefined
+      if (p && p.clip){
+        p.clip.videoBlob = undefined
       }
     }
   }
-  private playMedia(media:MediaPlay){
-      //  console.log(`media:${media.blob.type}, pid:${media.pid}, cid:${media.pid}, role:${media.role}`)
+  private playMedia(media:MediaPlay, from:number){
+    const m = Object.assign({}, media) as any
+    delete m.blob
+    console.log(`playMedia: ${JSON.stringify(m)}`)
     if (media.pid){
       const pid = `p_${media.pid}`
       this.pids.add(pid)
       const obj = participants.getOrCreatePlayback(pid)
+      const clip:MediaClip = {
+        rate : this.rate,
+        from
+      }
       if (media.kind === 'audio'){
-        obj.audioBlob = media.blob
+        clip.audioBlob = media.blob
       }else if (media.kind === 'video'){
-        obj.videoBlob = media.blob
+        clip.videoBlob = media.blob
       }else{
         console.error(`Unknown media kind ${media.kind}`)
       }
+      obj.clip = clip
     }else if (media.cid){
       const cid = `p_${media.cid}`
       this.cids.add(cid)
       const obj = contents.getOrCreatePlayback(cid)
+      const clip:MediaClip = {
+        rate : this.rate,
+        from
+      }
       if (media.kind === 'audio'){
-        obj.audioBlob = media.blob
+        clip.audioBlob = media.blob
       }else if (media.kind === 'video'){
-        obj.videoBlob = media.blob
+        clip.videoBlob = media.blob
         obj.url = URL.createObjectURL(media.blob)
       }else{
         console.error(`Unknown media kind ${media.kind}`)
       }
+      obj.clip = clip
       contents.updatePlayback(obj)
     }
   }
-  private playMessage(msg: BMMessage){
+  private playMessage(msg: BMMessage, from: number){
     //console.log(`playMessage ${msg.t}`, msg)
     const pid = msg.p ? `p_${msg.p}` : ''
     if (pid){ this.pids.add(pid) }
@@ -782,7 +803,7 @@ class Player{
     if (notHandled){
       notHandled = false
       switch(msg.t){
-        case MessageType.CONTENT_UPDATE_REQUEST: this.onContentUpdateRequest(msg); break
+        case MessageType.CONTENT_UPDATE_REQUEST: this.onContentUpdateRequest(msg, from); break
         case MessageType.CONTENT_REMOVE_REQUEST: this.onContentRemoveRequest(msg); break
         default: notHandled = true; break
       }
@@ -791,15 +812,20 @@ class Player{
       console.warn(`Playback did not handle message:`, msg)
     }
   }
-  private onContentUpdateRequest(msg: BMMessage){
+  private onContentUpdateRequest(msg: BMMessage, from: number){
     const cs = JSON.parse(msg.v) as IPlaybackContent[]
     for(const c of cs){
       //  console.log('CONTENT_UPDATE_REQUEST:', c)
       c.id = `p_${c.id}`
       const cur = contents.findPlayback(c.id)
       if (cur){
-        c.audioBlob = cur.audioBlob
-        c.videoBlob = cur.videoBlob
+        const clip:MediaClip = {
+          rate : this.rate,
+          from,
+          audioBlob: cur.clip?.audioBlob,
+          videoBlob: cur.clip?.videoBlob
+        }
+        c.clip = clip
         c.url = cur.url
       }
       if (c.type === 'camera' || c.type === 'screen'){

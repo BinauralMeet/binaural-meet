@@ -1,4 +1,5 @@
 import {MapObject} from './MapObject'
+import { MediaClip } from './Participant'
 const MAXIMIZABLE_IMAGE_MIN_WIDTH = 200
 
 export type ContentType = 'img' | 'text' | 'pdf' | 'youtube' | 'iframe' | 'screen' | 'camera' |
@@ -54,8 +55,7 @@ export interface ISharedContentToSend extends MapObject, SharedContentDataToSend
 export interface ISharedContentToSave extends MapObject, SharedContentDataToSend{
 }
 export interface IPlaybackContent extends ISharedContent{
-  audioBlob?: Blob
-  videoBlob?: Blob
+  clip?: MediaClip
 }
 
 export function contentsToSend(them: ISharedContent[]) {

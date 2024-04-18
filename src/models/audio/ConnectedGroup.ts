@@ -150,7 +150,7 @@ export class ConnectedGroupForPlayback {
         if (!participant && cid){
           content = contents.findPlayback(cid)
         }
-        group.playBlob(participant ? participant.audioBlob : content?.audioBlob)
+        group.playClip(participant ? participant.clip : content?.clip)
         //if (content) console.log(`playBlob: ${JSON.stringify(content?.audioBlob)} c:${JSON.stringify(content)}`)
       },
     ))

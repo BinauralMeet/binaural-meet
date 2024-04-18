@@ -1,5 +1,5 @@
 import { IPlaybackContent, ISharedContent } from '@models/ISharedContent'
-import {PlaybackContent, PlaybackParticipant, RemoteParticipant} from '@models/Participant'
+import {PlaybackParticipant, RemoteParticipant} from '@models/Participant'
 import {urlParameters} from '@models/url'
 import {diffMap} from '@models/utils'
 import participants from '@stores/participants/Participants'
@@ -17,7 +17,7 @@ export class ConnectedManager {
   private remotesMemo = new Map<string, RemoteParticipant>()
   private playbacksMemo = new Map<string, PlaybackParticipant>()
   private contentsMemo = new Map<string, ISharedContent>()
-  private playbackContentsMemo = new Map<string, PlaybackContent>()
+  private playbackContentsMemo = new Map<string, IPlaybackContent>()
 
   public setAudioOutput(deviceId: string) {
     this.manager.setAudioOutput(deviceId)

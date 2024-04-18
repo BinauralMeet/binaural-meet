@@ -1,6 +1,6 @@
 import {MessageType} from '@models/conference/DataMessageType'
 import {IPlaybackContent, isContentWallpaper, ISharedContent, SharedContentInfo} from '@models/ISharedContent'
-import {PARTICIPANT_SIZE, PlaybackContent} from '@models/Participant'
+import {PARTICIPANT_SIZE} from '@models/Participant'
 import {TrackRoles, TrackKind} from '@models/conference/RtcConnection'
 import {assert} from '@models/utils'
 import {getRect, isCircleInRect} from '@models/utils'
@@ -201,7 +201,7 @@ export class SharedContents extends EventEmitter {
   findPlayback(cid: string){
     return this.playbackContents.get(cid)
   }
-  getOrCreatePlayback(cid: string): PlaybackContent{
+  getOrCreatePlayback(cid: string): IPlaybackContent{
     let rv = this.findPlayback(cid)
     if (!rv){
       rv = _.cloneDeep(defaultContent)

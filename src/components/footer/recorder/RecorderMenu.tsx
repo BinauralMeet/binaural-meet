@@ -11,7 +11,7 @@ import StopIcon from '@material-ui/icons/Stop'
 import DeleteIcon from '@material-ui/icons/DeleteForever'
 import DownloadIcon from '@material-ui/icons/GetApp'
 import {useLiveQuery} from 'dexie-react-hooks'
-import { Divider, IconButton } from '@material-ui/core'
+import { Divider, IconButton, TextField } from '@material-ui/core'
 import { Observer } from 'mobx-react-lite'
 
 interface RecorderMenuProps extends DialogPageProps, BMProps {
@@ -21,6 +21,7 @@ export const RecorderMenu: React.FC<RecorderMenuProps> = (props) => {
   const {t} = useTranslation()
   const {map} = props.stores
   const fileToPlay = React.useRef<HTMLInputElement>(null)
+  const [startTime, setStartTime] = React.useState('0')
 
   function startStopRecord(){
     props.setStep('none')
@@ -57,7 +58,7 @@ export const RecorderMenu: React.FC<RecorderMenuProps> = (props) => {
       if (record && record.blob){
         props.setStep('none')
         player.load(record.blob).then(()=>{
-          player.play()
+          player.play(Number(startTime))
         })
       }
     }
@@ -97,6 +98,9 @@ export const RecorderMenu: React.FC<RecorderMenuProps> = (props) => {
   const isAdmin = props.stores.roomInfo.password === (pass ? pass : '')
 
   return (
+    <>
+    <TextField label="Start time" type="text" style={{}}
+      value={startTime} onChange={(ev)=>{ setStartTime(ev.currentTarget.value) }} />
     <List>
       {isAdmin ? <DialogIconItem
         key="record" text={t(recorder.recording ? 'recorderStop' : 'recorderStart')}
@@ -110,7 +114,7 @@ export const RecorderMenu: React.FC<RecorderMenuProps> = (props) => {
             if (files && files.length) {
               props.setStep('none')
               player.load(files[0]).then(()=>{
-                player.play()
+                player.play(Number(startTime))
               })
             }
           }}  />
@@ -151,6 +155,7 @@ export const RecorderMenu: React.FC<RecorderMenuProps> = (props) => {
         />
       })}
     </List>
+    </>
   )
 }
 RecorderMenu.displayName = 'RecorderMenu'

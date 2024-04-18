@@ -25,7 +25,7 @@ const ConnectedAvatar: React.FC<ConnectedAvatarProps> = (props) => {
       stream={participant.showVideo && !(participant instanceof PlaybackParticipant) ?
         participant.tracks.avatarStream : undefined}
       blob={participant.showVideo && (participant instanceof PlaybackParticipant) ?
-        participant.videoBlob: undefined}
+        participant.clip?.videoBlob: undefined}
       colors={colors} size={props.size} style={{pointerEvents:'none'}}
       //mirror={props.isLocal}
     />
