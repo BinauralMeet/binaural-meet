@@ -48,16 +48,16 @@ export const CameraSelector: React.FC<CameraSelectorProps> = (props) => {
 
   //  keyboard shortcut
   useEffect(() => {
-    const onKeyPress = (e: KeyboardEvent) => {
+    const onKeyDown = (e: KeyboardEvent) => {
       if (e.code.substring(0, 3) === 'Key') {
         const keyNum = e.code.charCodeAt(3) - 65
         closeVideoMenu(props.cameras.videos[keyNum]?.deviceId)
       }
     }
-    window.addEventListener('keypress', onKeyPress)
+    window.addEventListener('keypress', onKeyDown)
 
     return () => {
-      window.removeEventListener('keypress', onKeyPress)
+      window.removeEventListener('keypress', onKeyDown)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },        [])

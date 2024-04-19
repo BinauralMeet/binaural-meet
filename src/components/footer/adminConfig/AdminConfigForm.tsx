@@ -24,7 +24,7 @@ export interface AdminConfigFormProps{
   close?: () => void,
   stores: Stores,
 }
-function onKeyPress(ev:React.KeyboardEvent, roomInfo: RoomInfo){
+function onKeyDown(ev:React.KeyboardEvent, roomInfo: RoomInfo){
   if (ev.key === 'Enter') {
     let pass = roomInfo.roomProps.get('password')
     roomInfo.passMatched = roomInfo.password === (pass ? pass : '')
@@ -84,7 +84,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
       <Box mt={2} mb={2}>
         <TextField autoFocus label="Admin password" type="password" style={{marginTop:-12}}
           value={roomInfo?.password} onChange={(ev)=>{ roomInfo.password=ev.currentTarget.value}}
-          onKeyPress={(ev)=>onKeyPress(ev, roomInfo)}/>
+          onKeyDown={(ev)=>onKeyDown(ev, roomInfo)}/>
         &emsp;
         <Button variant="contained" color="primary" style={{textTransform:'none'}} onClick={() => {
           let pass = roomInfo.roomProps.get('password')

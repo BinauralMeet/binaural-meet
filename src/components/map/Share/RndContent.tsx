@@ -391,14 +391,14 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
           <Tooltip placement="top" title={t('ctCopyToClipboard')} >
             <div className={classes.titleButton} onClick={onClickCopy}
               onTouchStart={stop}>
-                <Icon icon={clipboardCopy} height={TITLE_HEIGHT}/>
+                <Icon style={{pointerEvents: 'none'}}  icon={clipboardCopy} height={TITLE_HEIGHT}/>
             </div>
           </Tooltip>
           {isContentMaximizable(props.content) ?
             <Tooltip placement="top" title={zoomed ? t('ctUnMaximize') : t('ctMaximize')} >
               <div className={classes.titleButton} onClick={onClickMaximize}
                 onTouchStart={stop}>
-                  <Icon icon={zoomed ? minimizeIcon: maximizeIcon} height={TITLE_HEIGHT}/>
+                  <Icon style={{pointerEvents: 'none'}}  icon={zoomed ? minimizeIcon: maximizeIcon} height={TITLE_HEIGHT}/>
               </div>
             </Tooltip> : undefined}
           <div className={classes.titleButton} onClick={onClickMore} onTouchStart={stop} ref={formRef}>

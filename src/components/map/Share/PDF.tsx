@@ -274,7 +274,7 @@ export const PDF: React.FC<ContentProps> = (props:ContentProps) => {
                   const num = Number(member.pageText)
                   if (num > 0) { member.updateUrl(num-1) }
                 }}
-                onKeyPress={(ev)=>{
+                onKeyDown={(ev)=>{
                   if (ev.key === 'Enter'){
                     const num = Number(member.pageText)
                     if (num > 0) { member.updateUrl(num-1) }

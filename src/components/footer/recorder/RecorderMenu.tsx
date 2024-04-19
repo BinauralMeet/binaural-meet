@@ -68,7 +68,7 @@ export const RecorderMenu: React.FC<RecorderMenuProps> = (props) => {
   }
   //  keyboard shortcut
   useEffect(() => {
-    const onKeyPress = (e: KeyboardEvent) => {
+    const onKeyDown = (e: KeyboardEvent) => {
       if (map.keyInputUsers.has('recorderDialog')) {
         if (e.code === 'KeyR') {
           startStopRecord()
@@ -79,9 +79,9 @@ export const RecorderMenu: React.FC<RecorderMenuProps> = (props) => {
         }
       }
     }
-    window.addEventListener('keypress', onKeyPress)
+    window.addEventListener('keypress', onKeyDown)
     return () => {
-      window.removeEventListener('keypress', onKeyPress)
+      window.removeEventListener('keypress', onKeyDown)
     }
     //  eslint-disable-next-line react-hooks/exhaustive-deps
   },        []);

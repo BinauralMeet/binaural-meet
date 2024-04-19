@@ -22,7 +22,7 @@ export const TextInput: React.FC<TextInputProps> = (props) => {
     <TextField  label={textLabel} multiline={props.multiline} value={value}
         onChange={event => setValue(event.target.value)}
         fullWidth={true} inputProps={{autoFocus:true}}
-        onKeyPress={(ev)=>{
+        onKeyDown={(ev)=>{
           if (!props.multiline && ev.key === 'Enter'){
             onFinishInput(value)
             setStep('none')

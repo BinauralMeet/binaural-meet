@@ -116,7 +116,10 @@ export function isContentEditable(c?: ISharedContent) {
 export function isContentMaximizable(c?: ISharedContent) {
   return c && (c.type === 'iframe' || c.type === 'pdf' || c.type === 'whiteboard' ||
     c.type === 'gdrive' || c.type === 'youtube' || c.type === 'screen' || c.type === 'camera'
-    ||  (c.type === 'img' && c.size[0] > MAXIMIZABLE_IMAGE_MIN_WIDTH))
+    ||  (c.type === 'img' && c.size[0] > MAXIMIZABLE_IMAGE_MIN_WIDTH)
+    ||  (c.type === 'text' && c.size[0] > MAXIMIZABLE_IMAGE_MIN_WIDTH)
+  )
+
 }
 //  wallpaper or not
 export function isContentWallpaper(c?: ISharedContent) {

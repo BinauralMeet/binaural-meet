@@ -54,7 +54,7 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
   }
 
 
-  const onKeyPress = (ev:React.KeyboardEvent) => {
+  const onKeyDown = (ev:React.KeyboardEvent) => {
     if (ev.key === 'Enter') {
       closeConfig(ev, 'enter')
     }else if (ev.key === 'Esc' || ev.key === 'Escape') {
@@ -101,7 +101,7 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
           <TextField label={t('YourName')} multiline={false} value={local.information.name} style={tfDivStyle}
             inputProps={{style: tfIStyle, autoFocus:true}} InputLabelProps={{style: tfLStyle}}
             onChange={event => {local.information.name = event.target.value}}
-            onKeyPress={onKeyPress} fullWidth={true}
+            onKeyDown={onKeyDown} fullWidth={true}
           />
           <Box mt={3}>
             <div style={{fontSize:12}}>{t('lsColor')}</div>
@@ -160,7 +160,7 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
                   style={{...tfDivStyle, marginTop:8}}
                   inputProps={{style: tfIStyle, autoFocus:true}} InputLabelProps={{style: tfLStyle}}
                   onChange={event => local.information.email = event.target.value}
-                  onKeyPress={onKeyPress} fullWidth={true}
+                  onKeyDown={onKeyDown} fullWidth={true}
                 />
                 <Button variant="contained" size="small"
                   style={{marginLeft:5, textTransform:'none', minWidth:15, ...buttonStyle}}

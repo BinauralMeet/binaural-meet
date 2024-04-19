@@ -119,8 +119,6 @@ export const ChatInBar: React.FC<BMProps&TextLineStyle>  = (props) => {
             if (ev.key === 'Escape' || ev.key === 'Esc'){ //  Esc key
               chat.sendTo = ''
             }
-          }}
-          onKeyPress={(ev)=>{
             //  if (ev.key === 'Enter'){  }
             if (ev.key === '\n'){ //  CTRL + Enter
               sendChatMessage(text, nameTo ? chat.sendTo : '', props)

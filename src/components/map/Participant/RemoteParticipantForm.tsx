@@ -24,7 +24,7 @@ export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (prop
   const roomInfo = props.stores.roomInfo
   const [kick, setKick] = React.useState<string>('')
   const [clear, setClear] = React.useState<string>('')
-  function onKeyPressKick(ev:React.KeyboardEvent){
+  function onKeyDownKick(ev:React.KeyboardEvent){
     if (ev.key === 'Enter' && kick === 'kick') {
       if (!props.participant) { return }
       //TODO: when kicked
@@ -33,7 +33,7 @@ export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (prop
       props.close()
     }
   }
-  function onKeyPressClear(ev:React.KeyboardEvent){
+  function onKeyDownClear(ev:React.KeyboardEvent){
     if (ev.key === 'Enter' && clear === 'clear') {
       if (!props.participant) { return }
       const remoteContents:string[] = []
@@ -105,13 +105,13 @@ export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (prop
           <Box mb={2}>
             To kick this user type 'kick' and enter. &thinsp;
             <TextField label="kick" type="text" style={{marginTop:-22}}
-              value={kick} onChange={(ev)=>{setKick(ev.currentTarget.value)}} onKeyPress={onKeyPressKick}
+              value={kick} onChange={(ev)=>{setKick(ev.currentTarget.value)}} onKeyDown={onKeyDownKick}
             />
           </Box>
           <Box mb={2}>
             Clear this user's contents.&thinsp;
             <TextField label="clear" type="text" style={{marginTop:-22}}
-              value={clear} onChange={(ev)=>{setClear(ev.currentTarget.value)}} onKeyPress={onKeyPressClear}
+              value={clear} onChange={(ev)=>{setClear(ev.currentTarget.value)}} onKeyDown={onKeyDownClear}
             />
          </Box>
         </>

@@ -87,6 +87,7 @@ export const TextEdit: React.FC<TextEditProps> = (props:TextEditProps) => {
           ev.preventDefault()
           if (sendTextLater){ sendTextLater.cancel() }
           sendText(text, props)
+          props.stores.map.keyInputUsers.delete(props.content.id)
           props.stores.contents.setEditing('')
         }
       }}

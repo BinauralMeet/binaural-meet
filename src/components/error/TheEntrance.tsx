@@ -70,7 +70,7 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
     participants.local.saveInformationToStorage(true)
   };
 
-  const onKeyPress = (ev: React.KeyboardEvent) => {
+  const onKeyDown = (ev: React.KeyboardEvent) => {
     if (ev.key === "Enter") {
       onClose(true);
     } else if (ev.key === "Esc" || ev.key === "Escape") {
@@ -125,7 +125,7 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
           inputProps={{ style: tfIStyle, autoFocus: true }}
           InputLabelProps={{ style: tfLStyle }}
           onChange={(event) => setName(event.target.value)}
-          onKeyPress={onKeyPress}
+          onKeyDown={onKeyDown}
           fullWidth={true}
         />
         <Box mt={4}>
@@ -137,7 +137,7 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
             inputProps={{ style: tfIStyle, autoFocus: false }}
             InputLabelProps={{ style: tfLStyle }}
             onChange={(event) => setRoom(event.target.value)}
-            onKeyPress={onKeyPress}
+            onKeyDown={onKeyDown}
             fullWidth={true}
           />
         </Box>

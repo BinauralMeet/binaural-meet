@@ -13,7 +13,7 @@ export const PositionServerForm: React.FC<PositionServerFormProps> = (props: Pos
   if (!settings.lpsUrl) settings.load()
   const [lpsId, setLpsId] = React.useState(settings.lpsId)
   const [lpsUrl, setLpsUrl] = React.useState(settings.lpsUrl)
-  function onKeyPress(ev:React.KeyboardEvent){
+  function onKeyDown(ev:React.KeyboardEvent){
     if (ev.key === 'Enter') {
       settings.lpsId = lpsId
       settings.lpsUrl = lpsUrl
@@ -27,10 +27,10 @@ export const PositionServerForm: React.FC<PositionServerFormProps> = (props: Pos
     Local Positioning System
     </Box><Box m={2}>
     <TextField autoFocus label="Id" value={lpsId} onChange={(ev)=>{ setLpsId(ev.currentTarget.value) }}
-    onKeyPress={(ev)=>onKeyPress(ev)}/>
+    onKeyDown={(ev)=>onKeyDown(ev)}/>
     </Box><Box m={2}>
     <TextField label="URL" value={lpsUrl} onChange={(ev)=>{ setLpsUrl(ev.currentTarget.value) }}
-    onKeyPress={(ev)=>onKeyPress(ev)}/>
+    onKeyDown={(ev)=>onKeyDown(ev)}/>
     </Box></>}
   }</Observer>
 }

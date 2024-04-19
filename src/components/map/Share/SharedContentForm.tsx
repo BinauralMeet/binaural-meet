@@ -107,7 +107,7 @@ export const SharedContentForm: React.FC<SharedContentFormProps> = (props: Share
     }
     props.close()
   }
-  const onKeyPress = (ev:React.KeyboardEvent) => {
+  const onKeyDown = (ev:React.KeyboardEvent) => {
     if (ev.key === 'Enter') {
       closeForm(ev, 'enter')
     }
@@ -140,7 +140,7 @@ export const SharedContentForm: React.FC<SharedContentFormProps> = (props: Share
             props.content.name = event.target.value
             props.updateOnly(props.content)
           }}
-          onKeyPress={onKeyPress} fullWidth={true}
+          onKeyDown={onKeyDown} fullWidth={true}
         />
         </td></tr></tbody></table>
         <Box mt={2} mb={2}>
