@@ -45,10 +45,10 @@ function onDeviceChange(ev: Event){
     videoinput: participants.local.devicePreference.videoinput,
     audiooutput: participants.local.devicePreference.audiooutput
   }
-  participants.local.devicePreference.videoinput = ''
-  participants.local.devicePreference.audiooutput = ''
+  participants.local.devicePreference.videoinput = undefined
+  participants.local.devicePreference.audiooutput = undefined
   conference.setLocalMicTrack(undefined).then(()=>{
-    participants.local.devicePreference.audioinput = ''
+    participants.local.devicePreference.audioinput = undefined
     participants.local.audioLevel = 0
     for(const prop in old){
       Object.assign(participants.local.devicePreference, old)
@@ -60,7 +60,7 @@ export function inputChangeObservationStart(){
   disposes.push(autorun(() => {
     //console.log('mic observer autorun called')
     let did = participants.local.devicePreference.audioinput
-    if (isMicMuted() || !did){
+    if (isMicMuted() || did===undefined){
       //  When muted or device not selected. remove mic track and finish.
       conference.setLocalMicTrack(undefined).then(()=>{
         participants.local.audioLevel = 0
