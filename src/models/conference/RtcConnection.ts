@@ -105,7 +105,7 @@ export class RtcConnection{
         const msg:MSMessage = {
           type: 'pong'
         }
-        console.log("RtcC: pong sent.")
+        rtcLog("RtcC: pong sent.")
         this.mainServer.send(JSON.stringify(msg))
         this.lastSendTime = now
       }
