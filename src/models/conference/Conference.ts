@@ -247,22 +247,6 @@ export class Conference {
     return promise
   }
 
-  public getRoomList():Promise<string[]>{
-    const promise = new Promise<string[]>((resolve, reject) => {
-      this.rtcTransports.getRoomList().then((result:any)=>{
-        if(result) {
-          resolve(result)
-        } else {
-          resolve([])
-        }
-      }).catch((error) => {
-        console.error("download json file error", error);
-        reject(error)
-    });
-    })
-    return promise
-  }
-
   private clearRtc(){
     const rids = Array.from(this.remotePeers.values()).map(r => r.peer)
     this.onRemoteLeft([rids])

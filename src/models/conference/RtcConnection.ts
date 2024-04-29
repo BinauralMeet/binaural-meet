@@ -77,7 +77,6 @@ export class RtcConnection{
     this.handlers.set('auth', this.onAuth)
     this.handlers.set('uploadFile', this.onUploadFile)
     this.handlers.set('checkAdmin', this.onAdminCheck)
-    this.handlers.set('roomsList',this.onRoomsList)
     try{
       this.device = new mediasoup.Device();
     }catch (error:any){
@@ -97,30 +96,36 @@ export class RtcConnection{
     this.interval = setInterval(this.processMessage.bind(this), this.INTERVAL)
   }
   private processMessage(){
-    let now = Date.now()
-    if (now > this.lastSendTime + SEND_INTERVAL && this.mainServer){
-      const msg:MSMessage = {
-        type: 'pong'
-      }
-      console.log("send pong")
-      this.mainServer.send(JSON.stringify(msg))
-      this.lastSendTime = now
+    if (this.mainServer && this.mainServer.readyState === WebSocket.CONNECTING){
+      return  //  wait until OEPN.
     }
-    const timeToProcess = this.INTERVAL * 0.5
-    const deadline = now + timeToProcess
-    while(this.rtcQueue.length && now < deadline){
-      const msg = this.rtcQueue.shift()!
-      rtcLog(`processMessag(${msg.type})`)
-      const func = this.handlers.get(msg.type)
-      if (func){
-        func.bind(this)(msg)
-      }else{
-        console.error(`unhandled message ${msg.type} received`, msg)
+    if (this.mainServer && this.mainServer.readyState === WebSocket.OPEN){
+      let now = Date.now()
+      if (now > this.lastSendTime + SEND_INTERVAL){
+        const msg:MSMessage = {
+          type: 'pong'
+        }
+        console.log("RtcC: pong sent.")
+        this.mainServer.send(JSON.stringify(msg))
+        this.lastSendTime = now
       }
-      now = Date.now()
+      const timeToProcess = this.INTERVAL * 0.5
+      const deadline = now + timeToProcess
+      while(this.rtcQueue.length && now < deadline){
+        const msg = this.rtcQueue.shift()!
+        rtcLog(`RtcC: processMessag(${msg.type})`, msg)
+        const func = this.handlers.get(msg.type)
+        if (func){
+          func.bind(this)(msg)
+        }else{
+          console.error(`unhandled message ${msg.type} received`, msg)
+        }
+        now = Date.now()
+      }
+      messageLoads.loadRtc = (now - (deadline-timeToProcess)) / timeToProcess
+    }else if (this.rtcQueue.length > 0){
+      console.error(`mainServer.readyState === '${this.mainServer?.readyState}' and mesgs in queue: ${JSON.stringify(this.rtcQueue)}.`)
     }
-    messageLoads.loadRtc = (now - (deadline-timeToProcess)) / timeToProcess
-
     //  Stop interval timer when disconnected and no messages in queue.
     if (!this.isConnected() && this.rtcQueue.length===0 && this.interval){
       clearInterval(this.interval)
@@ -242,55 +247,6 @@ export class RtcConnection{
 
   }
 
-  //  Rooms list
-  public getRoomList():Promise<string>{
-    const promise = new Promise<string>((resolve, reject)=>{
-      this.connected = true
-      this.startProcessMessage()
-      try{
-        this.mainServer = new WebSocket(config.mainServer)
-      }
-      catch(e){
-        this.disconnect(3000, 'e')
-        reject(e)
-      }
-      const onOpenEvent = () => {
-        const msg:MSRoomsListMessage = {
-          type:'roomsList',
-          rooms: []
-        }
-        if (this.mainServer && this.mainServer.readyState === WebSocket.OPEN){
-          this.setMessagePromise(msg, resolve, reject)
-          this.mainServer.send(JSON.stringify(msg))
-        }
-      }
-      const onMessageEvent = (ev: MessageEvent<any>)=> {
-        const msg = JSON.parse(ev.data) as MSMessage
-        //rtcLog(`onMessage(${msg.type})`)
-        this.rtcQueue.push(msg)
-      }
-      const onCloseEvent = () => {
-        //rtcLog('onClose() for mainServer')
-        console.log('onClose() for mainServer')
-        this.disconnect()
-      }
-      const onErrorEvent = () => {
-        console.error(`Error in WebSocket for ${config.mainServer}`)
-        this.disconnect(3000, 'onError')
-      }
-
-      const setEventHandler = () => {
-        this.mainServer?.addEventListener('error', onErrorEvent)
-        this.mainServer?.addEventListener('message', onMessageEvent)
-        this.mainServer?.addEventListener('open', onOpenEvent)
-        this.mainServer?.addEventListener('close', onCloseEvent)
-      }
-      setEventHandler()
-    });
-    return promise
-  }
-
-
   // room auth
   public auth(room: string, peer: string, email: string):Promise<string>{
     const promise = new Promise<string>((resolve, reject)=>{
@@ -343,7 +299,7 @@ export class RtcConnection{
 
   //  connect to main server. return my peer id got.
   public connect(room: string, peer: string){
-    rtcLog(`rtcConn connect(${room}, ${peer})`)
+    rtcLog(`RtcC: connect(${room}, ${peer})`)
     const promise = new Promise<string>((resolve, reject)=>{
       this.connected = true
       this.startProcessMessage()
@@ -497,7 +453,7 @@ export class RtcConnection{
   }
 
   private onConnect(base: MSMessage){
-    rtcLog(`onConnect( ${JSON.stringify(base)}`)
+    rtcLog(`RtcC: onConnect( ${JSON.stringify(base)}`)
     const msg = base as MSPeerMessage
     this.peer_ = msg.peer
     const room = this.getMessageArg(msg) as string
@@ -507,7 +463,7 @@ export class RtcConnection{
         peer:msg.peer,
         room
       }
-      rtcLog(`join sent ${JSON.stringify(joinMsg)}`)
+      rtcLog(`RtcC: join sent ${JSON.stringify(joinMsg)}`)
       this.mainServer.send(JSON.stringify(joinMsg))
       this.lastSendTime = Date.now()
       this.loadDevice(msg.peer).then(()=>{
@@ -610,18 +566,6 @@ export class RtcConnection{
     }else{
       this.resolveMessage(msg, msg.result)
     }
-  }
-
-  private onRoomsList(base:MSMessage){
-    const msg = base as MSRoomsListMessage
-    console.log("onRoomsList", msg)
-    if (msg.error){
-      this.rejectMessage(msg, msg.error)
-    }
-    else{
-      this.resolveMessage(msg, msg.rooms)
-    }
-
   }
 
   public produceTransport(params:{transport:string, kind:mediasoup.types.MediaKind,

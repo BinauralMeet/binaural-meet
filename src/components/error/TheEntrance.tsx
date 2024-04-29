@@ -27,9 +27,6 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
   );
   const [doGoogleAuth, setDoGoogleAuth] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  useEffect(() => {
-    getRoomsList();
-  }, []);
 
   const onClose = (save: boolean) => {
     setIsLoading(true);
@@ -77,17 +74,6 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
       onClose(false);
     }
   };
-
-  const getRoomsList = async () => {
-
-    conference.getRoomList().then((result) => {
-      // get success
-    }).catch((error) => {
-      console.error("download json file error", error);
-      errorInfo.type = 'roomInfo'
-    });
-  };
-
   const { t, i18n } = useTranslation();
 
   return (
