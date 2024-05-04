@@ -46,7 +46,7 @@ export const RemoteTrackLimitControl: React.FC<Stores> = (props:Stores) => {
     label={t('audioLimit')}
   />
   </Box>
-  <Grid container justify="flex-end">
+  <Grid container justifyContent="flex-end">
   <Button variant="contained" color={roomInfo.passMatched ? 'primary' : 'default'}
       style={{textTransform:'none'}} disabled={!roomInfo.passMatched}
       onClick = { () => {
