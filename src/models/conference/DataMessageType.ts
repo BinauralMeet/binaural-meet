@@ -67,12 +67,9 @@ export const MessageType = {
 
   //  special
   PARTICIPANT_LEFT: 'm_participant_left',       //  id:string,  remove info
+  PARTICIPANT_LEFT_BY_ERROR: 'm_participant_left_error',       //  id:string
   ROOM_PROP:  'room_prop',                      //  [name:string, value:string], set room property
   REQUEST_TO: 'req_to',                         //  ids:string[], request for info of specific participant
   PONG: 'o',                                    //  pong message
-
-  //  only for JVB
-  FRAGMENT_HEAD: 'frag_head',
-  FRAGMENT_CONTENT: 'frag_cont',
 }
 export type MessageKeys = keyof typeof MessageType

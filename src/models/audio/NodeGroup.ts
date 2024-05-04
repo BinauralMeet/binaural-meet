@@ -1,4 +1,5 @@
-import {MediaClip, PARTICIPANT_SIZE} from '@models/Participant'
+import {PARTICIPANT_SIZE} from '@models/Participant'
+import {MediaClip} from '@models/MapObject'
 import {Pose3DAudio} from '@models/utils'
 import {mulV3, normV} from '@models/utils/coordinates'
 import errorInfo from '@stores/ErrorInfo'

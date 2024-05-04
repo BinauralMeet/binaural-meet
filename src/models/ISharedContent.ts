@@ -1,5 +1,4 @@
-import {MapObject} from './MapObject'
-import { MediaClip } from './Participant'
+import {MapObject, MediaClip} from './MapObject'
 const MAXIMIZABLE_IMAGE_MIN_WIDTH = 200
 
 export type ContentType = 'img' | 'text' | 'pdf' | 'youtube' | 'iframe' | 'screen' | 'camera' |

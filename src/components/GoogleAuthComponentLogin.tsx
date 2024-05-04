@@ -33,8 +33,8 @@ export const GoogleAuthComponentLogin: React.FC<GoogleAuthComponentLoginProps> =
         'https://www.googleapis.com/oauth2/v3/userinfo',
         { headers: { Authorization: 'Bearer ' + tokenResponse.access_token } },
       )
-      // second time call conference.auth to check if the user has the permission to enter the room
-      conference.auth(props.room, true, userInfo.data.email).then((result) => {
+      // Second time call conference.auth to check if the user has the permission to enter the room
+      conference.auth(props.room, tokenResponse.access_token, userInfo.data.email, true).then((result) => {
         const role = result
         if(result == "guest") {
           conference.enter(props.room, true).then((result) => {

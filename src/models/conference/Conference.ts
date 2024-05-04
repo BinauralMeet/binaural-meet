@@ -75,7 +75,7 @@ export class Conference {
 
   private updateStatInterval = 0
 
-  public auth(room: string, reconnect:boolean = false, emali:string):Promise<string>{
+  public auth(room: string, token: string, email: string, reconnect:boolean = false):Promise<string>{
     if (!room) room = '_'
     if (reconnect){
       this.rtcTransports.removeListener('disconnect', this.onRtcDisconnect)
@@ -87,7 +87,7 @@ export class Conference {
     const promise = new Promise<string>((resolve, reject) => {
       //  connect to peer
       const peer = participants.local.information.name.substring(0, 4).replaceAll(' ','_').replaceAll(':','_')
-      this.rtcTransports.auth(room, peer, emali).then((role)=>{
+      this.rtcTransports.auth(room, peer, token, email).then((role)=>{
         if(role == "guest") {
           resolve("guest")
         }

@@ -3,7 +3,7 @@ import {PlaybackParticipant as IPlaybackParticipant, RemoteInformation} from '@m
 import {action, makeObservable, observable} from 'mobx'
 import {Store} from '../utils'
 import {ParticipantBase, TrackStates} from './ParticipantBase'
-import {MediaClip} from '@models/Participant'
+import {MediaClip} from '@models/MapObject'
 
 export class PlaybackParticipant extends ParticipantBase implements Store<IPlaybackParticipant> {
   // init information

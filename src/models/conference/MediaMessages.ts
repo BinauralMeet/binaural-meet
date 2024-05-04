@@ -1,12 +1,12 @@
 import * as mediasoup from 'mediasoup-client'
 export type MSMessageType =
   'dataConnect' | 'positionConnect' | 'position' |
-  'connect' | 'auth' | 'join' | 'pong' | 'rtpCapabilities' | 'leave' |
+  'connect' | 'auth' | 'join' | 'pong' | 'rtpCapabilities' | 'leave' | 'leave_error' |
   'remoteUpdate' | 'remoteLeft' | 'saveAdminInfo'|'checkAdmin'|
   'workerAdd' | 'workerDelete' | 'workerUpdate' |
   'createTransport' | 'closeTransport' | 'connectTransport' |
   'produceTransport' | 'closeProducer' | 'consumeTransport' | 'resumeConsumer' |
-  'streamingStart' | 'streamingStop' | 'uploadFile' | 'roomsList'
+  'streamingStart' | 'streamingStop' | 'uploadFile' | 'saveAdminInfo' | 'checkAdmin'
 export interface MSMessage{
   type: MSMessageType
   sn?: number
@@ -15,18 +15,22 @@ export interface MSPeerMessage extends MSMessage{
   peer: string
   remote?: string
 }
-export interface MSRoomsListMessage extends MSMessage{
-  rooms: string[]
-  error?: string
-}
 
 export interface MSAuthMessage extends MSPeerMessage{
   room: string
   email: string
+  token: string
   error?: string
   role?: string
 }
 
+export interface MSCheckAdminMessage extends MSMessage{
+  room: string
+  email: string
+  token: string
+  result?: string
+  role?: string
+}
 export interface MSSaveAdminMessage extends MSMessage{
   room: string
   email: string

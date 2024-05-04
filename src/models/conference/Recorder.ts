@@ -1,6 +1,7 @@
 import {Stores} from '@components/utils'
 import {contentsToSend, IPlaybackContent} from '@models/ISharedContent'
-import {MediaClip, ParticipantBase, RemoteInformation, Viewpoint, VRMRigs} from '@models/Participant'
+import {ParticipantBase, RemoteInformation, Viewpoint, VRMRigs} from '@models/Participant'
+import {MediaClip} from '@models/MapObject'
 import {mouse2Str, pose2Str, str2Mouse, str2Pose} from '@models/utils'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import { TrackStates } from '@stores/participants/ParticipantBase'

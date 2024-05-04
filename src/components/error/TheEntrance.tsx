@@ -44,7 +44,7 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
       }
       // room auth
       // the first conference.auth check if user need to use google auth. If not, it will enter the room use conference.enter
-      conference.auth(room, false, '').then((result) => {
+      conference.auth(room, '', '', false).then((result) => {
         if(result == "guest" || result == "admin") {
           // don't need google auth, enter the room without email
           conference.enter(room, false).then((result) => {

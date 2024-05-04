@@ -7,8 +7,7 @@ import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSAuthMessage, MSCon
   MSCloseProducerReply,
   MSStreamingStartMessage,MSUploadFileMessage,
   MSStreamingStopMessage,
-  MSSaveAdminMessage,
-  MSRoomsListMessage} from './MediaMessages'
+  MSSaveAdminMessage} from './MediaMessages'
 import * as mediasoup from 'mediasoup-client';
 import {connLog} from '@models/utils'
 import {RtcTransportStatsGot} from './RtcTransportStatsGot'
@@ -183,8 +182,8 @@ export class RtcConnection{
         console.log('onClose() for mainServer')
         this.disconnect()
       }
-      const onErrorEvent = () => {
-        console.error(`Error in WebSocket for ${config.mainServer}`)
+      const onErrorEvent = (ev:any) => {
+        console.error(`Error in WebSocket for ${config.mainServer}`, ev)
         this.disconnect(3000, 'onError')
       }
 
@@ -248,7 +247,7 @@ export class RtcConnection{
   }
 
   // room auth
-  public auth(room: string, peer: string, email: string):Promise<string>{
+  public auth(room: string, peer: string, token: string, email: string):Promise<string>{
     const promise = new Promise<string>((resolve, reject)=>{
       this.connected = true
       this.startProcessMessage()
@@ -262,8 +261,9 @@ export class RtcConnection{
       const onOpenEvent = () => {
         const msg:MSAuthMessage = {
           type:'auth',
-          room: room,
-          email: email,
+          room,
+          token,
+          email,
           peer,
         }
         if (this.mainServer && this.mainServer.readyState === WebSocket.OPEN){
@@ -281,8 +281,8 @@ export class RtcConnection{
         console.log('onClose() for mainServer')
         this.disconnect()
       }
-      const onErrorEvent = () => {
-        console.error(`Error in WebSocket for ${config.mainServer}`)
+      const onErrorEvent = (ev:any) => {
+        console.error(`Error in WebSocket for ${config.mainServer}`, ev)
         this.disconnect(3000, 'onError')
       }
 

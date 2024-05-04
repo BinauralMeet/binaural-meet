@@ -1,5 +1,5 @@
-import { ISharedContent } from '@models/ISharedContent'
-import {MapObject} from './MapObject'
+import {ISharedContent} from '@models/ISharedContent'
+import {MapObject, MediaClip} from './MapObject'
 import {findReverseColorRGB, findTextColorRGB, getRandomColorRGB, rgb2Color} from './utils/color'
 import {Mouse} from './utils/coordinates'
 import * as Kalidokit from 'kalidokit'
@@ -21,13 +21,6 @@ export interface ParticipantBase extends MapObject{
   information: RemoteInformation|LocalInformation
   zIndex: number
   vrmRigs?: VRMRigs
-}
-
-export interface MediaClip{
-  videoBlob?: Blob
-  audioBlob?: Blob
-  rate: number
-  from: number
 }
 
 export interface PlaybackParticipant extends ParticipantBase {
