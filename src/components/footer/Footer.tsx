@@ -61,7 +61,6 @@ export const Footer: React.FC<BMProps&{height?:number}> = (props) => {
     if(participants.local.information.role === 'guest'){
       console.log('admin buttom click: guest, you are not admin')
       errorInfo.type = 'notAdmin'
-      setShowAdmin(true)
     }
     else{
       conference.checkAdmin(urlParameters.room as string, participants.local.information.email, participants.local.information.token).then((result:any) => {
