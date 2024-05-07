@@ -94,8 +94,7 @@ export const RecorderMenu: React.FC<RecorderMenuProps> = (props) => {
     return await dbRecords.where('title').notEqual('').toArray()
   }) as DBRecord[] | undefined
 
-  const pass = props.stores.roomInfo.roomProps.get('password')
-  const isAdmin = props.stores.roomInfo.password === (pass ? pass : '')
+  const isAdmin = props.stores.roomInfo.isAdmin
 
   return (
     <>

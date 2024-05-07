@@ -104,3 +104,13 @@ export function isPortrait() {
 
   return false
 }
+
+export function fixIdString(input: string){
+  let rv=''
+  if (input === ''){
+    rv = '_'
+  }else{
+    rv = input.replaceAll(' ', '_')
+  }
+  return rv
+}

@@ -1,12 +1,12 @@
 import * as mediasoup from 'mediasoup-client'
 export type MSMessageType =
   'dataConnect' | 'positionConnect' | 'position' |
-  'connect' | 'auth' | 'join' | 'pong' | 'rtpCapabilities' | 'leave' | 'leave_error' |
-  'remoteUpdate' | 'remoteLeft' | 'saveAdminInfo'|'checkAdmin'|
+  'connect' | 'preConnect' | 'join' | 'pong' | 'rtpCapabilities' | 'leave' | 'leave_error' |
+  'remoteUpdate' | 'remoteLeft' | 'saveAdminInfo' | 'checkAdmin'|
   'workerAdd' | 'workerDelete' | 'workerUpdate' |
   'createTransport' | 'closeTransport' | 'connectTransport' |
   'produceTransport' | 'closeProducer' | 'consumeTransport' | 'resumeConsumer' |
-  'streamingStart' | 'streamingStop' | 'uploadFile' | 'saveAdminInfo' | 'checkAdmin'
+  'streamingStart' | 'streamingStop' | 'uploadFile'
 export interface MSMessage{
   type: MSMessageType
   sn?: number
@@ -16,18 +16,10 @@ export interface MSPeerMessage extends MSMessage{
   remote?: string
 }
 
-export interface MSAuthMessage extends MSPeerMessage{
-  room: string
-  email: string
-  token: string
-  error?: string
-  role?: string
-}
-
 export interface MSCheckAdminMessage extends MSMessage{
   room: string
-  email: string
-  token: string
+  email?: string
+  token?: string
   result?: string
   role?: string
 }
@@ -47,8 +39,19 @@ export interface MSUploadFileMessage extends MSMessage{
   fileID?: string
   fileName: string
 }
+
+export interface MSPreConnectMessage extends MSMessage{
+  room: string
+  login?: boolean
+}
 export interface MSConnectMessage extends MSPeerMessage{
   peerJustBefore?: string
+  room: string
+  email?: string
+  token?: string
+  admin?: string
+  error?: string
+  role?: string
 }
 export type MSTrackRole = 'camera' | 'mic' | 'window' | string
 export interface MSRemoteProducer{

@@ -89,10 +89,15 @@ export class ErrorInfo {
         this.setType('afk')
       }
     })
+  }
+  public startToListenRtcTransports(){
     conference.rtcTransports.addListener('disconnect', this.checkConnection)
   }
-  public onDestruct(){
+  public stopToListenRtcTransports(){
     conference.rtcTransports.removeListener('disconnect', this.checkConnection)
+  }
+  public onDestruct(){
+    this.stopToListenRtcTransports()
     this.checkConnection()
   }
 
@@ -114,6 +119,7 @@ export class ErrorInfo {
   }
   /// check errors after try to start the connection to the XMPP server.
   @action connectionStart() {
+    //console.log(`connectionStart called.`)
     //  even when reload, user interaction is needed to play sound.
     //  const nav = window?.performance?.getEntriesByType('navigation')[0] as any
     //  console.log(nav)
@@ -122,8 +128,10 @@ export class ErrorInfo {
       participants.local.sendInformation()
     }
     this.enumerateDevices()
+    //console.log(`connectionStart: enumerateDevices called.`)
     if (urlParameters.testBot === null)  {
       when(() => this.type === '', () => {
+        //console.log(`connectionStart: when type===${this.type}  checkConnection called.`)
         setTimeout(this.checkConnection.bind(this), 4 * 1000)
       })
     }else { //  testBot

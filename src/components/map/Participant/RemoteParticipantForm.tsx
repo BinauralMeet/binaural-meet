@@ -101,7 +101,7 @@ export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (prop
         props.stores.map.focusOn(props.participant)
       }}>{t('ctFocus')}</Button>
       </Box>
-      { roomInfo.passMatched && <>
+      { roomInfo.isAdmin && <>
           <Box mb={2}>
             To kick this user type 'kick' and enter. &thinsp;
             <TextField label="kick" type="text" style={{marginTop:-22}}

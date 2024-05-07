@@ -59,23 +59,22 @@ export const Footer: React.FC<BMProps&{height?:number}> = (props) => {
     console.log('admin buttom click')
     console.log(urlParameters.room)
     if(participants.local.information.role === 'guest'){
-      console.log('admin buttom click: guest, you are not admin')
-      errorInfo.type = 'notAdmin'
-    }
-    else{
-      conference.checkAdmin(urlParameters.room as string, participants.local.information.email, participants.local.information.token).then((result:any) => {
+      //console.log('admin buttom click: guest, you are not admin')
+      //errorInfo.type = 'notAdmin'
+    }else{
+      conference.checkAdmin().then((result:any) => {
         if(result === 'approve'){
+          roomInfo.isAdmin = true
           console.log("admin buttom click result: " + result)
           console.log('openAdmin')
-          map.keyInputUsers.add('adminForm')
-          setShowAdmin(true)
-          }
-        else{
+        }else{
           console.log("admin buttom click result: " + result)
-          errorInfo.type = 'notAdmin'
+          //errorInfo.type = 'notAdmin'
         }
       });
     }
+    map.keyInputUsers.add('adminForm')
+    setShowAdmin(true)
   }
   function closeAdmin(){
     console.log('closeAdmin')
@@ -323,13 +322,13 @@ export const Footer: React.FC<BMProps&{height?:number}> = (props) => {
       <ErrorDialog {...props}/>
 
       <div style={{marginLeft:'auto', marginRight:0, whiteSpace:'nowrap'}}>
-      <RecorderButton {...props} size={fabSize} iconSize={iconSize} showDialog={showRecorder}
-        setShowDialog={setShowRecorder} />
+        <RecorderButton {...props} size={fabSize} iconSize={iconSize} showDialog={showRecorder}
+          setShowDialog={setShowRecorder} />
 
-      <FabMain size={fabSize} onClick={openAdmin} divRef={adminButton}
-        style={{marginRight:10, opacity:0.1}}>
-        <SettingsIcon style={{width:iconSize, height:iconSize}} />
-      </FabMain>
+        <FabMain size={fabSize} onClick={openAdmin} divRef={adminButton}
+          style={{marginRight:10, opacity:0.1}}>
+          <SettingsIcon style={{width:iconSize, height:iconSize}} />
+        </FabMain>
       </div>
       {showAdmin ? <Popover open={showAdmin} onClose={closeAdmin}
         anchorEl={adminButton.current} anchorOrigin={{vertical:'top', horizontal:'left'}}

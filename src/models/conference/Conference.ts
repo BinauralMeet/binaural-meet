@@ -1,9 +1,9 @@
 import {KickTime} from '@models/KickTime'
-import {assert} from '@models/utils'
+import {assert, fixIdString} from '@models/utils'
 import {default as participants} from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
 import {ClientToServerOnlyMessageType, StringArrayMessageTypes} from './DataMessageType'
-import {MSTrack, TrackRoles, RemoteProducer, RemotePeer} from './RtcConnection'
+import {MSTrack, TrackRoles, RemoteProducer, RemotePeer, RtcConnection} from './RtcConnection'
 import {RtcTransportStatsGot} from './RtcTransportStatsGot'
 import {RtcTransports} from './RtcTransports'
 import {DataConnection} from './DataConnection'
@@ -28,8 +28,9 @@ stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.REQUEST_PARTI
 
 export class Conference {
   private room_=''    //  room name
+  private email?:string
+  private token?:string
   public get room(){ return this.room_ }
-
   //  rtc (mediasoup) related
   private rtcTransports_ = new RtcTransports()
   public get rtcTransports(){ return this.rtcTransports_ }
@@ -75,43 +76,16 @@ export class Conference {
 
   private updateStatInterval = 0
 
-  public auth(room: string, token: string, email: string, reconnect:boolean = false):Promise<string>{
-    if (!room) room = '_'
-    if (reconnect){
-      this.rtcTransports.removeListener('disconnect', this.onRtcDisconnect)
-      this.dataConnection.removeListener('disconnect', this.onDataDisconnect)
-    }
-    this.rtcTransports.addListener('disconnect', this.onRtcDisconnect)
-    this.dataConnection.addListener('disconnect', this.onDataDisconnect)
-
-    const promise = new Promise<string>((resolve, reject) => {
-      //  connect to peer
-      const peer = participants.local.information.name.substring(0, 4).replaceAll(' ','_').replaceAll(':','_')
-      this.rtcTransports.auth(room, peer, token, email).then((role)=>{
-        if(role == "guest") {
-          resolve("guest")
-        }
-        else if(role == "admin"){
-          resolve("admin")
-        }
-        else {
-          resolve("reject")
-        }
-      })
-    })
-    return promise
+  public preEnter(room: string){
+    return this.rtcTransports.preConnect(fixIdString(room))
   }
 
-  public enter(room: string, reconnect:boolean = false):Promise<string>{
-    if (!room) room = '_'
+  public enter(room: string, token:string|undefined, email:string|undefined):Promise<string>{
+    room = fixIdString(room)
     this.room_ = room
+    this.token = token
+    this.email = email
     connLog()(`enter to room ${room}.`)
-    if (reconnect){
-      this.rtcTransports.removeListener('disconnect', this.onRtcDisconnect)
-      this.dataConnection.removeListener('disconnect', this.onDataDisconnect)
-    }
-    this.rtcTransports.addListener('disconnect', this.onRtcDisconnect)
-    this.dataConnection.addListener('disconnect', this.onDataDisconnect)
 
     const promise = new Promise<string>((resolve, reject) => {
       //  check last kicked time and stop the operation if recently kicked.
@@ -132,9 +106,20 @@ export class Conference {
 
       //  connect to peer
       const peer = participants.local.information.name.substring(0, 4).replaceAll(' ','_').replaceAll(':','_')
-      this.rtcTransports.connect(room, peer).then((peer)=>{
+      this.rtcTransports.connect(room, peer, token, email).then((peer)=>{
         connLog()('rtc connected.')
-        //  register event handlers and join
+        //  Start to observe disconnect.
+        this.rtcTransports.removeListener('disconnect', this.onRtcDisconnect)
+        this.dataConnection.removeListener('disconnect', this.onDataDisconnect)
+        this.rtcTransports.addListener('disconnect', this.onRtcDisconnect)
+        this.dataConnection.addListener('disconnect', this.onDataDisconnect)
+
+        //  Start WebRTC stat update interval timer:
+        if (!this.updateStatInterval){
+          this.updateStatInterval = window.setInterval(()=>{
+            conference.updateAllTransportStats()}, 10000)
+        }
+
         //  set id
         participants.setLocalId(peer)
         //  Create local tracks
@@ -151,7 +136,7 @@ export class Conference {
             }
           }
 
-          //  prepare trasport for local tracks
+          //  Prepare trasport for local tracks
           const mic = this.getLocalMicTrack()
           this.setLocalMicTrack(undefined).catch(()=>{})
           this.setLocalMicTrack(mic).catch(()=>{})
@@ -166,7 +151,7 @@ export class Conference {
           }
           inputChangeObservationStart()
 
-          //  connect to data server to get contents and participants info.
+          //  Connect to data server to get contents and participants info.
           if (this.dataConnection.isConnected()){
             console.log(`DataConnection is connected.`)
             if (this.dataConnection.peer !== peer){
@@ -196,14 +181,16 @@ export class Conference {
           //  To access from debug console, add object d to the window.
           d.conference = this
         }).catch(() => { console.log('Device enumeration error') })
-      }).catch(reject)
+      //  When connect failed:
+      }).catch((e)=>{
+        //  console.log(`Auth failed to enter ${e}`)
+        this.rtcTransports.disconnect(3100, 'Auth failed')
+        reject(e)
+      })
     })
-    if (!this.updateStatInterval){
-      this.updateStatInterval = window.setInterval(()=>{
-        conference.updateAllTransportStats()}, 10000)
-    }
     return promise
   }
+
 
   //upload file to google drive
   public uploadFiletoGoogleDrive(file:File, reconnect:boolean = false,):Promise<string>{
@@ -233,10 +220,10 @@ export class Conference {
     return promise
   }
 
-  public checkAdmin(room: string, email: string, token: string):Promise<string>{
+  public checkAdmin():Promise<string>{
     const promise = new Promise<string>((resolve, reject) => {
       console.log("check if the user is admin")
-      this.rtcTransports.checkAdmin(room, email,token).then((result)=>{
+      this.rtcTransports.checkAdmin(this.room, this.email, this.token).then((result)=>{
         if(result) {
           resolve(result)
         } else {
@@ -259,7 +246,9 @@ export class Conference {
     this.clearRtc()
     this.rtcTransports.leave()
     setTimeout(()=>{
-      this.enter(this.room, true).then(()=>{
+      this.preEnter(this.room).then(()=>{
+        this.enter(this.room, this.token, this.email).then(()=>{
+        })
       })
     }, 5000)
     //  */

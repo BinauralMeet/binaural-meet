@@ -56,7 +56,6 @@ export interface RemoteInformation extends BaseInformation{
 export interface LocalInformation extends BaseInformation{
   email: string
   role: string
-  token: string
   faceTrack: boolean
   notifyCall: boolean
   notifyTouch: boolean
@@ -67,7 +66,6 @@ export const defaultInformation:LocalInformation = {
   name: '',
   email: '',
   role: 'guest',
-  token: '',
   avatar: 'frog',
   avatarSrc: '',
   color: [],

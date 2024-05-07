@@ -1,13 +1,12 @@
 import {EventEmitter} from 'events'
-import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSAuthMessage, MSConnectMessage, MSMessageType, MSRoomMessage,
+import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSConnectMessage, MSMessageType, MSRoomMessage,
   MSRTPCapabilitiesReply, MSTransportDirection, MSCreateTransportReply, MSConnectTransportMessage,
   MSConnectTransportReply, MSProduceTransportMessage, MSProduceTransportReply, MSTrackRole,
   MSConsumeTransportMessage, MSConsumeTransportReply, MSRemoteUpdateMessage, MSRemoteLeftMessage,
   MSResumeConsumerMessage, MSResumeConsumerReply, MSCloseProducerMessage, MSRemoteProducer,
-  MSCloseProducerReply,
-  MSStreamingStartMessage,MSUploadFileMessage,
-  MSStreamingStopMessage,
-  MSSaveAdminMessage} from './MediaMessages'
+  MSCloseProducerReply, MSStreamingStartMessage,MSUploadFileMessage, MSStreamingStopMessage, MSSaveAdminMessage,
+  MSPreConnectMessage,
+  MSCheckAdminMessage} from './MediaMessages'
 import * as mediasoup from 'mediasoup-client';
 import {connLog} from '@models/utils'
 import {RtcTransportStatsGot} from './RtcTransportStatsGot'
@@ -62,6 +61,7 @@ export class RtcConnection{
   private lastSendTime = 0
 
   public constructor(){
+    this.handlers.set('preConnect', this.onPreConnect)
     this.handlers.set('connect', this.onConnect)
     this.handlers.set('pong', ()=>{})
     this.handlers.set('createTransport', this.onCreateTransport)
@@ -73,7 +73,6 @@ export class RtcConnection{
     this.handlers.set('resumeConsumer', this.onResumeConsumer)
     this.handlers.set('remoteUpdate', this.onRemoteUpdate)
     this.handlers.set('remoteLeft', this.onRemoteLeft)
-    this.handlers.set('auth', this.onAuth)
     this.handlers.set('uploadFile', this.onUploadFile)
     this.handlers.set('checkAdmin', this.onAdminCheck)
     try{
@@ -92,7 +91,8 @@ export class RtcConnection{
   readonly INTERVAL = 100
   private interval:NodeJS.Timeout|undefined
   private startProcessMessage(){  //  start interval timer to process message queue.
-    this.interval = setInterval(this.processMessage.bind(this), this.INTERVAL)
+    if (!this.interval)
+      this.interval = setInterval(this.processMessage.bind(this), this.INTERVAL)
   }
   private processMessage(){
     if (this.mainServer && this.mainServer.readyState === WebSocket.CONNECTING){
@@ -160,9 +160,9 @@ export class RtcConnection{
   }
 
   // double check if the user is admin
-  public checkAdmin(room: string, email: string, token: string):Promise<string>{
+  public checkAdmin(room: string, email?: string, token?: string):Promise<string>{
     const promise = new Promise<string>((resolve, reject)=>{
-      const msg:MSSaveAdminMessage = {
+      const msg:MSCheckAdminMessage = {
         type:'checkAdmin',
         room: room,
         email: email,
@@ -246,9 +246,9 @@ export class RtcConnection{
 
   }
 
-  // room auth
-  public auth(room: string, peer: string, token: string, email: string):Promise<string>{
-    const promise = new Promise<string>((resolve, reject)=>{
+  /// Create websocket to the main server and ask whether the room requires login or not
+  public preConnect(room: string){
+    const promise = new Promise<boolean>((resolve, reject)=>{
       this.connected = true
       this.startProcessMessage()
       try{
@@ -259,12 +259,9 @@ export class RtcConnection{
         reject(e)
       }
       const onOpenEvent = () => {
-        const msg:MSAuthMessage = {
-          type:'auth',
+        const msg:MSPreConnectMessage = {
+          type:'preConnect',
           room,
-          token,
-          email,
-          peer,
         }
         if (this.mainServer && this.mainServer.readyState === WebSocket.OPEN){
           this.setMessagePromise(msg, resolve, reject, room)
@@ -273,12 +270,11 @@ export class RtcConnection{
       }
       const onMessageEvent = (ev: MessageEvent<any>)=> {
         const msg = JSON.parse(ev.data) as MSMessage
-        //rtcLog(`onMessage(${msg.type})`)
+        rtcLog(`onMessage(${msg.type})`)
         this.rtcQueue.push(msg)
       }
       const onCloseEvent = () => {
-        //rtcLog('onClose() for mainServer')
-        console.log('onClose() for mainServer')
+        rtcLog('onClose() for mainServer')
         this.disconnect()
       }
       const onErrorEvent = (ev:any) => {
@@ -296,58 +292,64 @@ export class RtcConnection{
     });
     return promise
   }
+  private onPreConnect(base: MSMessage){
+    const msg = base as MSPreConnectMessage
+    this.resolveMessage(msg, msg.login ? true : false)
+  }
 
   //  connect to main server. return my peer id got.
-  public connect(room: string, peer: string){
-    rtcLog(`RtcC: connect(${room}, ${peer})`)
+  public connect(room: string, peer: string, token?: string, email?: string){
+    if (!this.mainServer){
+      console.error(`RTCConnection: preConnect() must be called before connect().`)
+    }
+    rtcLog(`RtcC: connect(${room}, ${peer}, ${token}, ${email})`)
     const promise = new Promise<string>((resolve, reject)=>{
       this.connected = true
-      this.startProcessMessage()
-      try{
-        this.mainServer = new WebSocket(config.mainServer)
+      const msg:MSConnectMessage = {
+        type:'connect',
+        peer,
+        room,
+        token,
+        email,
       }
-      catch(e){
-        this.disconnect(3000, 'e')
-        reject(e)
+      if (this.prevPeer) {
+        msg.peerJustBefore = this.prevPeer
+        rtcLog(`reconnect with previous peer id '${this.prevPeer}'`)
       }
-
-      const onOpenEvent = () => {
-        this.lastSendTime = Date.now()
-        const msg:MSConnectMessage = {
-          type:'connect',
-          peer,
-        }
-        if (this.prevPeer) {
-          msg.peerJustBefore = this.prevPeer
-          rtcLog(`reconnect with previous peer id '${this.prevPeer}'`)
-        }
-        this.sendWithPromise(msg, resolve, reject, room)
-      }
-      const onMessageEvent = (ev: MessageEvent<any>)=> {
-        const msg = JSON.parse(ev.data) as MSMessage
-        //rtcLog(`onMessage(${msg.type})`)
-        this.rtcQueue.push(msg)
-      }
-      const onCloseEvent = () => {
-        //rtcLog('onClose() for mainServer')
-        console.warn('onClose() for mainServer')
-        this.disconnect()
-      }
-      const onErrorEvent = () => {
-        console.error(`Error in WebSocket for ${config.mainServer}`)
-        this.disconnect(3000, 'onError')
-      }
-
-      const setEventHandler = () => {
-        this.mainServer?.addEventListener('error', onErrorEvent)
-        this.mainServer?.addEventListener('message', onMessageEvent)
-        this.mainServer?.addEventListener('open', onOpenEvent)
-        this.mainServer?.addEventListener('close', onCloseEvent)
-      }
-      setEventHandler()
+      this.sendWithPromise(msg, resolve, reject)
     })
     return promise
   }
+  private onConnect(base: MSMessage){
+    rtcLog(`RtcC: onConnect( ${JSON.stringify(base)}`)
+    const msg = base as MSConnectMessage
+    if (msg.error){
+      //  console.log(`onConnect failed: ${msg.error}`)
+      this.rejectMessage(msg)
+    }else{
+      this.peer_ = msg.peer
+      if (this.mainServer){
+        const joinMsg:MSRoomMessage = {
+          type: 'join',
+          peer:msg.peer,
+          room:msg.room
+        }
+        rtcLog(`RtcC: join sent ${JSON.stringify(joinMsg)}`)
+        this.mainServer.send(JSON.stringify(joinMsg))
+        this.lastSendTime = Date.now()
+        this.loadDevice(msg.peer).then(()=>{
+          rtcLog(`RtcC: loadDevice success.`)
+          this.resolveMessage(msg, msg.peer)
+          this.emitter.emit('connect')
+          //  this.startPingPong()
+        })
+      }else{
+        this.rejectMessage(msg)
+        throw new Error('No connection has been established.')
+      }
+    }
+  }
+
   public leave(){
     const msg:MSMessage = {
       type:'leave'
@@ -452,30 +454,6 @@ export class RtcConnection{
     }
   }
 
-  private onConnect(base: MSMessage){
-    rtcLog(`RtcC: onConnect( ${JSON.stringify(base)}`)
-    const msg = base as MSPeerMessage
-    this.peer_ = msg.peer
-    const room = this.getMessageArg(msg) as string
-    if (this.mainServer){
-      const joinMsg:MSRoomMessage = {
-        type: 'join',
-        peer:msg.peer,
-        room
-      }
-      rtcLog(`RtcC: join sent ${JSON.stringify(joinMsg)}`)
-      this.mainServer.send(JSON.stringify(joinMsg))
-      this.lastSendTime = Date.now()
-      this.loadDevice(msg.peer).then(()=>{
-        this.resolveMessage(msg, msg.peer)
-        this.emitter.emit('connect')
-        //  this.startPingPong()
-      })
-    }else{
-      this.rejectMessage(msg)
-      throw new Error('No connection has been established.')
-    }
-  }
   public createTransport(dir: MSTransportDirection, remote?: RemotePeer){
     if (dir === 'receive' && !remote){
       console.error(`createTransport(): remote must be specified.`)
@@ -538,15 +516,6 @@ export class RtcConnection{
       this.resolveMessage(msg, '')
     }
 
-  }
-
-  private onAuth(base:MSMessage){
-    const msg = base as MSAuthMessage
-    if (msg.error){
-      this.resolveMessage(msg, false)
-    }else{
-      this.resolveMessage(msg, msg.role)
-    }
   }
 
   private onUploadFile(base:MSMessage){

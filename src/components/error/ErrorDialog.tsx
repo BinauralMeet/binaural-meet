@@ -51,13 +51,15 @@ export const ErrorDialog: React.FC<BMProps> = (props) => {
                 onClick={() => { close() }} >
                 {t('emClose')}
               </Button>&nbsp;
-              <Button variant="contained" color="secondary" style={{textTransform:'none'}}
-                onClick={() => {
-                  errorInfo.supressedTypes.add(errorInfo.type)
-                  close()
-                }}>
-                {t('emNeverShow')}
-              </Button>
+              {errorInfo.type !== 'noEnterPremission' ?
+                <Button variant="contained" color="secondary" style={{textTransform:'none'}}
+                  onClick={() => {
+                    errorInfo.supressedTypes.add(errorInfo.type)
+                    close()
+                  }}>
+                  {t('emNeverShow')}
+                </Button> : undefined
+              }
               </Box>
             : undefined}
           </ErrorDialogFrame>

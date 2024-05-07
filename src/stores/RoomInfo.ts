@@ -6,9 +6,7 @@ export class RoomInfo{
   defaultBackgroundColor = [0xB9, 0xB2, 0xC4]
 
   @observable roomProps = new Map<string, string>()
-  @observable password=''
-  @observable newPassword=''
-  @observable passMatched=false
+  @observable isAdmin=false
   @observable backgroundFill = this.defaultBackgroundFill
   @observable backgroundColor = this.defaultBackgroundColor
   constructor() {

@@ -6,29 +6,18 @@ import TextField from '@material-ui/core/TextField'
 import {conference} from '@models/conference'
 import {MessageType} from '@models/conference/DataMessageType'
 import {isDarkColor, rgb2Color} from '@models/utils'
-import {RoomInfo} from '@stores/RoomInfo'
 import contents from '@stores/sharedContents/SharedContents'
 import {Observer} from 'mobx-react-lite'
 import React from 'react'
 import {SketchPicker} from 'react-color'
 import {RemoteTrackLimitControl} from './RemoteTrackLimitControl'
 import { PositionServerForm } from './PositionServerForm'
-
-
-import { BMProps, buttonStyle, dialogStyle, translateIconStyle } from "@components/utils";
 import { urlParameters } from "@models/url";
-import {ParticipantList} from '../../leftBar/ParticipantList'
 
 
 export interface AdminConfigFormProps{
   close?: () => void,
   stores: Stores,
-}
-function onKeyDown(ev:React.KeyboardEvent, roomInfo: RoomInfo){
-  if (ev.key === 'Enter') {
-    let pass = roomInfo.roomProps.get('password')
-    roomInfo.passMatched = roomInfo.password === (pass ? pass : '')
-  }
 }
 export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConfigFormProps) => {
   const [clearName, setClearName] = React.useState('')
@@ -37,10 +26,8 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
   const fillButton = React.useRef<HTMLButtonElement>(null)
   const colorButton = React.useRef<HTMLButtonElement>(null)
   const {roomInfo,participants} = props.stores
-
   const [showPosition, setShowPosition] = React.useState(false)
   const anchor = React.useRef<HTMLDivElement>(null)
-
   const defaultTextLineHeight = {
     lineHeight:20,
     fontSize:16,
@@ -59,10 +46,10 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
       console.log('admin buttom click: guest, you are not admin')
     }
     else{
-      conference.checkAdmin(urlParameters.room as string, participants.local.information.email, participants.local.information.token).then((result:any) => {
+      conference.checkAdmin().then((result:any) => {
         if(result === 'approve'){
         console.log("admin buttom click result: " + result)
-          roomInfo.passMatched = true
+          roomInfo.isAdmin = true
         }
         else{
           console.log("admin buttom click result: " + result)
@@ -74,38 +61,37 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
   return <Observer>{()=>{
     const textForFill = isDarkColor(roomInfo.backgroundFill) ? 'white' : 'black'
     const textForColor = isDarkColor(roomInfo.backgroundColor) ? 'white' : 'black'
-    const btnColor = roomInfo.passMatched ? 'primary' : 'default'
+    const btnColor = roomInfo.isAdmin ? 'primary' : 'default'
 
-    return  <Box m={2}>
+    return <Box m={2}>
       <Box m={2}>
         <RemoteTrackLimitControl key="remotelimitcontrol" {...props.stores}/>
         <div ref={anchor} />
       </Box>
-      <Box mt={2} mb={2}>
-        <TextField autoFocus label="Admin password" type="password" style={{marginTop:-12}}
-          value={roomInfo?.password} onChange={(ev)=>{ roomInfo.password=ev.currentTarget.value}}
-          onKeyDown={(ev)=>onKeyDown(ev, roomInfo)}/>
-        &emsp;
-        <Button variant="contained" color="primary" style={{textTransform:'none'}} onClick={() => {
-          let pass = roomInfo.roomProps.get('password')
-          if (!pass){ pass = '' }
-          roomInfo.passMatched = roomInfo?.password === pass
-        }}> Check </Button>&emsp;
-        {roomInfo.passMatched ? 'OK': 'Not matched'}
-        <span style={{backgroundColor:'rgba(0,0,0,0.1)', color:'white', position:'absolute', right:'1.5em',}} onClick={()=>{
-          setShowPosition(true)
-        }}>&nbsp;LPS&nbsp;</span>
-      </Box>
-      <Box mt={2} mb={2}>
-        <TextField label="New password to update" type="text" style={{marginTop:-12}}
-          value={roomInfo?.newPassword} onChange={(ev)=>{roomInfo.newPassword=ev.currentTarget.value}}
-        />&emsp;
-        <Button variant="contained" color={btnColor} disabled={!roomInfo.passMatched} style={{textTransform:'none'}}
-          onClick={() => {
-            if (roomInfo.passMatched){
-              conference.dataConnection.setRoomProp('password', roomInfo.newPassword)
+      <Box>
+        <Button variant="contained" color={roomInfo.isAdmin ? 'primary': 'secondary'}
+          style={{textTransform:'none'}}
+          onClick = { () => {
+            if (roomInfo.isAdmin){
+              roomInfo.isAdmin = false
+            }else{
+              conference.checkAdmin().then((result)=>{
+                console.log(`checkAdmin: ${result}`)
+                if (result==='approve'){
+                  roomInfo.isAdmin = true
+                }
+              })
             }
-          }}> Update password </Button>&emsp;
+          }}
+        >{roomInfo.isAdmin ? 'Leave admin' : 'Get admin'} </Button> &nbsp;
+        <Button variant="contained" color={roomInfo.isAdmin ? 'primary' : 'default'}
+          style={{textTransform:'none'}} disabled={!roomInfo.isAdmin}
+          onClick = { () => {
+            if (roomInfo.isAdmin){
+              conference.dataConnection.sync.sendTrackLimits('', [participants.local.remoteVideoLimit, participants.local.remoteAudioLimit])
+            }
+          }}
+        >Sync limits</Button> &nbsp;
         <Button
             variant="contained"
             color="primary"
@@ -113,36 +99,39 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
             style={{textTransform:'none'}}
           >
           {"information test"}
-          </Button>
+        </Button> &nbsp;
+        <span style={{backgroundColor:'rgba(0,0,0,0.1)', color:'white', position:'absolute', right:'1.5em',}} onClick={()=>{
+          setShowPosition(true)
+        }}>&nbsp;LPS&nbsp;</span>
       </Box>
       <Box mt={2}>
         <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
-          disabled={!roomInfo.passMatched} onClick={() => {
-          if (roomInfo.passMatched) { conference.dataConnection.sendMessage(MessageType.MUTE_VIDEO, true) }
+          disabled={!roomInfo.isAdmin} onClick={() => {
+          if (roomInfo.isAdmin) { conference.dataConnection.sendMessage(MessageType.MUTE_VIDEO, true) }
         }}> Mute all videos </Button> &nbsp;
         <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
-          disabled={!roomInfo.passMatched} onClick={() => {
-          if (roomInfo.passMatched) { conference.dataConnection.sendMessage(MessageType.MUTE_VIDEO, false) }
+          disabled={!roomInfo.isAdmin} onClick={() => {
+          if (roomInfo.isAdmin) { conference.dataConnection.sendMessage(MessageType.MUTE_VIDEO, false) }
         }}> Show all videos </Button>&emsp;
         <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
-          disabled={!roomInfo.passMatched} onClick={() => {
-          if (roomInfo.passMatched) { conference.dataConnection.sendMessage(MessageType.MUTE_AUDIO, true) }
+          disabled={!roomInfo.isAdmin} onClick={() => {
+          if (roomInfo.isAdmin) { conference.dataConnection.sendMessage(MessageType.MUTE_AUDIO, true) }
         }}> Mute all mics </Button>&nbsp;
         <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
-          disabled={!roomInfo.passMatched} onClick={() => {
-          if (roomInfo.passMatched) { conference.dataConnection.sendMessage(MessageType.MUTE_AUDIO, false) }
+          disabled={!roomInfo.isAdmin} onClick={() => {
+          if (roomInfo.isAdmin) { conference.dataConnection.sendMessage(MessageType.MUTE_AUDIO, false) }
         }}> Switch on all mics </Button>
       </Box>
       <Box mt={2}>
         <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
-          disabled={!roomInfo.passMatched} onClick={() => {
-          if (roomInfo.passMatched) {
+          disabled={!roomInfo.isAdmin} onClick={() => {
+          if (roomInfo.isAdmin) {
             contents.removeAllContents()
           }
         }}> Remove all Contents </Button>&emsp;
         <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
-          disabled={!roomInfo.passMatched} onClick={() => {
-            if (roomInfo.passMatched){
+          disabled={!roomInfo.isAdmin} onClick={() => {
+            if (roomInfo.isAdmin){
               const ids = new Set(contents.roomContentsInfo.keys())
               contents.all.forEach(c => ids.add(c.id))
               contents.all.filter(c => c.ownerName === clearName).forEach(c => contents.removeByLocal(c.id))
@@ -153,19 +142,19 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
       </Box>
       <Box mt={2}>
         <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
-          disabled={!roomInfo.passMatched} onClick={() => {
-          if (roomInfo.passMatched) {
+          disabled={!roomInfo.isAdmin} onClick={() => {
+          if (roomInfo.isAdmin) {
             if (conference.isDataConnected()){
               conference.dataConnection.sendMessage(MessageType.RELOAD_BROWSER, {})
             }
           }
         }}> Reload </Button>&emsp;
 
-        <Button variant="contained" disabled={!roomInfo.passMatched}
-          style={roomInfo.passMatched ?
+        <Button variant="contained" disabled={!roomInfo.isAdmin}
+          style={roomInfo.isAdmin ?
             {backgroundColor:rgb2Color(roomInfo.backgroundFill), color:textForFill, textTransform:'none'}
             : {textTransform:'none'} }
-          onClick={()=>{if (roomInfo.passMatched){ setShowFillPicker(true) }}} ref={fillButton}>
+          onClick={()=>{if (roomInfo.isAdmin){ setShowFillPicker(true) }}} ref={fillButton}>
           Back color</Button>
         <Popover open={showFillPicker}
           onClose={()=>{
@@ -182,11 +171,11 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
           />
         </Popover>
         &nbsp;
-        <Button variant="contained" disabled={!roomInfo.passMatched}
-          style={roomInfo.passMatched ?
+        <Button variant="contained" disabled={!roomInfo.isAdmin}
+          style={roomInfo.isAdmin ?
             {backgroundColor:rgb2Color(roomInfo.backgroundColor), color:textForColor, textTransform:'none'}
             : {textTransform:'none'} }
-          onClick={()=>{if (roomInfo.passMatched){ setShowColorPicker(true)} }} ref={colorButton}>
+          onClick={()=>{if (roomInfo.isAdmin){ setShowColorPicker(true)} }} ref={colorButton}>
           Pattern color</Button>
         <Popover open={showColorPicker}
           onClose={()=>{
@@ -203,8 +192,8 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
           />
         </Popover>&nbsp;
         <Button variant="contained" color={btnColor} style={{textTransform:'none'}}
-          disabled={!roomInfo.passMatched} onClick={() => {
-          if (roomInfo.passMatched) {
+          disabled={!roomInfo.isAdmin} onClick={() => {
+          if (roomInfo.isAdmin) {
             roomInfo.backgroundFill = roomInfo.defaultBackgroundFill
             roomInfo.backgroundColor = roomInfo.defaultBackgroundColor
             conference.dataConnection.setRoomProp('backgroundFill', JSON.stringify(roomInfo.backgroundFill))
@@ -215,7 +204,6 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
       {showPosition ? <Popover open={showPosition} onClose={closePosition} anchorEl={anchor.current}>
         <PositionServerForm stores={props.stores} close={closePosition}/>
       </Popover> : undefined}
-
     </Box>}
   }</Observer>
 }

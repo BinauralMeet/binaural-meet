@@ -16,7 +16,6 @@ import {tfDivStyle, tfIStyle, tfLStyle} from '@components/utils'
 import {conference} from '@models/conference'
 import {GoogleAuthComponentLogin as GoogleAuthComponent } from '../GoogleAuthComponentLogin';
 import CircularProgress from "@material-ui/core/CircularProgress";
-import { set } from "lodash";
 
 export const TheEntrance: React.FC<BMProps> = (props) => {
   const { participants } = props.stores;
@@ -28,44 +27,35 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
   const [doGoogleAuth, setDoGoogleAuth] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const onClose = (save: boolean) => {
+  const onClose = (enter: boolean) => {
+    if (!enter || name.length === 0) return
     setIsLoading(true);
-    if (name.length !== 0 || participants.local.information.name.length !== 0){
-      if (save || participants.local.information.name.length === 0) {
-        if (name.length && participants.local.information.name !== name) {
-          participants.local.information.name = name
-          participants.local.sendInformation()
-          participants.local.saveInformationToStorage(true)
-        }
-      }
-      if (save){
-        urlParameters.room = room;
-        sessionStorage.setItem("room", room)
-      }
-      // room auth
-      // the first conference.auth check if user need to use google auth. If not, it will enter the room use conference.enter
-      conference.auth(room, '', '', false).then((result) => {
-        if(result == "guest" || result == "admin") {
-          participants.local.information.role = result
-          // don't need google auth, enter the room without email
-          conference.enter(room, false).then((result) => {
-            errorInfo.type = ''
-          })
-        } else {
-          // do google auth, will call conference.auth again after google Oauth2
-          setDoGoogleAuth(true)
-        }
-      })
+    if (participants.local.information.name !== name) {
+      participants.local.information.name = name
+      //participants.local.sendInformation()
+      participants.local.saveInformationToStorage(true)
     }
-  };
-
-  //save the token and email to local storage and participants information
-  const onTokenReceived = (token: string, role: string, email: string) => {
-    participants.local.information.token = token
-    participants.local.information.role = role
-    participants.local.information.email = email
-    participants.local.sendInformation()
-    participants.local.saveInformationToStorage(true)
+    urlParameters.room = room;
+    sessionStorage.setItem("room", room)
+    // room auth
+    // the first conference.auth check if user need to use google auth.
+    // If not, it will enter the room use conference.enter
+    conference.preEnter(room).then(loginRequired => {
+      //  console.log(`conference.preConnect: loginRequired=${loginRequired}`)
+      if(loginRequired) {
+        // do google auth, will call conference.auth again after google Oauth2
+        setDoGoogleAuth(true)
+      } else {
+        participants.local.information.role = 'guest'
+        // don't need google auth, enter the room without email
+        conference.enter(room, undefined, undefined).then((result) => {
+          errorInfo.clear()
+          errorInfo.startToListenRtcTransports()
+        }).catch(r=>{
+          errorInfo.type = 'noEnterPremission'
+        })
+      }
+    })
   };
 
   const onKeyDown = (ev: React.KeyboardEvent) => {
@@ -141,7 +131,7 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
         {isLoading && <CircularProgress style={{ color: 'blue', marginTop: '1%', marginLeft: '2%' }}/>}
         </Box>
 
-        <GoogleAuthComponent room={room} doGoogleAuth={doGoogleAuth} onTokenReceived={onTokenReceived} ></GoogleAuthComponent>
+        <GoogleAuthComponent room={room} doGoogleAuth={doGoogleAuth}></GoogleAuthComponent>
 
       </DialogContent>
     </ErrorDialogFrame>
