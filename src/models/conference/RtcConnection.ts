@@ -4,7 +4,7 @@ import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSConnectMessage, MS
   MSConnectTransportReply, MSProduceTransportMessage, MSProduceTransportReply, MSTrackRole,
   MSConsumeTransportMessage, MSConsumeTransportReply, MSRemoteUpdateMessage, MSRemoteLeftMessage,
   MSResumeConsumerMessage, MSResumeConsumerReply, MSCloseProducerMessage, MSRemoteProducer,
-  MSCloseProducerReply, MSStreamingStartMessage,MSUploadFileMessage, MSStreamingStopMessage, MSSaveAdminMessage,
+  MSCloseProducerReply, MSStreamingStartMessage,MSUploadFileMessage, MSStreamingStopMessage, MSAddAdminMessage,
   MSPreConnectMessage,
   MSCheckAdminMessage} from './MediaMessages'
 import * as mediasoup from 'mediasoup-client';
@@ -74,7 +74,8 @@ export class RtcConnection{
     this.handlers.set('remoteUpdate', this.onRemoteUpdate)
     this.handlers.set('remoteLeft', this.onRemoteLeft)
     this.handlers.set('uploadFile', this.onUploadFile)
-    this.handlers.set('checkAdmin', this.onAdminCheck)
+    this.handlers.set('addAdmin', this.onAddAdmin)
+    this.handlers.set('checkAdmin', this.onCheckAdmin)
     try{
       this.device = new mediasoup.Device();
     }catch (error:any){
@@ -145,59 +146,46 @@ export class RtcConnection{
     });
   }
   // save the admin info to server after login
-  public saveAdminInfo(room: string,  email: string, token: string):Promise<string>{
-    const promise = new Promise<string>((resolve, reject)=>{
-    const msg:MSSaveAdminMessage = {
-      type:'saveAdminInfo',
-      room: room,
-      email: email,
-      token: token,
-    }
-    this.mainServer?.send(JSON.stringify(msg))
-    resolve("success")
+  public addAdmin(email: string){
+    const promise = new Promise<undefined>((resolve, reject)=>{
+      const msg:MSAddAdminMessage = {
+        type:'addAdmin',
+        email: email,
+      }
+      this.sendWithPromise(msg, resolve, reject)
     });
     return promise
   }
+  private onAddAdmin(base:MSMessage){
+    const msg = base as MSAddAdminMessage
+    if (msg.result === 'approve'){
+      this.resolveMessage(msg)
+    }else{
+      this.rejectMessage(msg)
+    }
+  }
 
-  // double check if the user is admin
-  public checkAdmin(room: string, email?: string, token?: string):Promise<string>{
-    const promise = new Promise<string>((resolve, reject)=>{
+  // Check if the user is admin
+  public checkAdmin(room: string, email?: string, token?: string){
+    const promise = new Promise<undefined>((resolve, reject)=>{
       const msg:MSCheckAdminMessage = {
         type:'checkAdmin',
         room: room,
         email: email,
         token: token,
       }
-      this.setMessagePromise(msg, resolve, reject)
-      this.mainServer?.send(JSON.stringify(msg))
-      const onOpenEvent = async () => {
-      }
-      const onMessageEvent = (ev: MessageEvent<any>)=> {
-        const msg = JSON.parse(ev.data) as MSMessage
-        //rtcLog(`onMessage(${msg.type})`)
-        this.rtcQueue.push(msg)
-      }
-      const onCloseEvent = () => {
-        //rtcLog('onClose() for mainServer')
-        console.log('onClose() for mainServer')
-        this.disconnect()
-      }
-      const onErrorEvent = (ev:any) => {
-        console.error(`Error in WebSocket for ${config.mainServer}`, ev)
-        this.disconnect(3000, 'onError')
-      }
-
-      const setEventHandler = () => {
-        this.mainServer?.addEventListener('error', onErrorEvent)
-        this.mainServer?.addEventListener('message', onMessageEvent)
-        this.mainServer?.addEventListener('open', onOpenEvent)
-        this.mainServer?.addEventListener('close', onCloseEvent)
-      }
-      setEventHandler()
-      });
-      return promise
+      this.sendWithPromise(msg, resolve, reject)
+    });
+    return promise
   }
-
+  private onCheckAdmin(base:MSMessage){
+    const msg = base as MSCheckAdminMessage
+    if (msg.result === 'approve'){
+      this.resolveMessage(msg)
+    }else{
+      this.rejectMessage(msg)
+    }
+  }
 
   // Upload file to google drive
   public uploadFile(file:File):Promise<string>{
@@ -525,15 +513,6 @@ export class RtcConnection{
       this.resolveMessage(msg, false)
     }else{
       this.resolveMessage(msg, msg.fileID)
-    }
-  }
-
-  private onAdminCheck(base:MSMessage){
-    const msg = base as MSSaveAdminMessage
-    if (msg.error){
-      this.resolveMessage(msg, false)
-    }else{
-      this.resolveMessage(msg, msg.result)
     }
   }
 

@@ -2,7 +2,7 @@ import * as mediasoup from 'mediasoup-client'
 export type MSMessageType =
   'dataConnect' | 'positionConnect' | 'position' |
   'connect' | 'preConnect' | 'join' | 'pong' | 'rtpCapabilities' | 'leave' | 'leave_error' |
-  'remoteUpdate' | 'remoteLeft' | 'saveAdminInfo' | 'checkAdmin'|
+  'remoteUpdate' | 'remoteLeft' | 'addAdmin' | 'checkAdmin'|
   'workerAdd' | 'workerDelete' | 'workerUpdate' |
   'createTransport' | 'closeTransport' | 'connectTransport' |
   'produceTransport' | 'closeProducer' | 'consumeTransport' | 'resumeConsumer' |
@@ -16,19 +16,18 @@ export interface MSPeerMessage extends MSMessage{
   remote?: string
 }
 
+export type AdminResult = 'approve' | 'reject'
+
 export interface MSCheckAdminMessage extends MSMessage{
   room: string
   email?: string
   token?: string
-  result?: string
+  result?: AdminResult
   role?: string
 }
-export interface MSSaveAdminMessage extends MSMessage{
-  room: string
+export interface MSAddAdminMessage extends MSMessage{
   email: string
-  token: string
-  error?: string
-  result?: string
+  result?: AdminResult
 }
 
 export interface MSUploadFileMessage extends MSMessage{

@@ -61,7 +61,13 @@ function startConference() {
     errorInfo.onDestruct()
     logStr += `\nBefore call conference.leave().`
     localStorage.setItem('log', logStr)
-    conference.leave()
+    conference.leave().then((res)=>{
+      logStr += `\nconference.leave() success with ${res}.`
+      localStorage.setItem('log', logStr)
+    }).catch((e)=>{
+      logStr += `\nconference.leave() failed with ${e}.`
+      localStorage.setItem('log', logStr)
+    })
     logStr += `\nconference.leave() called.`
     localStorage.setItem('log', logStr)
   })

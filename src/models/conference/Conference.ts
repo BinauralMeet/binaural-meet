@@ -206,32 +206,13 @@ export class Conference {
     return promise
   }
 
-  public saveAdmin(room: string, email: string, token: string, reconnect:boolean = false):Promise<string>{
-    const promise = new Promise<string>((resolve, reject) => {
-      console.log("saveAdmin called in conference.")
-      this.rtcTransports.saveAdminInfo(room, email,token).then((result)=>{
-        if(result) {
-          resolve(result)
-        } else {
-          resolve("reject")
-        }
-      })
-    })
-    return promise
+  public addAdmin(email: string){
+    console.log("addAdmin called in conference.")
+    return this.rtcTransports.addAdmin(email)
   }
 
-  public checkAdmin():Promise<string>{
-    const promise = new Promise<string>((resolve, reject) => {
-      console.log("check if the user is admin")
-      this.rtcTransports.checkAdmin(this.room, this.email, this.token).then((result)=>{
-        if(result) {
-          resolve(result)
-        } else {
-          resolve("reject")
-        }
-      })
-    })
-    return promise
+  public checkAdmin(){
+    return this.rtcTransports.checkAdmin(this.room, this.email, this.token)
   }
 
   private clearRtc(){

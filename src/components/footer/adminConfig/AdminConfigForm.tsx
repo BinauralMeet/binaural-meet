@@ -46,15 +46,12 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
       console.log('admin buttom click: guest, you are not admin')
     }
     else{
-      conference.checkAdmin().then((result:any) => {
-        if(result === 'approve'){
-        console.log("admin buttom click result: " + result)
-          roomInfo.isAdmin = true
-        }
-        else{
-          console.log("admin buttom click result: " + result)
-        }
-      });
+      conference.checkAdmin().then(() => {
+        console.log("checkAdmin() succeed.")
+        roomInfo.isAdmin = true
+      }).catch(()=>{
+        console.log("checkAdmin() failed")
+      })
     }
   };
 
@@ -75,11 +72,11 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
             if (roomInfo.isAdmin){
               roomInfo.isAdmin = false
             }else{
-              conference.checkAdmin().then((result)=>{
-                console.log(`checkAdmin: ${result}`)
-                if (result==='approve'){
-                  roomInfo.isAdmin = true
-                }
+              conference.checkAdmin().then(()=>{
+                console.log("checkAdmin() succeed.")
+                roomInfo.isAdmin = true
+              }).catch(()=>{
+                console.log("checkAdmin() failed.")
               })
             }
           }}
