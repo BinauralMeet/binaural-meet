@@ -50,34 +50,15 @@ class Member{
 }
 
 export const Footer: React.FC<BMProps&{height?:number}> = (props) => {
-  const {roomInfo, map, participants} = props.stores
+  const {map, participants} = props.stores
   //  show or not
   const [showFooter, setShowFooterRaw] = React.useState<boolean>(true)
   const [showAdmin, setShowAdmin] = React.useState<boolean>(false)
   function openAdmin(){
-    // check if the user is admin
-    console.log('admin buttom click')
-    console.log(urlParameters.room)
-    if(participants.local.information.role === 'guest'){
-      //console.log('admin buttom click: guest, you are not admin')
-      //errorInfo.type = 'notAdmin'
-    }else{
-      conference.checkAdmin().then((result:any) => {
-        if(result === 'approve'){
-          roomInfo.isAdmin = true
-          console.log("admin buttom click result: " + result)
-          console.log('openAdmin')
-        }else{
-          console.log("admin buttom click result: " + result)
-          //errorInfo.type = 'notAdmin'
-        }
-      });
-    }
     map.keyInputUsers.add('adminForm')
     setShowAdmin(true)
   }
   function closeAdmin(){
-    console.log('closeAdmin')
     map.keyInputUsers.delete('adminForm')
     setShowAdmin(false)
   }

@@ -6,7 +6,8 @@ import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSConnectMessage, MS
   MSResumeConsumerMessage, MSResumeConsumerReply, MSCloseProducerMessage, MSRemoteProducer,
   MSCloseProducerReply, MSStreamingStartMessage,MSUploadFileMessage, MSStreamingStopMessage, MSAddAdminMessage,
   MSPreConnectMessage,
-  MSCheckAdminMessage} from './MediaMessages'
+  MSCheckAdminMessage,
+  RoomLoginInfo} from './MediaMessages'
 import * as mediasoup from 'mediasoup-client';
 import {connLog} from '@models/utils'
 import {RtcTransportStatsGot} from './RtcTransportStatsGot'
@@ -74,7 +75,10 @@ export class RtcConnection{
     this.handlers.set('remoteUpdate', this.onRemoteUpdate)
     this.handlers.set('remoteLeft', this.onRemoteLeft)
     this.handlers.set('uploadFile', this.onUploadFile)
-    this.handlers.set('addAdmin', this.onAddAdmin)
+    this.handlers.set('addAdmin', this.onAddRemoveAdminLogin)
+    this.handlers.set('removeAdmin', this.onAddRemoveAdminLogin)
+    this.handlers.set('addLogin', this.onAddRemoveAdminLogin)
+    this.handlers.set('removeLogin', this.onAddRemoveAdminLogin)
     this.handlers.set('checkAdmin', this.onCheckAdmin)
     try{
       this.device = new mediasoup.Device();
@@ -145,7 +149,7 @@ export class RtcConnection{
       reader.readAsDataURL(file);
     });
   }
-  // save the admin info to server after login
+  // add admin to the room
   public addAdmin(email: string){
     const promise = new Promise<undefined>((resolve, reject)=>{
       const msg:MSAddAdminMessage = {
@@ -156,10 +160,43 @@ export class RtcConnection{
     });
     return promise
   }
-  private onAddAdmin(base:MSMessage){
+  // remove admin from the room
+  public removeAdmin(email: string){
+    const promise = new Promise<undefined>((resolve, reject)=>{
+      const msg:MSAddAdminMessage = {
+        type:'removeAdmin',
+        email: email,
+      }
+      this.sendWithPromise(msg, resolve, reject)
+    });
+    return promise
+  }
+  // add login suffix to the room
+  public addLoginSuffix(suffix: string){
+    const promise = new Promise<undefined>((resolve, reject)=>{
+      const msg:MSAddAdminMessage = {
+        type:'addLogin',
+        email: suffix,
+      }
+      this.sendWithPromise(msg, resolve, reject)
+    });
+    return promise
+  }
+  // remove login suffix from the room
+  public removeLoginSuffix(suffix: string){
+    const promise = new Promise<undefined>((resolve, reject)=>{
+      const msg:MSAddAdminMessage = {
+        type:'removeLogin',
+        email: suffix,
+      }
+      this.sendWithPromise(msg, resolve, reject)
+    });
+    return promise
+  }
+  private onAddRemoveAdminLogin(base:MSMessage){
     const msg = base as MSAddAdminMessage
     if (msg.result === 'approve'){
-      this.resolveMessage(msg)
+      this.resolveMessage(msg, msg.loginInfo)
     }else{
       this.rejectMessage(msg)
     }
@@ -167,7 +204,7 @@ export class RtcConnection{
 
   // Check if the user is admin
   public checkAdmin(room: string, email?: string, token?: string){
-    const promise = new Promise<undefined>((resolve, reject)=>{
+    const promise = new Promise<RoomLoginInfo|undefined>((resolve, reject)=>{
       const msg:MSCheckAdminMessage = {
         type:'checkAdmin',
         room: room,
@@ -181,7 +218,7 @@ export class RtcConnection{
   private onCheckAdmin(base:MSMessage){
     const msg = base as MSCheckAdminMessage
     if (msg.result === 'approve'){
-      this.resolveMessage(msg)
+      this.resolveMessage(msg, msg.loginInfo)
     }else{
       this.rejectMessage(msg)
     }

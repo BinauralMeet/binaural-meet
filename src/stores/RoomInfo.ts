@@ -1,3 +1,4 @@
+import { RoomLoginInfo } from '@models/conference/MediaMessages'
 import {action, makeObservable, observable} from 'mobx'
 
 
@@ -6,6 +7,7 @@ export class RoomInfo{
   defaultBackgroundColor = [0xB9, 0xB2, 0xC4]
 
   @observable roomProps = new Map<string, string>()
+  @observable.ref loginInfo?: RoomLoginInfo
   @observable isAdmin=false
   @observable backgroundFill = this.defaultBackgroundFill
   @observable backgroundColor = this.defaultBackgroundColor

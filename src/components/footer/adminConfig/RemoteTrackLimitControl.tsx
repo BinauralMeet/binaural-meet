@@ -1,7 +1,6 @@
 import {Stores} from '@components/utils'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
 import Grid from '@material-ui/core/Grid'
-import Box from '@material-ui/core/Box'
 import Slider from '@material-ui/core/Slider'
 import {t} from '@models/locales'
 import React from 'react'
@@ -33,16 +32,16 @@ export const RemoteTrackLimitControl: React.FC<Stores> = (props:Stores) => {
     } } />
 
   return <>
-  <Box sx={{mt:4}}>
-  <FormControlLabel
-    control={videoSlider}
-    label={t('videoLimit')}
-  />
-  <FormControlLabel
-    control={audioSlider}
-    label={t('audioLimit')}
-  />
-  </Box>
+    <FormControlLabel
+      control={videoSlider}
+      label={t('stVideoLimit')}
+      labelPlacement='start'
+    />
+    <FormControlLabel
+      control={audioSlider}
+      label={t('stAudioLimit')}
+      labelPlacement='start'
+    />
   </>
 }
 RemoteTrackLimitControl.displayName = 'RemoteTrackLimitControl'

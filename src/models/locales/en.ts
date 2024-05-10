@@ -96,7 +96,7 @@ export const enTranslate = {
   lsNotifyNear: 'Approached',
   lsNotifyYarn: 'Yarn phone',
   lsNotification: 'Notification',
-  lsTitle3D:'3Dアバターの選択',
+  lsTitle3D:'Select 3D avatar',
 
   rsCall: 'Call',
   rsConnectYarnPhone: 'Connect yarn phone',
@@ -166,8 +166,9 @@ export const enTranslate = {
   afkTitle: 'In away from keyboard mode (L / Esc)',
   afkMessage: 'Hit any key or click mouse to return.',
   gdFailed: 'The file in Google Drive could not be accessed.\r\nChange the file-sharing settings so that everyone on the Internet can see it.',
-  videoLimit: 'Limit on the number of video streams',
-  audioLimit: 'Limit on the number of audio streams',
+  stSettingTitle: 'Settings',
+  stVideoLimit: 'Limit on the number of video streams',
+  stAudioLimit: 'Limit on the number of audio streams',
   connectionStatus: 'Connection Status',
 }
 export type EnKeyList = keyof typeof enTranslate

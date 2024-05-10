@@ -3,13 +3,13 @@ import {assert, fixIdString} from '@models/utils'
 import {default as participants} from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
 import {ClientToServerOnlyMessageType, StringArrayMessageTypes} from './DataMessageType'
-import {MSTrack, TrackRoles, RemoteProducer, RemotePeer, RtcConnection} from './RtcConnection'
+import {MSTrack, TrackRoles, RemoteProducer, RemotePeer} from './RtcConnection'
 import {RtcTransportStatsGot} from './RtcTransportStatsGot'
 import {RtcTransports} from './RtcTransports'
 import {DataConnection} from './DataConnection'
 import * as mediasoup from 'mediasoup-client'
 import { MSRemotePeer, MSRemoteProducer} from './MediaMessages'
-import { autorun } from 'mobx'
+import { autorun} from 'mobx'
 import { PriorityCalculator, trackInfoMerege, VideoAudioTrackInfo, videoAudioTrackInfoDiff } from '@models/conference/PriorityCalculator'
 import { isEqualMSRP } from '@models/conference/MediaMessages'
 import {connLog} from '@models/utils'
@@ -25,11 +25,14 @@ declare const d:any                  //  from index.html
 const stringArrayMessageTypesForClient = new Set(StringArrayMessageTypes)
 stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.CONTENT_UPDATE_REQUEST_BY_ID)
 stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.REQUEST_PARTICIPANT_STATES)
+export interface AuthInfo{
+  email?:string
+  token?:string
+}
 
 export class Conference {
+  public authInfo:AuthInfo={}
   private room_=''    //  room name
-  private email?:string
-  private token?:string
   public get room(){ return this.room_ }
   //  rtc (mediasoup) related
   private rtcTransports_ = new RtcTransports()
@@ -46,7 +49,6 @@ export class Conference {
   constructor(){
     this.rtcTransports.addListener('remoteUpdate', this.onRemoteUpdate)
     this.rtcTransports.addListener('remoteLeft', this.onRemoteLeft)
-
     this.priorityCalculator = new PriorityCalculator(this)
     let oldTracks: VideoAudioTrackInfo = {videos:[], audios:[]}
     autorun(()=>{
@@ -83,8 +85,8 @@ export class Conference {
   public enter(room: string, token:string|undefined, email:string|undefined):Promise<string>{
     room = fixIdString(room)
     this.room_ = room
-    this.token = token
-    this.email = email
+    this.authInfo.token = token
+    this.authInfo.email = email
     connLog()(`enter to room ${room}.`)
 
     const promise = new Promise<string>((resolve, reject) => {
@@ -207,12 +209,20 @@ export class Conference {
   }
 
   public addAdmin(email: string){
-    console.log("addAdmin called in conference.")
     return this.rtcTransports.addAdmin(email)
+  }
+  public removeAdmin(email: string){
+    return this.rtcTransports.removeAdmin(email)
+  }
+  public addLoginSuffix(suffix: string){
+    return this.rtcTransports.addLoginSuffix(suffix)
+  }
+  public removeLoginSuffix(suffix: string){
+    return this.rtcTransports.removeLoginSuffix(suffix)
   }
 
   public checkAdmin(){
-    return this.rtcTransports.checkAdmin(this.room, this.email, this.token)
+    return this.rtcTransports.checkAdmin(this.room, this.authInfo.email, this.authInfo.token)
   }
 
   private clearRtc(){
@@ -228,7 +238,7 @@ export class Conference {
     this.rtcTransports.leave()
     setTimeout(()=>{
       this.preEnter(this.room).then(()=>{
-        this.enter(this.room, this.token, this.email).then(()=>{
+        this.enter(this.room, this.authInfo.token, this.authInfo.email).then(()=>{
         })
       })
     }, 5000)
