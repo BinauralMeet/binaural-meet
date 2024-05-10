@@ -61,10 +61,10 @@ export const EditRoomForm: React.FC<EditRoomFormProps> = (props: EditRoomFormPro
         >Close</Button> &nbsp;
     </Box>
     <Box m={2}>
-      Login: { roomInfo.loginInfo?.emailSuffixes?.reduce((prev, cur)=>`${prev} ${cur}`) }
+      Login: { roomInfo.loginInfo?.emailSuffixes?.reduce((prev, cur)=>`${prev} ${cur}`, "") }
     </Box>
     <Box m={2}>
-      Admin: { roomInfo.loginInfo?.admins?.reduce((prev, cur)=>`${prev} ${cur}`) }
+      Admin: { roomInfo.loginInfo?.admins?.reduce((prev, cur)=>`${prev} ${cur}`, "") }
     </Box>
     </>}
   }</Observer>

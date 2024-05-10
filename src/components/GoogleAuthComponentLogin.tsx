@@ -25,15 +25,19 @@ export const GoogleAuthComponentLogin: React.FC<GoogleAuthComponentLoginProps> =
       )
       connLog()(`Auth userInfo: ${JSON.stringify(userInfo)}.`)
       // Second time call conference.auth to check if the user has the permission to enter the room
-      conference.enter(props.room, tokenResponse.access_token, userInfo.data.email).then((result) => {
-        connLog()(`GoogleAuth enter result = ${result}`)
-        errorInfo.clear()
-        errorInfo.startToListenRtcTransports()
-      }).catch(e=>{
-        connLog()(`GoogleAuth enter catch=${e}`)
-        // when the result is not success, it will show the error message in the dialog
-        errorInfo.type = 'noEnterPremission'
-      })
+      if (!conference.room){
+        conference.enter(props.room, tokenResponse.access_token, userInfo.data.email).then((result) => {
+          connLog()(`GoogleAuth enter result = ${result}`)
+          errorInfo.clear()
+          errorInfo.startToListenRtcTransports()
+        }).catch(e=>{
+          connLog()(`GoogleAuth enter catch=${e}`)
+          // when the result is not success, it will show the error message in the dialog
+          errorInfo.type = 'noEnterPremission'
+        })
+      }else{
+        conference.setAuthInfo(tokenResponse.access_token, userInfo.data.email)
+      }
     },
     onNonOAuthError: errorResponse => {
       errorInfo.type = 'noEnterPremission'

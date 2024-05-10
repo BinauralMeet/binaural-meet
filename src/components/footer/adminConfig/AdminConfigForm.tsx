@@ -15,6 +15,7 @@ import { PositionServerForm } from './PositionServerForm'
 import {t} from '@models/locales'
 import { DialogTitle, PropTypes } from '@material-ui/core'
 import { EditRoomForm } from './EditRoomForm'
+import { GoogleAuthComponentLogin } from '@components/GoogleAuthComponentLogin'
 
 export interface AdminConfigFormProps{
   close?: () => void,
@@ -29,6 +30,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
   const {roomInfo,participants} = props.stores
   const [showPosition, setShowPosition] = React.useState(false)
   const [showEditRoom, setShowEditRoom] = React.useState(false)
+  const [doGoogleAuth, setDoGoogleAuth] = React.useState(false);
   const anchor = React.useRef<HTMLDivElement>(null)
 
   function closePosition(){
@@ -60,6 +62,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
         <Button variant="contained" color={roomInfo.isAdmin ? 'primary': 'secondary'}
           style={{textTransform:'none'}}
           onClick = { () => {
+            setDoGoogleAuth(false)
             if (roomInfo.isAdmin){
               roomInfo.isAdmin = false
             }else{
@@ -68,10 +71,11 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
                 roomInfo.loginInfo = info
                 //  console.log("checkAdmin() succeed.")
               }).catch(()=>{
-                //  console.log("checkAdmin() failed.")
+                conference.setAuthInfo(undefined, undefined)
+                setDoGoogleAuth(true)
               })
             }
-          }}
+         }}
         >{roomInfo.isAdmin ? 'Leave admin' : 'Get admin'} </Button> &nbsp;
         <Button {...btnArgs} onClick={()=>{ setShowEditRoom(true) }}>Edit room</Button> &nbsp;
         <Button {...btnArgs} onClick = { () => {
@@ -181,6 +185,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
       {showEditRoom ? <Popover open={showEditRoom} onClose={closeEditRoom} anchorEl={anchor.current}>
         <EditRoomForm stores={props.stores} close={closeEditRoom}/>
       </Popover> : undefined}
+      <GoogleAuthComponentLogin room={conference.room} doGoogleAuth={doGoogleAuth}></GoogleAuthComponentLogin>
     </>}
   }</Observer>
 }

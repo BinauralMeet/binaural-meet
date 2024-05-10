@@ -10,11 +10,11 @@ import { i18nSupportedLngs, useTranslation } from "@models/locales";
 import { urlParameters } from "@models/url";
 import { isPortrait, isSmartphone } from "@models/utils";
 import errorInfo from "@stores/ErrorInfo";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { ErrorDialogFrame } from "./ErrorDialog";
 import {tfDivStyle, tfIStyle, tfLStyle} from '@components/utils'
 import {conference} from '@models/conference'
-import {GoogleAuthComponentLogin as GoogleAuthComponent } from '../GoogleAuthComponentLogin';
+import {GoogleAuthComponentLogin} from '../GoogleAuthComponentLogin';
 import CircularProgress from "@material-ui/core/CircularProgress";
 
 export const TheEntrance: React.FC<BMProps> = (props) => {
@@ -131,7 +131,7 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
         {isLoading && <CircularProgress style={{ color: 'blue', marginTop: '1%', marginLeft: '2%' }}/>}
         </Box>
 
-        <GoogleAuthComponent room={room} doGoogleAuth={doGoogleAuth}></GoogleAuthComponent>
+        <GoogleAuthComponentLogin room={room} doGoogleAuth={doGoogleAuth}></GoogleAuthComponentLogin>
 
       </DialogContent>
     </ErrorDialogFrame>

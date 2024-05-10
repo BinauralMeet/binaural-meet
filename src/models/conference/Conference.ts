@@ -82,11 +82,12 @@ export class Conference {
     return this.rtcTransports.preConnect(fixIdString(room))
   }
 
-  public enter(room: string, token:string|undefined, email:string|undefined):Promise<string>{
-    room = fixIdString(room)
-    this.room_ = room
+  public setAuthInfo(token:string|undefined, email:string|undefined){
     this.authInfo.token = token
     this.authInfo.email = email
+  }
+  public enter(room: string, token:string|undefined, email:string|undefined):Promise<string>{
+    room = fixIdString(room)
     connLog()(`enter to room ${room}.`)
 
     const promise = new Promise<string>((resolve, reject) => {
@@ -110,6 +111,9 @@ export class Conference {
       const peer = participants.local.information.name.substring(0, 4).replaceAll(' ','_').replaceAll(':','_')
       this.rtcTransports.connect(room, peer, token, email).then((peer)=>{
         connLog()('rtc connected.')
+        //  enter succeed. set room and authInfo to the conference.
+        this.room_ = room
+        this.setAuthInfo(token, email)
         //  Start to observe disconnect.
         this.rtcTransports.removeListener('disconnect', this.onRtcDisconnect)
         this.dataConnection.removeListener('disconnect', this.onDataDisconnect)
