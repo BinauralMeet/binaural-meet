@@ -9,8 +9,9 @@ import {DataSync} from '@models/conference/DataSync'
 import {AudioMeter} from '@models/audio/AudioMeter'
 import {connLog, connDebug} from '@models/utils'
 import {EventEmitter} from 'events'
-import {MSMessage} from './MediaMessages'
+import {MSConnectMessage, MSMessage} from './MediaMessages'
 import {messageLoads} from '@stores/MessageLoads'
+import { conference } from './Conference'
 
 //  Log level and module log options
 export const dataLog = connLog
@@ -82,9 +83,20 @@ export class DataConnection {
         dataLog()('data connected.')
         self.messagesToSendToRelay = []
         if (config.dataServer){
-          const msg:MSMessage = { type: 'dataConnect' }
+          const msg:MSConnectMessage = {
+            type: 'dataConnect',
+            peer: participants.local.id,
+            room: conference.room,
+            email: conference.authInfo.email,
+            token: conference.authInfo.token
+          }
           self.dataSocket?.send(JSON.stringify(msg))
         }
+      }
+      function onFirstMessage(ev: MessageEvent<any>){
+        const msg = JSON.parse(ev.data) as MSConnectMessage
+        self.dataSocket?.removeEventListener('message', onFirstMessage)
+        self.dataSocket?.addEventListener('message', onMessage)
         self.requestAll(true)
         self.flushSendMessages()
         //  start periodical communication with data server.
@@ -127,7 +139,7 @@ export class DataConnection {
       }
       function setHandler(){
         self.dataSocket?.addEventListener('error', onError)
-        self.dataSocket?.addEventListener('message', onMessage)
+        self.dataSocket?.addEventListener('message', onFirstMessage)
         self.dataSocket?.addEventListener('open', onOpen)
         self.dataSocket?.addEventListener('close', onClose)
       }
