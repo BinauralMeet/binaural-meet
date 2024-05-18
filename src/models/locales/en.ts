@@ -97,6 +97,8 @@ export const enTranslate = {
   lsNotifyYarn: 'Yarn phone',
   lsNotification: 'Notification',
   lsTitle3D:'Select 3D avatar',
+  lsLoginEmail:'Email for login',
+  lsGDriveEmail:'Email for GDrive',
 
   rsCall: 'Call',
   rsConnectYarnPhone: 'Connect yarn phone',
@@ -123,6 +125,7 @@ export const enTranslate = {
   ctCopyToClipboard: 'Copy to clipboard',
   ctMaximize: 'Zoom and move to maximize this content',
   ctUnMaximize: 'Unmaximize and restore the view',
+  ctLogin: 'Login to load Google Drive content',
   ctDelete: 'Delete',
   ctClose: 'Close',
   ctName: 'Titile',

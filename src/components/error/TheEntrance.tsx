@@ -14,8 +14,8 @@ import React, { useState } from "react";
 import { ErrorDialogFrame } from "./ErrorDialog";
 import {tfDivStyle, tfIStyle, tfLStyle} from '@components/utils'
 import {conference} from '@models/conference'
-import {GoogleAuthComponentLogin} from '../GoogleAuthComponentLogin';
 import CircularProgress from "@material-ui/core/CircularProgress";
+import { GoogleAuthLogin } from "@components/utils/GoogleAuthLogin";
 
 export const TheEntrance: React.FC<BMProps> = (props) => {
   const { participants } = props.stores;
@@ -131,7 +131,7 @@ export const TheEntrance: React.FC<BMProps> = (props) => {
         {isLoading && <CircularProgress style={{ color: 'blue', marginTop: '1%', marginLeft: '2%' }}/>}
         </Box>
 
-        <GoogleAuthComponentLogin room={room} doGoogleAuth={doGoogleAuth}></GoogleAuthComponentLogin>
+        <GoogleAuthLogin room={room} doAuth={doGoogleAuth} />
 
       </DialogContent>
     </ErrorDialogFrame>

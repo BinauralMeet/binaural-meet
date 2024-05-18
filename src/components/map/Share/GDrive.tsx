@@ -4,9 +4,10 @@ import {assert} from '@models/utils'
 import {getGDriveUrl, getInformationOfGDriveContent, getParamsFromUrl,
   getStringFromParams, isGDrivePreviewScrollable} from '@stores/sharedContents/SharedContentCreator'
 import _ from 'lodash'
-import {useObserver} from 'mobx-react-lite'
+import {Observer} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import {ContentProps} from './Content'
+import { GoogleAuthDrive } from '@components/utils/GoogleAuthDrive'
 
 const useStyles = makeStyles({
   iframe: {
@@ -47,6 +48,7 @@ interface Member{
   props: ContentProps
   params: Map<string, string>
   scrolling: boolean
+  prevToken?: string
   onscroll:()=>void
 }
 
@@ -70,31 +72,11 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
   const member = memberRef.current
   member.props = props
   member.params = params
-  if (!mimeType && fileId) {
-    getInformationOfGDriveContent(fileId).then((res)=>{
-      if ((res.name && props.content.name !== res.name) || res.mimeType){
-        member.params.set('mimeType', res.mimeType)
-        console.log(`mime: ${res.mimeType}`, res)
-        if (res.name){ props.content.name = res.name }
-        updateUrl(member)
-      }
-    }).catch(reason=>{
-      console.log(`GDrive failed ${reason.body}`)
-      if (reason.status === 404){
-        console.log('404 may be video')
-        member.params.set('mimeType', 'video')
-        updateUrl(member)
-      }
-    })
-  }
-  //  console.log(`Name:${props.content.name} mime: ${mimeType}`)
-  const classes = useStyles(props)
-  const editing = useObserver(() => props.stores.contents.editing === props.content.id)
-  const url = getGDriveUrl(editing, member.params)
 
-  //  scroll to given 'top' param
+  //  Scroll to given 'top' param
   useEffect(() => {
     const top = Number(member.params.get('top'))
+    const editing = props.stores.contents.editing === props.content.id
     if (!editing && !member.scrolling && divScroll.current
       && !isNaN(top) && top !== divScroll.current.scrollTop) {
       divScroll.current.onscroll = () => {}
@@ -108,12 +90,18 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
 
   //  Set onscroll handler setting 'top' param
   useEffect(() => {
+    console.log('useEffect() for onscroll called.')
     function doSendScroll() {
-      const top = Number(member.params.get('top'))
-      if (divScroll.current && divScroll.current.scrollTop !== top) {
-        //  console.log(`doSendScrool top=${divScroll.current.scrollTop}`)
-        member.params.set('top', divScroll.current.scrollTop.toString())
-        updateUrl(member)
+      const editing = props.stores.contents.editing === props.content.id
+      if (editing){
+
+      }else{
+        const top = Number(member.params.get('top'))
+        if (divScroll.current && divScroll.current.scrollTop !== top) {
+          //  console.log(`doSendScrool top=${divScroll.current.scrollTop}`)
+          member.params.set('top', divScroll.current.scrollTop.toString())
+          updateUrl(member)
+        }
       }
     }
     if (divScroll.current) {
@@ -121,11 +109,11 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
       const sendScroll = _.throttle(() => setTimeout(doSendScroll, INTERVAL), INTERVAL)
       const endScroll = _.debounce(() => {
         member.scrolling = false
-        //  console.log(`scrolling: ${member.current.scrolling}`)
+        //  console.log(`scrolling: ${member.scrolling}`)
       },                           INTERVAL)
       member.onscroll = () => {
         member.scrolling = true
-        //  console.log(`scrolling: ${member.current.scrolling}`)
+        //  console.log(`scrolling: ${member.scrolling}`)
         sendScroll()
         endScroll()
       }
@@ -133,11 +121,32 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
       divScroll.current.onscroll = member.onscroll
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contents.roomContents])
+  }, [divScroll.current, contents.roomContents])
 
-  const vscroll = isGDrivePreviewScrollable(mimeType)
-  //  console.log(`vscroll=${vscroll}  mimeType=${mimeType}`)
-  return <div className={mimeType ? classes.divClip : classes.divError} >
+  //  console.log(`Name:${props.content.name} mime: ${mimeType}`)
+  const classes = useStyles(props)
+  return <Observer>{()=>{
+    const vscroll = isGDrivePreviewScrollable(mimeType)
+    //  console.log(`vscroll=${vscroll}  mimeType=${mimeType}`)
+    if (fileId && (!mimeType || member.prevToken !== props.stores.roomInfo.gDriveToken)) {
+      member.prevToken = props.stores.roomInfo.gDriveToken
+      //  console.log(`id:${fileId}`)
+      getInformationOfGDriveContent(fileId).then((res)=>{
+        if ((res.name && props.content.name !== res.name) || res.mimeType){
+          member.params.set('mimeType', res.mimeType)
+          //  console.log(`id:${fileId}   mime: ${res.mimeType}`, res)
+          if (res.name){ props.content.name = res.name }
+          updateUrl(member)
+        }
+      }).catch(reason=>{
+        member.params.set('mimeType', 'unknown')
+        updateUrl(member)
+      })
+    }
+    const editing = props.stores.contents.editing === props.content.id
+    const url = getGDriveUrl(editing, member.params)
+
+    return <div className={mimeType ? classes.divClip : classes.divError} >
     {mimeType ?
       <div className={(editing || !vscroll) ? classes.divClip : classes.divScroll} ref={divScroll}
         onWheel = {ev => vscroll && (ev.ctrlKey || ev.stopPropagation()) }>
@@ -152,4 +161,5 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
       </div>
     }
   </div>
+  }}</Observer>
 }

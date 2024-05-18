@@ -6,7 +6,7 @@
       "dom.iterable",
       "esnext"
     ],
-    "types": ["vite/client"],
+    "types": ["vite/client","gapi","gapi.auth2","gapi.client.drive-v3","google.picker"],
     "strict": true,
     "strictPropertyInitialization": false,
     "allowJs": true,

@@ -14,6 +14,7 @@ import React, {useState} from 'react'
 import {SketchPicker} from 'react-color'
 import {SignalQualityButton} from './SignalQuality'
 import {Choose3DAvatar, vrmUrlBase} from './LocalParticipant3DAvatarForm'
+import { Grid } from '@material-ui/core'
 
 function isVrm(url: string){
   const ext = url.substring(url.lastIndexOf('.'))
@@ -201,6 +202,22 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
             map.focusOn(local)
           }}>{t('ctFocus')}</Button>
       </Box>
+      {props.stores.roomInfo.loginEmail || props.stores.roomInfo.gDriveEmail ?
+        <Box >
+          <Grid container>
+            <Grid item xs={6}> <div style={{fontSize:12}}>{t('lsLoginEmail')}</div>
+              <Box>
+                {props.stores.roomInfo.loginEmail}
+              </Box>
+            </Grid>
+            <Grid item xs={6}> <div style={{fontSize:12}}>{t('lsGDriveEmail')}</div>
+              <Box>
+                {props.stores.roomInfo.gDriveEmail}
+              </Box>
+            </Grid>
+          </Grid>
+        </Box>
+        : undefined}
     </DialogContent>
   </Popover>
 }

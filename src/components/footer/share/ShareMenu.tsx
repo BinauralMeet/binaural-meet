@@ -371,10 +371,10 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
           <DialogIconItem
             key="shareDownload" text={t('shareDownload')} icon={<Icon icon={downloadIcon} />} onClick={downloadFile}
           />
-          {/*<DialogIconItem
+          {<DialogIconItem
             tip = {t('shareGDriveTip')}
             key="shareGDrive" text={t('shareGDrive')} icon={<InsertDriveFileTwoTone />} onClick={() => setStep('Gdrive')}
-          />*/}
+          />}
         </div>
       </Collapse>
     </List>

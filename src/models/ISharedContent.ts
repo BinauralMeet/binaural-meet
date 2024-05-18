@@ -120,6 +120,9 @@ export function isContentMaximizable(c?: ISharedContent) {
   )
 
 }
+export function isContentRequireLogin(c?: ISharedContent) {
+  return c && (c.type === 'gdrive')
+}
 //  wallpaper or not
 export function isContentWallpaper(c?: ISharedContent) {
   return c && c.zorder <= TEN_YEAR

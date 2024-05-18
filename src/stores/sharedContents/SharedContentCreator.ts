@@ -12,7 +12,7 @@ import _ from 'lodash'
 import participants from '../participants/Participants'
 import sharedContents from './SharedContents'
 import {contentLog} from '@models/utils'
-
+import roomInfo from '@stores/RoomInfo'
 
 export const defaultContent: ISharedContent = Object.assign({}, mapObjectDefaultValue, {
   name: '',
@@ -99,7 +99,7 @@ export function createContentOfIframe(urlStr: string, map: MapData) {
       const fileIdStart = url.pathname.slice(url.pathname.indexOf('/d/') + 3)
       const fileId = fileIdStart.slice(0, fileIdStart.indexOf('/'))
       pasted.url = `id=${fileId}`
-      console.log('gdrive url:', pasted.url)
+      //  console.log('gdrive url:', pasted.url)
       pasted.pose.position[0] = map.mouseOnMap[0]
       pasted.pose.position[1] = map.mouseOnMap[1]
       pasted.size[0] = 900
@@ -220,7 +220,6 @@ export function createContentOfImageUrl(url: string, map: MapData,
   return promise
 }
 
-declare const gapi:any    //  google api from index.html
 let GoogleAuth:any        // Google Auth object.
 //  let isAuthorized = false
 function updateSigninStatus(isSignedIn:boolean) {
@@ -502,18 +501,23 @@ export function getInformationOfGDriveContent(fileId: string){
   const API_KEY = 'AIzaSyCE4B2cKycH0fVmBznwfr1ynnNf2qNEU9M'
   const rv = new Promise<{name:string, mimeType:string}>((resolve, reject)=>{
     if (gapi){
-      gapi.client.setApiKey(API_KEY)
+      if (roomInfo.gDriveToken){
+        gapi.client.setToken({access_token: roomInfo.gDriveToken})
+      }else{
+        gapi.client.setApiKey(API_KEY)
+      }
       gapi.client.load('drive', 'v3', () => {
         gapi.client.drive.files.get({
           fileId,
           fields:'mimeType,name',
+          supportsAllDrives: true,
         })
         .then((result:any) => {
           const body = JSON.parse(result.body)
-          //  console.log(`gapi mimeType:${body.mimeType}  name:${body.name}`)
+          //console.log(`gapi mimeType:${body.mimeType}  name:${body.name}`)
           resolve({mimeType:body.mimeType, name: body.name})
         }).catch((reason:any) => {
-          console.debug('gapi error', reason)
+          //console.log('gapi error', reason)
           reject(reason)
         })
       })

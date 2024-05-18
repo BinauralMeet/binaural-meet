@@ -15,7 +15,7 @@ import { PositionServerForm } from './PositionServerForm'
 import {t} from '@models/locales'
 import { DialogTitle, PropTypes } from '@material-ui/core'
 import { EditRoomForm } from './EditRoomForm'
-import { GoogleAuthComponentLogin } from '@components/GoogleAuthComponentLogin'
+import { GoogleAuthLogin } from '@components/utils/GoogleAuthLogin'
 
 export interface AdminConfigFormProps{
   close?: () => void,
@@ -185,7 +185,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
       {showEditRoom ? <Popover open={showEditRoom} onClose={closeEditRoom} anchorEl={anchor.current}>
         <EditRoomForm stores={props.stores} close={closeEditRoom}/>
       </Popover> : undefined}
-      <GoogleAuthComponentLogin room={conference.room} doGoogleAuth={doGoogleAuth}></GoogleAuthComponentLogin>
+      <GoogleAuthLogin room={conference.room} doAuth={doGoogleAuth}></GoogleAuthLogin>
     </>}
   }</Observer>
 }

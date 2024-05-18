@@ -95,6 +95,8 @@ export const jaTranslate = {
   lsNotifyNear: '接近',
   lsNotifyYarn: '糸電話',
   lsTitle3D:'3Dアバターの選択',
+  lsLoginEmail:'ログインのEmail',
+  lsGDriveEmail:'GDriveのEmail',
 
   rsCall: '呼び出す',
   rsConnectYarnPhone: '糸電話をつなぐ',
@@ -119,6 +121,7 @@ export const jaTranslate = {
   ctCopyToClipboard: 'クリップボードにコピー',
   ctMaximize: '最大化するように拡大する',
   ctUnMaximize: '最大化と拡大を戻す',
+  ctLogin: 'Google Driveのコンテンツのためにログインする',
   ctFocus: '中央に表示',
   ctDelete: '削除する',
   ctClose: '閉じる',

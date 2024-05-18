@@ -3,6 +3,7 @@ import maximizeIcon from '@iconify-icons/tabler/arrows-maximize'
 import minimizeIcon from '@iconify-icons/tabler/arrows-minimize'
 import pinIcon from '@iconify/icons-mdi/pin'
 import pinOffIcon from '@iconify/icons-mdi/pin-off'
+import loginIcon from '@iconify/icons-mdi/login'
 import {Icon} from '@iconify/react'
 import {Tooltip} from '@material-ui/core'
 import {makeStyles} from '@material-ui/core/styles'
@@ -15,7 +16,7 @@ import FlipToFrontIcon from '@material-ui/icons/FlipToFront'
 import MoreHorizIcon from '@material-ui/icons/MoreHoriz'
 import PlayArrowIcon from '@material-ui/icons/PlayArrow'
 import settings from '@components/Settings'
-import {doseContentEditingUseKeyinput, isContentWallpaper, isContentEditable, isContentMaximizable, ISharedContent} from '@models/ISharedContent'
+import {doseContentEditingUseKeyinput, isContentWallpaper, isContentEditable, isContentMaximizable, ISharedContent, isContentRequireLogin} from '@models/ISharedContent'
 import {t} from '@models/locales'
 import {Pose2DMap} from '@models/utils'
 import {addV2, extractScaleX, extractScaleY, mulV, rotateVector2DByDegree, subV2} from '@models/utils'
@@ -30,6 +31,7 @@ import { FullGestureState, UserHandlersPartial } from 'react-use-gesture/dist/ty
 import {Content, contentTypeIcons, editButtonTip} from './Content'
 import {ISharedContentProps} from './SharedContent'
 import {SharedContentForm} from './SharedContentForm'
+import { GoogleAuthDrive } from '@components/utils/GoogleAuthDrive'
 
 const MOUSE_RIGHT = 2
 
@@ -169,6 +171,13 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
     }else{
       map.zoomTo(props.content)
     }
+  }
+  function onClickLogin(evt: MouseOrTouch){
+    stop(evt)
+    setDoGoogleAuth(true)
+    setTimeout(() => {
+      setDoGoogleAuth(false)
+    }, 1000);
   }
   function onClickMore(evt: MouseOrTouch){
     stop(evt)
@@ -401,6 +410,13 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
                   <Icon style={{pointerEvents: 'none'}}  icon={zoomed ? minimizeIcon: maximizeIcon} height={TITLE_HEIGHT}/>
               </div>
             </Tooltip> : undefined}
+          {isContentRequireLogin(props.content) ?
+            <Tooltip placement="top" title={t('ctLogin')}>
+              <div className={classes.titleButton} onClick={onClickLogin}
+                onTouchStart={stop}>
+                  <Icon style={{pointerEvents: 'none'}}  icon={loginIcon} height={TITLE_HEIGHT}/>
+              </div>
+            </Tooltip> : undefined}
           <div className={classes.titleButton} onClick={onClickMore} onTouchStart={stop} ref={formRef}>
               <MoreHorizIcon />
           </div>
@@ -430,7 +446,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       </div>
     </div>
   //  console.log('Rnd rendered.')
-
+  const [doGoogleAuth, setDoGoogleAuth] = useState(false)
 
   return (
     <div className={classes.container} style={{zIndex:props.content.zIndex}} onContextMenu={
@@ -447,6 +463,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       >
         {theContent}
       </Rnd>
+      <GoogleAuthDrive doAuth={doGoogleAuth}/>
     </div >
   )
 }

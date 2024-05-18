@@ -1,13 +1,13 @@
 import {MAP_SIZE} from '@components/Constants'
 import {ISharedContent} from '@models/ISharedContent'
-import {LocalParticipant, ParticipantBase, PARTICIPANT_SIZE, PlaybackParticipant, RemoteParticipant} from '@models/Participant'
+import {ParticipantBase, PARTICIPANT_SIZE, PlaybackParticipant, RemoteParticipant} from '@models/Participant'
 import {getRect, isCircleInRect, Pose2DMap} from '@models/utils'
 import {convertToAudioCoordinate, getRelativePose, mulV2, normV} from '@models/utils'
 import {stereoParametersStore} from '@stores/AudioParameters'
 import participants from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
 import _ from 'lodash'
-import {autorun, IObservableValue, IReactionDisposer} from 'mobx'
+import {autorun, IReactionDisposer} from 'mobx'
 import {NodeGroup, NodeGroupForPlayback} from './NodeGroup'
 
 const audioLog = false ? console.log : ()=>{}

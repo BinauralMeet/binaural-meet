@@ -3,19 +3,20 @@
 import { useGoogleLogin } from "@react-oauth/google";
 import {conference} from '@models/conference'
 import errorInfo from "@stores/ErrorInfo";
+import roomInfo from "@stores/RoomInfo";
 import axios from 'axios';
 import React, { useEffect } from "react";
 import { connLog } from "@models/utils";
 
 
-export interface GoogleAuthComponentLoginProps {
-  doGoogleAuth: boolean;
+export interface GoogleAuthLoginProps {
+  doAuth: boolean;
   room: string;
 }
 
 // Room Auth and Enter
 // Google Aauth2 Login AND Get User Info
-export const GoogleAuthComponentLogin: React.FC<GoogleAuthComponentLoginProps> = (props: GoogleAuthComponentLoginProps) => {
+export const GoogleAuthLogin: React.FC<GoogleAuthLoginProps> = (props: GoogleAuthLoginProps) => {
   const login = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       connLog()(`Auth onSuccess called.`)
@@ -25,11 +26,13 @@ export const GoogleAuthComponentLogin: React.FC<GoogleAuthComponentLoginProps> =
       )
       connLog()(`Auth userInfo: ${JSON.stringify(userInfo)}.`)
       // Second time call conference.auth to check if the user has the permission to enter the room
+      roomInfo.loginEmail = userInfo.data.email
       if (!conference.room){
         conference.enter(props.room, tokenResponse.access_token, userInfo.data.email).then((result) => {
           connLog()(`GoogleAuth enter result = ${result}`)
           errorInfo.clear()
           errorInfo.startToListenRtcTransports()
+          roomInfo.loginEmail = userInfo.data.email
         }).catch(e=>{
           connLog()(`GoogleAuth enter catch=${e}`)
           // when the result is not success, it will show the error message in the dialog
@@ -47,14 +50,10 @@ export const GoogleAuthComponentLogin: React.FC<GoogleAuthComponentLoginProps> =
     }
   })
 
-  //const [doGoogleAuth, setDoGoogleAuth] = useState(false);
   useEffect(() => {
-    //setDoGoogleAuth(props.doGoogleAuth)
-    if (props.doGoogleAuth) {
-      //setDoGoogleAuth(false)
-      sessionStorage.setItem("googleAuth", "true")
+    if (props.doAuth) {
       login()
     }
-  }, [props.doGoogleAuth])
+  }, [props.doAuth])
   return(<></>)
 }
