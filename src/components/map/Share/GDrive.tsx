@@ -1,13 +1,14 @@
 import {makeStyles} from '@material-ui/core/styles'
 import {t} from '@models/locales'
 import {assert} from '@models/utils'
-import {getGDriveUrl, getInformationOfGDriveContent, getParamsFromUrl,
-  getStringFromParams, isGDrivePreviewScrollable} from '@stores/sharedContents/SharedContentCreator'
-import _ from 'lodash'
+import {MIMETYPE_GOOGLE_APP, getGDriveUrl, getInformationOfGDriveContent, getPage, getSlides, isGDrivePreviewScrollable} from '@stores/sharedContents/GDriveUtil'
 import {Observer} from 'mobx-react-lite'
-import React, {useEffect, useRef} from 'react'
+import React, {useEffect, useRef, useState} from 'react'
 import {ContentProps} from './Content'
-import { GoogleAuthDrive } from '@components/utils/GoogleAuthDrive'
+import axios from 'axios'
+import { PageControl } from './PageControl'
+import { getParamsFromUrl, getStringFromParams } from '@stores/sharedContents/SharedContentCreator'
+import _ from 'lodash'
 
 const useStyles = makeStyles({
   iframe: {
@@ -44,12 +45,12 @@ const useStyles = makeStyles({
   },
 })
 
-interface Member{
+export interface Member{
   props: ContentProps
   params: Map<string, string>
-  scrolling: boolean
+  scrolling:boolean
   prevToken?: string
-  onscroll:()=>void
+  onscroll: ()=>void
 }
 
 function updateUrl(member: Member) {
@@ -61,17 +62,18 @@ function updateUrl(member: Member) {
   }
 }
 
+
 export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
   assert(props.content.type === 'gdrive')
   const divScroll = useRef<HTMLDivElement>(null)
+
   const contents = props.stores.contents
-  const params = getParamsFromUrl(props.content.url)
-  const fileId = params.get('id')
-  const mimeType = params.get('mimeType')
-  const memberRef = useRef<Member>({props, params, scrolling:false, onscroll:()=>{}})
+  const paramsFromUrl = getParamsFromUrl(props.content.url)
+  const fileId = paramsFromUrl.get('id')
+  const memberRef = useRef<Member>({props, params:paramsFromUrl, scrolling:false, onscroll:()=>{}})
   const member = memberRef.current
   member.props = props
-  member.params = params
+  member.params = paramsFromUrl
 
   //  Scroll to given 'top' param
   useEffect(() => {
@@ -90,7 +92,7 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
 
   //  Set onscroll handler setting 'top' param
   useEffect(() => {
-    console.log('useEffect() for onscroll called.')
+    //console.log('useEffect() for onscroll called.')
     function doSendScroll() {
       const editing = props.stores.contents.editing === props.content.id
       if (editing){
@@ -125,18 +127,37 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
 
   //  console.log(`Name:${props.content.name} mime: ${mimeType}`)
   const classes = useStyles(props)
+  const mimeType = member.params.get('mimeType')
+  const page = getPage(member.params)
+  const slides = getSlides(member.params)
+
   return <Observer>{()=>{
     const vscroll = isGDrivePreviewScrollable(mimeType)
     //  console.log(`vscroll=${vscroll}  mimeType=${mimeType}`)
     if (fileId && (!mimeType || member.prevToken !== props.stores.roomInfo.gDriveToken)) {
       member.prevToken = props.stores.roomInfo.gDriveToken
-      //  console.log(`id:${fileId}`)
+      //  console.log(`GDrive: id:${fileId}, mime:${mimeType}  token:${member.prevToken}`)
       getInformationOfGDriveContent(fileId).then((res)=>{
         if ((res.name && props.content.name !== res.name) || res.mimeType){
-          member.params.set('mimeType', res.mimeType)
-          //  console.log(`id:${fileId}   mime: ${res.mimeType}`, res)
+          if (res.mimeType) member.params.set('mimeType', res.mimeType)
           if (res.name){ props.content.name = res.name }
-          updateUrl(member)
+          if (res.mimeType === `${MIMETYPE_GOOGLE_APP}presentation`){
+            const slides = getSlides(member.params)
+            if (slides.length === 0){
+              const gas = 'https://script.google.com/macros/s/AKfycbxZYIKpZy6Dj7t38NWDv1ExO03ly1HKQPHd0Z41vYmD7WDrFslgSx95iDBSoUXZtmZP/exec'
+              const app = 'presentation'
+              const url = `https://docs.google.com/${app}/d/${fileId}/edit`
+              axios.get(`${gas}?url=${url}`).then(res => {
+                member.params.set('slides', JSON.stringify(res.data.slides))
+              }).catch(e=>{
+                console.warn('Google App Script "Slides to ids" by hasevr@gs.haselab.net returns an error.', e)
+              }).finally(()=>{
+                updateUrl(member)
+              })
+            }
+          }else{
+            updateUrl(member)
+          }
         }
       }).catch(reason=>{
         member.params.set('mimeType', 'unknown')
@@ -144,6 +165,7 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
       })
     }
     const editing = props.stores.contents.editing === props.content.id
+    //  console.log(`getDriveUrl: ${editing}, ${JSON.stringify(Array.from(member.params))}`)
     const url = getGDriveUrl(editing, member.params)
 
     return <div className={mimeType ? classes.divClip : classes.divError} >
@@ -152,14 +174,20 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
         onWheel = {ev => vscroll && (ev.ctrlKey || ev.stopPropagation()) }>
         <iframe src={url} title={props.content.url}
           className={editing ? classes.iframeEdit : vscroll ? classes.iframeVScrool : classes.iframe}/>
-      </div> :
-    !editing ? <div style={{margin:'1em', whiteSpace:'pre-wrap'}}>{t('gdFailed')}</div> :
-      <div className={classes.divClip} onWheel = {ev => ev.ctrlKey || ev.stopPropagation() } >
-      <iframe src={url} title={props.content.url}
-        className={classes.iframeEdit}
-      />
       </div>
+    :
+      !editing ?
+        <div style={{margin:'1em', whiteSpace:'pre-wrap'}}>{t('gdFailed')}</div>
+      : <div className={classes.divClip} onWheel = {ev => ev.ctrlKey || ev.stopPropagation() } >
+          <iframe src={url} title={props.content.url} className={classes.iframeEdit} />
+        </div>
     }
+    <PageControl page={page} numPages={slides.length} onSetPage={(p)=>{
+      if (page != p){
+        member.params.set('page', p.toString())
+        updateUrl(member)
+      }
+    }}/>
   </div>
   }}</Observer>
 }

@@ -31,5 +31,12 @@ export function formatTimestamp(stamp: number){
   return timestamp
 }
 
+export const pointerStoppers = {
+  onMouseDown: (ev:React.MouseEvent) => {ev.stopPropagation()},
+  onMouseUp: (ev:React.MouseEvent) => {ev.stopPropagation()},
+  onPointerDown: (ev:React.MouseEvent) => {ev.stopPropagation()},
+  onPointerUp: (ev:React.MouseEvent) => {ev.stopPropagation()},
+}
+
 export * from './formatter'
 export * from './styles'

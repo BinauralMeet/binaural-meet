@@ -226,7 +226,7 @@ export class Conference {
   }
 
   public checkAdmin(){
-    return this.rtcTransports.checkAdmin(this.room, this.authInfo.email, this.authInfo.token)
+    return this.rtcTransports.checkAdmin(this.room, this.authInfo.token)
   }
 
   private clearRtc(){

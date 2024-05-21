@@ -12,7 +12,7 @@ import _ from 'lodash'
 import participants from '../participants/Participants'
 import sharedContents from './SharedContents'
 import {contentLog} from '@models/utils'
-import roomInfo from '@stores/RoomInfo'
+import { getGDriveUrl } from './GDriveUtil'
 
 export const defaultContent: ISharedContent = Object.assign({}, mapObjectDefaultValue, {
   name: '',
@@ -432,50 +432,7 @@ export function copyContentToClipboard(c: ISharedContent){
   }
 }
 
-export function isGDrivePreviewScrollable(mimeType?: string) {
-  if (!mimeType){ return true }
 
-  return !(
-    mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    || mimeType === 'application/vnd.google-apps.presentation'
-    || mimeType === 'application/vnd.google-apps.spreadsheet'
-    || mimeType.slice(0, 5) === 'image'
-    || mimeType.slice(0, 5) === 'video'
-    || mimeType.slice(0, 5) === 'audio'
-  )
-}
-export function isGDrivePreviewEditUrl(mimeType?: string){
-  if (!mimeType){ return false }
-
-  return mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  || mimeType === 'application/vnd.google-apps.spreadsheet'
-  || mimeType === 'application/vnd.google-apps.document'
-  || mimeType === 'application/vnd.google-apps.presentation'
-}
-
-export function getGDriveUrl(editing: boolean, params: Map<string, string>){
-  const fileId = params.get('id')
-  let mimeType = params.get('mimeType')
-  mimeType = mimeType ? mimeType : ''
-  const comp = 'application/vnd.google-apps.'
-
-  let url = `https://drive.google.com/file/d/${fileId}/preview`
-  if (editing || isGDrivePreviewEditUrl(mimeType)){
-    if (mimeType.substr(0, comp.length) === comp){
-      let app = mimeType.substr(comp.length)
-      if (app !== 'failed'){
-        if (app === 'spreadsheet'){ app = 'spreadsheets' }
-        url = `https://docs.google.com/${app}/d/${fileId}/edit`
-      }
-    } else if (mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
-      const app = 'spreadsheets'
-      url = `https://docs.google.com/${app}/d/${fileId}/edit`
-      console.log('edit url in share content creator:', url)
-    }
-  }
-
-  return url
-}
 export function getBeforeParamsOfUrl(url: string){
   const start = url.indexOf('?')
 
@@ -495,38 +452,6 @@ export function getStringFromParams(params: Map<string, string>){
   })
 
   return url
-}
-export function getInformationOfGDriveContent(fileId: string){
-  //  console.log('gapi try to get mimeType')
-  const API_KEY = 'AIzaSyCE4B2cKycH0fVmBznwfr1ynnNf2qNEU9M'
-  const rv = new Promise<{name:string, mimeType:string}>((resolve, reject)=>{
-    if (gapi){
-      if (roomInfo.gDriveToken){
-        gapi.client.setToken({access_token: roomInfo.gDriveToken})
-      }else{
-        gapi.client.setApiKey(API_KEY)
-      }
-      gapi.client.load('drive', 'v3', () => {
-        gapi.client.drive.files.get({
-          fileId,
-          fields:'mimeType,name',
-          supportsAllDrives: true,
-        })
-        .then((result:any) => {
-          const body = JSON.parse(result.body)
-          //console.log(`gapi mimeType:${body.mimeType}  name:${body.name}`)
-          resolve({mimeType:body.mimeType, name: body.name})
-        }).catch((reason:any) => {
-          //console.log('gapi error', reason)
-          reject(reason)
-        })
-      })
-    }else{
-      reject('gapi is not loaded')
-    }
-  })
-
-  return rv
 }
 
 //  change zorder to the top.

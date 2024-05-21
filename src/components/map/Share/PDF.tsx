@@ -10,6 +10,8 @@ import {getDocument, GlobalWorkerOptions, renderTextLayer} from 'pdfjs-dist'
 import {PDFDocumentProxy, PDFPageProxy} from 'pdfjs-dist/types/display/api'
 import React, {useEffect, useRef} from 'react'
 import {ContentProps} from './Content'
+import { pointerStoppers } from '@components/utils'
+import { PageControl } from './PageControl'
 
 ////GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.7.570/es5/build/pdf.worker.js'
 GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.7.570/build/pdf.worker.js'
@@ -50,15 +52,15 @@ class Member{
   textDiv: HTMLDivElement|null = null
   annotationDiv: HTMLDivElement|null = null
   prevSize = [0,0]
-  pageNum = 0
-  @observable numPages = 0
+  pageNum = 1
+  @observable numPages = 1
   @observable showTop = true
   @observable pageText = ''
   constructor(){
     makeObservable(this)
   }
   render(){
-    const page = this.pages[this.pageNum]
+    const page = this.pages[this.pageNum - 1]
     if (this.canvas && page){
       const viewport1 = page.getViewport({scale:1})
       const c = this.props.content
@@ -125,10 +127,10 @@ class Member{
     const url = new URL(this.props.content.url)
     this.mainUrl = url.hash ? url.href.substring(0, url.href.length - url.hash.length) : url.href
     let pageNum = this.pageNum
-    if (url.hash.substr(0,6) === '#page='){
-      pageNum = Number(url.hash.substring(6)) - 1
-      if (pageNum < 0){ pageNum = 0 }
-      if (this.numPages && pageNum >= this.numPages){ pageNum = this.numPages-1 }
+    if (url.hash.substring(0,6) === '#page='){
+      pageNum = Number(url.hash.substring(6))
+      if (pageNum < 1){ pageNum = 1 }
+      if (this.numPages && pageNum > this.numPages){ pageNum = this.numPages }
     }
     if (!this.document || pageNum !== this.pageNum){
       //  console.log(`doc${this.document}  page=${this.pageNum} -> ${pageNum}`)
@@ -136,7 +138,7 @@ class Member{
         this.render()
       })
       this.pageNum = pageNum
-      this.pageText = String(pageNum + 1)
+      this.pageText = String(pageNum)
     }else if(this.prevSize[0] !== this.props.content.size[0] || this.prevSize[1] !== this.props.content.size[1]){
       if (this.render()){
         this.prevSize = Array.from(this.props.content.size)
@@ -182,13 +184,13 @@ class Member{
   }
   getPage(pageNum:number) {
     const rv = new Promise<PDFPageProxy>((resolve, reject) => {
-      if (this.pages[pageNum]){
-        resolve(this.pages[pageNum])
+      if (this.pages[pageNum-1]){
+        resolve(this.pages[pageNum-1])
       }else{
         this.getDocument().then((doc)=>{
-          doc.getPage(pageNum+1).then((page)=>{
-            this.pages[pageNum] = page
-            resolve(this.pages[pageNum])
+          doc.getPage(pageNum).then((page)=>{
+            this.pages[pageNum-1] = page
+            resolve(this.pages[pageNum-1])
           }).catch((reason)=> {
             reject(reason)
           })
@@ -202,9 +204,9 @@ class Member{
   }
   updateUrl(pageNum?: number){
     if (pageNum === undefined || !Number.isFinite(pageNum)) {pageNum = this.pageNum}
-    if (pageNum < 0) {pageNum = 0}
-    if (pageNum >= this.numPages) {pageNum = this.numPages-1}
-    const url = `${this.mainUrl}#page=${pageNum+1}`
+    if (pageNum < 1) {pageNum = 1}
+    if (pageNum > this.numPages) {pageNum = this.numPages}
+    const url = `${this.mainUrl}#page=${pageNum}`
     if (url !== this.props.content.url) {
       const c = Object.assign({}, this.props.content)
       c.url = url
@@ -213,12 +215,7 @@ class Member{
   }
 }
 
-const stopper = {
-  onMouseDown: (ev:React.MouseEvent) => {ev.stopPropagation()},
-  onMouseUp: (ev:React.MouseEvent) => {ev.stopPropagation()},
-  onPointerDown: (ev:React.MouseEvent) => {ev.stopPropagation()},
-  onPointerUp: (ev:React.MouseEvent) => {ev.stopPropagation()},
-}
+const stopper = pointerStoppers
 
 export const PDF: React.FC<ContentProps> = (props:ContentProps) => {
   assert(props.content.type === 'pdf')
@@ -254,45 +251,8 @@ export const PDF: React.FC<ContentProps> = (props:ContentProps) => {
       transformOrigin:'top left', transform:`scale(${1/CANVAS_SCALE})`, lineHeight: 1,
       overflow:'hidden'}} />
     <div ref={refAnnotationDiv} />
-    <div style={{position:'absolute', top:0, left:0, width:'100%', height:40}}
-      onPointerEnter={()=>{member.showTop = true}} onPointerLeave={()=>{member.showTop = false}}>
-      <Observer>{()=>
-        <Collapse in={member.showTop} style={{position:'absolute', top:0, left:0, width:'100%'}}>
-          <Grid container alignItems="center">
-            <Grid item >
-              <IconButton size="small" color={member.pageNum>0?'primary':'default'} {...stopper}
-                onClick={(ev) => { ev.stopPropagation(); member.updateUrl(member.pageNum - 1) }}
-                onDoubleClick={(ev) => {ev.stopPropagation() }} >
-              <NavigateBeforeIcon />
-              </IconButton>
-            </Grid>
-            <Grid item xs={1}>
-              <TextField value={member.pageText} {...stopper}
-                inputProps={{min: 0, style: { textAlign: 'center' }}}
-                onChange={(ev)=> { member.pageText = ev.target.value}}
-                onBlur={(ev) => {
-                  const num = Number(member.pageText)
-                  if (num > 0) { member.updateUrl(num-1) }
-                }}
-                onKeyDown={(ev)=>{
-                  if (ev.key === 'Enter'){
-                    const num = Number(member.pageText)
-                    if (num > 0) { member.updateUrl(num-1) }
-                  }
-                }}
-              />
-            </Grid>
-            <Grid item style={{fontSize:15}}>/ {member.numPages}</Grid>
-            <Grid item >
-              <IconButton size="small" color={member.pageNum<member.numPages-1?'primary':'default'} {...stopper}
-                onClick={(ev) => { ev.stopPropagation(); member.updateUrl(member.pageNum + 1) }}
-                onDoubleClick={(ev) => {ev.stopPropagation() }} >
-              <NavigateNextIcon />
-              </IconButton>
-            </Grid>
-          </Grid>
-        </Collapse>
-      }</Observer>
-    </div>
+    <PageControl page={member.pageNum} numPages={member.numPages} onSetPage={page=>{
+      member.updateUrl(page)
+    }}/>
   </div>
 }
