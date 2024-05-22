@@ -1,13 +1,9 @@
-import {Collapse, Grid, TextField} from '@material-ui/core'
-import IconButton from '@material-ui/core/IconButton'
-import NavigateBeforeIcon from '@material-ui/icons/NavigateBefore'
-import NavigateNextIcon from '@material-ui/icons/NavigateNext'
 import {getProxiedUrl} from '@models/api/CORS'
 import {assert} from '@models/utils'
 import {makeObservable, observable} from 'mobx'
-import {Observer, useObserver} from 'mobx-react-lite'
+import {Observer} from 'mobx-react-lite'
 import {getDocument, GlobalWorkerOptions, renderTextLayer} from 'pdfjs-dist'
-import {PDFDocumentProxy, PDFPageProxy} from 'pdfjs-dist/types/display/api'
+import {PDFDocumentLoadingTask, PDFDocumentProxy, PDFPageProxy} from 'pdfjs-dist/types/display/api'
 import React, {useEffect, useRef} from 'react'
 import {ContentProps} from './Content'
 import { pointerStoppers } from '@components/utils'
@@ -40,25 +36,55 @@ export declare class RenderTask {
   cancel(): void
 }
 
-
 class Member{
-  newProps!: ContentProps
   props!: ContentProps
   mainUrl!: string
   document?: PDFDocumentProxy = undefined
+  getDocTask?: PDFDocumentLoadingTask
   pages: PDFPageProxy[] = []
   renderTask?: RenderTask = undefined
   canvas: HTMLCanvasElement|null = null
   textDiv: HTMLDivElement|null = null
   annotationDiv: HTMLDivElement|null = null
   prevSize = [0,0]
-  pageNum = 1
-  @observable numPages = 1
+  @observable pageNum = 1
+  @observable numPages: number|undefined = undefined
   @observable showTop = true
-  @observable pageText = ''
   constructor(){
     makeObservable(this)
   }
+  //  Clip page number p between 1 and numPages and return valid page number.
+  clipPage(p: number){
+    if (p < 1) {p = 1}
+    if (this.numPages && p > this.numPages) {p = this.numPages}
+    return p
+  }
+  //  Set or update props to this.
+  updateProps(propsIn: ContentProps){
+    this.props = propsIn
+    const editing = this.props.stores.contents.editing === this.props.content.id
+    const url = new URL(this.props.content.url)
+    this.mainUrl = url.hash ? url.href.substring(0, url.href.length - url.hash.length) : url.href
+    let pageNum = 1
+    if (editing){
+      pageNum = this.pageNum
+    }else if (url.hash.substring(0,6) === '#page='){
+      pageNum = this.clipPage(Number(url.hash.substring(6)))
+    }
+    if (!this.document || pageNum !== this.pageNum || editing){
+      //  console.log(`doc${this.document}  page=${this.pageNum} -> ${pageNum}`)
+      this.pageNum = pageNum
+      this.getPage(pageNum).then(()=>{
+        if (this.pageNum === pageNum) this.render()
+      })
+    }else if(this.prevSize[0] !== this.props.content.size[0]
+      || this.prevSize[1] !== this.props.content.size[1]){
+      if (this.render()){
+        this.prevSize = Array.from(this.props.content.size)
+      }
+    }
+  }
+  //  render pdf to canvas.
   render(){
     const page = this.pages[this.pageNum - 1]
     if (this.canvas && page){
@@ -115,57 +141,28 @@ class Member{
 
     return false
   }
-  updateProps(){
-    if (this.newProps === this.props) {
-      //  console.log('PDF c:', this.newProps === this.props, this.newProps.content.url, this.props?.content?.url)
-
-      return
-    }
-
-    this.props = this.newProps
-
-    const url = new URL(this.props.content.url)
-    this.mainUrl = url.hash ? url.href.substring(0, url.href.length - url.hash.length) : url.href
-    let pageNum = this.pageNum
-    if (url.hash.substring(0,6) === '#page='){
-      pageNum = Number(url.hash.substring(6))
-      if (pageNum < 1){ pageNum = 1 }
-      if (this.numPages && pageNum > this.numPages){ pageNum = this.numPages }
-    }
-    if (!this.document || pageNum !== this.pageNum){
-      //  console.log(`doc${this.document}  page=${this.pageNum} -> ${pageNum}`)
-      this.getPage(pageNum).then(()=>{
-        this.render()
-      })
-      this.pageNum = pageNum
-      this.pageText = String(pageNum)
-    }else if(this.prevSize[0] !== this.props.content.size[0] || this.prevSize[1] !== this.props.content.size[1]){
-      if (this.render()){
-        this.prevSize = Array.from(this.props.content.size)
-      }
-    }
-  }
+  //  get PDF from proxy server
   getDocument(){
     const rv = new Promise<PDFDocumentProxy>((resolve, reject)=>{
       if (this.document){
         resolve(this.document)
-      }else{
-        const task = getDocument({
+      }else if (!this.getDocTask) {
+        this.getDocTask = getDocument({
           url: getProxiedUrl(this.mainUrl),
           cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.7.570/cmaps/',
           cMapPacked: true,
         })
-        task.promise.then((doc) => {
+        this.getDocTask.promise.then((doc) => {
           this.document = doc
           this.numPages = doc.numPages
           resolve(this.document)
         }).catch(reason => {
-          const task = getDocument({
+          this.getDocTask = getDocument({
             url: this.mainUrl,
             cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.7.570/cmaps/',
             cMapPacked: true,
           })
-          task.promise.then((doc) => {
+          this.getDocTask.promise.then((doc) => {
             this.document = doc
             this.numPages = doc.numPages
             resolve(this.document)
@@ -177,11 +174,14 @@ class Member{
 //        task.onProgress = (progress:{loaded: number, total: number}) => {
 //          console.log(`PDF progress ${progress.loaded}/${progress.total}`)
 //        }
+      }else{
+        reject('already loading')
       }
     })
 
     return rv
   }
+  //  get a page of pdf to render
   getPage(pageNum:number) {
     const rv = new Promise<PDFPageProxy>((resolve, reject) => {
       if (this.pages[pageNum-1]){
@@ -202,11 +202,10 @@ class Member{
 
     return rv
   }
-  updateUrl(pageNum?: number){
-    if (pageNum === undefined || !Number.isFinite(pageNum)) {pageNum = this.pageNum}
-    if (pageNum < 1) {pageNum = 1}
-    if (pageNum > this.numPages) {pageNum = this.numPages}
-    const url = `${this.mainUrl}#page=${pageNum}`
+  //  Update url of content and send it to the server.
+  updatePageAndSendUrl(p: number){
+    const page = this.clipPage(p)
+    const url = `${this.mainUrl}#page=${page}`
     if (url !== this.props.content.url) {
       const c = Object.assign({}, this.props.content)
       c.url = url
@@ -221,29 +220,28 @@ export const PDF: React.FC<ContentProps> = (props:ContentProps) => {
   assert(props.content.type === 'pdf')
   const memberRef = useRef<Member>(new Member())
   const member = memberRef.current
-  member.newProps = props
   const refCanvas = useRef<HTMLCanvasElement>(null)
   const refTextDiv = useRef<HTMLDivElement>(null)
   const refAnnotationDiv = useRef<HTMLDivElement>(null)
-  const editing = useObserver(() => props.stores.contents.editing === props.content.id)
+  const editing = props.stores.contents.editing === props.content.id
 
   useEffect(()=>{
     member.canvas = refCanvas.current
     member.textDiv = refTextDiv.current
     member.annotationDiv = refAnnotationDiv.current
-  // eslint-disable-next-line  react-hooks/exhaustive-deps
+    member.render()
+    // eslint-disable-next-line  react-hooks/exhaustive-deps
   }, [refCanvas.current])
 
-  useEffect(()=>{
-    member.updateProps()
-  })
-
   return <div style={{overflow: 'hidden', pointerEvents: 'auto', userSelect: editing? 'text':'none'}}
-    onDoubleClick = {(ev) => { if (!editing) {
-      ev.stopPropagation()
-      ev.preventDefault()
-      props.stores.contents.setEditing(props.content.id)
-    } }} >
+    onDoubleClick = {(ev) => {
+      const editing = props.stores.contents.editing === props.content.id
+      if (!editing) {
+        ev.stopPropagation()
+        ev.preventDefault()
+        props.stores.contents.setEditing(props.content.id)
+      } }
+    } >
     <canvas style={{ width:`${CANVAS_SCALE*100}%`, height:`${CANVAS_SCALE*100}%`,
       transformOrigin:'top left', transform:`scale(${1/CANVAS_SCALE})`}} ref={refCanvas} />
     <div ref={refTextDiv} style={{position:'absolute', left:0, top:0,
@@ -251,8 +249,16 @@ export const PDF: React.FC<ContentProps> = (props:ContentProps) => {
       transformOrigin:'top left', transform:`scale(${1/CANVAS_SCALE})`, lineHeight: 1,
       overflow:'hidden'}} />
     <div ref={refAnnotationDiv} />
-    <PageControl page={member.pageNum} numPages={member.numPages} onSetPage={page=>{
-      member.updateUrl(page)
-    }}/>
+      <Observer>{()=>{  //  update page control and canvas
+        if (!editing) member.updateProps(props)
+        return <PageControl page={member.pageNum} numPages={member.numPages} onSetPage={page=>{
+          if (editing){
+            member.pageNum = page
+            member.updateProps(member.props)
+          }else if (page !== member.pageNum){
+            member.updatePageAndSendUrl(page)
+          }
+        }}/>
+      }}</Observer>
   </div>
 }

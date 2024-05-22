@@ -7,30 +7,37 @@ import NavigateNextIcon from '@material-ui/icons/NavigateNext'
 import {PassiveListener} from 'react-event-injector'
 
 interface PageControlProps{
-  numPages: number
+  numPages: number | undefined
   page: number
   onSetPage: (p:number)=>void
 }
 export const PageControl: React.FC<PageControlProps> = (props:PageControlProps) => {
   const stopper = pointerStoppers
   const [showPage, setShowPage] = useState(true)
-  const [page, setPage] = useState(props.page<1||props.numPages<1 ? 1 : (props.page>props.numPages ? props.numPages : props.page ))
+  const [page, setPage] = useState(props.page<1 ? 1 : (props.numPages!==undefined && props.page>props.numPages ? props.numPages : props.page ))
   const [pageText, setPageText] = useState(page.toString())
-  function checkAndSetPage(p: number){
+  function checkAndUpdatePage(p: number){
     if (p < 1) p = 1
-    if (p > props.numPages) p = props.numPages
-    setPage(p)
-    setPageText((p).toString())
-    props.onSetPage(p)
+    if (props.numPages!==undefined && p > props.numPages) p = props.numPages
+    if (p !== page){
+      setPage(p)
+      setPageText((p).toString())
+    }
+    return p
   }
-  if (page !== props.page) checkAndSetPage(props.page)
+  function checkAndSetPage(p: number){
+    const prev = page
+    p = checkAndUpdatePage(p)
+    if (p !== prev) props.onSetPage(p)
+  }
+  if (page !== props.page) checkAndUpdatePage(props.page)
 
   return  <div style={{position:'absolute', top:0, left:0, width:'100%', height:40}}
   onPointerEnter={()=>{setShowPage(true)}} onPointerLeave={()=>{setShowPage(false)}}>
     <Collapse in={showPage} style={{position:'absolute', top:0, left:0}}>
       <div style={{display:'flex', alignItems:'center', backgroundColor:'white'}}>
         <PassiveListener {...stopper}>
-          <IconButton size="small" color={page>0?'primary':'default'}
+          <IconButton size="small" color={page>1?'primary':'default'}
             onClick={(ev) => {
               checkAndSetPage(page - 1)
             }}
@@ -56,7 +63,7 @@ export const PageControl: React.FC<PageControlProps> = (props:PageControlProps) 
         </PassiveListener>
         / {props.numPages}
         <PassiveListener {...stopper}>
-          <IconButton size="small" color={page < props.numPages-1?'primary':'default'}
+          <IconButton size="small" color={props.numPages && page < props.numPages?'primary':'default'}
             onClick={(ev) => { ev.stopPropagation();
               checkAndSetPage(page + 1)
             }}
