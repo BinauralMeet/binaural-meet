@@ -1,6 +1,4 @@
-import { Member } from '@components/map/Share/GDrive'
 import roomInfo from '@stores/RoomInfo'
-import axios from 'axios'
 
 
 export function getInformationOfGDriveContent(fileId: string){
@@ -48,15 +46,16 @@ export function getPage(params:Map<string, string>){
 
 
 export const MIMETYPE_GOOGLE_APP = 'application/vnd.google-apps.'
+export const MIMETYPE_GOOGLE_APP_PRESENTATION = `${MIMETYPE_GOOGLE_APP}presentation`
+
 export function getGDriveUrl(editing: boolean, params:Map<string, string>){
   const fileId = params.get('id')
   let mimeType = params.get('mimeType')
   mimeType = mimeType ? mimeType : ''
-  const comp = MIMETYPE_GOOGLE_APP
   let url = `https://drive.google.com/file/d/${fileId}/preview`
   if (editing || isGDrivePreviewEditUrl(mimeType)){
-    if (mimeType.substring(0, comp.length) === comp){
-      let app = mimeType.substring(comp.length)
+    if (mimeType.substring(0, MIMETYPE_GOOGLE_APP.length) === MIMETYPE_GOOGLE_APP){
+      let app = mimeType.substring(MIMETYPE_GOOGLE_APP.length)
       if (app !== 'failed'){
         if (app === 'spreadsheet'){ app = 'spreadsheets' }
         url = `https://docs.google.com/${app}/d/${fileId}/edit`
@@ -66,7 +65,7 @@ export function getGDriveUrl(editing: boolean, params:Map<string, string>){
       url = `https://docs.google.com/${app}/d/${fileId}/edit`
       console.log('edit url in share content creator:', url)
     }
-  }else if(mimeType===`${comp}presentation`){
+  }else if(mimeType===MIMETYPE_GOOGLE_APP_PRESENTATION){
     let slide='p'
     const slides = getSlides(params)
     if (slides.length){
@@ -98,5 +97,4 @@ export function isGDrivePreviewEditUrl(mimeType?: string){
   return mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   || mimeType === 'application/vnd.google-apps.spreadsheet'
   || mimeType === 'application/vnd.google-apps.document'
-  //|| mimeType === 'application/vnd.google-apps.presentation'
 }

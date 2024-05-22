@@ -23,6 +23,7 @@ export const PageControl: React.FC<PageControlProps> = (props:PageControlProps) 
     setPageText((p).toString())
     props.onSetPage(p)
   }
+  if (page !== props.page) checkAndSetPage(props.page)
 
   return  <div style={{position:'absolute', top:0, left:0, width:'100%', height:40}}
   onPointerEnter={()=>{setShowPage(true)}} onPointerLeave={()=>{setShowPage(false)}}>

@@ -1,7 +1,7 @@
 import {makeStyles} from '@material-ui/core/styles'
 import {t} from '@models/locales'
 import {assert} from '@models/utils'
-import {MIMETYPE_GOOGLE_APP, getGDriveUrl, getInformationOfGDriveContent, getPage, getSlides, isGDrivePreviewScrollable} from '@stores/sharedContents/GDriveUtil'
+import {MIMETYPE_GOOGLE_APP_PRESENTATION, getGDriveUrl, getInformationOfGDriveContent, getPage, getSlides, isGDrivePreviewScrollable} from '@stores/sharedContents/GDriveUtil'
 import {Observer} from 'mobx-react-lite'
 import React, {useEffect, useRef, useState} from 'react'
 import {ContentProps} from './Content'
@@ -141,7 +141,7 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
         if ((res.name && props.content.name !== res.name) || res.mimeType){
           if (res.mimeType) member.params.set('mimeType', res.mimeType)
           if (res.name){ props.content.name = res.name }
-          if (res.mimeType === `${MIMETYPE_GOOGLE_APP}presentation`){
+          if (res.mimeType === MIMETYPE_GOOGLE_APP_PRESENTATION){
             const slides = getSlides(member.params)
             if (slides.length === 0){
               const gas = 'https://script.google.com/macros/s/AKfycbxZYIKpZy6Dj7t38NWDv1ExO03ly1HKQPHd0Z41vYmD7WDrFslgSx95iDBSoUXZtmZP/exec'
@@ -167,6 +167,7 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
     const editing = props.stores.contents.editing === props.content.id
     //  console.log(`getDriveUrl: ${editing}, ${JSON.stringify(Array.from(member.params))}`)
     const url = getGDriveUrl(editing, member.params)
+    //  console.log(`getDriveUrl: ${editing}, ${JSON.stringify(Array.from(member.params))}`)
 
     return <div className={mimeType ? classes.divClip : classes.divError} >
     {mimeType ?
@@ -182,12 +183,14 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
           <iframe src={url} title={props.content.url} className={classes.iframeEdit} />
         </div>
     }
-    <PageControl page={page} numPages={slides.length} onSetPage={(p)=>{
-      if (page != p){
-        member.params.set('page', p.toString())
-        updateUrl(member)
-      }
-    }}/>
+    {mimeType === MIMETYPE_GOOGLE_APP_PRESENTATION ?
+      <PageControl page={page} numPages={slides.length} onSetPage={(p)=>{
+        if (page != p){
+          member.params.set('page', p.toString())
+          updateUrl(member)
+        }
+      }}/>
+      : undefined }
   </div>
   }}</Observer>
 }
