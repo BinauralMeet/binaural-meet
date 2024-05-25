@@ -7,6 +7,7 @@ import {FabWithTooltip} from '@components/utils/FabEx'
 import {RecorderDialog} from './RecorderDialog'
 import PlayIcon from '@material-ui/icons/PlayArrow'
 import StopIcon from '@material-ui/icons/Stop'
+import PauseIcon from '@material-ui/icons/Pause'
 import RecordIcon from '@material-ui/icons/FiberManualRecord'
 import { player, recorder } from '@models/conference/Recorder'
 import { Observer } from 'mobx-react-lite'
@@ -35,11 +36,11 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
           title = {acceleratorText2El(t('ttPlayAndRec'))}
           aria-label="share" onClick={() => {
             if (recorder.recording) recorder.stop()
-            if (player.playing) player.stop()
+            if (player.state==='play') player.stop()
             props.setShowDialog(true)
           }}>
           {
-            player.playing ? <StopIcon style={{width:iconSize, height:iconSize}} />
+            player.state==='play' ? <PauseIcon style={{width:iconSize, height:iconSize}} />
             : recorder.recording ? <RecordIcon style={{width:iconSize, height:iconSize}}/>
             : <PlayIcon style={{width:iconSize, height:iconSize}} />
           }

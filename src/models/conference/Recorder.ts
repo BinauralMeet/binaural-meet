@@ -610,13 +610,16 @@ class MediaPlay{
     //console.log(`MediaPlay URL:${URL.createObjectURL(this.blob)} ${JSON.stringify(this)}`)
   }
 }
+type PlayerState = 'play' | 'pause' | 'stop'
+
 class Player{
   messages: Message[] = []
   medias: MediaPlay[] = []
   startTime = 0
   endTime = 0
   rate = 1.0
-  @observable playing = false
+  @observable state: PlayerState = 'stop'
+  @observable currentTime: number = 0 //  current playback time.
   constructor(){
     makeObservable(this)
   }
@@ -646,7 +649,7 @@ class Player{
               archive.slice(start, start+header.size).text().then(text => {
                 const jsonPart = JSON.parse(text) as JSONPart
                 this.messages = jsonPart.messages
-                this.startTime = jsonPart.startTime
+                this.currentTime = this.startTime = jsonPart.startTime
                 this.endTime = jsonPart.endTime
                 count ++
                 if (count === headers.length){ resolve(this) }
@@ -672,13 +675,14 @@ class Player{
     return promise
   }
   setRate(rate: number){
-    if (this.playing && this. rate !== rate){
+    if (this.state==='play' && this. rate !== rate){
       //  TODO hase
     }
     this.rate = rate
   }
+  playInterval = 0
   play(offset: number){
-    this.playing = true
+    this.state = 'play'
     const messages = Array.from(this.messages)
     const medias = Array.from(this.medias)
     console.log(`Play ${medias.length} medias.`)
@@ -691,40 +695,50 @@ class Player{
 
     messages.sort((a,b) => a.time - b.time)
     medias.sort((a,b) => a.time - b.time)
-    let time = this.startTime + offset
-    const ffTo = messages.findIndex(m=>m.time >= time) - 1
+    this.currentTime = this.startTime + offset
+    //let time = this.startTime + offset
+    const ffTo = messages.findIndex(m=>m.time >= this.currentTime) - 1
     if (ffTo > 0){  //  first forward to ffTo
       const ffMsgs = messages.splice(0, ffTo)
-      player.fastForwardMessage(ffMsgs, time)
+      player.fastForwardMessage(ffMsgs, this.currentTime)
     }
     const timeDiff = Date.now() - (this.startTime + offset)
     const step = () => {
-      time = Date.now() - timeDiff
-      while (messages.length && messages[0].time < time){
+      this.currentTime = Date.now() - timeDiff
+      while (messages.length && messages[0].time < this.currentTime){
         const message = messages.shift()!
-        const playFrom = time - message.time
+        const playFrom = this.currentTime - message.time
         player.playMessage(message.msg, playFrom)
       }
-      while (medias.length && medias[0].time < time){
+      while (medias.length && medias[0].time < this.currentTime){
         const media = medias.shift()!
-        const from = time - media.time
+        const from = this.currentTime - media.time
         player.playMedia(media, from)
       }
-      if (time < player.endTime){
-        setTimeout(() => {step()}, 30)
-      }else{
-        this.cleanup()
-      }
     }
-    step()
+    if (this.playInterval) window.clearInterval(this.playInterval)
+    this.playInterval = window.setInterval(step, 30)
+  }
+  pause(){
+    player.state = 'pause'
+    if (this.playInterval){
+      window.clearInterval(this.playInterval)
+      this.playInterval = 0
+    }
   }
   stop(){
-    player.endTime = 0
+    player.state = 'stop'
+    if (this.playInterval){
+      window.clearInterval(this.playInterval)
+      this.playInterval = 0
+    }
+    this.cleanup()
+    this.currentTime = 0
   }
   private pids = new Set<string>()
   private cids = new Set<string>()
   private cleanup(){
-    this.playing = false
+    this.state = 'stop'
     this.pids.forEach(pid=>{
       participants.removePlayback(pid)
     })

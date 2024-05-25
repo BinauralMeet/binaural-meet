@@ -50,7 +50,7 @@ export const RecorderMenu: React.FC<RecorderMenuProps> = (props) => {
     }
   }
   function startStopPlayback(id?: number){
-    if (player.playing){
+    if (player.state === 'play'){
       player.stop()
       props.setStep('none')
     }else if (id){
@@ -106,7 +106,7 @@ export const RecorderMenu: React.FC<RecorderMenuProps> = (props) => {
           icon={recorder.recording ? <StopIcon /> : <RecordIcon /> }
           onClick={startStopRecord}
       />: undefined}
-      {player.playing ? undefined : <>
+      {player.state==='play' ? undefined : <>
         <input type="file" accept="application/octet-stream" ref={fileToPlay} style={{display:'none'}}
           onChange={ (ev) => {
             const files = ev.currentTarget?.files
@@ -125,7 +125,7 @@ export const RecorderMenu: React.FC<RecorderMenuProps> = (props) => {
       </>}
       {!recorder.recording && records?.length ? <Divider /> : undefined}
       <Observer>{()=>{
-        if (player.playing){
+        if (player.state==='play'){
           return <DialogIconItem
             key="stopPlay" text={t('playerStop')}
             icon={<StopIcon />}
