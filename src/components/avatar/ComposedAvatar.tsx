@@ -10,15 +10,15 @@ export const ComposedAvatar: React.FC<ComposedAvatarProps> = (props: ComposedAva
     avatarSrc,
     colors,
     stream,
-    blob,
+    clip,
     ...remainProps
   } = props
 
-  if (!stream && !blob) {
+  if (!stream && !clip?.videoBlob) {
     return <ImageAvatar name={name} colors={colors}
     avatarSrc={avatarSrc} {...remainProps} />
   }
 
-  return <StreamAvatar stream={stream} blob={blob} {...remainProps} />
+  return <StreamAvatar stream={stream} clip={clip} {...remainProps} />
 }
 ComposedAvatar.displayName = 'ComposedAvatar'

@@ -1,4 +1,5 @@
 import {makeStyles} from '@material-ui/core/styles'
+import { MediaClip } from '@models/MapObject'
 import React, {useEffect, useRef} from 'react'
 
 const CENTER = 0.5
@@ -25,17 +26,17 @@ const useStyles = makeStyles({
 
 export interface StreamAvatarProps {
   stream?: MediaStream
-  blob?: Blob
+  clip?: MediaClip
   size?: number
   style?: any
   mirror?: boolean
 }
 
-function setStream(video: HTMLVideoElement, stream: MediaStream|undefined, blob: Blob|undefined,
+function setStream(video: HTMLVideoElement, stream: MediaStream|undefined, clip: MediaClip|undefined,
   videoLargerWidthClass: string, videoLargerHeightClass: string){
   if (stream) {video.srcObject = stream}
-  else if (blob && blob.size){
-    const url = URL.createObjectURL(blob)
+  else if (clip && clip.videoBlob && clip.videoBlob.size){
+    const url = URL.createObjectURL(clip.videoBlob)
     video.src = url
   }
   video.autoplay = true
@@ -53,6 +54,10 @@ function setStream(video: HTMLVideoElement, stream: MediaStream|undefined, blob:
       video.className = videoLargerWidthClass
     }
   }
+
+  video.onended = (ev) => {
+    delete clip?.videoBlob
+  }
 }
 
 export const StreamAvatar: React.FC<StreamAvatarProps> = (props: StreamAvatarProps) => {
@@ -62,11 +67,11 @@ export const StreamAvatar: React.FC<StreamAvatarProps> = (props: StreamAvatarPro
   useEffect(
     () => {
       if (videoRef?.current !== null) {
-        setStream(videoRef.current, props.stream, props.blob,
+        setStream(videoRef.current, props.stream, props.clip,
                   classes.videoLargerWidth, classes.videoLargerHeight)
       }
     },
-    [videoRef, classes.videoLargerWidth, classes.videoLargerHeight, props.stream, props.blob],
+    [videoRef, classes.videoLargerWidth, classes.videoLargerHeight, props.stream, props.clip?.videoBlob],
   )
 
   return <div className={classes.root} style={props.style}>

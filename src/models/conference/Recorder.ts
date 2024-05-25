@@ -1,5 +1,5 @@
 import {Stores} from '@components/utils'
-import {contentsToSend, IPlaybackContent} from '@models/ISharedContent'
+import {contentsToSend, IPlaybackContent, ISharedContentToSend} from '@models/ISharedContent'
 import {ParticipantBase, RemoteInformation, Viewpoint, VRMRigs} from '@models/Participant'
 import {MediaClip} from '@models/MapObject'
 import {mouse2Str, pose2Str, str2Mouse, str2Pose} from '@models/utils'
@@ -14,6 +14,7 @@ import {MessageType} from './DataMessageType'
 import {Dexie, IndexableType, Table} from 'dexie'
 import { conference } from './Conference'
 import { dateTimeString } from '@models/utils/date'
+import { Participant } from '@components/map/Participant/Participant'
 declare const d:any                  //  from index.html
 
 const recorderDb = new Dexie('recorderDb');
@@ -681,31 +682,33 @@ class Player{
     const messages = Array.from(this.messages)
     const medias = Array.from(this.medias)
     console.log(`Play ${medias.length} medias.`)
+
     for(const media of medias){
       const m = Object.assign({}, media) as any
       delete m.blob
       console.log(`${JSON.stringify(m)}`)
     }
+
     messages.sort((a,b) => a.time - b.time)
     medias.sort((a,b) => a.time - b.time)
     let time = this.startTime + offset
+    const ffTo = messages.findIndex(m=>m.time >= time) - 1
+    if (ffTo > 0){  //  first forward to ffTo
+      const ffMsgs = messages.splice(0, ffTo)
+      player.fastForwardMessage(ffMsgs, time)
+    }
     const timeDiff = Date.now() - (this.startTime + offset)
     const step = () => {
       time = Date.now() - timeDiff
       while (messages.length && messages[0].time < time){
         const message = messages.shift()!
-        const from = time - message.time
-        player.playMessage(message.msg, from)
+        const playFrom = time - message.time
+        player.playMessage(message.msg, playFrom)
       }
       while (medias.length && medias[0].time < time){
         const media = medias.shift()!
         const from = time - media.time
         player.playMedia(media, from)
-        if (media.duration) {
-          setTimeout(()=>{
-            this.stopMedia(media)
-          }, media.duration)
-        }
       }
       if (time < player.endTime){
         setTimeout(() => {step()}, 30)
@@ -730,27 +733,19 @@ class Player{
     })
   }
 
-  private stopMedia(media:MediaPlay){
-    if (media.pid && media.role === 'avatar'){
-      const pid = `p_${media.pid}`
-      const p = participants.playback.get(pid)
-      if (p && p.clip){
-        p.clip.videoBlob = undefined
-      }
-    }
-  }
   private playMedia(media:MediaPlay, from:number){
+    if (media.duration && media.duration < from){
+      return  //  already ended and skip to play
+    }
     const m = Object.assign({}, media) as any
     delete m.blob
     console.log(`playMedia: ${JSON.stringify(m)}`)
+    const clip:MediaClip = {rate : this.rate, from}
     if (media.pid){
       const pid = `p_${media.pid}`
       this.pids.add(pid)
       const obj = participants.getOrCreatePlayback(pid)
-      const clip:MediaClip = {
-        rate : this.rate,
-        from
-      }
+      Object.assign(clip, obj.clip)
       if (media.kind === 'audio'){
         clip.audioBlob = media.blob
       }else if (media.kind === 'video'){
@@ -758,15 +753,12 @@ class Player{
       }else{
         console.error(`Unknown media kind ${media.kind}`)
       }
-      obj.clip = clip
+      obj.clip = clip //  obj.clip is observed and need to update the object when update properties.
     }else if (media.cid){
       const cid = `p_${media.cid}`
       this.cids.add(cid)
       const obj = contents.getOrCreatePlayback(cid)
-      const clip:MediaClip = {
-        rate : this.rate,
-        from
-      }
+      Object.assign(clip, obj.clip)
       if (media.kind === 'audio'){
         clip.audioBlob = media.blob
       }else if (media.kind === 'video'){
@@ -775,11 +767,53 @@ class Player{
       }else{
         console.error(`Unknown media kind ${media.kind}`)
       }
-      obj.clip = clip
+      obj.clip = clip //  obj.clip is observed and need to update the object when update properties.
       contents.updatePlayback(obj)
     }
   }
-  private playMessage(msg: BMMessage, from: number){
+  private fastForwardMessage(messages: Message[], timeToFF:number){
+    const participantMessages = new Map<string, Map<string, Message>>
+    const contentMessages = new Map<string, Message>
+    const ff = Array.from(messages)
+    for(const m of ff){
+      if (m.msg.t === MessageType.CONTENT_UPDATE_REQUEST){
+        const contents = JSON.parse(m.msg.v) as ISharedContentToSend[]
+        for(const content of contents){
+          const newMessage = {...m}
+          newMessage.msg = {...m.msg}
+          newMessage.msg.v = JSON.stringify([content])
+          contentMessages.set(content.id, newMessage)
+        }
+      }else if (m.msg.t === MessageType.CONTENT_REMOVE_REQUEST){
+        const cids = JSON.parse(m.msg.v) as string[]
+        for(const cid of cids){
+          const newMessage = {...m}
+          newMessage.msg = {...m.msg}
+          newMessage.msg.v = JSON.stringify([cid])
+          contentMessages.set(cid, newMessage)
+        }
+      }else if (m.msg.p){
+        let participant = participantMessages.get(m.msg.p)
+        if (!participant){
+          participant = new Map<string, Message>
+          participantMessages.set(m.msg.p, participant)
+        }
+        participant.set(m.msg.t, m)
+      }
+    }
+    participantMessages.forEach(p => {
+      p.forEach(m => {
+        let playFrom = timeToFF - m.time
+        if (playFrom < 0) playFrom = 0
+        this.playMessage(m.msg, playFrom)
+      })
+    })
+    contentMessages.forEach(m => {
+      let playFrom = timeToFF - m.time
+      this.playMessage(m.msg, playFrom)
+    })
+  }
+  private playMessage(msg: BMMessage, playFrom: number){
     //console.log(`playMessage ${msg.t}`, msg)
     const pid = msg.p ? `p_${msg.p}` : ''
     if (pid){ this.pids.add(pid) }
@@ -804,7 +838,7 @@ class Player{
     if (notHandled){
       notHandled = false
       switch(msg.t){
-        case MessageType.CONTENT_UPDATE_REQUEST: this.onContentUpdateRequest(msg, from); break
+        case MessageType.CONTENT_UPDATE_REQUEST: this.onContentUpdateRequest(msg, playFrom); break
         case MessageType.CONTENT_REMOVE_REQUEST: this.onContentRemoveRequest(msg); break
         default: notHandled = true; break
       }

@@ -304,7 +304,7 @@ export class NodeGroupForPlayback extends NodeGroup {
     if (clip.audioBlob !== this.clipPlaying?.audioBlob){
       //  play a new audio blob
       const url = URL.createObjectURL(clip.audioBlob)
-      console.log(`playSourceClip t:${clip.audioBlob.type} sz:${clip.audioBlob.size} ${url}`)
+      console.log(`playSourceClip t:${clip.audioBlob.type} sz:${clip.audioBlob.size} f:${clip.from} r:${clip.rate}`)
 
       //  For the context mode
       if (this.audioElementForBlob){ this.audioElementForBlob.remove() }

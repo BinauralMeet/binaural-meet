@@ -2,6 +2,8 @@ import {makeStyles} from '@material-ui/core/styles'
 import {assert} from '@models/utils'
 import React, {useEffect, useRef} from 'react'
 import {ContentProps} from './Content'
+import { autorun } from 'mobx'
+import { IPlaybackContent } from '@models/ISharedContent'
 
 const useStyles = makeStyles({
   video: {
@@ -15,16 +17,16 @@ export const PlaybackScreenContent: React.FC<ContentProps> = (props:ContentProps
   const classes = useStyles()
   const ref = useRef<HTMLVideoElement>(null)
 
-  function setTrack() {
-    if (ref.current) {
-      ref.current.src = props.content.url
+  useEffect(() => {
+    const content = props.content as IPlaybackContent
+    if (ref.current && content.clip){
+      ref.current.src = content.url
+      ref.current.currentTime = content.clip.from / 1000.0
+      ref.current.playbackRate = content.clip.rate
       ref.current.autoplay = true
     }
-  }
-  useEffect(() => {
-    setTrack()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  },        [ref.current])
+  }, [ref.current, (props.content as IPlaybackContent).clip])
 
   return <video className={classes.video} ref={ref} />
 }
