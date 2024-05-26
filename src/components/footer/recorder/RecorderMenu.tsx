@@ -49,18 +49,24 @@ export const RecorderMenu: React.FC<RecorderMenuProps> = (props) => {
       document.body.removeChild(link)
     }
   }
-  function startStopPlayback(id?: number){
+  function playPausePlayback(id?: number){
     if (player.state === 'play'){
-      player.stop()
+      player.pause()
       props.setStep('none')
-    }else if (id){
-      const record = records?.find(r => r.id === id)
-      if (record && record.blob){
-        props.setStep('none')
-        player.load(record.blob).then(()=>{
-          player.play(Number(startTime))
-        })
+    }else if(player.state === 'stop'){
+      if (id){
+        const record = records?.find(r => r.id === id)
+        if (record && record.blob){
+          props.setStep('none')
+          player.load(record.blob).then(()=>{
+            player.play()
+          })
+        }
+      }else{
+        player.play()
       }
+    }else if (player.state === 'pause'){
+      player.play()
     }
   }
   function playFile(){
@@ -75,7 +81,7 @@ export const RecorderMenu: React.FC<RecorderMenuProps> = (props) => {
         }else if (e.code === 'KeyL') {
           playFile()
         }else if (e.code === 'KeyP') {
-          startStopPlayback()
+          playPausePlayback()
         }
       }
     }
@@ -113,7 +119,8 @@ export const RecorderMenu: React.FC<RecorderMenuProps> = (props) => {
             if (files && files.length) {
               props.setStep('none')
               player.load(files[0]).then(()=>{
-                player.play(Number(startTime))
+                player.seek(Number(startTime))
+                player.play()
               })
             }
           }}  />
@@ -129,7 +136,7 @@ export const RecorderMenu: React.FC<RecorderMenuProps> = (props) => {
           return <DialogIconItem
             key="stopPlay" text={t('playerStop')}
             icon={<StopIcon />}
-            onClick={startStopPlayback}
+            onClick={playPausePlayback}
           />
         }else{
           return null
@@ -147,7 +154,7 @@ export const RecorderMenu: React.FC<RecorderMenuProps> = (props) => {
             <span style={{display:'inline-block', width :'24em'}}>{r.title}</span>
             <span style={{display:'inline-block', width :'4em'}}>{duration}</span>
             &nbsp;&nbsp;
-            <IconButton size='small' onClick={()=>r.id && startStopPlayback(r.id)}><PlayIcon /></IconButton>
+            <IconButton size='small' onClick={()=>r.id && playPausePlayback(r.id)}><PlayIcon /></IconButton>
             &nbsp;&nbsp;
             <IconButton size='small' onClick={()=>r.id && downloadRecord(r.id)}><DownloadIcon /></IconButton>
           </>}

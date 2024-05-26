@@ -44,6 +44,9 @@ export const jaTranslate = {
   playerPlayfile: 'ファイルを再生(_l)',
 
   ttCreateAndshare: '作成と共有 (_c)',
+  ttPlay: '再生 (_r)',
+  ttPause: '一時停止 (_r)',
+  ttStop: '停止 (_p)',
   ttPlayAndRec: '録画と再生 (_r)',
   stopMouse: 'マウスカーソルの共有停止 (_m)',
   frameRateSetting: 'フレームレート',

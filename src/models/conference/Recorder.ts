@@ -681,7 +681,19 @@ class Player{
     this.rate = rate
   }
   playInterval = 0
-  play(offset: number){
+  seek(offset: number){
+    const messages = Array.from(this.messages)
+    messages.sort((a,b) => a.time - b.time)
+    this.currentTime = this.startTime + offset
+    //let time = this.startTime + offset
+    const ffTo = messages.findIndex(m=>m.time >= this.currentTime) - 1
+    if (ffTo > 0){  //  first forward to ffTo
+      const ffMsgs = messages.splice(0, ffTo)
+      player.fastForwardMessage(ffMsgs, this.currentTime)
+    }
+    return ffTo
+  }
+  play(){
     this.state = 'play'
     const messages = Array.from(this.messages)
     const medias = Array.from(this.medias)
@@ -695,14 +707,12 @@ class Player{
 
     messages.sort((a,b) => a.time - b.time)
     medias.sort((a,b) => a.time - b.time)
-    this.currentTime = this.startTime + offset
     //let time = this.startTime + offset
     const ffTo = messages.findIndex(m=>m.time >= this.currentTime) - 1
-    if (ffTo > 0){  //  first forward to ffTo
-      const ffMsgs = messages.splice(0, ffTo)
-      player.fastForwardMessage(ffMsgs, this.currentTime)
+    if (ffTo > 0){  //  skip to ffTo
+      messages.splice(0, ffTo)
     }
-    const timeDiff = Date.now() - (this.startTime + offset)
+    const timeDiff = Date.now() - (this.currentTime)
     const step = () => {
       this.currentTime = Date.now() - timeDiff
       while (messages.length && messages[0].time < this.currentTime){
@@ -714,6 +724,9 @@ class Player{
         const media = medias.shift()!
         const from = this.currentTime - media.time
         player.playMedia(media, from)
+      }
+      if (this.currentTime > this.endTime){
+        player.state = 'pause'
       }
     }
     if (this.playInterval) window.clearInterval(this.playInterval)

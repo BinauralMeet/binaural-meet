@@ -12,10 +12,14 @@ interface MySliderProps{
 
 const MAX = 30
 const MySlider: React.FC<MySliderProps> = (props) => {
-  return <Grid container={true} spacing={2}><Slider value={props.value} min={0} max={MAX}
-  track={false} valueLabelDisplay="auto" aria-labelledby="continuous-slider" style={{width:200}}
-  onChange={(ev, val) => props.setValue(val as number)} valueLabelFormat={v => v === MAX ? '∞' : v.toString()}
-  /></Grid>
+  return <Grid container={true} spacing={2}>
+    <Slider value={props.value} min={0} max={MAX}
+      track={false} valueLabelDisplay="auto" aria-labelledby="continuous-slider"
+      style={{width:200}}
+      onChange={(ev, val) => props.setValue(val as number)}
+      valueLabelFormat={v => v === MAX ? '∞' : v.toString()}
+    />
+  </Grid>
 }
 
 export const RemoteTrackLimitControl: React.FC<Stores> = (props:Stores) => {

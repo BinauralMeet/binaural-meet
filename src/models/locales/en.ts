@@ -49,6 +49,9 @@ export const enTranslate = {
 
   ttCreateAndshare: '_Create and share',
   ttMicMute: '_Mic mute',
+  ttPlay: '再生 (_r)',
+  ttPause: '一時停止 (_r)',
+  ttStop: '停止 (_p)',
   ttPlayAndRec: '_Record and Playback',
   headphoneL1Chrome: 'Stereo headphone (Caution: no echo cancel)',
   headphoneL1: 'Stereo headphone',

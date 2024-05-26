@@ -144,7 +144,7 @@ export const Footer: React.FC<BMProps&{height?:number}> = (props) => {
             setShowFooter(true)
             setShowRecorder(true)
             if (recorder.recording) recorder.stop()
-            if (player.playing) player.stop()
+            if (player.state === 'play') player.stop()
             e.preventDefault()
             e.stopPropagation()
           }
