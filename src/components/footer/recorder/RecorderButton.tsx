@@ -2,7 +2,7 @@ import {BMProps} from '@components/utils'
 import {acceleratorText2El} from '@components/utils/formatter'
 import {makeStyles} from '@material-ui/styles'
 import {useTranslation} from '@models/locales'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {FabWithTooltip} from '@components/utils/FabEx'
 import {RecorderDialog} from './RecorderDialog'
 import PlayIcon from '@material-ui/icons/PlayArrow'
@@ -14,7 +14,6 @@ import { Observer } from 'mobx-react-lite'
 import { Button, Slider, TextField } from '@material-ui/core'
 import _, { isNumber } from 'lodash'
 import { autorun } from 'mobx'
-
 
 const useStyles = makeStyles({
   root: {
@@ -35,6 +34,7 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
   const [seekOffset, setSeekOffset] = useState(player.currentTime - player.startTime)
   const [seekOffsetText, setSeekOffsetText] = useState(offsetNumberToText(player.currentTime - player.startTime))
   const doSeek = _.throttle((offset)=>{player.seek(offset)}, 500)
+  const refPauseBySeek = useRef<boolean>(false)
 
   function offsetNumberToText(offset: number){
     const decimal = (offset % 1000).toString().padEnd(2, '0').slice(0, 2)
@@ -109,11 +109,18 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
                     if (isNumber(val)){
                       if (player.state === 'play'){
                         player.pause()
+                        refPauseBySeek.current = true
                       }
                       if (player.state === 'pause'){
                         setSeekOffsetAndText(val)
                         doSeek(val)
                       }
+                    }
+                  }}
+                  onChangeCommitted={()=>{
+                    if (refPauseBySeek.current){
+                      refPauseBySeek.current = false
+                      player.play()
                     }
                   }}
                 />
