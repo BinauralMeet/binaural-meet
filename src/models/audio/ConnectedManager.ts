@@ -1,4 +1,4 @@
-import { IPlaybackContent, ISharedContent } from '@models/ISharedContent'
+import { ISharedContent } from '@models/ISharedContent'
 import {PlaybackParticipant, RemoteParticipant} from '@models/Participant'
 import {urlParameters} from '@models/url'
 import {diffMap} from '@models/utils'
@@ -17,7 +17,7 @@ export class ConnectedManager {
   private remotesMemo = new Map<string, RemoteParticipant>()
   private playbacksMemo = new Map<string, PlaybackParticipant>()
   private contentsMemo = new Map<string, ISharedContent>()
-  private playbackContentsMemo = new Map<string, IPlaybackContent>()
+  private playbackContentsMemo = new Map<string, ISharedContent>()
 
   public setAudioOutput(deviceId: string) {
     this.manager.setAudioOutput(deviceId)
@@ -78,7 +78,7 @@ export class ConnectedManager {
     this.contentsMemo = newRemotes
   }
 
-  private removePlayback = (pp: PlaybackParticipant | IPlaybackContent) => {
+  private removePlayback = (pp: PlaybackParticipant | ISharedContent) => {
     const id = pp.id
     this.connectedGroups[id].dispose()
     delete this.connectedGroups[id]
@@ -90,7 +90,7 @@ export class ConnectedManager {
     const group = this.manager.addPlayback(id)
     this.connectedGroups[id] = new ConnectedGroupForPlayback(group, pp)
   }
-  private addPlaybackContent = (pc: IPlaybackContent) => {
+  private addPlaybackContent = (pc: ISharedContent) => {
     //  console.log(`addPlaybackContent: ${JSON.stringify(pc)}`)
     const id = pc.id
     const group = this.manager.addPlayback(id)

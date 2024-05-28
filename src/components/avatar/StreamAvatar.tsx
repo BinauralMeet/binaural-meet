@@ -1,5 +1,5 @@
 import {makeStyles} from '@material-ui/core/styles'
-import { MediaClip } from '@models/MapObject'
+import {MediaClip} from '@stores/MapObject'
 import React, {useEffect, useRef} from 'react'
 
 const CENTER = 0.5
@@ -38,8 +38,11 @@ function setStream(video: HTMLVideoElement, stream: MediaStream|undefined, clip:
   else if (clip && clip.videoBlob && clip.videoBlob.size){
     const url = URL.createObjectURL(clip.videoBlob)
     video.src = url
+    video.playbackRate = clip.rate
+    video.currentTime = (clip.timeFrom - clip.videoTime) / 1000.0
+    if (clip.pause) video.pause()
+    else video.play()
   }
-  video.autoplay = true
 
   video.onloadedmetadata = () => {
     const settings = {

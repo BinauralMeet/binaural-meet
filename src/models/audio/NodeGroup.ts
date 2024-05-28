@@ -1,5 +1,4 @@
 import {PARTICIPANT_SIZE} from '@models/Participant'
-import {MediaClip} from '@models/MapObject'
 import {Pose3DAudio} from '@models/utils'
 import {mulV3, normV} from '@models/utils/coordinates'
 import errorInfo from '@stores/ErrorInfo'
@@ -169,12 +168,10 @@ export class NodeGroup {
     this.updateVolume()
   }
   protected updateVolume() {
-    let volume = 0
-    if (this.playMode === 'Element') {
-      volume = Math.pow(Math.max(this.distance, this.pannerNode.refDistance) / this.pannerNode.refDistance,
-                        - this.pannerNode.rolloffFactor)
-    }
     if (this.audioElement) {
+      const volume = this.playMode === 'Element' ?
+        Math.pow(Math.max(this.distance, this.pannerNode.refDistance) / this.pannerNode.refDistance,
+                        - this.pannerNode.rolloffFactor) : 0
       this.audioElement.volume = volume
     }
   }
@@ -221,7 +218,7 @@ export class NodeGroup {
     this.audibility = audibility
   }
 
-  disconnect() {
+  dispose() {
     if (this.sourceNode) {
       this.sourceNode.disconnect()
     }
@@ -281,80 +278,5 @@ export class NodeGroup {
     setAudioOutputDevice(audio, this.audioDeviceId)
 
     return audio
-  }
-}
-
-
-export class NodeGroupForPlayback extends NodeGroup {
-  private audioElementForBlob?: HTMLAudioElement
-  private clipPlaying: MediaClip|undefined
-
-  playClip(clip: MediaClip | undefined){
-    this.playSourceClip(clip)
-    this.setPlayMode(this.playMode)
-    this.clipPlaying = clip
-  }
-  private playSourceClip(clip: MediaClip | undefined) {
-    if (clip?.audioBlob === undefined) {
-      if (this.sourceNode) { this.sourceNode.disconnect() }
-      this.sourceNode = undefined
-      return
-    }
-
-    if (clip.audioBlob !== this.clipPlaying?.audioBlob){
-      //  play a new audio blob
-      const url = URL.createObjectURL(clip.audioBlob)
-      console.log(`playSourceClip t:${clip.audioBlob.type} sz:${clip.audioBlob.size} f:${clip.from} r:${clip.rate}`)
-
-      //  For the context mode
-      if (this.audioElementForBlob){ this.audioElementForBlob.remove() }
-      this.audioElementForBlob = this.createAudioElement()
-      this.audioElementForBlob.src = url
-      this.sourceNode = this.context.createMediaElementSource(this.audioElementForBlob)
-      this.sourceNode.connect(this.pannerNode)
-      this.audioElementForBlob.currentTime = clip.from / 1000.0
-      this.audioElementForBlob.playbackRate = clip.rate
-      this.audioElementForBlob.muted = false
-      const playAgain = (group: NodeGroupForPlayback) => {
-        group.audioElementForBlob?.play().catch(()=>{
-          setTimeout(()=>playAgain(group), 500)
-        })
-      }
-      playAgain(this)
-
-      //  For the element mode
-      if (this.audioElement === undefined) {
-        this.audioElement = this.createAudioElement()
-        this.audioElement.muted = false
-      }
-      this.audioElement.src = URL.createObjectURL(clip.audioBlob)
-      this.audioElement.currentTime = clip.from / 1000.0
-      this.audioElement.playbackRate = clip.rate
-      const playAgain2 = (group: NodeGroupForPlayback) => {
-        group.audioElement?.play().catch(()=>{
-          setTimeout(()=>playAgain2(group), 500)
-        })
-      }
-      playAgain2(this)
-    }else if (this.clipPlaying.from !== clip.from){ //  update from
-      if (this.audioElementForBlob){
-        this.audioElementForBlob.currentTime = clip.from / 1000.0
-      }
-      if (this.audioElement){
-        this.audioElement.currentTime = clip.from/ 1000.0
-      }
-    }else{  //  update rate
-      if (this.audioElementForBlob){
-        this.audioElementForBlob.playbackRate = clip.rate
-      }
-      if (this.audioElement){
-        this.audioElement.playbackRate = clip.rate
-      }
-    }
-  }
-
-  setPlayMode(playMode: PlayMode|undefined) {
-    this.playMode = playMode
-    this.updateVolume()
   }
 }

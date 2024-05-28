@@ -25,3 +25,17 @@ export class MapObject implements Store<IMapObject> {
     store.pose = shallowObservable(_.cloneDeep(obj.pose))
   }
 }
+
+
+export class MediaClip{
+  @observable.ref videoBlob?: Blob
+  @observable.ref audioBlob?: Blob
+  @observable videoTime = 0
+  @observable audioTime = 0
+  @observable rate = 1
+  @observable timeFrom = 0
+  @observable pause = false
+  constructor(){
+    makeObservable(this)
+  }
+}

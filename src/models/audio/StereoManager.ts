@@ -2,7 +2,8 @@ import { conference } from '@models/conference'
 import {assert} from '@models/utils'
 import errorInfo from '@stores/ErrorInfo'
 import {autorun} from 'mobx'
-import {getAudioOutputDevice, NodeGroup, NodeGroupForPlayback, PlayMode, setAudioOutputDevice} from './NodeGroup'
+import {getAudioOutputDevice, NodeGroup, PlayMode, setAudioOutputDevice} from './NodeGroup'
+import { NodeGroupForPlayback } from './NodeGroupForPlayback'
 
 export class StereoManager {
   private readonly audioContext: AudioContext = new window.AudioContext()
@@ -88,7 +89,7 @@ export class StereoManager {
   }
   removeSpeaker(id: string) {
     //  console.log('remove speaker')
-    this.nodes[id].disconnect()
+    this.nodes[id].dispose()
     delete this.nodes[id]
   }
 

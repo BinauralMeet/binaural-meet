@@ -3,7 +3,7 @@ import {PlaybackParticipant as IPlaybackParticipant, RemoteInformation} from '@m
 import {action, makeObservable, observable} from 'mobx'
 import {Store} from '../utils'
 import {ParticipantBase, TrackStates} from './ParticipantBase'
-import {MediaClip} from '@models/MapObject'
+import {MediaClip} from '@stores/MapObject'
 
 export class PlaybackParticipant extends ParticipantBase implements Store<IPlaybackParticipant> {
   // init information
@@ -18,7 +18,7 @@ export class PlaybackParticipant extends ParticipantBase implements Store<IPlayb
   @observable called = false
   @observable inLocalsZone = false
   @observable.ref closedZone: ISharedContent | undefined = undefined
-  @observable.ref clip?: MediaClip
+  @observable.ref clip?:MediaClip
   lastDistance = 0
   constructor(id:string) {
     super()

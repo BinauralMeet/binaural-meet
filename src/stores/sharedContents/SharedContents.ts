@@ -1,5 +1,5 @@
 import {MessageType} from '@models/conference/DataMessageType'
-import {IPlaybackContent, isContentWallpaper, ISharedContent, SharedContentInfo} from '@models/ISharedContent'
+import {isContentWallpaper, ISharedContent, SharedContentInfo} from '@models/ISharedContent'
 import {PARTICIPANT_SIZE} from '@models/Participant'
 import {TrackRoles, TrackKind} from '@models/conference/RtcConnection'
 import {assert} from '@models/utils'
@@ -11,6 +11,7 @@ import {action, autorun, makeObservable, observable} from 'mobx'
 import {createContent, defaultContent, moveContentToTop} from './SharedContentCreator'
 import {conference} from '@models/conference'
 import _ from 'lodash'
+import { MediaClip } from '@stores/MapObject'
 
 export const TITLE_HEIGHT = 24
 
@@ -77,7 +78,7 @@ export class SharedContents extends EventEmitter {
   //  Info of the contents. All contents are listed.
   @observable.shallow roomContentsInfo = new Map<string, SharedContentInfo>()
   //  Contents for playback.
-  @observable.shallow playbackContents = new Map<string, IPlaybackContent>()
+  @observable.shallow playbackContents = new Map<string, ISharedContent>()
 
   //  Tracks
   @observable.ref mainScreenStream?: MediaStream
@@ -168,6 +169,9 @@ export class SharedContents extends EventEmitter {
       .filter(cid=>this.contentTracks.get(cid)!.peer !== conference.rtcTransports.peer)
   }
 
+  //  Playback Clips
+  @observable.deep playbackClips = new Map<string, MediaClip>()  //  cid -> clip
+
   //  pasted content
   @observable.ref pasted:ISharedContent = createContent()
   @action setPasted(c:ISharedContent) {
@@ -189,24 +193,33 @@ export class SharedContents extends EventEmitter {
     }
   }
 
-  @action updatePlayback(content: IPlaybackContent){
+  @action updatePlayback(content: ISharedContent){
     content.playback = true
     this.playbackContents.set(content.id, content)
     this.updateAll()
   }
   @action removePlayback(cid: string){
+    this.playbackClips.delete(cid)
     this.playbackContents.delete(cid)
     this.updateAll()
   }
   findPlayback(cid: string){
     return this.playbackContents.get(cid)
   }
-  getOrCreatePlayback(cid: string): IPlaybackContent{
+  getOrCreatePlayback(cid: string): ISharedContent{
     let rv = this.findPlayback(cid)
     if (!rv){
       rv = _.cloneDeep(defaultContent)
       rv.id = cid
       this.playbackContents.set(cid, rv)
+    }
+    return rv
+  }
+  getOrCreatePlaybackClip(cid: string): MediaClip{
+    let rv = this.playbackClips.get(cid)
+    if (!rv){
+      rv = new MediaClip()
+      this.playbackClips.set(cid, rv)
     }
     return rv
   }

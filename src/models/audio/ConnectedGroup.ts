@@ -8,7 +8,8 @@ import participants from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
 import _ from 'lodash'
 import {autorun, IReactionDisposer} from 'mobx'
-import {NodeGroup, NodeGroupForPlayback} from './NodeGroup'
+import {NodeGroup} from './NodeGroup'
+import { NodeGroupForPlayback } from './NodeGroupForPlayback'
 
 const audioLog = false ? console.log : ()=>{}
 
@@ -146,11 +147,11 @@ export class ConnectedGroupForPlayback {
     this.disposers.push(autorun(
       () => {
         //console.log(`playBlob(${play.audioBlob})`)
-        let content
+        let clip
         if (!participant && cid){
-          content = contents.findPlayback(cid)
+          clip = contents.playbackClips.get(cid)
         }
-        group.playClip(participant ? participant.clip : content?.clip)
+        group.playClip(participant ? participant.clip : clip)
         //if (content) console.log(`playBlob: ${JSON.stringify(content?.audioBlob)} c:${JSON.stringify(content)}`)
       },
     ))
