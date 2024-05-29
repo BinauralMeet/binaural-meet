@@ -11,11 +11,17 @@ import {getColorOfParticipant} from '@models/Participant'
 import {isDarkColor} from '@models/utils'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import {autorun} from 'mobx'
-import {useObserver} from 'mobx-react-lite'
-import React from 'react'
+import {Observer, useObserver} from 'mobx-react-lite'
+import React, { CSSProperties } from 'react'
 import {styleForList} from '../utils/styles'
 import {TextLineStyle} from './LeftBar'
 import {StatusDialog} from './StatusDialog'
+import RecordIcon from '@material-ui/icons/FiberManualRecord'
+import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
+import MicOffIcon from '@material-ui/icons/MicOff'
+import {Icon} from '@iconify/react'
+import megaphoneIcon from '@iconify/icons-mdi/megaphone'
+import {t} from '@models/locales'
 
 export const ParticipantLine: React.FC<TextLineStyle&BMProps&{participant: ParticipantBase}> = (props) => {
   const map = props.stores.map
@@ -27,6 +33,24 @@ export const ParticipantLine: React.FC<TextLineStyle&BMProps&{participant: Parti
   const [showForm, setShowForm] = React.useState(false)
   const ref = React.useRef<HTMLButtonElement>(null)
   const {lineHeight, ...propsForForm} = props
+
+  const iconL:CSSProperties = {
+    position: 'absolute',
+    width: 0.6 * lineHeight,
+    height: 0.6 * lineHeight,
+    left: -0.1 * lineHeight,
+    top: 0.5 * lineHeight,
+    pointerEvents: 'none',
+  }
+  const iconR:CSSProperties = {
+    position: 'absolute',
+    width: 0.6 * lineHeight,
+    height: 0.6 * lineHeight,
+    left: 0.5 * lineHeight,
+    top: 0.5 * lineHeight,
+    pointerEvents: 'none',
+  }
+
   //  console.log(`PColor pid:${props.participant.id} colors:${colors}`, props.participant)
   function onClick(){
     if (props.participant.physics.located){
@@ -59,11 +83,15 @@ export const ParticipantLine: React.FC<TextLineStyle&BMProps&{participant: Parti
     }
   }
 
-  return <>
+  return <Observer>{()=> <>
     <Tooltip title={`${props.participant.information.name} (${props.participant.id})`} placement="right">
       <div className={classes.outer} style={{margin:'1px 0 1px 0'}}>
         <IconButton style={{margin:0, padding:0}} onClick={onClick} onContextMenu={onContextMenu}>
           <ImageAvatar border={true} colors={colors} size={size} name={name} avatarSrc={avatarSrc} />
+          {props.participant.recording ? <RecordIcon style={iconL} htmlColor="#D00"/> : undefined }
+          {props.participant.muteSpeaker ? <SpeakerOffIcon style={iconR} color="secondary"/> :
+            props.participant.muteAudio ? <MicOffIcon style={iconR} color="secondary"/> : undefined }
+          {props.participant.physics.onStage ? <Icon style={iconR} icon={megaphoneIcon} color="gold" />: undefined}
         </IconButton>
         <Button variant="contained" className={classes.line} ref={ref}
           style={{backgroundColor:colors[0], color:colors[1], textTransform:'none', padding:0}}
@@ -83,7 +111,7 @@ export const ParticipantLine: React.FC<TextLineStyle&BMProps&{participant: Parti
       }} participant={props.stores.participants.remote.get(props.participant.id)}
         anchorEl={ref.current} anchorOrigin={{vertical:'top', horizontal:'right'}} />
     }
-  </>
+  </>}</Observer>
 }
 
 export const RawParticipantList: React.FC<BMProps&TextLineStyle&{localId: string, remoteIds: string[]}> = (props) => {
@@ -93,7 +121,6 @@ export const RawParticipantList: React.FC<BMProps&TextLineStyle&{localId: string
   const classes = styleForList({height: props.lineHeight, fontSize: props.fontSize})
   const {localId, remoteIds, lineHeight, fontSize, ...statusProps} = props
   const lineProps = {lineHeight, fontSize, ...statusProps}
-  const textColor = useObserver(() => isDarkColor(roomInfo.backgroundFill) ? 'white' : 'black')
 
   remoteIds.sort((a, b) => {
     const pa = participants.remote.get(a)
@@ -112,16 +139,35 @@ export const RawParticipantList: React.FC<BMProps&TextLineStyle&{localId: string
   const localElement = (<ParticipantLine key={localId} participant={participants.local} {...lineProps} />)
   const ref = React.useRef<HTMLDivElement>(null)
 
-  return (
-    <div className={classes.container} >
+  const icon:CSSProperties = {
+    //position: 'absolute',
+    width: lineHeight,
+    height: lineHeight,
+    lineHeight: 0.4*lineHeight,
+    margin:0,
+    verticalAlign:'bottom'
+  }
+
+
+  return <Observer>{()=> {
+    const textColor = isDarkColor(roomInfo.backgroundFill) ? 'white' : 'black'
+    let recording = participants.local.recording
+    participants.remote.forEach(p => {recording ||= p.recording})
+
+    return <div className={classes.container} >
       <div className={classes.title} style={{color:textColor}} ref={ref}
         onClick={()=>{setShowStat(true)}}
-      >{(participants.remote.size + 1).toString()} in {conference.room}</div>
+      >
+        {recording ?
+          <Tooltip title={t('ttBeingRecorded')}>
+            <RecordIcon htmlColor='#D00' style={icon}/>
+          </Tooltip> : undefined}
+        {(participants.remote.size + 1).toString()} in {conference.room}</div>
       <StatusDialog open={showStat}
         close={()=>{setShowStat(false)}} {...statusProps} anchorEl={ref.current}/>
       {localElement}{remoteElements}
     </div>
-  )
+  }}</Observer>
 }
 RawParticipantList.displayName = 'ParticipantList'
 

@@ -28,7 +28,7 @@ export const RecorderMenu: React.FC<RecorderMenuProps> = (props) => {
     if (recorder.recording){
       recorder.stop()
     }else{
-      recorder.start(props.stores)
+      recorder.start()
     }
   }
   function deleteRecord(id: number){
@@ -100,18 +100,16 @@ export const RecorderMenu: React.FC<RecorderMenuProps> = (props) => {
     return await dbRecords.where('title').notEqual('').toArray()
   }) as DBRecord[] | undefined
 
-  const isAdmin = props.stores.roomInfo.isAdmin
-
   return (
     <>
     <TextField label="Start time" type="text" style={{}}
       value={startTime} onChange={(ev)=>{ setStartTime(ev.currentTarget.value) }} />
     <List>
-      {isAdmin ? <DialogIconItem
+      <DialogIconItem
         key="record" text={t(recorder.recording ? 'recorderStop' : 'recorderStart')}
           icon={recorder.recording ? <StopIcon /> : <RecordIcon /> }
           onClick={startStopRecord}
-      />: undefined}
+      />
       {player.state==='play' ? undefined : <>
         <input type="file" accept="application/octet-stream" ref={fileToPlay} style={{display:'none'}}
           onChange={ (ev) => {

@@ -48,6 +48,7 @@ export const jaTranslate = {
   ttPause: '一時停止 (_r)',
   ttStop: '停止 (_p)',
   ttPlayAndRec: '録画と再生 (_r)',
+  ttBeingRecorded: '録音されています',
   stopMouse: 'マウスカーソルの共有停止 (_m)',
   frameRateSetting: 'フレームレート',
   fps: 'fps',

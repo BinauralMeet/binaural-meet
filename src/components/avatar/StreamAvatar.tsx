@@ -34,8 +34,10 @@ export interface StreamAvatarProps {
 
 function setStream(video: HTMLVideoElement, stream: MediaStream|undefined, clip: MediaClip|undefined,
   videoLargerWidthClass: string, videoLargerHeightClass: string){
-  if (stream) {video.srcObject = stream}
-  else if (clip && clip.videoBlob && clip.videoBlob.size){
+  if (stream) {
+    video.srcObject = stream
+    video.play()
+  } else if (clip && clip.videoBlob && clip.videoBlob.size){
     const url = URL.createObjectURL(clip.videoBlob)
     video.src = url
     video.playbackRate = clip.rate
