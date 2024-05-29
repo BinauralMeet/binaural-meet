@@ -7,6 +7,7 @@ import {makeStyles} from '@material-ui/core/styles'
 import HeadsetIcon from '@material-ui/icons/HeadsetMic'
 import MicOffIcon from '@material-ui/icons/MicOff'
 import PlayArrowIcon from '@material-ui/icons/PlayArrow'
+import RecordIcon from '@material-ui/icons/FiberManualRecord'
 import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
 import {addV2, mulV2, normV, rotateVector2DByDegree, subV2} from '@models/utils'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
@@ -62,6 +63,14 @@ const useStyles = makeStyles({
     top: props.size * 0.6,
     pointerEvents: 'none',
   }),
+  iconLeft: (props: StyleProps) => ({
+    position: 'absolute',
+    width: props.size * 0.4 ,
+    height: props.size * 0.4,
+    left: 0,
+    top: props.size * 0.6,
+    pointerEvents: 'none',
+  }),
   signalIcon: (props: StyleProps) => ({
     position: 'absolute',
     width: props.size * 0.25 ,
@@ -97,6 +106,7 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
     orientation: participant.pose.orientation,
     mousePosition: participant.mouse.position,
     awayFromKeyboard: participant.physics.awayFromKeyboard,
+    recording: participant.recording
   }))
   const name = useObserver(() => participant!.information.name)
   const audioLevel = useObserver(() =>
@@ -255,7 +265,8 @@ const RawParticipant: React.ForwardRefRenderFunction<HTMLDivElement , RawPartici
               {speakerMuted ? <SpeakerOffIcon className={classes.icon} color="secondary" /> :
                 (micMuted ? <MicOffIcon className={classes.icon} color="secondary" /> : undefined)}
               {!micMuted && onStage ? <Icon className={classes.icon} icon={megaphoneIcon} color="gold" /> : undefined }
-              {props.isPlayback ? <PlayArrowIcon className={classes.icon} htmlColor="#0C0" /> : undefined}
+              {props.isPlayback ? <PlayArrowIcon className={classes.iconLeft} htmlColor="#0C0" /> : undefined}
+              {participantProps.recording ? <RecordIcon className={classes.iconLeft} htmlColor="#D00" /> : undefined}
             </div>
           </Tooltip>
         </div>

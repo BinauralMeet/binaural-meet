@@ -40,6 +40,7 @@ export class DataSync{
     this.sendTrackStates()
     this.sendViewpointNow()
     this.sendAfkChanged()
+    this.sendRecordingChanged()
   }
   //
   sendPoseMessage(bSendRandP: boolean){
@@ -73,6 +74,9 @@ export class DataSync{
   }
   sendAfkChanged(){
     this.connection.sendMessage(MessageType.PARTICIPANT_AFK, participants.local.physics.awayFromKeyboard)
+  }
+  sendRecordingChanged(){
+    this.connection.sendMessage(MessageType.PARTICIPANT_RECORDING, participants.local.recording)
   }
 
   //  Only for test (admin config dialog).
@@ -141,6 +145,11 @@ export class DataSync{
     assert(from)
     const remote = participants.find(from)
     if (remote){ remote.physics.awayFromKeyboard = afk }
+  }
+  private onRecordingChanged(from:string|undefined, rec: boolean){
+    assert(from)
+    const remote = participants.find(from)
+    if (remote){ remote.recording = rec }
   }
   public onKicked(pid:string|undefined, reason:string){
     assert(pid)
@@ -332,6 +341,7 @@ export class DataSync{
       })
     }))
     this.disposers.push(autorun(this.sendAfkChanged.bind(this)))
+    this.disposers.push(autorun(this.sendRecordingChanged.bind(this)))
     this.disposers.push(autorun(this.sendParticipantInfo.bind(this)))
     this.disposers.push(autorun(this.sendAudioLevel.bind(this)))
     this.disposers.push(autorun(this.sendTrackStates.bind(this)))
@@ -370,6 +380,7 @@ export class DataSync{
       case MessageType.REQUEST_ALL: this.sendAllAboutMe(false); break
       case MessageType.REQUEST_TO: this.sendAllAboutMe(false); break
       case MessageType.PARTICIPANT_AFK: this.onAfkChanged(msg.p, JSON.parse(msg.v)); break
+      case MessageType.PARTICIPANT_RECORDING: this.onRecordingChanged(msg.p, JSON.parse(msg.v)); break
       case MessageType.PARTICIPANT_LEFT: this.onParticipantLeft(JSON.parse(msg.v)); break
       case MessageType.CALL_REMOTE: this.onCallRemote(msg.p); break
       case MessageType.CHAT_MESSAGE: this.onChatMessage(msg.p, JSON.parse(msg.v)); break

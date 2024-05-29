@@ -3,6 +3,7 @@ export const ParticipantMessageType = {
   PARTICIPANT_AFK: 'p_afk',                     //  boolean
   PARTICIPANT_TRACKSTATES: 'p_trackSt',         //  TrackStates
   PARTICIPANT_VIEWPOINT: 'p_viewpoint',         //  Viewpoint
+  PARTICIPANT_RECORDING: 'p_rec',               //  recording
 }
 export type ParticipantMessageKeys = keyof typeof ParticipantMessageType
 

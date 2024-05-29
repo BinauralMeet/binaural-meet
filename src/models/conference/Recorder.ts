@@ -3,10 +3,8 @@ import {contentsToSend, ISharedContent, ISharedContentToSend} from '@models/ISha
 import {ParticipantBase, RemoteInformation, Viewpoint, VRMRigs} from '@models/Participant'
 import {mouse2Str, pose2Str, str2Mouse, str2Pose} from '@models/utils'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
-import { TrackStates } from '@stores/participants/ParticipantBase'
-import participants from '@stores/participants/Participants'
+import {TrackStates} from '@stores/participants/ParticipantBase'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
-import contents from '@stores/sharedContents/SharedContents'
 import {autorun, IReactionDisposer, makeObservable, observable} from 'mobx'
 import {BMMessage} from './DataMessage'
 import {MessageType} from './DataMessageType'
@@ -14,6 +12,8 @@ import {Dexie, IndexableType, Table} from 'dexie'
 import { conference } from './Conference'
 import { dateTimeString } from '@models/utils/date'
 import { MediaClip } from '@stores/MapObject'
+import participants from '@stores/participants/Participants'
+import contents from '@stores/sharedContents/SharedContents'
 declare const d:any                  //  from index.html
 
 const recorderDb = new Dexie('recorderDb');
@@ -172,10 +172,13 @@ export class Recorder{
     this.lastMessageValues.clear()
   }
   ///  Start to record
-  public start(stores: Stores){
+  public start(){
     this.clear()
     //  start recording
     this.recording = true
+    participants.local.recording = true
+
+
     this.startTime = Date.now()
     const dbRec: DBRecord = {
       room: conference.room,
@@ -191,12 +194,12 @@ export class Recorder{
     }))
 
     //  Record all contents
-    const cs = contentsToSend(stores.contents.all)
+    const cs = contentsToSend(contents.all)
     this.messages.push({msg:{t:MessageType.CONTENT_UPDATE_REQUEST, v:JSON.stringify(cs)}, time: Date.now()})
     //  Record all participants
-    const participants:ParticipantBase[] = Array.from(stores.participants.remote.values())
-    participants.unshift(stores.participants.local)
-    for(const p of participants){
+    const allParticipants:ParticipantBase[] = Array.from(participants.remote.values())
+    allParticipants.unshift(participants.local)
+    for(const p of allParticipants){
       this.messages.push(
         {msg:{t:MessageType.PARTICIPANT_INFO, p:p.id, v:JSON.stringify(p.information)}, time: Date.now()})
       this.messages.push(
@@ -385,6 +388,7 @@ export class Recorder{
 
   private stopMediaRecordings(){
     this.recording = false
+    participants.local.recording = false
     let count = 0
     const promise = new Promise<MediaRec[]>((resolve, reject)=>{
       const resolveAll = ()=>{

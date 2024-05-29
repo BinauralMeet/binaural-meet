@@ -1,8 +1,9 @@
 import {ISharedContent} from '@models/ISharedContent'
-import {MapObject, MediaClip} from './MapObject'
+import {MapObject} from './MapObject'
 import {findReverseColorRGB, findTextColorRGB, getRandomColorRGB, rgb2Color} from './utils/color'
 import {Mouse} from './utils/coordinates'
 import * as Kalidokit from 'kalidokit'
+import { MediaClip } from '@stores/MapObject'
 
 export const PARTICIPANT_SIZE = 60
 

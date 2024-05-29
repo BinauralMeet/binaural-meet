@@ -138,11 +138,12 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
               : <PlayIcon style={{width:iconSize, height:iconSize}} />
             }
           </FabWithTooltip> : undefined}
-        {!recorder.recording && (player.state === 'play' || player.state === 'pause') ?
+        {player.state === 'play' || player.state === 'pause' || recorder.recording ?
           <FabWithTooltip size={props.size}
             title = {acceleratorText2El(t('ttStop'))}
             aria-label="share" onClick={() => {
-              player.stop()
+              if (recorder.recording) recorder.stop()
+              if (player.state !== 'stop') player.stop()
             }}>
             <StopIcon color='primary' style={{width:iconSize, height:iconSize}} />
           </FabWithTooltip> : undefined}
