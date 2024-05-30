@@ -1,7 +1,7 @@
-import {BMProps} from '@components/utils'
 import {makeStyles} from '@material-ui/core'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef, useState} from 'react'
+import {contents} from '@stores/'
 
 const useStyles = makeStyles({
   videoContainer: {
@@ -25,13 +25,13 @@ const setStream = (
   video.srcObject = stream
   video.autoplay = true
 }
-export interface MainScreenProps extends BMProps{
+export interface MainScreenProps{
   showAllTracks?:boolean
 }
 
 export const MainScreen: React.FC<MainScreenProps> = (props) => {
   const classes = useStyles()
-  const stream = useObserver(() => (props.stores.contents.mainScreenStream))
+  const stream = useObserver(() => (contents.mainScreenStream))
   const videoRef = useRef<HTMLVideoElement>(null)
   useEffect(
     () => {

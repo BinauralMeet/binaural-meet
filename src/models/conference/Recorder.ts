@@ -1,4 +1,3 @@
-import {Stores} from '@components/utils'
 import {contentsToSend, ISharedContent, ISharedContentToSend} from '@models/ISharedContent'
 import {ParticipantBase, RemoteInformation, Viewpoint, VRMRigs} from '@models/Participant'
 import {mouse2Str, pose2Str, str2Mouse, str2Pose} from '@models/utils'

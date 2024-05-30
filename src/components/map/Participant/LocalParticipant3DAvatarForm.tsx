@@ -1,4 +1,4 @@
-import { BMProps, dialogStyle, titleStyle } from '@components/utils'
+import {dialogStyle, titleStyle } from '@components/utils'
 import Button from '@material-ui/core/Button'
 import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
@@ -12,7 +12,7 @@ import {IReactionDisposer, autorun, makeObservable, observable} from 'mobx'
 import { participants } from '@stores/index'
 import {formLog} from '@models/utils'
 
-export interface LocalParticipantFormProps extends BMProps{
+export interface LocalParticipantFormProps{
   open: boolean
   anchorEl: HTMLElement | null
   anchorOrigin: PopoverOrigin

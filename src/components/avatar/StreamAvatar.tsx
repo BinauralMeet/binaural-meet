@@ -1,10 +1,11 @@
+import {AvatarProps} from './ComposedAvatar'
 import {makeStyles} from '@material-ui/core/styles'
-import {MediaClip} from '@stores/MapObject'
+import { autorun } from 'mobx'
 import React, {useEffect, useRef} from 'react'
 
 const CENTER = 0.5
 const useStyles = makeStyles({
-  root: (props: StreamAvatarProps) => ({
+  root: (props: AvatarProps) => ({
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
@@ -14,38 +15,22 @@ const useStyles = makeStyles({
     clipPath: `circle(${(props.size || 0) * CENTER}px  at center)`,
     overflow: 'hidden',
   }),
-  videoLargerWidth: (props: StreamAvatarProps) => ({
+  videoLargerWidth: (props: AvatarProps) => ({
     height: '100%',
     transform: `scale(${props.mirror ? -1 : 1}, 1)`,
   }),
-  videoLargerHeight: (props: StreamAvatarProps) => ({
+  videoLargerHeight: (props: AvatarProps) => ({
     width: '100%',
     transform: `scale(${props.mirror ? -1 : 1}, 1)`,
   }),
 })
 
-export interface StreamAvatarProps {
-  stream?: MediaStream
-  clip?: MediaClip
-  size?: number
-  style?: any
-  mirror?: boolean
-}
-
-function setStream(video: HTMLVideoElement, stream: MediaStream|undefined, clip: MediaClip|undefined,
+function setStream(video: HTMLVideoElement, stream: MediaStream|undefined,
   videoLargerWidthClass: string, videoLargerHeightClass: string){
   if (stream) {
     video.srcObject = stream
     video.play()
-  } else if (clip && clip.videoBlob && clip.videoBlob.size){
-    const url = URL.createObjectURL(clip.videoBlob)
-    video.src = url
-    video.playbackRate = clip.rate
-    video.currentTime = (clip.timeFrom - clip.videoTime) / 1000.0
-    if (clip.pause) video.pause()
-    else video.play()
   }
-
   video.onloadedmetadata = () => {
     const settings = {
       width: video.width,
@@ -59,28 +44,66 @@ function setStream(video: HTMLVideoElement, stream: MediaStream|undefined, clip:
       video.className = videoLargerWidthClass
     }
   }
-
-  video.onended = (ev) => {
-    delete clip?.videoBlob
-  }
 }
 
-export const StreamAvatar: React.FC<StreamAvatarProps> = (props: StreamAvatarProps) => {
+export const StreamAvatar: React.FC<AvatarProps> = (props: AvatarProps) => {
   const classes = useStyles(props)
   const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(
     () => {
-      if (videoRef?.current !== null) {
-        setStream(videoRef.current, props.stream, props.clip,
+      const video = videoRef?.current
+      const tracks = props.participant.tracks
+      if (video && tracks?.avatarStream) {
+        setStream(videoRef.current, tracks.avatarStream,
                   classes.videoLargerWidth, classes.videoLargerHeight)
+        video.srcObject = tracks.avatarStream
+        video.play()
+        video.onloadedmetadata = () => {
+          const settings = {
+            width: video.width,
+            height: video.height,
+          }
+
+          if (settings.width !== undefined && settings.height !== undefined) {
+            video.className = settings.width >= settings.height ?
+              classes.videoLargerWidth : classes.videoLargerHeight
+          } else {
+            console.error('video stream width || height is undefined')
+            video.className = classes.videoLargerWidth
+          }
+        }
       }
     },
-    [videoRef, classes.videoLargerWidth, classes.videoLargerHeight, props.stream, props.clip?.videoBlob],
+    [videoRef, classes.videoLargerWidth, classes.videoLargerHeight, props.participant.tracks?.avatarStream],
+  )
+  useEffect(
+    () => {
+      const video = videoRef?.current
+      if (video && props.participant.clip) {
+        console.log(`autorun clip for StreamAvatar`)
+        const clip = props.participant.clip
+        const dispo = autorun(()=>{
+          if (clip && clip.videoBlob && clip.videoBlob.size){
+            const url = URL.createObjectURL(clip.videoBlob)
+            video.src = url
+            video.playbackRate = clip.rate
+            video.currentTime = (clip.timeFrom - clip.videoTime) / 1000.0
+            if (clip.pause) video.pause()
+            else video.play()
+          }
+          video.onended = (ev) => {
+            if (clip.videoBlob) delete clip.videoBlob
+          }
+        })
+        return ()=>{dispo()}
+      }
+    },
+    [videoRef?.current],
   )
 
-  return <div className={classes.root} style={props.style}>
-    <video ref={videoRef} style={props.style} />
+  return <div className={classes.root}>
+    <video ref={videoRef} />
   </div>
 }
 

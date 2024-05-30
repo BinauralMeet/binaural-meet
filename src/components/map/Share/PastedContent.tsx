@@ -1,4 +1,3 @@
-import {BMProps} from '@components/utils'
 import {ISharedContent, TIME_RESOLUTION_IN_MS} from '@models/ISharedContent'
 import {createContent, createContentsFromDataTransfer} from '@stores/sharedContents/SharedContentCreator'
 import {default as sharedContents} from '@stores/sharedContents/SharedContents'
@@ -6,10 +5,10 @@ import _ from 'lodash'
 import {useObserver} from 'mobx-react-lite'
 import React, {useEffect} from 'react'
 import {MouseOrTouch, RndContent} from './RndContent'
+import {map} from '@stores/'
 
 
-export const PastedContent: React.FC<BMProps> = (props:BMProps) => {
-  const map = props.stores.map
+export const PastedContent: React.FC = () => {
   //  Pasted handler. It prevents paste to dialog.
   function onPaste(evt: ClipboardEvent) {
     //  console.log(`onPaste called enabled:${sharedContents.pasteEnabled}`)
@@ -86,7 +85,7 @@ export const PastedContent: React.FC<BMProps> = (props:BMProps) => {
   //  console.log('Pasted contents rendered.')
 
   return (
-    <RndContent {...props} hideAll={pastedContent.type === ''} content={pastedContent}
+    <RndContent hideAll={pastedContent.type === ''} content={pastedContent}
       onShare = {(evt: MouseOrTouch) => { onShare() }}
       onClose = {(evt: MouseOrTouch) => {
         sharedContents.setPasted(createContent())

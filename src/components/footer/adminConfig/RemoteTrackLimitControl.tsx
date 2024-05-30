@@ -1,10 +1,10 @@
-import {Stores} from '@components/utils'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
 import Grid from '@material-ui/core/Grid'
 import Slider from '@material-ui/core/Slider'
 import {t} from '@models/locales'
 import React from 'react'
 import { useObserver } from 'mobx-react-lite'
+import {participants} from '@stores/'
 
 interface MySliderProps{
   value:number, setValue(v:number):void
@@ -22,8 +22,8 @@ const MySlider: React.FC<MySliderProps> = (props) => {
   </Grid>
 }
 
-export const RemoteTrackLimitControl: React.FC<Stores> = (props:Stores) => {
-  const local = props.participants.local
+export const RemoteTrackLimitControl: React.FC = () => {
+  const local = participants.local
   const videoLimit = useObserver(() => local.remoteVideoLimit)
   const audioLimit = useObserver(() => local.remoteAudioLimit)
   const videoSlider = <MySlider value={videoLimit >= 0 ? videoLimit : MAX}

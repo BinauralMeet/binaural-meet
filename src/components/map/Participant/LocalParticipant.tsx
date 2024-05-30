@@ -8,7 +8,8 @@ import {DragHandler, DragState} from '../../utils/DragHandler'
 import {KeyHandlerPlain} from '../../utils/KeyHandler'
 import {LocalParticipantForm} from './LocalParticipantForm'
 import {Participant, ParticipantProps} from './Participant'
-import { PARTICIPANT_SIZE } from '@models/Participant'
+import {PARTICIPANT_SIZE} from '@models/Participant'
+import {map, participants} from '@stores/'
 
 const AVATAR_SPEED_LIMIT = 50
 const MAP_SPEED_LIMIT = 600
@@ -40,8 +41,6 @@ interface LocalParticipantMember extends MoreButtonMember{
   scrollAgain: boolean
 }
 const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
-  const map = props.stores.map
-  const participants = props.stores.participants
   const participant = participants.local
   assert(props.participant.id === participant.id)
   const member = useRef<LocalParticipantMember>({} as LocalParticipantMember).current
@@ -270,7 +269,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
     <MoreButton show={showMore} className={classes.more} htmlColor={color} {...moreControl}
       buttonRef = {ref}
       onClickMore = {openConfig} />
-    <LocalParticipantForm stores={props.stores} open={showConfig} close={onClose}
+    <LocalParticipantForm open={showConfig} close={onClose}
       anchorEl={ref.current} anchorOrigin={{vertical:'top', horizontal:'left'}}
       anchorReference = "anchorEl"
     />

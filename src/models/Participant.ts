@@ -22,17 +22,19 @@ export interface ParticipantBase extends MapObject{
   information: RemoteInformation|LocalInformation
   zIndex: number
   vrmRigs?: VRMRigs
-}
-
-export interface PlaybackParticipant extends ParticipantBase {
+  getColor: ()=>string[]
+  tracks?: Tracks
   clip?: MediaClip
 }
 
+export interface PlaybackParticipant extends ParticipantBase {
+}
+
 export interface RemoteParticipant extends ParticipantBase {
-  tracks: Tracks
   informationReceived: boolean
   closedZone?: ISharedContent
   inLocalsZone: boolean
+  tracks: Tracks
 }
 
 export interface LocalParticipant extends ParticipantBase {
@@ -41,7 +43,7 @@ export interface LocalParticipant extends ParticipantBase {
   zone?: ISharedContent
   tracks: Tracks
 }
-export type Participant = LocalParticipant | RemoteParticipant
+export type Participant = LocalParticipant | RemoteParticipant | PlaybackParticipant
 
 export type AvatarType = 'frog' | 'arrow' | 'circle' | ''
 

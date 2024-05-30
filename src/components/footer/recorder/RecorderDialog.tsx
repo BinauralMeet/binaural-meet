@@ -1,4 +1,4 @@
-import {acceleratorText2El, BMProps, dialogStyle, titleStyle} from '@components/utils'
+import {acceleratorText2El, dialogStyle, titleStyle} from '@components/utils'
 import Dialog from '@material-ui/core/Dialog'
 import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
@@ -7,15 +7,15 @@ import sharedContents from '@stores/sharedContents/SharedContents'
 import React, {useState} from 'react'
 import {RecorderMenu} from './RecorderMenu'
 import {Step} from './Step'
+import {map} from '@stores/'
 
-interface RecorderDialogProps extends BMProps{
+interface RecorderDialogProps {
   open: boolean
   onClose: () => void
 }
 
 export const RecorderDialog: React.FC<RecorderDialogProps> = (props:RecorderDialogProps) => {
   const {open, onClose} = props
-  const {map} = props.stores
   const [step, rawSetStep] = useState<Step>('menu')
 
   const setStep = (step: Step) => {

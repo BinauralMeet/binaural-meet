@@ -1,9 +1,12 @@
 import {MAP_SIZE} from '@components/Constants'
-import {MapProps} from '@components/utils'
 import {makeStyles} from '@material-ui/core/styles'
 import {rgb2Color} from '@models/utils'
 import {Observer, useObserver} from 'mobx-react-lite'
 import React from 'react'
+import { MapProps } from '../map'
+import {roomInfo} from '@stores/'
+
+
 const HALF = 0.5
 
 const useStyles = makeStyles({
@@ -53,7 +56,6 @@ interface BackgroundStyleProps extends MapProps{
 }
 
 export const Background: React.FC<MapProps> = (props) => {
-  const roomInfo = props.stores.roomInfo
   const styleProps = {
     color: [0,0,0],
     fill: [0,0,0],

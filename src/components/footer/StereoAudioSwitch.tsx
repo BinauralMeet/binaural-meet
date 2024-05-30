@@ -1,4 +1,3 @@
-import {BMProps} from '@components/utils'
 import Container from '@material-ui/core/Container'
 import Grid from '@material-ui/core/Grid'
 import Popover from '@material-ui/core/Popover'
@@ -7,11 +6,12 @@ import HeadsetIcon from '@material-ui/icons/HeadsetMic'
 import SpeakerIcon from '@material-ui/icons/Speaker'
 import {useTranslation} from '@models/locales'
 import {isChromium} from '@models/utils'
-import participants from '@stores/participants/Participants'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {FabWithTooltip} from '@components/utils/FabEx'
 import Button from '@material-ui/core/Button'
+import {participants} from '@stores/'
+
 
 export const SoundLocalizationSetting: React.FC<{}> = () => {
   const soundLocalizationBase = useObserver(() => participants.local.soundLocalizationBase)
@@ -33,8 +33,7 @@ export const SoundLocalizationSetting: React.FC<{}> = () => {
 SoundLocalizationSetting.displayName = 'SoundLocalizationSetting'
 
 
-export const StereoAudioSwitch: React.FC<BMProps&{size?: number, iconSize:number}> = (props) => {
-  const participants = props.stores.participants
+export const StereoAudioSwitch: React.FC<{size?: number, iconSize:number}> = (props) => {
   const stereo = useObserver(() => participants.local.useStereoAudio)
   const [anchor, setAnchor] = React.useState<Element|null>(null)
   const [showStereoBase, setShowSteraoBase] = React.useState(false)

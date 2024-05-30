@@ -1,1 +1,1 @@
-export {default as participantsStore} from './Participants'
+export {default as participants} from './Participants'

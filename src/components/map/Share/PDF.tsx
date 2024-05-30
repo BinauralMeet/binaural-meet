@@ -8,6 +8,7 @@ import React, {useEffect, useRef} from 'react'
 import {ContentProps} from './Content'
 import { pointerStoppers } from '@components/utils'
 import { PageControl } from './PageControl'
+import {contents} from '@stores/'
 
 ////GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.7.570/es5/build/pdf.worker.js'
 GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.7.570/build/pdf.worker.js'
@@ -62,7 +63,7 @@ class Member{
   //  Set or update props to this.
   updateProps(propsIn: ContentProps){
     this.props = propsIn
-    const editing = this.props.stores.contents.editing === this.props.content.id
+    const editing = contents.editing === this.props.content.id
     const url = new URL(this.props.content.url)
     this.mainUrl = url.hash ? url.href.substring(0, url.href.length - url.hash.length) : url.href
     let pageNum = 1
@@ -223,7 +224,7 @@ export const PDF: React.FC<ContentProps> = (props:ContentProps) => {
   const refCanvas = useRef<HTMLCanvasElement>(null)
   const refTextDiv = useRef<HTMLDivElement>(null)
   const refAnnotationDiv = useRef<HTMLDivElement>(null)
-  const editing = props.stores.contents.editing === props.content.id
+  const editing = contents.editing === props.content.id
 
   useEffect(()=>{
     member.canvas = refCanvas.current
@@ -235,11 +236,11 @@ export const PDF: React.FC<ContentProps> = (props:ContentProps) => {
 
   return <div style={{overflow: 'hidden', pointerEvents: 'auto', userSelect: editing? 'text':'none'}}
     onDoubleClick = {(ev) => {
-      const editing = props.stores.contents.editing === props.content.id
+      const editing = contents.editing === props.content.id
       if (!editing) {
         ev.stopPropagation()
         ev.preventDefault()
-        props.stores.contents.setEditing(props.content.id)
+        contents.setEditing(props.content.id)
       } }
     } >
     <canvas style={{ width:`${CANVAS_SCALE*100}%`, height:`${CANVAS_SCALE*100}%`,

@@ -11,6 +11,7 @@ import RadioGroup from "@material-ui/core/RadioGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import FormControl from "@material-ui/core/FormControl";
 import FormLabel from "@material-ui/core/FormLabel";
+import {map} from '@stores/'
 
 
 interface ImageInputProps extends DialogPageProps{
@@ -53,8 +54,6 @@ export const ImageInput: React.FC<ImageInputProps> = (props) => {
   }, [uploadType]);
 
 
-  const map = props.stores.map
-
   return (
     <>
       <Box mt={0}>
@@ -81,7 +80,6 @@ export const ImageInput: React.FC<ImageInputProps> = (props) => {
       </Box>
 
       <Input
-        stores={props.stores}
         setStep={setStep}
         onFinishInput={(files) => {
           // TODO modify store

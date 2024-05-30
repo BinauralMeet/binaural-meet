@@ -1,4 +1,3 @@
-import {BMProps} from '@components/utils'
 import List from '@material-ui/core/List'
 import {useTranslation} from '@models/locales'
 import React, {useEffect} from 'react'
@@ -13,13 +12,13 @@ import DownloadIcon from '@material-ui/icons/GetApp'
 import {useLiveQuery} from 'dexie-react-hooks'
 import { Divider, IconButton, TextField } from '@material-ui/core'
 import { Observer } from 'mobx-react-lite'
+import {map} from '@stores/'
 
-interface RecorderMenuProps extends DialogPageProps, BMProps {
+interface RecorderMenuProps extends DialogPageProps {
 }
 
 export const RecorderMenu: React.FC<RecorderMenuProps> = (props) => {
   const {t} = useTranslation()
-  const {map} = props.stores
   const fileToPlay = React.useRef<HTMLInputElement>(null)
   const [startTime, setStartTime] = React.useState('0')
 

@@ -1,4 +1,4 @@
-import {BMProps, dialogStyle, titleStyle} from '@components/utils'
+import {dialogStyle, titleStyle} from '@components/utils'
 import {TextField} from '@material-ui/core'
 import Box from '@material-ui/core/Box'
 import Button from '@material-ui/core/Button'
@@ -14,14 +14,14 @@ import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import contents from '@stores/sharedContents/SharedContents'
 import React from 'react'
 import {SignalQualityButton} from './SignalQuality'
+import {map, roomInfo} from '@stores/'
 
-export interface RemoteParticipantFormProps extends PopoverProps, BMProps{
+export interface RemoteParticipantFormProps extends PopoverProps{
   close: () => void,
   participant?: RemoteParticipant
 }
 
 export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (props: RemoteParticipantFormProps) => {
-  const roomInfo = props.stores.roomInfo
   const [kick, setKick] = React.useState<string>('')
   const [clear, setClear] = React.useState<string>('')
   function onKeyDownKick(ev:React.KeyboardEvent){
@@ -98,7 +98,7 @@ export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (prop
       <Button variant="contained" style={{textTransform:'none'}}
       onClick={()=>{
         if (!props.participant) { return }
-        props.stores.map.focusOn(props.participant)
+        map.focusOn(props.participant)
       }}>{t('ctFocus')}</Button>
       </Box>
       { roomInfo.isAdmin && <>

@@ -1,24 +1,24 @@
 import React from 'react'
-import {ImageAvatar, ImageAvatarProps} from './ImageAvatar'
-import {StreamAvatar, StreamAvatarProps} from './StreamAvatar'
+import {ConnectedImageAvatar} from './ImageAvatar'
+import {StreamAvatar} from './StreamAvatar'
+import { Participant } from '@models/Participant'
+import { Observer } from 'mobx-react-lite'
+import { PlaybackParticipant } from '@stores/participants/PlaybackParticipant'
+import { LocalParticipant } from '@stores/participants/LocalParticipant'
+import { RemoteParticipant } from '@stores/participants/RemoteParticipant'
 
-type ComposedAvatarProps = ImageAvatarProps & Partial<StreamAvatarProps>
+export interface AvatarProps{
+  participant: Participant
+  size: number
+  mirror?: boolean
+}
 
-export const ComposedAvatar: React.FC<ComposedAvatarProps> = (props: ComposedAvatarProps) => {
-  const {
-    name,
-    avatarSrc,
-    colors,
-    stream,
-    clip,
-    ...remainProps
-  } = props
+export const ComposedAvatar: React.FC<AvatarProps> = (props: AvatarProps) => {
+  return <Observer>{()=>{
+    const hasVideo = (props.participant as LocalParticipant | RemoteParticipant).tracks?.avatarStream
+      || (props.participant as unknown as PlaybackParticipant).clip?.videoBlob
 
-  if (!stream && !clip?.videoBlob) {
-    return <ImageAvatar name={name} colors={colors}
-    avatarSrc={avatarSrc} {...remainProps} />
-  }
-
-  return <StreamAvatar stream={stream} clip={clip} {...remainProps} />
+    return hasVideo ? <StreamAvatar {...props} /> : <ConnectedImageAvatar {...props} />
+  }}</Observer>
 }
 ComposedAvatar.displayName = 'ComposedAvatar'

@@ -18,7 +18,7 @@ export class PlaybackParticipant extends ParticipantBase implements Store<IPlayb
   @observable called = false
   @observable inLocalsZone = false
   @observable.ref closedZone: ISharedContent | undefined = undefined
-  @observable.ref clip?:MediaClip
+  @observable clip?:MediaClip
   lastDistance = 0
   constructor(id:string) {
     super()

@@ -7,6 +7,7 @@ import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import YouTubePlayer from 'yt-player'
 import {ContentProps} from './Content'
+import {contents, participants} from '@stores/'
 
 const PLAYTIME_TOLERANCE = 0.1
 const CHECK_INTERVAL = 333
@@ -220,9 +221,8 @@ function updateVolume(distance:number, member: YTMember){
   }
 }
 function checkPositionsForVolume(member:YTMember){
-  if (!member.props.stores.participants) { return }
   updateUIVolume(member)
-  const relPos = subV2(member.props.content.pose.position, member.props.stores.participants.local.pose.position)
+  const relPos = subV2(member.props.content.pose.position, participants.local.pose.position)
   const diff = subV2(relPos, member.prevRelPos)
   if (normV(diff) > PARTICIPANT_SIZE * 0.1){
     member.prevRelPos = [relPos[0], relPos[1]]
@@ -251,7 +251,7 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
   member.props = props
 
   //  Editing (No sync) ?
-  const editing = useObserver(() => props.stores.contents.editing === props.content.id)
+  const editing = useObserver(() => contents.editing === props.content.id)
 
   //  Check params and reflect them to ytPlayer
   const oldParams = member.params

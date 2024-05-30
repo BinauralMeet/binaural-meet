@@ -1,4 +1,3 @@
-import {BMProps} from '@components/utils'
 import {acceleratorText2El} from '@components/utils/formatter'
 import {makeStyles} from '@material-ui/styles'
 import {useTranslation} from '@models/locales'
@@ -20,7 +19,7 @@ const useStyles = makeStyles({
     display: 'inline-block',
   },
 })
-interface RecorderButtonProps extends BMProps{
+interface RecorderButtonProps {
   showDialog:boolean
   setShowDialog(flag: boolean):void
   size?: number

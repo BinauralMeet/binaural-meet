@@ -1,4 +1,3 @@
-import {BMProps} from '@components/utils'
 import {acceleratorText2El} from '@components/utils/formatter'
 import windowArrowUp from '@iconify/icons-fluent/window-arrow-up-24-regular'
 
@@ -10,6 +9,7 @@ import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {FabWithTooltip} from '@components/utils/FabEx'
 import {ShareDialog} from './ShareDialog'
+import {contents} from '@stores/'
 
 
 const useStyles = makeStyles({
@@ -17,7 +17,7 @@ const useStyles = makeStyles({
     display: 'inline-block',
   },
 })
-interface ShareButtonProps extends BMProps{
+interface ShareButtonProps{
   showDialog:boolean
   setShowDialog(flag: boolean):void
   size?: number
@@ -25,7 +25,6 @@ interface ShareButtonProps extends BMProps{
 }
 export const ShareButton: React.FC<ShareButtonProps> = (props) => {
   const classes = useStyles()
-  const contents = props.stores.contents
   const sharing = useObserver(() => contents.getLocalRtcContentIds().length || contents.mainScreenOwner === conference.rtcTransports.peer)
   const {t} = useTranslation()
 

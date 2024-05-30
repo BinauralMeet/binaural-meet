@@ -1,5 +1,5 @@
 import {ErrorDialog} from '@components/error/ErrorDialog'
-import {BMProps, dialogStyle} from '@components/utils'
+import {dialogStyle} from '@components/utils'
 import {acceleratorText2El} from '@components/utils/formatter'
 import megaphoneIcon from '@iconify/icons-mdi/megaphone'
 import {Icon} from '@iconify/react'
@@ -26,10 +26,8 @@ import {ShareButton} from './share/ShareButton'
 import {RecorderButton} from './recorder/RecorderButton'
 import {StereoAudioSwitch} from './StereoAudioSwitch'
 import { player, recorder } from '@models/conference/Recorder'
+import {participants, map} from '@stores/'
 
-import errorInfo from "@stores/ErrorInfo";
-import { urlParameters } from "@models/url";
-import {conference} from '@models/conference'
 
 const useStyles = makeStyles({
   root:{
@@ -49,8 +47,7 @@ class Member{
   touched = false
 }
 
-export const Footer: React.FC<BMProps&{height?:number}> = (props) => {
-  const {map, participants} = props.stores
+export const Footer: React.FC<{height?:number}> = (props) => {
   //  show or not
   const [showFooter, setShowFooterRaw] = React.useState<boolean>(true)
   const [showAdmin, setShowAdmin] = React.useState<boolean>(false)
@@ -314,7 +311,7 @@ export const Footer: React.FC<BMProps&{height?:number}> = (props) => {
       {showAdmin ? <Popover open={showAdmin} onClose={closeAdmin}
         anchorEl={adminButton.current} anchorOrigin={{vertical:'top', horizontal:'left'}}
         anchorReference = "anchorEl" >
-        <AdminConfigForm close={closeAdmin} stores={props.stores}/>
+        <AdminConfigForm close={closeAdmin}/>
       </Popover> : undefined}
     </Collapse>
   </div>

@@ -1,4 +1,3 @@
-import {MapProps as BP} from '@components/utils'
 import {makeStyles} from '@material-ui/core/styles'
 import {PARTICIPANT_SIZE} from '@models/Participant'
 import {
@@ -11,6 +10,7 @@ import {useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import ResizeObserver from 'react-resize-observer'
 import {useGesture} from 'react-use-gesture'
+import {map, participants} from '@stores/'
 
 //  utility
 function limitScale(currentScale: number, scale: number): number {
@@ -55,16 +55,13 @@ const useStyles = makeStyles({
   }),
 })
 
-type MapProps = React.PropsWithChildren<BP>
-
 class BaseMember{
   prebThirdPersonView = false
   mouseDown = false
   dragging = false
 }
 
-export const Base: React.FC<MapProps> = (props: MapProps) => {
-  const {map, participants} = props.stores
+export const Base: React.FC = (props) => {
   const matrix = useObserver(() => map.matrix)
   const container = useRef<HTMLDivElement>(null)
   const outer = useRef<HTMLDivElement>(null)

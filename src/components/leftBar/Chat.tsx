@@ -8,13 +8,13 @@ import SendIcon from '@material-ui/icons/Send'
 import {MessageType} from '@models/conference/DataMessageType'
 import {t} from '@models/locales'
 import {isDarkColor} from '@models/utils'
-import chat, {ChatMessage, ChatMessageToSend, ChatMessageType} from '@stores/Chat'
+import {ChatMessage, ChatMessageToSend, ChatMessageType} from '@stores/Chat'
 import {Observer} from 'mobx-react-lite'
 import React from 'react'
-import {BMProps} from '../utils'
 import {styleForList} from '../utils/styles'
 import {TextLineStyle} from './LeftBar'
 import {conference} from '@models/conference'
+import {chat, participants, map, roomInfo} from '@stores/'
 
 const colorMapBlack: { [key in ChatMessageType]: string } = {
   text: 'black',
@@ -32,11 +32,10 @@ const colorMapWhite: { [key in ChatMessageType]: string } = {
 }
 
 
-export const ChatLine: React.FC<BMProps & TextLineStyle &{message: ChatMessage}> = (props) => {
+export const ChatLine: React.FC<TextLineStyle &{message: ChatMessage}> = (props) => {
   const scale = props.message.type === 'log' || props.message.type === 'callTo' ? 0.6 : 1
   const lineHeight = props.lineHeight * scale
   const fontSize = props.fontSize * scale
-  const {roomInfo, participants, map} = props.stores
 
   return <Observer>{() => {
     const timestamp = formatTimestamp(props.message.timestamp)    //  make formated timestamp for tooltip
@@ -66,12 +65,12 @@ export const ChatLine: React.FC<BMProps & TextLineStyle &{message: ChatMessage}>
   }}</Observer>
 }
 
-function sendChatMessage(text: string, sendTo: string, props: BMProps){
+function sendChatMessage(text: string, sendTo: string){
   const msg:ChatMessageToSend = {msg:text, ts: Date.now(), to: sendTo}
   conference.dataConnection.sendMessage(MessageType.CHAT_MESSAGE, msg, sendTo)
-  const local = props.stores.participants.local
+  const local = participants.local
   if (sendTo) {
-    const remote = props.stores.participants.remote.get(sendTo)
+    const remote = participants.remote.get(sendTo)
     if (remote){
       chat.addMessage(new ChatMessage(text, local.id, remote.information.name,
         local.information.avatarSrc, local.getColor(), Date.now(), 'private'))
@@ -82,9 +81,8 @@ function sendChatMessage(text: string, sendTo: string, props: BMProps){
   }
 }
 
-export const ChatInBar: React.FC<BMProps&TextLineStyle>  = (props) => {
+export const ChatInBar: React.FC<TextLineStyle>  = (props) => {
   //  console.log('Render RawContentList')
-  const {chat, roomInfo, participants, map} = props.stores
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
   const [text, setText] = React.useState('')
 
@@ -97,7 +95,7 @@ export const ChatInBar: React.FC<BMProps&TextLineStyle>  = (props) => {
           <IconButton size={'small'} onClick={()=>{
             const nameTo = chat.sendTo ?
               participants?.find(chat.sendTo)?.information?.name : undefined
-            sendChatMessage(text, nameTo ? chat.sendTo : '', props)
+            sendChatMessage(text, nameTo ? chat.sendTo : '')
             setText('')
           }}>
             <SendIcon color="primary" />
@@ -121,7 +119,7 @@ export const ChatInBar: React.FC<BMProps&TextLineStyle>  = (props) => {
             }
             //  if (ev.key === 'Enter'){  }
             if (ev.key === '\n'){ //  CTRL + Enter
-              sendChatMessage(text, nameTo ? chat.sendTo : '', props)
+              sendChatMessage(text, nameTo ? chat.sendTo : '')
               setText('')
             }
           }}

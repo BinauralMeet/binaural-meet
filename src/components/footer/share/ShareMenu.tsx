@@ -1,4 +1,4 @@
-import {BMProps, RadioWithLabel} from '@components/utils'
+import {RadioWithLabel} from '@components/utils'
 import bxWindowClose from '@iconify-icons/bx/bx-window-close'
 import clipboardPaste from '@iconify/icons-fluent/clipboard-arrow-right-24-regular'
 import whiteboard24Regular from '@iconify/icons-fluent/whiteboard-24-regular'
@@ -38,9 +38,10 @@ import {Step} from './Step'
 import {conference} from '@models/conference'
 import { dateTimeString } from '@models/utils/date'
 import { isSmartphone } from '@models/utils'
+import {contents, map, participants} from '@stores/'
 
-function startCapture(props:BMProps) {
-  const fps = props.stores.contents.screenFps
+function startCapture() {
+  const fps = contents.screenFps
   return new Promise<MediaStream>((resolve, reject) => {
     navigator.mediaDevices.getDisplayMedia({
       audio:{
@@ -113,17 +114,16 @@ function importItems(ev: React.ChangeEvent<HTMLInputElement>, contents: SharedCo
   }
 }
 
-interface ShareMenuProps extends DialogPageProps, BMProps {
+interface ShareMenuProps extends DialogPageProps {
   cameras: CameraSelectorMember
 }
 
-export interface DialogPageProps extends BMProps {
+export interface DialogPageProps {
   setStep: (step: Step) => void
 }
 
 export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
   const {t} = useTranslation()
-  const {contents, participants, map} = props.stores
   const mainScreen = useObserver(() => (
     {stream: contents.mainScreenStream, owner: contents.mainScreenOwner}))
   const showMouse = useObserver(() => participants.local.mouse.show)
@@ -180,7 +180,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
     })
   }
   const createScreen = () => {
-    startCapture(props).then((ms) => {
+    startCapture().then((ms) => {
       if (ms.getTracks().length) {
         const content = createContentOfVideo(ms.getTracks(), map, 'screen')
         contents.assignId(content)
@@ -211,7 +211,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
     if (contents.mainScreenOwner === participants.localId){
       conference.removeLocalTrackByRole(true, 'mainScreen')
     } else {
-      startCapture(props).then((ms) => {
+      startCapture().then((ms) => {
         if (ms.getTracks().length) {
           ms.getTracks().forEach((track) => {
             const msTrack:MSTrack = {
@@ -315,18 +315,18 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
         onClick={createScreen}
         secondEl = {<FormControl component="fieldset">
           <Observer>{
-            ()=> <RadioGroup row aria-label="screen-fps" name="FPS" value={props.stores.contents.screenFps}
-              onChange={(ev)=>{ props.stores.contents.setScreenFps(Number(ev.target.value)) }}
+            ()=> <RadioGroup row aria-label="screen-fps" name="FPS" value={contents.screenFps}
+              onChange={(ev)=>{ contents.setScreenFps(Number(ev.target.value)) }}
               onClick={(ev)=>{
                 ev.stopPropagation()
                 setTimeout(createScreen, 100)
               }}
             >
-              <RadioWithLabel value="1" checked={props.stores.contents.screenFps===1}/>
-              <RadioWithLabel value="5" checked={props.stores.contents.screenFps===5}/>
-              <RadioWithLabel value="15" checked={props.stores.contents.screenFps===15}/>
-              <RadioWithLabel value="30" checked={props.stores.contents.screenFps===30}/>
-              <RadioWithLabel value="60" checked={props.stores.contents.screenFps===60}
+              <RadioWithLabel value="1" checked={contents.screenFps===1}/>
+              <RadioWithLabel value="5" checked={contents.screenFps===5}/>
+              <RadioWithLabel value="15" checked={contents.screenFps===15}/>
+              <RadioWithLabel value="30" checked={contents.screenFps===30}/>
+              <RadioWithLabel value="60" checked={contents.screenFps===60}
                 label={<span>60&nbsp;&nbsp;&nbsp;&nbsp;{t('fps')}</span>} />
             </RadioGroup>
           }</Observer>

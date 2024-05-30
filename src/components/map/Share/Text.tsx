@@ -11,6 +11,7 @@ import _ from 'lodash'
 import {Observer, useObserver} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import {ContentProps} from './Content'
+import {map, contents, participants} from '@stores/'
 
 class TextMember{
   messages: TextMessage[] = []
@@ -87,8 +88,8 @@ export const TextEdit: React.FC<TextEditProps> = (props:TextEditProps) => {
           ev.preventDefault()
           if (sendTextLater){ sendTextLater.cancel() }
           sendText(text, props)
-          props.stores.map.keyInputUsers.delete(props.content.id)
-          props.stores.contents.setEditing('')
+          map.keyInputUsers.delete(props.content.id)
+          contents.setEditing('')
         }
       }}
     />
@@ -166,7 +167,6 @@ const useStyles = makeStyles({
 
 export const Text: React.FC<ContentProps> = (props:ContentProps) => {
   assert(props.content.type === 'text')
-  const {contents, participants} = props.stores
   const memberRef = React.useRef<TextMember>(new TextMember())
   const member = memberRef.current
   const classes = useStyles()

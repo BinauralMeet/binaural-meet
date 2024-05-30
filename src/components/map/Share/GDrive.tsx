@@ -9,6 +9,7 @@ import axios from 'axios'
 import { PageControl } from './PageControl'
 import { getParamsFromUrl, getStringFromParams } from '@stores/sharedContents/SharedContentCreator'
 import _ from 'lodash'
+import {contents, roomInfo} from '@stores/'
 
 const useStyles = makeStyles({
   iframe: {
@@ -67,7 +68,6 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
   assert(props.content.type === 'gdrive')
   const divScroll = useRef<HTMLDivElement>(null)
 
-  const contents = props.stores.contents
   const paramsFromUrl = getParamsFromUrl(props.content.url)
   const fileId = paramsFromUrl.get('id')
   const memberRef = useRef<Member>({props, params:paramsFromUrl, scrolling:false, onscroll:()=>{}})
@@ -78,7 +78,7 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
   //  Scroll to given 'top' param
   useEffect(() => {
     const top = Number(member.params.get('top'))
-    const editing = props.stores.contents.editing === props.content.id
+    const editing = contents.editing === props.content.id
     if (!editing && !member.scrolling && divScroll.current
       && !isNaN(top) && top !== divScroll.current.scrollTop) {
       divScroll.current.onscroll = () => {}
@@ -94,7 +94,7 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
   useEffect(() => {
     //console.log('useEffect() for onscroll called.')
     function doSendScroll() {
-      const editing = props.stores.contents.editing === props.content.id
+      const editing = contents.editing === props.content.id
       if (editing){
 
       }else{
@@ -134,8 +134,8 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
   return <Observer>{()=>{
     const vscroll = isGDrivePreviewScrollable(mimeType)
     //  console.log(`vscroll=${vscroll}  mimeType=${mimeType}`)
-    if (fileId && (!mimeType || member.prevToken !== props.stores.roomInfo.gDriveToken)) {
-      member.prevToken = props.stores.roomInfo.gDriveToken
+    if (fileId && (!mimeType || member.prevToken !== roomInfo.gDriveToken)) {
+      member.prevToken = roomInfo.gDriveToken
       //  console.log(`GDrive: id:${fileId}, mime:${mimeType}  token:${member.prevToken}`)
       getInformationOfGDriveContent(fileId).then((res)=>{
         if ((res.name && props.content.name !== res.name) || res.mimeType){
@@ -164,7 +164,7 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
         updateUrl(member)
       })
     }
-    const editing = props.stores.contents.editing === props.content.id
+    const editing = contents.editing === props.content.id
     //  console.log(`getDriveUrl: ${editing}, ${JSON.stringify(Array.from(member.params))}`)
     const url = getGDriveUrl(editing, member.params)
     //  console.log(`getDriveUrl: ${editing}, ${JSON.stringify(Array.from(member.params))}`)

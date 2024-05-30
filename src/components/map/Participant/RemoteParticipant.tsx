@@ -6,6 +6,7 @@ import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {Participant, ParticipantProps} from './Participant'
 import {RemoteParticipantForm} from './RemoteParticipantForm'
+import {map} from '@stores/'
 
 interface RemoteParticipantMember extends MoreButtonMember{
   timeout:NodeJS.Timeout|undefined
@@ -46,11 +47,11 @@ export const RemoteParticipant: React.FC<ParticipantProps> = (props) => {
     participants.yarnPhoneUpdated = true
   }
   function onClose() {
-    props.stores.map.keyInputUsers.delete('remoteForm')
+    map.keyInputUsers.delete('remoteForm')
     setShowForm(false)
   }
   function openForm() {
-    props.stores.map.keyInputUsers.add('remoteForm')
+    map.keyInputUsers.add('remoteForm')
     setShowForm(true)
   }
   const buttonRef=React.useRef<HTMLButtonElement>(null)
@@ -67,7 +68,7 @@ export const RemoteParticipant: React.FC<ParticipantProps> = (props) => {
         ev.stopPropagation()
         openForm()
       }} />
-      <RemoteParticipantForm open={showForm} close={onClose} stores={props.stores}
+      <RemoteParticipantForm open={showForm} close={onClose}
         participant={props.participant as RemoteParticipantStore}
         anchorEl={buttonRef.current} anchorOrigin={{vertical:'top', horizontal:'left'}}
         anchorReference = "anchorEl"

@@ -1,10 +1,7 @@
 import {urlParameters} from '@models/url'
 import {isPortrait, isSmartphone} from '@models/utils'
 import { rgb2Color } from '@models/utils'
-import chatStore from '@stores/Chat'
 import errorInfo from '@stores/ErrorInfo'
-import mapStore from '@stores/Map'
-import participantsStore from '@stores/participants/Participants'
 import roomInfo from '@stores/RoomInfo'
 import sharedContentsStore from '@stores/sharedContents/SharedContents'
 import {Observer} from 'mobx-react-lite'
@@ -14,7 +11,6 @@ import {Footer} from './footer/Footer'
 import {LeftBar} from './leftBar/LeftBar'
 import {MainScreen} from './map/MainScreen'
 import {Map} from './map/map'
-import {Stores} from './utils'
 import {styleCommon, styleForSplit} from './utils/styles'
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
@@ -22,13 +18,6 @@ export const App: React.FC<{}> = () => {
   const clsSplit = styleForSplit()
   const classes = styleCommon()
   const DEBUG_VIDEO = false //  To see all local and remote tracks or not.
-  const stores:Stores = {
-    map: mapStore,
-    participants: participantsStore,
-    contents: sharedContentsStore,
-    chat: chatStore,
-    roomInfo: roomInfo,
-  }
   const refDiv = useRef<HTMLDivElement>(null)
   //  toucmove: prevent browser zoom by pinch
   window.addEventListener('touchmove', (ev) => {
@@ -61,13 +50,13 @@ export const App: React.FC<{}> = () => {
       <GoogleOAuthProvider clientId="188672642721-3f8u1671ecugbl2ukhjmb18nv283upm0.apps.googleusercontent.com">
         <SplitPane className={classes.fill} split="vertical" resizerClassName={clsSplit.resizerVertical}
           minSize={0} defaultSize="7em">
-          <LeftBar stores={stores}/>
+          <LeftBar />
           <Fragment>
-            <MainScreen showAllTracks = {DEBUG_VIDEO} stores={stores} />
+            <MainScreen showAllTracks = {DEBUG_VIDEO} />
             <Observer>{() => <Map transparent={sharedContentsStore.mainScreenStream !== undefined
-             || DEBUG_VIDEO} stores={stores} />
+             || DEBUG_VIDEO} />
             }</Observer>
-            <Footer stores={stores} height={(isSmartphone() && isPortrait()) ? 100 : undefined} />
+            <Footer height={(isSmartphone() && isPortrait()) ? 100 : undefined} />
           </Fragment>
         </SplitPane>
       </GoogleOAuthProvider>

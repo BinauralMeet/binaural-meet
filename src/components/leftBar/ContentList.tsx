@@ -8,15 +8,15 @@ import {isContentOutOfRange, ISharedContent, SharedContentInfo} from '@models/IS
 import {useTranslation} from '@models/locales'
 import {getRandomColor, mulV2, rgb2Color} from '@models/utils'
 import {isDarkColor} from '@models/utils'
-import contents from '@stores/sharedContents/SharedContents'
 import {autorun} from 'mobx'
 import {Observer} from 'mobx-react-lite'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
 import {contentTypeIcons} from '../map/Share/Content'
-import {BMProps} from '../utils'
 import {styleForList} from '../utils/styles'
 import {TextLineStyle} from './LeftBar'
+import {contents, map, roomInfo} from '@stores/'
+
 
 function locatedContentOnly(content: ISharedContent|undefined){
   if (isContentOutOfRange(content)){ return undefined }
@@ -24,13 +24,12 @@ function locatedContentOnly(content: ISharedContent|undefined){
   return content
 }
 
-export const ContentLine: React.FC<BMProps & TextLineStyle & {content: SharedContentInfo}>=(props) => {
+export const ContentLine: React.FC<TextLineStyle & {content: SharedContentInfo}>=(props) => {
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
   const [showForm, setShowForm] = React.useState(false)
   const ref = React.useRef<HTMLButtonElement>(null)
   const {lineHeight, content, ...contentProps} = props
   let targetContent: ISharedContent|undefined = undefined
-  const map = props.stores.map
 
   return <Observer>{()=> {
     const typeIcon = contentTypeIcons(props.content.type, props.fontSize)
@@ -39,7 +38,7 @@ export const ContentLine: React.FC<BMProps & TextLineStyle & {content: SharedCon
     if (props.content.color?.length){ colors[0] = rgb2Color(props.content.color) }
     if (props.content.textColor?.length){ colors[1] = rgb2Color(props.content.textColor) }
     if (showForm){
-      targetContent = locatedContentOnly(props.stores.contents.find(props.content.id))
+      targetContent = locatedContentOnly(contents.find(props.content.id))
     }
 
     return <>
@@ -93,10 +92,8 @@ export const ContentLine: React.FC<BMProps & TextLineStyle & {content: SharedCon
   }}</Observer>
 }
 
-export const ContentList: React.FC<BMProps&TextLineStyle>  = (props) => {
+export const ContentList: React.FC<TextLineStyle>  = (props) => {
   //  console.log('Render RawContentList')
-  const roomInfo = props.stores.roomInfo
-  const contents = props.stores.contents
   const all = useObserver(() => {
     const all:SharedContentInfo[] =
       Array.from(contents.roomContentsInfo.size ? contents.roomContentsInfo.values() : contents.all)

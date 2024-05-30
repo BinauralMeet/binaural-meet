@@ -1,4 +1,3 @@
-import {Stores} from '@components/utils'
 import { Button, ButtonProps, DialogTitle } from '@material-ui/core'
 import Box from '@material-ui/core/Box'
 import TextField from '@material-ui/core/TextField'
@@ -9,7 +8,6 @@ import React from 'react'
 
 export interface EditRoomFormProps{
   close?: () => void,
-  stores: Stores,
 }
 export const EditRoomForm: React.FC<EditRoomFormProps> = (props: EditRoomFormProps) => {
   const [adminEmail, setAdminEmail] = React.useState('')

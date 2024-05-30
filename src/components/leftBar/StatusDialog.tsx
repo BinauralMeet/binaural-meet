@@ -3,7 +3,6 @@ import Paper from '@material-ui/core/Paper'
 import Popper, { PopperProps } from '@material-ui/core/Popper'
 import { StreamStat, RtcTransportStatsGot } from '@models/conference/RtcTransportStatsGot'
 import React from 'react'
-import {BMProps} from '../utils'
 import {conference} from '@models/conference'
 import { useObserver } from 'mobx-react-lite'
 import errorInfo from '@stores/ErrorInfo'
@@ -20,7 +19,7 @@ function resetDataConnection(){
   conference.dataConnection.forceClose()
 }
 
-export interface StatusDialogProps extends Omit<PopperProps, 'children'>, BMProps{
+export interface StatusDialogProps extends Omit<PopperProps, 'children'>{
   close: () => void,
 }
 export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogProps) => {

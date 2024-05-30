@@ -1,4 +1,3 @@
-import {Stores} from '@components/utils'
 import Box from '@material-ui/core/Box'
 import TextField from '@material-ui/core/TextField'
 import settings from '@stores/Settings'
@@ -7,7 +6,6 @@ import React from 'react'
 
 export interface PositionServerFormProps{
   close?: () => void,
-  stores: Stores,
 }
 export const PositionServerForm: React.FC<PositionServerFormProps> = (props: PositionServerFormProps) => {
   if (!settings.lpsUrl) settings.load()

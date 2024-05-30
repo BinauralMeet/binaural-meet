@@ -1,5 +1,3 @@
-import {Stores} from '@components/utils'
-import {MapProps } from '@components/utils'
 import {Participant, PARTICIPANT_SIZE} from '@models/Participant'
 import {urlParameters} from '@models/url'
 import {useObserver} from 'mobx-react-lite'
@@ -8,12 +6,12 @@ import {MemoedLocalParticipant as LocalParticipant} from './LocalParticipant'
 import {MouseCursor} from './MouseCursor'
 import {PlaybackParticipant} from './PlaybackParticipant'
 import {RemoteParticipant} from './RemoteParticipant'
+import { participants } from '@stores/'
 
 interface LineProps {
   start: [number, number]
   end: [number, number]
   remote: string,
-  stores: Stores
 }
 
 const Line: React.FC<LineProps> = (props) => {
@@ -25,8 +23,8 @@ const Line: React.FC<LineProps> = (props) => {
   return <svg xmlns="http://www.w3.org/2000/svg" style={{position:'absolute', left, top, width, height, pointerEvents:'stroke'}}
     viewBox={`0, 0, ${width}, ${height}`}
     onClick = {() => {
-      props.stores.participants.yarnPhones.delete(props.remote)
-      props.stores.participants.yarnPhoneUpdated = true
+      participants.yarnPhones.delete(props.remote)
+      participants.yarnPhoneUpdated = true
     }}
     >
     <line x1={props.start[0] - left} y1={props.start[1] - top}
@@ -34,12 +32,11 @@ const Line: React.FC<LineProps> = (props) => {
   </svg>
 }
 
-export const ParticipantLayer: React.FC<MapProps> = (props) => {
-  const store = props.stores.participants
+export const ParticipantLayer: React.FC = () => {
   const remotes = useObserver(() => {
-    const rs = Array.from(store.remote.values()).filter(r => r.physics.located)
+    const rs = Array.from(participants.remote.values()).filter(r => r.physics.located)
     const all:Participant[] = Array.from(rs)
-    all.push(store.local)
+    all.push(participants.local)
     all.sort((a,b) => a.pose.position[1] - b!.pose.position[1])
     for(let i=0; i<all.length; ++i){
       all[i].zIndex = i+1
@@ -47,32 +44,32 @@ export const ParticipantLayer: React.FC<MapProps> = (props) => {
     //rs.sort((a,b) => a.pose.position[1] - b!.pose.position[1])
     return rs
   })
-  const localId = useObserver(() => store.localId)
-  const remoteElements = remotes.map(r => <RemoteParticipant key={r.id} stores={props.stores}
-    participant={r} size={PARTICIPANT_SIZE} />)
-  const localElement = (<LocalParticipant key={'local'} participant={store.local}
-    size={PARTICIPANT_SIZE} stores={props.stores}/>)
+  const localId = useObserver(() => participants.localId)
+  const remoteElements = remotes.map((r, index) => <RemoteParticipant key={r.id}
+    participant={r} size={PARTICIPANT_SIZE} zIndex={index} />)
+  const localElement = (<LocalParticipant key={'local'} participant={participants.local}
+    size={PARTICIPANT_SIZE} />)
   const lines = useObserver(
-    () => Array.from(store.yarnPhones).map((rid) => {
-      const start = store.local.pose.position
-      const remote = store.remote.get(rid)
+    () => Array.from(participants.yarnPhones).map((rid) => {
+      const start = participants.local.pose.position
+      const remote = participants.remote.get(rid)
       if (!remote) { return undefined }
       const end = remote.pose.position
 
-      return <Line start={start} end={end} key={rid} remote={rid} stores={props.stores}/>
+      return <Line start={start} end={end} key={rid} remote={rid}/>
     }),
   )
-  const playIds = useObserver(()=> Array.from(store.playback.keys()))
-  const playbackElements = playIds.map(id => <PlaybackParticipant key={id} stores={props.stores}
-    participant={store.playback.get(id)!} size={PARTICIPANT_SIZE} />)
+  const playIds = useObserver(()=> Array.from(participants.playback.keys()))
+  const playbackElements = playIds.map((id, index) => <PlaybackParticipant key={id}
+    participant={participants.playback.get(id)!} size={PARTICIPANT_SIZE} zIndex={index}/>)
 
-  const mouseIds = useObserver(() => Array.from(store.remote.keys()).filter(id => (store.find(id)!.mouse.show)))
+  const mouseIds = useObserver(() => Array.from(participants.remote.keys()).filter(id => (participants.find(id)!.mouse.show)))
   const remoteMouseCursors = mouseIds.map(
-    id => <MouseCursor key={`M_${id}`} participantId={id} stores={props.stores} />)
+    id => <MouseCursor key={`M_${id}`} participantId={id}/>)
 
-  const showLocalMouse = useObserver(() => store.local.mouse.show)
+  const showLocalMouse = useObserver(() => participants.local.mouse.show)
   const localMouseCursor = showLocalMouse
-    ? <MouseCursor key={'M_local'} participantId={localId}  stores={props.stores} /> : undefined
+    ? <MouseCursor key={'M_local'} participantId={localId} /> : undefined
 
   if (urlParameters.testBot !== null) { return <div /> }
 

@@ -1,4 +1,3 @@
-import {Stores} from '@components/utils'
 import Box from '@material-ui/core/Box'
 import Button, { ButtonProps } from '@material-ui/core/Button'
 import Popover from '@material-ui/core/Popover'
@@ -16,10 +15,10 @@ import {t} from '@models/locales'
 import { DialogTitle, PropTypes } from '@material-ui/core'
 import { EditRoomForm } from './EditRoomForm'
 import { GoogleAuthLogin } from '@components/utils/GoogleAuthLogin'
+import {roomInfo,participants} from '@stores/'
 
 export interface AdminConfigFormProps{
   close?: () => void,
-  stores: Stores,
 }
 export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConfigFormProps) => {
   const [clearName, setClearName] = React.useState('')
@@ -27,7 +26,6 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
   const [showColorPicker, setShowColorPicker] = React.useState(false)
   const fillButton = React.useRef<HTMLButtonElement>(null)
   const colorButton = React.useRef<HTMLButtonElement>(null)
-  const {roomInfo,participants} = props.stores
   const [showPosition, setShowPosition] = React.useState(false)
   const [showEditRoom, setShowEditRoom] = React.useState(false)
   const [doGoogleAuth, setDoGoogleAuth] = React.useState(false);
@@ -55,7 +53,7 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
         {t('stSettingTitle')}
       </DialogTitle>
       <Box mb={2}>
-        <RemoteTrackLimitControl key="remotelimitcontrol" {...props.stores}/>
+        <RemoteTrackLimitControl key="remotelimitcontrol"/>
         <div ref={anchor} />
       </Box>
       <Box m={2}>
@@ -180,10 +178,10 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
         }}> Default </Button>&emsp;
       </Box>
       {showPosition ? <Popover open={showPosition} onClose={closePosition} anchorEl={anchor.current}>
-        <PositionServerForm stores={props.stores} close={closePosition}/>
+        <PositionServerForm close={closePosition}/>
       </Popover> : undefined}
       {showEditRoom ? <Popover open={showEditRoom} onClose={closeEditRoom} anchorEl={anchor.current}>
-        <EditRoomForm stores={props.stores} close={closeEditRoom}/>
+        <EditRoomForm close={closeEditRoom}/>
       </Popover> : undefined}
       <GoogleAuthLogin room={conference.room} doAuth={doGoogleAuth}></GoogleAuthLogin>
     </>}

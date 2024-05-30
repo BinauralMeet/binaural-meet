@@ -7,6 +7,7 @@ import {DialogPageProps} from './Step'
 import {createLocalCamera} from '@models/conference/faceCamera'
 import {conference} from '@models/conference'
 import { dialogStyle } from '@components/utils'
+import {contents, participants, map} from '@stores/'
 
 export class CameraSelectorMember{
   @observable.shallow videos: MediaDeviceInfo[] = []
@@ -20,7 +21,6 @@ interface CameraSelectorProps extends DialogPageProps{
 
 export const CameraSelector: React.FC<CameraSelectorProps> = (props) => {
   const {setStep} = props
-  const {contents, map, participants} = props.stores
   const videoMenuItems = useObserver(() =>
     props.cameras.videos.map((info, idx) => makeMenuItem(info, closeVideoMenu, idx)))
   function makeMenuItem(info: MediaDeviceInfo, close:(did:string) => void, key:number):JSX.Element {

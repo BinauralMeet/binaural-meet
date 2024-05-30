@@ -1,16 +1,15 @@
-import {BMProps} from '@components/utils'
 import {Tooltip} from '@material-ui/core'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import {useObserver} from 'mobx-react-lite'
 import React from 'react'
+import {participants} from '@stores/'
 
-interface MouseCursorProps extends BMProps{
+interface MouseCursorProps{
   participantId: string
 }
 
 
 export const MouseCursor: React.FC<MouseCursorProps> = (props:MouseCursorProps) => {
-  const participants = props.stores.participants
   const participant = participants.find(props.participantId) as ParticipantBase
   const position = useObserver(() => participant.mouse.position)
   const name = useObserver(() => participant.information.name)

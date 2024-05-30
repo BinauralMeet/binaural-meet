@@ -32,6 +32,7 @@ import {Content, contentTypeIcons, editButtonTip} from './Content'
 import {ISharedContentProps} from './SharedContent'
 import {SharedContentForm} from './SharedContentForm'
 import { GoogleAuthDrive } from '@components/utils/GoogleAuthDrive'
+import {contents, map} from '@stores/'
 
 const MOUSE_RIGHT = 2
 
@@ -93,7 +94,6 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   const [preciseOrientation, setPreciseOrientation] = useState(pose.orientation)
   const [dragging, setDragging] = useState(false)
   const rnd = useRef<Rnd>(null)                         //  ref to rnd to update position and size
-  const {contents, map} = props.stores
   const editing = useObserver(() => contents.editing === props.content.id)
   const zoomed = useObserver(() => map.zoomed)
   function setEditing(flag: boolean) { contents.setEditing(flag ? props.content.id : '') }

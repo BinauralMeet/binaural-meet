@@ -1,4 +1,4 @@
-import { BMProps, CheckWithLabel, buttonStyle, dialogStyle, inputStyle, tfDivStyle, tfIStyle, tfLStyle, titleStyle } from '@components/utils'
+import {CheckWithLabel, buttonStyle, dialogStyle, inputStyle, tfDivStyle, tfIStyle, tfLStyle, titleStyle } from '@components/utils'
 import Box from '@material-ui/core/Box'
 import Button from '@material-ui/core/Button'
 import DialogContent from '@material-ui/core/DialogContent'
@@ -14,7 +14,9 @@ import React, {useState} from 'react'
 import {SketchPicker} from 'react-color'
 import {SignalQualityButton} from './SignalQuality'
 import {Choose3DAvatar, vrmUrlBase} from './LocalParticipant3DAvatarForm'
-import { Grid } from '@material-ui/core'
+import {Grid} from '@material-ui/core'
+import {participants, map, roomInfo} from '@stores/'
+
 
 function isVrm(url: string){
   const ext = url.substring(url.lastIndexOf('.'))
@@ -30,7 +32,7 @@ function makeEmailDisp(email: string){
   return email
 }
 
-export interface LocalParticipantFormProps extends BMProps{
+export interface LocalParticipantFormProps{
   open: boolean
   anchorEl: HTMLElement | null
   anchorOrigin: PopoverOrigin
@@ -39,7 +41,6 @@ export interface LocalParticipantFormProps extends BMProps{
 }
 
 export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props: LocalParticipantFormProps) => {
-  const {participants, map} = props.stores
   const local = participants.local
   const [file, setFile] = useState<File|null>()
   const [showColorPicker, setShowColorPicker] = useState(false)
@@ -202,17 +203,17 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
             map.focusOn(local)
           }}>{t('ctFocus')}</Button>
       </Box>
-      {props.stores.roomInfo.loginEmail || props.stores.roomInfo.gDriveEmail ?
+      {roomInfo.loginEmail || roomInfo.gDriveEmail ?
         <Box >
           <Grid container>
             <Grid item xs={6}> <div style={{fontSize:12}}>{t('lsLoginEmail')}</div>
               <Box>
-                {props.stores.roomInfo.loginEmail}
+                {roomInfo.loginEmail}
               </Box>
             </Grid>
             <Grid item xs={6}> <div style={{fontSize:12}}>{t('lsGDriveEmail')}</div>
               <Box>
-                {props.stores.roomInfo.gDriveEmail}
+                {roomInfo.gDriveEmail}
               </Box>
             </Grid>
           </Grid>

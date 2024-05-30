@@ -1,7 +1,6 @@
 import {ImageAvatar} from '@components/avatar/ImageAvatar'
 import {LocalParticipantForm} from '@components/map/Participant/LocalParticipantForm'
 import {RemoteParticipantForm} from '@components/map/Participant/RemoteParticipantForm'
-import {BMProps} from '@components/utils'
 import {Tooltip} from '@material-ui/core'
 import Button from '@material-ui/core/Button'
 import IconButton from '@material-ui/core/IconButton'
@@ -22,9 +21,9 @@ import MicOffIcon from '@material-ui/icons/MicOff'
 import {Icon} from '@iconify/react'
 import megaphoneIcon from '@iconify/icons-mdi/megaphone'
 import {t} from '@models/locales'
+import {participants, map, roomInfo} from '@stores/'
 
-export const ParticipantLine: React.FC<TextLineStyle&BMProps&{participant: ParticipantBase}> = (props) => {
-  const map = props.stores.map
+export const ParticipantLine: React.FC<TextLineStyle&{participant: ParticipantBase}> = (props) => {
   const name = useObserver(() => (props.participant.information.name))
   const avatarSrc = useObserver(() => (props.participant.information.avatarSrc))
   const colors = useObserver(() => getColorOfParticipant(props.participant.information))
@@ -100,24 +99,22 @@ export const ParticipantLine: React.FC<TextLineStyle&BMProps&{participant: Parti
         </Button>
       </div>
     </Tooltip>
-    {props.participant.id === props.stores.participants.localId ?
-      <LocalParticipantForm stores={props.stores} open={showForm} close={()=>{
+    {props.participant.id === participants.localId ?
+      <LocalParticipantForm open={showForm} close={()=>{
         setShowForm(false)
         map.keyInputUsers.delete('participantList')
       }} anchorEl={ref.current} anchorOrigin={{vertical:'top', horizontal:'right'}} /> :
       <RemoteParticipantForm {...propsForForm} open={showForm} close={()=>{
         setShowForm(false)
         map.keyInputUsers.delete('participantList')
-      }} participant={props.stores.participants.remote.get(props.participant.id)}
+      }} participant={participants.remote.get(props.participant.id)}
         anchorEl={ref.current} anchorOrigin={{vertical:'top', horizontal:'right'}} />
     }
   </>}</Observer>
 }
 
-export const RawParticipantList: React.FC<BMProps&TextLineStyle&{localId: string, remoteIds: string[]}> = (props) => {
+export const RawParticipantList: React.FC<TextLineStyle&{localId: string, remoteIds: string[]}> = (props) => {
   const [showStat, setShowStat] = React.useState(false)
-  const participants = props.stores.participants
-  const roomInfo = props.stores.roomInfo
   const classes = styleForList({height: props.lineHeight, fontSize: props.fontSize})
   const {localId, remoteIds, lineHeight, fontSize, ...statusProps} = props
   const lineProps = {lineHeight, fontSize, ...statusProps}
@@ -171,10 +168,10 @@ export const RawParticipantList: React.FC<BMProps&TextLineStyle&{localId: string
 }
 RawParticipantList.displayName = 'ParticipantList'
 
-export const ParticipantList = React.memo<BMProps&TextLineStyle>(
+export const ParticipantList = React.memo<TextLineStyle>(
   (props) => {
-    const localId = useObserver(() => props.stores.participants.localId)
-    const ids = useObserver(() => Array.from(props.stores.participants.remote.keys()))
+    const localId = useObserver(() => participants.localId)
+    const ids = useObserver(() => Array.from(participants.remote.keys()))
 
     return <RawParticipantList {...props} localId={localId} remoteIds = {ids} />
   },

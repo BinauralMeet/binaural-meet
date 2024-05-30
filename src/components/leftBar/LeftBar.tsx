@@ -1,7 +1,6 @@
 import React, {useState} from 'react'
 import SplitPane from 'react-split-pane'
 import {useGesture} from 'react-use-gesture'
-import {BMProps} from '../utils'
 import {styleForSplit} from '../utils/styles'
 import {ChatInBar} from './Chat'
 import {ContentList} from './ContentList'
@@ -28,7 +27,7 @@ function limitScale(currentScale: number, scale: number): number {
 }
 const textLineStyle = Object.assign({}, defaultTextLineHeight)
 
-export const LeftBar: React.FC<BMProps> = (props) => {
+export const LeftBar: React.FC = () => {
   const classes = styleForSplit()
   const [scale, doSetScale] = useState<number>(1)
   const setScale = (scale:number) => {
@@ -66,10 +65,10 @@ export const LeftBar: React.FC<BMProps> = (props) => {
         paneStyle = {{overflowY: 'auto', overflowX: 'hidden', width:'100%'}} >
         <SplitPane split="horizontal" defaultSize="50%" resizerClassName = {classes.resizerHorizontal}
           paneStyle = {{overflowY: 'auto', overflowX: 'hidden', width:'100%'}} >
-          <ParticipantList {...props} {...textLineStyle} />
-          <ContentList {...props}  {...textLineStyle} />
+          <ParticipantList{...textLineStyle} />
+          <ContentList {...textLineStyle} />
         </SplitPane >
-        <ChatInBar {...props}  {...textLineStyle} />
+        <ChatInBar {...textLineStyle} />
       </SplitPane >
     </div>
   )

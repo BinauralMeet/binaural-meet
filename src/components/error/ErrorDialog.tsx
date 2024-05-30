@@ -1,4 +1,4 @@
-import {BMProps, titleStyle} from '@components/utils'
+import {titleStyle} from '@components/utils'
 import Box from '@material-ui/core/Box'
 import Button from '@material-ui/core/Button'
 import Dialog, {DialogProps} from '@material-ui/core/Dialog'
@@ -11,9 +11,9 @@ import React from 'react'
 import {AfkDialog} from './AfkDialog'
 import {TheEntrance} from './TheEntrance'
 
-export const dialogs = new Map<ErrorType, (props:BMProps)=>JSX.Element>()
-dialogs.set('entrance', (props: BMProps) => <TheEntrance {...props}/>)
-dialogs.set('afk', (props: BMProps) => <AfkDialog />)
+export const dialogs = new Map<ErrorType, ()=>JSX.Element>()
+dialogs.set('entrance', () => <TheEntrance />)
+dialogs.set('afk', () => <AfkDialog />)
 
 export const ErrorDialogFrame: React.FC<DialogProps | {onClose:(event:{}, reason:string)=>void}> = (props) => {
   return <Dialog {...props} open={errorInfo.show()}
@@ -26,7 +26,7 @@ export const ErrorDialogFrame: React.FC<DialogProps | {onClose:(event:{}, reason
 }
 
 
-export const ErrorDialog: React.FC<BMProps> = (props) => {
+export const ErrorDialog: React.FC = () => {
   function close(){
     // close login failed dialog. start the enter process again
     if (errorInfo.type === 'noEnterPremission'){
@@ -41,7 +41,7 @@ export const ErrorDialog: React.FC<BMProps> = (props) => {
     () => {
       if (errorInfo.type){
         if (dialogs.has(errorInfo.type)) {
-          return dialogs.get(errorInfo.type)!(props)
+          return dialogs.get(errorInfo.type)!()
         }else{
           return <ErrorDialogFrame onClose={() => { close() }}>
             <DialogContent>{errorInfo.message}</DialogContent>

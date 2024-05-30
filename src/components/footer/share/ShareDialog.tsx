@@ -1,4 +1,4 @@
-import {acceleratorText2El, BMProps, dialogStyle, titleStyle} from '@components/utils'
+import {acceleratorText2El, dialogStyle, titleStyle} from '@components/utils'
 import Dialog from '@material-ui/core/Dialog'
 import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
@@ -13,15 +13,15 @@ import {ImageInput} from './ImageInput'
 import {ShareMenu} from './ShareMenu'
 import {Step} from './Step'
 import {TextInput} from './TextInput'
+import {map} from '@stores/'
 
-interface ShareDialogProps extends BMProps{
+interface ShareDialogProps{
   open: boolean
   onClose: () => void
 }
 
 export const ShareDialog: React.FC<ShareDialogProps> = (props:ShareDialogProps) => {
   const {open, onClose} = props
-  const {map} = props.stores
 
   const cameras = useRef(new CameraSelectorMember())
 
@@ -39,7 +39,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props:ShareDialogProps) 
       case 'menu':
         return <ShareMenu {...props} setStep={setStep} cameras={cameras.current} />
       case 'text':
-        return <TextInput stores={props.stores}
+        return <TextInput
             setStep={setStep}
             onFinishInput={(value) => {
               sharedContents.shareContent(createContentOfText(value, map))
@@ -49,7 +49,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props:ShareDialogProps) 
             multiline = {true}
           />
       case 'iframe':
-        return <TextInput stores={props.stores}
+        return <TextInput
             setStep={setStep}
             onFinishInput={(value) => {
               createContentOfIframe(value, map).then((c) => {
@@ -60,12 +60,11 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props:ShareDialogProps) 
             multiline = {false}
           />
       case 'image':
-        return <ImageInput setStep={setStep} stores={props.stores}/>
+        return <ImageInput setStep={setStep}/>
       case 'camera':
-        return <CameraSelector setStep={setStep} stores={props.stores} cameras={cameras.current} />
+        return <CameraSelector setStep={setStep} cameras={cameras.current} />
       case 'Gdrive':
         return <GoogleDriveImport
-        stores={props.stores}
         setStep={setStep} onSelectedFile={(value) => {
           createContentOfIframe(value, map).then((c) => {
             sharedContents.shareContent(c)

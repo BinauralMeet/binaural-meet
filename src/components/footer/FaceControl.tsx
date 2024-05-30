@@ -1,13 +1,14 @@
-import {BMProps, dialogStyle} from '@components/utils'
+import {dialogStyle} from '@components/utils'
 import Container from '@material-ui/core/Container'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
 import Switch from '@material-ui/core/Switch'
 import {useTranslation} from '@models/locales'
 import {Observer} from 'mobx-react-lite'
 import React from 'react'
+import {participants} from '@stores/'
 
-export const FaceControl: React.FC<BMProps> = (props: BMProps) => {
-  const local = props.stores.participants.local
+export const FaceControl: React.FC = () => {
+  const local = participants.local
   const faceSwitch = <Observer>{ () =>
     <Switch checked={local.information.faceTrack} name="face" style={dialogStyle}
       onChange={event => {

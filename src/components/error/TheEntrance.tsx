@@ -1,4 +1,4 @@
-import { BMProps, buttonStyle, dialogStyle, translateIconStyle } from "@components/utils";
+import { buttonStyle, dialogStyle, translateIconStyle } from "@components/utils";
 import usageEn from "@images/usage.en.png";
 import usageJa from "@images/usage.ja.png";
 import Box from "@material-ui/core/Box";
@@ -16,9 +16,9 @@ import {tfDivStyle, tfIStyle, tfLStyle} from '@components/utils'
 import {conference} from '@models/conference'
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { GoogleAuthLogin } from "@components/utils/GoogleAuthLogin";
+import {participants} from '@stores/'
 
-export const TheEntrance: React.FC<BMProps> = (props) => {
-  const { participants } = props.stores;
+export const TheEntrance: React.FC = () => {
   const [name, setName] = useState(participants.local.information.name);
   const savedRoom = sessionStorage.getItem("room");
   const [room, setRoom] = useState(
