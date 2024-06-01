@@ -2,7 +2,7 @@ import {MAP_CENTER} from '@components/Constants'
 import {MapObject as IMapObject} from '@models/MapObject'
 import {Pose2DMap} from '@models/utils'
 import _ from 'lodash'
-import { makeObservable, observable} from 'mobx'
+import { computed, makeObservable, observable} from 'mobx'
 import {shallowObservable, Store} from './utils'
 
 export const defaultValue: IMapObject = {
@@ -29,11 +29,12 @@ export class MapObject implements Store<IMapObject> {
 
 export class MediaClip{
   @observable.ref videoBlob?: Blob
+  videoTime = 0
   @observable.ref audioBlob?: Blob
-  @observable videoTime = 0
-  @observable audioTime = 0
+  audioTime = 0
+  @observable videoFrom = 0
+  @observable audioFrom = 0
   @observable rate = 1
-  @observable timeFrom = 0
   @observable pause = false
   constructor(){
     makeObservable(this)

@@ -90,7 +90,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   const [resizeBase, setResizeBase] = useState(size)    //  size when resize start
   const [resizeBasePos, setResizeBasePos] = useState(pose.position)    //  position when resize start
   const [showTitle, setShowTitle] = useState(!props.autoHideTitle || !props.content.pinned)
-  const [showForm, setShowForm] = useState(false)
+  const [showForm, setShowFormRaw] = useState(false)
   const [preciseOrientation, setPreciseOrientation] = useState(pose.orientation)
   const [dragging, setDragging] = useState(false)
   const rnd = useRef<Rnd>(null)                         //  ref to rnd to update position and size
@@ -99,6 +99,11 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   function setEditing(flag: boolean) { contents.setEditing(flag ? props.content.id : '') }
   const memberRef = useRef<RndContentMember>(new RndContentMember())
   const member = memberRef.current
+  function setShowForm(show: boolean){
+    if (!props.content.playback){
+      setShowFormRaw(show)
+    }
+  }
 
   useEffect(  //  update pose
     ()=> {

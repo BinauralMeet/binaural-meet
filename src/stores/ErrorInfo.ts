@@ -139,7 +139,7 @@ export class ErrorInfo {
     }
   }
   @action clear(type?: ErrorType) {
-    if (this.type === 'afk'){
+    if (type === 'afk'){
       participants.local.physics.awayFromKeyboard = false
     }
     if (type){

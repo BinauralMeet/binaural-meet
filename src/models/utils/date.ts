@@ -11,6 +11,6 @@ export function dateTimeString(n?: number){
     n = Date.now()
   }
   const d = new Date(n)
-  return `${pad4(d.getFullYear())}.${pad2(d.getMonth()+1)}.${pad2(d.getDay())}_`
+  return `${pad4(d.getFullYear())}.${pad2(d.getMonth()+1)}.${pad2(d.getDate())}_`
    + `${pad2(d.getHours())}.${pad2(d.getMinutes())}`
 }

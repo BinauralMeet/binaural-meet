@@ -2,8 +2,8 @@ import {MAP_SIZE} from '@components/Constants'
 import {MoreButton, moreButtonControl, MoreButtonMember} from '@components/utils/MoreButton'
 import {makeStyles} from '@material-ui/core/styles'
 import {addV2, assert, extractScaleX, mulV2, rotateVector2DByDegree, subV2, transformPoint2D, transfromAt} from '@models/utils'
-import {useObserver} from 'mobx-react-lite'
-import React, {useEffect, useRef} from 'react'
+import {Observer} from 'mobx-react-lite'
+import React, {CSSProperties, useEffect, useRef} from 'react'
 import {DragHandler, DragState} from '../../utils/DragHandler'
 import {KeyHandlerPlain} from '../../utils/KeyHandler'
 import {LocalParticipantForm} from './LocalParticipantForm'
@@ -239,12 +239,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   },
             [])
 */
-  const styleProps = useObserver(() => ({
-    position: participant.pose.position,
-    size: props.size,
-  }))
   const [color] = participant ? participant.getColor() : ['white', 'black']
-  const classes = useStyles(styleProps)
   const [showMore, setShowMore] = React.useState(false)
   const [showConfig, setShowConfig] = React.useState(false)
   const moreControl = moreButtonControl(setShowMore, member)
@@ -266,9 +261,19 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
         openConfig()
       }}
     />
-    <MoreButton show={showMore} className={classes.more} htmlColor={color} {...moreControl}
-      buttonRef = {ref}
-      onClickMore = {openConfig} />
+    <Observer>{()=>{
+      const moreStyle:CSSProperties = {
+        position: 'absolute',
+        width: props.size * 0.5 ,
+        height: props.size * 0.5,
+        left: participant.pose.position[0] + props.size * 0.4,
+        top: participant.pose.position[1] - props.size * 0.8,
+      }
+
+      return <MoreButton show={showMore} style={moreStyle} htmlColor={color} {...moreControl}
+        buttonRef = {ref}
+        onClickMore = {openConfig} />
+    }}</Observer>
     <LocalParticipantForm open={showConfig} close={onClose}
       anchorEl={ref.current} anchorOrigin={{vertical:'top', horizontal:'left'}}
       anchorReference = "anchorEl"

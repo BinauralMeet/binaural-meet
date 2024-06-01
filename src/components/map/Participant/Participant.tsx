@@ -17,37 +17,35 @@ import React from 'react'
 import {SignalQualityIcon} from './SignalQuality'
 import {VRMAvatar} from '../../avatar/VRMAvatar'
 import { ComposedAvatar } from '@components/avatar/ComposedAvatar'
+import _ from 'lodash'
 
-interface StyleProps {
+const renderLog = false ? console.log : (..._:any)=>{}
+
+interface StylePropsPose {
   position: [number, number],
   orientation: number,
   size: number,
 }
-
+interface StylePropsSize {
+  size: number,
+}
 // const SVG_RATIO = 18
 const SVG_RATIO = 12
 const HALF = 0.5
 
-const useStyles = makeStyles({
-  root: (props: StyleProps) => ({
+const useStylesWithPose = makeStyles({
+  root: (props: StylePropsPose) => ({
     position: 'absolute',
     left: props.position[0],
     top: props.position[1],
     width:0,
     height:0,
   }),
-  pointerRotate: (props: StyleProps) => ({
+  pointerRotate: (props: StylePropsPose) => ({
     transformOrigin: `top left`,
     transform: `rotate(${props.orientation}deg)`,
   }),
-  pointer: (props: StyleProps) => ({
-    position: 'absolute',
-    width: `${SVG_RATIO * props.size}`,
-    left: `-${SVG_RATIO * props.size * HALF}px`,
-    top: `-${SVG_RATIO * props.size * HALF}px`,
-    pointerEvents: 'none',
-  }),
-  avatar: (props: StyleProps) => ({
+  avatar: (props: StylePropsPose) => ({
     position: 'absolute',
     left: `-${props.size * HALF}px`,
     top: `-${props.size * HALF}px`,
@@ -55,7 +53,17 @@ const useStyles = makeStyles({
     transform: `translate(${props.size * HALF}px, ${props.size * HALF}px) `
       +`rotate(${-props.orientation}deg) translate(${-props.size * HALF}px, ${-props.size * HALF}px)`,
   }),
-  icon: (props: StyleProps) => ({
+})
+
+const useStylesWithSize = makeStyles({
+  pointer: (props: StylePropsSize) => ({
+    position: 'absolute',
+    width: `${SVG_RATIO * props.size}`,
+    left: `-${SVG_RATIO * props.size * HALF}px`,
+    top: `-${SVG_RATIO * props.size * HALF}px`,
+    pointerEvents: 'none',
+  }),
+  icon: (props: StylePropsSize) => ({
     position: 'absolute',
     width: props.size * 0.4 ,
     height: props.size * 0.4,
@@ -63,7 +71,7 @@ const useStyles = makeStyles({
     top: props.size * 0.6,
     pointerEvents: 'none',
   }),
-  iconLeft: (props: StyleProps) => ({
+  iconLeft: (props: StylePropsSize) => ({
     position: 'absolute',
     width: props.size * 0.4 ,
     height: props.size * 0.4,
@@ -71,7 +79,7 @@ const useStyles = makeStyles({
     top: props.size * 0.6,
     pointerEvents: 'none',
   }),
-  signalIcon: (props: StyleProps) => ({
+  signalIcon: (props: StylePropsSize) => ({
     position: 'absolute',
     width: props.size * 0.25 ,
     height: props.size * 0.25,
@@ -79,80 +87,47 @@ const useStyles = makeStyles({
     top: props.size * 0.8,
     pointerEvents: 'none',
   }),
-  more: (props: StyleProps) => ({
-    position: 'absolute',
-    width: props.size * 0.4 ,
-    height: props.size * 0.4,
-    left: props.size * 0.9,
-    top: -props.size * 0.3,
-  }),
 })
 
-export interface ParticipantProps{
-  size: number  //  constant
-  participant: LocalParticipant | RemoteParticipant | PlaybackParticipant
-  zIndex?: number
+type AnyParticipant = LocalParticipant | RemoteParticipant | PlaybackParticipant
+interface BasicProps{
+  participant: AnyParticipant
+  size: number
+}
+interface OuterProps extends BasicProps{
+  isLocal?: boolean
+}
+interface MainAvatarProps extends BasicProps{
   isLocal?: boolean
   isPlayback?: boolean
   onContextMenu?:(ev:React.MouseEvent<HTMLDivElement, MouseEvent>) => void
 }
+export interface ParticipantProps extends MainAvatarProps{
+  zIndex?: number
+}
 
 
-export const Participant: React.FC<ParticipantProps> = (props) => {
+
+function getColor(participant:LocalParticipant|RemoteParticipant|PlaybackParticipant){
+  return participant ? participant.getColor() : ['white', 'black']
+}
+function calcOuterRadius(props:{size:number}){
+  return props.size / 2 + 2
+}
+function calcSvgCenter(props:{size:number}){
+  return SVG_RATIO * props.size * HALF
+}
+
+const audioMeterSteps = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+export const AudioMeter: React.FC<BasicProps> = React.memo( (props) => {
   const participant = props.participant
-  const classes = useStyles({
-    position: participant.pose.position,
-    orientation: participant.pose.orientation,
-    size: props.size,
-  })
-  function getColor(){
-    return participant ? participant.getColor() : ['white', 'black']
-  }
-  const outerRadius = props.size / 2 + 2
   const AUDIOLEVELSCALE = props.size * SVG_RATIO * HALF
-  const svgCenter = SVG_RATIO * props.size * HALF
+  const svgCenter = calcSvgCenter(props)
 
-
-  const dir = subV2(participant.mouse.position, participant.mouse.position)
-  const eyeDist = 0.45
-
-  //const tailStart = noseStart
-  //const tailLength = tailStart * 0.9
-  //const tailWidth = 0.36
-  function onClickEye(ev: React.MouseEvent | React.TouchEvent | React.PointerEvent){
-    if (props.participant.id === participants.localId){
-      ev.stopPropagation()
-      ev.preventDefault()
-      participants.local.physics.awayFromKeyboard = true
-    }
-  }
-  const eyeClick = {
-    onMouseDown: onClickEye,
-    onTouchStart: onClickEye,
-    onPointerDown: onClickEye,
-  }
-
-  const shadow = <Observer>{()=>{
-    const shadowOffset = Math.sqrt(participant.viewpoint.height) / 2.5 - 4
-    const shadowScale = 1 + (shadowOffset/200)
-
-    return <svg className={classes.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO}
-    xmlns="http://www.w3.org/2000/svg">{/* Cast shadow to show the height */}
-    <defs>
-      <radialGradient id="grad">
-        <stop offset="0%" stopColor="rgb(0,0,0,0.4)"/>
-        <stop offset="70%" stopColor="rgb(0,0,0,0.4)"/>
-        <stop offset="100%" stopColor="rgb(0,0,0,0)"/>
-      </radialGradient>
-    </defs>
-    <circle r={outerRadius * shadowScale} cy={svgCenter-shadowOffset} cx={svgCenter-shadowOffset}
-      stroke="none" fill={'url(#grad)'} />
-  </svg>}}</Observer>
-
-  const audioMeterSteps = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
-  const audioMeter = <Observer>{()=>{
+  return <Observer>{()=>{
+    renderLog(`${participant.id} audioMeter`)
     const audioLevel = participant!.trackStates.micMuted ? 0 : Math.pow(participant!.audioLevel, 0.5)
-    const [color] = getColor()
+    const [color] = getColor(participant)
 
     return <>{
       audioMeterSteps.map(step => audioLevel > step ?
@@ -163,10 +138,19 @@ export const Participant: React.FC<ParticipantProps> = (props) => {
         stroke="black" fill="none" opacity={0.4 * (1 - step)} strokeDasharray="4 32" strokeDashoffset="-4" />
       </React.Fragment>
       : undefined)} </>
-  }}</Observer>
+    }}
+  </Observer>
+})
+
+export const AvatarOuter: React.FC<OuterProps> = React.memo((props)=>{
+  const svgCenter = calcSvgCenter(props)
+  const outerRadius = calcOuterRadius(props)
+  const participant = props.participant
+  const circleOuter = <></>
 
   const arrowOuter = <Observer>{()=>{
-    const [color, textColor] = getColor()
+    renderLog(`${participant.id} arrowOuter`)
+    const [color, textColor] = getColor(participant)
 
     return <g transform={`translate(${svgCenter} ${svgCenter}) rotate(-135) `}>
       <rect style={{pointerEvents: 'fill'}}
@@ -179,23 +163,26 @@ export const Participant: React.FC<ParticipantProps> = (props) => {
     </g>}
   }</Observer>
 
+  const eyeDist = 0.45
+  function onClickEye(ev: React.MouseEvent | React.TouchEvent | React.PointerEvent){
+    if (props.participant.id === participants.localId){
+      ev.stopPropagation()
+      ev.preventDefault()
+      participants.local.physics.awayFromKeyboard = true
+    }
+  }
+  const eyeClick = {
+    onMouseDown: onClickEye,
+    onTouchStart: onClickEye,
+    onPointerDown: onClickEye,
+  }
   const frogOuter = <Observer>{()=>{
+    renderLog(`${participant.id} ${participant.physics.awayFromKeyboard ? 'AFK' : ''} frogOuter`)
     const eyeOffsetMul = normV(participant.viewpoint.center)/500 * 0.16 + 0.85
     const eyeOffsets:[[number, number], [number, number]]
     = [[eyeDist * outerRadius, - eyeOffsetMul*outerRadius],
       [-eyeDist * outerRadius, - eyeOffsetMul*outerRadius]]
-    const dirs = eyeOffsets.map(offset => subV2(dir, rotateVector2DByDegree(participant.pose.orientation, offset)))
-    const eyeballsGlobal = dirs.map((dir) => {
-      const norm = normV(dir)
-      const dist = Math.log(norm < 1 ? 1 : norm) * 0.3
-      const limit = 0.1 * outerRadius
-      const offset = dist > limit ? limit : dist
-
-      return mulV2(offset / norm, dir)
-    })
-    const eyeballs = eyeballsGlobal.map(g => addV2([0, -0.04 * outerRadius],
-                                                    rotateVector2DByDegree(-participant.pose.orientation, g)))
-    const [color] = getColor()
+    const [color] = getColor(participant)
 
     return <g style={{pointerEvents: 'fill'}} >
     <circle {...eyeClick} r={0.35 * outerRadius} cy={svgCenter + eyeOffsets[0][1]}
@@ -203,100 +190,194 @@ export const Participant: React.FC<ParticipantProps> = (props) => {
     <circle {...eyeClick} r={0.35 * outerRadius} cy={svgCenter + eyeOffsets[1][1]}
       cx={svgCenter + eyeOffsets[1][0]} fill={color} />
     {participant.physics.awayFromKeyboard === true ?
-      undefined
-      :<>
-      <circle {...eyeClick} r={0.25 * outerRadius} cy={svgCenter + eyeOffsets[0][1]}
-        cx={svgCenter + eyeOffsets[0][0]} fill="white" />
-      <circle {...eyeClick} r={0.25 * outerRadius} cy={svgCenter + eyeOffsets[1][1]}
-        cx={svgCenter + eyeOffsets[1][0]} fill="white" />
-      <circle {...eyeClick} r={0.14 * outerRadius} cy={svgCenter + eyeOffsets[0][1] + eyeballs[0][1]}
-        cx={svgCenter + eyeOffsets[0][0] +  eyeballs[0][0]} fill="black" />
-      <circle {...eyeClick} r={0.14 * outerRadius} cy={svgCenter + eyeOffsets[1][1] + eyeballs[1][1]}
-        cx={svgCenter + eyeOffsets[1][0] +  eyeballs[1][0]} fill="black" />
-    </>}
+      undefined:
+      <>
+        <circle {...eyeClick} r={0.25 * outerRadius} cy={svgCenter + eyeOffsets[0][1]}
+          cx={svgCenter + eyeOffsets[0][0]} fill="white" />
+        <circle {...eyeClick} r={0.25 * outerRadius} cy={svgCenter + eyeOffsets[1][1]}
+          cx={svgCenter + eyeOffsets[1][0]} fill="white" />
+
+        <Observer>{()=>{
+          renderLog(`${participant.id} eyeball`)
+          const dir = subV2(participant.mouse.position, participant.pose.position)
+          const dirs = eyeOffsets.map(offset => subV2(dir, rotateVector2DByDegree(participant.pose.orientation, offset)))
+          const eyeballsGlobal = dirs.map((dir) => {
+            const norm = normV(dir)
+            const dist = Math.log(norm < 1 ? 1 : norm) * 0.3
+            const limit = 0.1 * outerRadius
+            const offset = dist > limit ? limit : dist
+
+            return mulV2(offset / norm, dir)
+          })
+          const eyeballs = eyeballsGlobal.map(g => addV2([0, -0.04 * outerRadius],
+                                                          rotateVector2DByDegree(-participant.pose.orientation, g)))
+          return <>
+            <circle {...eyeClick} r={0.14 * outerRadius} cy={svgCenter + eyeOffsets[0][1] + eyeballs[0][1]}
+              cx={svgCenter + eyeOffsets[0][0] +  eyeballs[0][0]} fill="black" />
+            <circle {...eyeClick} r={0.14 * outerRadius} cy={svgCenter + eyeOffsets[1][1] + eyeballs[1][1]}
+              cx={svgCenter + eyeOffsets[1][0] +  eyeballs[1][0]} fill="black" />
+          </>}}</Observer>
+      </>
+    }
   </g>  }}</Observer>
 
-  const nose = <Observer>{()=>{
+  return <>{ participant.information.avatar === 'arrow' ? arrowOuter: //  arrow (circle with a corner) type avatar
+    participant.information.avatar === 'circle' ? circleOuter: frogOuter // Frog type (two eyes) avatar
+    }</>
+})
+
+const Nose: React.FC<OuterProps> = (props)=>{
+  const svgCenter = calcSvgCenter(props)
+  const outerRadius = calcOuterRadius(props)
+  const participant = props.participant
+
+  return <Observer>{()=>{
+    renderLog(`${participant.id} nose`)
     const nodding = participant.viewpoint.nodding
     const noseWidth = 0.45
     const noseStart = 0.9 * (nodding ? Math.cos(nodding * 4) : 1)
     const noseLength = 0.6 * noseStart
-    const [color, textColor] = getColor()
+    const [color, textColor] = getColor(participant)
 
     return <path d={`M ${svgCenter-noseWidth*outerRadius/2} ${svgCenter-outerRadius*noseStart} `+
     `Q ${svgCenter} ${svgCenter-outerRadius*(noseStart+noseLength)}` +
     ` ${svgCenter+noseWidth*outerRadius/2} ${svgCenter-outerRadius*noseStart}`} stroke={textColor} fill={color} />}}
-    </Observer>
+  </Observer>
+}
+const Tail: React.FC = ()=>{
+  //const tailStart = noseStart
+  //const tailLength = tailStart * 0.9
+  //const tailWidth = 0.36
   //const tail = <path d={`M ${svgCenter-tailWidth*outerRadius} ${svgCenter+outerRadius*tailStart}` +
   //  ` Q ${svgCenter} ${svgCenter+outerRadius*(tailStart+tailLength)}`+
   //  `  ${svgCenter+tailWidth*outerRadius} ${svgCenter+outerRadius*tailStart}`} stroke={textColor} fill={color} />
-  const tail = undefined
-  const circleOuter = undefined
+  return <></>
+}
 
-  const avatarOuter =
-    participant.information.avatar === 'arrow' ? arrowOuter: //  arrow (circle with a corner) type avatar
-    participant.information.avatar === 'circle' ? circleOuter: frogOuter // Frog type (two eyes) avatar
+const OuterUnder: React.FC<OuterProps> = React.memo((props)=>{
+  const classesSize = useStylesWithSize({
+    size: props.size
+  })
+  const svgCenter = calcSvgCenter(props)
+  const outerRadius = calcOuterRadius(props)
+  const participant = props.participant
 
-  const outerUnder = <Observer>{()=>{
+  return <Observer>{()=>{
+    renderLog(`${participant.id} outerUnder`)
     const nodding = participant.viewpoint.nodding
     const isNoseUp = nodding ? nodding < -0.01 : false
-    const [color, textColor] = getColor()
+    const [color, textColor] = getColor(participant)
 
     return <svg
-      className={classes.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO} xmlns="http://www.w3.org/2000/svg">
-      {nodding ? (isNoseUp ? tail : nose) : undefined}
+      className={classesSize.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO} xmlns="http://www.w3.org/2000/svg">
+      {nodding ? (isNoseUp ? <Tail /> : <Nose {...props}/>) : undefined}
       <circle r={outerRadius} cy={svgCenter} cx={svgCenter} stroke={props.isLocal ? textColor : 'none'} fill={color} />
-      {audioMeter}
-      {(!nodding || !isNoseUp) ? avatarOuter : undefined}
+      <AudioMeter size={props.size} participant={props.participant}/>
+      {(!nodding || !isNoseUp) ? <AvatarOuter {...props}/> : undefined}
     </svg>}}</Observer>
+})
 
-  const outerOver = <Observer>{()=>{
+const OuterOver: React.FC<OuterProps> = React.memo((props) => {
+  const participant = props.participant
+  const classesSize = useStylesWithSize({
+    size: props.size
+  })
+
+  return <Observer>{()=>{
+    renderLog(`${participant.id} outerOver`)
     const nodding = participant.viewpoint.nodding
-    const isNoseUp = nodding ? nodding < -0.01 : false
+    if (nodding){
+      const isNoseUp = nodding ? nodding < -0.01 : false
 
-    return <svg
-      className={classes.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO} xmlns="http://www.w3.org/2000/svg">
-      {isNoseUp ? avatarOuter: undefined}
-      {nodding ? (isNoseUp ? nose : tail) : undefined}
-    </svg>}}</Observer>
+      return <svg
+        className={classesSize.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO} xmlns="http://www.w3.org/2000/svg">
+        {isNoseUp ? <AvatarOuter {...props} />: undefined}
+        {nodding ? (isNoseUp ? <Nose {...props}/> : <Tail />) : undefined}
+      </svg>
+    }
+    return <></>
+  }}</Observer>
+})
+
+const MainAvatar: React.FC<MainAvatarProps> = React.memo((props) => {
+  const participant = props.participant
+  renderLog(`${participant.id} MainAvatar`)
+  const classesSize = useStylesWithSize({
+    size: props.size
+  })
+
+  return <Observer>{()=>
+    <Tooltip title={participant!.information.name}>
+      <div>
+        <ComposedAvatar participant={props.participant} mirror={props.isLocal} size={props.size}/>
+        <SignalQualityIcon className={classesSize.signalIcon} quality={props.participant.quality} />
+        {participant.trackStates.headphone ?
+          <HeadsetIcon className={classesSize.icon} htmlColor="rgba(0, 0, 0, 0.3)" /> : undefined}
+        {participant.trackStates.speakerMuted ?
+          <SpeakerOffIcon className={classesSize.icon} color="secondary" /> :
+          (participant.trackStates.micMuted ? <MicOffIcon className={classesSize.icon} color="secondary" /> : undefined)}
+        {!participant.trackStates.micMuted && participant.physics.onStage ?
+          <Icon className={classesSize.icon} icon={megaphoneIcon} color="gold" /> : undefined }
+        {props.isPlayback ? <PlayArrowIcon className={classesSize.iconLeft} htmlColor="#0C0" /> : undefined}
+        {participant.recording ? <RecordIcon className={classesSize.iconLeft} htmlColor="#D00" /> : undefined}
+      </div>
+    </Tooltip>
+  }</Observer>
+})
 
 
-  return <>
-    <div className={classes.root} style={{zIndex:props.isLocal ? 5000 : props.zIndex}}>
-      {shadow}
-      <Observer>{()=>{
+const Shadow: React.FC<BasicProps> = React.memo((props) => {
+  const participant = props.participant
+  const classesSize = useStylesWithSize({size: props.size})
+  const outerRadius = calcOuterRadius(props)
+  const svgCenter = calcSvgCenter(props)
 
-        return <div className={classes.pointerRotate}>
-          {outerUnder}
-          <div className={classes.avatar + ' dragHandle'} onContextMenu={props.onContextMenu}>
-            <Tooltip title={participant!.information.name}>
-              <div>
-                <ComposedAvatar participant={props.participant} mirror={props.isLocal} size={props.size}/>
-                <SignalQualityIcon className={classes.signalIcon} quality={props.participant.quality} />
-                {participant.trackStates.headphone ?
-                  <HeadsetIcon className={classes.icon} htmlColor="rgba(0, 0, 0, 0.3)" /> : undefined}
-                {participant.trackStates.speakerMuted ?
-                  <SpeakerOffIcon className={classes.icon} color="secondary" /> :
-                  (participant.trackStates.micMuted ? <MicOffIcon className={classes.icon} color="secondary" /> : undefined)}
-                {!participant.trackStates.micMuted && participant.physics.onStage ?
-                  <Icon className={classes.icon} icon={megaphoneIcon} color="gold" /> : undefined }
-                {props.isPlayback ? <PlayArrowIcon className={classes.iconLeft} htmlColor="#0C0" /> : undefined}
-                {participant.recording ? <RecordIcon className={classes.iconLeft} htmlColor="#D00" /> : undefined}
-              </div>
-            </Tooltip>
-          </div>
-          {outerOver}
+  return <Observer>{()=>{
+    renderLog(`${participant.id} Shadow`)
+    const shadowOffset = Math.sqrt(participant.viewpoint.height) / 2.5 - 4
+    const shadowScale = 1 + (shadowOffset/200)
+
+    return <svg className={classesSize.pointer} width={props.size * SVG_RATIO} height={props.size * SVG_RATIO}
+    xmlns="http://www.w3.org/2000/svg">{/* Cast shadow to show the height */}
+    <defs>
+      <radialGradient id="grad">
+        <stop offset="0%" stopColor="rgb(0,0,0,0.4)"/>
+        <stop offset="70%" stopColor="rgb(0,0,0,0.4)"/>
+        <stop offset="100%" stopColor="rgb(0,0,0,0)"/>
+      </radialGradient>
+    </defs>
+    <circle r={outerRadius * shadowScale} cy={svgCenter-shadowOffset} cx={svgCenter-shadowOffset}
+      stroke="none" fill={'url(#grad)'} />
+  </svg>}}</Observer>
+})
+
+export const Participant: React.FC<ParticipantProps> = (props) => {
+  const participant = props.participant
+
+  return <Observer>{()=>{
+    renderLog(`${participant.id} Participant`)
+    const classesPose = useStylesWithPose({
+      position: participant.pose.position,
+      orientation: participant.pose.orientation,
+      size: props.size,
+    })
+    const useVrm = participant.information.avatarSrc && participant.information.avatarSrc.slice(-4) === '.vrm'
+
+    return <><div className={classesPose.root} style={{zIndex:props.isLocal ? 5000 : props.zIndex}}>
+      <Shadow participant={props.participant} size={props.size} />
+      <div className={classesPose.pointerRotate}>
+        <OuterUnder participant={props.participant} size={props.size} isLocal={props.isLocal} />
+        <div className={classesPose.avatar + ' dragHandle'} onContextMenu={props.onContextMenu}>
+          <MainAvatar participant={props.participant} isLocal={props.isLocal} isPlayback={props.isPlayback} size={props.size} />
         </div>
-      }}</Observer>
+        <OuterOver participant={props.participant} size={props.size} isLocal={props.isLocal}/>
+        </div>
     </div>
-    <Observer>{()=>{
-      const useVrm = participant.information.avatarSrc && participant.information.avatarSrc.slice(-4) === '.vrm'
-
-      return useVrm ?
-        <div className={classes.root} style={{zIndex:props.zIndex ? props.zIndex + 5000 : 10000}}>
-          <VRMAvatar participant={participant} />
-        </div> : <></>
-    }}</Observer>
+    {useVrm ?
+    <div className={classesPose.root} style={{zIndex:props.zIndex ? props.zIndex + 5000 : 10000}}>
+      <VRMAvatar participant={participant} />
+    </div>:undefined}
   </>
+  }}</Observer>
 }
 Participant.displayName = 'Participant'

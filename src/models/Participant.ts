@@ -28,6 +28,8 @@ export interface ParticipantBase extends MapObject{
 }
 
 export interface PlaybackParticipant extends ParticipantBase {
+  trackStates: TrackStates
+  audioLevel: number
 }
 
 export interface RemoteParticipant extends ParticipantBase {
@@ -35,6 +37,8 @@ export interface RemoteParticipant extends ParticipantBase {
   closedZone?: ISharedContent
   inLocalsZone: boolean
   tracks: Tracks
+  trackStates: TrackStates
+  audioLevel: number
 }
 
 export interface LocalParticipant extends ParticipantBase {
@@ -42,6 +46,8 @@ export interface LocalParticipant extends ParticipantBase {
   information: LocalInformation
   zone?: ISharedContent
   tracks: Tracks
+  trackStates: TrackStates
+  audioLevel: number
 }
 export type Participant = LocalParticipant | RemoteParticipant | PlaybackParticipant
 

@@ -19,7 +19,7 @@ export const AfkDialog: React.FC<{}> = () => {
       evKey.preventDefault()
       evKey.stopPropagation()
     }
-    errorInfo.clear()
+    errorInfo.clear('afk')
   }
 
   return <ErrorDialogFrame style={dialogStyle} onClose={onClose}>

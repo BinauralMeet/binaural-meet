@@ -1,10 +1,10 @@
 import {contentsToSend, ISharedContent, ISharedContentToSend} from '@models/ISharedContent'
 import {ParticipantBase, RemoteInformation, Viewpoint, VRMRigs} from '@models/Participant'
-import {mouse2Str, pose2Str, str2Mouse, str2Pose} from '@models/utils'
+import {assert, diffSet, mouse2Str, pose2Str, str2Mouse, str2Pose} from '@models/utils'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {TrackStates} from '@stores/participants/ParticipantBase'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
-import {autorun, IReactionDisposer, makeObservable, observable} from 'mobx'
+import {autorun, computed, IReactionDisposer, makeObservable, observable} from 'mobx'
 import {BMMessage} from './DataMessage'
 import {MessageType} from './DataMessageType'
 import {Dexie, IndexableType, Table} from 'dexie'
@@ -14,6 +14,9 @@ import { MediaClip } from '@stores/MapObject'
 import participants from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
 declare const d:any                  //  from index.html
+
+const REC_LOG = false
+const recLog = REC_LOG ? console.log : (..._:any)=>{}
 
 const recorderDb = new Dexie('recorderDb');
 recorderDb.version(1).stores({
@@ -107,7 +110,7 @@ class MediaRec implements MediaRecData{
   private onDataAvailable(ev: BlobEvent){
     const blob = ev.data
     this.blobs.push(blob)
-    //  console.log(`p:${this.pid} c:${this.cid} role:${this.role} blob type:${blob.type} size:${blob.size}`)
+    //  recLog(`p:${this.pid} c:${this.cid} role:${this.role} blob type:${blob.type} size:${blob.size}`)
     //  + `url:${window.URL.createObjectURL(blob)}`)
     this.onData(this)
   }
@@ -142,7 +145,8 @@ interface JSONPart{
   messages: Message[]
 }
 export class Recorder{
-  medias = new Map<string, MediaRec>()
+  recordingMedias = new Map<string, MediaRec>()
+
   messages: Message[] = []
   @observable recording = false
   startTime = 0
@@ -154,7 +158,9 @@ export class Recorder{
   private MessageTypesToRecord = new Set<string>([
     MessageType.PARTICIPANT_INFO, MessageType.PARTICIPANT_POSE, MessageType.PARTICIPANT_MOUSE,
     MessageType.PARTICIPANT_AFK, MessageType.PARTICIPANT_TRACKSTATES, MessageType.PARTICIPANT_VIEWPOINT,
-    MessageType.PARTICIPANT_ON_STAGE, MessageType.CONTENT_UPDATE_REQUEST, MessageType.CONTENT_REMOVE_REQUEST,
+    MessageType.PARTICIPANT_ON_STAGE, MessageType.CONTENT_UPDATE_REQUEST,
+    MessageType.PARTICIPANT_LEFT,
+    MessageType.CONTENT_REMOVE_REQUEST,
     MessageType.AUDIO_LEVEL
   ])
   private lastMessageValues= new Map<string, string>()
@@ -163,13 +169,14 @@ export class Recorder{
     makeObservable(this)
   }
   public clear(){
-    this.medias.clear()
+    this.recordingMedias.clear()
     this.messages = []
     this.stoppedMedias = []
     this.startTime = 0
     this.endTime = 0
     this.lastMessageValues.clear()
   }
+
   ///  Start to record
   public start(){
     this.clear()
@@ -214,6 +221,10 @@ export class Recorder{
 
   /// stop and save to db
   public stop(){
+    //  Stop all recording media
+    this.recordingMedias.forEach((_media, id) => this.stopMedia(id))
+    assert(this.recordingMedias.size === 0)
+
     if (this.intervalTimer){
       window.clearInterval(this.intervalTimer)
       this.intervalTimer = 0
@@ -221,7 +232,7 @@ export class Recorder{
     for(const d of this.disposers){ d() }
     this.disposers = []
     const promise = new Promise<DBRecord>((resolve, reject)=>{
-      this.stopMediaRecordings().then((medias:MediaRec[])=>{
+      this.getMediaData().then((medias:MediaRec[])=>{
         this.endTime = Date.now()
         this.makeRecord(medias).then((dbr)=>{
           dbBlobs.clear().then(()=>{
@@ -235,6 +246,7 @@ export class Recorder{
 
     return promise
   }
+
   //  called by DataConnection.ts
   public recordMessage(msg:BMMessage){
     if (this.recording && this.MessageTypesToRecord.has(msg.t)){
@@ -249,16 +261,15 @@ export class Recorder{
     }
   }
 
-
   //  incremental save to indexedDB
   private saveDiffToDB(){
     const promise = new Promise<void>((resolve)=>{
-      const medias = Array.from(this.medias.values())
+      const medias = Array.from(this.recordingMedias.values())
       let count = medias.length + 1
       const resolveAll = () => {
         count --
         if (count === 0){
-          //console.log(`saveDiffToDB() ${medias.length} media, ${this.messages.length} msg`)
+          //recLog(`saveDiffToDB() ${medias.length} media, ${this.messages.length} msg`)
           resolve()
         }
       }
@@ -322,7 +333,7 @@ export class Recorder{
       this.converting = true
       dbRecords.where({title:''}).count(nRecord => {
         if (nRecord === 0){ reject(); return}
-        //  console.log(`convert start nRecord=${nRecord}`)
+        //  recLog(`convert start nRecord=${nRecord}`)
         dbMessageRecs.toArray((dbMsgs:DBRecMessage[])=>{
           dbMediaRecs.toArray((dbMedias:DBMediaRec[])=>{
             const medias: MediaRecData[] = []
@@ -385,7 +396,8 @@ export class Recorder{
     return promise
   }
 
-  private stopMediaRecordings(){
+  private getMediaData(){
+    assert(this.recordingMedias.size === 0)
     this.recording = false
     participants.local.recording = false
     let count = 0
@@ -397,7 +409,6 @@ export class Recorder{
         }
       }
       const medias = this.stoppedMedias
-      medias.push(...this.medias.values())
       if (medias.length){
         for(const media of medias) {
           if (media.state === 'inactive'){
@@ -488,7 +499,7 @@ export class Recorder{
   private saveMediaRecordings(){
     let count = 0
     const promise = new Promise<MediaRec[]>((resolve, reject)=>{
-      const medias = Array.from(this.medias.values())
+      const medias = Array.from(this.recordingMedias.values())
       function resolveAll(){
         count ++
         if (count === medias.length){
@@ -515,42 +526,40 @@ export class Recorder{
     return promise
   }
 
+  private startMedia(stream:MediaStream, role:MediaRole, kind:MediaKind, id: string, opt?: {cid?:string, pid?: string}){
+    if (!this.recordingMedias.has(id)){
+      const media = new MediaRec(stream, role, kind, id, opt)
+      this.recordingMedias.set(id, media)
+      media.start()
+      recLog(`Rec for ${id}: ${JSON.stringify(media)}`)
+    }
+  }
+  private stopMedia(id: string){
+    const media = this.recordingMedias.get(id)
+    if (media){
+      media.stop()
+      this.stoppedMedias.push(media)
+      this.recordingMedias.delete(media.id)
+    }
+  }
+
+
   private observeAndRecordMedia(){
-    const remains = new Set(this.medias.keys()) //  medias which should be deleted
-    //  Participants
+//  Participants
     const all:(RemoteParticipant|LocalParticipant)[] = Array.from(participants.remote.values())
     all.push(participants.local)
     for(const p of all){
       const vid = `pv_${p.id}`
-      remains.delete(vid)
       if (p.tracks.avatarStream){
-        if (!this.medias.has(vid)){
-          const media = new MediaRec(p.tracks.avatarStream, 'avatar', 'video', vid, {pid:p.id})
-          this.medias.set(vid, media)
-          media.start()
-        }
+        this.startMedia(p.tracks.avatarStream, 'avatar', 'video', vid, {pid:p.id})
       }else{
-        const media = this.medias.get(vid)
-        if (media){
-          media.stop()
-          this.stoppedMedias.push(media)
-          this.medias.delete(vid)
-        }
+        this.stopMedia(vid)
       }
       const aid = `pa_${p.id}`
       if (p.tracks.audioStream){
-        if (!this.medias.has(aid)){
-          const media = new MediaRec(p.tracks.audioStream, 'avatar', 'audio', aid, {pid:p.id})
-          this.medias.set(aid, media)
-          media.start()
-        }
+        this.startMedia(p.tracks.audioStream, 'avatar', 'audio', aid, {pid:p.id})
       }else{
-        const media = this.medias.get(aid)
-        if (media){
-          media.stop()
-          this.stoppedMedias.push(media)
-          this.medias.delete(aid)
-        }
+        this.stopMedia(aid)
       }
     }
     //  Contents
@@ -566,24 +575,8 @@ export class Recorder{
           }else{
             id = `cv_${c.id}`
           }
-          remains.delete(id)
-          if (!this.medias.has(id)){
-            const stream = new MediaStream([track])
-            const media = new MediaRec(stream, c.type, track.kind as MediaKind, id, {cid:c.id})
-            this.medias.set(id, media)
-            media.start()
-            console.log(`Rec for ${id}: ${JSON.stringify(media)}`)
-          }
+          this.startMedia(new MediaStream([track]), c.type, track.kind as MediaKind, id, {cid:c.id})
         }
-      }
-    }
-    //  Remove when participat or content has removed
-    for(const id of remains){
-      const media = this.medias.get(id)
-      if (media){
-        media.stop()
-        this.stoppedMedias.push(media)
-        this.medias.delete(id)
       }
     }
   }
@@ -592,7 +585,7 @@ export class Recorder{
 class MediaPlay{
   blob: Blob
   time: number
-  duration?: number
+  duration: number
   cid?:string
   pid?:string
   role:string
@@ -600,7 +593,10 @@ class MediaPlay{
   constructor(blob: Blob, header:BlobHeader){
     this.blob = blob
     this.time = header.time!
-    this.duration = header.duration
+    if (!header.duration){
+      console.error(`duration is needed. ${JSON.stringify(header)}`)
+    }
+    this.duration = header.duration!
     this.cid = header.cid
     this.pid = header.pid
     this.role = header.role
@@ -609,19 +605,29 @@ class MediaPlay{
     }else{
       this.kind = 'invalid'
     }
-    //console.log(`MediaPlay URL:${URL.createObjectURL(this.blob)} ${JSON.stringify(this)}`)
+    //recLog(`MediaPlay URL:${URL.createObjectURL(this.blob)} ${JSON.stringify(this)}`)
   }
 }
 type PlayerState = 'play' | 'pause' | 'stop'
 
 class Player{
-  messages: Message[] = []
-  medias: MediaPlay[] = []
-  startTime = 0
-  endTime = 0
-  rate = 1.0
-  @observable state: PlayerState = 'stop'
-  @observable currentTime: number = 0 //  current playback time.
+  @computed get state(){ return this.state_ }
+  @observable private state_: PlayerState = 'stop'
+  @computed get currentTime(){ return this.currentTime_ }
+  @observable private currentTime_: number = 0 //  current playback time.
+  @computed get offset(){ return this.currentTime_ - this.startTime }
+  @computed get duration(){ return this.endTime - this.startTime }
+  private messages: Message[] = []
+  private medias: MediaPlay[] = []
+  private startTime = 0
+  private endTime = 0
+  private rate = 1.0
+  private playInterval = 0
+  private pids = new Set<string>()
+  private cids = new Set<string>()
+  private pidsPlaying = new Set<string>()
+  private cidsPlaying = new Set<string>()
+  private mediasPlaying:MediaPlay[] = []
   constructor(){
     makeObservable(this)
   }
@@ -644,14 +650,14 @@ class Player{
         archive.slice(start, start+headerLen).text().then(text => {
           start += headerLen
           const headers = JSON.parse(text) as BlobHeader[]
-          //  console.log(JSON.stringify(headers))
+          //  recLog(JSON.stringify(headers))
           for(const header of headers){
             if (header.role === 'message'){
               //  eslint-disable-next-line no-loop-func
               archive.slice(start, start+header.size).text().then(text => {
                 const jsonPart = JSON.parse(text) as JSONPart
                 this.messages = jsonPart.messages
-                this.currentTime = this.startTime = jsonPart.startTime
+                this.currentTime_ = this.startTime = jsonPart.startTime
                 this.endTime = jsonPart.endTime
                 count ++
                 if (count === headers.length){ resolve(this) }
@@ -676,22 +682,46 @@ class Player{
 
     return promise
   }
-  playInterval = 0
   seek(offset: number){
     const messages = Array.from(this.messages)
     const medias = Array.from(this.medias)
     messages.sort((a,b) => a.time - b.time)
     medias.sort((a,b) => a.time - b.time)
-    this.currentTime = this.startTime + offset
+    this.currentTime_ = this.startTime + offset
+    //recLog(`seek ct=${this.currentTime}`)
     //let time = this.startTime + offset
     const ffTo = messages.findIndex(m=>m.time >= this.currentTime) - 1
     if (ffTo > 0){  //  first forward to ffTo
       const ffMsgs = messages.splice(0, ffTo)
       this.fastForwardMessage(ffMsgs, this.currentTime)
     }
+    //  Play medias playing at currentTime
+    this.pidsPlaying.clear()
+    this.cidsPlaying.clear()
+    const mediasNotPlayed:MediaPlay[] = []  //  Medias too early or too late for current time.
     while (medias.length && medias[0].time < this.currentTime){
       const media = medias.shift()!
-      this.playMedia(media, this.currentTime)
+      if (this.playMedia(media, this.currentTime)){
+        if (media.pid) this.pidsPlaying.add(`p_${media.pid}`)
+        if (media.cid) this.cidsPlaying.add(`p_${media.cid}`)
+        this.mediasPlaying.push(media)
+      }else{
+        mediasNotPlayed.push(media)
+      }
+    }
+    mediasNotPlayed.push(...medias)
+    for(const media of mediasNotPlayed){
+      let clip
+      if (media.pid && !this.pidsPlaying.has(`p_${media.pid}`)){
+        clip = participants.playback.get(`p_${media.pid}`)?.clip
+      }
+      if (media.cid && !this.cidsPlaying.has(`p_${media.cid}`)){
+        clip = contents.playbackClips.get(`p_${media.cid}`)
+      }
+      if (clip){
+        if (media.kind === 'audio') clip.audioBlob = undefined
+        if (media.kind === 'video') clip.videoBlob = undefined
+      }
     }
     return ffTo
   }
@@ -700,55 +730,84 @@ class Player{
     this.setRateToClips(rate)
   }
   play(){
-    this.state = 'play'
+    this.state_ = 'play'
     this.setPauseToClips(false)
 
     const messages = Array.from(this.messages)
     const medias = Array.from(this.medias)
-    /*
-    console.log(`Play ${medias.length} medias.`)
+    //*
 
-    for(const media of medias){
-      const m = Object.assign({}, media) as any
-      delete m.blob
-      console.log(`${JSON.stringify(m)}`)
-    }
     //  */
 
     messages.sort((a,b) => a.time - b.time)
     medias.sort((a,b) => a.time - b.time)
+
+    recLog(`Play ${medias.length} medias.`)
+    for(const media of medias){
+      const {blob, ...m} = media
+      recLog(`${JSON.stringify(m)}`)
+    }
+
     //let time = this.startTime + offset
     const ffTo = messages.findIndex(m=>m.time >= this.currentTime) - 1
     if (ffTo > 0){  //  skip to ffTo
       messages.splice(0, ffTo)
     }
+
+    const ffToMedia = medias.findIndex(m=>m.time >= this.currentTime) - 1
+    if (ffToMedia > 0){  //  skip to ffToMedia
+      medias.splice(0, ffToMedia)
+    }
+
     const timeDiff = Date.now() - (this.currentTime)
     const step = () => {
-      this.currentTime = Date.now() - timeDiff
+      this.currentTime_ = Date.now() - timeDiff
+      //  recLog(`play ct=${this.currentTime}`)
+      //  Play message
       while (messages.length && messages[0].time < this.currentTime){
         const message = messages.shift()!
         const playFrom = this.currentTime - message.time
         this.playMessage(message.msg, playFrom)
       }
+      //  Play media
       while (medias.length && medias[0].time < this.currentTime){
         const media = medias.shift()!
-        this.playMedia(media, this.currentTime)
+        if (this.playMedia(media, this.currentTime)){
+          if (media.pid) this.pidsPlaying.add(`p_${media.pid}`)
+          if (media.cid) this.pidsPlaying.add(`p_${media.cid}`)
+          this.mediasPlaying.push(media)
+        }
       }
+      //  remove playing media
+      const remains:MediaPlay[] = []
+      for(const media of medias){
+        if (media.time + media.duration > this.currentTime){
+          remains.push(media)
+        }else{
+          if (media.pid) this.pidsPlaying.delete(`p_${media.pid}`)
+          if (media.cid) this.cidsPlaying.delete(`p_${media.cid}`)
+        }
+      }
+      this.mediasPlaying = remains
+
       if (this.currentTime > this.endTime){
-        this.state = 'pause'
+        if (this.playInterval){
+          window.clearInterval(this.playInterval)
+          this.playInterval = 0
+        }
+        this.state_ = 'pause'
       }
     }
-    if (this.playInterval) window.clearInterval(this.playInterval)
-    this.playInterval = window.setInterval(step, 30)
+    if (!this.playInterval) this.playInterval = window.setInterval(step, 30)
   }
   setRateToClips(rate: number){
-    this.pids.forEach(pid=>{
+    this.pidsPlaying.forEach(pid=>{
       const p = participants.playback.get(pid)
       if (p && p.clip){
         p.clip.rate = rate
       }
     })
-    this.cids.forEach(cid=>{
+    this.cidsPlaying.forEach(cid=>{
       const clip = contents.playbackClips.get(cid)
       if (clip){
         clip.rate = rate
@@ -756,13 +815,14 @@ class Player{
     })
   }
   setPauseToClips(pause: boolean){
-    this.pids.forEach(pid=>{
+    console.log(`${pause? 'Pause' : 'Play'} pids: ${JSON.stringify(Array.from(this.pidsPlaying.values()))}`)
+    this.pidsPlaying.forEach(pid=>{
       const p = participants.playback.get(pid)
       if (p && p.clip){
         p.clip.pause = pause
       }
     })
-    this.cids.forEach(cid=>{
+    this.cidsPlaying.forEach(cid=>{
       const clip = contents.playbackClips.get(cid)
       if (clip){
         clip.pause = pause
@@ -770,7 +830,7 @@ class Player{
     })
   }
   pause(){
-    this.state = 'pause'
+    this.state_ = 'pause'
     if (this.playInterval){
       window.clearInterval(this.playInterval)
       this.playInterval = 0
@@ -778,34 +838,36 @@ class Player{
     this.setPauseToClips(true)
   }
   stop(){
-    this.state = 'stop'
+    this.state_ = 'stop'
     if (this.playInterval){
       window.clearInterval(this.playInterval)
       this.playInterval = 0
     }
     this.cleanup()
-    this.currentTime = 0
+    this.currentTime_ = 0
   }
-  private pids = new Set<string>()
-  private cids = new Set<string>()
   private cleanup(){
-    this.state = 'stop'
+    this.state_ = 'stop'
     this.pids.forEach(pid=>{
       participants.removePlayback(pid)
     })
+    this.pids.clear()
+    this.pidsPlaying.clear()
     this.cids.forEach(cid=>{
       contents.removePlayback(cid)
     })
+    this.cids.clear()
+    this.cidsPlaying.clear()
   }
 
   private playMedia(media:MediaPlay, timeFrom:number){
-    if (media.duration && media.duration < timeFrom - media.time){
-      return  //  already ended and skip to play
+    if (media.duration && media.duration < timeFrom - media.time || this.currentTime < media.time){
+      return false //  Already ended or not start yet. Skip to play
     }
-    /*
-    const m = Object.assign({}, media) as any
-    delete m.blob
-    console.log(`playMedia: ${JSON.stringify(m)}`) //  */
+    ///*
+    const {blob, ...m} = media
+    recLog(`playMedia: ${this.currentTime%10000} ${JSON.stringify(m)}`) //  */
+
     let clip:MediaClip|undefined = undefined
     if (media.pid){
       const pid = `p_${media.pid}`
@@ -818,18 +880,22 @@ class Player{
       this.cids.add(cid)
       clip = contents.getOrCreatePlaybackClip(cid)
     }
+    if (this.state === 'pause') clip!.pause = true
     if (media.kind === 'audio'){
-      clip!.audioBlob = media.blob
       clip!.audioTime = media.time
+      clip!.audioFrom = timeFrom
+      clip!.rate = this.rate
+      clip!.audioBlob = media.blob
     }else if (media.kind === 'video'){
-      clip!.videoBlob = media.blob
       clip!.videoTime = media.time
+      clip!.videoFrom = timeFrom
+      clip!.rate = this.rate
+      clip!.videoBlob = media.blob
     }else{
       console.error(`Unknown media kind ${media.kind}`)
     }
-    clip!.timeFrom = timeFrom
-    clip!.rate = this.rate
-    clip!.pause = this.state === 'pause'
+    if (this.state === 'play') clip!.pause = false
+    return true
   }
 
   private fastForwardMessage(messages: Message[], timeToFF:number){
@@ -848,20 +914,28 @@ class Player{
       }else if (m.msg.t === MessageType.CONTENT_REMOVE_REQUEST){
         const cids = JSON.parse(m.msg.v) as string[]
         for(const cid of cids){
-          const newMessage = {...m}
-          newMessage.msg = {...m.msg}
-          newMessage.msg.v = JSON.stringify([cid])
-          contentMessages.set(cid, newMessage)
+          contentMessages.delete(cid)
         }
       }else if (m.msg.p){
-        let participant = participantMessages.get(m.msg.p)
-        if (!participant){
-          participant = new Map<string, Message>
-          participantMessages.set(m.msg.p, participant)
+        if (m.msg.t === MessageType.PARTICIPANT_LEFT){
+          const pidsLeft = JSON.parse(m.msg.v) as string[]
+          for(const pid of pidsLeft){
+            participantMessages.delete(pid)
+          }
+        }else{
+          let participant = participantMessages.get(m.msg.p)
+          if (!participant){
+            participant = new Map<string, Message>
+            participantMessages.set(m.msg.p, participant)
+          }
+          participant.set(m.msg.t, m)
         }
-        participant.set(m.msg.t, m)
       }
     }
+    const pidsBefore = this.pids
+    const cidsBefore = this.cids
+    this.pids = new Set<string>()
+    this.cids = new Set<string>()
     participantMessages.forEach(p => {
       p.forEach(m => {
         let playFrom = timeToFF - m.time
@@ -873,45 +947,65 @@ class Player{
       let playFrom = timeToFF - m.time
       this.playMessage(m.msg, playFrom)
     })
+    const pidsDelete = diffSet(pidsBefore, this.pids)
+    for(const pid of pidsDelete){
+      participants.playback.delete(pid)
+    }
+    const cidsDelete = diffSet(cidsBefore, this.cids)
+    for(const cid of cidsDelete){
+      contents.playbackContents.delete(cid)
+      contents.playbackClips.delete(cid)
+    }
   }
   private playMessage(msg: BMMessage, playFrom: number){
-    //console.log(`playMessage ${msg.t}`, msg)
-    const pid = msg.p ? `p_${msg.p}` : ''
-    if (pid){ this.pids.add(pid) }
-    const p = pid ? participants.getOrCreatePlayback(pid) : undefined
-    let notHandled = true
-    const v = JSON.parse(msg.v)
-    if (p){
-      notHandled = false
-      switch(msg.t){
-        case MessageType.PARTICIPANT_INFO: p.information = v as RemoteInformation; break
-        case MessageType.PARTICIPANT_POSE: p.pose = str2Pose(v as string); break
-        case MessageType.PARTICIPANT_MOUSE: p.mouse = str2Mouse(v as string); break
-        case MessageType.PARTICIPANT_AFK: p.physics.awayFromKeyboard = v as boolean; break
-        case MessageType.PARTICIPANT_TRACKSTATES: Object.assign(p.trackStates, v as TrackStates); break
-        case MessageType.PARTICIPANT_VIEWPOINT: Object.assign(p.viewpoint, v as Viewpoint); break
-        case MessageType.PARTICIPANT_ON_STAGE: p.physics.onStage = v as boolean; break
-        case MessageType.PARTICIPANT_VRMRIG: p.vrmRigs = v as VRMRigs; break
-        case MessageType.AUDIO_LEVEL: p.audioLevel = v as number; break
-        default: notHandled = true; break
+    //recLog(`playMessage ${msg.t}`, msg)
+    if (msg.t === MessageType.PARTICIPANT_LEFT){
+      this.removeParticipants(msg)
+    }else{
+      const pid = msg.p ? `p_${msg.p}` : ''
+      if (pid) this.pids.add(pid)
+        const p = pid ? participants.getOrCreatePlayback(pid) : undefined
+      let notHandled = true
+      if (p){
+        notHandled = false
+        const v = JSON.parse(msg.v)
+        switch(msg.t){
+          case MessageType.PARTICIPANT_INFO: p.information = v as RemoteInformation; break
+          case MessageType.PARTICIPANT_POSE: p.pose = str2Pose(v as string); break
+          case MessageType.PARTICIPANT_MOUSE: p.mouse = str2Mouse(v as string); break
+          case MessageType.PARTICIPANT_AFK: p.physics.awayFromKeyboard = v as boolean; break
+          case MessageType.PARTICIPANT_TRACKSTATES: Object.assign(p.trackStates, v as TrackStates); break
+          case MessageType.PARTICIPANT_VIEWPOINT: Object.assign(p.viewpoint, v as Viewpoint); break
+          case MessageType.PARTICIPANT_ON_STAGE: p.physics.onStage = v as boolean; break
+          case MessageType.PARTICIPANT_VRMRIG: p.vrmRigs = v as VRMRigs; break
+          case MessageType.AUDIO_LEVEL: p.audioLevel = v as number; break
+          default: notHandled = true; break
+        }
+      }
+      if (notHandled){
+        notHandled = false
+        switch(msg.t){
+          case MessageType.CONTENT_UPDATE_REQUEST: this.onContentUpdateRequest(msg, playFrom); break
+          case MessageType.CONTENT_REMOVE_REQUEST: this.onContentRemoveRequest(msg); break
+          default: notHandled = true; break
+        }
+      }
+      if (notHandled){
+        console.warn(`Playback did not handle message:`, msg)
       }
     }
-    if (notHandled){
-      notHandled = false
-      switch(msg.t){
-        case MessageType.CONTENT_UPDATE_REQUEST: this.onContentUpdateRequest(msg, playFrom); break
-        case MessageType.CONTENT_REMOVE_REQUEST: this.onContentRemoveRequest(msg); break
-        default: notHandled = true; break
-      }
-    }
-    if (notHandled){
-      console.warn(`Playback did not handle message:`, msg)
+  }
+  private removeParticipants(msg: BMMessage){
+    const pidsRemove = JSON.parse(msg.v) as string[]
+    for(const pid of pidsRemove){
+      participants.playback.delete(`p_${pid}`)
+      this.pids.delete(`p_${pid}`)
     }
   }
   private onContentUpdateRequest(msg: BMMessage, from: number){
     const cs = JSON.parse(msg.v) as ISharedContent[]
     for(const c of cs){
-      //  console.log('CONTENT_UPDATE_REQUEST:', c)
+      //  recLog('CONTENT_UPDATE_REQUEST:', c)
       c.id = `p_${c.id}`
       if (c.type === 'camera' || c.type === 'screen'){
         c.type = c.type === 'camera' ? 'playbackCamera' : 'playbackScreen'
@@ -924,6 +1018,7 @@ class Player{
     const cids = JSON.parse(msg.v) as string[]
     for(const cid of cids){
       contents.removePlayback(`p_${cid}`)
+      this.cids.delete(`p_${cid}`)
     }
   }
 }

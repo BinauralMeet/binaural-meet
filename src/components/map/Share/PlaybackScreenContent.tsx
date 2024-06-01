@@ -13,38 +13,35 @@ const useStyles = makeStyles({
   },
 })
 
-const initialMediaClip:MediaClip = {videoTime:0, audioTime:0, rate:1, timeFrom:0, pause:false}
-
 export const PlaybackScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
   assert(props.content.type === 'playbackScreen' || props.content.type === 'playbackCamera')
   const classes = useStyles()
   const ref = useRef<HTMLVideoElement>(null)
-  const refPlayingClip = useRef<MediaClip>({...initialMediaClip})
-  const playingClip:MediaClip = refPlayingClip.current
+  const refPlayingClip = useRef<MediaClip|undefined>(undefined)
 
   function updateClip(){
+    const playingClip = refPlayingClip.current
     const clip = sharedContents.playbackClips.get(props.content.id)
     const video = ref.current
     if (video && clip){
-      if (clip.videoBlob && clip.videoBlob !== playingClip.videoBlob){
+      if (clip.videoBlob && clip.videoBlob !== playingClip?.videoBlob){
         video.src = URL.createObjectURL(clip.videoBlob)
       }
-      if (clip.timeFrom !== playingClip.timeFrom){
-        video.currentTime = (clip.timeFrom - clip.videoTime) / 1000.0
+      if (clip.videoFrom !== playingClip?.videoFrom){
+        video.currentTime = (clip.videoFrom - clip.videoTime) / 1000.0
       }
-      if (clip.rate !== playingClip.rate){
+      if (clip.rate !== playingClip?.rate){
         video.playbackRate = clip.rate
       }
-      if (clip.pause !== playingClip.pause){
+      if (clip.pause !== playingClip?.pause){
+        console.log(`Content clip pause=${clip.pause}, prev=${playingClip?.pause}`)
         if (clip.pause){
           video.autoplay = false
-          video.pause()
         }else{
           video.autoplay = true
-          video.play()
         }
       }
-      Object.assign(playingClip, {...clip})
+      refPlayingClip.current = {...clip}
     }
   }
 

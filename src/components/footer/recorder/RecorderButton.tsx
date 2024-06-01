@@ -29,9 +29,9 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
   const classes = useStyles()
   const {t} = useTranslation()
   const iconSize = props.iconSize ? props.iconSize : 36
-  const duration = player.endTime - player.startTime
-  const [seekOffset, setSeekOffset] = useState(player.currentTime - player.startTime)
-  const [seekOffsetText, setSeekOffsetText] = useState(offsetNumberToText(player.currentTime - player.startTime))
+  const duration = player.duration
+  const [seekOffset, setSeekOffset] = useState(player.offset)
+  const [seekOffsetText, setSeekOffsetText] = useState(offsetNumberToText(player.offset))
   const doSeek = _.throttle((offset)=>{player.seek(offset)}, 500)
   const refPauseBySeek = useRef<boolean>(false)
 
@@ -75,7 +75,7 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
   useEffect(()=>{
     const disposer = autorun(()=>{
       if (player.state === 'play'){
-        setSeekOffsetAndText(player.currentTime - player.startTime)
+        setSeekOffsetAndText(player.offset)
       }
     })
     return ()=>{disposer()}
@@ -97,7 +97,7 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
                     if (ev.key === 'Enter'){
                       const offset = offsetTextToNumber(seekOffsetText)
                       setSeekOffsetAndText(offset)
-                      console.log('Text::onChange', seekOffset)
+                      //console.log('Text::onChange', seekOffset)
                       doSeek(offset)
                     }
                   }}

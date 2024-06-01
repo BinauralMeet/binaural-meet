@@ -26,10 +26,15 @@ function locatedContentOnly(content: ISharedContent|undefined){
 
 export const ContentLine: React.FC<TextLineStyle & {content: SharedContentInfo}>=(props) => {
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
-  const [showForm, setShowForm] = React.useState(false)
+  const [showForm, setShowFormRaw] = React.useState(false)
   const ref = React.useRef<HTMLButtonElement>(null)
   const {lineHeight, content, ...contentProps} = props
   let targetContent: ISharedContent|undefined = undefined
+  function setShowForm(show: boolean){
+    if (!props.content.playback){
+      setShowForm(show)
+    }
+  }
 
   return <Observer>{()=> {
     const typeIcon = contentTypeIcons(props.content.type, props.fontSize)

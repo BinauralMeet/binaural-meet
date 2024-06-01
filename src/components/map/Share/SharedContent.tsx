@@ -11,6 +11,8 @@ import {contents, map} from '@stores/'
 export const sharedContentHandler = (props: {content:SharedContentInfo}) => {
   return {
     onClose: (evt: MouseOrTouch) => {
+      if (props.content.playback) return //  for playback contents do nothing
+
       contentLog()('RndContent onClose for ', props.content.id)
       evt.stopPropagation()
       map.keyInputUsers.delete(props.content.id)
@@ -18,10 +20,12 @@ export const sharedContentHandler = (props: {content:SharedContentInfo}) => {
       contents.removeByLocal(props.content.id)
     },
     updateAndSend:(c: ISharedContent) => {
+      if (c.playback) return //  for playback contents do nothing
       //	console.log('updateByLocal(send content)')
       contents.updateByLocal(Object.assign({}, c))
     },
     updateOnly:(c: ISharedContent) => {
+      if (c.playback) return //  for playback contents do nothing
       contents.updateLocalOnly(Object.assign({}, c))
     }
   }
