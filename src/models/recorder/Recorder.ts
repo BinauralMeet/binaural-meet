@@ -5,10 +5,10 @@ import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {TrackStates} from '@stores/participants/ParticipantBase'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
 import {autorun, computed, IReactionDisposer, makeObservable, observable} from 'mobx'
-import {BMMessage} from './DataMessage'
-import {MessageType} from './DataMessageType'
+import {BMMessage} from '@models/conference/DataMessage'
+import {MessageType} from '@models/conference/DataMessageType'
 import {Dexie, IndexableType, Table} from 'dexie'
-import { conference } from './Conference'
+import { conference } from '@models/conference/Conference'
 import { dateTimeString } from '@models/utils/date'
 import { MediaClip } from '@stores/MapObject'
 import participants from '@stores/participants/Participants'
@@ -115,7 +115,7 @@ class MediaRec implements MediaRecData{
     this.onData(this)
   }
 }
-export interface BlobHeader{
+interface BlobHeader{
   cid?: string
   pid?: string
   role: string
@@ -133,17 +133,26 @@ class Message{
     this.time = time ? time : Date.now()
   }
 }
+interface MessagesHeader{
+  startTime: number
+  endTime: number
+  messages: Message[]
+}
+export interface RecordHeader{
+  messages: MessagesHeader
+  blobs: BlobHeader[]
+}
+const defaultRecordHeader:RecordHeader = {
+  messages:{messages:[], startTime:0, endTime: 0},
+  blobs:[]
+}
 export interface DBRecMessage{
   id?: number
   messages: Message[]
   length: number
 }
 
-interface JSONPart{
-  startTime: number
-  endTime: number
-  messages: Message[]
-}
+
 export class Recorder{
   recordingMedias = new Map<string, MediaRec>()
 
@@ -472,8 +481,8 @@ export class Recorder{
   private makeBlob(medias: MediaRecData[]){
     const blobs:Blob[] = []
     const headers:BlobHeader[] = []
-    const jsonPart:JSONPart = {startTime:this.startTime, endTime: this.endTime, messages:this.messages}
-    const blob = new Blob([JSON.stringify(jsonPart)], {type:'application/json'})
+    const msgsHeader:MessagesHeader = {startTime:this.startTime, endTime: this.endTime, messages:this.messages}
+    const blob = new Blob([JSON.stringify(msgsHeader)], {type:'application/json'})
     const header:BlobHeader = {role:'message', size:blob.size, kind:'json'}
     blobs.push(blob)
     headers.push(header)
@@ -628,6 +637,10 @@ class Player{
   private pidsPlaying = new Set<string>()
   private cidsPlaying = new Set<string>()
   private mediasPlaying:MediaPlay[] = []
+  private header_ = {...defaultRecordHeader}
+   get header(){ return this.header_ }
+  private title_=''
+  get title(){ return this.title_ }
   constructor(){
     makeObservable(this)
   }
@@ -637,10 +650,12 @@ class Player{
     this.medias = []
     this.startTime = 0
     this.endTime = 0
+    this.header_ = {...defaultRecordHeader}
   }
-  load(archive: Blob){
+  load(archive: Blob, title: string, loadMedia: boolean){
     this.clear()
-    const promise = new Promise<Player>((resolve) => {
+    this.title_ = title
+    const promise = new Promise<void>((resolve) => {
       let start = 0
       archive.slice(start, start+4).arrayBuffer().then(buffer => {
         start += 4
@@ -655,21 +670,28 @@ class Player{
             if (header.role === 'message'){
               //  eslint-disable-next-line no-loop-func
               archive.slice(start, start+header.size).text().then(text => {
-                const jsonPart = JSON.parse(text) as JSONPart
-                this.messages = jsonPart.messages
-                this.currentTime_ = this.startTime = jsonPart.startTime
-                this.endTime = jsonPart.endTime
+                const msgsHeader = JSON.parse(text) as MessagesHeader
+                this.header_.messages = msgsHeader
+                this.messages = msgsHeader.messages
+                this.currentTime_ = this.startTime = msgsHeader.startTime
+                this.endTime = msgsHeader.endTime
                 count ++
-                if (count === headers.length){ resolve(this) }
+                if (count === headers.length){ resolve() }
               })
             }else{
               //  eslint-disable-next-line no-loop-func
-              archive.slice(start, start+header.size).arrayBuffer().then(ab => {
-                const blob = new Blob([ab])
-                this.medias.push(new MediaPlay(blob, header))
+              this.header_.blobs.push(header)
+              if (loadMedia){
+                archive.slice(start, start+header.size).arrayBuffer().then(ab => {
+                  const blob = new Blob([ab])
+                  this.medias.push(new MediaPlay(blob, header))
+                  count ++
+                  if (count === headers.length){ resolve() }
+                })
+              }else{
                 count ++
-                if (count === headers.length){ resolve(this) }
-              })
+                if (count === headers.length){ resolve() }
+              }
             }
             start += header.size
           }
