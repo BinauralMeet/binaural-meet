@@ -4,38 +4,31 @@ import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
 import {useTranslation} from '@models/locales'
 import sharedContents from '@stores/sharedContents/SharedContents'
-import React, {useState} from 'react'
+import React from 'react'
 import {RecorderMenu} from './RecorderMenu'
-import {Step} from './Step'
 import {map} from '@stores/'
+import { RecordInfo } from './RecordInfo'
 
-interface RecorderDialogProps {
-  open: boolean
-  onClose: () => void
+export type RecorderStepType = 'menu' | 'infoFromMenu' | 'infoFromButton' | 'none'
+export type SetRecorderStepType = (step: RecorderStepType) => void
+export interface DialogPageProps {
+  setRecorderStep: SetRecorderStepType
+  recorderStep: RecorderStepType
 }
 
-export const RecorderDialog: React.FC<RecorderDialogProps> = (props:RecorderDialogProps) => {
-  const {open, onClose} = props
-  const [step, rawSetStep] = useState<Step>('menu')
-
-  const setStep = (step: Step) => {
-    if (step === 'none') {
-      onClose()
-    } else {
-      rawSetStep(step)
-    }
-  }
-  function getPage(step: Step, setStep: (step: Step) => void): JSX.Element | undefined {
-    switch (step) {
-      case 'menu':
-        return <RecorderMenu {...props} setStep={setStep}  />
-      default:
-        throw new Error(`Unknown step: ${step}`)
+export const RecorderDialog: React.FC<DialogPageProps> = (props:DialogPageProps) => {
+  function getPage(step: RecorderStepType): JSX.Element | undefined {
+    if (step === 'menu'){
+      return <RecorderMenu {...props} setRecorderStep={props.setRecorderStep}  />
+    }else if(step === 'infoFromButton' || step === 'infoFromMenu'){
+      return <RecordInfo setRecorderStep={props.setRecorderStep} recorderStep={step}/>
+    }else{
+      throw new Error(`Unknown step: ${step}`)
     }
   }
 
   //  console.debug(`step=${step}, pasteEnabled=${sharedContents.pasteEnabled}`)
-  sharedContents.pasteEnabled = step === 'none' || step === 'menu'
+  sharedContents.pasteEnabled = props.recorderStep === 'none' || props.recorderStep === 'menu'
 
   const {t} = useTranslation()
   const stepTitle: {
@@ -43,11 +36,12 @@ export const RecorderDialog: React.FC<RecorderDialogProps> = (props:RecorderDial
   } = {
     menu: acceleratorText2El(t('recorderMenuTitle')),
   }
-  const title = stepTitle[step]
-  const page: JSX.Element | undefined = getPage(step, setStep)
+  const title = stepTitle[props.recorderStep]
+  const page: JSX.Element | undefined = getPage(props.recorderStep)
 
   return  <Dialog style={dialogStyle}
-    open={open} onClose={onClose} TransitionProps={{onExited:() => setStep('menu')}} maxWidth="lg"
+    open={props.recorderStep !== 'none'} onClose={()=>{props.setRecorderStep('none')}}
+    TransitionProps={{onExited:() => props.setRecorderStep('menu')}} maxWidth="lg"
     onPointerMove = {(ev) => {
       map.setMouse([ev.clientX, ev.clientY])
     }}

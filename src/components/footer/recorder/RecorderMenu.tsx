@@ -1,29 +1,29 @@
 import List from '@material-ui/core/List'
 import {useTranslation} from '@models/locales'
 import React, {useEffect} from 'react'
-import {DialogPageProps} from './Step'
+import {DialogPageProps} from './RecorderDialog'
 import {DialogIconItem, DialogItem} from '@components/utils/DialogIconItem'
-import {player, recorder, dbRecords, DBRecord} from '@models/conference/Recorder'
+import {player, recorder, dbRecords, DBRecord} from '@models/recorder'
 import PlayIcon from '@material-ui/icons/PlayArrow'
 import RecordIcon from '@material-ui/icons/FiberManualRecord'
 import StopIcon from '@material-ui/icons/Stop'
 import DeleteIcon from '@material-ui/icons/DeleteForever'
 import DownloadIcon from '@material-ui/icons/GetApp'
+import InfoIcon from '@material-ui/icons/Info'
 import {useLiveQuery} from 'dexie-react-hooks'
 import { Divider, IconButton, TextField } from '@material-ui/core'
 import { Observer } from 'mobx-react-lite'
 import {map} from '@stores/'
+import { timeToHourMinSec } from '@models/utils/date'
 
-interface RecorderMenuProps extends DialogPageProps {
-}
 
-export const RecorderMenu: React.FC<RecorderMenuProps> = (props) => {
+export const RecorderMenu: React.FC<DialogPageProps> = (props) => {
   const {t} = useTranslation()
   const fileToPlay = React.useRef<HTMLInputElement>(null)
   const [startTime, setStartTime] = React.useState('0')
 
   function startStopRecord(){
-    props.setStep('none')
+    props.setRecorderStep('none')
     if (recorder.recording){
       recorder.stop()
     }else{
@@ -51,13 +51,13 @@ export const RecorderMenu: React.FC<RecorderMenuProps> = (props) => {
   function playPausePlayback(id?: number){
     if (player.state === 'play'){
       player.pause()
-      props.setStep('none')
+      props.setRecorderStep('none')
     }else if(player.state === 'stop'){
       if (id){
         const record = records?.find(r => r.id === id)
         if (record && record.blob){
-          props.setStep('none')
-          player.load(record.blob).then(()=>{
+          props.setRecorderStep('none')
+          player.load(record.blob, record.title, true).then(()=>{
             player.play()
           })
         }
@@ -114,8 +114,8 @@ export const RecorderMenu: React.FC<RecorderMenuProps> = (props) => {
           onChange={ (ev) => {
             const files = ev.currentTarget?.files
             if (files && files.length) {
-              props.setStep('none')
-              player.load(files[0]).then(()=>{
+              props.setRecorderStep('none')
+              player.load(files[0], files[0].name, true).then(()=>{
                 player.seek(Number(startTime))
                 player.play()
               })
@@ -140,16 +140,26 @@ export const RecorderMenu: React.FC<RecorderMenuProps> = (props) => {
         }
       }}</Observer>
       {!recorder.recording && records?.map((r)=>{
-        const du = new Date(r.duration)
-        const h = du.getUTCHours()
-        const m = du.getMinutes()
-        const duration = (h ? `${h}:` : '') + (m ? `${m}:` :'') + `${du.getSeconds()}.${(du.getMilliseconds()/100).toFixed(0)}`
+        const duration = timeToHourMinSec(r.duration)
         return <DialogItem
           key={r.id}
           icon = {<><IconButton size='small' onClick={()=>r.id && deleteRecord(r.id)}><DeleteIcon /></IconButton> </>}
           plain={<>
             <span style={{display:'inline-block', width :'24em'}}>{r.title}</span>
             <span style={{display:'inline-block', width :'4em'}}>{duration}</span>
+            &nbsp;&nbsp;
+            <IconButton size='small' onClick={() => {
+              if (r.id){
+                const rec = records.find(data => data.id === r.id)
+                if (rec?.blob) {
+                  player.load(rec.blob, rec.title, false).then(()=>{
+                    props.setRecorderStep('infoFromMenu')
+                  })
+                }
+              }
+            }}>
+              <InfoIcon/>
+            </IconButton>
             &nbsp;&nbsp;
             <IconButton size='small' onClick={()=>r.id && playPausePlayback(r.id)}><PlayIcon /></IconButton>
             &nbsp;&nbsp;

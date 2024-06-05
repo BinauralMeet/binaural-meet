@@ -55,7 +55,7 @@ export class NodeGroupForPlayback extends NodeGroup {
     //  play for both
     if (clip.pause !== this.clipPlaying?.pause){
       const {videoBlob, audioBlob, ...clipLog} = clip
-      console.log(`NGP: ${clip.pause?'Pause':'Play'} ${JSON.stringify(clipLog)}`)
+      //  console.log(`NGP: ${clip.pause?'Pause':'Play'} ${JSON.stringify(clipLog)}`)
       if (clip.pause){
         this.audioElementForBlob?.pause()
         this.audioElement?.pause()
@@ -74,7 +74,7 @@ export class NodeGroupForPlayback extends NodeGroup {
   private playElements(){
     if (this.clipPlaying){
       const {videoBlob, audioBlob, ...clipLog} = this.clipPlaying
-      console.log(`playElements for ${JSON.stringify(clipLog)}`)
+      //console.log(`playElements for ${JSON.stringify(clipLog)}`)
     }
     const playAgain = (group: NodeGroupForPlayback) => {
       if (!group.clipPlaying?.pause){

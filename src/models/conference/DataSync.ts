@@ -1,4 +1,4 @@
-import {recorder} from '@models/conference/Recorder'
+import {recorder} from '@models/recorder'
 import {ISharedContent, contentsToSend, ISharedContentToSend, receiveToContents} from '@models/ISharedContent'
 import {CONTENT_OUT_OF_RANGE_VALUE} from '@models/ISharedContent'
 import { KickTime } from '@models/KickTime'

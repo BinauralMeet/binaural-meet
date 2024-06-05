@@ -5,6 +5,7 @@ import {ContentProps} from './Content'
 import {autorun} from 'mobx'
 import sharedContents from '@stores/sharedContents/SharedContents'
 import {MediaClip} from '@stores/MapObject'
+import { recLog } from '@models/recorder/RecorderTypes'
 
 const useStyles = makeStyles({
   video: {
@@ -18,6 +19,8 @@ export const PlaybackScreenContent: React.FC<ContentProps> = (props:ContentProps
   const classes = useStyles()
   const ref = useRef<HTMLVideoElement>(null)
   const refPlayingClip = useRef<MediaClip|undefined>(undefined)
+  const refTimeout = useRef(0)
+  const refWaitPlay = useRef(false)
 
   function updateClip(){
     const playingClip = refPlayingClip.current
@@ -33,12 +36,38 @@ export const PlaybackScreenContent: React.FC<ContentProps> = (props:ContentProps
       if (clip.rate !== playingClip?.rate){
         video.playbackRate = clip.rate
       }
+      //  console.log(`CCC pause=${clip.pause}, ${clip.pause!==playingClip?.pause?'Diff':'s'}`)
       if (clip.pause !== playingClip?.pause){
-        console.log(`Content clip pause=${clip.pause}, prev=${playingClip?.pause}`)
         if (clip.pause){
-          video.autoplay = false
+          const pause = () => {
+            if (refWaitPlay.current){
+              window.clearTimeout(refTimeout.current)
+              refTimeout.current = 0
+              window.setTimeout(pause, 100)
+            }else{
+              window.clearTimeout(refTimeout.current)
+              refTimeout.current = 0
+              video.pause()
+              recLog(`C ${props.content.id} paused`)
+            }
+          }
+          pause()
         }else{
-          video.autoplay = true
+          const playFunc = () => {
+            refWaitPlay.current = true
+            video.play().then(()=>{
+              recLog(`C ${props.content.id} played`)
+              refWaitPlay.current = false
+              if (refTimeout.current){
+                window.clearTimeout(refTimeout.current)
+                refTimeout.current = 0
+              }
+            }).catch(()=>{
+              refWaitPlay.current = false
+              refTimeout.current = window.setTimeout(playFunc, 100)
+            })
+          }
+          playFunc()
         }
       }
       refPlayingClip.current = {...clip}
@@ -49,7 +78,13 @@ export const PlaybackScreenContent: React.FC<ContentProps> = (props:ContentProps
     const dispo = autorun(()=>{
       updateClip()
     })
-    return ()=>{dispo()}
+    return ()=>{
+      if (refTimeout.current){
+        window.clearTimeout(refTimeout.current)
+        refTimeout.current = 0
+      }
+      dispo()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   useEffect(() => {

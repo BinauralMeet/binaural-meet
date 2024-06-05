@@ -32,7 +32,7 @@ export const ContentLine: React.FC<TextLineStyle & {content: SharedContentInfo}>
   let targetContent: ISharedContent|undefined = undefined
   function setShowForm(show: boolean){
     if (!props.content.playback){
-      setShowForm(show)
+      setShowFormRaw(show)
     }
   }
 

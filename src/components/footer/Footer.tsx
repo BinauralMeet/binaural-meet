@@ -25,8 +25,9 @@ import {FabMain, FabWithTooltip} from '@components/utils/FabEx'
 import {ShareButton} from './share/ShareButton'
 import {RecorderButton} from './recorder/RecorderButton'
 import {StereoAudioSwitch} from './StereoAudioSwitch'
-import { player, recorder } from '@models/conference/Recorder'
+import { player, recorder } from '@models/recorder'
 import {participants, map} from '@stores/'
+import { RecorderStepType } from './recorder/RecorderDialog'
 
 
 const useStyles = makeStyles({
@@ -68,14 +69,14 @@ export const Footer: React.FC<{height?:number}> = (props) => {
     }
     setShowShareRaw(flag)
   }
-  const [showRecorder, setShowRecorderRaw] = React.useState<boolean>(false)
-  function setShowRecorder(flag: boolean) {
-    if (flag) {
+  const [recorderStep, setRecorderStepRaw] = React.useState<RecorderStepType>('none')
+  function setRecorderStep(step: RecorderStepType) {
+    if (step !== 'none') {
       map.keyInputUsers.add('recorderDialog')
     }else {
       map.keyInputUsers.delete('recorderDialog')
     }
-    setShowRecorderRaw(flag)
+    setRecorderStepRaw(step)
   }
 
   const memberRef = useRef<Member>(new Member())
@@ -139,7 +140,7 @@ export const Footer: React.FC<{height?:number}> = (props) => {
           }
           if (e.code === 'KeyR') {  //  Recorder dialog
             setShowFooter(true)
-            setShowRecorder(true)
+            setRecorderStep('menu')
             if (recorder.recording) recorder.stop()
             if (player.state === 'play') player.stop()
             e.preventDefault()
@@ -300,9 +301,8 @@ export const Footer: React.FC<{height?:number}> = (props) => {
       <ErrorDialog {...props}/>
 
       <div style={{marginLeft:'auto', marginRight:0, whiteSpace:'nowrap'}}>
-        <RecorderButton {...props} size={fabSize} iconSize={iconSize} showDialog={showRecorder}
-          setShowDialog={setShowRecorder} />
-
+        <RecorderButton {...props} size={fabSize} iconSize={iconSize}
+          recorderStep={recorderStep} setRecorderStep={setRecorderStep} />
         <FabMain size={fabSize} onClick={openAdmin} divRef={adminButton}
           style={{marginRight:10, opacity:0.1}}>
           <SettingsIcon style={{width:iconSize, height:iconSize}} />

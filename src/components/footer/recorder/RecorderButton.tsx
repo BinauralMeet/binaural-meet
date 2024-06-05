@@ -3,14 +3,15 @@ import {makeStyles} from '@material-ui/styles'
 import {useTranslation} from '@models/locales'
 import React, { useEffect, useRef, useState } from 'react'
 import {FabWithTooltip} from '@components/utils/FabEx'
-import {RecorderDialog} from './RecorderDialog'
+import {RecorderDialog, RecorderStepType, SetRecorderStepType} from './RecorderDialog'
 import PlayIcon from '@material-ui/icons/PlayArrow'
 import StopIcon from '@material-ui/icons/Stop'
 import PauseIcon from '@material-ui/icons/Pause'
 import RecordIcon from '@material-ui/icons/FiberManualRecord'
-import { player, recorder } from '@models/conference/Recorder'
+import InfoIcon from '@material-ui/icons/InfoRounded'
+import { player, recorder,  } from '@models/recorder'
 import { Observer } from 'mobx-react-lite'
-import { Button, Slider, TextField } from '@material-ui/core'
+import { Button, Paper, Slider, TextField } from '@material-ui/core'
 import _, { isNumber } from 'lodash'
 import { autorun } from 'mobx'
 
@@ -20,8 +21,8 @@ const useStyles = makeStyles({
   },
 })
 interface RecorderButtonProps {
-  showDialog:boolean
-  setShowDialog(flag: boolean):void
+  recorderStep:RecorderStepType
+  setRecorderStep:SetRecorderStepType
   size?: number
   iconSize?: number
 }
@@ -74,9 +75,7 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
   }
   useEffect(()=>{
     const disposer = autorun(()=>{
-      if (player.state === 'play'){
-        setSeekOffsetAndText(player.offset)
-      }
+      setSeekOffsetAndText(player.offset)
     })
     return ()=>{disposer()}
   }, [])
@@ -86,9 +85,10 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
       <Observer>{()=> <>
         {player.state === 'play' || player.state === 'pause' ?
           <div>
-            <Button variant="contained" size="large" color="default" disableRipple={true}
-              style={{pointerEvents: 'auto'}}>
+            <Paper elevation={5}
+              style={{pointerEvents: 'auto', padding:15, backgroundColor:'gainsboro'}}>
               <div style={{display:'grid'}}>
+                <div style={{display:"inline-block"}}>
                 <TextField value={seekOffsetText} size="small" style={{width:'5em'}}
                                   onChange={(ev)=> {
                     setSeekOffsetText(ev.target.value)
@@ -102,6 +102,12 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
                     }
                   }}
                 />
+                &nbsp;
+                <Button variant='contained' color="primary" style={{height:iconSize*0.7}}
+                  onClick={()=>{ props.setRecorderStep('infoFromButton')}}>
+                  <InfoIcon style={{height:iconSize/2, width:iconSize/2}} />
+                </Button>
+              </div>
                 <Slider aria-label="seekbar" value={seekOffset} valueLabelDisplay="off"
                   style={{width:'10em'}} min={0} max={duration} track={"normal"}
                   onChange={(ev, val)=>{
@@ -124,14 +130,14 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
                   }}
                 />
               </div>
-            </Button>
+            </Paper>
           </div>
         : undefined}
         {!recorder.recording && player.state === 'stop' ?
           <FabWithTooltip size={props.size} color={recorder.recording ? 'secondary' : 'primary'}
             title = {acceleratorText2El(t('ttPlayAndRec'))}
             aria-label="share" onClick={() => {
-              props.setShowDialog(true)
+              props.setRecorderStep('menu')
             }}>
             {recorder.recording ? <RecordIcon style={{width:iconSize, height:iconSize}} />
               : <PlayIcon style={{width:iconSize, height:iconSize}} />
@@ -164,8 +170,8 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
           </FabWithTooltip> : undefined}
         </>
       }</Observer>
-      {props.showDialog ?
-        <RecorderDialog {...props} open={props.showDialog} onClose={() => props.setShowDialog(false)} />
+      {props.recorderStep !== 'none' ?
+        <RecorderDialog {...props} />
         : undefined}
     </div>
   )

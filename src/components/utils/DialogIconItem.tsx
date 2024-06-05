@@ -9,6 +9,7 @@ interface DialogIconItemProps {
   text?: string
   plain?: string | JSX.Element
   secondEl?: JSX.Element
+  children?: undefined | string | JSX.Element | (undefined | string|JSX.Element)[]
   tip?:JSX.Element | string
   dense?: boolean
   onClick?: () => void
@@ -35,6 +36,7 @@ export const DialogIconItem: React.FC<DialogIconItemProps> = (props) => {
     <div style={{verticalAlign: 'middle'}}>
       {textEl ? textEl : plain}
       {secondEl ? <><br/>{secondEl}</> : undefined}
+      {props.children}
     </div>
   </ListItem>
 

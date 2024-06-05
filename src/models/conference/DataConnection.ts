@@ -1,5 +1,5 @@
 import {MAP_SIZE} from '@components/Constants'
-import {recorder} from '@models/conference/Recorder'
+import {recorder} from '@models/recorder'
 import map from '@stores/Map'
 import {default as participants} from '@stores/participants/Participants'
 import roomInfo from '@stores/RoomInfo'
