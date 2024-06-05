@@ -11,7 +11,7 @@ import RecordIcon from '@material-ui/icons/FiberManualRecord'
 import InfoIcon from '@material-ui/icons/InfoRounded'
 import { player, recorder,  } from '@models/recorder'
 import { Observer } from 'mobx-react-lite'
-import { Button, Paper, Slider, TextField } from '@material-ui/core'
+import { Button, IconButton, MenuItem, Paper, Select, Slider, TextField } from '@material-ui/core'
 import _, { isNumber } from 'lodash'
 import { autorun } from 'mobx'
 
@@ -33,6 +33,7 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
   const duration = player.duration
   const [seekOffset, setSeekOffset] = useState(player.offset)
   const [seekOffsetText, setSeekOffsetText] = useState(offsetNumberToText(player.offset))
+  const [rate, setRate] = useState(1.0)
   const doSeek = _.throttle((offset)=>{player.seek(offset)}, 500)
   const refPauseBySeek = useRef<boolean>(false)
 
@@ -102,11 +103,22 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
                     }
                   }}
                 />
+                &nbsp;x
+                <Select style={{height:28}} label="rate" value={rate} onChange={(ev)=>{
+                  const r = Number(ev.target.value)
+                  player.setRate(r)
+                  setRate(r)
+                }}>
+                  <MenuItem value={0.5}>0.5</MenuItem>
+                  <MenuItem value={1.0}>1.0</MenuItem>
+                  <MenuItem value={1.5}>1.5</MenuItem>
+                  <MenuItem value={2.0}>2.0</MenuItem>
+                </Select>
                 &nbsp;
-                <Button variant='contained' color="primary" style={{height:iconSize*0.7}}
+                <IconButton color="primary" style={{height:iconSize*0.7, width:iconSize*0.7}}
                   onClick={()=>{ props.setRecorderStep('infoFromButton')}}>
-                  <InfoIcon style={{height:iconSize/2, width:iconSize/2}} />
-                </Button>
+                  <InfoIcon style={{height:iconSize*0.6, width:iconSize*0.6, margin:0}} />
+                </IconButton>
               </div>
                 <Slider aria-label="seekbar" value={seekOffset} valueLabelDisplay="off"
                   style={{width:'10em'}} min={0} max={duration} track={"normal"}
@@ -152,7 +164,7 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
             }}>
             <StopIcon color='primary' style={{width:iconSize, height:iconSize}} />
           </FabWithTooltip> : undefined}
-        {!recorder.recording && player.state === 'play' ?
+        {!recorder.recording && (player.state === 'play' || refPauseBySeek.current) ?
           <FabWithTooltip size={props.size}
             title = {acceleratorText2El(t('ttPause'))}
             aria-label="share" onClick={() => {
@@ -160,7 +172,7 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
             }}>
             <PauseIcon color='primary' style={{width:iconSize, height:iconSize}} />
           </FabWithTooltip> : undefined}
-        {!recorder.recording && player.state === 'pause' ?
+        {!recorder.recording && (player.state === 'pause' && !refPauseBySeek.current) ?
           <FabWithTooltip size={props.size}
             title = {acceleratorText2El(t('ttPlay'))}
             aria-label="share" onClick={() => {

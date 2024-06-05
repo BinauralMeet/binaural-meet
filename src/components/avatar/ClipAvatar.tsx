@@ -63,6 +63,7 @@ export const ClipAvatar: React.FC<AvatarProps> = (props: AvatarProps) => {
               //console.log('videoBlob set')
               const url = URL.createObjectURL(clip.videoBlob)
               video.src = url
+              video.playbackRate = clip.rate
             }
             if (clip.rate !== prev?.rate){
               video.playbackRate = clip.rate

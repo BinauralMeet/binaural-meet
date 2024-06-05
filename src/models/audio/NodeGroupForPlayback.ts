@@ -34,9 +34,11 @@ export class NodeGroupForPlayback extends NodeGroup {
           console.log(`playClip audioBlob ${clipStr}`) // */
       //  The audio element for the context mode
       this.audioElementForBlob.src = URL.createObjectURL(clip.audioBlob)
+      this.audioElementForBlob.playbackRate = clip.rate
       this.sourceNode.connect(this.pannerNode)
       //  The audio element for the element mode
       this.audioElement.src = URL.createObjectURL(clip.audioBlob)
+      this.audioElement.playbackRate = clip.rate
       if (!clip.pause) playNow = true
     }
 

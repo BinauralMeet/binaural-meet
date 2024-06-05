@@ -29,6 +29,7 @@ export const PlaybackScreenContent: React.FC<ContentProps> = (props:ContentProps
     if (video && clip){
       if (clip.videoBlob && clip.videoBlob !== playingClip?.videoBlob){
         video.src = URL.createObjectURL(clip.videoBlob)
+        video.playbackRate = clip.rate
       }
       if (clip.videoFrom !== playingClip?.videoFrom){
         video.currentTime = (clip.videoFrom - clip.videoTime) / 1000.0

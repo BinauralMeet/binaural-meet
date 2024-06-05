@@ -91,7 +91,8 @@ class Player{
   private medias: MediaPlay[] = []
   private startTime = 0
   private endTime = 0
-  private rate = 1.0
+  private rate_ = 1.0
+  get rate(){ return this.rate_}
   private playInterval = 0
   private pids = new Set<string>()
   private cids = new Set<string>()
@@ -114,17 +115,18 @@ class Player{
     this.endTime = 0
     this.header_ = new RecordHeader()
   }
-  load(archive: Blob|undefined, title: string, loadMedia: boolean){
+  load(archiveOr: Blob|undefined, title: string, loadMedia: boolean){
     this.clear()
-    if (archive) this.archive = archive
-    else archive = this.archive
+    if (archiveOr) this.archive = archiveOr
+    else archiveOr = this.archive
     this.title_ = title
     const promise = new Promise<void>((resolve, reject) => {
-      if (!archive) {
+      if (!archiveOr) {
         reject('Player.load() archive not set.')
         return
       }
       let start = 0
+      const archive:Blob = archiveOr!
       archive.slice(start, start+4).arrayBuffer().then(buffer => {
         start += 4
         const view = new Int32Array(buffer)
@@ -217,7 +219,7 @@ class Player{
     return ffTo
   }
   setRate(rate: number){
-    this.rate = rate
+    this.rate_ = rate
     this.setRateToClips(rate)
   }
   play(){
@@ -250,9 +252,12 @@ class Player{
       medias.splice(0, ffToMedia)
     }
 
-    const timeDiff = Date.now() - (this.currentTime)
+    let lastTime = Date.now()
     const step = () => {
-      this.currentTime_ = Date.now() - timeDiff
+      const nowTime = Date.now()
+      const laspTime = nowTime - lastTime
+      lastTime = nowTime
+      this.currentTime_ = this.currentTime + laspTime * this.rate
       //  recLog(`play ct=${this.currentTime}`)
       //  Play message
       while (messages.length && messages[0].time < this.currentTime){
