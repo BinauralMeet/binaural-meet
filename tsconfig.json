@@ -46,6 +46,5 @@
   },
   "include": [
     "src",
-    "libs/lib-jitsi-meet"
   ]
 }
