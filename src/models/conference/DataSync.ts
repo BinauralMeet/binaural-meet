@@ -29,7 +29,7 @@ export class DataSync{
 
   constructor(c:DataConnection) {
     this.connection = c
-    //  setInterval(()=>{ this.checkRemoteAlive() }, 1000)
+    //  window.setInterval(()=>{ this.checkRemoteAlive() }, 1000)
   }
   sendAllAboutMe(bSendRandP: boolean){
     syncLog()('sendAllAboutMe called.')
@@ -169,7 +169,7 @@ export class DataSync{
       found.time = Date.now()
       window.localStorage.setItem('kickTimes', JSON.stringify(kickTimes))
     }
-    setTimeout(()=>{
+    window.setTimeout(()=>{
       window.location.reload()
     }, 10000)
   }

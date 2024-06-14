@@ -11,10 +11,10 @@
     "@mediapipe/face_mesh": "^0.4.1633559619",
     "@mediapipe/holistic": "^0.5.1657300018",
     "@pixiv/three-vrm": "^0.6.11",
-    "@vitejs/plugin-react": "^4.2.1",
     "axios": "^1.6.7",
     "dexie": "^3.2.5",
     "dexie-react-hooks": "^1.1.7",
+    "eventemitter3": "^5.0.1",
     "face-api.js": "^0.22.2",
     "i18next": "^19.9.1",
     "i18next-browser-languagedetector": "^6.0.1",
@@ -37,10 +37,8 @@
     "react-split-pane": "^0.1.92",
     "react-use-gesture": "^7.0.15",
     "three": "^0.142.0",
-    "typescript": "^4.1.2",
     "vite": "^5.0.12",
     "vite-tsconfig-paths": "^4.3.1",
-    "web-vitals": "^1.0.1",
     "yt-player": "https://github.com/BinauralMeet/yt-player.git"
   },
   "scripts": {
@@ -89,7 +87,7 @@
     "@types/google.picker": "^0.0.39",
     "@types/lodash": "^4.14.168",
     "@types/md5": "^2.3.5",
-    "@types/node": "^12.0.0",
+    "@types/node": "^20.14.2",
     "@types/pdfjs-dist": "2.7.2",
     "@types/react": "^17.0.0",
     "@types/react-color": "^3.0.4",
@@ -97,8 +95,9 @@
     "@types/react-sidebar": "^3.0.0",
     "@types/three": "^0.141.0",
     "@types/throttle-debounce": "^2.1.0",
-    "@vitejs/plugin-react": "^4.2.1",
+    "@vitejs/plugin-react-swc": "^3.5.0",
     "import": "^0.0.6",
+    "typescript": "^4.1.2",
     "vite-plugin-mediapipe": "^0.1.0"
   },
   "resolutions": {

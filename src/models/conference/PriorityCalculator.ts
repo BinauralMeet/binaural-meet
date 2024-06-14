@@ -119,7 +119,7 @@ export class PriorityCalculator {
     this.conference.rtcTransports.addListener('disconnect', ()=>{
       this.clear()
       if (intervalHandle !== undefined) {
-        clearInterval(intervalHandle)
+        window.clearInterval(intervalHandle)
       }
     })
     autorun(() => {

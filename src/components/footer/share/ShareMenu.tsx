@@ -91,7 +91,7 @@ function downloadItems(contents:SharedContents) {
   a.download = `BMC_${conference.room}_${dateTimeString()}.json`
   document.body.appendChild(a)
   a.click()
-  setTimeout(() => {
+  window.setTimeout(() => {
     document.body.removeChild(a)
     window.URL.revokeObjectURL(url)
   },         0)
@@ -319,7 +319,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
               onChange={(ev)=>{ contents.setScreenFps(Number(ev.target.value)) }}
               onClick={(ev)=>{
                 ev.stopPropagation()
-                setTimeout(createScreen, 100)
+                window.setTimeout(createScreen, 100)
               }}
             >
               <RadioWithLabel value="1" checked={contents.screenFps===1}/>

@@ -83,7 +83,7 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
       && !isNaN(top) && top !== divScroll.current.scrollTop) {
       divScroll.current.onscroll = () => {}
       divScroll.current.scrollTop = top
-      setTimeout(()=>{
+      window.setTimeout(()=>{
         if (divScroll.current){ divScroll.current.onscroll = member.onscroll }
       }, 100)
       //  console.log(`scrool to top=${top}`)
@@ -108,7 +108,7 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
     }
     if (divScroll.current) {
       const INTERVAL = 100
-      const sendScroll = _.throttle(() => setTimeout(doSendScroll, INTERVAL), INTERVAL)
+      const sendScroll = _.throttle(() => window.setTimeout(doSendScroll, INTERVAL), INTERVAL)
       const endScroll = _.debounce(() => {
         member.scrolling = false
         //  console.log(`scrolling: ${member.scrolling}`)

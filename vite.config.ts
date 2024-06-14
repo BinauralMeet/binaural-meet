@@ -1,5 +1,5 @@
 import { defineConfig } from "vite";
-import reactSupport from "@vitejs/plugin-react";
+import react from '@vitejs/plugin-react-swc'
 import viteTsconfigPaths from 'vite-tsconfig-paths'
 import { mediapipe } from 'vite-plugin-mediapipe';
 import * as fs from 'fs';
@@ -8,16 +8,9 @@ const path = require("path");
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  build: {
-    outDir: "build",
-  },
   plugins: [
-    reactSupport({
-      babel: {
-        parserOpts: {
-          plugins: ['decorators-legacy', 'classProperties']
-        }
-      }
+    react({
+      tsDecorators: true,
     }),
     viteTsconfigPaths(),
     mediapipe(),
@@ -26,11 +19,7 @@ export default defineConfig({
   server: {
     port: 3000
   }
-
-
-
 });
-
 
 function mediapipe_workaround() {
   return {

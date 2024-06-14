@@ -42,7 +42,7 @@ export function KeyHandlerPlain(onTimer: KeyHandlerPlain_OnTimer, interval?:numb
       }
     }else {
       if (state.timerId) {
-        clearInterval(state.timerId)
+        window.clearInterval(state.timerId)
         state.timerId = undefined
       }
     }
@@ -56,7 +56,7 @@ export function KeyHandlerPlain(onTimer: KeyHandlerPlain_OnTimer, interval?:numb
     state.keys.add(e.code)
     //  console.log('onKeyDown', this.state.keys, e.target, e.target === document.body)
     if (!state.timerId && state.event.target === document.body) {
-      state.timerId = setInterval(timerFunc, interval)
+      state.timerId = window.setInterval(timerFunc, interval)
     }
   }
   const onKeyUp = (e: KeyboardEvent) => {

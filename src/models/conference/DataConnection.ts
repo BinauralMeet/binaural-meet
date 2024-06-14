@@ -8,8 +8,8 @@ import {ClientToServerOnlyMessageType, MessageType, ObjectArrayMessageTypes, Str
 import {DataSync} from '@models/conference/DataSync'
 import {AudioMeter} from '@models/audio/AudioMeter'
 import {connLog, connDebug} from '@models/utils'
-import {EventEmitter} from 'events'
-import {MSConnectMessage, MSMessage} from './MediaMessages'
+import {EventEmitter} from 'eventemitter3'
+import {MSConnectMessage} from './MediaMessages'
 import {messageLoads} from '@stores/MessageLoads'
 import { conference } from './Conference'
 
@@ -101,8 +101,8 @@ export class DataConnection {
         self.flushSendMessages()
         //  start periodical communication with data server.
         if (self.stepTimeout){
-          clearTimeout(self.stepTimeout)
-          self.stepTimeout = undefined
+          window.clearTimeout(self.stepTimeout)
+          self.stepTimeout = 0
         }
         self.step()
 
@@ -157,14 +157,14 @@ export class DataConnection {
       }
       //  stop relayServer communication.
       if (this.stepTimeout){
-        clearTimeout(this.stepTimeout)
-        this.stepTimeout = undefined
+        window.clearTimeout(this.stepTimeout)
+        this.stepTimeout = 0
       }
       this.room_ = ''
       this.peer_ = ''
       const func = ()=>{
         if (this.dataSocket && this.dataSocket.readyState === WebSocket.OPEN && this.dataSocket.bufferedAmount){
-          setTimeout(func, 100)
+          window.setTimeout(func, 100)
         }else{
           this.dataSocket?.close()
           this.dataSocket = undefined
@@ -189,7 +189,7 @@ export class DataConnection {
   }
 
 
-  private stepTimeout?:NodeJS.Timeout
+  private stepTimeout=0
   private step(){
     const period = 33
     if (this.dataSocket?.readyState === WebSocket.OPEN){
@@ -233,7 +233,7 @@ export class DataConnection {
       }
       //  console.log(`step RTT:${this.relayRttAverage} remain:${deadline - Date.now()}/${timeToProcess}`)
     }
-    this.stepTimeout = setTimeout(()=>{this.step()}, period)
+    this.stepTimeout = window.setTimeout(()=>{this.step()}, period)
   }
 
   receivedMessages: BMMessage[] = []
@@ -304,7 +304,7 @@ export class DataConnection {
       this.dataSocket?.addEventListener('open', ()=> {
         const waitAndSend = ()=>{
           if(this.dataSocket?.readyState !== WebSocket.OPEN){
-            setTimeout(waitAndSend, 100)
+            window.setTimeout(waitAndSend, 100)
           }else{
             this.dataSocket?.send(JSON.stringify(this.messagesToSendToRelay))
             this.lastSentTime = Date.now()

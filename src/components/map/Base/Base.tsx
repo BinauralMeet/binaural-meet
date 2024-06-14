@@ -145,7 +145,7 @@ export const Base: React.FC = (props) => {
   function moveParticipantPeriodically(move: boolean, target?:[number,number]) {
     moveParticipant(move, target)
     const TIMER_INTERVAL = move ? 33 : 300
-    setTimeout(() => {
+    window.setTimeout(() => {
       if (mem.mouseDown) {
         moveParticipantPeriodically(true)
       }

@@ -1,5 +1,5 @@
 #!/bin/sh
-cd build
+cd dist
 
 #scp titech.binaural.me:/usr/share/BinauralMeet/config.js config.js.org
 scp -r * titech.binaural.me:/usr/share/BinauralMeet/

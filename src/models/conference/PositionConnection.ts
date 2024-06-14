@@ -110,7 +110,7 @@ export class PositionConnection {
       this.name_ = ''
       const func = ()=>{
         if (this.positionSocket && this.positionSocket.readyState === WebSocket.OPEN && this.positionSocket.bufferedAmount){
-          setTimeout(func, 100)
+          window.setTimeout(func, 100)
         }else{
           this.positionSocket?.close()
           this.positionSocket = undefined

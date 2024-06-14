@@ -44,7 +44,7 @@ const useStyles = makeStyles({
 })
 
 class Member{
-  timeoutOut:NodeJS.Timeout|undefined = undefined
+  timeoutOut = 0
   touched = false
 }
 
@@ -108,15 +108,15 @@ export const Footer: React.FC<{height?:number}> = (props) => {
     if (showFooter) {
       setShowFooterRaw(true)
       if (member.timeoutOut) {
-        clearTimeout(member.timeoutOut)
-        member.timeoutOut = undefined
+        window.clearTimeout(member.timeoutOut)
+        member.timeoutOut = 0
       }
       containerRef.current?.focus()
     }else {
       if (!member.timeoutOut) {
-        member.timeoutOut = setTimeout(() => {
+        member.timeoutOut = window.setTimeout(() => {
           setShowFooterRaw(false)
-          member.timeoutOut = undefined
+          member.timeoutOut = 0
         },                             500)
       }
     }

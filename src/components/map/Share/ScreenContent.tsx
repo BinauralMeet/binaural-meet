@@ -94,8 +94,8 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
         }
       }
     }
-    const interval = setInterval(checkVideoSize, 333)   //  Notification of exact video size may take time.
-    return () => clearInterval(interval)
+    const interval = window.setInterval(checkVideoSize, 333)   //  Notification of exact video size may take time.
+    return () => window.clearInterval(interval)
   //  eslint-disable-next-line  react-hooks/exhaustive-deps
   }, [])
 

@@ -132,10 +132,10 @@ export class ErrorInfo {
     if (urlParameters.testBot === null)  {
       when(() => this.type === '', () => {
         //console.log(`connectionStart: when type===${this.type}  checkConnection called.`)
-        setTimeout(this.checkConnection.bind(this), 4 * 1000)
+        window.setTimeout(this.checkConnection.bind(this), 4 * 1000)
       })
     }else { //  testBot
-      setTimeout(this.startTestBot.bind(this), 3000)
+      window.setTimeout(this.startTestBot.bind(this), 3000)
     }
   }
   @action clear(type?: ErrorType) {
@@ -153,10 +153,10 @@ export class ErrorInfo {
   @action checkConnection = () => {
     if (!conference.isRtcConnected()) {
       this.setType('rtcTransports')
-      setTimeout(this.checkConnection.bind(this), 1000)
+      window.setTimeout(this.checkConnection.bind(this), 1000)
     }else if (!conference.isDataConnected()){
       this.setType('dataConnection')
-      setTimeout(this.checkConnection.bind(this), 1000)
+      window.setTimeout(this.checkConnection.bind(this), 1000)
     }else {
       this.clear('rtcTransports')
       this.clear('dataConnection')
@@ -175,10 +175,10 @@ export class ErrorInfo {
         this.clear('micPermission')
         this.setType('noMic')
       }
-      setTimeout(this.checkMic.bind(this),   5 * 1000)
+      window.setTimeout(this.checkMic.bind(this),   5 * 1000)
     }else {
       if (participants.local.muteAudio){
-        setTimeout(this.checkMic.bind(this),   5 * 1000)
+        window.setTimeout(this.checkMic.bind(this),   5 * 1000)
       }
       this.clear('noMic')
       this.clear('micPermission')
@@ -226,7 +226,7 @@ export class ErrorInfo {
       ctx.fill()
       counter += 1
     }
-    setInterval(draw, 1000 / 20)
+    window.setInterval(draw, 1000 / 20)
     const chars = '01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijlkmnopqrstuvwxyz'
     const randChar = () =>  chars.substr(Math.floor(Math.random() * chars.length), 1)
     participants.local.information = defaultInformation
@@ -242,7 +242,7 @@ export class ErrorInfo {
       if (urlParameters.testBot !== null &&
           connection.conference._jitsiConference?.room &&
           !connection.conference._jitsiConference?.room.connected){
-        setTimeout(()=>{
+        window.setTimeout(()=>{
           if (!connection.conference._jitsiConference?.room.connected){
             window.location.reload()  //  testBot will reload when channel is closed.
           }
@@ -254,16 +254,16 @@ export class ErrorInfo {
     const win = window as any
     if (win.requestIdleCallback) {
       const moveTask = () => {  //  onIdle, wait 50ms and run move()
-        setTimeout(() => {
+        window.setTimeout(() => {
           move()
           win.requestIdleCallback(moveTask)
         },         50)
       }
       moveTask()
     }else {
-      setInterval(move, 1000)
+      window.setInterval(move, 1000)
     }*/
-    setInterval(move, 500)
+    window.setInterval(move, 500)
 
     const vidoeStream = (this.canvas as any).captureStream(20) as MediaStream
     const videoTrack = vidoeStream.getVideoTracks()[0]

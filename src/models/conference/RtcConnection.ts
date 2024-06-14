@@ -1,4 +1,4 @@
-import {EventEmitter} from 'events'
+import {EventEmitter} from 'eventemitter3'
 import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSConnectMessage, MSMessageType, MSRoomMessage,
   MSRTPCapabilitiesReply, MSTransportDirection, MSCreateTransportReply, MSConnectTransportMessage,
   MSConnectTransportReply, MSProduceTransportMessage, MSProduceTransportReply, MSTrackRole,
@@ -94,10 +94,10 @@ export class RtcConnection{
 
   rtcQueue = Array<MSMessage>()
   readonly INTERVAL = 100
-  private interval:NodeJS.Timeout|undefined
+  private interval=0
   private startProcessMessage(){  //  start interval timer to process message queue.
     if (!this.interval)
-      this.interval = setInterval(this.processMessage.bind(this), this.INTERVAL)
+      this.interval = window.setInterval(this.processMessage.bind(this), this.INTERVAL)
   }
   private processMessage(){
     if (this.mainServer && this.mainServer.readyState === WebSocket.CONNECTING){
@@ -132,8 +132,8 @@ export class RtcConnection{
     }
     //  Stop interval timer when disconnected and no messages in queue.
     if (!this.isConnected() && this.rtcQueue.length===0 && this.interval){
-      clearInterval(this.interval)
-      this.interval = undefined
+      window.clearInterval(this.interval)
+      this.interval = 0
     }
   }
 
@@ -390,7 +390,7 @@ export class RtcConnection{
     const promise = new Promise<void>((resolve)=>{
       const func = ()=>{
         if (this.mainServer && this.mainServer.readyState === WebSocket.OPEN && this.mainServer.bufferedAmount){
-          setTimeout(func, 100)
+          window.setTimeout(func, 100)
         }else{
           if (this.mainServer?.readyState !== WebSocket.CLOSING
             && this.mainServer?.readyState !== WebSocket.CLOSED){

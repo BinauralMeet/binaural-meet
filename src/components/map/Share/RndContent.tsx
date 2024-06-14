@@ -180,7 +180,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   function onClickLogin(evt: MouseOrTouch){
     stop(evt)
     setDoGoogleAuth(true)
-    setTimeout(() => {
+    window.setTimeout(() => {
       setDoGoogleAuth(false)
     }, 1000);
   }

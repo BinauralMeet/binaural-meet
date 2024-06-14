@@ -210,7 +210,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
       if (!member.scrollAgain && !drag.memo.timerId){
         const scroll = ()=>{
           if (scrollMap(0.01)){
-            setTimeout(scroll, TIMER_INTERVAL)
+            window.setTimeout(scroll, TIMER_INTERVAL)
           }
         }
         scroll()

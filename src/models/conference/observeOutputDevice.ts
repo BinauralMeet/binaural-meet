@@ -3,19 +3,19 @@ import participants from '@stores/participants/Participants'
 import {autorun} from 'mobx'
 
 //  headphone or audio output device update
-let timeout:NodeJS.Timeout|undefined
+let timeout = 0
 autorun(() => {
   //console.log('autorun for audiooutput called.')
   if (timeout){
-    clearTimeout(timeout)
-    timeout = undefined
+    window.clearTimeout(timeout)
+    timeout = 0
   }
   const setAudioSink = () => {
     const did = participants.local.devicePreference.audiooutput
     if (did){
       audioManager.setAudioOutput(did)
       if (did !== audioManager.getAudioOutput()){
-        timeout = setTimeout(setAudioSink, 3000)
+        timeout = window.setTimeout(setAudioSink, 3000)
       }
     }
   }

@@ -120,13 +120,13 @@ export class StereoManager {
       case 'Context':
         // For Chrome, resume audio context when loaded (https://goo.gl/7K7WLu)
         // AudioContext must be resumed (or created) after a user gesture on the page.
-        const interval = setInterval(
+        const interval = window.setInterval(
           () => {
             if (errorInfo.type) { return }
             // console.log(`Audio context = ${this.audioContext.state}  element = ${this.audioElement.played}`)
             if (this.audioContext.state !== 'suspended') {
               //  console.log('AudioContext successfully resumed')
-              clearInterval(interval)
+              window.clearInterval(interval)
             }
             this.audioContext.resume()
             this.audioElement.play()  //  play() must be delayed

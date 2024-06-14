@@ -63,7 +63,7 @@ export class NodeGroup {
     this.updateAudibility(audibility)
   }
 
-  interval:NodeJS.Timeout|undefined = undefined
+  interval = 0
   setPlayMode(playMode: PlayMode|undefined) {
     this.playMode = playMode
 
@@ -75,8 +75,8 @@ export class NodeGroup {
         }catch (e) {}*/
 
         if (this.interval) {
-          clearInterval(this.interval)
-          this.interval = undefined
+          window.clearInterval(this.interval)
+          this.interval = 0
         }
         if (this.audioElement) {
           this.audioElement.pause() //  Do not pause when this is for playback.
@@ -87,8 +87,8 @@ export class NodeGroup {
         this.sourceNode?.connect(this.pannerNode)
         //  this.pannerNode.connect(this.destination)
         if (this.interval) {
-          clearInterval(this.interval)
-          this.interval = undefined
+          window.clearInterval(this.interval)
+          this.interval = 0
         }
         if (this.audioElement) {
           this.audioElement.pause()
@@ -106,14 +106,14 @@ export class NodeGroup {
         }
         this.audioElement.muted = false
         if (!this.interval) {
-          this.interval = setInterval(
+          this.interval = window.setInterval(
             () => {
               if (!errorInfo.type) {
                 this?.audioElement?.play().then(() => {
                   //  console.warn(`Succeed to play in NodeGroup`)
                   if (this.interval) {
-                    clearInterval(this.interval)
-                    this.interval = undefined
+                    window.clearInterval(this.interval)
+                    this.interval = 0
                   }
                 }).catch(reason => {
                   //  console.warn(`Failed to play in NodeGroup reason:${reason}`)

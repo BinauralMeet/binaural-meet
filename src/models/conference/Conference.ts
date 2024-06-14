@@ -162,7 +162,7 @@ export class Conference {
             console.log(`DataConnection is connected.`)
             if (this.dataConnection.peer !== peer){
               this.dataConnection.disconnect().then(()=>{
-                setTimeout(()=>{
+                window.setTimeout(()=>{
                   this.dataConnection.connect(room, peer).then(()=>{
                     resolve("success")
                   }).catch(reject)
@@ -240,7 +240,7 @@ export class Conference {
     inputChangeObservationStop()
     this.clearRtc()
     this.rtcTransports.leave()
-    setTimeout(()=>{
+    window.setTimeout(()=>{
       this.preEnter(this.room).then(()=>{
         this.enter(this.room, this.authInfo.token, this.authInfo.email).then(()=>{
         })
@@ -255,14 +255,14 @@ export class Conference {
     const func = ()=>{
       if (this.rtcTransports.isConnected()){
         this.dataConnection.connect(this.room, this.rtcTransports.peer)
-        setTimeout(()=>{
+        window.setTimeout(()=>{
           this.sendLocalRtcContents()
         }, 2000)
       }else{
-        setTimeout(func, 2000)
+        window.setTimeout(func, 2000)
       }
     }
-    setTimeout(func, 2000)
+    window.setTimeout(func, 2000)
     //  */
 }
 

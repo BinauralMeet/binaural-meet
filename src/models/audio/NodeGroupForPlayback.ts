@@ -81,7 +81,7 @@ export class NodeGroupForPlayback extends NodeGroup {
     const playAgain = (group: NodeGroupForPlayback) => {
       if (!group.clipPlaying?.pause){
         group.audioElementForBlob?.play().catch(()=>{
-          setTimeout(()=>playAgain(group), 100)
+          window.setTimeout(()=>playAgain(group), 100)
         })
       }
     }
@@ -89,7 +89,7 @@ export class NodeGroupForPlayback extends NodeGroup {
     const playAgain2 = (group: NodeGroupForPlayback) => {
       if (!group.clipPlaying?.pause){
         group.audioElement?.play().catch(()=>{
-          setTimeout(()=>playAgain2(group), 100)
+          window.setTimeout(()=>playAgain2(group), 100)
         })
       }
     }

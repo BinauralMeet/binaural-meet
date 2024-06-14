@@ -50,7 +50,7 @@ export function DragHandler<ET extends Element>(onDrag:(state:DragState<ET>) => 
 
   const timerFunc = () => {
     if (!memo.state.dragging && !memo.timerAgain) {
-      clearInterval(memo.timerId)
+      window.clearInterval(memo.timerId)
       memo.timerId = 0
     }else if (onTimer) {
       memo.timerAgain = onTimer(memo.state)
@@ -86,7 +86,7 @@ export function DragHandler<ET extends Element>(onDrag:(state:DragState<ET>) => 
         (e.target as Element).setPointerCapture(e.pointerId)
 
         if (!memo.timerId) {
-          memo.timerId = setInterval(timerFunc, interval)
+          memo.timerId = window.setInterval(timerFunc, interval)
         }
         memo.state.dragging = true
       }

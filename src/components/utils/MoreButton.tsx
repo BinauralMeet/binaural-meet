@@ -5,7 +5,7 @@ import React, {CSSProperties} from 'react'
 
 //  utility to control more button
 export interface MoreButtonMember{
-  timeout:NodeJS.Timeout|undefined
+  timeout:number
 }
 export function moreButtonControl(setShowMore:(show:boolean) => void, member:MoreButtonMember) {
   return {
@@ -13,8 +13,8 @@ export function moreButtonControl(setShowMore:(show:boolean) => void, member:Mor
       //  console.log('over')
       if (! (ev.nativeEvent as any).sourceCapabilities?.firesTouchEvents) {
         if (member.timeout) {
-          clearTimeout(member.timeout)
-          member.timeout = undefined
+          window.clearTimeout(member.timeout)
+          member.timeout = 0
         }
         setShowMore(true)
       }
@@ -22,11 +22,11 @@ export function moreButtonControl(setShowMore:(show:boolean) => void, member:Mor
     onMouseOut(ev:React.MouseEvent) {
       //  console.log('out')
       if (member.timeout) {
-        clearTimeout(member.timeout)
+        window.clearTimeout(member.timeout)
       }
-      member.timeout = setTimeout(() => {
+      member.timeout = window.setTimeout(() => {
         setShowMore(false)
-        member.timeout = undefined
+        member.timeout = 0
       },                          500)
     },
   }

@@ -7,7 +7,7 @@ import {RemoteParticipantForm} from './RemoteParticipantForm'
 import {map} from '@stores/'
 
 interface RemoteParticipantMember extends MoreButtonMember{
-  timeout:NodeJS.Timeout|undefined
+  timeout:number
 }
 
 export const RemoteParticipant: React.FC<ParticipantProps> = (props) => {

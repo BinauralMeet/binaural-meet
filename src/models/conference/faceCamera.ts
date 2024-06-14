@@ -9,7 +9,7 @@ import {MSTrack} from '@models/conference/RtcConnection'
 declare const config:any                  //  from ../../config.js included from index.html
 
 //  camera device selection
-var interval:NodeJS.Timeout|undefined
+var interval:number
 var videoEl: HTMLVideoElement|undefined
 var imageEl: HTMLImageElement|undefined
 var canvasBufEl: HTMLCanvasElement|undefined
@@ -141,8 +141,8 @@ var canvasEl: HTMLCanvasElement|undefined
 var loaded = false
 export function stopFaceTrack(){
   if (interval){
-    clearInterval(interval)
-    interval = undefined
+    window.clearInterval(interval)
+    interval = 0
   }
   if (videoEl) videoEl.srcObject = null
   participants.local.viewpoint.nodding = undefined
@@ -171,10 +171,10 @@ export function createLocalCamera(faceTrack: boolean, did?:string) {
         }
         if (!canvasEl) canvasEl = window.document.createElement('canvas') as HTMLCanvasElement
         videoEl.srcObject = ms
-        if (interval){ clearInterval(interval) }
+        if (interval){ window.clearInterval(interval) }
         const ops = new TinyFaceDetectorOptions({inputSize: 160, scoreThreshold: 0.5})
-        interval = setInterval(()=>{
-          if (interval === null) return
+        interval = window.setInterval(()=>{
+          if (interval === 0) return
           if (loaded){
             detectSingleFace(videoEl!, ops).withFaceLandmarks(true).then((face) => {
               drawFace(videoEl!.videoWidth, videoEl!.videoHeight, canvasEl!, face)

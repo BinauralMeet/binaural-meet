@@ -66,7 +66,7 @@ export const MainScreen: React.FC<MainScreenProps> = (props) => {
   useEffect(
     () => {
       if (member.current?.interval) {
-        clearInterval(member.current.interval)
+        window.clearInterval(member.current.interval)
         member.current.interval = undefined
       }
     },

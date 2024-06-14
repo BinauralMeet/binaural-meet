@@ -35,7 +35,7 @@ interface MyFabProps{
 export const FabMain: React.FC<MyFabProps> = (props) => {
   const classes = useStyles()
   const [showMore, setShowMore] = useState<boolean>(false)
-  const memberRef = useRef<MoreButtonMember>({timeout:undefined})
+  const memberRef = useRef<MoreButtonMember>({timeout:0})
   const member = memberRef.current
 
   return <div className={classes.container + (props.className ? ` ${props.className}` : '')}

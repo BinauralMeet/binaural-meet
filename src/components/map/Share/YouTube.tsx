@@ -66,11 +66,11 @@ export function paramMap2Str(params:Map<string, string|undefined>) {
 }
 function clearAllTimer(member: YTMember){
   if (member.playTimeout){
-    clearTimeout(member.playTimeout)
+    window.clearTimeout(member.playTimeout)
     member.playTimeout = 0
   }
   if (member.pauseTimeout){
-    clearTimeout(member.pauseTimeout)
+    window.clearTimeout(member.pauseTimeout)
     member.pauseTimeout = 0
   }
 }
@@ -126,7 +126,7 @@ function ytSeekAndPlay(start:number, index: number, member: YTMember) {
       }
       member.player.seek(seekTarget)
     }
-    member.playTimeout = setTimeout(onTime, TIMETOSEEK * 1000)
+    member.playTimeout = window.setTimeout(onTime, TIMETOSEEK * 1000)
   }
   onTime()
 }
@@ -146,7 +146,7 @@ function ytSeekAndPause(time:number, member: YTMember) {
         member.player.playVideoAt(index)
       }
       member.player.pause()
-      member.pauseTimeout = setTimeout(pauseCheck, CHECK_INTERVAL)
+      member.pauseTimeout = window.setTimeout(pauseCheck, CHECK_INTERVAL)
 
       return
     }
@@ -192,7 +192,7 @@ function ytPauseInterval(member: YTMember) {  //  Seeked by user duruing paused.
     }
   }else {
     if (member.pauseIntervalTimer) {
-      clearInterval(member.pauseIntervalTimer)
+      window.clearInterval(member.pauseIntervalTimer)
       member.pauseIntervalTimer = 0
     }
   }
@@ -328,7 +328,7 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
             member.goal = ''
           }else if(member.goal === ''){   //  paused by user's operation
             if (!member.params.has('paused')) {
-              setTimeout(()=>{
+              window.setTimeout(()=>{
                 if (!member.params.has('paused') && !member.params.has('playing') && player.getState() === 'paused'){
                   ytUpdateState('paused', player.getCurrentTime(), member)
                 }
@@ -340,7 +340,7 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
           //  Add interval timer to check seek when paused is acheived.
           if (member.goal === '' && !member.pauseIntervalTimer) {
             member.pauseIntervalTimer
-              = setInterval(ytPauseInterval, CHECK_INTERVAL, member)
+              = window.setInterval(ytPauseInterval, CHECK_INTERVAL, member)
           }
         })
         player.on('playing', () => {
@@ -398,7 +398,7 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
       }
 
       if (!member.volumeIntervalTimer){
-        member.volumeIntervalTimer = setInterval(checkPositionsForVolume, VOLUME_INTERVAL, member)
+        member.volumeIntervalTimer = window.setInterval(checkPositionsForVolume, VOLUME_INTERVAL, member)
       }
 
       return () => {
@@ -407,7 +407,7 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
         }
         member.player = undefined
         if (member.volumeIntervalTimer){
-          clearInterval(member.volumeIntervalTimer)
+          window.clearInterval(member.volumeIntervalTimer)
         }
       }
     },
