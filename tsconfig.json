@@ -1,11 +1,9 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2021", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
     "types": ["vite/client","gapi","gapi.auth2","gapi.client.drive-v3","google.picker"],
     "strict": true,
     "strictPropertyInitialization": false,
@@ -16,7 +14,6 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
-    "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "noEmit": true,
@@ -25,7 +22,6 @@
     "jsx": "react-jsx",
     "baseUrl": "src",
     "isolatedModules": true,
-    "useDefineForClassFields": true,
     "paths": {
       "@component*": [
         "./component*"

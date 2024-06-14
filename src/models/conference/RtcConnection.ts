@@ -11,7 +11,7 @@ import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSConnectMessage, MS
 import * as mediasoup from 'mediasoup-client';
 import {connLog} from '@models/utils'
 import {RtcTransportStatsGot} from './RtcTransportStatsGot'
-import {messageLoads} from '../../stores/MessageLoads'
+import {messageLoads} from '@stores/MessageLoads'
 
 export type TrackRoles = 'avatar' | 'mainScreen' | string
 export type TrackKind = 'audio' | 'video'
