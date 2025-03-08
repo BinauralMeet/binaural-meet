@@ -28,6 +28,11 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
 
   const simulcastRatios = [0.25, 0.5, 0.75, 4.0 / 3, 2, 4]
   //const simulcastRatios:number[] = []
+  useEffect(()=>{
+    member.current.content = props.content
+    //  console.log(`props.content updated ${JSON.stringify(props.content)}`)
+  }, [props.content])
+
   useEffect(() => {
     //  Create tracks.
     if (!member.current?.tracks){

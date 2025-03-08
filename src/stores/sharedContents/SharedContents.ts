@@ -288,7 +288,7 @@ export class SharedContents extends EventEmitter {
     }
     this.updateAll()
   }
-  //  request content by id which is not sent yet.
+  //  request content by id which is not received yet.
   requestContent(cids: string[]){
     conference.dataConnection.sendMessage(MessageType.CONTENT_UPDATE_REQUEST_BY_ID, cids)
   }
