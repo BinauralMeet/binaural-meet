@@ -13,7 +13,11 @@ export function createLocalMic() {
   const promise = new Promise<MSTrack>((resolutionFunc, rejectionFunc) => {
     const did = participants.local.devicePreference.audioinput
     navigator.mediaDevices.getUserMedia({
-      audio:{deviceId: did}
+      audio:{
+        deviceId: {exact: did},
+        echoCancellation: true,
+        noiseSuppression: true
+      }
     }).then((ms)=>{
       const track = ms.getAudioTracks()[0]
       if (track){

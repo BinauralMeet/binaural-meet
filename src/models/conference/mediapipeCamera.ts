@@ -58,7 +58,7 @@ export function startMpTrack(faceOnly: boolean, did?:string) {
     }
     navigator.mediaDevices.getUserMedia(
       {video:{
-        deviceId:did,
+        deviceId: did ? {exact: did} : did,
         ...rtcVideo
       }}
     ).then((ms)=>{

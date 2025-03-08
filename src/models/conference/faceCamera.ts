@@ -154,8 +154,8 @@ export function createLocalCamera(faceTrack: boolean, did?:string) {
     }
     navigator.mediaDevices.getUserMedia(
       {video:{
-        deviceId:did,
-        ...config.rtc.video
+        deviceId:did ? {exact : did} : did,
+        ...config.rtc.videoConstraints.video
       }}
     ).then((ms)=>{
       if (faceTrack){

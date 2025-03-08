@@ -5,6 +5,7 @@ import contents from '@stores/sharedContents/SharedContents'
 import { autorun } from 'mobx'
 import React, {useEffect, useRef} from 'react'
 import {ContentProps} from './Content'
+import {participants} from '@stores/participants'
 
 const useStyles = makeStyles({
   video: {
@@ -77,19 +78,22 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
         const tracks = ref.current.srcObject instanceof MediaStream && ref.current.srcObject.getTracks()
         if (tracks && tracks.length) {
           const video = tracks.find(track => track.kind === 'video')
-          const settings = video?.getSettings()
-          const newSize = [settings?.width || 0, settings?.height || 0] as [number, number]
-          if (newSize[0] && member.current.content.originalSize.toString() !== newSize.toString()) {
-            if (member.current.content.originalSize[0]){
-              const sx = member.current.content.originalSize[0] / newSize[0]
-              const sy = member.current.content.originalSize[1] / newSize[1]
-              if (sx === sy && simulcastRatios.find(s => s === sx)) { return }
+          const peer = contents.contentTracks.get(member.current.content.id)?.peer
+          if (peer === participants.local.id){
+            const settings = video?.getSettings()
+            const newSize = [settings?.width || 0, settings?.height || 0] as [number, number]
+            if (newSize[0] && member.current.content.originalSize.toString() !== newSize.toString()) {
+              if (member.current.content.originalSize[0]){
+                const sx = member.current.content.originalSize[0] / newSize[0]
+                const sy = member.current.content.originalSize[1] / newSize[1]
+                if (sx === sy && simulcastRatios.find(s => s === sx)) { return }
+              }
+              const scale = member.current.content.size[0] /
+                (member.current.content.originalSize[0] ? member.current.content.originalSize[0] : newSize[0])
+              member.current.content.originalSize = newSize
+              member.current.content.size = mulV2(scale, newSize)
+              props.updateAndSend(member.current.content)
             }
-            const scale = member.current.content.size[0] /
-              (member.current.content.originalSize[0] ? member.current.content.originalSize[0] : newSize[0])
-            member.current.content.originalSize = newSize
-            member.current.content.size = mulV2(scale, newSize)
-            props.updateAndSend(member.current.content)
           }
         }
       }
