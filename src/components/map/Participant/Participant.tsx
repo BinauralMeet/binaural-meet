@@ -104,6 +104,7 @@ interface MainAvatarProps extends BasicProps{
 }
 export interface ParticipantProps extends MainAvatarProps{
   zIndex?: number
+  gl: WebGLRenderingContext|null
 }
 
 
@@ -375,7 +376,7 @@ export const Participant: React.FC<ParticipantProps> = (props) => {
     </div>
     {useVrm ?
     <div className={classesPose.root} style={{zIndex:props.zIndex ? props.zIndex + 5000 : 10000}}>
-      <VRMAvatar participant={participant} />
+      <VRMAvatar participant={participant} gl={props.gl} />
     </div>:undefined}
   </>
   }}</Observer>

@@ -289,5 +289,6 @@ export const MemoedLocalParticipant = (props: ParticipantProps) =>
     props.participant.information.color,
     props.participant.information.name,
     props.participant.information.textColor,
+    props.gl
   ])
   MemoedLocalParticipant.displayName = 'MemorizedLocalParticipant'

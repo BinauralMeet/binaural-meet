@@ -1,12 +1,13 @@
 import {Participant, PARTICIPANT_SIZE} from '@models/Participant'
 import {urlParameters} from '@models/url'
 import {useObserver} from 'mobx-react-lite'
-import React from 'react'
+import React, { useState } from 'react'
 import {MemoedLocalParticipant as LocalParticipant} from './LocalParticipant'
 import {MouseCursor} from './MouseCursor'
 import {PlaybackParticipant} from './PlaybackParticipant'
 import {RemoteParticipant} from './RemoteParticipant'
 import { participants } from '@stores/'
+import { MAP_SIZE } from '@components/Constants'
 
 interface LineProps {
   start: [number, number]
@@ -33,6 +34,19 @@ const Line: React.FC<LineProps> = (props) => {
 }
 
 export const ParticipantLayer: React.FC = () => {
+  const ref = React.useRef<HTMLCanvasElement>(null)
+  const [gl, setGl] = useState<WebGLRenderingContext|null>(null)
+  React.useEffect(()=>{
+    if (!ref.current) return
+    if (!gl){
+      setGl(ref.current.getContext("webgl"))
+    }
+    if (gl){
+      gl.clearColor(0.0, 0.0, 0.0, 0.0);
+      gl.clear(gl.COLOR_BUFFER_BIT)
+    }
+  },[])
+
   const remotes = useObserver(() => {
     const rs = Array.from(participants.remote.values()).filter(r => r.physics.located)
     const all:Participant[] = Array.from(rs)
@@ -45,10 +59,11 @@ export const ParticipantLayer: React.FC = () => {
     return rs
   })
   const localId = useObserver(() => participants.localId)
+
   const remoteElements = remotes.map((r, index) => <RemoteParticipant key={r.id}
-    participant={r} size={PARTICIPANT_SIZE} zIndex={index} />)
+    participant={r} size={PARTICIPANT_SIZE} zIndex={index} gl={gl}/>)
   const localElement = (<LocalParticipant key={'local'} participant={participants.local}
-    size={PARTICIPANT_SIZE} />)
+    size={PARTICIPANT_SIZE} gl={gl}/>)
   const lines = useObserver(
     () => Array.from(participants.yarnPhones).map((rid) => {
       const start = participants.local.pose.position
@@ -61,7 +76,7 @@ export const ParticipantLayer: React.FC = () => {
   )
   const playIds = useObserver(()=> Array.from(participants.playback.keys()))
   const playbackElements = playIds.map((id, index) => <PlaybackParticipant key={id}
-    participant={participants.playback.get(id)!} size={PARTICIPANT_SIZE} zIndex={index}/>)
+    participant={participants.playback.get(id)!} size={PARTICIPANT_SIZE} zIndex={index} gl={gl}/>)
 
   const mouseIds = useObserver(() => Array.from(participants.remote.keys()).filter(id => (participants.find(id)!.mouse.show)))
   const remoteMouseCursors = mouseIds.map(
@@ -72,6 +87,7 @@ export const ParticipantLayer: React.FC = () => {
     ? <MouseCursor key={'M_local'} participantId={localId} /> : undefined
 
   if (urlParameters.testBot !== null) { return <div /> }
+  const HALF = 0.5
 
   //  zIndex is needed to show the participants over the share layer.
   return(
@@ -80,6 +96,14 @@ export const ParticipantLayer: React.FC = () => {
       {playbackElements}
       {remoteElements}
       {localElement}
+      <canvas style={{
+        position: 'absolute',
+        top: - MAP_SIZE * HALF,
+        left: - MAP_SIZE * HALF,
+        height: MAP_SIZE,
+        width: MAP_SIZE,
+        pointerEvents:'none'}}
+        ref={ref}/>
       {remoteMouseCursors}
       {localMouseCursor}
     </div>

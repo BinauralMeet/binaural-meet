@@ -15,6 +15,7 @@ interface Member{
   scene?: THREE.Scene
   camera?: THREE.Camera
   vrm?:VRM
+  gl?: WebGLRenderingContext
 }
 
 const size = [150,300]
@@ -64,7 +65,7 @@ function createMember(ref: React.MutableRefObject<Member|null>, canvas: HTMLCanv
       1000,
     ),
     scene: new THREE.Scene(),
-    vrm: ref.current?.vrm
+    vrm: ref.current?.vrm,
   }
   ref.current = mem
   canvas.addEventListener('webglcontextlost', (ev)=>{
@@ -79,11 +80,16 @@ function createMember(ref: React.MutableRefObject<Member|null>, canvas: HTMLCanv
   return mem
 }
 
+interface VRMAvatarProps{
+  participant:ParticipantBase
+  gl: WebGLRenderingContext | null
+}
 
-export const VRMAvatar: React.FC<{participant:ParticipantBase}> = (props: {participant:ParticipantBase}) => {
+export const VRMAvatar: React.FC<VRMAvatarProps> = (props: VRMAvatarProps) => {
   const ref = React.useRef<HTMLCanvasElement>(null)
   const memberRef = React.useRef<Member|null>(null)
 
+  if (props.gl && memberRef.current) memberRef.current.gl = props.gl
   React.useEffect(()=>{
     if (!ref.current) return
     if (!memberRef.current){ createMember(memberRef, ref.current) }
@@ -146,8 +152,7 @@ export const VRMAvatar: React.FC<{participant:ParticipantBase}> = (props: {parti
         participants.local.pose.orientation += diff * (180/Math.PI)
       }
 
-      const glCtx = mem.renderer?.getContext()
-      if (mem.vrm && glCtx && !glCtx.isContextLost()) {
+      if (mem.vrm && mem.gl && !mem.gl.isContextLost()) {
         vrmSetPose(mem.vrm, rig)                //  apply rig
         mem.vrm.update(mem.clock.getDelta());   //  Update model to render physics
         const rad = ori / 180 * Math.PI
