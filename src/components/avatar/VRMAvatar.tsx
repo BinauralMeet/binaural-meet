@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import {VRM, VRMSchema, VRMUtils} from '@pixiv/three-vrm'
-import React from 'react'
-import { ParticipantBase, PARTICIPANT_SIZE, VRMRigs } from '@models/Participant'
+import React, { useEffect, useRef } from 'react'
+import { ParticipantBase, VRMRigs } from '@models/Participant'
 import { autorun, IReactionDisposer } from 'mobx'
 import * as Kalidokit from 'kalidokit'
 import { throttle } from 'lodash'
@@ -9,183 +9,97 @@ import Euler from 'kalidokit/dist/utils/euler'
 import {GetPromiseGLTFLoader} from '@models/api/GLTF'
 import { participants } from '@stores/index'
 
-interface Member{
+export interface VRMUpdateReq{
+  pos: [number, number]
+  ori: number
+  vrm: VRM
+  rig?: VRMRigs
+}
+export interface ThreeContext{
   clock: THREE.Clock
-  renderer?: THREE.WebGLRenderer
-  scene?: THREE.Scene
-  camera?: THREE.Camera
-  vrm?:VRM
-  gl?: WebGLRenderingContext
+  renderer: THREE.WebGLRenderer
+  camera: THREE.Camera
+  scene: THREE.Scene
+  updateReqs: Map<string, VRMUpdateReq>
 }
 
-const size = [150,300]
-
-/*  was very slow.
-let canvas:HTMLCanvasElement|undefined
-let renderer:THREE.WebGLRenderer|undefined
-function getImage(ctx:Member, size: number[], ori: number, rig:VRMRigs){
-  if (!canvas){
-    canvas = document.createElement('canvas')
-    canvas.width = size[0]
-    canvas.height = size[1]
-    renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: true,
-      canvas
-    })
-  }
-  if(ctx.vrm && ctx.scene && ctx.camera && renderer){
-    vrmSetPose(ctx.vrm, rig)                //  apply rig
-    ctx.vrm.update(ctx.clock.getDelta());   //  Update model to render physics
-    const rad = ori / 180 * Math.PI
-    //mem.camera?.position.set(-Math.sin(rad)*3, 2, -Math.cos(rad)*3)
-    //mem.camera?.lookAt(0,0.93,0)
-    ctx.camera?.position.set(-Math.sin(rad)*3, 0.8, -Math.cos(rad)*3)
-    ctx.camera?.lookAt(0,0.8,0)
-    renderer.setSize(size[0], size[1])
-    renderer.setPixelRatio(window.devicePixelRatio * 4)
-    renderer.render(ctx.scene, ctx.camera)
-  }
-  return canvas.toDataURL()
-}
-*/
-
-function createMember(ref: React.MutableRefObject<Member|null>, canvas: HTMLCanvasElement):Member{
-  const mem = {
-    clock:new THREE.Clock(),
-    renderer : new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: true,
-      canvas: canvas
-    }),
-    camera: new THREE.PerspectiveCamera(
-      35,
-      size[0]/size[1],
-      0.1,
-      1000,
-    ),
-    scene: new THREE.Scene(),
-    vrm: ref.current?.vrm,
-  }
-  ref.current = mem
-  canvas.addEventListener('webglcontextlost', (ev)=>{
-    ev.preventDefault();
-    createMember(ref, canvas)
-  })
-  mem.renderer.setSize(size[0], size[1])
-  mem.renderer.setPixelRatio(window.devicePixelRatio * 4)
-  const light = new THREE.DirectionalLight(0xffffff)
-  light.position.set(1, 1, 1).normalize()
-  mem.scene.add(light)
-  return mem
-}
-
-interface VRMAvatarProps{
+export interface VRMAvatarProps{
   participant:ParticipantBase
-  gl: WebGLRenderingContext | null
+  refCtx: React.RefObject<ThreeContext>
+}
+
+interface Member{
+  vrm?: VRM
+  dispo?:IReactionDisposer
+  lastLocalOri:number
+}
+
+const updateRequest = (oriIn:number, rig:VRMRigs|undefined, props: VRMAvatarProps, mem: Member) => {
+  if (!mem.vrm) return
+  const oriOffset = (oriIn+720) % 360 - 180
+  const ori = 180 + oriOffset / 2
+  //  console.log(`render3d() ori: ${ori}`)
+
+  if (props.participant === participants.local && rig && rig.face){
+    const face = rig.face as Kalidokit.TFace
+    //console.log(`Local Face Ori:${face.head.y}`)
+    //const pose = rig.pose as Kalidokit.TPose
+    //const cur = (pose.Hips?.rotation?.y || 0) + pose.Spine.y + face.head.y
+    const cur = face.head.y
+    const diff = cur - mem.lastLocalOri
+    mem.lastLocalOri = cur
+    participants.local.pose.orientation += diff * (180/Math.PI)
+  }
+  const req:VRMUpdateReq = {
+    pos: props.participant.pose.position,
+    ori: ori,
+    vrm: mem.vrm,
+    rig
+  }
+  props.refCtx.current?.updateReqs?.set(props.participant.id, req)
+  //console.log(`updateRequest called req: ${props.refCtx.current?.updateReqs?.size}`)
 }
 
 export const VRMAvatar: React.FC<VRMAvatarProps> = (props: VRMAvatarProps) => {
-  const ref = React.useRef<HTMLCanvasElement>(null)
-  const memberRef = React.useRef<Member|null>(null)
+  const refMem = useRef<Member>({lastLocalOri:0})
 
-  if (props.gl && memberRef.current) memberRef.current.gl = props.gl
-  React.useEffect(()=>{
-    if (!ref.current) return
-    if (!memberRef.current){ createMember(memberRef, ref.current) }
+  //  3D avatar rendering function
 
-    /*  //  show grid
-    const gridHelper = new THREE.GridHelper(10, 10)
-    scene.add(gridHelper)
-    gridHelper.visible = true
+  //  Load avatar and set update autorun when context is updated.
+  useEffect(()=>{
+    if (!props.refCtx.current) return
+    const ctx = props.refCtx.current
+    const mem = refMem.current
 
-    let geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);// 立方体
-    let material = new THREE.MeshLambertMaterial({color: 0x00ddff});// 影が表示される
-    const cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
-    scene.add(cube);
-
-    // show axis
-    const axesHelper = new THREE.AxesHelper(0.5)
-    scene.add(axesHelper)
-    //  */
+    //  load VRM
     const loader = GetPromiseGLTFLoader()
-    const dispo: IReactionDisposer[] = []
-
-    //  load VRM from avatarSrc
-    dispo.push(autorun(()=>{
-      const mem = memberRef.current!
-      loader.promiseLoad(
-          props.participant.information.avatarSrc,
-      ).then(gltf => {
-        if (mem.vrm){
-          mem.scene?.remove(mem.vrm.scene)
-        }
-        VRMUtils.removeUnnecessaryJoints(gltf.scene);
-        VRM.from(gltf).then(vrmGot => {
-          mem.scene?.add(vrmGot.scene)
-          vrmGot.scene.rotation.y = Math.PI
-          if (mem){ mem.vrm = vrmGot }
-          render3d(props.participant.pose.orientation, props.participant.vrmRigs)
+    loader.promiseLoad(
+        props.participant.information.avatarSrc,
+    ).then(gltf => {
+      VRMUtils.removeUnnecessaryJoints(gltf.scene);
+      VRM.from(gltf).then(vrmGot => {
+        vrmGot.scene.rotation.y = Math.PI
+        mem.vrm = vrmGot
+        console.log('VRM loaded')
+        //  set autorun
+        if (mem.dispo){ mem.dispo() }
+        mem.dispo = autorun(()=>{
+          updateRequest(props.participant.pose.orientation, props.participant.vrmRigs, props, mem)
         })
-      }).catch((e)=>{
-        console.log('Failed to load VRM', e)
       })
-    }))
-
-    //  render when updated
-    let lastLocalOri = 0
-    const render3d = throttle((oriIn, rig)=>{
-      //  /*
-      const oriOffset = (oriIn+720) % 360 - 180
-      const ori = 180 + oriOffset / 2
-      //console.log(`ori: ${ori}`)
-
-      const mem = memberRef.current!
-      if (props.participant === participants.local && rig && rig.face){
-        const face = rig.face as Kalidokit.TFace
-        //console.log(`Local Face Ori:${face.head.y}`)
-        //const pose = rig.pose as Kalidokit.TPose
-        //const cur = (pose.Hips?.rotation?.y || 0) + pose.Spine.y + face.head.y
-        const cur = face.head.y
-        const diff = cur - lastLocalOri
-        lastLocalOri = cur
-        participants.local.pose.orientation += diff * (180/Math.PI)
-      }
-
-      if (mem.vrm && mem.gl && !mem.gl.isContextLost()) {
-        vrmSetPose(mem.vrm, rig)                //  apply rig
-        mem.vrm.update(mem.clock.getDelta());   //  Update model to render physics
-        const rad = ori / 180 * Math.PI
-        //mem.camera?.position.set(-Math.sin(rad)*3, 2, -Math.cos(rad)*3)
-        //mem.camera?.lookAt(0,0.93,0)
-        mem.camera?.position.set(-Math.sin(rad)*3, 0.8, -Math.cos(rad)*3)
-        mem.camera?.lookAt(0,0.8,0)
-        mem.renderer?.render(mem.scene!, mem.camera!)
-      }
-      /*/
-      if (memberRef.current && ref.current){
-        const url = getImage(memberRef.current, size, ori, rig)
-        ref.current.src = url
-      } */
-    }, 1000/20)
-    dispo.push(autorun(()=>{
-      render3d(props.participant.pose.orientation, props.participant.vrmRigs)
-    }))
+    }).catch((e)=>{
+      console.log('Failed to load VRM', e)
+    })
 
     return ()=>{
-      for(const d of dispo) d()
+      if (mem.dispo) mem.dispo()
+      mem.vrm?.dispose()
+      mem.vrm=undefined
     }
-    //  eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [props.refCtx.current])
 
   //  /*
   return <>
-    <canvas style={{
-      pointerEvents:'none',
-      position:'relative',
-      width:size[0], height:size[1],
-      left: -size[0]/2, top:-(size[1] - PARTICIPANT_SIZE/4)
-      }} ref={ref}/>
   </>
   /*/
   return <>
@@ -198,8 +112,6 @@ export const VRMAvatar: React.FC<VRMAvatarProps> = (props: VRMAvatarProps) => {
   </>
   //  */
 }
-
-
 
 
 const clamp = Kalidokit.Utils.clamp;
@@ -302,7 +214,7 @@ function rigFace(vrm:VRM, riggedFace:Kalidokit.TFace){
 }
 
 /* VRM Character Animator */
-function vrmSetPose (vrm:VRM, rigs?:VRMRigs){
+export function vrmSetPose (vrm:VRM, rigs?:VRMRigs){
   if (!vrm) return
   if (!rigs) {
     rigRotation(vrm, "RightUpperArm", new Euler(0,0,-Math.PI/2*0.8), 1, 1);

@@ -28,6 +28,8 @@ commonConfig = {
   thirdPersonView: true,
   rtc: rtcConfig,
   websocketTimeout: 60 * 1000,
+  soundLocalizationBase: 'user',
+  avatarDisplayType: '3D',
 }
 
 const configTitech = {

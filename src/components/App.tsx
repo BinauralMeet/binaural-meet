@@ -51,13 +51,13 @@ export const App: React.FC<{}> = () => {
         <SplitPane className={classes.fill} split="vertical" resizerClassName={clsSplit.resizerVertical}
           minSize={0} defaultSize="7em">
           <LeftBar />
-          <Fragment>
+          <>
             <MainScreen showAllTracks = {DEBUG_VIDEO} />
-            <Observer>{() => <Map transparent={sharedContentsStore.mainScreenStream !== undefined
-             || DEBUG_VIDEO} />
+            <Observer>{() =>
+              <Map transparent={sharedContentsStore.mainScreenStream !== undefined || DEBUG_VIDEO} />
             }</Observer>
             <Footer height={(isSmartphone() && isPortrait()) ? 100 : undefined} />
-          </Fragment>
+          </>
         </SplitPane>
       </GoogleOAuthProvider>
       </div>

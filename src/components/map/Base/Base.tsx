@@ -11,6 +11,8 @@ import React, {useEffect, useRef} from 'react'
 import ResizeObserver from 'react-resize-observer'
 import {useGesture} from 'react-use-gesture'
 import {map, participants} from '@stores/'
+import { ThreeContext } from '@components/avatar/VRMAvatar'
+import { WebGLCanvas } from './WebGLCanvas'
 
 //  utility
 function limitScale(currentScale: number, scale: number): number {
@@ -55,6 +57,8 @@ const useStyles = makeStyles({
   }),
 })
 
+
+
 class BaseMember{
   prebThirdPersonView = false
   mouseDown = false
@@ -65,6 +69,7 @@ export const Base: React.FC = (props) => {
   const matrix = useObserver(() => map.matrix)
   const container = useRef<HTMLDivElement>(null)
   const outer = useRef<HTMLDivElement>(null)
+
   function offset():[number, number] {
     return map.offset
   }
@@ -361,7 +366,8 @@ export const Base: React.FC = (props) => {
   }
   const classes = useStyles(styleProps)
 
-  return (
+
+  return <>
     <div className={classes.root} ref={outer} {...bind()}>
       <ResizeObserver onResize = { onResizeOuter } />
       <div className={classes.center} onWheel={wheelHandler}>
@@ -369,8 +375,9 @@ export const Base: React.FC = (props) => {
             {props.children}
         </div>
       </div>
+      <WebGLCanvas />
     </div>
-  )
+  </>
 }
 Base.displayName = 'MapBase'
 

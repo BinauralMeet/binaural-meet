@@ -38,6 +38,7 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
   @observable headphoneConfirmed = false  //  Ask if really use headphone or not
   @observable thirdPersonView = config.thirdPersonView as boolean
   @observable soundLocalizationBase = config.soundLocalizationBase ? config.soundLocalizationBase : 'user'
+  @observable avatarDisplayType = config.avatarDisplayType ? config.avatarDisplayType : '3D'
   @observable uploaderPreference:UploaderPreference = config.uploaderPreference ? config.uploaderPreference : 'gyazo'
   @observable.ref zone:ISharedContent|undefined = undefined    //  The zone on which the local participant located.
   @observable remoteVideoLimit = config.remoteVideoLimit as number || -1

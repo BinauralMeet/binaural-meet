@@ -11,6 +11,7 @@ import React from 'react'
 import {FabWithTooltip} from '@components/utils/FabEx'
 import Button from '@material-ui/core/Button'
 import {participants} from '@stores/'
+import { FormControlLabel, Radio, RadioGroup } from '@material-ui/core'
 
 
 export const SoundLocalizationSetting: React.FC<{}> = () => {
@@ -32,6 +33,31 @@ export const SoundLocalizationSetting: React.FC<{}> = () => {
 }
 SoundLocalizationSetting.displayName = 'SoundLocalizationSetting'
 
+export const AvatarDisplaySetting: React.FC<{}> = () => {
+  const avatarDisplayType = useObserver(() => participants.local.avatarDisplayType)
+  const {t} = useTranslation()
+
+  return <Container>
+    <Grid component="label" container={true} alignItems="center" spacing={1}>
+      <Grid item={true}>
+      <RadioGroup row={true} defaultValue={avatarDisplayType}
+        onChange={(ev, val)=>{
+          participants.local.avatarDisplayType = val
+          if (val==='3D'){
+            participants.local.soundLocalizationBase = 'avatar'
+          }
+          participants.local.saveMediaSettingsToStorage()
+        }}>
+        <FormControlLabel value='3D' control={<Radio />} label={t('avatar3D')} checked={avatarDisplayType==='3D'} />
+        <FormControlLabel value='2.5D' control={<Radio />} label={t('avatar2_5D')} checked={avatarDisplayType==='2.5D'} />
+        <FormControlLabel value='2D' control={<Radio />} label={t('avatar2D')} checked={avatarDisplayType==='2D'}/>
+      </RadioGroup>
+      </Grid>
+    </Grid>
+  </Container>
+}
+AvatarDisplaySetting.displayName = 'AvatarDisplaySetting'
+
 
 export const StereoAudioSwitch: React.FC<{size?: number, iconSize:number}> = (props) => {
   const stereo = useObserver(() => participants.local.useStereoAudio)
@@ -40,7 +66,8 @@ export const StereoAudioSwitch: React.FC<{size?: number, iconSize:number}> = (pr
   const [showConfirmation, setShowConfirmation] = React.useState(false)
 
   const switchStereo = () => {
-    if (stereo || participants.local.headphoneConfirmed){
+    //  As Chrome support AEC, skip the confirmation now.
+    if (true){ // stereo || participants.local.headphoneConfirmed){
       participants.local.headphoneConfirmed = true
       participants.local.useStereoAudio = !stereo
       participants.local.saveMediaSettingsToStorage()
@@ -54,12 +81,12 @@ export const StereoAudioSwitch: React.FC<{size?: number, iconSize:number}> = (pr
   return <>
     <FabWithTooltip size={props.size} title={
         <>
-          {isChromium ? t('headphoneL1Chrome') : t('headphoneL1')} <br />
+          {`${t('headphoneL1')} /`} <br />
           {t('headphoneL2')}
         </>}
       color = {stereo ? 'secondary' : 'primary'}
       onClick={(ev)=>{setAnchor(ev.currentTarget); switchStereo()}}
-      onClickMore = {stereo ? (ev) => { setShowSteraoBase(true); setAnchor(ev.currentTarget) } : undefined} >
+      onClickMore = {(ev) => { setShowSteraoBase(true); setAnchor(ev.currentTarget) }} >
       {stereo ? <HeadsetIcon style={{width:props.iconSize, height:props.iconSize}} />  :
       <SpeakerIcon style={{width:props.iconSize, height:props.iconSize}} /> }
     </FabWithTooltip>
@@ -90,6 +117,8 @@ export const StereoAudioSwitch: React.FC<{size?: number, iconSize:number}> = (pr
       <div style={{padding:20}}>
         {t('soundLocalizationBasedOn')} <br />
         <SoundLocalizationSetting />
+        {t('avatarDisplay')} <br />
+        <AvatarDisplaySetting />
       </div>
     </Popover>
   </>
