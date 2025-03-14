@@ -11,8 +11,6 @@ import React, {useEffect, useRef} from 'react'
 import ResizeObserver from 'react-resize-observer'
 import {useGesture} from 'react-use-gesture'
 import {map, participants} from '@stores/'
-import { ThreeContext } from '@components/avatar/VRMAvatar'
-import { WebGLCanvas } from './WebGLCanvas'
 
 //  utility
 function limitScale(currentScale: number, scale: number): number {
@@ -242,6 +240,7 @@ export const Base: React.FC = (props) => {
       onPinchEnd: () => map.setCommittedMatrix(matrix),
       onMove:({xy}) => {
         map.setMouse(xy)
+        //console.log(`map.setMouse(${xy[0]}, ${xy[1]})`)
         if (participants.local.mouse.position[0] !== map.mouseOnMap[0]
           || participants.local.mouse.position[1] !== map.mouseOnMap[1]){
           participants.local.mouse.position = Object.assign({}, map.mouseOnMap)
@@ -375,7 +374,6 @@ export const Base: React.FC = (props) => {
             {props.children}
         </div>
       </div>
-      <WebGLCanvas />
     </div>
   </>
 }

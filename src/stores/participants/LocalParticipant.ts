@@ -1,5 +1,5 @@
 import { ISharedContent } from '@models/ISharedContent'
-import {LocalInformation, LocalParticipant as ILocalParticipant, Physics, RemoteInformation, TrackStates, AvatarType} from '@models/Participant'
+import {LocalInformation, LocalParticipant as ILocalParticipant, Physics, RemoteInformation, TrackStates, AvatarType, AvatarDisplayType} from '@models/Participant'
 import {urlParameters} from '@models/url'
 import {checkImageUrl, mulV2, Pose2DMap, subV2} from '@models/utils'
 import {MapData} from '@stores/Map'
@@ -38,7 +38,7 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
   @observable headphoneConfirmed = false  //  Ask if really use headphone or not
   @observable thirdPersonView = config.thirdPersonView as boolean
   @observable soundLocalizationBase = config.soundLocalizationBase ? config.soundLocalizationBase : 'user'
-  @observable avatarDisplayType = config.avatarDisplayType ? config.avatarDisplayType : '3D'
+  @observable avatarDisplayType:AvatarDisplayType = config.avatarDisplayType ? config.avatarDisplayType : '3D'
   @observable uploaderPreference:UploaderPreference = config.uploaderPreference ? config.uploaderPreference : 'gyazo'
   @observable.ref zone:ISharedContent|undefined = undefined    //  The zone on which the local participant located.
   @observable remoteVideoLimit = config.remoteVideoLimit as number || -1

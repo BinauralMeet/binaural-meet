@@ -29,7 +29,7 @@ commonConfig = {
   rtc: rtcConfig,
   websocketTimeout: 60 * 1000,
   soundLocalizationBase: 'user',
-  avatarDisplayType: '3D',
+  avatarDisplayType: '2.5D',
 }
 
 const configTitech = {

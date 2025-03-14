@@ -14,11 +14,11 @@ export interface VRMUpdateReq{
   ori: number
   vrm: VRM
   rig?: VRMRigs
+  rendered?: boolean
 }
 export interface ThreeContext{
   clock: THREE.Clock
   renderer: THREE.WebGLRenderer
-  camera: THREE.Camera
   scene: THREE.Scene
   updateReqs: Map<string, VRMUpdateReq>
 }
@@ -64,11 +64,9 @@ export const VRMAvatar: React.FC<VRMAvatarProps> = (props: VRMAvatarProps) => {
   const refMem = useRef<Member>({lastLocalOri:0})
 
   //  3D avatar rendering function
-
   //  Load avatar and set update autorun when context is updated.
   useEffect(()=>{
     if (!props.refCtx.current) return
-    const ctx = props.refCtx.current
     const mem = refMem.current
 
     //  load VRM
@@ -80,10 +78,10 @@ export const VRMAvatar: React.FC<VRMAvatarProps> = (props: VRMAvatarProps) => {
       VRM.from(gltf).then(vrmGot => {
         vrmGot.scene.rotation.y = Math.PI
         mem.vrm = vrmGot
-        console.log('VRM loaded')
+        //  console.log(`VRM loaded for ${props.participant.id}`)
         //  set autorun
         if (mem.dispo){ mem.dispo() }
-        mem.dispo = autorun(()=>{
+        mem.dispo = autorun(()=>{ //  Request update when orientation or rigs changed.
           updateRequest(props.participant.pose.orientation, props.participant.vrmRigs, props, mem)
         })
       })
@@ -92,25 +90,18 @@ export const VRMAvatar: React.FC<VRMAvatarProps> = (props: VRMAvatarProps) => {
     })
 
     return ()=>{
+      //console.log(`Unmount VRMAvatar for ${props.participant.id}`)
+      if (props.refCtx.current){
+        const ctx = props.refCtx.current
+        ctx.updateReqs.delete(props.participant.id)
+      }
       if (mem.dispo) mem.dispo()
       mem.vrm?.dispose()
       mem.vrm=undefined
     }
-  }, [props.refCtx.current])
+  }, [props.refCtx.current, props.participant.information.avatarSrc]) //  reload vrm when ctx or avatarSrc changed.
 
-  //  /*
-  return <>
-  </>
-  /*/
-  return <>
-    <img style={{
-      pointerEvents:'none',
-      position:'relative',
-      width:size[0], height:size[1],
-      left: -size[0]/2, top:-(size[1] - PARTICIPANT_SIZE/4)
-      }} ref={ref}/>
-  </>
-  //  */
+  return <></>
 }
 
 

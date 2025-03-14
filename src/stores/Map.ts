@@ -32,6 +32,9 @@ export class MapData {
   @computed get rotation(): number {
     return radian2Degree(extractRotation(this.committedMatrix))
   }
+  @computed get scale():number{
+    return extractScaleX(this.matrix)
+  }
   @observable left = 0
   @observable mouse: [number, number] = [0, 0]
   @observable mouseOnMap: [number, number] = [0, 0]

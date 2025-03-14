@@ -165,7 +165,7 @@ export const Choose3DAvatar: React.FC<LocalParticipantFormProps> = (props: Local
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  return <Popover {...popoverProps} style={dialogStyle} onWheelCapture={(ev)=>{ev.stopPropagation()}}>
+  return <Popover {...popoverProps} style={dialogStyle} onWheelCapture={(ev)=>{ev.stopPropagation()}} onClose={()=>close3D({}, 'cancel')}>
     <DialogTitle >
       <span style={titleStyle}>
         {t('lsTitle3D')}
