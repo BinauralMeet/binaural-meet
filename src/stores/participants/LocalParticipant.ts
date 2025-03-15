@@ -1,5 +1,5 @@
 import { ISharedContent } from '@models/ISharedContent'
-import {LocalInformation, LocalParticipant as ILocalParticipant, Physics, RemoteInformation, TrackStates, AvatarType, AvatarDisplayType} from '@models/Participant'
+import {LocalInformation, LocalParticipant as ILocalParticipant, Physics, RemoteInformation, TrackStates, AvatarType} from '@models/Participant'
 import {urlParameters} from '@models/url'
 import {checkImageUrl, mulV2, Pose2DMap, subV2} from '@models/utils'
 import {MapData} from '@stores/Map'
@@ -21,6 +21,8 @@ export interface MediaSettings{
   device:DevicePreference,
   headphone: boolean,
   soundLocalizationBase: string,
+  avatarDisplay2_5D: boolean,
+  avatarDisplay3D: boolean,
   uploadPreference: string
 }
 
@@ -37,8 +39,9 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
   @observable useStereoAudio = false  //  will be override by url switch
   @observable headphoneConfirmed = false  //  Ask if really use headphone or not
   @observable thirdPersonView = config.thirdPersonView as boolean
-  @observable soundLocalizationBase = config.soundLocalizationBase ? config.soundLocalizationBase : 'user'
-  @observable avatarDisplayType:AvatarDisplayType = config.avatarDisplayType ? config.avatarDisplayType : '3D'
+  @observable soundLocalizationBase = config.soundLocalizationBase ? config.soundLocalizationBase : 'avatar'
+  @observable avatarDisplay2_5D:boolean = config.avatarDisplay2_5D ? config.avatarDisplay2_5D : false
+  @observable avatarDisplay3D:boolean = config.avatarDisplay3D ? config.avatarDisplay3D : true
   @observable uploaderPreference:UploaderPreference = config.uploaderPreference ? config.uploaderPreference : 'gyazo'
   @observable.ref zone:ISharedContent|undefined = undefined    //  The zone on which the local participant located.
   @observable remoteVideoLimit = config.remoteVideoLimit as number || -1
@@ -146,6 +149,8 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
       device:this.devicePreference,
       headphone: this.useStereoAudio,
       soundLocalizationBase: this.soundLocalizationBase,
+      avatarDisplay2_5D: this.avatarDisplay2_5D,
+      avatarDisplay3D: this.avatarDisplay3D,
       uploadPreference: this.uploaderPreference,
     }
     //  console.log(storage === localStorage ? 'Save to localStorage' : 'Save to sessionStorage')
@@ -171,6 +176,8 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
         Object.assign(this.devicePreference, setting.device)
         this.useStereoAudio = setting.headphone
         this.soundLocalizationBase = setting.soundLocalizationBase
+        this.avatarDisplay2_5D = setting.avatarDisplay2_5D
+        this.avatarDisplay3D = setting.avatarDisplay3D
       }
     }
   }

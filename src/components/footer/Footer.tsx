@@ -24,7 +24,7 @@ import {FaceControl} from './FaceControl'
 import {FabMain, FabWithTooltip} from '@components/utils/FabEx'
 import {ShareButton} from './share/ShareButton'
 import {RecorderButton} from './recorder/RecorderButton'
-import {StereoAudioSwitch} from './StereoAudioSwitch'
+import {Fab3DSettings} from './Fab3DSettings'
 import { player, recorder } from '@models/recorder'
 import {participants, map} from '@stores/'
 import { RecorderStepType } from './recorder/RecorderDialog'
@@ -231,7 +231,7 @@ export const Footer: React.FC<{height?:number}> = (props) => {
 
   return <div ref={containerRef} className={classes.root}>
     <Collapse in={showFooter} classes={classes}>
-      <StereoAudioSwitch size={fabSize} iconSize={iconSize} {...props}/>
+      <Fab3DSettings size={fabSize} iconSize={iconSize} {...props}/>
       <FabMain size={fabSize} color={mute.muteS ? 'primary' : 'secondary' }
         aria-label="speaker" onClick={() => {
           participants.local.muteSpeaker = !mute.muteS

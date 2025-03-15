@@ -130,7 +130,11 @@ export const Base: React.FC = (props) => {
       map.setCommittedMatrix(newMatrix)
     }
   }
-  function moveParticipant(move: boolean, givenTarget?:[number,number]) {
+  function moveParticipantAfterDrag(move: boolean, givenTarget?:[number,number]) {
+    if (participants.local.avatarDisplay3D){
+      if (map.isInCenter()) return
+    }
+
     const local = participants.local
     let target = givenTarget
     if (!target){ target = map.mouseOnMap }
@@ -144,16 +148,6 @@ export const Base: React.FC = (props) => {
       local.savePhysicsToStorage(false)
     }
   }
-  /*
-  function moveParticipantPeriodically(move: boolean, target?:[number,number]) {
-    moveParticipant(move, target)
-    const TIMER_INTERVAL = move ? 33 : 300
-    window.setTimeout(() => {
-      if (mem.mouseDown) {
-        moveParticipantPeriodically(true)
-      }
-    }, TIMER_INTERVAL) //  move to mouse position
-  }*/
 
   const bind = useGesture(
     {
@@ -194,7 +188,7 @@ export const Base: React.FC = (props) => {
             map.setMatrix(newMatrix)
             //  rotate and direct participant to the mouse position.
             if (delta[0] || delta[1]){
-              moveParticipant(false, map.centerOnMap)
+              moveParticipantAfterDrag(false, map.centerOnMap)
             }
             //console.log('Base onDrag:', delta)
           }
@@ -203,7 +197,7 @@ export const Base: React.FC = (props) => {
       onDragEnd: () => {
         if (matrix.toString() !== map.committedMatrix.toString()) {
           map.setCommittedMatrix(matrix)
-          moveParticipant(false, map.centerOnMap)
+          moveParticipantAfterDrag(false, map.centerOnMap)
           //console.log(`Base onDragEnd: (${map.centerOnMap})`)
         }
         mem.dragging = false

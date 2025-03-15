@@ -43,7 +43,8 @@ export interface RemoteParticipant extends ParticipantBase {
 
 export interface LocalParticipant extends ParticipantBase {
   soundLocalizationBase: SoundLocalizationBase
-  avatarDisplayType: AvatarDisplayType
+  avatarDisplay2_5D: boolean
+  avatarDisplay3D: boolean
   information: LocalInformation
   zone?: ISharedContent
   tracks: Tracks
@@ -125,7 +126,6 @@ export const defaultViewpoint: Viewpoint = {
   center: [0,0],
 }
 export type SoundLocalizationBase = 'avatar' | 'user'
-export type AvatarDisplayType = '2D' | '2.5D' | '3D'
 
 export function getColorOfParticipant(information: BaseInformation) {
   let color = information.color

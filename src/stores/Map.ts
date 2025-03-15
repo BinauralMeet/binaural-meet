@@ -112,6 +112,14 @@ export class MapData {
   @computed get centerOnMap(){
     return transformPoint2D(this.matrix.inverse(), [0,0])
   }
+  isInCenter(pos?:[number, number]){
+    if (!pos) pos = participants.local.pose.position
+    pos = this.toElement(pos)
+    const posRatio = [pos[0] / this.screenSize[0], pos[1] / this.screenSize[1]]
+    const dist = [Math.abs(0.5-posRatio[0]), Math.abs(0.5-posRatio[1])]
+    const center = 0.4
+    return dist[0] < center && dist[1] < center
+  }
 
   toWindow(pos:[number, number]) {
     return subV2(transformPoint2D(this.matrix, pos), this.offset)

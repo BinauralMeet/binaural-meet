@@ -74,6 +74,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   }
   const moveParticipantByKey = (keys:Set<string>) => {
     let deltaF = 0
+    let deltaR = 0
     let deltaA = 0
     const VEL = 10
     const ANGVEL = 5
@@ -86,11 +87,19 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
       deltaF = -VEL * HALF
       relatedKeyPressed = true
     }
-    if (keys.has('ArrowLeft') || keys.has('KeyA') || keys.has('KeyQ')) {
+    if (keys.has('KeyA')) {
+      deltaR = -VEL
+      relatedKeyPressed = true
+    }
+    if (keys.has('KeyD')) {
+      deltaR = VEL
+      relatedKeyPressed = true
+    }
+    if (keys.has('ArrowLeft') || keys.has('KeyQ')) {
       deltaA = -ANGVEL
       relatedKeyPressed = true
     }
-    if (keys.has('ArrowRight') || keys.has('KeyD') || keys.has('KeyE')) {
+    if (keys.has('ArrowRight') || keys.has('KeyE')) {
       deltaA = ANGVEL
       relatedKeyPressed = true
     }
@@ -109,7 +118,7 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
       map.setMatrix(newMatrix)
       map.setCommittedMatrix(newMatrix)
     }
-    const delta = rotateVector2DByDegree(participant!.pose.orientation, [0, -deltaF])
+    const delta = rotateVector2DByDegree(participant!.pose.orientation, [deltaR, -deltaF])
     //  console.log(participant!.pose.position, delta)
     const newPos = addV2(participant!.pose.position, delta)
     if (newPos[0] < -MAP_SIZE * HALF) { newPos[0] = -MAP_SIZE * HALF }

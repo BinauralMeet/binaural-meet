@@ -4,23 +4,29 @@ import React, { useEffect, useRef } from 'react'
 import { ParticipantBase, VRMRigs } from '@models/Participant'
 import { autorun, IReactionDisposer } from 'mobx'
 import * as Kalidokit from 'kalidokit'
-import { throttle } from 'lodash'
 import Euler from 'kalidokit/dist/utils/euler'
 import {GetPromiseGLTFLoader} from '@models/api/GLTF'
 import { participants } from '@stores/index'
+import { Pose2DMap } from '@models/utils'
 
 export interface VRMUpdateReq{
-  pos: [number, number]
-  ori: number
+  participant: ParticipantBase
+  pose: Pose2DMap
   vrm: VRM
+  nameLabel?:THREE.Sprite
   rig?: VRMRigs
+  //  used in WebGLCanvas
   rendered?: boolean
+  dist?: number
+  dir?: number
+  ori?: number
 }
 export interface ThreeContext{
   clock: THREE.Clock
   renderer: THREE.WebGLRenderer
   scene: THREE.Scene
-  updateReqs: Map<string, VRMUpdateReq>
+  remotes: Map<string, VRMUpdateReq>
+  local?: VRMUpdateReq
 }
 
 export interface VRMAvatarProps{
@@ -30,34 +36,60 @@ export interface VRMAvatarProps{
 
 interface Member{
   vrm?: VRM
+  nameLabel?:THREE.Sprite
   dispo?:IReactionDisposer
   lastLocalOri:number
 }
 
-const updateRequest = (oriIn:number, rig:VRMRigs|undefined, props: VRMAvatarProps, mem: Member) => {
-  if (!mem.vrm) return
-  const oriOffset = (oriIn+720) % 360 - 180
-  const ori = 180 + oriOffset / 2
-  //  console.log(`render3d() ori: ${ori}`)
-
-  if (props.participant === participants.local && rig && rig.face){
-    const face = rig.face as Kalidokit.TFace
-    //console.log(`Local Face Ori:${face.head.y}`)
-    //const pose = rig.pose as Kalidokit.TPose
-    //const cur = (pose.Hips?.rotation?.y || 0) + pose.Spine.y + face.head.y
-    const cur = face.head.y
-    const diff = cur - mem.lastLocalOri
-    mem.lastLocalOri = cur
-    participants.local.pose.orientation += diff * (180/Math.PI)
-  }
+function updateRequest(props: VRMAvatarProps, mem: Member){
+  const ctx = props.refCtx.current
+  if (!mem.vrm || !ctx) return
   const req:VRMUpdateReq = {
-    pos: props.participant.pose.position,
-    ori: ori,
+    participant: props.participant,
+    pose: props.participant.pose,
     vrm: mem.vrm,
-    rig
+    nameLabel: mem.nameLabel,
+    rig: props.participant.vrmRigs
   }
-  props.refCtx.current?.updateReqs?.set(props.participant.id, req)
+  if (props.participant.id === participants.localId){
+    ctx.local = req
+  }else{
+    ctx.remotes?.set(props.participant.id, req)
+  }
   //console.log(`updateRequest called req: ${props.refCtx.current?.updateReqs?.size}`)
+}
+function fillRoundedRect(ctx:CanvasRenderingContext2D, x:number, y:number, width:number, height:number, radius:number) {
+  ctx.beginPath();
+  ctx.moveTo(x, y + radius);
+  ctx.arcTo(x, y + height, x + radius, y + height, radius);
+  ctx.arcTo(x + width, y + height, x + width, y + height - radius, radius);
+  ctx.arcTo(x + width, y, x + width - radius, y, radius);
+  ctx.arcTo(x, y, x, y + radius, radius);
+  ctx.fill();
+}
+
+function createNameLabel(participant: ParticipantBase) {
+  const colors = participant.getColor()
+  const fontSize = 30;
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  if (!context) return undefined
+  context.font = `${fontSize}px Arial`;
+  const textSize = context.measureText(participant.information.name)
+  canvas.width = textSize.width + 8
+  canvas.height = (fontSize + 8)
+  console.log(`w: ${canvas.width} h:${canvas.height} `)
+  context.fillStyle = colors[0]
+  fillRoundedRect(context, 0, 0, canvas.width, canvas.height, 8)
+  context .fillStyle = colors[1]
+  context.font = `${fontSize}px Arial`
+  context.fillText(participant.information.name, 4, canvas.height-8, canvas.width)
+  const texture = new THREE.CanvasTexture(canvas)
+  const material = new THREE.SpriteMaterial({ map: texture , depthTest:false})
+  const sprite = new THREE.Sprite(material)
+  const scale = 0.15
+  sprite.scale.set(canvas.width/canvas.height*scale, scale, 1)
+  return sprite
 }
 
 export const VRMAvatar: React.FC<VRMAvatarProps> = (props: VRMAvatarProps) => {
@@ -78,11 +110,12 @@ export const VRMAvatar: React.FC<VRMAvatarProps> = (props: VRMAvatarProps) => {
       VRM.from(gltf).then(vrmGot => {
         vrmGot.scene.rotation.y = Math.PI
         mem.vrm = vrmGot
+        mem.nameLabel = createNameLabel(props.participant)
         //  console.log(`VRM loaded for ${props.participant.id}`)
         //  set autorun
         if (mem.dispo){ mem.dispo() }
         mem.dispo = autorun(()=>{ //  Request update when orientation or rigs changed.
-          updateRequest(props.participant.pose.orientation, props.participant.vrmRigs, props, mem)
+          updateRequest(props, mem)
         })
       })
     }).catch((e)=>{
@@ -91,13 +124,21 @@ export const VRMAvatar: React.FC<VRMAvatarProps> = (props: VRMAvatarProps) => {
 
     return ()=>{
       //console.log(`Unmount VRMAvatar for ${props.participant.id}`)
-      if (props.refCtx.current){
-        const ctx = props.refCtx.current
-        ctx.updateReqs.delete(props.participant.id)
+      const ctx = props.refCtx.current
+      if (ctx){
+        if (props.participant.id === participants.localId){
+          delete ctx.local
+        }else{
+          ctx.remotes.delete(props.participant.id)
+        }
       }
       if (mem.dispo) mem.dispo()
       mem.vrm?.dispose()
-      mem.vrm=undefined
+      delete mem.vrm
+      mem.nameLabel?.material.map?.dispose()
+      mem.nameLabel?.material.dispose()
+      mem.nameLabel?.geometry.dispose()
+      delete mem.nameLabel
     }
   }, [props.refCtx.current, props.participant.information.avatarSrc]) //  reload vrm when ctx or avatarSrc changed.
 
