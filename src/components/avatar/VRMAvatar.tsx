@@ -2,12 +2,13 @@ import * as THREE from 'three'
 import {VRM, VRMSchema, VRMUtils} from '@pixiv/three-vrm'
 import React, { useEffect, useRef } from 'react'
 import { ParticipantBase, VRMRigs } from '@models/Participant'
-import { autorun, IReactionDisposer } from 'mobx'
+import { autorun, IReactionDisposer, observable } from 'mobx'
 import * as Kalidokit from 'kalidokit'
 import Euler from 'kalidokit/dist/utils/euler'
 import {GetPromiseGLTFLoader} from '@models/api/GLTF'
 import { participants } from '@stores/index'
 import { Pose2DMap } from '@models/utils'
+import { useObserver } from 'mobx-react-lite'
 
 export interface VRMUpdateReq{
   participant: ParticipantBase
@@ -110,7 +111,6 @@ export const VRMAvatar: React.FC<VRMAvatarProps> = (props: VRMAvatarProps) => {
       VRM.from(gltf).then(vrmGot => {
         vrmGot.scene.rotation.y = Math.PI
         mem.vrm = vrmGot
-        mem.nameLabel = createNameLabel(props.participant)
         //  console.log(`VRM loaded for ${props.participant.id}`)
         //  set autorun
         if (mem.dispo){ mem.dispo() }
@@ -141,6 +141,22 @@ export const VRMAvatar: React.FC<VRMAvatarProps> = (props: VRMAvatarProps) => {
       delete mem.nameLabel
     }
   }, [props.refCtx.current, props.participant.information.avatarSrc]) //  reload vrm when ctx or avatarSrc changed.
+
+  //  Create name label for 3D avatar
+  useEffect(()=>{
+    if (!props.refCtx.current) return
+    const mem = refMem.current
+    mem.nameLabel = createNameLabel(props.participant)
+    updateRequest(props, mem)
+
+    return ()=>{
+      mem.nameLabel?.material.map?.dispose()
+      mem.nameLabel?.material.dispose()
+      mem.nameLabel?.geometry.dispose()
+      delete mem.nameLabel
+    }
+  }, [props.refCtx.current, ...props.participant.information.textColor,
+    ...props.participant.information.color, props.participant.information.name]) //  reload name or color changed.
 
   return <></>
 }

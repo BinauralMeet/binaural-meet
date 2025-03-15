@@ -364,6 +364,8 @@ export const Participant: React.FC<ParticipantProps> = (props) => {
       size: props.size,
     })
     const useVrm = participant.information.avatarSrc && participant.information.avatarSrc.slice(-4) === '.vrm'
+    const depends = [participant.information.name, participant.information.color, participant.information.textColor]
+
 
     return <><div className={classesPose.root} style={{zIndex:props.isLocal ? 5000 : props.zIndex}}>
       <Shadow participant={props.participant} size={props.size} />
@@ -375,10 +377,7 @@ export const Participant: React.FC<ParticipantProps> = (props) => {
         <OuterOver participant={props.participant} size={props.size} isLocal={props.isLocal}/>
         </div>
     </div>
-    {useVrm ?
-    <div className={classesPose.root} style={{zIndex:props.zIndex ? props.zIndex + 5000 : 10000}}>
-      <VRMAvatar participant={participant} refCtx={props.refCtx} />
-    </div>:undefined}
+    {useVrm ? <VRMAvatar participant={participant} refCtx={props.refCtx} /> : undefined}
   </>
   }}</Observer>
 }
