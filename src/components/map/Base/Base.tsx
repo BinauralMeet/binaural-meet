@@ -61,6 +61,7 @@ class BaseMember{
   prebThirdPersonView = false
   mouseDown = false
   dragging = false
+  lastOrientation?:number
 }
 
 export const Base: React.FC = (props) => {
@@ -132,7 +133,18 @@ export const Base: React.FC = (props) => {
   }
   function moveParticipantAfterDrag(move: boolean, givenTarget?:[number,number]) {
     if (participants.local.avatarDisplay3D){
-      if (map.isInCenter()) return
+      if (map.isInCenter()){
+        if (mem.lastOrientation){
+          //console.log(`Restore lastOri: ${mem.lastOrientation}`)
+          participants.local.pose.orientation = mem.lastOrientation
+          mem.lastOrientation = undefined
+        }
+        return
+      }
+      if (mem.lastOrientation === undefined){
+        mem.lastOrientation = participants.local.pose.orientation
+        //console.log(`Set lastOri: ${mem.lastOrientation}`)
+      }
     }
 
     const local = participants.local
