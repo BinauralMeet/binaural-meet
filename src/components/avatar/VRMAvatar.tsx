@@ -7,8 +7,9 @@ import * as Kalidokit from 'kalidokit'
 import Euler from 'kalidokit/dist/utils/euler'
 import {GetPromiseGLTFLoader} from '@models/api/GLTF'
 import { participants } from '@stores/index'
-import { Pose2DMap } from '@models/utils'
+import { mulV, normV, Pose2DMap, square } from '@models/utils'
 import { useObserver } from 'mobx-react-lite'
+import { addV, subV } from 'react-use-gesture'
 
 export interface VRMUpdateReq{
   participant: ParticipantBase
@@ -79,7 +80,7 @@ function createNameLabel(participant: ParticipantBase) {
   const textSize = context.measureText(participant.information.name)
   canvas.width = textSize.width + 8
   canvas.height = (fontSize + 8)
-  console.log(`w: ${canvas.width} h:${canvas.height} `)
+  //console.log(`w: ${canvas.width} h:${canvas.height} `)
   context.fillStyle = colors[0]
   fillRoundedRect(context, 0, 0, canvas.width, canvas.height, 8)
   context .fillStyle = colors[1]
@@ -109,8 +110,36 @@ export const VRMAvatar: React.FC<VRMAvatarProps> = (props: VRMAvatarProps) => {
     ).then(gltf => {
       VRMUtils.removeUnnecessaryJoints(gltf.scene);
       VRM.from(gltf).then(vrmGot => {
-        vrmGot.scene.rotation.y = Math.PI
         mem.vrm = vrmGot
+        //  Color replace to the avatar color
+        if (props.participant.information.avatarSrc==='https://binaural.me/public_packages/uploader/vrm/avatar/256Chinchilla.vrm'){
+          const bodyColor = mulV(1.0/255.0, props.participant.getColorRGB())
+          const canvas = document.createElement('canvas');
+          canvas.width = canvas.height = 256
+          const context = canvas.getContext('2d');
+          if (context){
+            const tex = (mem.vrm.materials![0] as any).map as THREE.Texture
+            context.drawImage(tex.image, 0, 0)
+            const image = context.getImageData(0,0, 256,256)
+            const base = [0.5, 0.5, 0.5]
+            const baseLen = normV(base)
+            for (let i=0; i<256*256; ++i){
+              const color = [image.data[i*4]/255.0, image.data[i*4+1]/255.0, image.data[i*4+2]/255.0]
+              const dist = normV(subV(color, base))
+              const near = baseLen - dist
+              const baseColor = subV(color, mulV(near, base))
+              const newColor = addV(baseColor, mulV(near, bodyColor))
+              //if (i===0) console.log(`baseColor:${baseColor[0]} newColor:${newColor[0]}`)
+              for(let ci=0; ci<3;++ci){
+                newColor[ci] = Math.min(Math.max(0, newColor[ci]), 1)
+                image.data[i*4+ci] = newColor[ci]*255
+              }
+            }
+            createImageBitmap(image).then((bitmap)=>{
+              tex.image = bitmap
+            })
+          }
+        }
         //  console.log(`VRM loaded for ${props.participant.id}`)
         //  set autorun
         if (mem.dispo){ mem.dispo() }

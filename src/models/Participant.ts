@@ -23,6 +23,8 @@ export interface ParticipantBase extends MapObject{
   zIndex: number
   vrmRigs?: VRMRigs
   getColor: ()=>string[]
+  getColorRGB: ()=> number[]
+  getTextColorRGB: ()=> number[]
   tracks?: Tracks
   clip?: MediaClip
 }

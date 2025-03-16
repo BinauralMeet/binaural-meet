@@ -363,6 +363,9 @@ export const Participant: React.FC<ParticipantProps> = (props) => {
       orientation: participant.pose.orientation,
       size: props.size,
     })
+    if (participants.localId === participant.id && !participant.information.avatarSrc){
+      props.participant.information.avatarSrc='https://binaural.me/public_packages/uploader/vrm/avatar/256Chinchilla.vrm'
+    }
     const useVrm = participant.information.avatarSrc && participant.information.avatarSrc.slice(-4) === '.vrm'
     const depends = [participant.information.name, participant.information.color, participant.information.textColor]
 

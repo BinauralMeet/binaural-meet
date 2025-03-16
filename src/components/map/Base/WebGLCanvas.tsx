@@ -7,6 +7,8 @@ import { participants } from "@stores/participants"
 import { normV, subV2 } from "@models/utils"
 import { PARTICIPANT_SIZE } from "@models/Participant"
 
+declare const d:any                  //  from index.html
+
 
 function createThreeContext(ref: React.MutableRefObject<ThreeContext|null>, canvas: HTMLCanvasElement){
   const ctx:ThreeContext = {
@@ -33,6 +35,7 @@ function createThreeContext(ref: React.MutableRefObject<ThreeContext|null>, canv
   const light = new THREE.DirectionalLight(0xffffff)
   light.position.set(1, 1, 1).normalize()
   ctx.scene.add(light)
+  d.three = ctx
 }
 
 function updateVrmAvatar(avatar:VRMUpdateReq, ctx: ThreeContext){
