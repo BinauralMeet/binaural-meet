@@ -126,7 +126,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props) => {
           0.1,
           100000,
         )
-        camera.setViewOffset(viewportSize[0], viewportSize[1], 0, 100, viewportSize[0], viewportSize[1])
+        camera.setViewOffset(viewportSize[0], viewportSize[1], 0, 50, viewportSize[0], viewportSize[1])
         camera.updateProjectionMatrix()
         camera.position.set(0, 0.7, 0)
         camera.lookAt(0, 0.5, -1)
