@@ -111,6 +111,14 @@ export const VRMAvatar: React.FC<VRMAvatarProps> = (props: VRMAvatarProps) => {
       VRMUtils.removeUnnecessaryJoints(gltf.scene);
       VRM.from(gltf).then(vrmGot => {
         mem.vrm = vrmGot
+        let head = mem.vrm.scene.getObjectByName('Head')
+        if (!head) head = mem.vrm.firstPerson?.firstPersonBone
+        if (head){
+          const height = head.matrixWorld.elements[13]
+          //console.log(`height:${height} head:${head}`)
+          mem.vrm.scene.position.y = 0.5 - height
+        }
+        if (mem.nameLabel && mem.vrm) mem.nameLabel.position.y = -mem.vrm.scene.position.y
         //  Color replace to the avatar color
         if (props.participant.information.avatarSrc==='https://binaural.me/public_packages/uploader/vrm/avatar/256Chinchilla.vrm'){
           const bodyColor = mulV(1.0/255.0, props.participant.getColorRGB())
@@ -176,6 +184,7 @@ export const VRMAvatar: React.FC<VRMAvatarProps> = (props: VRMAvatarProps) => {
     if (!props.refCtx.current) return
     const mem = refMem.current
     mem.nameLabel = createNameLabel(props.participant)
+    if (mem.nameLabel && mem.vrm) mem.nameLabel.position.y = -mem.vrm.scene.position.y
     updateRequest(props, mem)
 
     return ()=>{

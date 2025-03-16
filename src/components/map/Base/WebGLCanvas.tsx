@@ -118,7 +118,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props) => {
       //  draw 3D avatars
       if (participants.local.avatarDisplay3D && map.isInCenter()){
         //refCanvas.current.style.opacity = '0.6'
-        const viewportSize = [mapSize[0], mapSize[1]*0.8]
+        const viewportSize = [mapSize[0], mapSize[1]*0.5]
         ctx.renderer.setViewport(0, mapSize[1]-viewportSize[1], mapSize[0], viewportSize[1])
         const camera = new THREE.PerspectiveCamera(
           45,
@@ -128,8 +128,8 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props) => {
         )
         camera.setViewOffset(viewportSize[0], viewportSize[1], 0, 100, viewportSize[0], viewportSize[1])
         camera.updateProjectionMatrix()
-        camera.position.set(0, 1.2, 0)
-        camera.lookAt(0, 1.0, -1)
+        camera.position.set(0, 0.7, 0)
+        camera.lookAt(0, 0.5, -1)
 
         const localPos = participants.local.pose.position
         const localOri = participants.local.pose.orientation / 180.0 * Math.PI
