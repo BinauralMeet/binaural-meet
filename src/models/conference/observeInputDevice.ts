@@ -12,11 +12,22 @@ export function createLocalMic() {
   //  console.log(`createLocalMic() called`)
   const promise = new Promise<MSTrack>((resolutionFunc, rejectionFunc) => {
     const did = participants.local.devicePreference.audioinput
-    navigator.mediaDevices.getUserMedia({
-      audio:{deviceId: did}
-    }).then((ms)=>{
+    const audio: MediaTrackConstraints|{echoCancellationType:string}|{advanced:Array<{echoCancellationType?:string}>} = {
+      deviceId: did,
+      echoCancellation: {ideal: true},
+      noiseSuppression: {ideal: true},
+      echoCancellationType: 'system',
+      advanced: [
+        {echoCancellationType: 'system'},
+      ]
+    }
+    navigator.mediaDevices.getUserMedia({audio: audio as MediaTrackConstraints}).then((ms)=>{
       const track = ms.getAudioTracks()[0]
       if (track){
+        /*  //  log track settings
+        const c = track.getConstraints()
+        const s = track.getSettings()
+        console.log(`Mic: C:${JSON.stringify(c)}  S:${JSON.stringify(s)}`)  //  */
         resolutionFunc({track, peer:participants.local.id, role:'avatar', deviceId:did})
       }
     }).catch(rejectionFunc)
