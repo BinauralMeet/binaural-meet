@@ -40,8 +40,8 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
   @observable headphoneConfirmed = false  //  Ask if really use headphone or not
   @observable thirdPersonView = config.thirdPersonView as boolean
   @observable soundLocalizationBase = config.soundLocalizationBase ? config.soundLocalizationBase : 'avatar'
-  @observable avatarDisplay2_5D:boolean = config.avatarDisplay2_5D ? config.avatarDisplay2_5D : false
-  @observable avatarDisplay3D:boolean = config.avatarDisplay3D ? config.avatarDisplay3D : true
+  @observable avatarDisplay2_5D:boolean = config.avatarDisplay2_5D!==undefined ? config.avatarDisplay2_5D : false
+  @observable avatarDisplay3D:boolean = config.avatarDisplay3D!==undefined ? config.avatarDisplay3D : true
   @observable uploaderPreference:UploaderPreference = config.uploaderPreference ? config.uploaderPreference : 'gyazo'
   @observable.ref zone:ISharedContent|undefined = undefined    //  The zone on which the local participant located.
   @observable remoteVideoLimit = config.remoteVideoLimit as number || -1
@@ -176,8 +176,10 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
         Object.assign(this.devicePreference, setting.device)
         this.useStereoAudio = setting.headphone
         this.soundLocalizationBase = setting.soundLocalizationBase
-        this.avatarDisplay2_5D = setting.avatarDisplay2_5D
-        this.avatarDisplay3D = setting.avatarDisplay3D
+        this.avatarDisplay2_5D = setting.avatarDisplay2_5D!==undefined ? setting.avatarDisplay2_5D :
+          (config.avatarDisplay2_5D !== undefined ? config.avatarDisplay2_5D : false)
+        this.avatarDisplay3D = setting.avatarDisplay3D!==undefined ? setting.avatarDisplay3D :
+          (config.avatarDisplay3D !== undefined ? config.avatarDisplay3D : true)
       }
     }
   }
