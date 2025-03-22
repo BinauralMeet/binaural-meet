@@ -5,9 +5,9 @@ import DialogTitle from '@material-ui/core/DialogTitle'
 import Popover, { PopoverOrigin, PopoverReference } from '@material-ui/core/Popover'
 import {useTranslation} from '@models/locales'
 import React, {useEffect} from 'react'
-import {VRM, VRMUtils} from '@pixiv/three-vrm'
+import {VRM, VRMLoaderPlugin} from '@pixiv/three-vrm'
 import * as THREE from 'three'
-import {GetPromiseGLTFLoader} from '@models/api/GLTF'
+import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader'
 import {IReactionDisposer, autorun, makeObservable, observable} from 'mobx'
 import { participants } from '@stores/index'
 import {formLog} from '@models/utils'
@@ -75,8 +75,17 @@ function getImage(ctx:VRMContext, size: number[]){
 
 export const vrmUrlBase = 'https://binaural.me/public_packages/uploader/vrm/avatar/'
 const avatarSize = [150,200]
+
+function getVRMLoader() {
+  const loader = new GLTFLoader();
+  loader.register((parser) => {
+    return new VRMLoaderPlugin(parser)
+  });
+  return loader;
+}
+
 function loadFile(mem: Member, size: number[]){
-  const loader = GetPromiseGLTFLoader()
+  const loader = getVRMLoader()
   formLog()(`files: ${mem.files}`)
 
   for(const file of mem.files){
@@ -88,16 +97,16 @@ function loadFile(mem: Member, size: number[]){
         render3d(ctx, avatarSize)
       }
     })
-    loader.promiseLoad(`${vrmUrlBase}${file}`).then(gltf => {
+    loader.load(`${vrmUrlBase}${file}`, (gltf) => {
       formLog()(`${file} loaded.`)
       if (!ctx) return
-      VRMUtils.removeUnnecessaryJoints(gltf.scene);
-      VRM.from(gltf).then(vrmGot => {
-        if (!ctx) return
-        formLog()(`${file} vrm got.`)
-        vrmGot.scene.rotation.y = Math.PI
-        ctx.vrm = vrmGot
-      })
+      const vrm = gltf.userData.vrm;
+      if (!vrm) return;
+      vrm.scene.rotation.y = Math.PI
+      ctx.vrm = vrm
+      formLog()(`${file} vrm got.`)
+    }, undefined, (error) => {
+      console.error('VRMのロードに失敗しました:', error)
     })
     mem.contexts.push(ctx)
   }
