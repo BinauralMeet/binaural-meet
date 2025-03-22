@@ -24,7 +24,7 @@ function createThreeContext(ref: React.MutableRefObject<ThreeContext|null>, canv
     canvas,
     onscreen: renderer.getRenderTarget()!,
     offscreen,
-    selfSprite: new THREE.Sprite(new THREE.SpriteMaterial({map: offscreen.texture, alphaTest:0.001, opacity:0.7})),
+    selfSprite: new THREE.Sprite(new THREE.SpriteMaterial({map: offscreen.texture, alphaTest:0.001, opacity:0.5})),
     mirrorSprite: new THREE.Sprite(new THREE.SpriteMaterial({map: offscreen.texture, alphaTest:0.001, opacity:0.7}))
   }
   ref.current = ctx
@@ -145,20 +145,21 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
           //  draw local avatar
           if (ctx.local){
             const viewportSize = [ctx.offscreen.width, ctx.offscreen.height]
-            const camera = new THREE.PerspectiveCamera(45, viewportSize[0]/viewportSize[1], 0.1, 100000)
-            camera.updateProjectionMatrix()
+            const cameraOff = new THREE.PerspectiveCamera(45, viewportSize[0]/viewportSize[1], 0.1, 100000)
+            cameraOff.updateProjectionMatrix()
             const cameraHeight = 0.9
             const viewScale = 0.5
-            camera.position.set(participants.local.pose.position[0]*posScale - viewDir[0]*viewScale, cameraHeight, participants.local.pose.position[1]*posScale - viewDir[1]*viewScale)
-            camera.lookAt(participants.local.pose.position[0]*posScale, cameraHeight-0.2, participants.local.pose.position[1]*posScale)
+            cameraOff.position.set(participants.local.pose.position[0]*posScale - viewDir[0]*viewScale, cameraHeight, participants.local.pose.position[1]*posScale - viewDir[1]*viewScale)
+            cameraOff.lookAt(participants.local.pose.position[0]*posScale, cameraHeight-0.2, participants.local.pose.position[1]*posScale)
 
             //  offscreen rendering
             ctx.renderer.setRenderTarget(ctx.offscreen)
             ctx.renderer.clear(true, true, true)
             ctx.scene.add(ctx.local.vrm.scene)
-            ctx.renderer.render(ctx.scene, camera)
+            ctx.renderer.render(ctx.scene, cameraOff)
             ctx.scene.remove(ctx.local.vrm.scene)
-            //  set onscreen position
+
+            //  set onscreen position and render it
             ctx.selfSprite.position.x = ctx.local.vrm.scene.position.x
             ctx.selfSprite.position.z = ctx.local.vrm.scene.position.z
             ctx.selfSprite.position.y = 0.8
@@ -166,6 +167,8 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
             ctx.selfSprite.scale.y = 0.5
             ctx.renderer.setRenderTarget(ctx.onscreen)
             ctx.scene.add(ctx.selfSprite)
+            ctx.renderer.render(ctx.scene, camera)
+            ctx.scene.remove(ctx.selfSprite)
           }
 
           //  draw remote 3D avatars and self sprite
@@ -178,7 +181,6 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
             ctx.scene.remove(avatar.vrm.scene)
             if (avatar.nameLabel) avatar.vrm.scene.remove(avatar.nameLabel)
           }
-          ctx.scene.remove(ctx.selfSprite)
 
           //  draw face mirror
           if (ctx.local){
