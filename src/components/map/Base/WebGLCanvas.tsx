@@ -1,5 +1,5 @@
 import { ThreeContext, vrmSetPose, VRMUpdateReq } from "@components/avatar/VRMAvatar"
-import React from "react"
+import React from 'react'
 import * as THREE from 'three'
 import * as Kalidokit from 'kalidokit'
 import map from "@stores/Map"
@@ -11,15 +11,21 @@ const animationPeriod = 20  //  20ms / frame
 const posScale = 0.01
 
 function createThreeContext(ref: React.MutableRefObject<ThreeContext|null>, canvas: HTMLCanvasElement){
+  const renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    alpha: true,
+    canvas: canvas
+  })
+  const offscreen = new THREE.WebGLRenderTarget(300, 300)
   const ctx:ThreeContext = {
-    clock:new THREE.Clock(),
-    renderer : new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: true,
-      canvas: canvas
-    }),
+    renderer,
     scene: new THREE.Scene(),
-    remotes: new Map<string, VRMUpdateReq>()
+    remotes: new Map<string, VRMUpdateReq>(),
+    canvas,
+    onscreen: renderer.getRenderTarget()!,
+    offscreen,
+    selfSprite: new THREE.Sprite(new THREE.SpriteMaterial({map: offscreen.texture, alphaTest:0.001, opacity:0.7})),
+    mirrorSprite: new THREE.Sprite(new THREE.SpriteMaterial({map: offscreen.texture, alphaTest:0.001, opacity:0.7}))
   }
   ref.current = ctx
   canvas.addEventListener('webglcontextlost', (ev)=>{
@@ -27,8 +33,7 @@ function createThreeContext(ref: React.MutableRefObject<ThreeContext|null>, canv
     ev.preventDefault();
     createThreeContext(ref, canvas)
   })
-  ctx.renderer.setClearColor(new THREE.Color(0,0,0))
-  ctx.renderer.setClearAlpha(0)
+  ctx.renderer.setClearColor(new THREE.Color(0,0,0), 0)
   ctx.renderer.setPixelRatio(window.devicePixelRatio * 4)
   ctx.renderer.autoClear = false
 
@@ -55,7 +60,7 @@ function createAvatarCamera(viewportSize:[number, number]){
 
   return camera
 }
-function renderAvatar(ctx: ThreeContext, avatar:VRMUpdateReq, camera:THREE.Camera, ori?:number){
+function renderAvatar(ctx: ThreeContext, avatar:VRMUpdateReq, camera:THREE.Camera, ori?:number, distIn?: number){
   if (ori===undefined){
     const oriOffset = (avatar.pose.orientation+360*2) % 360 - 180
     ori = 180 + oriOffset / 2
@@ -64,7 +69,7 @@ function renderAvatar(ctx: ThreeContext, avatar:VRMUpdateReq, camera:THREE.Camer
   }
   ori -= avatar.pose.orientation
   const rad = ori / 180 * Math.PI
-  const dist = 5
+  const dist = distIn ? distIn : 5
   camera.position.x = avatar.pose.position[0]*posScale + Math.sin(rad)*dist
   camera.position.z = avatar.pose.position[1]*posScale + Math.cos(rad)*dist
   camera.position.y = dist*0.3
@@ -115,8 +120,8 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
         const rad = -participants.local.pose.orientation/180*Math.PI
         const viewDir = [-Math.sin(rad), -Math.cos(rad)]
         //  Update avatars
-        const avatars = Array.from(ctx.remotes.values())
-        if (ctx.local) avatars.push(ctx.local)
+        const remotes = Array.from(ctx.remotes.values())
+        const avatars = ctx.local ? [...remotes, ctx.local] : remotes
         for(const avatar of avatars){
           avatar.vrm.scene.position.x = avatar.pose.position[0]*posScale
           avatar.vrm.scene.position.z = avatar.pose.position[1]*posScale
@@ -127,14 +132,9 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
         //  3D mode
         if (participants.local.avatarDisplay3D && map.isInCenter()){
           //refCanvas.current.style.opacity = '0.6'
-          const viewportSize = [mapSize[0], mapSize[1]*0.8]
+          const viewportSize = [mapSize[0], mapSize[1]*0.6]
           ctx.renderer.setViewport(0, mapSize[1]-viewportSize[1], mapSize[0], viewportSize[1])
-          const camera = new THREE.PerspectiveCamera(
-            45,
-            viewportSize[0]/viewportSize[1],
-            0.1,
-            100000,
-          )
+          const camera = new THREE.PerspectiveCamera(45, viewportSize[0]/viewportSize[1], 0.1, 100000)
           camera.setViewOffset(viewportSize[0], viewportSize[1], 0, 160, viewportSize[0], viewportSize[1])
           camera.updateProjectionMatrix()
           const cameraHeight = 1.6
@@ -142,43 +142,75 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
           camera.position.set(participants.local.pose.position[0]*posScale - viewDir[0]*viewScale, cameraHeight, participants.local.pose.position[1]*posScale - viewDir[1]*viewScale)
           camera.lookAt(participants.local.pose.position[0]*posScale, cameraHeight-0.2, participants.local.pose.position[1]*posScale)
 
-          //  draw remote 3D avatars
-          if (ctx.local) avatars.pop()
-          for(const avatar of avatars){
+          //  draw local avatar
+          if (ctx.local){
+            const viewportSize = [ctx.offscreen.width, ctx.offscreen.height]
+            const camera = new THREE.PerspectiveCamera(45, viewportSize[0]/viewportSize[1], 0.1, 100000)
+            camera.updateProjectionMatrix()
+            const cameraHeight = 0.9
+            const viewScale = 0.5
+            camera.position.set(participants.local.pose.position[0]*posScale - viewDir[0]*viewScale, cameraHeight, participants.local.pose.position[1]*posScale - viewDir[1]*viewScale)
+            camera.lookAt(participants.local.pose.position[0]*posScale, cameraHeight-0.2, participants.local.pose.position[1]*posScale)
+
+            //  offscreen rendering
+            ctx.renderer.setRenderTarget(ctx.offscreen)
+            ctx.renderer.clear(true, true, true)
+            ctx.scene.add(ctx.local.vrm.scene)
+            ctx.renderer.render(ctx.scene, camera)
+            ctx.scene.remove(ctx.local.vrm.scene)
+            //  set onscreen position
+            ctx.selfSprite.position.x = ctx.local.vrm.scene.position.x
+            ctx.selfSprite.position.z = ctx.local.vrm.scene.position.z
+            ctx.selfSprite.position.y = 0.8
+            ctx.selfSprite.scale.x = 0.5
+            ctx.selfSprite.scale.y = 0.5
+            ctx.renderer.setRenderTarget(ctx.onscreen)
+            ctx.scene.add(ctx.selfSprite)
+          }
+
+          //  draw remote 3D avatars and self sprite
+          for(const avatar of remotes){
             if (avatar.nameLabel) avatar.vrm.scene.add(avatar.nameLabel)
             ctx.scene.add(avatar.vrm.scene)
           }
           ctx.renderer.render(ctx.scene, camera)
-          for(const avatar of avatars){
+          for(const avatar of remotes){
             ctx.scene.remove(avatar.vrm.scene)
             if (avatar.nameLabel) avatar.vrm.scene.remove(avatar.nameLabel)
           }
-          if (ctx.local) avatars.push(ctx.local)
-
-          //  draw local avatar
-          if (ctx.local){
-            ctx.local.vrm.materials?.forEach((m)=>{
-              m.blending = THREE.CustomBlending
-              m.blendEquation = THREE.AddEquation
-              m.blendSrc = THREE.OneFactor
-              m.blendSrcAlpha = THREE.ConstantAlphaFactor
-              m.blendDst = THREE.OneMinusConstantAlphaFactor
-              m.blendDstAlpha = THREE.OneMinusConstantAlphaFactor
-              m.blendAlpha = 0.1
-            })
-            ctx.scene.add(ctx.local.vrm.scene)
-            ctx.renderer.render(ctx.scene, camera)
-            ctx.scene.remove(ctx.local.vrm.scene)
-          }
+          ctx.scene.remove(ctx.selfSprite)
 
           //  draw face mirror
           if (ctx.local){
-            const viewportSize:[number,number] = [200, 500]
-            ctx.renderer.setViewport(mapSize[0]-viewportSize[0], 0, viewportSize[0], viewportSize[1])
-            const camera = createAvatarCamera(viewportSize)
-            renderAvatar(ctx, ctx.local, camera, lastLocalOri)
+            ctx.renderer.setRenderTarget(ctx.offscreen)
+            //ctx.renderer.setClearColor(new THREE.Color(1,0,0), 1)
+            ctx.renderer.clear(true, true, true)
+            //ctx.renderer.setClearColor(new THREE.Color(0,0,0), 0)
+            const offCamera = createAvatarCamera([ctx.offscreen.width, ctx.offscreen.height])
+            ctx.renderer.setViewport(0, 0, ctx.offscreen.width, ctx.offscreen.height)
+            renderAvatar(ctx, ctx.local, offCamera, lastLocalOri, 2)
+            //  set onscreen position
+            ctx.mirrorSprite.position.x = 0
+            ctx.mirrorSprite.position.z = 0
+            ctx.mirrorSprite.position.y = 0
+            ctx.mirrorSprite.scale.x = -1
+
+            ctx.renderer.setRenderTarget(ctx.onscreen)
+            ctx.scene.add(ctx.mirrorSprite)
+
+            const mirrorSize = [200, 500]
+            ctx.renderer.setViewport(mapSize[0]-mirrorSize[0], -150, mirrorSize[0], mirrorSize[1])
+            const camera = new THREE.PerspectiveCamera(45, mirrorSize[0]/mirrorSize[1], 0.1, 100000)
+            camera.updateProjectionMatrix()
+            camera.position.x = 0
+            camera.position.y = 0
+            camera.position.z = 3
+            ctx.renderer.render(ctx.scene, camera)
+            ctx.scene.remove(ctx.mirrorSprite)
           }
         }
+
+
 
         //  2.5D mode
         if (participants.local.avatarDisplay2_5D){

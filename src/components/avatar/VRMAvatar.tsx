@@ -1,14 +1,12 @@
 import * as THREE from 'three'
-import {VRM, VRMHumanBoneName, VRMLoaderPlugin, VRMHumanoid, VRMUtils} from '@pixiv/three-vrm'
+import {VRM, VRMHumanBoneName, VRMLoaderPlugin, VRMUtils} from '@pixiv/three-vrm'
 import React, { useEffect, useRef } from 'react'
 import { ParticipantBase, VRMRigs } from '@models/Participant'
-import { autorun, IReactionDisposer, observable } from 'mobx'
+import { autorun, IReactionDisposer } from 'mobx'
 import * as Kalidokit from 'kalidokit'
 import Euler from 'kalidokit/dist/utils/euler'
-import {GetPromiseGLTFLoader} from '@models/api/GLTF'
 import { participants } from '@stores/index'
-import { mulV, normV, Pose2DMap, square } from '@models/utils'
-import { useObserver } from 'mobx-react-lite'
+import { mulV, normV, Pose2DMap } from '@models/utils'
 import { addV, subV } from 'react-use-gesture'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { VRMExpressionPresetName } from '@pixiv/three-vrm'
@@ -26,7 +24,11 @@ export interface VRMUpdateReq{
   ori?: number
 }
 export interface ThreeContext{
-  clock: THREE.Clock
+  canvas: HTMLCanvasElement
+  offscreen: THREE.WebGLRenderTarget
+  selfSprite: THREE.Sprite
+  mirrorSprite: THREE.Sprite
+  onscreen: THREE.WebGLRenderTarget
   renderer: THREE.WebGLRenderer
   scene: THREE.Scene
   remotes: Map<string, VRMUpdateReq>
@@ -228,19 +230,6 @@ export const VRMAvatar: React.FC<VRMAvatarProps> = (props: VRMAvatarProps) => {
 const clamp = Kalidokit.Utils.clamp;
 const lerp = Kalidokit.Vector.lerp;
 
-type HumanoidBoneName = 'Chest'|'Head'|'Hips'|'Jaw'|'LeftEye'|'LeftFoot'|'LeftHand'
-  |'LeftIndexDistal'|'LeftIndexIntermediate'|'LeftIndexProximal'|'LeftLittleDistal'
-  |'LeftLittleIntermediate'|'LeftLittleProximal'|'LeftLowerArm'|'LeftLowerLeg'
-  |'LeftMiddleDistal'|'LeftMiddleIntermediate'|'LeftMiddleProximal'|'LeftRingDistal'
-  |'LeftRingIntermediate'|'LeftRingProximal'|'LeftShoulder'|'LeftThumbDistal'
-  |'LeftThumbIntermediate'|'LeftThumbProximal'|'LeftToes'|'LeftUpperArm'|'LeftUpperLeg'
-  |'Neck'|'RightEye'|'RightFoot'|'RightHand'|'RightIndexDistal'|'RightIndexIntermediate'
-  |'RightIndexProximal'|'RightLittleDistal'|'RightLittleIntermediate'|'RightLittleProximal'
-  |'RightLowerArm'|'RightLowerLeg'|'RightMiddleDistal'|'RightMiddleIntermediate'
-  |'RightMiddleProximal'|'RightRingDistal'|'RightRingIntermediate'|'RightRingProximal'
-  |'RightShoulder'|'RightThumbDistal'|'RightThumbIntermediate'|'RightThumbProximal'
-  |'RightToes'|'RightUpperArm'|'RightUpperLeg'|'Spine'|'UpperChest'
-
 // Animate Rotation Helper function
 const rigRotation = (
   vrm: VRM,
@@ -301,9 +290,8 @@ function rigFace(vrm:VRM, riggedFace:Kalidokit.TFace){
     //console.log(`face eye:${riggedFace.eye.l},${riggedFace.eye.r}`)
     const eyeL = clamp(1-riggedFace.eye.l, 0, 1)
     const eyeR = clamp(1-riggedFace.eye.r, 0, 1)
-    // riggedFace.eye = Kalidokit.Face.stabilizeBlink(riggedFace.eye, riggedFace.head.y)
-    Blendshape.setValue(PresetName.BlinkLeft, eyeL);
-    Blendshape.setValue(PresetName.BlinkRight, eyeR);
+    Blendshape.setValue(PresetName.BlinkLeft, eyeR);
+    Blendshape.setValue(PresetName.BlinkRight, eyeL);
 
     // Interpolate and set mouth blendshapes
     Blendshape.setValue(PresetName.Ih, lerp(riggedFace.mouth.shape.I,Blendshape.getValue(PresetName.Ih)!, .5));
@@ -316,7 +304,7 @@ function rigFace(vrm:VRM, riggedFace:Kalidokit.TFace){
     //interpolate pupil and keep a copy of the value
     let lookTarget =
       new THREE.Euler(
-        lerp(oldLookTarget.x , riggedFace.pupil.y, .4),
+        lerp(-oldLookTarget.x , riggedFace.pupil.y, .4),
         lerp(oldLookTarget.y, riggedFace.pupil.x, .4),
         0,
         "XYZ"
@@ -338,7 +326,10 @@ export function vrmSetPose (vrm:VRM, rigs?:VRMRigs){
 
   // Animate Pose
   if (rigs.pose){
-    rigRotation(vrm, "hips", rigs.pose.Hips.rotation, 0.7);
+    const rotHip = rigs.pose.Hips.rotation!
+    rotHip.z *= -1
+    rotHip.y *= -1
+    rigRotation(vrm, "hips", rotHip, 0.7);
 /*    rigPosition(vrm,
       "Hips",
       {
@@ -350,18 +341,36 @@ export function vrmSetPose (vrm:VRM, rigs?:VRMRigs){
       0.07
     );
 */
-    rigRotation(vrm, "chest", rigs.pose.Spine, 0.25, .3);
-    rigRotation(vrm, "spine", rigs.pose.Spine, 0.45, .3);
+    const rotSpine = rigs.pose.Spine!
+    rotSpine.z *= -1
+    rotSpine.y *= -1
+    rigRotation(vrm, "chest", rotSpine, 0.25, .3);
+    rigRotation(vrm, "spine", rotSpine, 0.45, .3);
 
-    rigRotation(vrm, "rightUpperArm", rigs.pose.RightUpperArm, 1, .3);
-    rigRotation(vrm, "rightLowerArm", rigs.pose.RightLowerArm, 1, .3);
-    rigRotation(vrm, "leftUpperArm", rigs.pose.LeftUpperArm, 1, .3);
-    rigRotation(vrm, "leftLowerArm", rigs.pose.LeftLowerArm, 1, .3);
+    //  Cancel mirror
+    const rua = {...rigs.pose.RightUpperArm}
+    rua.y *= -1
+    rua.z *= -1
+    const rla = {...rigs.pose.RightLowerArm}
+    rla.y *= -1
+    rla.z *= -1
+    const lua = {...rigs.pose.LeftUpperArm}
+    lua.y *= -1
+    lua.z *= -1
+    const lla = {...rigs.pose.LeftLowerArm}
+    lla.y *= -1
+    lla.z *= -1
+    rigRotation(vrm, "leftUpperArm", rua, 1, .3);
+    rigRotation(vrm, "leftLowerArm", rla, 1, .3);
+    rigRotation(vrm, "rightUpperArm", lua, 1, .3);
+    rigRotation(vrm, "rightLowerArm", lla, 1, .3);
 
-    rigRotation(vrm, "leftUpperLeg", rigs.pose.LeftUpperLeg, 1, .3);
-    rigRotation(vrm, "leftLowerLeg", rigs.pose.LeftLowerLeg, 1, .3);
-    rigRotation(vrm, "rightUpperLeg", rigs.pose.RightUpperLeg, 1, .3);
-    rigRotation(vrm, "rightLowerLeg", rigs.pose.RightLowerLeg, 1, .3);
+/*  TODO: Legs also need to reversed.
+    rigRotation(vrm, "leftUpperLeg", rigs.pose.RightUpperLeg, 1, .3);
+    rigRotation(vrm, "leftLowerLeg", rigs.pose.RightLowerLeg, 1, .3);
+    rigRotation(vrm, "rightUpperLeg", rigs.pose.LeftUpperLeg, 1, .3);
+    rigRotation(vrm, "rightLowerLeg", rigs.pose.LeftLowerLeg, 1, .3);
+    */
   }else{
     if (rigs.face){
       //console.log(`head: ${JSON.stringify(rigs.face.head)}`)
@@ -379,11 +388,11 @@ export function vrmSetPose (vrm:VRM, rigs?:VRMRigs){
 
   // Animate Hands
   if (rigs.pose && rigs.leftHand){
-    rigRotation(vrm, "leftHand", {
+    rigRotation(vrm, "rightHand", {
       // Combine pose rotation Z and hand rotation X Y
-      z: rigs.pose.LeftHand.z,
-      y: rigs.leftHand.LeftWrist.y,
-      x: rigs.leftHand.LeftWrist.x
+      z: -rigs.leftHand.LeftWrist.y - Math.PI/4,  //  axis around thumb to ring
+      y: -rigs.pose.LeftHand.y*3,  //  y does not work well
+      x: -rigs.leftHand.LeftWrist.x*3 //  rot around middle finger
     })
   }
   if (rigs?.leftHand){
@@ -405,9 +414,9 @@ export function vrmSetPose (vrm:VRM, rigs?:VRMRigs){
   if (rigs.pose && rigs.rightHand){
     rigRotation(vrm, "rightHand", {
       // Combine Z axis from pose hand and X/Y axis from hand wrist rotation
-      z: rigs.pose.RightHand.z,
-      y: rigs.rightHand.RightWrist.y,
-      x: rigs.rightHand.RightWrist.x
+      z: -rigs.rightHand.RightWrist.y - Math.PI/4,  //  axis around thumb to ring
+      y: -rigs.pose.RightHand.y*3,  //  y does not work well
+      x: -rigs.rightHand.RightWrist.x*3 //  rot around middle finger
     })
   }
   if (rigs.rightHand){
