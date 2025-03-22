@@ -195,7 +195,8 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
             ctx.mirrorSprite.position.x = 0
             ctx.mirrorSprite.position.z = 0
             ctx.mirrorSprite.position.y = 0
-            ctx.mirrorSprite.scale.x = -1
+            ctx.offscreen.texture.repeat.set(-1, 1);
+            ctx.offscreen.texture.offset.set( 1, 0);
 
             ctx.renderer.setRenderTarget(ctx.onscreen)
             ctx.scene.add(ctx.mirrorSprite)
@@ -209,6 +210,9 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
             camera.position.z = 3
             ctx.renderer.render(ctx.scene, camera)
             ctx.scene.remove(ctx.mirrorSprite)
+            ctx.offscreen.texture.repeat.set(1, 1);
+            ctx.offscreen.texture.offset.set(0, 0);
+
           }
         }
 
