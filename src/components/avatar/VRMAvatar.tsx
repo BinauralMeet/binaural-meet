@@ -262,7 +262,7 @@ const rigPosition = (vrm: VRM,
 let oldLookTarget = new THREE.Euler()
 function rigFace(vrm:VRM, riggedFace:Kalidokit.TFace){
     if(!vrm){return}
-    const rot = {x:riggedFace.head.x-0.1, y:riggedFace.head.y, z:riggedFace.head.z}
+    const rot = {x:riggedFace.head.x-0.1, y:-riggedFace.head.y, z:-riggedFace.head.z}
     //console.log(`rigRot: ${JSON.stringify(rot)}`)
     rigRotation(vrm, "Neck", rot, 0.7);
 
