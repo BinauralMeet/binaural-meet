@@ -158,13 +158,13 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
           //  draw local avatar
           if (ctx.local){
             ctx.local.vrm.materials?.forEach((m)=>{
- //             m.blending = THREE.CustomBlending
-//              m.blendEquation = THREE.AddEquation
-   //           m.blendSrc = THREE.OneFactor
-//              m.blendSrcAlpha = THREE.ConstantAlphaFactor
-//              m.blendDst = THREE.OneMinusConstantAlphaFactor
-//              m.blendDstAlpha = THREE.OneMinusConstantAlphaFactor
-     //         m.blendAlpha = 0.1
+              m.blending = THREE.CustomBlending
+              m.blendEquation = THREE.AddEquation
+              m.blendSrc = THREE.OneFactor
+              m.blendSrcAlpha = THREE.ConstantAlphaFactor
+              m.blendDst = THREE.OneMinusConstantAlphaFactor
+              m.blendDstAlpha = THREE.OneMinusConstantAlphaFactor
+              m.blendAlpha = 0.1
             })
             ctx.scene.add(ctx.local.vrm.scene)
             ctx.renderer.render(ctx.scene, camera)
