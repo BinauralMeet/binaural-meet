@@ -122,7 +122,7 @@ export const VRMAvatar: React.FC<VRMAvatarProps> = (props: VRMAvatarProps) => {
       (gltf) => {
         const vrm = gltf.userData.vrm as VRM
         if (!vrm) return;
-        VRMUtils.removeUnnecessaryJoints(vrm.scene)
+        VRMUtils.combineSkeletons(vrm.scene)
         mem.vrm = vrm
         let head = vrm.scene.getObjectByName('Head')
         const firstPersonBone = vrm.humanoid?.getNormalizedBoneNode('head');
@@ -310,7 +310,8 @@ function rigFace(vrm:VRM, riggedFace:Kalidokit.TFace){
         "XYZ"
       )
     oldLookTarget.copy(lookTarget)
-    vrm.lookAt?.applier?.lookAt(lookTarget);
+    vrm.lookAt?.applier?.applyYawPitch(lookTarget.y, lookTarget.x)
+    //vrm.lookAt?.applier?.lookAt(lookTarget);
 }
 
 /* VRM Character Animator */

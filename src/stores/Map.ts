@@ -112,13 +112,24 @@ export class MapData {
   @computed get centerOnMap(){
     return transformPoint2D(this.matrix.inverse(), [0,0])
   }
+  centerLimit(){
+    //console.log(`scale: ${extractScaleX(map.matrix)}, psize:${participantSize}`)
+    //const participantSize = 0.7 *  PARTICIPANT_SIZE * extractScaleX(this.matrix)
+    const participantSize = 2 *  PARTICIPANT_SIZE * extractScaleX(this.matrix)
+    const ratioX = Math.min(participantSize / this.screenSize[0], 0.3)
+    const ratioY = Math.min(participantSize / this.screenSize[1], 0.3)
+    const left = map.left + map.screenSize[0] * ratioX
+    const right = map.left + map.screenSize[0] * (1 - ratioX)
+    const bottom = map.screenSize[1] * (1 - ratioY)
+    const top = participants.local.thirdPersonView ? map.screenSize[1] * ratioY : bottom
+    return {left, top, right, bottom}
+  }
+
   isInCenter(pos?:[number, number]){
     if (!pos) pos = participants.local.pose.position
-    pos = this.toElement(pos)
-    const posRatio = [pos[0] / this.screenSize[0], pos[1] / this.screenSize[1]]
-    const dist = [Math.abs(0.5-posRatio[0]), Math.abs(0.5-posRatio[1])]
-    const center = 0.4
-    return dist[0] < center && dist[1] < center
+    pos = map.toWindow(pos)
+    const limit = this.centerLimit()
+    return limit.left<=pos[0] && pos[0] < limit.right && limit.top <= pos[1] && pos[1] <= limit.bottom
   }
 
   toWindow(pos:[number, number]) {

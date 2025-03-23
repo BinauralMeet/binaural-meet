@@ -132,20 +132,13 @@ const LocalParticipant: React.FC<LocalParticipantProps> = (props) => {
   }
 
   const scrollMap = () => {
-    const participantSize = 0.7 *  PARTICIPANT_SIZE * extractScaleX(map.matrix)
-    //console.log(`scale: ${extractScaleX(map.matrix)}, psize:${participantSize}`)
-    const ratioX = Math.min(participantSize / map.screenSize[0], 0.3)
-    const ratioY = Math.min(participantSize / map.screenSize[1], 0.3)
     const posOnScreen = map.toWindow(participant!.pose.position)
     const target = [posOnScreen[0], posOnScreen[1]]
-    const left = map.left + map.screenSize[0] * ratioX
-    const right = map.left + map.screenSize[0] * (1 - ratioX)
-    const bottom = map.screenSize[1] * (1 - ratioY)
-    const top = participants.local.thirdPersonView ? map.screenSize[1] * ratioY : bottom
-    if (target[0] < left) { target[0] = left }
-    if (target[0] > right) { target[0] = right }
-    if (target[1] < top) { target[1] = top }
-    if (target[1] > bottom) { target[1] = bottom }
+    const limit = map.centerLimit()
+    if (target[0] < limit.left) { target[0] = limit.left }
+    if (target[0] > limit.right) { target[0] = limit.right }
+    if (target[1] < limit.top) { target[1] = limit.top }
+    if (target[1] > limit.bottom) { target[1] = limit.bottom }
     let diff = subV2(posOnScreen, target) as [number, number]
     const norm = Math.sqrt(diff[0] * diff[0] + diff[1] * diff[1])
     if (norm > MAP_SPEED_LIMIT) {
