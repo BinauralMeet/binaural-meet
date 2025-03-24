@@ -89,21 +89,17 @@ AvatarSetting.displayName = 'AvatarSetting'
 export const Fab3DSettings: React.FC<{size?: number, iconSize:number}> = (props) => {
   const [anchor, setAnchor] = React.useState<Element|null>(null)
   const [showStereoBase, setShowSteraoBase] = React.useState(false)
-  const [showConfirmation, setShowConfirmation] = React.useState(false)
   const avatarDisplay3D = useObserver(() => participants.local.avatarDisplay3D)
 
   const switch3D = () => {
     //  As Chrome support AEC, skip the confirmation now.
     if (true){ // stereo || participants.local.headphoneConfirmed){
-      participants.local.headphoneConfirmed = true
       participants.local.avatarDisplay3D = !avatarDisplay3D
       if (participants.local.avatarDisplay3D){
         participants.local.useStereoAudio = true
         participants.local.soundLocalizationBase = 'avatar'
       }
       participants.local.saveMediaSettingsToStorage()
-    }else{
-      setShowConfirmation(true)
     }
   }
 
@@ -120,27 +116,6 @@ export const Fab3DSettings: React.FC<{size?: number, iconSize:number}> = (props)
       {avatarDisplay3D ?  <Icon icon={iconPeople} style={{width:props.iconSize, height:props.iconSize}} />
         : <Icon icon={iconThreeCircle} style={{width:props.iconSize*1, height:props.iconSize*1}} /> }
     </FabWithTooltip>
-    <Popover open={showConfirmation} onClose={() => setShowConfirmation(false)}
-      anchorEl={anchor} anchorOrigin={{vertical:'top', horizontal:'left'}}
-      anchorReference = "anchorEl" >
-      <div style={{padding:20, width:'20em'}}>
-      <strong>{t('stereoNote')}</strong> <br /><br />
-      {t('stereoNoteDesc')} <br />
-      <br />
-      <Button variant="contained" color="secondary" style={{textTransform:'none'}}
-        onClick={() => {
-          participants.local.headphoneConfirmed = true
-          switch3D()
-          setShowConfirmation(false) }} >
-        {t('stereoConfirmed')}
-      </Button> <br />
-      <br />
-      <Button variant="contained" color="primary" style={{textTransform:'none'}}
-        onClick={() => { setShowConfirmation(false) }} >
-        {t('stereoCancel')}
-      </Button>
-      </div>
-    </Popover>
     <Popover open={showStereoBase} onClose={() => setShowSteraoBase(false)}
       anchorEl={anchor} anchorOrigin={{vertical:'top', horizontal:'left'}}
       anchorReference = "anchorEl" >
