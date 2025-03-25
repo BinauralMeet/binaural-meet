@@ -15,7 +15,6 @@ import {participants} from '@stores/participants'
 import {Observer} from 'mobx-react-lite'
 import React from 'react'
 import {SignalQualityIcon} from './SignalQuality'
-import {VRMAvatar, ThreeContext} from '../../avatar/VRMAvatar'
 import { ComposedAvatar } from '@components/avatar/ComposedAvatar'
 import _ from 'lodash'
 
@@ -105,7 +104,6 @@ interface MainAvatarProps extends BasicProps{
 }
 export interface ParticipantProps extends MainAvatarProps{
   zIndex?: number
-  refCtx: React.RefObject<ThreeContext>
 }
 
 
@@ -379,7 +377,6 @@ export const Participant: React.FC<ParticipantProps> = (props) => {
         <OuterOver participant={props.participant} size={props.size} isLocal={props.isLocal}/>
         </div>
     </div>
-    {participant.isVrm() ? <VRMAvatar participant={participant} refCtx={props.refCtx} /> : undefined}
   </>
   }}</Observer>
 }

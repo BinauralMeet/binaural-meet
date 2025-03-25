@@ -1,10 +1,10 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import {Base} from '@components/map/Base'
 import {ParticipantLayer} from '@components/map/Participant'
 import {ShareLayer} from '@components/map/Share'
 import {BackgroundLayer} from './Background'
 import {WebGLCanvas} from './Base/WebGLCanvas'
-import {ThreeContext} from '@components/avatar/VRMAvatar'
+import {createVRMAvatars, VRMAvatars} from '@components/map/vrm'
 
 export interface MapProps{
   transparent: boolean
@@ -12,15 +12,18 @@ export interface MapProps{
 
 export const Map: React.FC<MapProps> = (props) => {
   const refCanvas = React.useRef<HTMLCanvasElement>(null)
-  const refThreeCtx = React.useRef<ThreeContext>(null)
+  const refVRMAvatars = React.useRef<VRMAvatars>()
+  if (!refVRMAvatars.current){
+    refVRMAvatars.current = createVRMAvatars()
+  }
 
   return <>
     <Base {...props}>
       <BackgroundLayer {...props}/>
       <ShareLayer {...props} />
-      <ParticipantLayer {...props} refCanvas={refCanvas} refThreeCtx={refThreeCtx}/>
+      <ParticipantLayer {...props} vrmAvatars={refVRMAvatars.current}/>
     </Base>
-    <WebGLCanvas refCanvas={refCanvas} refThreeCtx={refThreeCtx}/>
+    <WebGLCanvas refCanvas={refCanvas} vrmAvatars={refVRMAvatars.current}/>
   </>
 }
 Map.displayName = 'Map'

@@ -1,17 +1,16 @@
+import { ParticipantBase, VRMRigs} from '@models/Participant'
+import { mulV, normV, Pose2DMap } from '../../models/utils/coordinates'
+import { VRM, VRMExpressionPresetName, VRMHumanBoneName, VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm'
 import * as THREE from 'three'
-import {VRM, VRMHumanBoneName, VRMLoaderPlugin, VRMUtils} from '@pixiv/three-vrm'
-import React, { useEffect, useRef } from 'react'
-import { ParticipantBase, VRMRigs } from '@models/Participant'
-import { autorun, IReactionDisposer } from 'mobx'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+import { addV, subV } from 'react-use-gesture'
 import * as Kalidokit from 'kalidokit'
 import Euler from 'kalidokit/dist/utils/euler'
-import { participants } from '@stores/index'
-import { mulV, normV, Pose2DMap } from '@models/utils'
-import { addV, subV } from 'react-use-gesture'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import { VRMExpressionPresetName } from '@pixiv/three-vrm'
 
-export interface VRMUpdateReq{
+declare const d:any                  //  from index.html
+
+
+export interface VRMAvatar{
   participant: ParticipantBase
   pose: Pose2DMap
   vrm: VRM
@@ -23,58 +22,75 @@ export interface VRMUpdateReq{
   dir?: number
   ori?: number
 }
-export interface ThreeContext{
-  canvas: HTMLCanvasElement
-  offscreen: THREE.WebGLRenderTarget
-  selfSprite: THREE.Sprite
-  mirrorSprite: THREE.Sprite
-  onscreen: THREE.WebGLRenderTarget
-  renderer: THREE.WebGLRenderer
-  scene: THREE.Scene
-  remotes: Map<string, VRMUpdateReq>
-  local?: VRMUpdateReq
+export interface VRMAvatars{
+  remotes: Map<string, VRMAvatar>
+  local?: VRMAvatar
+//  offscreen: THREE.WebGLRenderTarget
+//  selfSprite: THREE.Sprite
+//  mirrorSprite: THREE.Sprite
+//  onscreen?: THREE.WebGLRenderTarget
+//  scene: THREE.Scene
 }
 
-export interface VRMAvatarProps{
-  participant:ParticipantBase
-  refCtx: React.RefObject<ThreeContext>
-}
-
-interface Member{
-  vrm?: VRM
-  nameLabel?:THREE.Sprite
-  dispo?:IReactionDisposer
-  lastLocalOri:number
-}
-
-function updateRequest(props: VRMAvatarProps, mem: Member){
-  const ctx = props.refCtx.current
-  if (!mem.vrm || !ctx) return
-  const req:VRMUpdateReq = {
-    participant: props.participant,
-    pose: props.participant.pose,
-    vrm: mem.vrm,
-    nameLabel: mem.nameLabel,
-    rig: props.participant.vrmRigs
+export function createVRMAvatars(){
+  const vrmAvatars:VRMAvatars = {
+    remotes: new Map<string, VRMAvatar>(),
   }
-  if (props.participant.id === participants.localId){
-    ctx.local = req
+  d.vrmAvatars = vrmAvatars
+  return vrmAvatars
+}
+
+function getVRMLoader() {
+  const loader = new GLTFLoader()
+  loader.register((parser) => {
+    return new VRMLoaderPlugin(parser)
+  });
+  return loader;
+}
+
+export function updateVrmAvatar(vas:VRMAvatars, participant: ParticipantBase, isLocal: boolean){
+  const  avatar = isLocal ? vas.local : vas.remotes.get(participant.id)
+  if (avatar){
+    avatar.pose = participant.pose,
+    avatar.rig = participant.vrmRigs
   }else{
-    ctx.remotes?.set(props.participant.id, req)
+    createVrmAvatar(vas, participant, isLocal).then((newAvatar)=>{
+      if (isLocal) vas.local = newAvatar
+      else vas.remotes.set(participant.id, newAvatar)
+    })
   }
   //console.log(`updateRequest called req: ${props.refCtx.current?.updateReqs?.size}`)
 }
-function fillRoundedRect(ctx:CanvasRenderingContext2D, x:number, y:number, width:number, height:number, radius:number) {
-  ctx.beginPath();
-  ctx.moveTo(x, y + radius);
-  ctx.arcTo(x, y + height, x + radius, y + height, radius);
-  ctx.arcTo(x + width, y + height, x + width, y + height - radius, radius);
-  ctx.arcTo(x + width, y, x + width - radius, y, radius);
-  ctx.arcTo(x, y, x, y + radius, radius);
-  ctx.fill();
+
+function createVrmAvatar(vas:VRMAvatars, participant: ParticipantBase, isLocal: boolean){
+  const promise = new Promise<VRMAvatar>((resolve, reject)=>{
+    loadVrmAvatar(vas, participant, isLocal).then((vrm)=>{
+      const avatar:VRMAvatar = {
+        vrm,
+        nameLabel: createNameLabel(participant),
+        participant,
+        pose: participant.pose,
+      }
+      if (avatar.nameLabel){
+        avatar.nameLabel.position.y = -avatar.vrm.scene.position.y
+      }
+      resolve(avatar)
+    })
+  })
+  return promise
 }
 
-function createNameLabel(participant: ParticipantBase) {
+function fillRoundedRect(vas:CanvasRenderingContext2D, x:number, y:number, width:number, height:number, radius:number) {
+  vas.beginPath();
+  vas.moveTo(x, y + radius);
+  vas.arcTo(x, y + height, x + radius, y + height, radius);
+  vas.arcTo(x + width, y + height, x + width, y + height - radius, radius);
+  vas.arcTo(x + width, y, x + width - radius, y, radius);
+  vas.arcTo(x, y, x, y + radius, radius);
+  vas.fill();
+}
+
+export function createNameLabel(participant: ParticipantBase): THREE.Sprite|undefined{
   const colors = participant.getColor()
   const fontSize = 30;
   const canvas = document.createElement('canvas');
@@ -98,32 +114,15 @@ function createNameLabel(participant: ParticipantBase) {
   return sprite
 }
 
-function getVRMLoader() {
-  const loader = new GLTFLoader()
-  loader.register((parser) => {
-    return new VRMLoaderPlugin(parser)
-  });
-  return loader;
-}
-
-export const VRMAvatar: React.FC<VRMAvatarProps> = (props: VRMAvatarProps) => {
-  const refMem = useRef<Member>({lastLocalOri:0})
-
-  //  3D avatar rendering function
-  //  Load avatar and set update autorun when context is updated.
-  useEffect(()=>{
-    if (!props.refCtx.current) return
-    const mem = refMem.current
-
-    //  load VRM
+export function loadVrmAvatar(vas:VRMAvatars, participant: ParticipantBase, isLocal: boolean){
+  const promise = new Promise<VRM>((resolve, reject)=>{
     const loader = getVRMLoader()
     loader.load(
-      props.participant.information.avatarSrc,
+      participant.information.avatarSrc,
       (gltf) => {
         const vrm = gltf.userData.vrm as VRM
         if (!vrm) return;
         VRMUtils.combineSkeletons(vrm.scene)
-        mem.vrm = vrm
         let head = vrm.scene.getObjectByName('Head')
         const firstPersonBone = vrm.humanoid?.getNormalizedBoneNode('head');
         if (!head && firstPersonBone) head = firstPersonBone;
@@ -132,10 +131,9 @@ export const VRMAvatar: React.FC<VRMAvatarProps> = (props: VRMAvatarProps) => {
           //console.log(`height:${height} head:${head}`)
           vrm.scene.position.y = 0.5 - height
         }
-        if (mem.nameLabel && vrm) mem.nameLabel.position.y = -vrm.scene.position.y
         //  Color replace to the avatar color
-        if (props.participant.information.avatarSrc==='https://binaural.me/public_packages/uploader/vrm/avatar/256Chinchilla.vrm'){
-          const bodyColor = mulV(1.0/255.0, props.participant.getColorRGB())
+        if (participant.information.avatarSrc==='https://binaural.me/public_packages/uploader/vrm/avatar/256Chinchilla.vrm'){
+          const bodyColor = mulV(1.0/255.0, participant.getColorRGB())
           const canvas = document.createElement('canvas');
           canvas.width = canvas.height = 256
           const context = canvas.getContext('2d');
@@ -162,156 +160,27 @@ export const VRMAvatar: React.FC<VRMAvatarProps> = (props: VRMAvatarProps) => {
             })
           }
         }
-        //  console.log(`VRM loaded for ${props.participant.id}`)
-        //  set autorun
-        if (mem.dispo){ mem.dispo() }
-        mem.dispo = autorun(()=>{ //  Request update when orientation or rigs changed.
-          updateRequest(props, mem)
-        })
+        resolve(vrm)
       },
-      undefined,
-      (error) => {
-        console.log('Failed to load VRM', error)
-      }
     )
-
-    return ()=>{
-      //console.log(`Unmount VRMAvatar for ${props.participant.id}`)
-      const ctx = props.refCtx.current
-      if (ctx){
-        if (props.participant.id === participants.localId){
-          delete ctx.local
-        }else{
-          ctx.remotes.delete(props.participant.id)
-        }
-      }
-      if (mem.dispo) mem.dispo()
-      if (mem.vrm) {
-        mem.vrm.scene.traverse((obj) => {
-          if (obj instanceof THREE.Mesh) {
-            obj.geometry.dispose()
-            if (Array.isArray(obj.material)) {
-              obj.material.forEach(mat => mat.dispose())
-            } else {
-              obj.material.dispose()
-            }
-          }
-        })
-      }
-      delete mem.vrm
-      mem.nameLabel?.material.map?.dispose()
-      mem.nameLabel?.material.dispose()
-      mem.nameLabel?.geometry.dispose()
-      delete mem.nameLabel
-    }
-  }, [props.refCtx.current, props.participant.information.avatarSrc]) //  reload vrm when ctx or avatarSrc changed.
-
-  //  Create name label for 3D avatar
-  useEffect(()=>{
-    if (!props.refCtx.current) return
-    const mem = refMem.current
-    mem.nameLabel = createNameLabel(props.participant)
-    if (mem.nameLabel && mem.vrm) mem.nameLabel.position.y = -mem.vrm.scene.position.y
-    updateRequest(props, mem)
-
-    return ()=>{
-      mem.nameLabel?.material.map?.dispose()
-      mem.nameLabel?.material.dispose()
-      mem.nameLabel?.geometry.dispose()
-      delete mem.nameLabel
-    }
-  }, [props.refCtx.current, ...props.participant.information.textColor,
-    ...props.participant.information.color, props.participant.information.name]) //  reload name or color changed.
-
-  return <></>
+  })
+  return promise
 }
-
-
-const clamp = Kalidokit.Utils.clamp;
-const lerp = Kalidokit.Vector.lerp;
-
-// Animate Rotation Helper function
-const rigRotation = (
-  vrm: VRM,
-  name: VRMHumanBoneName,
-  rotation = { x: 0, y: 0, z: 0 },
-  dampener = 1,
-  lerpAmount = 0.3
-) => {
-  if (!vrm) { return }
-  const humanoid = vrm.humanoid;
-  if (!humanoid) { return }
-
-  const bone = humanoid.getNormalizedBoneNode(name);
-  if (!bone) { return }
-
-  const euler = new THREE.Euler(
-    rotation.x * dampener,
-    rotation.y * dampener,
-    rotation.z * dampener
-  );
-  const quaternion = new THREE.Quaternion().setFromEuler(euler);
-  bone.quaternion.slerp(quaternion, lerpAmount);
-};
-
-/*  // Animate Position Helper Function
-const rigPosition = (vrm: VRM,
-  name:HumanoidBoneName,
-  position = { x: 0, y: 0, z: 0 },
-  dampener = 1,
-  lerpAmount = 0.3
-) => {
-  if (!vrm) {return}
-  const Part = vrm.humanoid?.getBoneNode(
-    VRMSchema.HumanoidBoneName[name]
-  );
-  if (!Part) {return}
-  let vector = new THREE.Vector3(
-    position.x * dampener,
-    position.y * dampener,
-    position.z * dampener
-  );
-  Part.position.lerp(vector, lerpAmount); // interpolate
-};  */
-
-let oldLookTarget = new THREE.Euler()
-function rigFace(vrm:VRM, riggedFace:Kalidokit.TFace){
-    if(!vrm){return}
-    const rot = {x:riggedFace.head.x-0.1, y:-riggedFace.head.y, z:-riggedFace.head.z}
-    //console.log(`rigRot: ${JSON.stringify(rot)}`)
-    rigRotation(vrm, "neck", rot, 0.7);
-
-    // Blendshapes and Preset Name Schema
-    const Blendshape = vrm.expressionManager!
-    const PresetName = VRMExpressionPresetName;
-
-    // Simple example without winking. Interpolate based on old blendshape, then stabilize blink with `Kalidokit` helper function.
-    // for VRM, 1 is closed, 0 is open.
-    //console.log(`face eye:${riggedFace.eye.l},${riggedFace.eye.r}`)
-    const eyeL = clamp(1-riggedFace.eye.l, 0, 1)
-    const eyeR = clamp(1-riggedFace.eye.r, 0, 1)
-    Blendshape.setValue(PresetName.BlinkLeft, eyeR);
-    Blendshape.setValue(PresetName.BlinkRight, eyeL);
-
-    // Interpolate and set mouth blendshapes
-    Blendshape.setValue(PresetName.Ih, lerp(riggedFace.mouth.shape.I,Blendshape.getValue(PresetName.Ih)!, .5));
-    Blendshape.setValue(PresetName.Aa, lerp(riggedFace.mouth.shape.A,Blendshape.getValue(PresetName.Aa)!, .5));
-    Blendshape.setValue(PresetName.Ee, lerp(riggedFace.mouth.shape.E,Blendshape.getValue(PresetName.Ee)!, .5));
-    Blendshape.setValue(PresetName.Oh, lerp(riggedFace.mouth.shape.O,Blendshape.getValue(PresetName.Oh)!, .5));
-    Blendshape.setValue(PresetName.Ou, lerp(riggedFace.mouth.shape.U,Blendshape.getValue(PresetName.Ou)!, .5));
-
-    //PUPILS
-    //interpolate pupil and keep a copy of the value
-    let lookTarget =
-      new THREE.Euler(
-        lerp(-oldLookTarget.x , riggedFace.pupil.y, .4),
-        lerp(oldLookTarget.y, riggedFace.pupil.x, .4),
-        0,
-        "XYZ"
-      )
-    oldLookTarget.copy(lookTarget)
-    vrm.lookAt?.applier?.applyYawPitch(lookTarget.y, lookTarget.x)
-    //vrm.lookAt?.applier?.lookAt(lookTarget);
+export function disposeVrmAvatar(vas: VRMAvatars, avatar: VRMAvatar){
+  avatar.vrm.scene.traverse((obj) => {
+    if (obj instanceof THREE.Mesh) {
+      obj.geometry.dispose()
+      if (Array.isArray(obj.material)) {
+        obj.material.forEach(mat => mat.dispose())
+      } else {
+        obj.material.dispose()
+      }
+    }
+  })
+  avatar.nameLabel?.material.map?.dispose()
+  avatar.nameLabel?.material.dispose()
+  avatar.nameLabel?.geometry.dispose()
+  delete avatar.nameLabel
 }
 
 /* VRM Character Animator */
@@ -438,3 +307,91 @@ export function vrmSetPose (vrm:VRM, rigs?:VRMRigs){
   }
   vrm.expressionManager?.update()
 };
+
+const clamp = Kalidokit.Utils.clamp;
+const lerp = Kalidokit.Vector.lerp;
+
+// Animate Rotation Helper function
+const rigRotation = (
+  vrm: VRM,
+  name: VRMHumanBoneName,
+  rotation = { x: 0, y: 0, z: 0 },
+  dampener = 1,
+  lerpAmount = 0.3
+) => {
+  if (!vrm) { return }
+  const humanoid = vrm.humanoid;
+  if (!humanoid) { return }
+
+  const bone = humanoid.getNormalizedBoneNode(name);
+  if (!bone) { return }
+
+  const euler = new THREE.Euler(
+    rotation.x * dampener,
+    rotation.y * dampener,
+    rotation.z * dampener
+  );
+  const quaternion = new THREE.Quaternion().setFromEuler(euler);
+  bone.quaternion.slerp(quaternion, lerpAmount);
+};
+
+/*  // Animate Position Helper Function
+const rigPosition = (vrm: VRM,
+  name:HumanoidBoneName,
+  position = { x: 0, y: 0, z: 0 },
+  dampener = 1,
+  lerpAmount = 0.3
+) => {
+  if (!vrm) {return}
+  const Part = vrm.humanoid?.getBoneNode(
+    VRMSchema.HumanoidBoneName[name]
+  );
+  if (!Part) {return}
+  let vector = new THREE.Vector3(
+    position.x * dampener,
+    position.y * dampener,
+    position.z * dampener
+  );
+  Part.position.lerp(vector, lerpAmount); // interpolate
+};  */
+
+let oldLookTarget = new THREE.Euler()
+function rigFace(vrm:VRM, riggedFace:Kalidokit.TFace){
+    if(!vrm){return}
+    const rot = {x:riggedFace.head.x-0.1, y:-riggedFace.head.y, z:-riggedFace.head.z}
+    //console.log(`rigRot: ${JSON.stringify(rot)}`)
+    rigRotation(vrm, "neck", rot, 0.7);
+
+    // Blendshapes and Preset Name Schema
+    const Blendshape = vrm.expressionManager!
+    const PresetName = VRMExpressionPresetName;
+
+    // Simple example without winking. Interpolate based on old blendshape, then stabilize blink with `Kalidokit` helper function.
+    // for VRM, 1 is closed, 0 is open.
+    //console.log(`face eye:${riggedFace.eye.l},${riggedFace.eye.r}`)
+    const eyeL = clamp(1-riggedFace.eye.l, 0, 1)
+    const eyeR = clamp(1-riggedFace.eye.r, 0, 1)
+    Blendshape.setValue(PresetName.BlinkLeft, eyeR);
+    Blendshape.setValue(PresetName.BlinkRight, eyeL);
+
+    // Interpolate and set mouth blendshapes
+    Blendshape.setValue(PresetName.Ih, lerp(riggedFace.mouth.shape.I,Blendshape.getValue(PresetName.Ih)!, .5));
+    Blendshape.setValue(PresetName.Aa, lerp(riggedFace.mouth.shape.A,Blendshape.getValue(PresetName.Aa)!, .5));
+    Blendshape.setValue(PresetName.Ee, lerp(riggedFace.mouth.shape.E,Blendshape.getValue(PresetName.Ee)!, .5));
+    Blendshape.setValue(PresetName.Oh, lerp(riggedFace.mouth.shape.O,Blendshape.getValue(PresetName.Oh)!, .5));
+    Blendshape.setValue(PresetName.Ou, lerp(riggedFace.mouth.shape.U,Blendshape.getValue(PresetName.Ou)!, .5));
+
+    //PUPILS
+    //interpolate pupil and keep a copy of the value
+    let lookTarget =
+      new THREE.Euler(
+        lerp(-oldLookTarget.x , riggedFace.pupil.y, .4),
+        lerp(oldLookTarget.y, riggedFace.pupil.x, .4),
+        0,
+        "XYZ"
+      )
+    oldLookTarget.copy(lookTarget)
+    vrm.lookAt?.applier?.applyYawPitch(lookTarget.y, lookTarget.x)
+    //vrm.lookAt?.applier?.lookAt(lookTarget);
+}
+

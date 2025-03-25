@@ -1,13 +1,14 @@
 import {Participant, PARTICIPANT_SIZE} from '@models/Participant'
 import {urlParameters} from '@models/url'
 import {useObserver} from 'mobx-react-lite'
-import React from 'react'
+import React, { useEffect } from 'react'
 import {MemoedLocalParticipant as LocalParticipant} from './LocalParticipant'
 import {MouseCursor} from './MouseCursor'
 import {PlaybackParticipant} from './PlaybackParticipant'
 import {RemoteParticipant} from './RemoteParticipant'
 import { participants } from '@stores/'
-import { WebGLCanvasProps } from '../Base/WebGLCanvas'
+import { disposeVrmAvatar, updateVrmAvatar, VRMAvatars } from '@components/map/vrm'
+import { autorun, IReactionDisposer } from 'mobx'
 
 interface LineProps {
   start: [number, number]
@@ -33,7 +34,8 @@ const Line: React.FC<LineProps> = (props) => {
   </svg>
 }
 
-export const ParticipantLayer: React.FC<WebGLCanvasProps> = (props) => {
+
+export const ParticipantLayer: React.FC<{vrmAvatars:VRMAvatars}> = (props) => {
   const remotes = useObserver(() => {
     const rs = Array.from(participants.remote.values()).filter(r => r.physics.located)
     const all:Participant[] = Array.from(rs)
@@ -46,9 +48,9 @@ export const ParticipantLayer: React.FC<WebGLCanvasProps> = (props) => {
     return rs
   })
   const localId = useObserver(() => participants.localId)
-  const remoteElements = remotes.map((r, index) => <RemoteParticipant key={r.id} refCtx={props.refThreeCtx}
+  const remoteElements = remotes.map((r, index) => <RemoteParticipant key={r.id}
     participant={r} size={PARTICIPANT_SIZE} zIndex={index} />)
-  const localElement = (<LocalParticipant key={'local'} participant={participants.local} refCtx={props.refThreeCtx}
+  const localElement = (<LocalParticipant key={'local'} participant={participants.local}
     size={PARTICIPANT_SIZE} />)
   const lines = useObserver(
     () => Array.from(participants.yarnPhones).map((rid) => {
@@ -61,7 +63,7 @@ export const ParticipantLayer: React.FC<WebGLCanvasProps> = (props) => {
     }),
   )
   const playIds = useObserver(()=> Array.from(participants.playback.keys()))
-  const playbackElements = playIds.map((id, index) => <PlaybackParticipant key={id} refCtx={props.refThreeCtx}
+  const playbackElements = playIds.map((id, index) => <PlaybackParticipant key={id}
     participant={participants.playback.get(id)!} size={PARTICIPANT_SIZE} zIndex={index}/>)
 
   const mouseIds = useObserver(() => Array.from(participants.remote.keys()).filter(id => (participants.find(id)!.mouse.show)))
@@ -73,6 +75,42 @@ export const ParticipantLayer: React.FC<WebGLCanvasProps> = (props) => {
     ? <MouseCursor key={'M_local'} participantId={localId} /> : undefined
 
   if (urlParameters.testBot !== null) { return <div /> }
+
+  useEffect(()=>{
+    //  console.log('ParticipantLayer mount')
+    const vas = props.vrmAvatars
+    const dispos:Array<IReactionDisposer> = []
+    if (vas){
+      for(const remote of remotes){
+        dispos.push(autorun(()=>{
+          if(remote.isVrm()){
+            updateVrmAvatar(vas, remote, false)
+          }
+        }))
+      }
+      dispos.push(autorun(()=>{
+        if (participants.local.isVrm()){
+          updateVrmAvatar(vas, participants.local, true)
+        }}
+      ))
+    }
+    return ()=>{
+      //  console.log('ParticipantLayer unmount')
+      if (vas){
+        for(const remote of vas.remotes.values()){
+          disposeVrmAvatar(vas, remote)
+        }
+        if (vas.local){
+          disposeVrmAvatar(vas, vas.local)
+        }
+        vas.remotes.clear()
+        delete vas.local
+      }
+      for(const dispo of dispos){
+        dispo()
+      }
+    }
+  }, [props.vrmAvatars])
 
   //  zIndex is needed to show the participants over the share layer.
   return(
