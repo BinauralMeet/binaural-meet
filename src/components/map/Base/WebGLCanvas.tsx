@@ -86,6 +86,8 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
         selfSprite: new THREE.Sprite(new THREE.SpriteMaterial({map: offscreen.texture, alphaTest:0.001, opacity:0.5})),
         mirrorSprite: new THREE.Sprite(new THREE.SpriteMaterial({map: offscreen.texture, alphaTest:0.001, opacity:0.7})),
       }
+      rv.renderer.setClearColor(new THREE.Color(0,0,0), 0)
+      rv.renderer.clear(true, true, true)
       const light = new THREE.DirectionalLight(0xffffff)
       light.position.set(1, 1, 1).normalize()
       rv.scene.add(light)
