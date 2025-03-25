@@ -1,7 +1,7 @@
 import { ISharedContent } from '@models/ISharedContent'
 import {LocalInformation, LocalParticipant as ILocalParticipant, Physics, RemoteInformation, TrackStates, AvatarType} from '@models/Participant'
 import {urlParameters} from '@models/url'
-import {checkImageUrl, mulV2, Pose2DMap, subV2} from '@models/utils'
+import {checkImageUrl, isVrmUrl, mulV2, Pose2DMap, subV2} from '@models/utils'
 import {MapData} from '@stores/Map'
 import {Store} from '@stores/utils'
 import md5 from 'md5'
@@ -23,6 +23,7 @@ export interface MediaSettings{
   soundLocalizationBase: string,
   avatarDisplay2_5D: boolean,
   avatarDisplay3D: boolean,
+  viewRotateByFace: boolean,
   uploadPreference: string
 }
 
@@ -41,10 +42,12 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
   @observable soundLocalizationBase = config.soundLocalizationBase ? config.soundLocalizationBase : 'avatar'
   @observable avatarDisplay2_5D:boolean = config.avatarDisplay2_5D!==undefined ? config.avatarDisplay2_5D : false
   @observable avatarDisplay3D:boolean = config.avatarDisplay3D!==undefined ? config.avatarDisplay3D : true
+  @observable viewRotateByFace:boolean = config.viewRotateByFace!==undefined ? config.viewRotateByFace : false
   @observable uploaderPreference:UploaderPreference = config.uploaderPreference ? config.uploaderPreference : 'gyazo'
   @observable.ref zone:ISharedContent|undefined = undefined    //  The zone on which the local participant located.
   @observable remoteVideoLimit = config.remoteVideoLimit as number || -1
   @observable remoteAudioLimit = config.remoteAudioLimit as number || -1
+  @observable faceDir = 0
   // init information
   get information(): LocalInformation {
     return this.information_ as LocalInformation;
@@ -83,7 +86,7 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
       let src = this.information.avatarSrc
       if ((!src || src.includes(gravatar, 0) || src.includes(vrm, 0)) && this.information.email){
         const email = this.information.email.trim()
-        if (email.includes(vrm) && email.slice(-4) === '.vrm'){
+        if (email.includes(vrm) && isVrmUrl(email)){
           src = email
         }else{
           const hash = md5(this.information.email.trim().toLowerCase())
@@ -91,13 +94,13 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
         }
       }
       if (src){
-        if (src.slice(-4).toLowerCase()==='.vrm'){
+        if (isVrmUrl(src)){
           this.information.avatarSrc = src
         }else{
           checkImageUrl(src).then((src)=>{
             this.information.avatarSrc = src
           }).catch(()=>{
-            this.information.avatarSrc = ''
+            //this.information.avatarSrc = '' //  This could make infinite loop.
           })
         }
       }
@@ -150,6 +153,7 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
       soundLocalizationBase: this.soundLocalizationBase,
       avatarDisplay2_5D: this.avatarDisplay2_5D,
       avatarDisplay3D: this.avatarDisplay3D,
+      viewRotateByFace: this.viewRotateByFace,
       uploadPreference: this.uploaderPreference,
     }
     //  console.log(storage === localStorage ? 'Save to localStorage' : 'Save to sessionStorage')
@@ -179,6 +183,8 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
           (config.avatarDisplay2_5D !== undefined ? config.avatarDisplay2_5D : false)
         this.avatarDisplay3D = setting.avatarDisplay3D!==undefined ? setting.avatarDisplay3D :
           (config.avatarDisplay3D !== undefined ? config.avatarDisplay3D : true)
+        this.viewRotateByFace = setting.viewRotateByFace!==undefined ? setting.viewRotateByFace :
+          (config.viewRotateByFace !== undefined ? config.viewRotateByFace : false)
       }
     }
   }

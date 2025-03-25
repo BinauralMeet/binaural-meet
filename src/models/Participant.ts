@@ -47,11 +47,13 @@ export interface LocalParticipant extends ParticipantBase {
   soundLocalizationBase: SoundLocalizationBase
   avatarDisplay2_5D: boolean
   avatarDisplay3D: boolean
+  viewRotateByFace: boolean
   information: LocalInformation
   zone?: ISharedContent
   tracks: Tracks
   trackStates: TrackStates
   audioLevel: number
+  faceDir: number             //  faceDir in degree
 }
 export type Participant = LocalParticipant | RemoteParticipant | PlaybackParticipant
 

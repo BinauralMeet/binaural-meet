@@ -114,3 +114,8 @@ export function fixIdString(input: string){
   }
   return rv
 }
+
+export function isVrmUrl(url: string){
+  const ext = url.substring(url.lastIndexOf('.'))
+  return ext.toLowerCase() === '.vrm'
+}

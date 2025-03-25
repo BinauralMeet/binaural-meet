@@ -366,7 +366,6 @@ export const Participant: React.FC<ParticipantProps> = (props) => {
     if (participants.localId === participant.id && !participant.information.avatarSrc){
       props.participant.information.avatarSrc='https://binaural.me/public_packages/uploader/vrm/avatar/256Chinchilla.vrm'
     }
-    const useVrm = participant.information.avatarSrc && participant.information.avatarSrc.slice(-4) === '.vrm'
     const depends = [participant.information.name, participant.information.color, participant.information.textColor]
 
 
@@ -380,7 +379,7 @@ export const Participant: React.FC<ParticipantProps> = (props) => {
         <OuterOver participant={props.participant} size={props.size} isLocal={props.isLocal}/>
         </div>
     </div>
-    {useVrm ? <VRMAvatar participant={participant} refCtx={props.refCtx} /> : undefined}
+    {participant.isVrm() ? <VRMAvatar participant={participant} refCtx={props.refCtx} /> : undefined}
   </>
   }}</Observer>
 }

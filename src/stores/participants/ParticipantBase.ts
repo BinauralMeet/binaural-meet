@@ -3,7 +3,7 @@ import {
   defaultViewpoint, LocalInformation,
   ParticipantBase as IParticipantBase, Physics, RemoteInformation, Tracks, TrackStates as ITrackStates, VRMRigs
 } from '@models/Participant'
-import {findReverseColorRGB, findTextColorRGB, getRandomColorRGB, rgb2Color} from '@models/utils'
+import {findReverseColorRGB, findTextColorRGB, getRandomColorRGB, isVrmUrl, rgb2Color} from '@models/utils'
 import {Mouse} from '@models/utils'
 import {MapObject} from '@stores/MapObject'
 import {Store} from '@stores/utils'
@@ -127,5 +127,9 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
   @action.bound
   setPhysics(physics: Partial<Physics>) {
     Object.assign(this.physics, physics)
+  }
+
+  isVrm(){
+    return isVrmUrl(this.information.avatarSrc)
   }
 }

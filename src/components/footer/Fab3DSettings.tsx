@@ -9,6 +9,8 @@ import Button from '@material-ui/core/Button'
 import {participants} from '@stores/'
 import React from 'react';
 import {Icon} from '@iconify/react'
+import { CheckBox } from '@material-ui/icons'
+import { Checkbox } from '@material-ui/core'
 
 const iconThreeCircle = {
 	"width": 256,
@@ -55,31 +57,43 @@ export const SoundSetting: React.FC<{}> = () => {
 SoundSetting.displayName = 'SoundSetting'
 
 export const AvatarSetting: React.FC<{}> = () => {
-  const avatarDisplay3D = useObserver(() => participants.local.avatarDisplay3D)
   const avatarDisplay2_5D = useObserver(() => participants.local.avatarDisplay2_5D)
+  const avatarDisplay3D = useObserver(() => participants.local.avatarDisplay3D)
+  const viewRotateByFace = useObserver(() => participants.local.viewRotateByFace)
   const {t} = useTranslation()
 
   return <>
     <Container>
       <Grid component="label" container={true} alignItems="center" spacing={1}>
-        <Grid xs={2}   item={true}>{t('avatar3D')}</Grid>
-        <Switch checked={avatarDisplay3D === true} onChange={(ev, checked) => {
+        <Grid item xs={3}>
+          <Checkbox checked={avatarDisplay3D === true} onChange={(ev, checked) => {
             participants.local.avatarDisplay3D = checked
             if (participants.local.avatarDisplay3D){
               participants.local.soundLocalizationBase = 'avatar'
             }
             participants.local.saveMediaSettingsToStorage()
-          }} name="avatar3D" />
+          }} name="avatar3D" />{t('alAvatar3D')}
+        </Grid>
+        {avatarDisplay3D ? <>
+          <Grid item xs={4}>
+            <span style={{whiteSpace: 'nowrap'}}>
+              {t('alViewRotationBase')}:
+            </span>
+          </Grid>
+          <Grid item xs={4}>
+            {t('alBodyView')}
+            <Switch checked={viewRotateByFace === true} onChange={(ev, checked) => {
+              participants.local.viewRotateByFace = checked
+              participants.local.saveMediaSettingsToStorage()
+            }} name="viewRotate" />
+            {t('alFaceView')}
+          </Grid></> : undefined }
       </Grid>
-    </Container>
-    <Container>
-      <Grid component="label" container={true} alignItems="center" spacing={1}>
-        <Grid xs={2} item={true}>{t('avatar2_5D')}</Grid>
-        <Switch checked={avatarDisplay2_5D === true} onChange={(ev, checked) => {
-            participants.local.avatarDisplay2_5D = checked
-            participants.local.saveMediaSettingsToStorage()
-          }} name="avatar2_5D" />
-      </Grid>
+      <Checkbox checked={avatarDisplay2_5D === true} onChange={(ev, checked) => {
+          participants.local.avatarDisplay2_5D = checked
+          participants.local.saveMediaSettingsToStorage()
+        }} name="avatar2_5D" />
+        {t('alAvatar2_5D')}
     </Container>
   </>
 }
@@ -88,7 +102,7 @@ AvatarSetting.displayName = 'AvatarSetting'
 
 export const Fab3DSettings: React.FC<{size?: number, iconSize:number}> = (props) => {
   const [anchor, setAnchor] = React.useState<Element|null>(null)
-  const [showStereoBase, setShowSteraoBase] = React.useState(false)
+  const [showDetails, setShowDetails] = React.useState(false)
   const avatarDisplay3D = useObserver(() => participants.local.avatarDisplay3D)
 
   const switch3D = () => {
@@ -112,17 +126,17 @@ export const Fab3DSettings: React.FC<{size?: number, iconSize:number}> = (props)
         </>}
       color = {avatarDisplay3D ? 'secondary' : 'primary'}
       onClick={(ev)=>{setAnchor(ev.currentTarget); switch3D()}}
-      onClickMore = {(ev) => { setShowSteraoBase(true); setAnchor(ev.currentTarget) }} >
+      onClickMore = {(ev) => { setShowDetails(true); setAnchor(ev.currentTarget) }} >
       {avatarDisplay3D ?  <Icon icon={iconPeople} style={{width:props.iconSize, height:props.iconSize}} />
         : <Icon icon={iconThreeCircle} style={{width:props.iconSize*1, height:props.iconSize*1}} /> }
     </FabWithTooltip>
-    <Popover open={showStereoBase} onClose={() => setShowSteraoBase(false)}
+    <Popover open={showDetails} onClose={() => setShowDetails(false)}
       anchorEl={anchor} anchorOrigin={{vertical:'top', horizontal:'left'}}
       anchorReference = "anchorEl" >
       <div style={{padding:20}}>
-        {t('avatarDisplay')} <br />
+        {t('alAvatarDisplay')} <br />
         <AvatarSetting />
-        {t('soundLocalization')} <br />
+        {t('slSoundLocalization')} <br />
         <SoundSetting />
       </div>
     </Popover>

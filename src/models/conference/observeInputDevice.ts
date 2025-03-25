@@ -117,7 +117,8 @@ export function inputChangeObservationStart(){
         if (track) { conference.removeLocalTrack(true, track) }
       }
     }else{
-      const isVrm = participants.local.information.avatarSrc.slice(-4) === '.vrm'
+      const local = participants.local
+      const isVrm = local.isVrm() && (local.avatarDisplay2_5D || local.avatarDisplay3D)
       if (isVrm){
         stopFaceTrack()
         startMpTrack(!faceTrack)

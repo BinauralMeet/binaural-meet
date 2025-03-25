@@ -23,7 +23,7 @@ export const FaceControl: React.FC = () => {
     <FormControlLabel
       control={faceSwitch}
       label={<span style={dialogStyle}>
-        {local.information.avatarSrc.slice(-4)==='.vrm' ? t('trackWholeBody') :  t('showTrackedFace')}
+        {local.isVrm() ? t('trackWholeBody') :  t('showTrackedFace')}
       </span>}/>
   </Container>
 }

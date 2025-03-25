@@ -8,7 +8,7 @@ import TextField from '@material-ui/core/TextField'
 import {uploadToGyazo} from '@models/api/Gyazo'
 import { conference } from '@models/conference'
 import {useTranslation} from '@models/locales'
-import {isDarkColor, rgb2Color} from '@models/utils'
+import {isDarkColor, isVrmUrl, rgb2Color} from '@models/utils'
 import {Observer} from 'mobx-react-lite'
 import React, {useState} from 'react'
 import {SketchPicker} from 'react-color'
@@ -18,10 +18,6 @@ import {Grid} from '@material-ui/core'
 import {participants, map, roomInfo} from '@stores/'
 
 
-function isVrm(url: string){
-  const ext = url.substring(url.lastIndexOf('.'))
-  return ext.toLowerCase() === '.vrm'
-}
 function makeEmailDisp(email: string){
   const lastSlashIdx = email.lastIndexOf('/')+1
   const base = email.substring(0, lastSlashIdx)
@@ -146,7 +142,7 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
                 style={{display:'inline', lineHeight:'2em'}}>
                 <div style={{fontSize:12, marginTop:8}}>{t('lsImageFile')}
                 </div>
-                {local.information.avatarSrc && !isVrm(local.information.avatarSrc) ? <>
+                {local.information.avatarSrc && !isVrmUrl(local.information.avatarSrc) ? <>
                   <img src={local.information.avatarSrc} style={{height:'1.5em', verticalAlign:'middle'}} alt="avatar"/>
                   <input style={inputStyle} type="submit" onClick={clearAvatarSrc} value="✕" /> &nbsp;
                 </> : undefined}

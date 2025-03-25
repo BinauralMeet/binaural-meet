@@ -3,6 +3,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import { Observer } from 'mobx-react-lite';
 import React, { CSSProperties } from 'react';
 import {AvatarProps} from './ComposedAvatar'
+import { isVrmUrl } from '@models/utils';
 
 
 interface ConnectedImageAvatarProps extends AvatarProps{
@@ -75,7 +76,7 @@ export interface ImageAvatarProps{
 export const ImageAvatar: React.FC<ImageAvatarProps> = (props: ImageAvatarProps)=>{
   const classes = useStyles({...props, colors:props.colors});
   const avatarSrc = props.avatarSrc
-  const isImage = avatarSrc && avatarSrc.slice(-4) !== '.vrm';
+  const isImage = avatarSrc && !isVrmUrl(avatarSrc)
   const size = props.border ? props.size * BORDER_CONTENT : props.size;
   if (isImage) {
     return <Avatar src={avatarSrc} className={classes.imageAvatar} />

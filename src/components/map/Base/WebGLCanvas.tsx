@@ -96,7 +96,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
 
     //  render
     let prevTime = 0
-    let lastLocalOri=0
+    let filteredFaceDir=0
     let animate = (time:number) => {
       requestAnimationFrame(animate)
       if (time - prevTime < animationPeriod) return
@@ -108,21 +108,32 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
       ctx.renderer.setDrawingBufferSize(mapSize[0], mapSize[1], 1)
       ctx.renderer.clear(true, true, true)
 
-      if (participants.local.avatarDisplay2_5D || participants.local.avatarDisplay3D){
-        //  Update local avatar's orientation from the face rig (camera)
-        if(ctx.local && ctx.local.rig && ctx.local.rig.face){
-          const face = ctx.local.rig.face as Kalidokit.TFace
-          const cur = face.head.y
-          const diff = (cur - lastLocalOri) * 0.3
-          lastLocalOri += diff
+      if(ctx.local && ctx.local.rig && ctx.local.rig.face){
+        //  Fliter face direction and set it for sound localization etc.
+        const face = ctx.local.rig.face as Kalidokit.TFace
+        const cur = face.head.y
+        const diff = (cur - filteredFaceDir) * 0.3
+        filteredFaceDir += diff
+        participants.local.faceDir = filteredFaceDir*(180/Math.PI)
+        //console.log(`face:${participants.local.faceDir}, ori:${participants.local.pose.orientation}`)
+        if ((participants.local.avatarDisplay3D && participants.local.viewRotateByFace) ||
+          (!participants.local.avatarDisplay2_5D && !participants.local.avatarDisplay3D)){
+          //  Update local avatar's orientation from the face rig (camera)
           participants.local.pose.orientation += diff * (180/Math.PI)
         }
-        const rad = -participants.local.pose.orientation/180*Math.PI
-        const viewDir = [-Math.sin(rad), -Math.cos(rad)]
+      }
+
+      if (participants.local.avatarDisplay2_5D || participants.local.avatarDisplay3D){
+        if(ctx.local){
+          const avatar = ctx.local
+          avatar.vrm.scene.position.x = avatar.pose.position[0]*posScale
+          avatar.vrm.scene.position.z = avatar.pose.position[1]*posScale
+          avatar.vrm.scene.rotation.y = -participants.local.pose.orientation/180*Math.PI
+          updateVrmAvatar(avatar)
+        }
         //  Update avatars
         const remotes = Array.from(ctx.remotes.values())
-        const avatars = ctx.local ? [...remotes, ctx.local] : remotes
-        for(const avatar of avatars){
+        for(const avatar of remotes){
           avatar.vrm.scene.position.x = avatar.pose.position[0]*posScale
           avatar.vrm.scene.position.z = avatar.pose.position[1]*posScale
           avatar.vrm.scene.rotation.y = -avatar.pose.orientation / 180 * Math.PI
@@ -134,13 +145,15 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
           //refCanvas.current.style.opacity = '0.6'
           const viewportSize = [mapSize[0], mapSize[1]*0.6]
           ctx.renderer.setViewport(0, mapSize[1]-viewportSize[1], mapSize[0], viewportSize[1])
-          const camera = new THREE.PerspectiveCamera(45, viewportSize[0]/viewportSize[1], 0.1, 100000)
-          camera.setViewOffset(viewportSize[0], viewportSize[1], 0, 160, viewportSize[0], viewportSize[1])
-          camera.updateProjectionMatrix()
+          const camera3D = new THREE.PerspectiveCamera(45, viewportSize[0]/viewportSize[1], 0.1, 100000)
+          camera3D.setViewOffset(viewportSize[0], viewportSize[1], 0, 160, viewportSize[0], viewportSize[1])
+          camera3D.updateProjectionMatrix()
           const cameraHeight = 1.6
           const viewScale = 1.0
-          camera.position.set(participants.local.pose.position[0]*posScale - viewDir[0]*viewScale, cameraHeight, participants.local.pose.position[1]*posScale - viewDir[1]*viewScale)
-          camera.lookAt(participants.local.pose.position[0]*posScale, cameraHeight-0.2, participants.local.pose.position[1]*posScale)
+          const rad = -participants.local.pose.orientation/180*Math.PI
+          const viewDir = [-Math.sin(rad), -Math.cos(rad)]
+          camera3D.position.set(participants.local.pose.position[0]*posScale - viewDir[0]*viewScale, cameraHeight, participants.local.pose.position[1]*posScale - viewDir[1]*viewScale)
+          camera3D.lookAt(participants.local.pose.position[0]*posScale, cameraHeight-0.2, participants.local.pose.position[1]*posScale)
 
           //  draw local avatar
           if (ctx.local){
@@ -167,7 +180,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
             ctx.selfSprite.scale.y = 0.5
             ctx.renderer.setRenderTarget(ctx.onscreen)
             ctx.scene.add(ctx.selfSprite)
-            ctx.renderer.render(ctx.scene, camera)
+            ctx.renderer.render(ctx.scene, camera3D)
             ctx.scene.remove(ctx.selfSprite)
           }
 
@@ -176,7 +189,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
             if (avatar.nameLabel) avatar.vrm.scene.add(avatar.nameLabel)
             ctx.scene.add(avatar.vrm.scene)
           }
-          ctx.renderer.render(ctx.scene, camera)
+          ctx.renderer.render(ctx.scene, camera3D)
           for(const avatar of remotes){
             ctx.scene.remove(avatar.vrm.scene)
             if (avatar.nameLabel) avatar.vrm.scene.remove(avatar.nameLabel)
@@ -190,7 +203,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
             //ctx.renderer.setClearColor(new THREE.Color(0,0,0), 0)
             const offCamera = createAvatarCamera([ctx.offscreen.width, ctx.offscreen.height])
             ctx.renderer.setViewport(0, 0, ctx.offscreen.width, ctx.offscreen.height)
-            renderAvatar(ctx, ctx.local, offCamera, lastLocalOri, 2)
+            renderAvatar(ctx, ctx.local, offCamera, filteredFaceDir, 2)
             //  set onscreen position
             ctx.mirrorSprite.position.x = 0
             ctx.mirrorSprite.position.z = 0
@@ -222,6 +235,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
         if (participants.local.avatarDisplay2_5D){
           const viewportSize:[number, number] = [200 * map.scale, 500 * map.scale]
           const camera = createAvatarCamera(viewportSize)
+          const avatars = ctx.local ? [...remotes, ctx.local] : remotes
           for(const avatar of avatars){
             //  console.log(`render3d() ori: ${ori}`)
             if (avatar.vrm && ctx) {

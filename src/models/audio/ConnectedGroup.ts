@@ -38,6 +38,7 @@ export class ConnectedGroup {
       const local = participants.local
       this.disposers.push(autorun(()=>{
         const base = _.clone(local.pose)
+        base.orientation += local.faceDir
         if (local.soundLocalizationBase === 'user') { base.orientation = 0 }
         const relativePose = getRelativePoseFromObject(base, remote, content)
         if (remote){
