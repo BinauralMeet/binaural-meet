@@ -7,8 +7,8 @@ import {MouseCursor} from './MouseCursor'
 import {PlaybackParticipant} from './PlaybackParticipant'
 import {RemoteParticipant} from './RemoteParticipant'
 import { participants } from '@stores/'
-import { disposeVrmAvatar, updateVrmAvatar, VRMAvatars } from '@components/map/vrm'
-import { autorun, IReactionDisposer } from 'mobx'
+import { createVrmAvatar, freeVrmAvatar, removeVrmAvatar, VRMAvatars} from '@components/map/vrm'
+import { autorun } from 'mobx'
 
 interface LineProps {
   start: [number, number]
@@ -79,35 +79,49 @@ export const ParticipantLayer: React.FC<{vrmAvatars:VRMAvatars}> = (props) => {
   useEffect(()=>{
     //  console.log('ParticipantLayer mount')
     const vas = props.vrmAvatars
-    const dispos:Array<IReactionDisposer> = []
-    if (vas){
-      for(const remote of remotes){
-        dispos.push(autorun(()=>{
-          if(remote.isVrm()){
-            updateVrmAvatar(vas, remote, false)
-          }
-        }))
+    if (!vas) return
+    const dispoLocal = autorun(()=>{
+      if (participants.local.isVrm()){
+        createVrmAvatar(participants.local).then(avatar => {
+          if(vas.local) freeVrmAvatar(vas.local)
+          vas.local = avatar
+          avatar.dispo = dispoLocal
+        })
       }
-      dispos.push(autorun(()=>{
-        if (participants.local.isVrm()){
-          updateVrmAvatar(vas, participants.local, true)
-        }}
-      ))
-    }
+    })
+    const dispo = autorun(()=>{
+      for(const remote of participants.remote.values()){
+        if (!vas.remotes.has(remote.id)){
+          const dispoRemote = autorun(()=>{
+            if(remote.isVrm()){
+              createVrmAvatar(remote).then(avatar => {
+                avatar.dispo = dispoRemote
+                const rav = vas.remotes.get(remote.id)
+                if (rav) freeVrmAvatar(rav)
+                vas.remotes.set(remote.id, avatar)
+              })
+            }
+          })
+        }
+      }
+      for(const pid of vas.remotes.keys()){
+        if(!participants.remote.has(pid)){
+          removeVrmAvatar(vas, false, pid)
+        }
+      }
+    })
     return ()=>{
       //  console.log('ParticipantLayer unmount')
+      dispo()
       if (vas){
-        for(const remote of vas.remotes.values()){
-          disposeVrmAvatar(vas, remote)
+        for(const pid of vas.remotes.keys()){
+          removeVrmAvatar(vas, false, pid)
         }
         if (vas.local){
-          disposeVrmAvatar(vas, vas.local)
+          removeVrmAvatar(vas, true)
         }
         vas.remotes.clear()
         delete vas.local
-      }
-      for(const dispo of dispos){
-        dispo()
       }
     }
   }, [props.vrmAvatars])

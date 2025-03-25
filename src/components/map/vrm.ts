@@ -6,21 +6,16 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { addV, subV } from 'react-use-gesture'
 import * as Kalidokit from 'kalidokit'
 import Euler from 'kalidokit/dist/utils/euler'
+import { IReactionDisposer } from 'mobx'
 
 declare const d:any                  //  from index.html
 
 
 export interface VRMAvatar{
   participant: ParticipantBase
-  pose: Pose2DMap
   vrm: VRM
   nameLabel?:THREE.Sprite
-  rig?: VRMRigs
-  //  used in WebGLCanvas
-  rendered?: boolean
-  dist?: number
-  dir?: number
-  ori?: number
+  dispo?: IReactionDisposer
 }
 export interface VRMAvatars{
   remotes: Map<string, VRMAvatar>
@@ -48,32 +43,55 @@ function getVRMLoader() {
   return loader;
 }
 
-export function updateVrmAvatar(vas:VRMAvatars, participant: ParticipantBase, isLocal: boolean){
-  const  avatar = isLocal ? vas.local : vas.remotes.get(participant.id)
-  if (avatar){
-    avatar.pose = participant.pose,
-    avatar.rig = participant.vrmRigs
-  }else{
-    createVrmAvatar(vas, participant, isLocal).then((newAvatar)=>{
-      if (isLocal) vas.local = newAvatar
-      else vas.remotes.set(participant.id, newAvatar)
-    })
+export function removeVrmAvatar(vas:VRMAvatars, isLocal:boolean, pid?: string){
+  if (isLocal){
+    if (vas.local) {
+      disposeVrmAvatar(vas.local)
+      delete vas.local
+    }
   }
-  //console.log(`updateRequest called req: ${props.refCtx.current?.updateReqs?.size}`)
+  else{
+    const remote = vas.remotes.get(pid!)
+    if (remote){
+      disposeVrmAvatar(remote)
+      vas.remotes.delete(pid!)
+    }
+  }
+}
+function disposeVrmAvatar(avatar: VRMAvatar){
+  if (avatar.dispo) avatar.dispo()
+  delete avatar.dispo
+  freeVrmAvatar(avatar)
+}
+export function freeVrmAvatar(avatar: VRMAvatar){
+  avatar.vrm.scene.traverse((obj) => {
+    if (obj instanceof THREE.Mesh) {
+      obj.geometry.dispose()
+      if (Array.isArray(obj.material)) {
+        obj.material.forEach(mat => mat.dispose())
+      } else {
+        obj.material.dispose()
+      }
+    }
+  })
+  avatar.nameLabel?.material.map?.dispose()
+  avatar.nameLabel?.material.dispose()
+  avatar.nameLabel?.geometry.dispose()
+  delete avatar.nameLabel
 }
 
-function createVrmAvatar(vas:VRMAvatars, participant: ParticipantBase, isLocal: boolean){
+export function createVrmAvatar(participant: ParticipantBase){
   const promise = new Promise<VRMAvatar>((resolve, reject)=>{
-    loadVrmAvatar(vas, participant, isLocal).then((vrm)=>{
+    loadVrmAvatar(participant).then((vrm)=>{
       const avatar:VRMAvatar = {
         vrm,
         nameLabel: createNameLabel(participant),
         participant,
-        pose: participant.pose,
       }
       if (avatar.nameLabel){
         avatar.nameLabel.position.y = -avatar.vrm.scene.position.y
       }
+      //  console.log(`avatar for ${participant.id} loaded.`)
       resolve(avatar)
     })
   })
@@ -90,7 +108,7 @@ function fillRoundedRect(vas:CanvasRenderingContext2D, x:number, y:number, width
   vas.fill();
 }
 
-export function createNameLabel(participant: ParticipantBase): THREE.Sprite|undefined{
+function createNameLabel(participant: ParticipantBase): THREE.Sprite|undefined{
   const colors = participant.getColor()
   const fontSize = 30;
   const canvas = document.createElement('canvas');
@@ -114,9 +132,10 @@ export function createNameLabel(participant: ParticipantBase): THREE.Sprite|unde
   return sprite
 }
 
-export function loadVrmAvatar(vas:VRMAvatars, participant: ParticipantBase, isLocal: boolean){
+let loader: GLTFLoader
+function loadVrmAvatar(participant: ParticipantBase){
   const promise = new Promise<VRM>((resolve, reject)=>{
-    const loader = getVRMLoader()
+    if (!loader) loader = getVRMLoader()
     loader.load(
       participant.information.avatarSrc,
       (gltf) => {
@@ -165,22 +184,6 @@ export function loadVrmAvatar(vas:VRMAvatars, participant: ParticipantBase, isLo
     )
   })
   return promise
-}
-export function disposeVrmAvatar(vas: VRMAvatars, avatar: VRMAvatar){
-  avatar.vrm.scene.traverse((obj) => {
-    if (obj instanceof THREE.Mesh) {
-      obj.geometry.dispose()
-      if (Array.isArray(obj.material)) {
-        obj.material.forEach(mat => mat.dispose())
-      } else {
-        obj.material.dispose()
-      }
-    }
-  })
-  avatar.nameLabel?.material.map?.dispose()
-  avatar.nameLabel?.material.dispose()
-  avatar.nameLabel?.geometry.dispose()
-  delete avatar.nameLabel
 }
 
 /* VRM Character Animator */
@@ -358,7 +361,7 @@ const rigPosition = (vrm: VRM,
 let oldLookTarget = new THREE.Euler()
 function rigFace(vrm:VRM, riggedFace:Kalidokit.TFace){
     if(!vrm){return}
-    const rot = {x:riggedFace.head.x-0.1, y:-riggedFace.head.y, z:-riggedFace.head.z}
+    const rot = {x:riggedFace.head.x-0.1, y:-riggedFace.head.y*2.5, z:-riggedFace.head.z}
     //console.log(`rigRot: ${JSON.stringify(rot)}`)
     rigRotation(vrm, "neck", rot, 0.7);
 

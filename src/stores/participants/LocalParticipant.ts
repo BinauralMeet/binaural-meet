@@ -64,6 +64,15 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
       headphone: this.useStereoAudio,
     }
   }
+  @computed get rotateAvatarByFace(){
+    return !this.avatarDisplay3D && !this.avatarDisplay2_5D
+  }
+  @computed get headOrientation(){
+    if (this.rotateAvatarByFace){
+      return this.pose.orientation
+    }
+    return this.pose.orientation + this.faceDir
+  }
 //  get info():LocalInformation { return this.information as LocalInformation}
 
   constructor() {

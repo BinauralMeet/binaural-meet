@@ -22,10 +22,7 @@ interface WebGLContext{
 
 
 function updateVrmAvatar(avatar:VRMAvatar){
-  if (!avatar.rendered){
-    vrmSetPose(avatar.vrm, avatar.rig)  //  apply rig
-    avatar.rendered = true
-  }
+  vrmSetPose(avatar.vrm, avatar.participant.vrmRigs)  //  apply rig
   avatar.vrm.update(animationPeriod / 1000);   //  Update model to render physics
 }
 function createAvatarCamera(viewportSize:[number, number]){
@@ -40,22 +37,23 @@ function createAvatarCamera(viewportSize:[number, number]){
 }
 function renderAvatar(ctx: WebGLContext, vas: VRMAvatars, avatar:VRMAvatar, camera:THREE.Camera, ori?:number, distIn?: number){
   if (ori===undefined){
-    const oriOffset = (avatar.pose.orientation+360*2) % 360 - 180
+    const oriOffset = (avatar.participant.pose.orientation+360*2) % 360 - 180
     ori = 180 + oriOffset / 2
   }else{
     ori += 180
   }
-  ori -= avatar.pose.orientation
+  ori -= avatar.participant.pose.orientation
   const rad = ori / 180 * Math.PI
   const dist = distIn ? distIn : 5
-  camera.position.x = avatar.pose.position[0]*posScale + Math.sin(rad)*dist
-  camera.position.z = avatar.pose.position[1]*posScale + Math.cos(rad)*dist
+  camera.position.x = avatar.participant.pose.position[0]*posScale + Math.sin(rad)*dist
+  camera.position.z = avatar.participant.pose.position[1]*posScale + Math.cos(rad)*dist
   camera.position.y = dist*0.3
-  camera.lookAt(avatar.pose.position[0]*posScale, dist*0.3, avatar.pose.position[1]*posScale)
+  camera.lookAt(avatar.participant.pose.position[0]*posScale, dist*0.3, avatar.participant.pose.position[1]*posScale)
 
   ctx.scene.add(avatar.vrm.scene)
   ctx.renderer.render(ctx.scene, camera)
   ctx.scene.remove(avatar.vrm.scene)
+  //console.log(`render 2.5 avatar ${JSON.stringify(avatar.pose.orientation)}`)
 }
 
 
@@ -77,6 +75,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
         alpha: true,
         canvas: canvas
       })
+      renderer.autoClear = false
       const offscreen = new THREE.WebGLRenderTarget(300, 300)
       const rv:WebGLContext = {
         canvas: canvas,
@@ -112,35 +111,34 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
       ctx.renderer.setDrawingBufferSize(mapSize[0], mapSize[1], 1)
       ctx.renderer.clear(true, true, true)
 
-      if(vas.local && vas.local.rig && vas.local.rig.face){
+      if(vas.local && participants.local.vrmRigs && participants.local.vrmRigs.face){
         //  Fliter face direction and set it for sound localization etc.
-        const face = vas.local.rig.face as Kalidokit.TFace
+        const face = participants.local.vrmRigs.face as Kalidokit.TFace
         const cur = face.head.y
         const diff = (cur - filteredFaceDir) * 0.3
         filteredFaceDir += diff
         participants.local.faceDir = filteredFaceDir*(180/Math.PI)
         //console.log(`face:${participants.local.faceDir}, ori:${participants.local.pose.orientation}`)
-        if ((participants.local.avatarDisplay3D && participants.local.viewRotateByFace) ||
-          (!participants.local.avatarDisplay2_5D && !participants.local.avatarDisplay3D)){
+        if (participants.local.rotateAvatarByFace){
           //  Update local avatar's orientation from the face rig (camera)
+          participants.local.pose.orientation += diff * (180/Math.PI)
+        }
+      }else{
+        const diff = -filteredFaceDir * 0.3
+        filteredFaceDir += diff
+        if (participants.local.rotateAvatarByFace){
           participants.local.pose.orientation += diff * (180/Math.PI)
         }
       }
 
       if (participants.local.avatarDisplay2_5D || participants.local.avatarDisplay3D){
-        if(vas.local){
-          const avatar = vas.local
-          avatar.vrm.scene.position.x = avatar.pose.position[0]*posScale
-          avatar.vrm.scene.position.z = avatar.pose.position[1]*posScale
-          avatar.vrm.scene.rotation.y = -participants.local.pose.orientation/180*Math.PI
-          updateVrmAvatar(avatar)
-        }
         //  Update avatars
         const remotes = Array.from(vas.remotes.values())
-        for(const avatar of remotes){
-          avatar.vrm.scene.position.x = avatar.pose.position[0]*posScale
-          avatar.vrm.scene.position.z = avatar.pose.position[1]*posScale
-          avatar.vrm.scene.rotation.y = -avatar.pose.orientation / 180 * Math.PI
+        const avatars = vas.local? [...remotes, vas.local] : remotes
+        for(const avatar of avatars){
+          avatar.vrm.scene.position.x = avatar.participant.pose.position[0]*posScale
+          avatar.vrm.scene.position.z = avatar.participant.pose.position[1]*posScale
+          avatar.vrm.scene.rotation.y = -avatar.participant.pose.orientation / 180 * Math.PI
           updateVrmAvatar(avatar)
         }
 
@@ -154,7 +152,10 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
           camera3D.updateProjectionMatrix()
           const cameraHeight = 1.6
           const viewScale = 1.0
-          const rad = -participants.local.pose.orientation/180*Math.PI
+          let rad = -participants.local.pose.orientation/180*Math.PI
+          if (participants.local.avatarDisplay3D && participants.local.viewRotateByFace){
+            rad -= filteredFaceDir
+          }
           const viewDir = [-Math.sin(rad), -Math.cos(rad)]
           camera3D.position.set(participants.local.pose.position[0]*posScale - viewDir[0]*viewScale, cameraHeight, participants.local.pose.position[1]*posScale - viewDir[1]*viewScale)
           camera3D.lookAt(participants.local.pose.position[0]*posScale, cameraHeight-0.2, participants.local.pose.position[1]*posScale)
@@ -243,7 +244,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
           for(const avatar of avatars){
             //  console.log(`render3d() ori: ${ori}`)
             if (avatar.vrm) {
-              const pos = map.toElement(avatar.pose.position)
+              const pos = map.toElement(avatar.participant.pose.position)
               ctx.renderer.setViewport(pos[0]-viewportSize[0]/2, mapSize[1]-pos[1], viewportSize[0], viewportSize[1])
               renderAvatar(ctx, vas, avatar, camera)
               /*
