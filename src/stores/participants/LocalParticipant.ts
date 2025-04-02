@@ -1,5 +1,5 @@
 import { ISharedContent } from '@models/ISharedContent'
-import {LocalInformation, LocalParticipant as ILocalParticipant, Physics, RemoteInformation, TrackStates, AvatarType} from '@models/Participant'
+import {LocalInformation, LocalParticipant as ILocalParticipant, Physics, RemoteInformation, TrackStates, AvatarType, AllLandmarks} from '@models/Participant'
 import {urlParameters} from '@models/url'
 import {checkImageUrl, isVrmUrl, mulV2, Pose2DMap, subV2} from '@models/utils'
 import {MapData} from '@stores/Map'
@@ -48,6 +48,7 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
   @observable remoteVideoLimit = config.remoteVideoLimit as number || -1
   @observable remoteAudioLimit = config.remoteAudioLimit as number || -1
   @observable faceDir = 0
+  @observable.ref landmarks:AllLandmarks = {}
   // init information
   get information(): LocalInformation {
     return this.information_ as LocalInformation;

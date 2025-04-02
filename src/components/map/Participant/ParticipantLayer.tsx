@@ -7,7 +7,7 @@ import {MouseCursor} from './MouseCursor'
 import {PlaybackParticipant} from './PlaybackParticipant'
 import {RemoteParticipant} from './RemoteParticipant'
 import { participants } from '@stores/'
-import { createVrmAvatar, freeVrmAvatar, removeVrmAvatar, VRMAvatars} from '@components/map/vrm'
+import { createVrmAvatar, freeVrmAvatar, removeVrmAvatar, VRMAvatars} from '@models/utils/vrm'
 import { autorun } from 'mobx'
 
 interface LineProps {

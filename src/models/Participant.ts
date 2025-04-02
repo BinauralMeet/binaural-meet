@@ -4,6 +4,7 @@ import {findReverseColorRGB, findTextColorRGB, getRandomColorRGB, rgb2Color} fro
 import {Mouse} from './utils/coordinates'
 import * as Kalidokit from 'kalidokit'
 import { MediaClip } from '@stores/MapObject'
+import { GpuBuffer, NormalizedLandmarkList } from '@mediapipe/holistic'
 
 export const PARTICIPANT_SIZE = 60
 
@@ -12,6 +13,15 @@ export interface VRMRigs{
   pose?:Kalidokit.TPose,
   leftHand?: Kalidokit.THand<'Left'>
   rightHand?: Kalidokit.THand<'Right'>
+}
+
+export interface AllLandmarks{
+  faceLm?: NormalizedLandmarkList
+  poseLm?: NormalizedLandmarkList
+  poseLm3d?: NormalizedLandmarkList
+  leftHandLm?: NormalizedLandmarkList
+  rightHandLm?: NormalizedLandmarkList
+  image?: GpuBuffer
 }
 
 export interface ParticipantBase extends MapObject{
@@ -43,6 +53,7 @@ export interface RemoteParticipant extends ParticipantBase {
   audioLevel: number
 }
 
+
 export interface LocalParticipant extends ParticipantBase {
   soundLocalizationBase: SoundLocalizationBase
   avatarDisplay2_5D: boolean
@@ -54,6 +65,7 @@ export interface LocalParticipant extends ParticipantBase {
   trackStates: TrackStates
   audioLevel: number
   faceDir: number             //  faceDir in degree
+  landmarks: AllLandmarks
 }
 export type Participant = LocalParticipant | RemoteParticipant | PlaybackParticipant
 

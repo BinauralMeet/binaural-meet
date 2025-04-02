@@ -1,9 +1,12 @@
-import { vrmSetPose, VRMAvatar, VRMAvatars } from "@components/map/vrm"
+import { vrmSetPose, VRMAvatar, VRMAvatars } from "@models/utils/vrm"
 import React, { useRef } from 'react'
 import * as THREE from 'three'
 import * as Kalidokit from 'kalidokit'
 import map from "@stores/Map"
 import { participants } from "@stores/participants"
+import { AllLandmarks } from "@models/Participant"
+import * as MP from "@mediapipe/drawing_utils"
+import { FACEMESH_TESSELATION, HAND_CONNECTIONS, POSE_CONNECTIONS } from "@mediapipe/holistic"
 
 declare const d:any                  //  from index.html
 
@@ -21,8 +24,8 @@ interface WebGLContext{
 }
 
 
-function updateVrmAvatar(avatar:VRMAvatar){
-  vrmSetPose(avatar.vrm, avatar.participant.vrmRigs)  //  apply rig
+function updateVrmAvatar(avatar:VRMAvatar, landmarks: AllLandmarks|undefined, c2d?: CanvasRenderingContext2D){
+  vrmSetPose(avatar, landmarks, c2d)  //  apply rig
   avatar.vrm.update(animationPeriod / 1000);   //  Update model to render physics
 }
 function createAvatarCamera(viewportSize:[number, number]){
@@ -63,6 +66,7 @@ export interface WebGLCanvasProps{
 }
 export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) => {
   const refWebGLContext = useRef<WebGLContext>()
+  const refCanvas2 = useRef<HTMLCanvasElement>(null)
 
   React.useEffect(()=>{
     //console.log('WebGL mount')
@@ -76,7 +80,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
         canvas: canvas
       })
       renderer.autoClear = false
-      const offscreen = new THREE.WebGLRenderTarget(300, 300)
+      const offscreen = new THREE.WebGLRenderTarget(600, 300)
       const rv:WebGLContext = {
         canvas: canvas,
         renderer,
@@ -100,6 +104,10 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
       ctx = refWebGLContext.current = createThreeContext(ctx.canvas)
     })
 
+
+    let c2d = refCanvas2.current?.getContext("2d")
+    if (c2d===null) c2d=undefined
+
     //  render
     let prevTime = 0
     let filteredFaceDir=0
@@ -112,6 +120,33 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
       const mapSize = map.screenSize
       ctx.renderer.setDrawingBufferSize(mapSize[0], mapSize[1], 1)
       ctx.renderer.clear(true, true, true)
+
+      //  console.log(`canvas2: ${refCanvas2.current}`)
+      if (refCanvas2.current){
+        const lms = participants.local.landmarks
+        if (lms.image){
+          refCanvas2.current.width = lms.image.width
+          refCanvas2.current.height = lms.image.height
+          const c2d = refCanvas2.current.getContext("2d")
+          if (c2d){
+            c2d.drawImage(lms.image, 0, 0, refCanvas2.current.width, refCanvas2.current.height)
+            MP.drawConnectors(c2d, lms.poseLm, POSE_CONNECTIONS,
+                        { color: '#00FF00', lineWidth: 4 }); // Green lines
+            MP.drawLandmarks(c2d, lms.poseLm,
+                        { color: '#FF0000', lineWidth: 2, radius: 3 }); // Red dots
+            MP.drawConnectors(c2d, lms.faceLm, FACEMESH_TESSELATION,
+                                         { color: 'rgba(200, 200, 200, 0.5)', lineWidth: 1 }); // Light grey, semi-transparent
+            const handLandmarkStyle = { color: '#FFFFFF', lineWidth: 2, radius: 3 }; // White dots
+            const leftHandConnectionStyle = { color: '#CC0000', lineWidth: 4 };     // Dark Red lines
+            const rightHandConnectionStyle = { color: '#00CC00', lineWidth: 4 };    // Dark Green lines
+            MP.drawConnectors(c2d, lms.leftHandLm, HAND_CONNECTIONS, leftHandConnectionStyle);
+            MP.drawLandmarks(c2d, lms.leftHandLm, handLandmarkStyle);
+            MP.drawConnectors(c2d, lms.rightHandLm, HAND_CONNECTIONS, rightHandConnectionStyle);
+            MP.drawLandmarks(c2d, lms.rightHandLm, handLandmarkStyle);
+          }
+        }
+      }
+
 
       if(vas.local && participants.local.vrmRigs && participants.local.vrmRigs.face){
         //  Fliter face direction and set it for sound localization etc.
@@ -141,7 +176,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
           avatar.vrm.scene.position.x = avatar.participant.pose.position[0]*posScale
           avatar.vrm.scene.position.z = avatar.participant.pose.position[1]*posScale
           avatar.vrm.scene.rotation.y = -avatar.participant.pose.orientation / 180 * Math.PI
-          updateVrmAvatar(avatar)
+          updateVrmAvatar(avatar, vas.local === avatar ? participants.local.landmarks : undefined, c2d)
         }
 
         //  3D mode
@@ -183,7 +218,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
             ctx.selfSprite.position.x = vas.local.vrm.scene.position.x
             ctx.selfSprite.position.z = vas.local.vrm.scene.position.z
             ctx.selfSprite.position.y = 0.8
-            ctx.selfSprite.scale.x = 0.5
+            ctx.selfSprite.scale.x = 0.5*(ctx.offscreen.width / ctx.offscreen.height)
             ctx.selfSprite.scale.y = 0.5
             ctx.renderer.setRenderTarget(ctx.onscreen)
             ctx.scene.add(ctx.selfSprite)
@@ -210,11 +245,12 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
             //vas.renderer.setClearColor(new THREE.Color(0,0,0), 0)
             const offCamera = createAvatarCamera([ctx.offscreen.width, ctx.offscreen.height])
             ctx.renderer.setViewport(0, 0, ctx.offscreen.width, ctx.offscreen.height)
-            renderAvatar(ctx, vas, vas.local, offCamera, filteredFaceDir, 2)
+            renderAvatar(ctx, vas, vas.local, offCamera, filteredFaceDir, 1)
             //  set onscreen position
             ctx.mirrorSprite.position.x = 0
             ctx.mirrorSprite.position.z = 0
             ctx.mirrorSprite.position.y = 0
+            ctx.mirrorSprite.scale.x = (ctx.offscreen.width / ctx.offscreen.height)
             ctx.offscreen.texture.repeat.set(-1, 1);
             ctx.offscreen.texture.offset.set( 1, 0);
 
@@ -270,7 +306,17 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
     }
   },[props.refCanvas.current, props.vrmAvatars])
 
-  return <canvas style={{
+  return <>
+      <canvas style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        height: '100%',
+        width: '100%',
+        pointerEvents:'none'}}
+        ref={refCanvas2}>
+      </canvas>
+  <canvas style={{
         position: 'absolute',
         top: 0,
         left: 0,
@@ -279,4 +325,5 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
         pointerEvents:'none'}}
         ref={props.refCanvas}>
       </canvas>
-}
+  </>
+  }

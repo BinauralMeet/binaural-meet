@@ -1,5 +1,5 @@
-import { ParticipantBase, VRMRigs} from '@models/Participant'
-import { mulV, normV, Pose2DMap } from '../../models/utils/coordinates'
+import { AllLandmarks, ParticipantBase, VRMRigs} from '@models/Participant'
+import { mulV, normV} from './coordinates'
 import { VRM, VRMExpressionPresetName, VRMHumanBoneName, VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
@@ -7,6 +7,7 @@ import { addV, subV } from 'react-use-gesture'
 import * as Kalidokit from 'kalidokit'
 import Euler from 'kalidokit/dist/utils/euler'
 import { IReactionDisposer } from 'mobx'
+import { applyFikToVrm, createFikStrcture, drawFikStructure, Structure3DEx, updateFikStructure } from './vrmIK'
 
 declare const d:any                  //  from index.html
 
@@ -16,6 +17,7 @@ export interface VRMAvatar{
   vrm: VRM
   nameLabel?:THREE.Sprite
   dispo?: IReactionDisposer
+  structure?: Structure3DEx
 }
 export interface VRMAvatars{
   remotes: Map<string, VRMAvatar>
@@ -186,130 +188,6 @@ function loadVrmAvatar(participant: ParticipantBase){
   return promise
 }
 
-/* VRM Character Animator */
-export function vrmSetPose (vrm:VRM, rigs?:VRMRigs){
-  if (!vrm) return
-  if (!rigs) {
-    rigRotation(vrm, "rightUpperArm", new Euler(0,0,-Math.PI/2*0.8), 1, 1);
-    rigRotation(vrm, "leftUpperArm", new Euler(0,0,Math.PI/2*0.8), 1, 1);
-    return;
-  }
-
-  if (rigs.face) rigFace(vrm, rigs.face)
-
-  // Animate Pose
-  if (rigs.pose){
-    const rotHip = rigs.pose.Hips.rotation!
-    rotHip.z *= -1
-    rotHip.y *= -1
-    rigRotation(vrm, "hips", rotHip, 0.7);
-/*    rigPosition(vrm,
-      "Hips",
-      {
-        x: -rigs.pose.Hips.position.x, // Reverse direction
-        y: rigs.pose.Hips.position.y + 1, // Add a bit of height
-        z: -rigs.pose.Hips.position.z // Reverse direction
-      },
-      1,
-      0.07
-    );
-*/
-    const rotSpine = rigs.pose.Spine!
-    rotSpine.z *= -1
-    rotSpine.y *= -1
-    rigRotation(vrm, "chest", rotSpine, 0.25, .3);
-    rigRotation(vrm, "spine", rotSpine, 0.45, .3);
-
-    //  Cancel mirror
-    const rua = {...rigs.pose.RightUpperArm}
-    rua.y *= -1
-    rua.z *= -1
-    const rla = {...rigs.pose.RightLowerArm}
-    rla.y *= -1
-    rla.z *= -1
-    const lua = {...rigs.pose.LeftUpperArm}
-    lua.y *= -1
-    lua.z *= -1
-    const lla = {...rigs.pose.LeftLowerArm}
-    lla.y *= -1
-    lla.z *= -1
-    rigRotation(vrm, "leftUpperArm", rua, 1, .3);
-    rigRotation(vrm, "leftLowerArm", rla, 1, .3);
-    rigRotation(vrm, "rightUpperArm", lua, 1, .3);
-    rigRotation(vrm, "rightLowerArm", lla, 1, .3);
-
-/*  TODO: Legs also need to reversed.
-    rigRotation(vrm, "leftUpperLeg", rigs.pose.RightUpperLeg, 1, .3);
-    rigRotation(vrm, "leftLowerLeg", rigs.pose.RightLowerLeg, 1, .3);
-    rigRotation(vrm, "rightUpperLeg", rigs.pose.LeftUpperLeg, 1, .3);
-    rigRotation(vrm, "rightLowerLeg", rigs.pose.LeftLowerLeg, 1, .3);
-    */
-  }else{
-    if (rigs.face){
-      //console.log(`head: ${JSON.stringify(rigs.face.head)}`)
-      const rot = {x:rigs.face.head.x/3-0.3, y:rigs.face.head.y/2, z:rigs.face.head.z/2}
-      rigRotation(vrm, "chest", rot, 0.25, .3);
-      rigRotation(vrm, "spine", rot, 0.45, .3);
-      rigRotation(vrm, "rightUpperArm", {x:-rot.x/4-0.2, y:-rot.y/4, z: -rot.z/4-Math.PI/2*0.8}, 1, 1);
-      rigRotation(vrm, "leftUpperArm", {x:-rot.x/4-0.2, y:-rot.y/4, z: -rot.z/4+Math.PI/2*0.8}, 1, 1);
-      rigRotation(vrm, "rightLowerArm", new Euler(0,1.8,-0.3), 1, 1);
-      rigRotation(vrm, "leftLowerArm", new Euler(0,-1.8,0.3), 1, 1);
-      rigRotation(vrm, "rightHand", new Euler(-0.4,0.3,-0.3), 1, 1);
-      rigRotation(vrm, "leftHand", new Euler(-0.4,-0.3,0.3), 1, 1);
-      }
-  }
-
-  // Animate Hands
-  if (rigs.pose && rigs.leftHand){
-    rigRotation(vrm, "rightHand", {
-      // Combine pose rotation Z and hand rotation X Y
-      z: -rigs.leftHand.LeftWrist.y - Math.PI/4,  //  axis around thumb to ring
-      y: -rigs.pose.LeftHand.y*3,  //  y does not work well
-      x: -rigs.leftHand.LeftWrist.x*3 //  rot around middle finger
-    })
-  }
-  if (rigs?.leftHand){
-    rigRotation(vrm, "leftRingProximal", rigs.leftHand.LeftRingProximal);
-    rigRotation(vrm, "leftRingIntermediate", rigs.leftHand.LeftRingIntermediate);
-    rigRotation(vrm, "leftRingDistal", rigs.leftHand.LeftRingDistal);
-    rigRotation(vrm, "leftIndexProximal", rigs.leftHand.LeftIndexProximal);
-    rigRotation(vrm, "leftIndexIntermediate", rigs.leftHand.LeftIndexIntermediate);
-    rigRotation(vrm, "leftIndexDistal", rigs.leftHand.LeftIndexDistal);
-    rigRotation(vrm, "leftMiddleProximal", rigs.leftHand.LeftMiddleProximal);
-    rigRotation(vrm, "leftMiddleIntermediate", rigs.leftHand.LeftMiddleIntermediate);
-    rigRotation(vrm, "leftMiddleDistal", rigs.leftHand.LeftMiddleDistal);
-    rigRotation(vrm, "leftThumbProximal", rigs.leftHand.LeftThumbProximal);
-    rigRotation(vrm, "leftThumbDistal", rigs.leftHand.LeftThumbDistal);
-    rigRotation(vrm, "leftLittleProximal", rigs.leftHand.LeftLittleProximal);
-    rigRotation(vrm, "leftLittleIntermediate", rigs.leftHand.LeftLittleIntermediate);
-    rigRotation(vrm, "leftLittleDistal", rigs.leftHand.LeftLittleDistal);
-  }
-  if (rigs.pose && rigs.rightHand){
-    rigRotation(vrm, "rightHand", {
-      // Combine Z axis from pose hand and X/Y axis from hand wrist rotation
-      z: -rigs.rightHand.RightWrist.y - Math.PI/4,  //  axis around thumb to ring
-      y: -rigs.pose.RightHand.y*3,  //  y does not work well
-      x: -rigs.rightHand.RightWrist.x*3 //  rot around middle finger
-    })
-  }
-  if (rigs.rightHand){
-    rigRotation(vrm, "rightRingProximal", rigs.rightHand.RightRingProximal);
-    rigRotation(vrm, "rightRingIntermediate", rigs.rightHand.RightRingIntermediate);
-    rigRotation(vrm, "rightRingDistal", rigs.rightHand.RightRingDistal);
-    rigRotation(vrm, "rightIndexProximal", rigs.rightHand.RightIndexProximal);
-    rigRotation(vrm, "rightIndexIntermediate",rigs.rightHand.RightIndexIntermediate);
-    rigRotation(vrm, "rightIndexDistal", rigs.rightHand.RightIndexDistal);
-    rigRotation(vrm, "rightMiddleProximal", rigs.rightHand.RightMiddleProximal);
-    rigRotation(vrm, "rightMiddleIntermediate", rigs.rightHand.RightMiddleIntermediate);
-    rigRotation(vrm, "rightMiddleDistal", rigs.rightHand.RightMiddleDistal);
-    rigRotation(vrm, "rightThumbProximal", rigs.rightHand.RightThumbProximal);
-    rigRotation(vrm, "rightThumbDistal", rigs.rightHand.RightThumbDistal);
-    rigRotation(vrm, "rightLittleProximal", rigs.rightHand.RightLittleProximal);
-    rigRotation(vrm, "rightLittleIntermediate", rigs.rightHand.RightLittleIntermediate);
-    rigRotation(vrm, "rightLittleDistal", rigs.rightHand.RightLittleDistal);
-  }
-  vrm.expressionManager?.update()
-};
 
 const clamp = Kalidokit.Utils.clamp;
 const lerp = Kalidokit.Vector.lerp;
@@ -359,9 +237,9 @@ const rigPosition = (vrm: VRM,
 };  */
 
 let oldLookTarget = new THREE.Euler()
-function rigFace(vrm:VRM, riggedFace:Kalidokit.TFace){
+function vrmSetFaceRig(vrm:VRM, riggedFace:Kalidokit.TFace){
     if(!vrm){return}
-    const rot = {x:riggedFace.head.x-0.1, y:-riggedFace.head.y*2.5, z:-riggedFace.head.z}
+    const rot = {x:riggedFace.head.x-0.1, y:-riggedFace.head.y, z:-riggedFace.head.z}
     //console.log(`rigRot: ${JSON.stringify(rot)}`)
     rigRotation(vrm, "neck", rot, 0.7);
 
@@ -398,3 +276,150 @@ function rigFace(vrm:VRM, riggedFace:Kalidokit.TFace){
     //vrm.lookAt?.applier?.lookAt(lookTarget);
 }
 
+/* VRM Character Animator */
+export function vrmSetPose (avatar:VRMAvatar, landmarks: AllLandmarks|undefined, c2d?: CanvasRenderingContext2D){
+  if (!avatar.vrm) return
+  //if (avatar.participant.vrmRigs?.face) vrmSetFaceRig(avatar.vrm, avatar.participant.vrmRigs.face)
+  if (landmarks){
+    if (!avatar.structure){
+      avatar.structure = createFikStrcture(avatar.vrm)
+    }
+    updateFikStructure(avatar.structure, landmarks)
+    if (c2d){
+      drawFikStructure(avatar.structure, c2d)
+    }
+    applyFikToVrm(avatar.vrm, avatar.structure)
+  }
+  else if (!avatar.participant.vrmRigs) {
+    rigRotation(avatar.vrm, "rightUpperArm", new Euler(0,0,-Math.PI/2*0.8), 1, 1);
+    rigRotation(avatar.vrm, "leftUpperArm", new Euler(0,0,Math.PI/2*0.8), 1, 1);
+    return;
+  }
+}
+/*
+  // Animate Pose
+  if (rigs.pose){
+    const rotHip = {...rigs.pose.Hips.rotation!}
+    rotHip.z *= -1
+    rotHip.y *= -1
+    rigRotation(vrm, "hips", rotHip, 0.7);
+/*    rigPosition(vrm,
+      "Hips",
+      {
+        x: -rigs.pose.Hips.position.x, // Reverse direction
+        y: rigs.pose.Hips.position.y + 1, // Add a bit of height
+        z: -rigs.pose.Hips.position.z // Reverse direction
+      },
+      1,
+      0.07
+    );
+*/
+/*
+  const rotSpine = {...rigs.pose.Spine!}
+    rotSpine.z *= -1
+    rotSpine.y *= -1
+    rigRotation(vrm, "chest", rotSpine, 0.25, .3);
+    rigRotation(vrm, "spine", rotSpine, 0.45, .3);
+
+    //  Cancel mirror
+    const rua = {...rigs.pose.RightUpperArm}
+    rua.y *= -1
+    rua.z *= -1
+    const rla = {...rigs.pose.RightLowerArm}
+    rla.y *= -1
+    rla.z *= -1
+    const lua = {...rigs.pose.LeftUpperArm}
+    lua.y *= -1
+    lua.z *= -1
+    const lla = {...rigs.pose.LeftLowerArm}
+    lla.y *= -1
+    lla.z *= -1
+    rigRotation(vrm, "leftUpperArm", rua, 1, .3);
+    rigRotation(vrm, "leftLowerArm", rla, 1, .3);
+    rigRotation(vrm, "rightUpperArm", lua, 1, .3);
+    rigRotation(vrm, "rightLowerArm", lla, 1, .3);
+
+/*  TODO: Legs also need to reversed.
+    rigRotation(vrm, "leftUpperLeg", rigs.pose.RightUpperLeg, 1, .3);
+    rigRotation(vrm, "leftLowerLeg", rigs.pose.RightLowerLeg, 1, .3);
+    rigRotation(vrm, "rightUpperLeg", rigs.pose.LeftUpperLeg, 1, .3);
+    rigRotation(vrm, "rightLowerLeg", rigs.pose.LeftLowerLeg, 1, .3);
+    */
+/*  }else{
+    if (rigs.face){
+      //console.log(`head: ${JSON.stringify(rigs.face.head)}`)
+      const rot = {x:rigs.face.head.x/3-0.3, y:-rigs.face.head.y, z:-rigs.face.head.z}
+      rigRotation(vrm, "hips", rot, 0.7);
+      rigRotation(vrm, "chest", rot, 0.25, .3);
+      rigRotation(vrm, "spine", rot, 0.45, .3);
+      rigRotation(vrm, "rightUpperArm", {x:-rot.x/4-0.2, y:-rot.y/4, z: -rot.z/4-Math.PI/2*0.8}, 1, 1);
+      rigRotation(vrm, "leftUpperArm", {x:-rot.x/4-0.2, y:-rot.y/4, z: -rot.z/4+Math.PI/2*0.8}, 1, 1);
+      rigRotation(vrm, "rightLowerArm", new Euler(0,1.8,-0.3), 1, 1);
+      rigRotation(vrm, "leftLowerArm", new Euler(0,-1.8,0.3), 1, 1);
+      rigRotation(vrm, "rightHand", new Euler(-0.4,0.3,-0.3), 1, 1);
+      rigRotation(vrm, "leftHand", new Euler(-0.4,-0.3,0.3), 1, 1);
+      }
+  }
+
+  // Animate Hands
+  if (rigs.pose && rigs.leftHand){
+  //*
+  console.log(`rightHand: ${JSON.stringify(rigs.leftHand.LeftWrist)}`)
+  rigRotation(vrm, "rightHand", {
+      // Combine pose rotation Z and hand rotation X Y
+      x: 0, //rigs.leftHand.LeftWrist.x,  //  axis around thumb to ring
+      y: 0,//rigs.leftHand.LeftWrist.x, //rigs.leftHand.LeftWrist.y,// *3 + Math.PI/3,  //  y does not work well
+      z: 0,// -rigs.leftHand.LeftWrist.x*3 //  rot around middle finger
+    })  //  */
+  /*
+  }
+  if (rigs?.leftHand){
+    rigRotation(vrm, "rightRingProximal", rigs.leftHand.LeftRingProximal);
+    rigRotation(vrm, "rightRingIntermediate", rigs.leftHand.LeftRingIntermediate);
+    rigRotation(vrm, "rightRingDistal", rigs.leftHand.LeftRingDistal);
+    rigRotation(vrm, "rightIndexProximal", rigs.leftHand.LeftIndexProximal);
+    rigRotation(vrm, "rightIndexIntermediate", rigs.leftHand.LeftIndexIntermediate);
+    rigRotation(vrm, "rightIndexDistal", rigs.leftHand.LeftIndexDistal);
+    rigRotation(vrm, "rightMiddleProximal", rigs.leftHand.LeftMiddleProximal);
+    rigRotation(vrm, "rightMiddleIntermediate", rigs.leftHand.LeftMiddleIntermediate);
+    rigRotation(vrm, "rightMiddleDistal", rigs.leftHand.LeftMiddleDistal);
+    rigRotation(vrm, "rightThumbProximal", rigs.leftHand.LeftThumbProximal);
+    rigRotation(vrm, "rightThumbDistal", rigs.leftHand.LeftThumbDistal);
+    rigRotation(vrm, "rightLittleProximal", rigs.leftHand.LeftLittleProximal);
+    rigRotation(vrm, "rightLittleIntermediate", rigs.leftHand.LeftLittleIntermediate);
+    rigRotation(vrm, "rightLittleDistal", rigs.leftHand.LeftLittleDistal);
+  }
+  if (false && rigs.pose && rigs.rightHand){
+    rigRotation(vrm, "leftHand", {
+      // Combine Z axis from pose hand and X/Y axis from hand wrist rotation
+      z: -rigs.rightHand.RightWrist.y - Math.PI/4,  //  axis around thumb to ring
+      y: -rigs.pose.RightHand.y*3,  //  y does not work well
+      x: -rigs.rightHand.RightWrist.x*3 //  rot around middle finger
+    })
+  }
+  if (false && rigs.rightHand){
+    rigRotation(vrm, "leftRingProximal", rigs.rightHand.RightRingProximal);
+    rigRotation(vrm, "leftRingIntermediate", rigs.rightHand.RightRingIntermediate);
+    rigRotation(vrm, "leftRingDistal", rigs.rightHand.RightRingDistal);
+    const rot = {...rigs.rightHand.RightIndexDistal}
+    rot.x *= -1
+    rigRotation(vrm, "leftIndexProximal", rot);
+    rigRotation(vrm, "leftIndexIntermediate",rot);
+    rigRotation(vrm, "leftIndexDistal", rot);
+/*
+    rigRotation(vrm, "leftIndexProximal", rigs.rightHand.RightIndexProximal);
+    rigRotation(vrm, "leftIndexIntermediate",rigs.rightHand.RightIndexIntermediate);
+    rigRotation(vrm, "leftIndexDistal", rigs.rightHand.RightIndexDistal);
+*/
+/*    rigRotation(vrm, "leftMiddleProximal", rigs.rightHand.RightMiddleProximal);
+    rigRotation(vrm, "leftMiddleIntermediate", rigs.rightHand.RightMiddleIntermediate);
+    rigRotation(vrm, "leftMiddleDistal", rigs.rightHand.RightMiddleDistal);
+    rigRotation(vrm, "leftThumbProximal", rigs.rightHand.RightThumbProximal);
+    rigRotation(vrm, "leftThumbDistal", rigs.rightHand.RightThumbDistal);
+    rigRotation(vrm, "leftLittleProximal", rigs.rightHand.RightLittleProximal);
+    rigRotation(vrm, "leftLittleIntermediate", rigs.rightHand.RightLittleIntermediate);
+    rigRotation(vrm, "leftLittleDistal", rigs.rightHand.RightLittleDistal);
+  }
+  vrm.expressionManager?.update()
+};
+*/

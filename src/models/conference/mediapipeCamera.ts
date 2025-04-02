@@ -4,9 +4,11 @@ import {Holistic} from '@mediapipe/holistic'
 import {FaceMesh} from '@mediapipe/face_mesh'
 import {VRMRigs} from '@models/Participant'
 import {dataRequestInterval} from '@models/conference/DataConnection'
+import { AllLandmarks } from '@models/Participant'
 
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
+
 
 let holistic = new Holistic({locateFile: (file) => {
   return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
@@ -23,8 +25,6 @@ let faceMesh = new FaceMesh({locateFile: (file) => {
   return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
 }})
 faceMesh.setOptions({
-  //enableFaceGeometry?: boolean;
-  //selfieMode?: boolean;
   maxNumFaces: 1,
   refineLandmarks: true,
 })
@@ -68,40 +68,22 @@ export function startMpTrack(faceOnly: boolean, did?:string) {
       videoEl.autoplay = true
       if (faceOnly){
         faceMesh.onResults(results=>{
-          const facelm = results.multiFaceLandmarks[0]
-          const vrmRigs: VRMRigs = {
-            face:facelm && Kalidokit.Face.solve(facelm,{
-              runtime:'mediapipe',
-              video:videoEl,
-            })
+          const lms:AllLandmarks = {
+            faceLm: results.multiFaceLandmarks[0]
           }
-          participants.local.vrmRigs = vrmRigs
         })
       }else{
-        holistic.onResults(results=>{
-          //console.log('results:', results)
-          // do something with prediction results
-          // landmark names may change depending on TFJS/Mediapipe model version
-          const facelm = results.faceLandmarks
-          const poselm = results.poseLandmarks
-          const poselm3d = (results as any).za
-          const rightHandlm = results.leftHandLandmarks
-          const leftHandlm = results.rightHandLandmarks
-          const vrmRigs: VRMRigs = {
-            face:facelm && Kalidokit.Face.solve(facelm,{
-              runtime:'mediapipe',
-              video:videoEl,
-            }),
-            pose:(poselm3d&&poselm) && Kalidokit.Pose.solve(poselm3d,poselm,{
-              runtime:'mediapipe',
-              video:videoEl,
-              imageSize: { height: 0, width: 0 },
-              enableLegs: true,
-            }),
-            leftHand: leftHandlm && Kalidokit.Hand.solve(leftHandlm,"Left"),
-            rightHand: rightHandlm && Kalidokit.Hand.solve(rightHandlm,"Right"),
+        holistic.onResults(results => {
+          //console.log(`MPResult:`, results)
+          const lms:AllLandmarks = {
+            faceLm: results.faceLandmarks,
+            poseLm: results.poseLandmarks,
+            poseLm3d: (results as any).za,
+            leftHandLm: results.leftHandLandmarks,
+            rightHandLm: results.rightHandLandmarks,
+            image: results.image
           }
-          participants.local.vrmRigs = vrmRigs
+          participants.local.landmarks = lms
         })
       }
       function timer(detector:Holistic | FaceMesh){

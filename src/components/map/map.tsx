@@ -4,7 +4,7 @@ import {ParticipantLayer} from '@components/map/Participant'
 import {ShareLayer} from '@components/map/Share'
 import {BackgroundLayer} from './Background'
 import {WebGLCanvas} from './Base/WebGLCanvas'
-import {createVRMAvatars, VRMAvatars} from '@components/map/vrm'
+import {createVRMAvatars, VRMAvatars} from '@models/utils/vrm'
 
 export interface MapProps{
   transparent: boolean
