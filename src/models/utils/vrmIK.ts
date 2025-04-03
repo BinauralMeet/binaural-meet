@@ -20,46 +20,70 @@ export interface Structure3DEx extends FIK.Structure3D{
   vrmHandToHandLength:number
   scale: number
   qwHeadInv: THREE.Quaternion
+  hHeadTohLm: THREE.Vector3
 }
 
+function scaleLm(v:{x:number,y:number,z:number}, s:Structure3DEx) {
+  return new THREE.Vector3(-v.x*s.scale, -v.y*s.scale, v.z*s.scale)
+}
 function mp2VrmV3(v:{x:number,y:number,z:number}, s:Structure3DEx){  //  Convert into VRM = OpenGL coordinates.
-  if (!v){
-    console.warn(`mp2VrmV3 called with v`)
-  }
-  const cooked = new THREE.Vector3(-v.x*s.scale, -v.y*s.scale, v.z*s.scale)
+  const cooked = scaleLm(v, s)
   cooked.applyQuaternion(s.qwHeadInv) //  rotated
+  cooked.sub(s.hHeadTohLm)
   return cooked
 }
 
 function getInterpolatedColor(ratio: number, colors:number[][]){
   return colors[0].map((el, j)=> ratio * el + (1-ratio)*colors[1][j])
 }
-function drawChain(chain: FIK.Chain3D, c2d: CanvasRenderingContext2D, colors: number[][]){
+function scaleAndCenter(c2d: CanvasRenderingContext2D, z:boolean){
   const scale = [c2d.canvas.width, c2d.canvas.height]
-  const center = [scale[0]*0.5, scale[1]*0.8]
+  return {scale, center: [scale[0]*0.5, scale[1]*(z? 0.3 : 0.5)]}
+}
+function drawChain(chain: FIK.Chain3D, c2d: CanvasRenderingContext2D, colors: number[][], z: boolean){
+  const {scale, center} = scaleAndCenter(c2d, z)
   chain.bones.forEach((bone, index) => {
     if (index === 0) return
     const color = getInterpolatedColor(1 - (index-1)/(chain.bones.length-2), colors)
     c2d.strokeStyle = `rgb(${color[0]} ${color[1]} ${color[2]})`
     c2d.beginPath()
-    c2d.moveTo(bone.start.x*scale[0] + center[0], -bone.start.y*scale[1] + center[1])
-    c2d.lineTo(bone.end.x*scale[0] + center[0], -bone.end.y*scale[1] + center[1])
+    c2d.moveTo(bone.start.x*scale[0] + center[0], -(z?bone.start.z:bone.start.y)*scale[1] + center[1])
+    c2d.lineTo(bone.end.x*scale[0] + center[0], -(z?bone.end.z:bone.end.y)*scale[1] + center[1])
     c2d.stroke()
   })
 }
+function drawLine(line: {x:number,y:number,z:number}[], c2d: CanvasRenderingContext2D, colors: number[][], z:boolean){
+  const {scale, center} = scaleAndCenter(c2d, z)
+  let prev = line[0]
+  line.forEach((pos, index) => {
+    if (index === 0 ) return
+    const color = getInterpolatedColor(1 - (index-1)/(line.length-1), colors)
+    c2d.strokeStyle = `rgb(${color[0]} ${color[1]} ${color[2]})`
+    c2d.beginPath()
+    c2d.moveTo(prev.x*scale[0] + center[0], - (z?prev.z:prev.y)*scale[1] + center[1])
+    c2d.lineTo(pos.x*scale[0] + center[0], - (z?pos.z:pos.y)*scale[1] + center[1])
+    c2d.stroke()
+    prev = pos
+  })
+}
+
 export function drawFikStructure(structure: Structure3DEx, landmarks:AllLandmarks, c2d: CanvasRenderingContext2D){
-  drawChain(structure.chains[0], c2d, [[255,255,0],[255,0,0]])
-  drawChain(structure.chains[1], c2d, [[255,0,255],[0,0,255]])
+  drawChain(structure.chains[0], c2d, [[255,255,0],[255,0,0]], true)
+  drawChain(structure.chains[1], c2d, [[255,0,255],[0,0,255]], true)
+  const head = mp2VrmV3(landmarks.poseLm3d![0], structure)
+  const lh = structure.chains[0].bones[0].start
+  const rh = structure.chains[1].bones[0].start
+  drawLine([lh, head, rh], c2d, [[255,0,0],[255,255,255],[0,0,255]], true)
+  drawChain(structure.chains[0], c2d, [[255,255,0],[255,0,0]], false)
+  drawChain(structure.chains[1], c2d, [[255,0,255],[0,0,255]], false)
+  drawLine([lh, head, rh], c2d, [[255,0,0],[255,255,255],[0,0,255]], false)
+
   if (printCount%10===1){
     const errors = [
       structure.chains[0].embeddedTarget?.distanceTo(structure.chains[0].bones[2].end),
       structure.chains[1].embeddedTarget?.distanceTo(structure.chains[1].bones[2].end),
     ]
     console.log(`error l r = ${errors[0]?.toFixed(3)} ${errors[0]?.toFixed(3)}`)
-    const poseLm = landmarks.poseLm3d
-    const head = mp2VrmV3(poseLm![0], structure)
-    const lh = mp2VrmV3(poseLm![15], structure)
-    const rh = mp2VrmV3(poseLm![16], structure)
     console.log(`head ${printV3(head)} lh ${printV3(lh)} rh ${printV3(rh)}`)
   }
 }
@@ -121,37 +145,39 @@ export function updateStructure3DEx(vrm:VRM, structure: Structure3DEx, lms: AllL
   structure.scale = structure.vrmHandToHandLength / mpHandToHandLength
   const qwH = new THREE.Quaternion()
   vrm.humanoid.getNormalizedBoneNode('head')?.getWorldQuaternion(qwH)
-  structure.qwHeadInv = qwH.invert()
-
-  //  adjust sholder width
-  const leftUpperArm = mp2VrmV3(lms.poseLm3d[11], structure)
-  const rightUpperArm = mp2VrmV3(lms.poseLm3d[12], structure)
-  const leftToRight = new THREE.Vector3().subVectors(rightUpperArm, leftUpperArm)
-  const sholderScale = structure.vrmSholderWidth / leftToRight.length()
-  //console.log(`scale:${scale.toFixed(2)} sws:${sholderScale.toFixed(2)}`)
-
-  leftUpperArm.add(leftToRight.multiplyScalar((1-sholderScale)/2))
-  rightUpperArm.add(leftToRight.multiplyScalar(-(1-sholderScale)/2))
+  structure.qwHeadInv = qwH.clone().invert()
+  const hHeadPos = new THREE.Vector3()
+  vrm.humanoid.getNormalizedBoneNode('head')?.getWorldPosition(hHeadPos)
+  const offset = new THREE.Vector3(0, 0, -0.15) //  LM and VRM head center's
+  offset.applyQuaternion(qwH)
+  hHeadPos.add(offset)
+  hHeadPos.applyQuaternion(structure.qwHeadInv)
+  const hLmHead = scaleLm(lms.poseLm3d[0], structure)
+  hLmHead.applyQuaternion(structure.qwHeadInv)
+  structure.hHeadTohLm = new THREE.Vector3().subVectors(hLmHead, hHeadPos)
 
   //  sholder position in head coordinates
   const qhLeftSholder = new THREE.Quaternion()
   vrm.humanoid.getNormalizedBoneNode('leftShoulder')?.getWorldQuaternion(qhLeftSholder)
-  const qwLS = qhLeftSholder.clone()
   qhLeftSholder.premultiply(structure.qwHeadInv)
-  if (printCount%10 === 1){
-    console.log(`qwLS:${printV3(qwLS)} qh:${printV3(qhLeftSholder)}`)
-  }
-
   const leftArmDir = vrm.humanoid.getNormalizedBoneNode('leftLowerArm')?.position.clone().applyQuaternion(qhLeftSholder).normalize()
-  const qwRightSholder = new THREE.Quaternion()
-  vrm.humanoid.getNormalizedBoneNode('rightShoulder')?.getWorldQuaternion(qwRightSholder)
-  qwRightSholder.premultiply(structure.qwHeadInv)
-  const rightArmDir = vrm.humanoid.getNormalizedBoneNode('rightLowerArm')?.position.clone().applyQuaternion(qwRightSholder).normalize()
+  const leftArmRoot = new THREE.Vector3()
+  vrm.humanoid.getNormalizedBoneNode('leftUpperArm')?.getWorldPosition(leftArmRoot)
+  leftArmRoot.applyQuaternion(structure.qwHeadInv)
+
+  const qhRightSholder = new THREE.Quaternion()
+  vrm.humanoid.getNormalizedBoneNode('rightShoulder')?.getWorldQuaternion(qhRightSholder)
+  qhRightSholder.premultiply(structure.qwHeadInv)
+  const rightArmDir = vrm.humanoid.getNormalizedBoneNode('rightLowerArm')?.position.clone().applyQuaternion(qhRightSholder).normalize()
+  const rightArmRoot = new THREE.Vector3()
+  vrm.humanoid.getNormalizedBoneNode('rightUpperArm')?.getWorldPosition(rightArmRoot)
+  rightArmRoot.applyQuaternion(structure.qwHeadInv)
+
 
   //  update arms
   const arms = [
-    [leftUpperArm, mp2VrmV3(lms.poseLm3d[13], structure), mp2VrmV3(lms.poseLm3d[16], structure)],
-    [rightUpperArm, mp2VrmV3(lms.poseLm3d[14], structure), mp2VrmV3(lms.poseLm3d[16], structure)]]
+    [leftArmRoot, mp2VrmV3(lms.poseLm3d[13], structure), mp2VrmV3(lms.poseLm3d[15], structure)],
+    [rightArmRoot, mp2VrmV3(lms.poseLm3d[14], structure), mp2VrmV3(lms.poseLm3d[16], structure)]]
 
   //  update arms
   updateFikChain(structure.chains[0], structure.lengthsList[0], arms[0])
