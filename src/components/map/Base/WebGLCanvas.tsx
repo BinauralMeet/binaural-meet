@@ -88,7 +88,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
         offscreen,
         scene: new THREE.Scene(),
         selfSprite: new THREE.Sprite(new THREE.SpriteMaterial({map: offscreen.texture, alphaTest:0.001, opacity:0.5})),
-        mirrorSprite: new THREE.Sprite(new THREE.SpriteMaterial({map: offscreen.texture, alphaTest:0.001, opacity:0.7})),
+        mirrorSprite: new THREE.Sprite(new THREE.SpriteMaterial({map: offscreen.texture, alphaTest:0.001, opacity:1.0})),
       }
       rv.renderer.setClearColor(new THREE.Color(0,0,0), 0)
       rv.renderer.clear(true, true, true)

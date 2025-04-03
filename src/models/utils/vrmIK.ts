@@ -3,30 +3,32 @@ import { VRM, VRMExpressionPresetName, VRMHumanBoneName } from '@pixiv/three-vrm
 import * as FIK from 'fullik';
 import { AllLandmarks } from '@models/Participant';
 import { normV, square } from './coordinates';
-import { LandmarkList, NormalizedLandmarkList } from '@mediapipe/holistic';
 import * as Kalidokit from 'kalidokit'
-import { KeyboardArrowLeft } from '@material-ui/icons';
+import { LandmarkList } from '@mediapipe/holistic';
 
-
-type Landmark = { x: number; y: number; z: number };
-
-// ランドマークを THREE.Vector3 に変換
-function lmToVector3(lm: Landmark): THREE.Vector3 {
-  return new THREE.Vector3(lm.x, lm.y, lm.z);
+export function printV3(v?:{x:number,y:number,z:number}){
+  if(v) return `(${v.x.toFixed(2)} ${v.y.toFixed(2)} ${v.z.toFixed(2)})`
+  else 'undef'
 }
-
-// 複数のランドマークの平均位置を計算
-function averageLandmarks(lms: Landmark[]): THREE.Vector3 {
-  const sum = lms.reduce((acc, lm) => lmToVector3(acc).add(lmToVector3(lm)), new THREE.Vector3());
-  return lmToVector3(sum).divideScalar(lms.length);
-}
+let printCount = 0
 
 export interface Structure3DEx extends FIK.Structure3D{
   hips?: {Hips: Kalidokit.IHips, Spine: Kalidokit.XYZ}
   face?: Kalidokit.TFace
-  ratiosList:number[][]
-  sholderWidth:number
+  lengthsList:number[][]
+  vrmSholderWidth:number
   vrmHandToHandLength:number
+  scale: number
+  qwHeadInv: THREE.Quaternion
+}
+
+function mp2VrmV3(v:{x:number,y:number,z:number}, s:Structure3DEx){  //  Convert into VRM = OpenGL coordinates.
+  if (!v){
+    console.warn(`mp2VrmV3 called with v`)
+  }
+  const cooked = new THREE.Vector3(-v.x*s.scale, -v.y*s.scale, v.z*s.scale)
+  cooked.applyQuaternion(s.qwHeadInv) //  rotated
+  return cooked
 }
 
 function getInterpolatedColor(ratio: number, colors:number[][]){
@@ -34,7 +36,7 @@ function getInterpolatedColor(ratio: number, colors:number[][]){
 }
 function drawChain(chain: FIK.Chain3D, c2d: CanvasRenderingContext2D, colors: number[][]){
   const scale = [c2d.canvas.width, c2d.canvas.height]
-  const center = [scale[0]/2, scale[1]*(0.5+0.3)]
+  const center = [scale[0]*0.5, scale[1]*0.8]
   chain.bones.forEach((bone, index) => {
     if (index === 0) return
     const color = getInterpolatedColor(1 - (index-1)/(chain.bones.length-2), colors)
@@ -45,80 +47,132 @@ function drawChain(chain: FIK.Chain3D, c2d: CanvasRenderingContext2D, colors: nu
     c2d.stroke()
   })
 }
-
-export function drawFikStructure(structure: Structure3DEx, c2d: CanvasRenderingContext2D){
+export function drawFikStructure(structure: Structure3DEx, landmarks:AllLandmarks, c2d: CanvasRenderingContext2D){
   drawChain(structure.chains[0], c2d, [[255,255,0],[255,0,0]])
   drawChain(structure.chains[1], c2d, [[255,0,255],[0,0,255]])
+  if (printCount%10===1){
+    const errors = [
+      structure.chains[0].embeddedTarget?.distanceTo(structure.chains[0].bones[2].end),
+      structure.chains[1].embeddedTarget?.distanceTo(structure.chains[1].bones[2].end),
+    ]
+    console.log(`error l r = ${errors[0]?.toFixed(3)} ${errors[0]?.toFixed(3)}`)
+    const poseLm = landmarks.poseLm3d
+    const head = mp2VrmV3(poseLm![0], structure)
+    const lh = mp2VrmV3(poseLm![15], structure)
+    const rh = mp2VrmV3(poseLm![16], structure)
+    console.log(`head ${printV3(head)} lh ${printV3(lh)} rh ${printV3(rh)}`)
+  }
 }
 
-function updateFikChain(chain: FIK.Chain3D, ratios: number[], lms: NormalizedLandmarkList, lengthSum: number){
-  //if (ratios.length>2) console.log(`len: ${lengthSum}`)
-  const prevPos = new FIK.V3()
-  let pos:FIK.V3 = new FIK.V3()
+function updateFikChain(chain: FIK.Chain3D, lengths:number[], lms: {x:number, y:number, z:number}[]){
+  let prevPos = new FIK.V3()
+  let pos = new FIK.V3()
   for (let i=0; i < lms.length; i++) {
-    pos = new FIK.V3().copy({x: lms[i].x, y:-lms[i].y, z:-lms[i].z})
+    pos = new FIK.V3().copy(lms[i])
     const bone = chain.bones[i]
-    if (i === 0) {  //  frist bone is the fixed root.
+    if (i===0) {  //  frist bone is the fixed root.
       chain.setBaseLocation(pos)
-      bone.init(pos, pos)
       prevPos.copy(pos)
+      bone.init(pos, pos)
     } else {  //  movable bones
-      const dir = pos.minus(prevPos).normalize()
-      bone.init(prevPos, undefined, dir, ratios[i-1]*lengthSum)
+      const dir = pos.clone().minus(prevPos)
+      bone.init(prevPos, undefined, dir, lengths[i-1])
       prevPos.copy(bone.end)
     }
   }
   chain.lastTargetLocation = new FIK.V3( 1e10, 1e10, 1e10 ) //  need to reset to force solve every call
   chain.embeddedTarget = pos.clone()
+  //chain.embeddedTarget.z -= 0.1
   chain.useEmbeddedTarget = true
   chain.updateChainLength()
 }
-function lengthSum(lms: ({x:number, y:number, z:number}|null|undefined)[]){
+function lengthSumForMP(lms: ({x:number, y:number, z:number}|null|undefined)[]){
   let sum = 0
   let lastPos = {x:0, y:0, z:0}
   if (lms[0]) lastPos = lms[0]
   for(let i=1; i<lms.length; i++){
     let pos = lms[i] || lastPos
     sum += Math.sqrt(square(pos.x-lastPos.x) + square(pos.y-lastPos.y) + square(pos.z-lastPos.z))
+    lastPos = pos
   }
   return sum
 }
-export function updateStructure3DEx(structure: Structure3DEx, lms: AllLandmarks){
+function lengthSumForVrm(lps:(THREE.Vector3|null|undefined)[]){
+  let sum = 0
+  for(const lp of lps){
+    sum += lp ? lp.length() : 0
+  }
+  return sum
+}
+
+export function updateStructure3DEx(vrm:VRM, structure: Structure3DEx, lms: AllLandmarks){
   if (!lms.poseLm3d || !lms.poseLm) return
+  printCount ++;
+  //  update spine and face
   structure.hips = Kalidokit.Pose.calcHips(lms.poseLm3d, lms.poseLm)
+  applyHipsToVrm(vrm, structure)
   if (lms.faceLm){
     structure.face = Kalidokit.Face.solve(lms.faceLm, {runtime: "mediapipe"})
+    if (structure.face) applyFaceRigToVrm(vrm, structure.face)
   }
-  const handToHandLengthLm = lengthSum([lms.poseLm3d[15], lms.poseLm3d[13], lms.poseLm3d[11], lms.poseLm3d[12], lms.poseLm3d[14], lms.poseLm3d[16]])
-  const scale = handToHandLengthLm / structure.vrmHandToHandLength
 
-  //  Solve IK. Neck pos is the root. sholder->ua->la->hand
-  //  sholder, ua -> use VRM's position   la, hand -> user lm's pos
+  //  update scale and head quaternion in world coordinates
+  const mpHandToHandLength = lengthSumForMP([lms.poseLm3d[15], lms.poseLm3d[13], lms.poseLm3d[11], lms.poseLm3d[12], lms.poseLm3d[14], lms.poseLm3d[16]])
+  structure.scale = structure.vrmHandToHandLength / mpHandToHandLength
+  const qwH = new THREE.Quaternion()
+  vrm.humanoid.getNormalizedBoneNode('head')?.getWorldQuaternion(qwH)
+  structure.qwHeadInv = qwH.invert()
 
   //  adjust sholder width
-  const arms = [[lms.poseLm3d[11], lms.poseLm3d[13], lms.poseLm3d[15]],
-    [lms.poseLm3d[12], lms.poseLm3d[14], lms.poseLm3d[16]]]
-  const armLengths = [
-    lengthSum(arms[0]), lengthSum(arms[1])
-  ]
-  let ratio = 1
-  if (structure.sholderWidth > 0){
-    const sholderWidthInLm = (armLengths[0] + armLengths[1]) * structure.sholderWidth
-    const lmSholderWidth = lengthSum([lms.poseLm3d[11], lms.poseLm3d[12]])
-    ratio = sholderWidthInLm / lmSholderWidth
-    console.log(`ratio: ${ratio}  sw:${structure.sholderWidth}`)
-  }
-  const mid = new THREE.Vector3().addVectors(lms.poseLm3d[11], lms.poseLm3d[12]).multiplyScalar(0.5)
-  const dir = new THREE.Vector3().subVectors(lms.poseLm3d[12], lms.poseLm3d[11]).multiplyScalar(0.5*ratio)
-  const left = new THREE.Vector3().subVectors(mid, dir)
-  const right = new THREE.Vector3().addVectors(mid, dir)
-  arms[0][0] = left
-  arms[1][0] = right
-  //  update arms
-  updateFikChain(structure.chains[0], structure.ratiosList[0], arms[0], lengthSum(arms[0]))
-  updateFikChain(structure.chains[1], structure.ratiosList[1], arms[1], lengthSum(arms[1]))
+  const leftUpperArm = mp2VrmV3(lms.poseLm3d[11], structure)
+  const rightUpperArm = mp2VrmV3(lms.poseLm3d[12], structure)
+  const leftToRight = new THREE.Vector3().subVectors(rightUpperArm, leftUpperArm)
+  const sholderScale = structure.vrmSholderWidth / leftToRight.length()
+  //console.log(`scale:${scale.toFixed(2)} sws:${sholderScale.toFixed(2)}`)
 
+  leftUpperArm.add(leftToRight.multiplyScalar((1-sholderScale)/2))
+  rightUpperArm.add(leftToRight.multiplyScalar(-(1-sholderScale)/2))
+
+  //  sholder position in head coordinates
+  const qhLeftSholder = new THREE.Quaternion()
+  vrm.humanoid.getNormalizedBoneNode('leftShoulder')?.getWorldQuaternion(qhLeftSholder)
+  const qwLS = qhLeftSholder.clone()
+  qhLeftSholder.premultiply(structure.qwHeadInv)
+  if (printCount%10 === 1){
+    console.log(`qwLS:${printV3(qwLS)} qh:${printV3(qhLeftSholder)}`)
+  }
+
+  const leftArmDir = vrm.humanoid.getNormalizedBoneNode('leftLowerArm')?.position.clone().applyQuaternion(qhLeftSholder).normalize()
+  const qwRightSholder = new THREE.Quaternion()
+  vrm.humanoid.getNormalizedBoneNode('rightShoulder')?.getWorldQuaternion(qwRightSholder)
+  qwRightSholder.premultiply(structure.qwHeadInv)
+  const rightArmDir = vrm.humanoid.getNormalizedBoneNode('rightLowerArm')?.position.clone().applyQuaternion(qwRightSholder).normalize()
+
+  //  update arms
+  const arms = [
+    [leftUpperArm, mp2VrmV3(lms.poseLm3d[13], structure), mp2VrmV3(lms.poseLm3d[16], structure)],
+    [rightUpperArm, mp2VrmV3(lms.poseLm3d[14], structure), mp2VrmV3(lms.poseLm3d[16], structure)]]
+
+  //  update arms
+  updateFikChain(structure.chains[0], structure.lengthsList[0], arms[0])
+  updateFikChain(structure.chains[1], structure.lengthsList[1], arms[1])
+
+  //  Solve IK
   structure.update()
+
+  //  apply to VRM
+  const nodes = [
+    [
+      vrm.humanoid.getNormalizedBoneNode('leftUpperArm'),
+      vrm.humanoid.getNormalizedBoneNode('leftLowerArm'),
+    ],
+    [
+      vrm.humanoid.getNormalizedBoneNode('rightUpperArm'),
+      vrm.humanoid.getNormalizedBoneNode('rightLowerArm'),
+    ],
+  ]
+  applyChainToVrmBones(nodes[0], structure.chains[0], leftArmDir!)
+  applyChainToVrmBones(nodes[1], structure.chains[1], rightArmDir!)
 }
 
 
@@ -126,53 +180,37 @@ export function createStrcture3DEx(vrm: VRM){
   const structure:Structure3DEx = new FIK.Structure3D() as Structure3DEx
   structure.add(new FIK.Chain3D())
   structure.add(new FIK.Chain3D())
-  structure.ratiosList = [[], []]
+  structure.chains[0].setSolveDistanceThreshold(0.01)
+  structure.chains[1].setSolveDistanceThreshold(0.01)
+  structure.lengthsList = [[
+    vrm.humanoid.getNormalizedBoneNode('leftLowerArm')!.position.length(),
+    vrm.humanoid.getNormalizedBoneNode('leftHand')!.position.length(),
+  ], [
+    vrm.humanoid.getNormalizedBoneNode('rightLowerArm')!.position.length(),
+    vrm.humanoid.getNormalizedBoneNode('rightHand')!.position.length(),
+  ]]
   function addBones(index: number, nBones: number){
     for(let i=0; i<nBones; ++i){
       structure.chains[index].addBone(new FIK.Bone3D(new FIK.V3(), new FIK.V3()))
-      if (i>0) structure.ratiosList[index].push(1/(nBones-1))
     }
   }
   addBones(0, 3)
   addBones(1, 3)
 
-  const handToHandPoses = getVrmNodes(vrm, ['leftHand', 'leftLowerArm', 'leftUpperArm', 'leftShoulder',
+  const handToHandPosList = getVrmNodes(vrm, ['leftHand', 'leftLowerArm', 'leftUpperArm', 'leftShoulder',
     'rightShoulder', 'rightUpperArm', 'rightLowerArm', 'rightHand']).map(node => node?.position)
-  structure.vrmHandToHandLength = lengthSum(handToHandPoses)
+  structure.vrmHandToHandLength = lengthSumForVrm(handToHandPosList)
 
-  const positionsList = getVRMIKTargets(vrm).map(nodes => nodes.map(node => node?.position ))
-  let armLength = 0
-  positionsList.forEach((positions, i) => {
-    const ratios = structure.ratiosList[i]
-    let sum = 0
-    let prevPos = positions[0]!
-    for(let j=1; j<positions.length; ++j){
-      let pos = positions[j]
-      if (!pos) pos = prevPos
-      ratios[j-1] = new THREE.Vector3().subVectors(pos, prevPos).length()
-      sum += ratios[j-1]
-      prevPos = pos
-    }
-    for(let j=0; j<positions.length-1; ++j){
-      ratios[j] /= sum
-    }
-    if (i<2) {  //  for left and right arms
-      armLength += sum
-    }
-  })
+  const leftUpperArm = new THREE.Vector3()
+  const rightUpperArm = new THREE.Vector3()
+  vrm.humanoid.getNormalizedBoneNode('leftUpperArm')?.getWorldPosition(leftUpperArm)
+  vrm.humanoid.getNormalizedBoneNode('rightUpperArm')?.getWorldPosition(rightUpperArm)
+  structure.vrmSholderWidth = leftUpperArm.sub(rightUpperArm).length()
+  structure.scale = 1
+  structure.qwHeadInv = new THREE.Quaternion()
 
-  const left = vrm.humanoid.getNormalizedBoneNode('leftUpperArm')?.position
-  const right = vrm.humanoid.getNormalizedBoneNode('rightUpperArm')?.position
-  if (left && right){
-    structure.sholderWidth = new THREE.Vector3().subVectors(left, right).length() / armLength
-  }
+  console.log(`vrmH2H:${structure.vrmHandToHandLength.toFixed(2)}  vrmSW:${structure.vrmSholderWidth.toFixed(2)}`)
 
-  const sw = new THREE.Vector3().subVectors(left!, right!).length()
-  const lenU = new THREE.Vector3().subVectors(vrm.humanoid.getNormalizedBoneNode('leftUpperArm')!.position, vrm.humanoid.getNormalizedBoneNode('leftLowerArm')!.position).length()
-  const lenL = new THREE.Vector3().subVectors(vrm.humanoid.getNormalizedBoneNode('leftLowerArm')!.position, vrm.humanoid.getNormalizedBoneNode('leftHand')!.position).length()
-
-
-  console.log(`sum:${armLength} sw u l:${sw} ${lenU} ${lenL} ratios: ${JSON.stringify(structure.ratiosList)}`)
   return structure
 }
 
@@ -184,20 +222,6 @@ function getVrmNodes(vrm: VRM, names: VRMHumanBoneName[]): (THREE.Object3D|null)
   return rv
 }
 
-function getVRMIKTargets(vrm: VRM): (THREE.Object3D|null)[][] {
-  return [
-    [
-      vrm.humanoid.getNormalizedBoneNode('leftUpperArm'),
-      vrm.humanoid.getNormalizedBoneNode('leftLowerArm'),
-      vrm.humanoid.getNormalizedBoneNode('leftHand'),
-    ],
-    [
-      vrm.humanoid.getNormalizedBoneNode('rightUpperArm'),
-      vrm.humanoid.getNormalizedBoneNode('rightLowerArm'),
-      vrm.humanoid.getNormalizedBoneNode('rightHand'),
-    ],
-  ]
-}
 
 
 
@@ -245,31 +269,31 @@ function rigPosition(vrm: VRM,
 }
 
 
-function applyChainToVrmBones(vrmBones: (THREE.Object3D|null)[], chain: FIK.Chain3D, originDirection: THREE.Vector3){
-  let prevBone: FIK.Bone3D | undefined = undefined
+function applyChainToVrmBones(vrmBones: (THREE.Object3D|null)[], chain: FIK.Chain3D, rootDir: THREE.Vector3){
   const angles:number[] = []
-  chain.bones.forEach((bone, index) => {
+  let direction = new THREE.Vector3()
+  let prevDirection = new THREE.Vector3()
+chain.bones.forEach((bone, index) => {
     if (index < 1) return
+    direction.subVectors(bone.end, bone.start).normalize()
+    if (index === 1){
+      prevDirection.copy(rootDir)
+    }
+    const quaternion = new THREE.Quaternion().setFromUnitVectors(prevDirection, direction);
+    angles.push(normV([quaternion.x, quaternion.y, quaternion.z]))
+    if (rootDir.x > 0 && index === 2 && printCount%10===1){
+      //console.log(`dirs: ${printV3(prevDirection)} ${printV3(direction)}  quat:${printV3(quaternion)}`)
+    }
     if (vrmBones[index-1]) {
-      const direction = new THREE.Vector3(bone.end.x, bone.end.y, bone.end.z).sub(
-        new THREE.Vector3(bone.start.x, bone.start.y, bone.start.z)
-      ).normalize();
-      let prevDirection = originDirection
-      if (prevBone){
-        prevDirection = new THREE.Vector3(prevBone.end.x, prevBone.end.y, prevBone.end.z).sub(
-          new THREE.Vector3(prevBone.start.x, prevBone.start.y, prevBone.start.z)
-        ).normalize();
-      }
-      prevBone = bone
-      prevDirection.y *= -1
-      direction.y *= -1
-      const quaternion = new THREE.Quaternion().setFromUnitVectors(prevDirection, direction);
-      angles.push(normV([quaternion.x, quaternion.y, quaternion.z]))
       vrmBones[index-1]?.quaternion.slerp(quaternion, 0.5);
     }else{
       console.log(`vrmBones[${index}] undefined`)
     }
-  });
+    prevDirection.copy(direction)
+  })
+  if (rootDir.x > 0){
+    // console.log(`angles: ${JSON.stringify(angles.map(a=>a.toFixed(2)))}`)
+  }
 }
 
 let oldLookTarget = new THREE.Euler()
@@ -311,8 +335,7 @@ function applyFaceRigToVrm(vrm:VRM, faceRig:Kalidokit.TFace){
   vrm.lookAt?.applier?.applyYawPitch(lookTarget.y, lookTarget.x)
 }
 
-export function applyFikToVrm(vrm:VRM, structure:Structure3DEx){
-  //  Use Kalaido kit for body trunk.
+function applyHipsToVrm(vrm: VRM, structure: Structure3DEx){
   if (structure.hips){
     const rotHip = {...structure.hips.Hips.rotation!}
     const rotSpine = {...structure.hips.Spine}
@@ -322,12 +345,4 @@ export function applyFikToVrm(vrm:VRM, structure:Structure3DEx){
     rigRotation(vrm, "chest", rotSpine, 0.25, .3);
     rigRotation(vrm, "spine", rotSpine, 0.45, .3);
   }
-  if (structure.face){
-    applyFaceRigToVrm(vrm, structure.face)
-  }
-
-  //  use FullIK for arms
-  const nodes = getVRMIKTargets(vrm)
-  applyChainToVrmBones(nodes[0], structure.chains[0], new THREE.Vector3(1,0,0))
-  applyChainToVrmBones(nodes[1], structure.chains[1], new THREE.Vector3(-1,0,0))
 }

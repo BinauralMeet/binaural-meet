@@ -7,7 +7,7 @@ import { addV, subV } from 'react-use-gesture'
 import * as Kalidokit from 'kalidokit'
 import Euler from 'kalidokit/dist/utils/euler'
 import { IReactionDisposer } from 'mobx'
-import { applyFikToVrm, createFikStrcture, drawFikStructure, Structure3DEx, updateFikStructure } from './vrmIK'
+import { createStrcture3DEx, drawFikStructure, Structure3DEx, updateStructure3DEx } from './vrmIK'
 
 declare const d:any                  //  from index.html
 
@@ -282,13 +282,12 @@ export function vrmSetPose (avatar:VRMAvatar, landmarks: AllLandmarks|undefined,
   //if (avatar.participant.vrmRigs?.face) vrmSetFaceRig(avatar.vrm, avatar.participant.vrmRigs.face)
   if (landmarks){
     if (!avatar.structure){
-      avatar.structure = createFikStrcture(avatar.vrm)
+      avatar.structure = createStrcture3DEx(avatar.vrm)
     }
-    updateFikStructure(avatar.structure, landmarks)
+    updateStructure3DEx(avatar.vrm, avatar.structure, landmarks)
     if (c2d){
-      drawFikStructure(avatar.structure, c2d)
+      drawFikStructure(avatar.structure, landmarks, c2d)
     }
-    applyFikToVrm(avatar.vrm, avatar.structure)
   }
   else if (!avatar.participant.vrmRigs) {
     rigRotation(avatar.vrm, "rightUpperArm", new Euler(0,0,-Math.PI/2*0.8), 1, 1);

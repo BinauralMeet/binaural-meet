@@ -91,6 +91,7 @@ declare module 'fullik' {
     updateChainLength(); void;
     setEmbeddedTarget(target: V3): void;
     setUseEmbeddedTarget(use: boolean): void;
+    setSolveDistanceThreshold(newThreshold: number): void
     getWorldTarget(): V3;
     getIsSolved(): boolean;
     clear(): void;
