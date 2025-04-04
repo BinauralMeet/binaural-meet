@@ -257,7 +257,8 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
             ctx.renderer.setRenderTarget(ctx.onscreen)
             ctx.scene.add(ctx.mirrorSprite)
 
-            const mirrorSize = [200, 500]
+            //const mirrorSize = [200, 500]
+            const mirrorSize = [600, 1000]
             ctx.renderer.setViewport(mapSize[0]-mirrorSize[0], -150, mirrorSize[0], mirrorSize[1])
             const camera = new THREE.PerspectiveCamera(45, mirrorSize[0]/mirrorSize[1], 0.1, 100000)
             camera.updateProjectionMatrix()

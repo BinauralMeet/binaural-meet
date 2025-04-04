@@ -85,6 +85,29 @@ export function freeVrmAvatar(avatar: VRMAvatar){
 export function createVrmAvatar(participant: ParticipantBase){
   const promise = new Promise<VRMAvatar>((resolve, reject)=>{
     loadVrmAvatar(participant).then((vrm)=>{
+      const hand = vrm.humanoid.getNormalizedBoneNode('rightHand')
+      if (hand){
+        const sphereG = new THREE.SphereGeometry(0.03, 4, 4);
+        const coneG = new THREE.ConeGeometry(0.03, 0.08, 4);
+        const materialW = new THREE.MeshBasicMaterial( {color: 0x00AAAAAA} );
+        const materialG = new THREE.MeshBasicMaterial( {color: 0x0000FF00} );
+        const materialR = new THREE.MeshBasicMaterial( {color: 0x00FF0000} );
+        const materialB = new THREE.MeshBasicMaterial( {color: 0x000000FF} );
+        let sphere = new THREE.Mesh(sphereG, materialW)
+        hand.add(sphere);
+        let cone = new THREE.Mesh(coneG, materialR);
+        cone.translateX(0.1)
+        cone.rotateZ(-0.5*Math.PI)
+        hand.add(cone);
+        cone = new THREE.Mesh(coneG, materialG);
+        cone.translateY(0.1)
+        hand.add(cone);
+        cone = new THREE.Mesh(coneG, materialB);
+        cone.translateZ(0.1)
+        cone.rotateX(0.5*Math.PI)
+        hand.add(cone);
+      }
+
       const avatar:VRMAvatar = {
         vrm,
         nameLabel: createNameLabel(participant),

@@ -4,6 +4,7 @@ import * as FIK from 'fullik';
 import { AllLandmarks } from '@models/Participant';
 import { normV, square } from './coordinates';
 import * as Kalidokit from 'kalidokit'
+import { Landscape } from '@material-ui/icons';
 import { LandmarkList } from '@mediapipe/holistic';
 
 export function printV3(v?:{x:number,y:number,z:number}){
@@ -83,8 +84,8 @@ export function drawFikStructure(structure: Structure3DEx, landmarks:AllLandmark
       structure.chains[0].embeddedTarget?.distanceTo(structure.chains[0].bones[2].end),
       structure.chains[1].embeddedTarget?.distanceTo(structure.chains[1].bones[2].end),
     ]
-    console.log(`error l r = ${errors[0]?.toFixed(3)} ${errors[0]?.toFixed(3)}`)
-    console.log(`head ${printV3(head)} lh ${printV3(lh)} rh ${printV3(rh)}`)
+    //  console.log(`error l r = ${errors[0]?.toFixed(3)} ${errors[0]?.toFixed(3)}`)
+    // console.log(`head ${printV3(head)} lh ${printV3(lh)} rh ${printV3(rh)}`)
   }
 }
 
@@ -173,7 +174,6 @@ export function updateStructure3DEx(vrm:VRM, structure: Structure3DEx, lms: AllL
   vrm.humanoid.getNormalizedBoneNode('rightUpperArm')?.getWorldPosition(rightArmRoot)
   rightArmRoot.applyQuaternion(structure.qwHeadInv)
 
-
   //  update arms
   const arms = [
     [leftArmRoot, mp2VrmV3(lms.poseLm3d[13], structure), mp2VrmV3(lms.poseLm3d[15], structure)],
@@ -199,6 +199,49 @@ export function updateStructure3DEx(vrm:VRM, structure: Structure3DEx, lms: AllL
   ]
   applyChainToVrmBones(nodes[0], structure.chains[0], leftArmDir!)
   applyChainToVrmBones(nodes[1], structure.chains[1], rightArmDir!)
+
+  if (lms.leftHandLm) setHandDir('left', lms.leftHandLm)
+  if (lms.rightHandLm) setHandDir('right', lms.rightHandLm)
+  function setHandDir(lr:'left'|'right', lms: LandmarkList){
+    //  wrist, index, pinky
+    const hand = [mp2VrmV3(lms[0], structure), mp2VrmV3(lms[5], structure), mp2VrmV3(lms[17], structure)]
+    const indexToPinky = new THREE.Vector3().subVectors(hand[2], hand[1])
+    const handCenter = new THREE.Vector3().addVectors(hand[1], indexToPinky.clone().multiplyScalar(0.5))
+    indexToPinky.normalize()
+    const handDir = new THREE.Vector3().subVectors(handCenter, hand[0]).normalize()
+
+    const normal = new THREE.Vector3().crossVectors(indexToPinky, handDir).normalize()
+    const ipOrtho = new THREE.Vector3().crossVectors(handDir, normal)
+    const basis = lr==='right' ? new THREE.Matrix4().makeBasis(handDir, normal, ipOrtho) :
+      new THREE.Matrix4().makeBasis(handDir.negate(), normal.negate(), ipOrtho)
+    if (printCount % 10 === 1){
+      console.log(`${lr} hand ip:${printV3(indexToPinky)}  dir:${printV3(handDir)} n:${printV3(normal)}}`)
+    }
+
+    const qhHand = new THREE.Quaternion().setFromRotationMatrix(basis)
+    const qhLowerArm = new THREE.Quaternion()
+    vrm.humanoid.getNormalizedBone(`${lr}LowerArm`)?.node.getWorldQuaternion(qhLowerArm)
+    qhLowerArm.premultiply(structure.qwHeadInv)
+    //  qhLowerArm * qHand = qhHand. qHand = qhLowerArm.inv() * qhHand
+    const qHand = qhLowerArm.invert().multiply(qhHand)
+    //if (printCount % 10 === 1) console.log(`${lr} hand q:${printV3(qhHand)}`)
+    vrm.humanoid.getNormalizedBone(`${lr}Hand`)?.node.quaternion.slerp(qHand, 0.5)
+  }
+
+  applyHands(structure, lms)
+/*
+    if (printCount % 10 === 1 && lms.rightHandLm){
+      const wrist = mp2VrmV3(lms.rightHandLm[0], structure)
+      const pinky = mp2VrmV3(lms.rightHandLm[17], structure)
+      const index = mp2VrmV3(lms.rightHandLm[5], structure)
+      const pToI = new THREE.Vector3().subVectors(index, pinky)
+      const wToI = new THREE.Vector3().subVectors(index, wrist)
+      console.log(`RhandLM: ${printV3(lms.rightHandLm[0])} hand: ${printV3(pToI)}  ${printV3(wToI)}`)
+    }
+*/
+}
+function applyHands(structure: Structure3DEx, all: AllLandmarks){
+  all.leftHandLm
 }
 
 
@@ -235,7 +278,7 @@ export function createStrcture3DEx(vrm: VRM){
   structure.scale = 1
   structure.qwHeadInv = new THREE.Quaternion()
 
-  console.log(`vrmH2H:${structure.vrmHandToHandLength.toFixed(2)}  vrmSW:${structure.vrmSholderWidth.toFixed(2)}`)
+  //console.log(`vrmH2H:${structure.vrmHandToHandLength.toFixed(2)}  vrmSW:${structure.vrmSholderWidth.toFixed(2)}`)
 
   return structure
 }
