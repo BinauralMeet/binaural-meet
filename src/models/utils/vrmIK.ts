@@ -6,6 +6,7 @@ import { normV, square } from './coordinates';
 import * as Kalidokit from 'kalidokit'
 import { Landscape } from '@material-ui/icons';
 import { LandmarkList } from '@mediapipe/holistic';
+import { VRMAvatar } from './vrm';
 
 export function printV3(v?:{x:number,y:number,z:number}){
   if(v) return `(${v.x.toFixed(2)} ${v.y.toFixed(2)} ${v.z.toFixed(2)})`
@@ -167,13 +168,13 @@ export function updateStructure3DEx(vrm:VRM, structure: Structure3DEx, lms: AllL
   rightArmRoot.applyQuaternion(structure.qwHeadInv)
 
   //  update arms
-  const arms = [
+  const lmArms = [
     [leftArmRoot, mp2VrmV3(lms.poseLm3d[13], structure), mp2VrmV3(lms.poseLm3d[15], structure)],
     [rightArmRoot, mp2VrmV3(lms.poseLm3d[14], structure), mp2VrmV3(lms.poseLm3d[16], structure)]]
 
   //  update arms
-  updateFikChain(structure.chains[0], structure.lengthsList[0], arms[0])
-  updateFikChain(structure.chains[1], structure.lengthsList[1], arms[1])
+  updateFikChain(structure.chains[0], structure.lengthsList[0], lmArms[0])
+  updateFikChain(structure.chains[1], structure.lengthsList[1], lmArms[1])
 
   //  Solve IK
   structure.update()
@@ -245,7 +246,7 @@ function applyHand(lr:'left'|'right', lms: LandmarkList, vrm:VRM, structure: Str
   })
   function applyFinger(fingerName:FingerName|'Thumb', boneNames:ThumbBoneName[]|FingerBoneName[], lms: THREE.Vector3[]){
     let node = vrm.humanoid.getNormalizedBoneNode(`${lr}${fingerName}${boneNames[0]}` as VRMHumanBoneName)
-    let orgDir
+    let orgDir:THREE.Vector3
     let prevQuat = qhHand.clone()
     for(let i=0; i<boneNames.length; ++i){
       let nextNode = i<boneNames.length-1 ? vrm.humanoid.getNormalizedBoneNode(`${lr}${fingerName}${boneNames[i+1]}` as VRMHumanBoneName) : null
@@ -424,4 +425,66 @@ function applyHipsToVrm(vrm: VRM, structure: Structure3DEx){
     rigRotation(vrm, "chest", rotSpine, 0.25, .3);
     rigRotation(vrm, "spine", rotSpine, 0.45, .3);
   }
+}
+
+
+const vrmBodyRigNames:VRMHumanBoneName[] = [
+  'hips', 'spine', 'chest', 'neck', 'leftUpperArm', 'leftLowerArm', 'leftHand', 'rightUpperArm', 'rightLowerArm', 'rightHand'
+]
+const vrmLeftHandRigNames:VRMHumanBoneName[] = [
+  'leftThumbMetacarpal', 'leftThumbProximal', 'leftThumbDistal',
+  'leftIndexProximal', 'leftIndexIntermediate', 'leftIndexDistal',
+  'leftMiddleProximal', 'leftMiddleIntermediate', 'leftMiddleDistal',
+  'leftRingProximal', 'leftRingIntermediate', 'leftRingDistal',
+  'leftLittleProximal', 'leftLittleIntermediate', 'leftLittleDistal',
+]
+const vrmRightHandRigNames:VRMHumanBoneName[] = [
+  'rightThumbMetacarpal', 'rightThumbProximal', 'rightThumbDistal',
+  'rightIndexProximal', 'rightIndexIntermediate', 'rightIndexDistal',
+  'rightMiddleProximal', 'rightMiddleIntermediate', 'rightMiddleDistal',
+  'rightRingProximal', 'rightRingIntermediate', 'rightRingDistal',
+  'rightLittleProximal', 'rightLittleIntermediate', 'rightLittleDistal',
+]
+
+export interface VRMRig{
+  faceRig?: Kalidokit.TFace
+  body?: [number,number,number][]
+  leftHand?: [number,number,number][]
+  rightHand?: [number,number,number][]
+}
+function extractQuats(vrm:VRM, names: VRMHumanBoneName[]){
+  return names.map(name => {
+    const q = vrm.humanoid.getNormalizedBoneNode(name)?.quaternion
+    return (q? [q.x, q.y, q.z] : [0,0,0]) as [number, number, number]
+  })
+}
+function vrmExtractRigQuats(rig:VRMRig, vrm:VRM, lms:AllLandmarks){
+  if (lms.poseLm3d) rig.body = extractQuats(vrm, vrmBodyRigNames)
+  if (lms.leftHandLm) rig.leftHand = extractQuats(vrm, vrmLeftHandRigNames)
+  if (lms.rightHandLm) rig.rightHand = extractQuats(vrm, vrmRightHandRigNames)
+}
+export function vrmExtractRig(avatar: VRMAvatar, lms: AllLandmarks): VRMRig{
+  const rv = {
+    faceRig: avatar.structure?.face,
+  }
+  vrmExtractRigQuats(rv, avatar.vrm, lms)
+  return rv
+}
+function applyQuats(vrm:VRM, names:VRMHumanBoneName[], quats:[number,number,number][]){
+  names.forEach((name, i) => {
+    if(i >= quats.length) return
+    const node = vrm.humanoid.getNormalizedBoneNode(name)
+    if (node){
+      node.quaternion.x = quats[i][0]
+      node.quaternion.y = quats[i][1]
+      node.quaternion.z = quats[i][2]
+      node.quaternion.w = 1 - normV(quats[i])
+    }
+  })
+}
+export function vrmApplyRig(vrm:VRM, rig: VRMRig){
+  if (rig.body) applyQuats(vrm, vrmBodyRigNames, rig.body)
+  if (rig.leftHand) applyQuats(vrm, vrmLeftHandRigNames, rig.leftHand)
+  if (rig.rightHand) applyQuats(vrm, vrmRightHandRigNames, rig.rightHand)
+  if (rig.faceRig) applyFaceRigToVrm(vrm, rig.faceRig)
 }

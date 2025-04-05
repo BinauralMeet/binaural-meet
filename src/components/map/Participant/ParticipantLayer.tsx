@@ -7,8 +7,9 @@ import {MouseCursor} from './MouseCursor'
 import {PlaybackParticipant} from './PlaybackParticipant'
 import {RemoteParticipant} from './RemoteParticipant'
 import { participants } from '@stores/'
-import { createVrmAvatar, freeVrmAvatar, removeVrmAvatar, VRMAvatars} from '@models/utils/vrm'
+import { createVrmAvatar, freeVrmAvatar, removeVrmAvatar, VRMAvatars, vrmSetPoseFromMP} from '@models/utils/vrm'
 import { autorun } from 'mobx'
+import { vrmApplyRig, vrmExtractRig } from '@models/utils/vrmIK'
 
 interface LineProps {
   start: [number, number]
@@ -80,22 +81,41 @@ export const ParticipantLayer: React.FC<{vrmAvatars:VRMAvatars}> = (props) => {
     //  console.log('ParticipantLayer mount')
     const vas = props.vrmAvatars
     if (!vas) return
+    const dispoLocalApplyMediaPipe = autorun(()=>{
+      if (participants.local.landmarks && vas.local?.vrm){
+        vrmSetPoseFromMP(vas.local, participants.local.landmarks)
+        const rig = vrmExtractRig(vas.local, participants.local.landmarks)
+        participants.local.vrmRig = rig
+      }
+    })
     const dispoLocal = autorun(()=>{
       if (participants.local.isVrm()){
         createVrmAvatar(participants.local).then(avatar => {
           if(vas.local) freeVrmAvatar(vas.local)
           vas.local = avatar
-          avatar.dispo = dispoLocal
+          avatar.dispo = ()=>{
+            dispoLocal()
+            dispoLocalApplyMediaPipe()
+          }
         })
       }
     })
     const dispo = autorun(()=>{
       for(const remote of participants.remote.values()){
         if (!vas.remotes.has(remote.id)){
+          const dispoRemoteApplyRig = autorun(()=>{
+            const rav = vas.remotes.get(remote.id)
+            if (rav && rav.vrm && remote.vrmRig){
+              vrmApplyRig(rav.vrm, remote.vrmRig)
+            }
+          })
           const dispoRemote = autorun(()=>{
             if(remote.isVrm()){
               createVrmAvatar(remote).then(avatar => {
-                avatar.dispo = dispoRemote
+                avatar.dispo = ()=>{
+                  dispoRemoteApplyRig()
+                  dispoRemote()
+                }
                 const rav = vas.remotes.get(remote.id)
                 if (rav) freeVrmAvatar(rav)
                 vas.remotes.set(remote.id, avatar)

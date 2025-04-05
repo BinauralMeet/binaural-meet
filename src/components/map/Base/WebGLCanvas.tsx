@@ -1,4 +1,4 @@
-import { vrmSetPose, VRMAvatar, VRMAvatars } from "@models/utils/vrm"
+import {VRMAvatar, VRMAvatars} from "@models/utils/vrm"
 import React, { useRef } from 'react'
 import * as THREE from 'three'
 import * as Kalidokit from 'kalidokit'
@@ -23,11 +23,6 @@ interface WebGLContext{
   mirrorSprite: THREE.Sprite
 }
 
-
-function updateVrmAvatar(avatar:VRMAvatar, landmarks: AllLandmarks|undefined, c2d?: CanvasRenderingContext2D){
-  vrmSetPose(avatar, landmarks, c2d)  //  apply rig
-  avatar.vrm.update(animationPeriod / 1000);   //  Update model to render physics
-}
 function createAvatarCamera(viewportSize:[number, number]){
   const camera = new THREE.PerspectiveCamera(
     35,
@@ -147,10 +142,9 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
         }
       }
 
-
-      if(vas.local && participants.local.vrmRigs && participants.local.vrmRigs.face){
+      if(vas.local && vas.local.structure?.face){
         //  Fliter face direction and set it for sound localization etc.
-        const face = participants.local.vrmRigs.face as Kalidokit.TFace
+        const face = vas.local.structure?.face
         const cur = face.head.y
         const diff = (cur - filteredFaceDir) * 0.3
         filteredFaceDir += diff
@@ -176,7 +170,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
           avatar.vrm.scene.position.x = avatar.participant.pose.position[0]*posScale
           avatar.vrm.scene.position.z = avatar.participant.pose.position[1]*posScale
           avatar.vrm.scene.rotation.y = -avatar.participant.pose.orientation / 180 * Math.PI
-          updateVrmAvatar(avatar, vas.local === avatar ? participants.local.landmarks : undefined, c2d)
+          avatar.vrm.update(animationPeriod / 1000);   //  Update model to render physics
         }
 
         //  3D mode
