@@ -104,9 +104,11 @@ export const ParticipantLayer: React.FC<{vrmAvatars:VRMAvatars}> = (props) => {
       for(const remote of participants.remote.values()){
         if (!vas.remotes.has(remote.id)){
           const dispoRemoteApplyRig = autorun(()=>{
-            const rav = vas.remotes.get(remote.id)
-            if (rav && rav.vrm && remote.vrmRig){
-              vrmApplyRig(rav.vrm, remote.vrmRig)
+            if (remote.vrmRig){
+              const rav = vas.remotes.get(remote.id)
+              if (rav && rav.vrm){
+                vrmApplyRig(rav.vrm, remote.vrmRig)
+              }
             }
           })
           const dispoRemote = autorun(()=>{

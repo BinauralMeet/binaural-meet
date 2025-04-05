@@ -83,7 +83,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
         offscreen,
         scene: new THREE.Scene(),
         selfSprite: new THREE.Sprite(new THREE.SpriteMaterial({map: offscreen.texture, alphaTest:0.001, opacity:0.5})),
-        mirrorSprite: new THREE.Sprite(new THREE.SpriteMaterial({map: offscreen.texture, alphaTest:0.001, opacity:1.0})),
+        mirrorSprite: new THREE.Sprite(new THREE.SpriteMaterial({map: offscreen.texture, alphaTest:0.001, opacity:0.6})),
       }
       rv.renderer.setClearColor(new THREE.Color(0,0,0), 0)
       rv.renderer.clear(true, true, true)
@@ -117,6 +117,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
       ctx.renderer.clear(true, true, true)
 
       //  console.log(`canvas2: ${refCanvas2.current}`)
+      /*
       if (refCanvas2.current){
         const lms = participants.local.landmarks
         if (lms.image){
@@ -140,7 +141,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
             MP.drawLandmarks(c2d, lms.rightHandLm, handLandmarkStyle);
           }
         }
-      }
+      } */
 
       if(vas.local && vas.local.structure?.face){
         //  Fliter face direction and set it for sound localization etc.
@@ -239,7 +240,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
             //vas.renderer.setClearColor(new THREE.Color(0,0,0), 0)
             const offCamera = createAvatarCamera([ctx.offscreen.width, ctx.offscreen.height])
             ctx.renderer.setViewport(0, 0, ctx.offscreen.width, ctx.offscreen.height)
-            renderAvatar(ctx, vas, vas.local, offCamera, filteredFaceDir, 1)
+            renderAvatar(ctx, vas, vas.local, offCamera, filteredFaceDir, 1.3)
             //  set onscreen position
             ctx.mirrorSprite.position.x = 0
             ctx.mirrorSprite.position.z = 0
@@ -251,8 +252,8 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
             ctx.renderer.setRenderTarget(ctx.onscreen)
             ctx.scene.add(ctx.mirrorSprite)
 
-            //const mirrorSize = [200, 500]
-            const mirrorSize = [600, 1000]
+            const mirrorSize = [200, 500]
+            //const mirrorSize = [600, 1000]
             ctx.renderer.setViewport(mapSize[0]-mirrorSize[0], -150, mirrorSize[0], mirrorSize[1])
             const camera = new THREE.PerspectiveCamera(45, mirrorSize[0]/mirrorSize[1], 0.1, 100000)
             camera.updateProjectionMatrix()
