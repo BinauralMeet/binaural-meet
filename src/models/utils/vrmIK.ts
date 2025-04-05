@@ -69,9 +69,10 @@ function drawLine(line: {x:number,y:number,z:number}[], c2d: CanvasRenderingCont
 }
 
 export function drawFikStructure(structure: Structure3DEx, landmarks:AllLandmarks, c2d: CanvasRenderingContext2D){
+  if (!landmarks.poseLm3d) return
   drawChain(structure.chains[0], c2d, [[255,255,0],[255,0,0]], true)
   drawChain(structure.chains[1], c2d, [[255,0,255],[0,0,255]], true)
-  const head = mp2VrmV3(landmarks.poseLm3d![0], structure)
+  const head = mp2VrmV3(landmarks.poseLm3d[0], structure)
   const lh = structure.chains[0].bones[0].start
   const rh = structure.chains[1].bones[0].start
   drawLine([lh, head, rh], c2d, [[255,0,0],[255,255,255],[0,0,255]], true)
