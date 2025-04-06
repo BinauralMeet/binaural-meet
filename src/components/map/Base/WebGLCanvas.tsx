@@ -7,6 +7,7 @@ import { participants } from "@stores/participants"
 import { AllLandmarks } from "@models/Participant"
 import * as MP from "@mediapipe/drawing_utils"
 import { FACEMESH_TESSELATION, HAND_CONNECTIONS, POSE_CONNECTIONS } from "@mediapipe/holistic"
+import { drawFikStructure } from "@models/utils/vrmIK"
 
 declare const d:any                  //  from index.html
 
@@ -56,16 +57,16 @@ function renderAvatar(ctx: WebGLContext, vas: VRMAvatars, avatar:VRMAvatar, came
 
 
 export interface WebGLCanvasProps{
-  refCanvas: React.RefObject<HTMLCanvasElement>
+  refCanvasGL: React.RefObject<HTMLCanvasElement>
+  refCanvas2D: React.RefObject<HTMLCanvasElement>
   vrmAvatars: VRMAvatars
 }
 export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) => {
   const refWebGLContext = useRef<WebGLContext>()
-  const refCanvas2 = useRef<HTMLCanvasElement>(null)
 
   React.useEffect(()=>{
     //console.log('WebGL mount')
-    if (!props.refCanvas.current) return
+    if (!props.refCanvasGL.current) return
     const vas = props.vrmAvatars
 
     function createThreeContext(canvas: HTMLCanvasElement){
@@ -92,7 +93,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
       rv.scene.add(light)
       return rv
     }
-    let ctx = refWebGLContext.current = createThreeContext(props.refCanvas.current)
+    let ctx = refWebGLContext.current = createThreeContext(props.refCanvasGL.current)
     ctx.canvas.addEventListener('webglcontextlost', (ev)=>{
       console.log('webglcontextlost');
       ev.preventDefault();
@@ -100,7 +101,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
     })
 
 
-    let c2d = refCanvas2.current?.getContext("2d")
+    let c2d = props.refCanvas2D.current?.getContext("2d")
     if (c2d===null) c2d=undefined
 
     //  render
@@ -111,21 +112,22 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
       if (time - prevTime < animationPeriod) return
       prevTime = time
 
-      if (!props.refCanvas.current) return
+      if (!props.refCanvasGL.current) return
       const mapSize = map.screenSize
       ctx.renderer.setDrawingBufferSize(mapSize[0], mapSize[1], 1)
       ctx.renderer.clear(true, true, true)
 
       //  console.log(`canvas2: ${refCanvas2.current}`)
-      /*
-      if (refCanvas2.current){
+      //  /*
+      if (props.refCanvas2D.current){
+        const c2d = props.refCanvas2D.current.getContext("2d")
+        //  draw landmakrs
         const lms = participants.local.landmarks
         if (lms.image){
-          refCanvas2.current.width = lms.image.width
-          refCanvas2.current.height = lms.image.height
-          const c2d = refCanvas2.current.getContext("2d")
           if (c2d){
-            c2d.drawImage(lms.image, 0, 0, refCanvas2.current.width, refCanvas2.current.height)
+            props.refCanvas2D.current.width = lms.image.width
+            props.refCanvas2D.current.height = lms.image.height
+            c2d.drawImage(lms.image, 0, 0, props.refCanvas2D.current.width, props.refCanvas2D.current.height)
             MP.drawConnectors(c2d, lms.poseLm, POSE_CONNECTIONS,
                         { color: '#00FF00', lineWidth: 4 }); // Green lines
             MP.drawLandmarks(c2d, lms.poseLm,
@@ -141,7 +143,9 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
             MP.drawLandmarks(c2d, lms.rightHandLm, handLandmarkStyle);
           }
         }
-      } */
+        //  drawIK
+        if (vas.local?.structure && c2d) drawFikStructure(vas.local.structure, lms, c2d)
+      } //*/
 
       if(vas.local && vas.local.structure?.face){
         //  Fliter face direction and set it for sound localization etc.
@@ -300,7 +304,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
       ctx.renderer.dispose()
       //  console.log('WebGL unmount')
     }
-  },[props.refCanvas.current, props.vrmAvatars])
+  },[props.refCanvasGL.current, props.refCanvas2D.current, props.vrmAvatars])
 
   return <>
       <canvas style={{
@@ -310,7 +314,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
         height: '100%',
         width: '100%',
         pointerEvents:'none'}}
-        ref={refCanvas2}>
+        ref={props.refCanvas2D}>
       </canvas>
   <canvas style={{
         position: 'absolute',
@@ -319,7 +323,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
         height: '100%',
         width: '100%',
         pointerEvents:'none'}}
-        ref={props.refCanvas}>
+        ref={props.refCanvasGL}>
       </canvas>
   </>
   }

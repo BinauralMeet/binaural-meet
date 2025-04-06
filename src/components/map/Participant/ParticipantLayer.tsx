@@ -82,7 +82,7 @@ export const ParticipantLayer: React.FC<{vrmAvatars:VRMAvatars}> = (props) => {
     const vas = props.vrmAvatars
     if (!vas) return
     const dispoLocalApplyMediaPipe = autorun(()=>{
-      if (participants.local.landmarks && vas.local?.vrm){
+      if (vas.local){
         vrmSetPoseFromMP(vas.local, participants.local.landmarks)
         const rig = vrmExtractRig(vas.local, participants.local.landmarks)
         participants.local.vrmRig = rig
@@ -143,7 +143,7 @@ export const ParticipantLayer: React.FC<{vrmAvatars:VRMAvatars}> = (props) => {
           removeVrmAvatar(vas, true)
         }
         vas.remotes.clear()
-        delete vas.local
+        vas.local = undefined
       }
     }
   }, [props.vrmAvatars])

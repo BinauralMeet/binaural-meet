@@ -71,6 +71,7 @@ export function startMpTrack(faceOnly: boolean, did?:string) {
           const lms:AllLandmarks = {
             faceLm: results.multiFaceLandmarks[0]
           }
+          participants.local.landmarks = lms
         })
       }else{
         holistic.onResults(results => {

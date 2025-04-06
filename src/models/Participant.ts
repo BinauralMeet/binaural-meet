@@ -5,6 +5,7 @@ import {Mouse} from './utils/coordinates'
 import * as Kalidokit from 'kalidokit'
 import { MediaClip } from '@stores/MapObject'
 import { GpuBuffer, NormalizedLandmarkList } from '@mediapipe/holistic'
+import { VRMRig } from './utils/vrmIK'
 
 export const PARTICIPANT_SIZE = 60
 
@@ -31,12 +32,12 @@ export interface ParticipantBase extends MapObject{
   id: string
   information: RemoteInformation|LocalInformation
   zIndex: number
-  vrmRigs?: VRMRigs
   getColor: ()=>string[]
   getColorRGB: ()=> number[]
   getTextColorRGB: ()=> number[]
   tracks?: Tracks
   clip?: MediaClip
+  vrmRig?: VRMRig
 }
 
 export interface PlaybackParticipant extends ParticipantBase {

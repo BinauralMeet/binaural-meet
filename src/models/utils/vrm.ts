@@ -6,7 +6,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { addV, subV } from 'react-use-gesture'
 import * as Kalidokit from 'kalidokit'
 import Euler from 'kalidokit/dist/utils/euler'
-import { IReactionDisposer } from 'mobx'
+import { IReactionDisposer, makeObservable, observable } from 'mobx'
 import { createStrcture3DEx, drawFikStructure, Structure3DEx, updateStructure3DEx } from './vrmIK'
 
 declare const d:any                  //  from index.html
@@ -19,22 +19,13 @@ export interface VRMAvatar{
   dispo?: ()=>void
   structure?: Structure3DEx
 }
-export interface VRMAvatars{
-  remotes: Map<string, VRMAvatar>
-  local?: VRMAvatar
-//  offscreen: THREE.WebGLRenderTarget
-//  selfSprite: THREE.Sprite
-//  mirrorSprite: THREE.Sprite
-//  onscreen?: THREE.WebGLRenderTarget
-//  scene: THREE.Scene
-}
-
-export function createVRMAvatars(){
-  const vrmAvatars:VRMAvatars = {
-    remotes: new Map<string, VRMAvatar>(),
+export class VRMAvatars{
+  @observable remotes = new Map<string, VRMAvatar>
+  @observable.ref local?: VRMAvatar
+  constructor(){
+    makeObservable(this)
+    d.vrmAvatars = this
   }
-  d.vrmAvatars = vrmAvatars
-  return vrmAvatars
 }
 
 function getVRMLoader() {
@@ -49,7 +40,7 @@ export function removeVrmAvatar(vas:VRMAvatars, isLocal:boolean, pid?: string){
   if (isLocal){
     if (vas.local) {
       disposeVrmAvatar(vas.local)
-      delete vas.local
+      vas.local = undefined
     }
   }
   else{
@@ -85,7 +76,7 @@ export function freeVrmAvatar(avatar: VRMAvatar){
 export function createVrmAvatar(participant: ParticipantBase){
   const promise = new Promise<VRMAvatar>((resolve, reject)=>{
     loadVrmAvatar(participant).then((vrm)=>{
-      /*  //  add coordinate arrows at right hand
+      //*  //  add coordinate arrows at right hand
       const hand = vrm.humanoid.getNormalizedBoneNode('rightHand')
       if (hand){
         const sphereG = new THREE.SphereGeometry(0.03, 4, 4);
@@ -107,7 +98,7 @@ export function createVrmAvatar(participant: ParticipantBase){
         cone.translateZ(0.1)
         cone.rotateX(0.5*Math.PI)
         hand.add(cone);
-      } */
+      }   //  */
 
       const avatar:VRMAvatar = {
         vrm,
@@ -213,9 +204,6 @@ function loadVrmAvatar(participant: ParticipantBase){
 }
 
 
-const clamp = Kalidokit.Utils.clamp;
-const lerp = Kalidokit.Vector.lerp;
-
 // Animate Rotation Helper function
 const rigRotation = (
   vrm: VRM,
@@ -240,70 +228,9 @@ const rigRotation = (
   bone.quaternion.slerp(quaternion, lerpAmount);
 };
 
-/*  // Animate Position Helper Function
-const rigPosition = (vrm: VRM,
-  name:HumanoidBoneName,
-  position = { x: 0, y: 0, z: 0 },
-  dampener = 1,
-  lerpAmount = 0.3
-) => {
-  if (!vrm) {return}
-  const Part = vrm.humanoid?.getBoneNode(
-    VRMSchema.HumanoidBoneName[name]
-  );
-  if (!Part) {return}
-  let vector = new THREE.Vector3(
-    position.x * dampener,
-    position.y * dampener,
-    position.z * dampener
-  );
-  Part.position.lerp(vector, lerpAmount); // interpolate
-};  */
-
-let oldLookTarget = new THREE.Euler()
-function vrmSetFaceRig(vrm:VRM, riggedFace:Kalidokit.TFace){
-    if(!vrm){return}
-    const rot = {x:riggedFace.head.x-0.1, y:-riggedFace.head.y, z:-riggedFace.head.z}
-    //console.log(`rigRot: ${JSON.stringify(rot)}`)
-    rigRotation(vrm, "neck", rot, 0.7);
-
-    // Blendshapes and Preset Name Schema
-    const Blendshape = vrm.expressionManager!
-    const PresetName = VRMExpressionPresetName;
-
-    // Simple example without winking. Interpolate based on old blendshape, then stabilize blink with `Kalidokit` helper function.
-    // for VRM, 1 is closed, 0 is open.
-    //console.log(`face eye:${riggedFace.eye.l},${riggedFace.eye.r}`)
-    const eyeL = clamp(1-riggedFace.eye.l, 0, 1)
-    const eyeR = clamp(1-riggedFace.eye.r, 0, 1)
-    Blendshape.setValue(PresetName.BlinkLeft, eyeR);
-    Blendshape.setValue(PresetName.BlinkRight, eyeL);
-
-    // Interpolate and set mouth blendshapes
-    Blendshape.setValue(PresetName.Ih, lerp(riggedFace.mouth.shape.I,Blendshape.getValue(PresetName.Ih)!, .5));
-    Blendshape.setValue(PresetName.Aa, lerp(riggedFace.mouth.shape.A,Blendshape.getValue(PresetName.Aa)!, .5));
-    Blendshape.setValue(PresetName.Ee, lerp(riggedFace.mouth.shape.E,Blendshape.getValue(PresetName.Ee)!, .5));
-    Blendshape.setValue(PresetName.Oh, lerp(riggedFace.mouth.shape.O,Blendshape.getValue(PresetName.Oh)!, .5));
-    Blendshape.setValue(PresetName.Ou, lerp(riggedFace.mouth.shape.U,Blendshape.getValue(PresetName.Ou)!, .5));
-
-    //PUPILS
-    //interpolate pupil and keep a copy of the value
-    let lookTarget =
-      new THREE.Euler(
-        lerp(-oldLookTarget.x , riggedFace.pupil.y, .4),
-        lerp(oldLookTarget.y, riggedFace.pupil.x, .4),
-        0,
-        "XYZ"
-      )
-    oldLookTarget.copy(lookTarget)
-    vrm.lookAt?.applier?.applyYawPitch(lookTarget.y, lookTarget.x)
-    //vrm.lookAt?.applier?.lookAt(lookTarget);
-}
-
 /* VRM Character Animator */
 export function vrmSetPoseFromMP (avatar:VRMAvatar, landmarks: AllLandmarks|undefined, c2d?: CanvasRenderingContext2D){
   if (!avatar.vrm) return
-  //if (avatar.participant.vrmRigs?.face) vrmSetFaceRig(avatar.vrm, avatar.participant.vrmRigs.face)
   if (landmarks){
     if (!avatar.structure){
       avatar.structure = createStrcture3DEx(avatar.vrm)
@@ -313,7 +240,7 @@ export function vrmSetPoseFromMP (avatar:VRMAvatar, landmarks: AllLandmarks|unde
       drawFikStructure(avatar.structure, landmarks, c2d)
     }
   }
-  else if (!avatar.participant.vrmRigs) {
+  else{
     rigRotation(avatar.vrm, "rightUpperArm", new Euler(0,0,-Math.PI/2*0.8), 1, 1);
     rigRotation(avatar.vrm, "leftUpperArm", new Euler(0,0,Math.PI/2*0.8), 1, 1);
     return;
