@@ -118,7 +118,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
       ctx.renderer.clear(true, true, true)
 
       //  console.log(`canvas2: ${refCanvas2.current}`)
-      //  /*
+      /*
       if (props.refCanvas2D.current){
         const c2d = props.refCanvas2D.current.getContext("2d")
         //  draw landmakrs

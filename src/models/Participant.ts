@@ -9,13 +9,6 @@ import { VRMRig } from './utils/vrmIK'
 
 export const PARTICIPANT_SIZE = 60
 
-export interface VRMRigs{
-  face?:Kalidokit.TFace,
-  pose?:Kalidokit.TPose,
-  leftHand?: Kalidokit.THand<'Left'>
-  rightHand?: Kalidokit.THand<'Right'>
-}
-
 export interface AllLandmarks{
   faceLm?: NormalizedLandmarkList
   poseLm?: NormalizedLandmarkList

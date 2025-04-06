@@ -1,12 +1,11 @@
-import { AllLandmarks, ParticipantBase, VRMRigs} from '@models/Participant'
+import { AllLandmarks, ParticipantBase} from '@models/Participant'
 import { mulV, normV} from './coordinates'
-import { VRM, VRMExpressionPresetName, VRMHumanBoneName, VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm'
+import { VRM, VRMHumanBoneName, VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { addV, subV } from 'react-use-gesture'
-import * as Kalidokit from 'kalidokit'
 import Euler from 'kalidokit/dist/utils/euler'
-import { IReactionDisposer, makeObservable, observable } from 'mobx'
+import { makeObservable, observable } from 'mobx'
 import { createStrcture3DEx, drawFikStructure, Structure3DEx, updateStructure3DEx } from './vrmIK'
 
 declare const d:any                  //  from index.html
