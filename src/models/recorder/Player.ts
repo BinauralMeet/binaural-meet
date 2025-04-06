@@ -1,5 +1,5 @@
 import {ISharedContent, ISharedContentToSend, SharedContentInfoData} from '@models/ISharedContent'
-import {BaseInformation, RemoteInformation, Viewpoint, VRMRigs} from '@models/Participant'
+import {BaseInformation, RemoteInformation, Viewpoint} from '@models/Participant'
 import {diffSet, str2Mouse, str2Pose} from '@models/utils'
 import {TrackStates} from '@stores/participants/ParticipantBase'
 import {computed, makeObservable, observable} from 'mobx'

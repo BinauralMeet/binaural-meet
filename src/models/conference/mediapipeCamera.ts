@@ -1,8 +1,6 @@
 import participants from '@stores/participants/Participants'
-import * as Kalidokit from 'kalidokit'
 import {Holistic} from '@mediapipe/holistic'
 import {FaceMesh} from '@mediapipe/face_mesh'
-import {VRMRigs} from '@models/Participant'
 import {dataRequestInterval} from '@models/conference/DataConnection'
 import { AllLandmarks } from '@models/Participant'
 

@@ -3,7 +3,7 @@ import {ISharedContent, contentsToSend, ISharedContentToSend, receiveToContents}
 import {CONTENT_OUT_OF_RANGE_VALUE} from '@models/ISharedContent'
 import { KickTime } from '@models/KickTime'
 import {t} from '@models/locales'
-import {defaultRemoteInformation, PARTICIPANT_SIZE, RemoteInformation, TrackStates, Viewpoint, VRMRigs} from '@models/Participant'
+import {defaultRemoteInformation, PARTICIPANT_SIZE, RemoteInformation, TrackStates, Viewpoint} from '@models/Participant'
 import {urlParameters} from '@models/url'
 import {mouse2Str, pose2Str, str2Mouse, str2Pose} from '@models/utils'
 import {normV, subV2} from '@models/utils'

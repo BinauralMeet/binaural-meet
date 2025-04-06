@@ -1,7 +1,7 @@
 import {
   defaultInformation, defaultPhysics, defaultRemoteInformation,
   defaultViewpoint, LocalInformation,
-  ParticipantBase as IParticipantBase, Physics, RemoteInformation, Tracks, TrackStates as ITrackStates, VRMRigs
+  ParticipantBase as IParticipantBase, Physics, RemoteInformation, Tracks, TrackStates as ITrackStates
 } from '@models/Participant'
 import {findReverseColorRGB, findTextColorRGB, getRandomColorRGB, isVrmUrl, rgb2Color} from '@models/utils'
 import {Mouse} from '@models/utils'
