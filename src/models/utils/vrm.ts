@@ -6,7 +6,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { addV, subV } from 'react-use-gesture'
 import Euler from 'kalidokit/dist/utils/euler'
 import { makeObservable, observable } from 'mobx'
-import { createStrcture3DEx, drawFikStructure, Structure3DEx, updateStructure3DEx } from './vrmIK'
+import { createStrcture3DEx, drawFikStructure, Structure3DEx, updateStructure3DEx, vrmRestBody } from './vrmIK'
 
 declare const d:any                  //  from index.html
 
@@ -75,7 +75,7 @@ export function freeVrmAvatar(avatar: VRMAvatar){
 export function createVrmAvatar(participant: ParticipantBase){
   const promise = new Promise<VRMAvatar>((resolve, reject)=>{
     loadVrmAvatar(participant).then((vrm)=>{
-      //*  //  add coordinate arrows at right hand
+      /*  //  add coordinate arrows at right hand
       const hand = vrm.humanoid.getNormalizedBoneNode('rightHand')
       if (hand){
         const sphereG = new THREE.SphereGeometry(0.03, 4, 4);
@@ -98,7 +98,7 @@ export function createVrmAvatar(participant: ParticipantBase){
         cone.rotateX(0.5*Math.PI)
         hand.add(cone);
       }   //  */
-
+      vrmRestBody(vrm)
       const avatar:VRMAvatar = {
         vrm,
         nameLabel: createNameLabel(participant),
@@ -245,4 +245,3 @@ export function vrmSetPoseFromMP (avatar:VRMAvatar, landmarks: AllLandmarks|unde
     return;
   }
 }
-

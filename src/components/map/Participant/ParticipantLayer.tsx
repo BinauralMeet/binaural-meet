@@ -83,13 +83,15 @@ export const ParticipantLayer: React.FC<{vrmAvatars:VRMAvatars}> = (props) => {
     if (!vas) return
     const dispoLocalApplyMediaPipe = autorun(()=>{
       if (vas.local){
+        //console.log(`Set pose to VRM avatar for local ${participants.localId}.`)
         vrmSetPoseFromMP(vas.local, participants.local.landmarks)
         const rig = vrmExtractRig(vas.local, participants.local.landmarks)
         participants.local.vrmRig = rig
       }
     })
     const dispoLocal = autorun(()=>{
-      if (participants.local.isVrm()){
+      if (participants.local.isVrm() && participants.localId){
+        //console.log(`Loading VRM avatar for local ${participants.localId}.`)
         createVrmAvatar(participants.local).then(avatar => {
           if(vas.local) freeVrmAvatar(vas.local)
           vas.local = avatar
@@ -107,12 +109,14 @@ export const ParticipantLayer: React.FC<{vrmAvatars:VRMAvatars}> = (props) => {
             if (remote.vrmRig){
               const rav = vas.remotes.get(remote.id)
               if (rav && rav.vrm){
+                //console.log(`Set pose to VRM avatar for remote ${remote.id}.`)
                 vrmApplyRig(rav.vrm, remote.vrmRig)
               }
             }
           })
           const dispoRemote = autorun(()=>{
             if(remote.isVrm()){
+              //console.log(`Loading VRM avatar for remote ${remote.id}.`)
               createVrmAvatar(remote).then(avatar => {
                 avatar.dispo = ()=>{
                   dispoRemoteApplyRig()

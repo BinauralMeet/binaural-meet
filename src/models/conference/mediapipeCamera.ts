@@ -36,6 +36,7 @@ export function stopMpTrack(){
     videoEl.remove()
     videoEl = undefined
   }
+  participants.local.landmarks = {}
   runMeidaPipe = false
 }
 export function startMpTrack(faceOnly: boolean, did?:string) {

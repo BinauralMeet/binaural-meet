@@ -141,6 +141,49 @@ function getTranslation(from: THREE.Matrix4){
   return new THREE.Vector3(from.elements[12], from.elements[13], from.elements[14])
 }
 
+type ArmBoneName = 'Sholder'|'UpperArm'|'LowerArm'|'Hand'
+const fourFingerNames:FourFingerName[] = ['Index',  'Middle' , 'Ring' , 'Little']
+type FourFingerName = 'Index' | 'Middle'| 'Ring' | 'Little'
+type FingerName = 'Thumb' | FourFingerName
+const fingerNames:FingerName[] = ['Thumb', ...fourFingerNames]
+type ThumbBoneName = 'Metacarpal'|'Proximal'|'Distal'
+const thumbBoneNames:ThumbBoneName[] = ['Metacarpal', 'Proximal', 'Distal']
+type FingerBoneName = 'Proximal'|'Intermediate'|'Distal'
+const fingerBoneNames:FingerBoneName[] = ['Proximal', 'Intermediate', 'Distal']
+type LeftRight =  'left'|'right'
+const leftRight:LeftRight[] = ['left', 'right']
+
+export function vrmRestBody(vrm: VRM){
+  vrm.expressionManager?.resetValues()
+  vrm.humanoid.resetNormalizedPose()
+  vrmRestHand(vrm)
+}
+
+function vrmRestHand(vrm: VRM){
+  function restFinger(lr:'left'|'right', name:FingerName){
+    const lrpm = lr==='left' ? 1 : -1
+    if (name==='Thumb'){
+      thumbBoneNames.forEach(bn=>{
+        vrm.humanoid.getNormalizedBoneNode(`${lr}Thumb${bn}`)?.quaternion.setFromEuler( new THREE.Euler(0.2, lrpm*0.4, lrpm*0.2))
+      })
+    }else{
+      fingerBoneNames.forEach(bn=>{
+        vrm.humanoid.getNormalizedBoneNode(`${lr}${name}${bn}`)?.quaternion.setFromEuler( new THREE.Euler(0, 0, lrpm*0.2))
+      })
+    }
+  }
+  function restOneHand(lr:'left'|'right'){
+    const lrpm = lr==='left' ? 1 : -1
+    vrm.humanoid.getNormalizedBoneNode(`${lr}UpperArm`)?.quaternion.setFromEuler( new THREE.Euler(-0.2, 0, lrpm*1.2))
+    vrm.humanoid.getNormalizedBoneNode(`${lr}LowerArm`)?.quaternion.setFromEuler( new THREE.Euler(0, -lrpm*1.0, lrpm*0.3))
+    vrm.humanoid.getNormalizedBoneNode(`${lr}Hand`)?.quaternion.setFromEuler(new THREE.Euler(0, 0, lrpm*0.3))
+    fingerNames.forEach((name:FingerName)=>{
+      restFinger(lr, name)
+    })
+  }
+  leftRight.forEach((lr)=> restOneHand(lr))
+}
+
 export function updateStructure3DEx(vrm:VRM, structure: Structure3DEx, lms: AllLandmarks){
   printCount ++;
 
@@ -149,8 +192,7 @@ export function updateStructure3DEx(vrm:VRM, structure: Structure3DEx, lms: AllL
     structure.hips = Kalidokit.Pose.calcHips(lms.poseLm3d, lms.poseLm)
     applyHipsToVrm(vrm, structure)
   }else{
-    rigRotation(vrm, "rightUpperArm", new Euler(0,0,-Math.PI/2*0.8), 1, 1);
-    rigRotation(vrm, "leftUpperArm", new Euler(0,0,Math.PI/2*0.8), 1, 1);
+    vrmRestBody(vrm)
   }
   if (lms.faceLm){
     structure.face = Kalidokit.Face.solve(lms.faceLm, {runtime: "mediapipe"})
@@ -260,12 +302,6 @@ function applyHand(lr:'left'|'right', lms: LandmarkList, vrm:VRM, structure: Str
       [mp2VrmV3(lms[13], structure), mp2VrmV3(lms[14], structure), mp2VrmV3(lms[15], structure), mp2VrmV3(lms[16], structure)],
       [mp2VrmV3(lms[17], structure), mp2VrmV3(lms[18], structure), mp2VrmV3(lms[19], structure), mp2VrmV3(lms[20], structure)],
     ]
-    type FingerName = 'Thumb' | 'Index' | 'Middle' | 'Ring' | 'Little'
-    type ThumbBoneName = 'Metacarpal' | 'Proximal' | 'Distal'
-    type FingerBoneName = 'Proximal' | 'Intermediate' | 'Distal'
-    const fourFingerNames:FingerName[] = ['Index',  'Middle' , 'Ring' , 'Little']
-    const thumbBoneNames:ThumbBoneName[] = ['Metacarpal', 'Proximal', 'Distal']
-    const fingerBoneNames:FingerBoneName[] = ['Proximal', 'Intermediate', 'Distal']
     applyFinger('Thumb', thumbBoneNames, thumbLms)
     fourFingerNames.forEach( (fname, f)=>{
       applyFinger(fname, fingerBoneNames, fourFingersLmses[f])
