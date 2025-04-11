@@ -192,7 +192,7 @@ export function updateStructure3DEx(vrm:VRM, structure: Structure3DEx, lms: AllL
     structure.hips = Kalidokit.Pose.calcHips(lms.poseLm3d, lms.poseLm)
     applyHipsToVrm(vrm, structure)
   }else{
-    vrmRestBody(vrm)
+    if (!lms.faceLm) vrmRestBody(vrm)
   }
   if (lms.faceLm){
     structure.face = Kalidokit.Face.solve(lms.faceLm, {runtime: "mediapipe"})
