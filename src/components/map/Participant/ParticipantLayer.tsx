@@ -114,7 +114,7 @@ export const ParticipantLayer: React.FC<{vrmAvatars:VRMAvatars}> = (props) => {
             }
           })
           const dispoRemote = autorun(()=>{
-            if(remote.isVrm()){
+            if(remote.hasVrm() && participants.local.showVrm()){
               //console.log(`Loading VRM avatar for remote ${remote.id}.`)
               createVrmAvatar(remote).then(avatar => {
                 avatar.dispo = ()=>{

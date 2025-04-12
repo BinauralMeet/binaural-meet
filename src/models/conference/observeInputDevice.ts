@@ -118,8 +118,7 @@ export function inputChangeObservationStart(){
       }
     }else{
       const local = participants.local
-      const isVrm = local.isVrm() && (local.avatarDisplay2_5D || local.avatarDisplay3D)
-      if (isVrm){
+      if (local.isVrm()){
         stopFaceTrack()
         startMpTrack(!faceTrack)
       }else{

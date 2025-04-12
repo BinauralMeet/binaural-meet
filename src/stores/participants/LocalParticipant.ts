@@ -118,6 +118,13 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
     })
   }
 
+  public showVrm(){
+    return this.avatarDisplay2_5D || this.avatarDisplay3D
+  }
+  public isVrm(){
+    return this.hasVrm() && this.showVrm()
+  }
+
   //  send infomration to other participants
   @action sendInformation(){
     const {email, ...info} = this.information

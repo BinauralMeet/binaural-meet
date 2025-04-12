@@ -71,6 +71,7 @@ export const AvatarSetting: React.FC<{}> = () => {
             if (participants.local.avatarDisplay3D){
               participants.local.soundLocalizationBase = 'avatar'
             }
+            checkCamera()
             participants.local.saveMediaSettingsToStorage()
           }} name="avatar3D" />{t('alAvatar3D')}
         </Grid>
@@ -91,6 +92,7 @@ export const AvatarSetting: React.FC<{}> = () => {
       </Grid>
       <Checkbox checked={avatarDisplay2_5D === true} onChange={(ev, checked) => {
           participants.local.avatarDisplay2_5D = checked
+          checkCamera()
           participants.local.saveMediaSettingsToStorage()
         }} name="avatar2_5D" />
         {t('alAvatar2_5D')}
@@ -99,11 +101,18 @@ export const AvatarSetting: React.FC<{}> = () => {
 }
 AvatarSetting.displayName = 'AvatarSetting'
 
+function checkCamera(){
+  const local = participants.local
+  if (!local.avatarDisplay3D && !local.avatarDisplay2_5D && !local.muteVideo){
+    local.muteVideo = true
+  }
+}
 
 export const Fab3DSettings: React.FC<{size?: number, iconSize:number}> = (props) => {
   const [anchor, setAnchor] = React.useState<Element|null>(null)
   const [showDetails, setShowDetails] = React.useState(false)
   const avatarDisplay3D = useObserver(() => participants.local.avatarDisplay3D)
+
 
   const switch3D = () => {
     //  As Chrome support AEC, skip the confirmation now.
@@ -113,6 +122,7 @@ export const Fab3DSettings: React.FC<{size?: number, iconSize:number}> = (props)
         participants.local.useStereoAudio = true
         participants.local.soundLocalizationBase = 'avatar'
       }
+      checkCamera()
       participants.local.saveMediaSettingsToStorage()
     }
   }

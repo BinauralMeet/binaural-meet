@@ -277,7 +277,7 @@ export const Footer: React.FC<{height?:number}> = (props) => {
         {getMenuItems('audioinput')}
       </Menu> : undefined}
 
-      <FabMain size={fabSize} color={mute.muteV ? 'primary' : 'secondary'} aria-label="camera"
+      <FabMain size={fabSize} color={mute.muteV ? 'primary' : 'secondary'}
         onClick = { () => {
           participants.local.muteVideo = !mute.muteV
           participants.local.saveMediaSettingsToStorage()

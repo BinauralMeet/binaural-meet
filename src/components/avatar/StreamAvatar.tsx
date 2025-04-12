@@ -73,7 +73,7 @@ export const StreamAvatar: React.FC<AvatarProps> = (props: AvatarProps) => {
     const tracks = props.participant.tracks
     if (video && tracks?.avatarStream) {
       if (video.srcObject !== tracks.avatarStream){
-        console.log('StreamAvatar useEffect play()')
+        //  console.log('StreamAvatar useEffect play()')
         video.srcObject = tracks.avatarStream
         video.play()
       }

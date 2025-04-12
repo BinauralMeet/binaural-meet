@@ -130,7 +130,7 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
     Object.assign(this.physics, physics)
   }
 
-  isVrm(){
+  public hasVrm(){
     return isVrmUrl(this.information.avatarSrc)
   }
 }
