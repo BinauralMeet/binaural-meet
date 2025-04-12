@@ -1,5 +1,5 @@
 import { ISharedContent } from '@models/ISharedContent'
-import {LocalInformation, LocalParticipant as ILocalParticipant, Physics, RemoteInformation, TrackStates, AvatarType, AllLandmarks} from '@models/Participant'
+import {LocalInformation, LocalParticipant as ILocalParticipant, Physics, RemoteInformation, TrackStates, AvatarType} from '@models/Participant'
 import {urlParameters} from '@models/url'
 import {checkImageUrl, isVrmUrl, mulV2, Pose2DMap, subV2} from '@models/utils'
 import {MapData} from '@stores/Map'
@@ -9,6 +9,7 @@ import {action, computed, makeObservable, observable} from 'mobx'
 import {autorun} from 'mobx'
 import {DevicePreference} from './localPlugins'
 import {ParticipantBase, TracksStore} from './ParticipantBase'
+import { AllLandmarks } from '@models/utils/vrmIK'
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
 

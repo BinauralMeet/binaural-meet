@@ -2,7 +2,7 @@ import participants from '@stores/participants/Participants'
 import {Holistic} from '@mediapipe/holistic'
 import {FaceMesh} from '@mediapipe/face_mesh'
 import {dataRequestInterval} from '@models/conference/DataConnection'
-import { AllLandmarks } from '@models/Participant'
+import {AllLandmarks} from '@models/utils/vrmIK'
 
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
