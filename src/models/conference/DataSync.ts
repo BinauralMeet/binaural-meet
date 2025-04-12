@@ -20,7 +20,7 @@ import {DataConnection} from './DataConnection'
 import {MessageType} from './DataMessageType'
 import {notification} from './Notification'
 import {connLog} from '@models/utils'
-import {VRMRig} from '@models/utils/vrmIK'
+import {VrmRig} from '@models/utils/vrmIK'
 
 const syncLog = connLog
 
@@ -111,7 +111,7 @@ export class DataSync{
     participants.local.remoteVideoLimit = limits[0]
     participants.local.remoteAudioLimit = limits[1]
   }
-  private onParticipantVrmRig(id:string|undefined, rig:VRMRig){
+  private onParticipantVrmRig(id:string|undefined, rig:VrmRig){
     if (id){
       const remote = participants.getRemote(id)
       if (remote) remote.vrmRig = rig

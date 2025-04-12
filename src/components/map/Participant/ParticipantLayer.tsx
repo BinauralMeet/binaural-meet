@@ -7,9 +7,9 @@ import {MouseCursor} from './MouseCursor'
 import {PlaybackParticipant} from './PlaybackParticipant'
 import {RemoteParticipant} from './RemoteParticipant'
 import { participants } from '@stores/'
-import { createVrmAvatar, freeVrmAvatar, removeVrmAvatar, VRMAvatars, vrmSetPoseFromMP} from '@models/utils/vrm'
+import { createVrmAvatar, freeVrmAvatar, VRMAvatars, applyMPLandmarkToVrm} from '@models/utils/vrm'
 import { autorun } from 'mobx'
-import { vrmApplyRig, vrmExtractRig } from '@models/utils/vrmIK'
+import { extractVrmRig, applyVrmRig} from '@models/utils/vrmIK'
 
 interface LineProps {
   start: [number, number]
@@ -84,9 +84,8 @@ export const ParticipantLayer: React.FC<{vrmAvatars:VRMAvatars}> = (props) => {
     const dispoLocalApplyMediaPipe = autorun(()=>{
       if (vas.local){
         //console.log(`Set pose to VRM avatar for local ${participants.localId}.`)
-        vrmSetPoseFromMP(vas.local, participants.local.landmarks)
-        const rig = vrmExtractRig(vas.local, participants.local.landmarks)
-        participants.local.vrmRig = rig
+        applyMPLandmarkToVrm(vas.local, participants.local.landmarks)
+        participants.local.vrmRig = extractVrmRig(vas.local, participants.local.landmarks)
       }
     })
     const dispoLocal = autorun(()=>{
@@ -110,7 +109,7 @@ export const ParticipantLayer: React.FC<{vrmAvatars:VRMAvatars}> = (props) => {
               const rav = vas.remotes.get(remote.id)
               if (rav && rav.vrm){
                 //console.log(`Set pose to VRM avatar for remote ${remote.id}.`)
-                vrmApplyRig(rav.vrm, remote.vrmRig)
+                applyVrmRig(rav.vrm, remote.vrmRig)
               }
             }
           })
@@ -132,7 +131,7 @@ export const ParticipantLayer: React.FC<{vrmAvatars:VRMAvatars}> = (props) => {
       }
       for(const pid of vas.remotes.keys()){
         if(!participants.remote.has(pid)){
-          removeVrmAvatar(vas, false, pid)
+          vas.delete(false, pid)
         }
       }
     })
@@ -141,10 +140,10 @@ export const ParticipantLayer: React.FC<{vrmAvatars:VRMAvatars}> = (props) => {
       dispo()
       if (vas){
         for(const pid of vas.remotes.keys()){
-          removeVrmAvatar(vas, false, pid)
+          vas.delete(false, pid)
         }
         if (vas.local){
-          removeVrmAvatar(vas, true)
+          vas.delete(true)
         }
         vas.remotes.clear()
         vas.local = undefined

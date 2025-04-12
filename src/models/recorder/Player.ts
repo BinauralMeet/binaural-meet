@@ -9,7 +9,7 @@ import { MediaClip } from '@stores/MapObject'
 import {MediaKind, BlobKind, recLog} from './RecorderTypes'
 import participants from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
-import { VRMRig } from '@models/utils/vrmIK'
+import { VrmRig } from '@models/utils/vrmIK'
 declare const d:any                  //  from index.html
 
 interface BlobHeader{
@@ -504,7 +504,7 @@ class Player{
           case MessageType.PARTICIPANT_TRACKSTATES: Object.assign(p.trackStates, v as TrackStates); break
           case MessageType.PARTICIPANT_VIEWPOINT: Object.assign(p.viewpoint, v as Viewpoint); break
           case MessageType.PARTICIPANT_ON_STAGE: p.physics.onStage = v as boolean; break
-          case MessageType.PARTICIPANT_VRMRIG: p.vrmRig = v as VRMRig; break
+          case MessageType.PARTICIPANT_VRMRIG: p.vrmRig = v as VrmRig; break
           case MessageType.AUDIO_LEVEL: p.audioLevel = v as number; break
           default: notHandled = true; break
         }

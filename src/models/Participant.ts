@@ -2,21 +2,10 @@ import {ISharedContent} from '@models/ISharedContent'
 import {MapObject} from './MapObject'
 import {findReverseColorRGB, findTextColorRGB, getRandomColorRGB, rgb2Color} from './utils/color'
 import {Mouse} from './utils/coordinates'
-import * as Kalidokit from 'kalidokit'
 import { MediaClip } from '@stores/MapObject'
-import { GpuBuffer, NormalizedLandmarkList } from '@mediapipe/holistic'
-import { VRMRig } from './utils/vrmIK'
+import {AllLandmarks, VrmRig} from './utils/vrmIK'
 
 export const PARTICIPANT_SIZE = 60
-
-export interface AllLandmarks{
-  faceLm?: NormalizedLandmarkList
-  poseLm?: NormalizedLandmarkList
-  poseLm3d?: NormalizedLandmarkList
-  leftHandLm?: NormalizedLandmarkList
-  rightHandLm?: NormalizedLandmarkList
-  image?: GpuBuffer
-}
 
 export interface ParticipantBase extends MapObject{
   physics: Physics
@@ -30,7 +19,7 @@ export interface ParticipantBase extends MapObject{
   getTextColorRGB: ()=> number[]
   tracks?: Tracks
   clip?: MediaClip
-  vrmRig?: VRMRig
+  vrmRig?: VrmRig
 }
 
 export interface PlaybackParticipant extends ParticipantBase {

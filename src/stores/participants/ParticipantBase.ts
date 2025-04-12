@@ -5,7 +5,7 @@ import {
 } from '@models/Participant'
 import {findReverseColorRGB, findTextColorRGB, getRandomColorRGB, isVrmUrl, rgb2Color} from '@models/utils'
 import {Mouse} from '@models/utils'
-import { VRMRig } from '@models/utils/vrmIK'
+import { VrmRig } from '@models/utils/vrmIK'
 import {MapObject} from '@stores/MapObject'
 import {Store} from '@stores/utils'
 import {action, computed, makeObservable, observable} from 'mobx'
@@ -78,7 +78,7 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
     return !this.muteVideo
   }
   @observable quality:number|undefined = undefined
-  @observable.ref vrmRig:VRMRig|undefined = undefined
+  @observable.ref vrmRig:VrmRig|undefined = undefined
 
   constructor(isLocal=false) {
     super()

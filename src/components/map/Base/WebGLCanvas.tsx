@@ -1,13 +1,13 @@
-import {VRMAvatar, VRMAvatars} from "@models/utils/vrm"
-import React, { useRef } from 'react'
+import React, {useRef} from 'react'
 import * as THREE from 'three'
-import * as Kalidokit from 'kalidokit'
+import {VRMAvatar, VRMAvatars} from "@models/utils/vrm"
 import map from "@stores/Map"
 import { participants } from "@stores/participants"
-import { AllLandmarks } from "@models/Participant"
-import * as MP from "@mediapipe/drawing_utils"
-import { FACEMESH_TESSELATION, HAND_CONNECTIONS, POSE_CONNECTIONS } from "@mediapipe/holistic"
+
+//  for debug drawing
 import { drawFikStructure } from "@models/utils/vrmIK"
+import { FACEMESH_TESSELATION, HAND_CONNECTIONS, POSE_CONNECTIONS } from "@mediapipe/holistic"
+import * as MP from '@mediapipe/drawing_utils'
 
 declare const d:any                  //  from index.html
 
@@ -34,7 +34,7 @@ function createAvatarCamera(viewportSize:[number, number]){
 
   return camera
 }
-function renderAvatar(ctx: WebGLContext, vas: VRMAvatars, avatar:VRMAvatar, camera:THREE.Camera, ori?:number, distIn?: number){
+function renderAvatar(ctx: WebGLContext, avatar:VRMAvatar, camera:THREE.Camera, ori?:number, distIn?: number){
   if (ori===undefined){
     const oriOffset = (avatar.participant.pose.orientation+360*2) % 360 - 180
     ori = 180 + oriOffset / 2
@@ -244,7 +244,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
             //vas.renderer.setClearColor(new THREE.Color(0,0,0), 0)
             const offCamera = createAvatarCamera([ctx.offscreen.width, ctx.offscreen.height])
             ctx.renderer.setViewport(0, 0, ctx.offscreen.width, ctx.offscreen.height)
-            renderAvatar(ctx, vas, vas.local, offCamera, filteredFaceDir, 1.3)
+            renderAvatar(ctx, vas.local, offCamera, filteredFaceDir, 1.3)
             //  set onscreen position
             ctx.mirrorSprite.position.x = 0
             ctx.mirrorSprite.position.z = 0
@@ -284,7 +284,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
             if (avatar.vrm) {
               const pos = map.toElement(avatar.participant.pose.position)
               ctx.renderer.setViewport(pos[0]-viewportSize[0]/2, mapSize[1]-pos[1], viewportSize[0], viewportSize[1])
-              renderAvatar(ctx, vas, avatar, camera)
+              renderAvatar(ctx, avatar, camera)
               /*
               console.log(`canvas:${refCanvas.current?.width},${refCanvas.current?.height}  map:${mapSize[0]},${mapSize[1]}`)
               console.log(`render avatar:${pid} pos:${Math.trunc(pos[0])}/${mapSize[0]},${Math.trunc(pos[1])}`+
