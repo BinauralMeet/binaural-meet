@@ -13,7 +13,6 @@ export class PlaybackParticipant extends ParticipantBase implements Store<IPlayb
   set information(value: RemoteInformation) {
       this.information_ = value;
   }
-  informationReceived = false
   @observable trackStates = new TrackStates()
   @observable called = false
   @observable inLocalsZone = false

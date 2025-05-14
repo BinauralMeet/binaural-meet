@@ -534,7 +534,7 @@ function extractRigQuats(rig:VrmRig, vrm:VRM, lms:AllLandmarks){
 function extractQuats(vrm:VRM, names: VRMHumanBoneName[]){
   return names.map(name => {
     const q = vrm.humanoid.getNormalizedBoneNode(name)?.quaternion
-    return (q? [q.x, q.y, q.z] : [0,0,0]) as [number, number, number]
+    return (q? (q.w > 0 ? [q.x, q.y, q.z] : [-q.x, -q.y, -q.z]) : [0,0,0]) as [number, number, number]
   })
 }
 

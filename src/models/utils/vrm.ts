@@ -12,6 +12,8 @@ declare const d:any                  //  from index.html
 
 export interface VRMAvatar{
   participant: ParticipantBase
+  name: string
+  avatarSrc: string
   vrm: VRM
   nameLabel?:THREE.Sprite
   dispo?: ()=>void
@@ -28,7 +30,8 @@ export class VRMAvatars{
     function disposeVrmAvatar(avatar: VRMAvatar){
       if (avatar.dispo) avatar.dispo()
       delete avatar.dispo
-      freeVrmAvatar(avatar)
+      freeVrm(avatar)
+      freeNameLabel(avatar)
     }
     if (isLocal){
       if (this.local) {
@@ -46,7 +49,7 @@ export class VRMAvatars{
   }
 }
 
-export function freeVrmAvatar(avatar: VRMAvatar){
+function freeVrm(avatar: VRMAvatar){
   avatar.vrm.scene.traverse((obj) => {
     if (obj instanceof THREE.Mesh) {
       obj.geometry.dispose()
@@ -57,50 +60,78 @@ export function freeVrmAvatar(avatar: VRMAvatar){
       }
     }
   })
+}
+function freeNameLabel(avatar:VRMAvatar){
   avatar.nameLabel?.material.map?.dispose()
   avatar.nameLabel?.material.dispose()
   avatar.nameLabel?.geometry.dispose()
   delete avatar.nameLabel
 }
 
-export function createVrmAvatar(participant: ParticipantBase){
+function addCooridateArraw(vrm: VRM){
+  //  add coordinate arrows at right hand
+  const hand = vrm.humanoid.getNormalizedBoneNode('rightHand')
+  if (hand){
+    const sphereG = new THREE.SphereGeometry(0.03, 4, 4);
+    const coneG = new THREE.ConeGeometry(0.03, 0.08, 4);
+    const materialW = new THREE.MeshBasicMaterial( {color: 0x00AAAAAA} );
+    const materialG = new THREE.MeshBasicMaterial( {color: 0x0000FF00} );
+    const materialR = new THREE.MeshBasicMaterial( {color: 0x00FF0000} );
+    const materialB = new THREE.MeshBasicMaterial( {color: 0x000000FF} );
+    let sphere = new THREE.Mesh(sphereG, materialW)
+    hand.add(sphere);
+    let cone = new THREE.Mesh(coneG, materialR);
+    cone.translateX(0.1)
+    cone.rotateZ(-0.5*Math.PI)
+    hand.add(cone);
+    cone = new THREE.Mesh(coneG, materialG);
+    cone.translateY(0.1)
+    hand.add(cone);
+    cone = new THREE.Mesh(coneG, materialB);
+    cone.translateZ(0.1)
+    cone.rotateX(0.5*Math.PI)
+    hand.add(cone);
+  }
+}
+
+function updateNameLabel(avatar:VRMAvatar, participant: ParticipantBase){
+  if (!avatar.nameLabel || avatar.name !== participant.information.name){
+    if (avatar.nameLabel){
+      freeNameLabel(avatar)
+    }
+    avatar.nameLabel = createNameLabel(participant)
+    avatar.name = participant.information.name
+  }
+  if (avatar.nameLabel){
+    avatar.nameLabel.position.y = -avatar.vrm.scene.position.y + 0.9
+  }
+}
+
+export function updateVrmAvatar(avatar:VRMAvatar|undefined, participant: ParticipantBase){
   const promise = new Promise<VRMAvatar>((resolve, reject)=>{
-    loadVrmAvatar(participant).then((vrm)=>{
-      /*  //  add coordinate arrows at right hand
-      const hand = vrm.humanoid.getNormalizedBoneNode('rightHand')
-      if (hand){
-        const sphereG = new THREE.SphereGeometry(0.03, 4, 4);
-        const coneG = new THREE.ConeGeometry(0.03, 0.08, 4);
-        const materialW = new THREE.MeshBasicMaterial( {color: 0x00AAAAAA} );
-        const materialG = new THREE.MeshBasicMaterial( {color: 0x0000FF00} );
-        const materialR = new THREE.MeshBasicMaterial( {color: 0x00FF0000} );
-        const materialB = new THREE.MeshBasicMaterial( {color: 0x000000FF} );
-        let sphere = new THREE.Mesh(sphereG, materialW)
-        hand.add(sphere);
-        let cone = new THREE.Mesh(coneG, materialR);
-        cone.translateX(0.1)
-        cone.rotateZ(-0.5*Math.PI)
-        hand.add(cone);
-        cone = new THREE.Mesh(coneG, materialG);
-        cone.translateY(0.1)
-        hand.add(cone);
-        cone = new THREE.Mesh(coneG, materialB);
-        cone.translateZ(0.1)
-        cone.rotateX(0.5*Math.PI)
-        hand.add(cone);
-      }   //  */
-      setRestingPoseToVrm(vrm)
-      const avatar:VRMAvatar = {
-        vrm,
-        nameLabel: createNameLabel(participant),
-        participant,
+    if (avatar?.avatarSrc !== participant.information.avatarSrc){
+      if (avatar?.vrm){
+        freeVrm(avatar)
       }
-      if (avatar.nameLabel){
-        avatar.nameLabel.position.y = -avatar.vrm.scene.position.y
-      }
-      //  console.log(`avatar for ${participant.id} loaded.`)
+      //  console.log(`loadVrm ${participant.information.avatarSrc.substring(participant.information.avatarSrc.lastIndexOf('/'))}`)
+      loadVrmAvatar(participant).then((vrm)=>{
+        setRestingPoseToVrm(vrm)
+        const newAvatar:VRMAvatar = {
+          name: '',
+          avatarSrc: participant.information.avatarSrc,
+          vrm,
+          participant,
+        }
+        if (!avatar) avatar = newAvatar
+        else Object.assign(avatar, newAvatar)
+        updateNameLabel(avatar, participant)
+        //  console.log(`avatar for ${participant.id} loaded.`)
+        resolve(avatar)
+      })
+    }else{
+      updateNameLabel(avatar, participant)
       resolve(avatar)
-    })
+    }
   })
   return promise
 }
@@ -136,6 +167,7 @@ function createNameLabel(participant: ParticipantBase): THREE.Sprite|undefined{
   const sprite = new THREE.Sprite(material)
   const scale = 0.15
   sprite.scale.set(canvas.width/canvas.height*scale, scale, 1)
+  canvas.remove()
   return sprite
 }
 

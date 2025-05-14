@@ -13,7 +13,6 @@ export class RemoteParticipant extends ParticipantBase implements Store<IRemoteP
   set information(value: RemoteInformation) {
       this.information_ = value;
   }
-  informationReceived = false
   @observable.shallow tracks = new TracksStore()
   @observable trackStates = new TrackStates()
   @observable called = false

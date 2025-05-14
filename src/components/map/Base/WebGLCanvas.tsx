@@ -84,7 +84,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
         offscreen,
         scene: new THREE.Scene(),
         selfSprite: new THREE.Sprite(new THREE.SpriteMaterial({map: offscreen.texture, alphaTest:0.001, opacity:0.5})),
-        mirrorSprite: new THREE.Sprite(new THREE.SpriteMaterial({map: offscreen.texture, alphaTest:0.001, opacity:0.6})),
+        mirrorSprite: new THREE.Sprite(new THREE.SpriteMaterial({map: offscreen.texture, alphaTest:0.001, opacity:0.6, depthTest:false})),
       }
       rv.renderer.setClearColor(new THREE.Color(0,0,0), 0)
       rv.renderer.clear(true, true, true)
@@ -181,22 +181,23 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
         //  3D mode
         if (participants.local.avatarDisplay3D && map.isInCenter()){
           //refCanvas.current.style.opacity = '0.6'
-          const viewportSize = [mapSize[0], mapSize[1]*0.6]
+          const viewportSize = [mapSize[0], mapSize[1]]
           ctx.renderer.setViewport(0, mapSize[1]-viewportSize[1], mapSize[0], viewportSize[1])
-          const camera3D = new THREE.PerspectiveCamera(45, viewportSize[0]/viewportSize[1], 0.1, 100000)
-          camera3D.setViewOffset(viewportSize[0], viewportSize[1], 0, 160, viewportSize[0], viewportSize[1])
+          const camera3D = new THREE.PerspectiveCamera(45, viewportSize[0]/viewportSize[1], 0.2, 100000)
+          camera3D.setViewOffset(viewportSize[0], viewportSize[1], 0, 100, viewportSize[0], viewportSize[1])
           camera3D.updateProjectionMatrix()
-          const cameraHeight = 1.6
-          const viewScale = 1.0
+          const cameraHeight = 0.6
+          const viewScale = 0.1
           let rad = -participants.local.pose.orientation/180*Math.PI
           if (participants.local.avatarDisplay3D && participants.local.viewRotateByFace){
             rad -= filteredFaceDir
           }
           const viewDir = [-Math.sin(rad), -Math.cos(rad)]
           camera3D.position.set(participants.local.pose.position[0]*posScale - viewDir[0]*viewScale, cameraHeight, participants.local.pose.position[1]*posScale - viewDir[1]*viewScale)
-          camera3D.lookAt(participants.local.pose.position[0]*posScale, cameraHeight-0.2, participants.local.pose.position[1]*posScale)
+          camera3D.lookAt(participants.local.pose.position[0]*posScale, cameraHeight, participants.local.pose.position[1]*posScale)
 
           //  draw local avatar
+          /*
           if (vas.local){
             const viewportSize = [ctx.offscreen.width, ctx.offscreen.height]
             const cameraOff = new THREE.PerspectiveCamera(45, viewportSize[0]/viewportSize[1], 0.1, 100000)
@@ -212,7 +213,6 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
             ctx.scene.add(vas.local.vrm.scene)
             ctx.renderer.render(ctx.scene, cameraOff)
             ctx.scene.remove(vas.local.vrm.scene)
-
             //  set onscreen position and render it
             ctx.selfSprite.position.x = vas.local.vrm.scene.position.x
             ctx.selfSprite.position.z = vas.local.vrm.scene.position.z
@@ -224,6 +224,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
             ctx.renderer.render(ctx.scene, camera3D)
             ctx.scene.remove(ctx.selfSprite)
           }
+*/
 
           //  draw remote 3D avatars and self sprite
           for(const avatar of remotes){
@@ -268,7 +269,6 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
             ctx.scene.remove(ctx.mirrorSprite)
             ctx.offscreen.texture.repeat.set(1, 1);
             ctx.offscreen.texture.offset.set(0, 0);
-
           }
         }
 

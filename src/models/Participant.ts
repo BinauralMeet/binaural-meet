@@ -28,7 +28,6 @@ export interface PlaybackParticipant extends ParticipantBase {
 }
 
 export interface RemoteParticipant extends ParticipantBase {
-  informationReceived: boolean
   closedZone?: ISharedContent
   inLocalsZone: boolean
   tracks: Tracks

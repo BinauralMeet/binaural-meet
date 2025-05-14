@@ -210,7 +210,8 @@ export class DataSync{
       const remote = participants.getOrCreateRemote(from)
       if (!remote) return
       const name = remote.information.name
-      Object.assign(remote.information, info)
+      remote.information = info
+//      Object.assign(remote.information, info)
       if (name !== remote.information.name){
         if (name === defaultRemoteInformation.name){
           chat.participantJoined(from)
@@ -218,7 +219,6 @@ export class DataSync{
           chat.participantNameChanged(from, name)
         }
       }
-      remote.informationReceived = true
       syncLog()(`Info of ${from} received.`)
     }
   }
@@ -409,15 +409,5 @@ export class DataSync{
         console.log(`Unhandled message type ${msg.t} from ${msg.p}`)
         break
     }
-    //this.checkInfo()
   }
-/*
-  checkInfo(){
-    const remotes = Array.from(participants.remote.values())
-    const ids = remotes.filter(remote => !remote.informationReceived).map(remote => remote.id)
-    if (ids.length){
-      syncLog()(`checkInfo sent ${ids}`)
-      this.connection.sendMessage(MessageType.REQUEST_TO, ids)
-    }
-  } */
 }
