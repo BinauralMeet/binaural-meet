@@ -14,6 +14,7 @@ export interface ParticipantBase extends MapObject{
   id: string
   information: RemoteInformation|LocalInformation
   zIndex: number
+  audioLevel: number
   getColor: ()=>string[]
   getColorRGB: ()=> number[]
   getTextColorRGB: ()=> number[]

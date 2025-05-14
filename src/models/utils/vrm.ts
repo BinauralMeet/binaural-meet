@@ -16,6 +16,7 @@ export interface VRMAvatar{
   avatarSrc: string
   vrm: VRM
   nameLabel?:THREE.Sprite
+  nameLabelOuter?:THREE.Sprite
   dispo?: ()=>void
   structure?: FikStructure3DEx
 }
@@ -66,6 +67,10 @@ function freeNameLabel(avatar:VRMAvatar){
   avatar.nameLabel?.material.dispose()
   avatar.nameLabel?.geometry.dispose()
   delete avatar.nameLabel
+  avatar.nameLabelOuter?.material.map?.dispose()
+  avatar.nameLabelOuter?.material.dispose()
+  avatar.nameLabelOuter?.geometry.dispose()
+  delete avatar.nameLabelOuter
 }
 
 function addCooridateArraw(vrm: VRM){
@@ -99,11 +104,11 @@ function updateNameLabel(avatar:VRMAvatar, participant: ParticipantBase){
     if (avatar.nameLabel){
       freeNameLabel(avatar)
     }
-    avatar.nameLabel = createNameLabel(participant)
-    avatar.name = participant.information.name
+    createNameLabel(avatar, participant)
   }
-  if (avatar.nameLabel){
+  if (avatar.nameLabel && avatar.nameLabelOuter){
     avatar.nameLabel.position.y = -avatar.vrm.scene.position.y + 0.9
+    avatar.nameLabelOuter.position.y = -avatar.vrm.scene.position.y + 0.9
   }
 }
 
@@ -136,22 +141,31 @@ export function updateVrmAvatar(avatar:VRMAvatar|undefined, participant: Partici
   return promise
 }
 
-function fillRoundedRect(vas:CanvasRenderingContext2D, x:number, y:number, width:number, height:number, radius:number) {
-  vas.beginPath();
-  vas.moveTo(x, y + radius);
-  vas.arcTo(x, y + height, x + radius, y + height, radius);
-  vas.arcTo(x + width, y + height, x + width, y + height - radius, radius);
-  vas.arcTo(x + width, y, x + width - radius, y, radius);
-  vas.arcTo(x, y, x, y + radius, radius);
-  vas.fill();
+function roundRectPath(path:Path2D, x:number, y:number, width:number, height:number, radius:number){
+  path.moveTo(x, y + radius);
+  path.arcTo(x, y + height, x + radius, y + height, radius);
+  path.arcTo(x + width, y + height, x + width, y + height - radius, radius);
+  path.arcTo(x + width, y, x + width - radius, y, radius);
+  path.arcTo(x, y, x, y + radius, radius);
 }
 
-function createNameLabel(participant: ParticipantBase): THREE.Sprite|undefined{
+function fillRoundedRect(vas:CanvasRenderingContext2D, x:number, y:number, width:number, height:number, radius:number) {
+  const path = new Path2D()
+  roundRectPath(path, x, y, width, height, radius)
+  vas.fill(path, "evenodd")
+}
+function fillRoundedRectOuter(vas:CanvasRenderingContext2D, x:number, y:number, width:number, height:number, radOut:number, radIn:number, thickness:number) {
+  const path = new Path2D()
+  roundRectPath(path, x, y, width, height, radOut)
+  roundRectPath(path, x + thickness, y + thickness, width-2*thickness, height-2*thickness, radIn)
+  vas.fill(path, "evenodd")
+}
+function createNameLabel(avatar:VRMAvatar, participant: ParticipantBase){
   const colors = participant.getColor()
   const fontSize = 30;
   const canvas = document.createElement('canvas');
   const context = canvas.getContext('2d');
-  if (!context) return undefined
+  if (!context) return
   context.font = `${fontSize}px Arial`;
   const textSize = context.measureText(participant.information.name)
   canvas.width = textSize.width + 8
@@ -159,7 +173,7 @@ function createNameLabel(participant: ParticipantBase): THREE.Sprite|undefined{
   //console.log(`w: ${canvas.width} h:${canvas.height} `)
   context.fillStyle = colors[0]
   fillRoundedRect(context, 0, 0, canvas.width, canvas.height, 8)
-  context .fillStyle = colors[1]
+  context.fillStyle = colors[1]
   context.font = `${fontSize}px Arial`
   context.fillText(participant.information.name, 4, canvas.height-8, canvas.width)
   const texture = new THREE.CanvasTexture(canvas)
@@ -168,7 +182,26 @@ function createNameLabel(participant: ParticipantBase): THREE.Sprite|undefined{
   const scale = 0.15
   sprite.scale.set(canvas.width/canvas.height*scale, scale, 1)
   canvas.remove()
-  return sprite
+  avatar.name = participant.information.name
+  avatar.nameLabel = sprite
+
+  //  outer
+  const canvas2 = document.createElement('canvas');
+  const context2 = canvas2.getContext('2d');
+  if (!context2) return
+  canvas2.width = canvas.width + 16
+  canvas2.height = canvas.height + 16
+  context2.fillStyle = 'cyan'
+  fillRoundedRectOuter(context2, 0, 0, canvas2.width, canvas2.height, 12, 8, 8)
+//  context.fillStyle = 'rgba(0,0,0,0)'
+//  fillRoundedRect(context, 8, 8, canvas.width-16, canvas.height-16, 10)
+  const texture2 = new THREE.CanvasTexture(canvas2)
+  const material2 = new THREE.SpriteMaterial({ map: texture2 , depthTest:false})
+  const sprite2 = new THREE.Sprite(material2)
+  const scale2 = scale * canvas2.height / canvas.height
+  sprite2.scale.set(canvas2.width/canvas2.height*scale2, scale2, 1)
+  canvas2.remove()
+  avatar.nameLabelOuter = sprite2
 }
 
 function replaceTextureColor(vrm: VRM, colorBase:number[], colorTo:number[]){

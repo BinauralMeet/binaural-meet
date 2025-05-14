@@ -229,12 +229,17 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
           //  draw remote 3D avatars and self sprite
           for(const avatar of remotes){
             if (avatar.nameLabel) avatar.vrm.scene.add(avatar.nameLabel)
+            if (avatar.nameLabelOuter){
+              avatar.vrm.scene.add(avatar.nameLabelOuter)
+              avatar.nameLabelOuter.material.opacity = Math.pow(avatar.participant.audioLevel, 0.5)
+            }
             ctx.scene.add(avatar.vrm.scene)
           }
           ctx.renderer.render(ctx.scene, camera3D)
           for(const avatar of remotes){
             ctx.scene.remove(avatar.vrm.scene)
             if (avatar.nameLabel) avatar.vrm.scene.remove(avatar.nameLabel)
+            if (avatar.nameLabelOuter) avatar.vrm.scene.remove(avatar.nameLabelOuter)
           }
 
           //  draw face mirror
