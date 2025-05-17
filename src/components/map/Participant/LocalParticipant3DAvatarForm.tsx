@@ -11,6 +11,7 @@ import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader'
 import {IReactionDisposer, autorun, makeObservable, observable} from 'mobx'
 import { participants } from '@stores/index'
 import {formLog} from '@models/utils'
+import { freeVrm } from '@models/utils/vrm'
 
 export interface LocalParticipantFormProps{
   open: boolean
@@ -69,8 +70,15 @@ function getImage(ctx:VRMContext, size: number[]){
     renderer.setPixelRatio(window.devicePixelRatio * 4)
     renderer.render(scene, camera)
     formLog()(`render ${ctx.id}`)
+    //  remove
+    if (ctx.vrm) freeVrm(ctx.vrm)
+    renderer.getRenderTarget()?.dispose()
+    renderer.setRenderTarget(null)
+    ctx.vrm = undefined
   }
-  return canvas.toDataURL()
+  const url = canvas.toDataURL()
+  canvas.remove()
+  return url
 }
 
 export const vrmUrlBase = 'https://binaural.me/public_packages/uploader/vrm/avatar/'
@@ -106,7 +114,7 @@ function loadFile(mem: Member, size: number[]){
       ctx.vrm = vrm
       formLog()(`${file} vrm got.`)
     }, undefined, (error) => {
-      console.error('VRMのロードに失敗しました:', error)
+      console.error('Failed to load VRM file:', error)
     })
     mem.contexts.push(ctx)
   }

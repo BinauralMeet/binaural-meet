@@ -29,10 +29,11 @@ function limitScale(currentScale: number, scale: number): number {
 
 interface StyleProps {
   matrix: DOMMatrixReadOnly,
+  rotateByMouse: boolean
 }
 
 const useStyles = makeStyles({
-  root: {
+  root: (props: StyleProps) => ({
     position: 'absolute',
     width: '100%',
     height: '100%',
@@ -41,7 +42,8 @@ const useStyles = makeStyles({
     userDrag: 'none',
     userSelect: 'none',
     overflow: 'hidden',
-  },
+    cursor: props.rotateByMouse ? 'none' : 'auto'
+  }),
   center:{
     position: 'absolute',
     margin: 'auto',
@@ -68,7 +70,19 @@ export const Base: React.FC = (props) => {
   const matrix = useObserver(() => map.matrix)
   const container = useRef<HTMLDivElement>(null)
   const outer = useRef<HTMLDivElement>(null)
-
+  let [rotateByMouse, setRotateByMouseRaw] = React.useState<boolean>(false)
+  function setRotateByMouse(b: boolean){
+    setRotateByMouseRaw(b)
+    if (b) {
+      outer.current?.requestPointerLock().then(()=>{
+        //console.log('success to lock pointer.')
+      }).catch(e =>{
+        console.log('lock pointer failed', e)
+      })
+    }else{
+      document.exitPointerLock()
+    }
+  }
   function offset():[number, number] {
     return map.offset
   }
@@ -173,27 +187,35 @@ export const Base: React.FC = (props) => {
           //  move participant to mouse position
           //  moveParticipantPeriodically(false)
         }
+        if (buttons === MOUSE_RIGHT){
+          if(participants.local.avatarDisplay3D){
+            setRotateByMouse(!rotateByMouse)
+          }
+        }
       },
       onDrag: ({down, delta, xy, buttons}) => {
         if (delta[0] || delta[1]) { mem.mouseDown = false }
         //  if (map.keyInputUsers.size) { return }
         if (mem.dragging && down && outer.current) {
-          if (!thirdPersonView && buttons === MOUSE_RIGHT) {  // right mouse drag - rotate map
-            const center = transformPoint2D(matrix, participants.local.pose.position)
-            const target:[number, number] = addV2(xy, offset())
-            const radius1 = subV2(target, center)
-            const radius2 = subV2(radius1, delta)
+          if (buttons === MOUSE_RIGHT) {  // right mouse drag
+            if (!thirdPersonView){  //  FPV: rotate map by drag
+              const center = transformPoint2D(matrix, participants.local.pose.position)
+              const target:[number, number] = addV2(xy, offset())
+              const radius1 = subV2(target, center)
+              const radius2 = subV2(radius1, delta)
 
-            const cosAngle = crossProduct(radius1, radius2) / (vectorLength(radius1) * vectorLength(radius2))
-            const flag = crossProduct(rotate90ClockWise(radius1), delta) > 0 ? -1 : 1
-            const angle = Math.acos(cosAngle) * flag
-            if (isNaN(angle)) {  // due to accuracy, angle might be NaN when cosAngle is larger than 1
-              return  // no need to update matrix
+              const cosAngle = crossProduct(radius1, radius2) / (vectorLength(radius1) * vectorLength(radius2))
+              const flag = crossProduct(rotate90ClockWise(radius1), delta) > 0 ? -1 : 1
+              const angle = Math.acos(cosAngle) * flag
+              if (isNaN(angle)) {  // due to accuracy, angle might be NaN when cosAngle is larger than 1
+                return  // no need to update matrix
+              }
+
+              const newMatrix = rotateMap(radian2Degree(angle), center)
+              participants.local.pose.orientation = -radian2Degree(extractRotation(newMatrix))
             }
-
-            const newMatrix = rotateMap(radian2Degree(angle), center)
-            participants.local.pose.orientation = -radian2Degree(extractRotation(newMatrix))
           } else {
+            setRotateByMouse(false)
             // left mouse drag or touch screen drag - translate map
             const diff = rotateVector2D(matrix.inverse(), delta)
             const newMatrix = matrix.translate(...diff)
@@ -244,12 +266,18 @@ export const Base: React.FC = (props) => {
         return [d, a]
       },
       onPinchEnd: () => map.setCommittedMatrix(matrix),
-      onMove:({xy}) => {
-        map.setMouse(xy)
-        //console.log(`map.setMouse(${xy[0]}, ${xy[1]})`)
-        if (participants.local.mouse.position[0] !== map.mouseOnMap[0]
-          || participants.local.mouse.position[1] !== map.mouseOnMap[1]){
-          participants.local.mouse.position = Object.assign({}, map.mouseOnMap)
+      onMove:(ev) => {
+        if (rotateByMouse){
+          const dx = (ev.event as any)?.movementX
+          participants.local.pose.orientation += dx * 0.3
+        }else{
+          const xy = ev.xy
+          map.setMouse(xy)
+          //console.log(`map.setMouse(${xy[0]}, ${xy[1]})`)
+          if (participants.local.mouse.position[0] !== map.mouseOnMap[0]
+            || participants.local.mouse.position[1] !== map.mouseOnMap[1]){
+            participants.local.mouse.position = Object.assign({}, map.mouseOnMap)
+          }
         }
       },
       onTouchStart:(ev) => {
@@ -261,6 +289,28 @@ export const Base: React.FC = (props) => {
       eventOptions:{passive:false}, //  This prevents default zoom by browser when pinch.
     },
   )
+
+  useEffect(
+    () => {
+      function KeyHandler(ev:KeyboardEvent){
+        if (map.keyInputUsers.size) return
+        if (ev.key === "Escape"){
+          setRotateByMouse(false)
+        }
+        if (ev.key === " "){
+          rotateByMouse = !rotateByMouse
+          setRotateByMouse(rotateByMouse)
+        }
+      }
+      document.addEventListener('keydown', KeyHandler)
+      return ()=>{
+        document.removeEventListener('keydown', KeyHandler)
+      }
+    },
+    // eslint-disable-next-line  react-hooks/exhaustive-deps
+    [],
+  )
+
 
   //  setClientRect of the outer.
   useEffect(
@@ -368,6 +418,7 @@ export const Base: React.FC = (props) => {
 
   const styleProps: StyleProps = {
     matrix,
+    rotateByMouse
   }
   const classes = useStyles(styleProps)
 

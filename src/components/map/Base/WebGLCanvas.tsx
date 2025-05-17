@@ -11,7 +11,7 @@ import * as MP from '@mediapipe/drawing_utils'
 
 declare const d:any                  //  from index.html
 
-const animationPeriod = 20  //  20ms / frame
+const animationPeriod = 60  //  1/60ms =  17 frame / sec
 const posScale = 0.01
 
 interface WebGLContext{

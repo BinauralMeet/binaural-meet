@@ -1,14 +1,13 @@
 import {MAP_SIZE} from '@components/Constants'
 import {MoreButton, moreButtonControl, MoreButtonMember} from '@components/utils/MoreButton'
 import {makeStyles} from '@material-ui/core/styles'
-import {addV2, assert, extractScaleX, mulV2, rotateVector2DByDegree, subV2, transformPoint2D, transfromAt} from '@models/utils'
+import {addV2, assert, mulV2, rotateVector2DByDegree, subV2, transformPoint2D, transfromAt} from '@models/utils'
 import {Observer} from 'mobx-react-lite'
 import React, {CSSProperties, useEffect, useRef} from 'react'
 import {DragHandler, DragState} from '../../utils/DragHandler'
 import {KeyHandlerPlain} from '../../utils/KeyHandler'
 import {LocalParticipantForm} from './LocalParticipantForm'
 import {Participant, ParticipantProps} from './Participant'
-import {PARTICIPANT_SIZE} from '@models/Participant'
 import {map, participants} from '@stores/'
 
 const AVATAR_SPEED_LIMIT = 50

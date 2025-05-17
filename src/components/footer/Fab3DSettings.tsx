@@ -75,7 +75,7 @@ export const AvatarSetting: React.FC<{}> = () => {
             participants.local.saveMediaSettingsToStorage()
           }} name="avatar3D" />{t('alAvatar3D')}
         </Grid>
-        {avatarDisplay3D ? <>
+        {false && avatarDisplay3D ? <>
           <Grid item xs={4}>
             <span style={{whiteSpace: 'nowrap'}}>
               {t('alViewRotationBase')}:

@@ -201,8 +201,9 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
           (config.avatarDisplay2_5D !== undefined ? config.avatarDisplay2_5D : false)
         this.avatarDisplay3D = setting.avatarDisplay3D!==undefined ? setting.avatarDisplay3D :
           (config.avatarDisplay3D !== undefined ? config.avatarDisplay3D : true)
-        this.viewRotateByFace = setting.viewRotateByFace!==undefined ? setting.viewRotateByFace :
-          (config.viewRotateByFace !== undefined ? config.viewRotateByFace : false)
+//        this.viewRotateByFace = setting.viewRotateByFace!==undefined ? setting.viewRotateByFace :
+//          (config.viewRotateByFace !== undefined ? config.viewRotateByFace : false)
+          this.viewRotateByFace = false
       }
     }
   }

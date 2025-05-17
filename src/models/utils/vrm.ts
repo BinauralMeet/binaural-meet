@@ -27,35 +27,38 @@ export class VRMAvatars{
     makeObservable(this)
     d.vrmAvatars = this
   }
+  disposeVrmAvatar(avatar: VRMAvatar){
+    if (avatar.dispo) avatar.dispo()
+    delete avatar.dispo
+    freeVrm(avatar.vrm)
+    freeNameLabel(avatar)
+  }
   public delete(isLocal:boolean, pid?: string){
-    function disposeVrmAvatar(avatar: VRMAvatar){
-      if (avatar.dispo) avatar.dispo()
-      delete avatar.dispo
-      freeVrm(avatar)
-      freeNameLabel(avatar)
-    }
     if (isLocal){
       if (this.local) {
-        disposeVrmAvatar(this.local)
+        this.disposeVrmAvatar(this.local)
         this.local = undefined
       }
     }
     else{
       const remote = this.remotes.get(pid!)
       if (remote){
-        disposeVrmAvatar(remote)
+        this.disposeVrmAvatar(remote)
         this.remotes.delete(pid!)
       }
     }
   }
 }
 
-function freeVrm(avatar: VRMAvatar){
-  avatar.vrm.scene.traverse((obj) => {
+export function freeVrm(vrm: VRM){
+  vrm.scene.traverse((obj) => {
     if (obj instanceof THREE.Mesh) {
       obj.geometry.dispose()
       if (Array.isArray(obj.material)) {
-        obj.material.forEach(mat => mat.dispose())
+        obj.material.forEach(mat => {
+          mat.map.dispose()
+          mat.dispose()
+        })
       } else {
         obj.material.dispose()
       }
@@ -116,7 +119,7 @@ export function updateVrmAvatar(avatar:VRMAvatar|undefined, participant: Partici
   const promise = new Promise<VRMAvatar>((resolve, reject)=>{
     if (avatar?.avatarSrc !== participant.information.avatarSrc){
       if (avatar?.vrm){
-        freeVrm(avatar)
+        freeVrm(avatar.vrm)
       }
       //  console.log(`loadVrm ${participant.information.avatarSrc.substring(participant.information.avatarSrc.lastIndexOf('/'))}`)
       loadVrmAvatar(participant).then((vrm)=>{

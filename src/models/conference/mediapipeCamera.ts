@@ -12,7 +12,7 @@ let holistic = new Holistic({locateFile: (file) => {
   return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
 }})
 holistic.setOptions({
-  modelComplexity: 1,
+  modelComplexity: 0,
   smoothLandmarks: true,
   minDetectionConfidence: 0.7,
   minTrackingConfidence: 0.7,
