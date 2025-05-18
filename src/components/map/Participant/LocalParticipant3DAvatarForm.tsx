@@ -8,10 +8,10 @@ import React, {useEffect} from 'react'
 import {VRM, VRMLoaderPlugin} from '@pixiv/three-vrm'
 import * as THREE from 'three'
 import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader'
-import {IReactionDisposer, autorun, makeObservable, observable} from 'mobx'
 import { participants } from '@stores/index'
 import {formLog} from '@models/utils'
-import { freeVrm } from '@models/utils/vrm'
+import { freeScene, freeVrm } from '@models/utils/vrm'
+import { ImageSearch } from '@material-ui/icons'
 
 export interface LocalParticipantFormProps{
   open: boolean
@@ -21,41 +21,35 @@ export interface LocalParticipantFormProps{
   anchorReference?: PopoverReference
 }
 
-class VRMContext{
+class AvatarImage{
   id: string
-  @observable.shallow imgRef: React.RefObject<HTMLImageElement> = React.createRef<HTMLImageElement>()
-  @observable.ref vrm?: VRM
-  disposer?: IReactionDisposer
+  imgRef: React.RefObject<HTMLImageElement> = React.createRef<HTMLImageElement>()
   constructor(file:string){
     this.id = file
-    makeObservable(this)
   }
 }
 interface Member{
   files: string[]
-  contexts: VRMContext[]
+  images: AvatarImage[]
 }
 
-let canvas:HTMLCanvasElement|undefined
-let renderer:THREE.WebGLRenderer|undefined
-function getImage(ctx:VRMContext, size: number[]){
-  if (!canvas){
-    canvas = document.createElement('canvas')
+function render3d(ctx: AvatarImage, vrm: VRM, size: number[]){
+  const img = ctx.imgRef.current
+  if (img){
+    const canvas = document.createElement('canvas')
     canvas.width = size[0]
     canvas.height = size[1]
-    renderer = new THREE.WebGLRenderer({
+    const renderer = new THREE.WebGLRenderer({
       antialias: true,
       alpha: true,
       canvas
     })
-  }
 
-  if(ctx.vrm && renderer){
     const scene = new THREE.Scene()
     const light = new THREE.DirectionalLight(0xffffff)
     light.position.set(1, 1, 1).normalize()
     scene.add(light)
-    scene.add(ctx.vrm.scene)
+    scene.add(vrm.scene)
 
     const rad = (180 + 20) / 180 * Math.PI
     const camera = new THREE.PerspectiveCamera(
@@ -70,15 +64,21 @@ function getImage(ctx:VRMContext, size: number[]){
     renderer.setPixelRatio(window.devicePixelRatio * 4)
     renderer.render(scene, camera)
     formLog()(`render ${ctx.id}`)
+
     //  remove
-    if (ctx.vrm) freeVrm(ctx.vrm)
+    const url = canvas.toDataURL()
+    canvas.remove()
+
+    freeVrm(vrm)
+    freeScene(scene)
     renderer.getRenderTarget()?.dispose()
     renderer.setRenderTarget(null)
-    ctx.vrm = undefined
+    renderer.forceContextLoss()
+    if (renderer) {
+      renderer.dispose()
+    }
+    img.src = url
   }
-  const url = canvas.toDataURL()
-  canvas.remove()
-  return url
 }
 
 export const vrmUrlBase = 'https://binaural.me/public_packages/uploader/vrm/avatar/'
@@ -92,37 +92,26 @@ function getVRMLoader() {
   return loader;
 }
 
-function loadFile(mem: Member, size: number[]){
+function loadFile(mem: Member){
   const loader = getVRMLoader()
   formLog()(`files: ${mem.files}`)
 
   for(const file of mem.files){
-    let ctx:VRMContext|undefined = mem.contexts.find(c => c.id === file)
-    if (ctx) continue
-    ctx = new VRMContext(file)
-    ctx.disposer = autorun(()=>{
-      if (ctx){
-        render3d(ctx, avatarSize)
-      }
-    })
+    let aimg:AvatarImage|undefined = mem.images.find(c => c.id === file)
+    if (aimg) continue
+    aimg = new AvatarImage(file)
     loader.load(`${vrmUrlBase}${file}`, (gltf) => {
       formLog()(`${file} loaded.`)
-      if (!ctx) return
+      if (!aimg) return
       const vrm = gltf.userData.vrm;
       if (!vrm) return;
       vrm.scene.rotation.y = Math.PI
-      ctx.vrm = vrm
+      render3d(aimg, vrm, avatarSize)
       formLog()(`${file} vrm got.`)
     }, undefined, (error) => {
       console.error('Failed to load VRM file:', error)
     })
-    mem.contexts.push(ctx)
-  }
-}
-function render3d(ctx: VRMContext, size: number[]){
-  const img = ctx.imgRef.current
-  if (img){
-    img.src = getImage(ctx, size)
+    mem.images.push(aimg)
   }
 }
 
@@ -133,12 +122,6 @@ export const Choose3DAvatar: React.FC<LocalParticipantFormProps> = (props: Local
     if (reason === 'enter' || reason==='backdropClick'){
     }
     props.close()
-    /*  Not worked.
-    memberRef.current?.contexts.forEach(ctx => {
-      if (ctx.imgRef.current){
-        ctx.imgRef.current.src='data:image/svg+xml,%3Csvg%3E%3Ctext%3Enow loading...%3C/text%3E%3C/svg%3E'
-      }
-    })*/
   }
 
   const [list, setList] = React.useState<JSX.Element[]|undefined>()
@@ -148,7 +131,7 @@ export const Choose3DAvatar: React.FC<LocalParticipantFormProps> = (props: Local
     if (!memberRef.current){
       memberRef.current = {
         files:[],
-        contexts:[],
+        images:[],
       }
     }
     const mem = memberRef.current
@@ -156,29 +139,40 @@ export const Choose3DAvatar: React.FC<LocalParticipantFormProps> = (props: Local
     const req = new XMLHttpRequest();
     req.onload = (e) => {
       const text = req.responseText
-      //  formLog()(`onload ${text}`)
       mem.files = JSON.parse(text)
-      loadFile(mem, avatarSize)
-      setList(mem?.contexts.map((ctx)=>{
-        return <div key={ctx.id} style={{ display:'inline-block', padding:'0 10 0 10',
+      loadFile(mem)
+      setList(mem?.images.map((aimg)=>{
+        return <div key={aimg.id} style={{ display:'inline-block', padding:'0 10 0 10',
           width:avatarSize[0], overflowWrap:'break-word'}}>
           <Button variant="contained" style={{width:avatarSize[0], height:avatarSize[1], textTransform:'none'}}
             onClick={(ev)=>{
               const local = participants.local
-              local.information.email=`${vrmUrlBase}${ctx.id}`
+              local.information.email=`${vrmUrlBase}${aimg.id}`
               close3D(ev, 'enter')
             }}>
             <img alt='loading' style={{
               pointerEvents:'none',
               width:avatarSize[0], height:avatarSize[1],
-            }} ref={ctx.imgRef}/><br />
+            }} ref={aimg.imgRef}/><br />
           </Button>
-          {ctx.id}
+          {aimg.id}
         </div>
       }) )
     };
     req.open("GET", vrmUrl);
     req.send();
+
+    return () => {
+      mem.images.forEach(aimg => {
+        if (aimg.imgRef.current){
+          aimg.imgRef.current.src=''
+          aimg.imgRef.current.remove()
+        }
+      })
+      mem.images = []
+      mem.files = []
+    }
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

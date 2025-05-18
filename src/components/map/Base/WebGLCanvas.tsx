@@ -1,6 +1,6 @@
 import React, {useRef} from 'react'
 import * as THREE from 'three'
-import {VRMAvatar, VRMAvatars} from "@models/utils/vrm"
+import {freeRenderTarget, freeScene, VRMAvatar, VRMAvatars} from "@models/utils/vrm"
 import map from "@stores/Map"
 import { participants } from "@stores/participants"
 
@@ -61,40 +61,59 @@ export interface WebGLCanvasProps{
   refCanvas2D: React.RefObject<HTMLCanvasElement>
   vrmAvatars: VRMAvatars
 }
+
+function createThreeContext(canvas: HTMLCanvasElement){
+  const renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    alpha: true,
+    canvas: canvas
+  })
+  renderer.autoClear = false
+  const offscreen = new THREE.WebGLRenderTarget(600, 300)
+  const rv:WebGLContext = {
+    canvas: canvas,
+    renderer,
+    onscreen: renderer.getRenderTarget()!,
+    offscreen,
+    scene: new THREE.Scene(),
+    selfSprite: new THREE.Sprite(new THREE.SpriteMaterial({map: offscreen.texture, alphaTest:0.001, opacity:0.5})),
+    mirrorSprite: new THREE.Sprite(new THREE.SpriteMaterial({map: offscreen.texture, alphaTest:0.001, opacity:0.6, depthTest:false})),
+  }
+  rv.renderer.setClearColor(new THREE.Color(0,0,0), 0)
+  rv.renderer.clear(true, true, true)
+  const light = new THREE.DirectionalLight(0xffffff)
+  light.position.set(1, 1, 1).normalize()
+  rv.scene.add(light)
+  return rv
+}
+function freeThreeContext(ctx: WebGLContext){
+  ctx.selfSprite.material.dispose();
+  ctx.mirrorSprite.material.dispose();
+  ctx.selfSprite.geometry.dispose();
+  ctx.mirrorSprite.geometry.dispose();
+
+  if (ctx.renderer) {
+    ctx.renderer.dispose()
+    ctx.renderer.forceContextLoss()
+  }
+
+  freeScene(ctx.scene)
+  freeRenderTarget(ctx.offscreen)
+  freeRenderTarget(ctx.onscreen)
+}
+
+
+
 export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) => {
   const refWebGLContext = useRef<WebGLContext>()
-
   React.useEffect(()=>{
     //console.log('WebGL mount')
     if (!props.refCanvasGL.current) return
     const vas = props.vrmAvatars
 
-    function createThreeContext(canvas: HTMLCanvasElement){
-      const renderer = new THREE.WebGLRenderer({
-        antialias: true,
-        alpha: true,
-        canvas: canvas
-      })
-      renderer.autoClear = false
-      const offscreen = new THREE.WebGLRenderTarget(600, 300)
-      const rv:WebGLContext = {
-        canvas: canvas,
-        renderer,
-        onscreen: renderer.getRenderTarget()!,
-        offscreen,
-        scene: new THREE.Scene(),
-        selfSprite: new THREE.Sprite(new THREE.SpriteMaterial({map: offscreen.texture, alphaTest:0.001, opacity:0.5})),
-        mirrorSprite: new THREE.Sprite(new THREE.SpriteMaterial({map: offscreen.texture, alphaTest:0.001, opacity:0.6, depthTest:false})),
-      }
-      rv.renderer.setClearColor(new THREE.Color(0,0,0), 0)
-      rv.renderer.clear(true, true, true)
-      const light = new THREE.DirectionalLight(0xffffff)
-      light.position.set(1, 1, 1).normalize()
-      rv.scene.add(light)
-      return rv
-    }
     let ctx = refWebGLContext.current = createThreeContext(props.refCanvasGL.current)
     ctx.canvas.addEventListener('webglcontextlost', (ev)=>{
+      freeThreeContext(ctx)
       console.log('webglcontextlost');
       ev.preventDefault();
       ctx = refWebGLContext.current = createThreeContext(ctx.canvas)
@@ -107,8 +126,9 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
     //  render
     let prevTime = 0
     let filteredFaceDir=0
+    let animationFrameId: number;
     let animate = (time:number) => {
-      requestAnimationFrame(animate)
+      animationFrameId = requestAnimationFrame(animate)
       if (time - prevTime < animationPeriod) return
       prevTime = time
 
@@ -304,14 +324,16 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
     }
     animate(0)
     return ()=>{
-      animate = ()=>{}
-      ctx.scene.clear()
-      ctx.renderer.dispose()
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId)
+      }
+      freeThreeContext(ctx)
       //  console.log('WebGL unmount')
     }
   },[props.refCanvasGL.current, props.refCanvas2D.current, props.vrmAvatars])
 
-  return <>
+
+return <>
       <canvas style={{
         position: 'absolute',
         top: 0,

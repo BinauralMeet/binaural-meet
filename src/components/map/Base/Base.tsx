@@ -74,11 +74,7 @@ export const Base: React.FC = (props) => {
   function setRotateByMouse(b: boolean){
     setRotateByMouseRaw(b)
     if (b) {
-      outer.current?.requestPointerLock().then(()=>{
-        //console.log('success to lock pointer.')
-      }).catch(e =>{
-        console.log('lock pointer failed', e)
-      })
+      outer.current?.requestPointerLock()
     }else{
       document.exitPointerLock()
     }

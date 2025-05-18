@@ -78,6 +78,11 @@ export const StreamAvatar: React.FC<AvatarProps> = (props: AvatarProps) => {
         video.play()
       }
     }
+    return () => {
+      if (video){
+        video.srcObject = null
+      }
+    }
   },[videoRef.current, props.participant.tracks?.avatarStream])
 
   return <div className={classes.root}>

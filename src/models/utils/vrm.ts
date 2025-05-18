@@ -50,20 +50,27 @@ export class VRMAvatars{
   }
 }
 
-export function freeVrm(vrm: VRM){
-  vrm.scene.traverse((obj) => {
+export function freeScene(scene: THREE.Scene | THREE.Group){
+  scene.traverse((obj) => {
     if (obj instanceof THREE.Mesh) {
       obj.geometry.dispose()
       if (Array.isArray(obj.material)) {
         obj.material.forEach(mat => {
-          mat.map.dispose()
+          if (mat.map) mat.map.dispose()
           mat.dispose()
         })
       } else {
+        if (obj.material.map) obj.material.map.dispose()
         obj.material.dispose()
       }
     }
+    if (obj instanceof THREE.Light) {
+      obj.dispose()
+    }
   })
+}
+export function freeVrm(vrm: VRM){
+  freeScene(vrm.scene)
 }
 function freeNameLabel(avatar:VRMAvatar){
   avatar.nameLabel?.material.map?.dispose()
@@ -281,4 +288,11 @@ export function applyMPLandmarkToVrm(avatar:VRMAvatar, landmarks: AllLandmarks|u
       drawFikStructure(avatar.structure, landmarks, c2dDebug)
     }
   }
+}
+
+export function freeRenderTarget(target: THREE.WebGLRenderTarget) {
+  if (target.texture) {
+    target.texture.dispose();
+  }
+  target.dispose();
 }
