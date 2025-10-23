@@ -13,7 +13,7 @@ export function createLocalMic() {
   const promise = new Promise<MSTrack>((resolutionFunc, rejectionFunc) => {
     const did = participants.local.devicePreference.audioinput
     const audio: MediaTrackConstraints|{echoCancellationType:string}|{advanced:Array<{echoCancellationType?:string}>} = {
-      deviceId: did,
+      deviceId: {exact: did},
       echoCancellation: {ideal: true},
       noiseSuppression: {ideal: true},
       echoCancellationType: 'system',

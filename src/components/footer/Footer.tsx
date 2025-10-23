@@ -162,6 +162,7 @@ export const Footer: React.FC<{height?:number}> = (props) => {
 
   //  Create menu list for device selection
   function makeMenuItem(info: MediaDeviceInfo, close:(did:string) => void):JSX.Element {
+    //console.log(`${info.label}`, info)
     let selected = false
     selected = info.deviceId === participants.local.devicePreference[info.kind]
 
