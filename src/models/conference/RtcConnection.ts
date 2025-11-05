@@ -614,9 +614,9 @@ export class RtcConnection{
       this.rejectMessage(msg, msg.error)
     }else{
       const consumerOptions: mediasoup.types.ConsumerOptions = {
-        id: msg.consumer,
-        producerId: msg.producer,
-        kind: msg.kind,
+        id: msg.consumer!,
+        producerId: msg.producer!,
+        kind: msg.kind!,
         rtpParameters: msg.rtpParameters!
       }
       this.resolveMessage(msg, consumerOptions)

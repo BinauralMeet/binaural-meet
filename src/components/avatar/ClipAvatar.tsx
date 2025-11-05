@@ -30,7 +30,7 @@ const useStyles = makeStyles({
 export const ClipAvatar: React.FC<AvatarProps> = (props: AvatarProps) => {
   const classes = useStyles(props)
   const videoRef = useRef<HTMLVideoElement>(null)
-  const prevClipRef = useRef<MediaClip|undefined>()
+  const prevClipRef = useRef<MediaClip|undefined>(undefined)
 
   useEffect(
     () => {
