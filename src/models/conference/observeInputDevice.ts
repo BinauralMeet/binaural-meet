@@ -9,17 +9,14 @@ import {conference} from '@models/conference'
 
 //  mic device selection
 export function createLocalMic() {
-  //  console.log(`createLocalMic() called`)
   const promise = new Promise<MSTrack>((resolutionFunc, rejectionFunc) => {
     const did = participants.local.devicePreference.audioinput
-    const audio: MediaTrackConstraints|{echoCancellationType:string}|{advanced:Array<{echoCancellationType?:string}>} = {
-      deviceId: {exact: did},
+    //console.log(`createLocalMic() called did:${typeof did} = ${did}`)
+    const audio: MediaTrackConstraints|{echoCancellationType:{ideal:string}}|{advanced:Array<{echoCancellationType?:string}>} = {
+      deviceId: did ? {exact: did} : {ideal: did},
       echoCancellation: {ideal: true},
       noiseSuppression: {ideal: true},
-      echoCancellationType: 'system',
-      advanced: [
-        {echoCancellationType: 'system'},
-      ]
+      echoCancellationType: {ideal: 'system'},
     }
     navigator.mediaDevices.getUserMedia({audio: audio as MediaTrackConstraints}).then((ms)=>{
       const track = ms.getAudioTracks()[0]
