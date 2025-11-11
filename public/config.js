@@ -29,7 +29,7 @@ commonConfig = {
   rtc: rtcConfig,
   websocketTimeout: 60 * 1000,
   soundLocalizationBase: 'avatar',
-  avatarDisplay3D: true,
+  avatarDisplay3D: false,
   avatarDisplay2_5D: false,
 }
 
