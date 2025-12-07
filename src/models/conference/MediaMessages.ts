@@ -2,11 +2,11 @@ import * as mediasoup from 'mediasoup-client'
 export type MSMessageType =
   'dataConnect' | 'positionConnect' | 'position' |
   'connect' | 'preConnect' | 'join' | 'pong' | 'rtpCapabilities' | 'leave' | 'leave_error' |
-  'remoteUpdate' | 'remoteLeft' | 'checkAdmin' | 'addAdmin'| 'removeAdmin' | 'addLogin' | 'removeLogin' |
+  'remoteUpdate' | 'remoteLeft' | 'peerLeft' | 'checkAdmin' | 'addAdmin'| 'removeAdmin' | 'addLogin' | 'removeLogin' |
   'workerAdd' | 'workerDelete' | 'workerUpdate' |
   'createTransport' | 'closeTransport' | 'connectTransport' |
   'produceTransport' | 'closeProducer' | 'consumeTransport' | 'resumeConsumer' |
-  'streamingStart' | 'streamingStop' | 'uploadFile'
+  'streamingStart' | 'streamingStop' | 'uploadFile' | 'serverStatus'
 export interface MSMessage{
   type: MSMessageType
   sn?: number
@@ -79,6 +79,8 @@ export interface MSRemoteUpdateMessage extends MSMessage{
 }
 export interface MSRemoteLeftMessage extends MSMessage{
   remotes: string[]
+}
+export interface MSPeerLeftMessage extends MSPeerMessage{
 }
 
 export interface MSRoomMessage extends MSPeerMessage{
@@ -157,7 +159,7 @@ export interface MSResumeConsumerReply extends MSPeerMessage{
   error?: string
 }
 
-export interface MSCloseTransportMessage extends MSMessage{
+export interface MSCloseTransportMessage extends MSPeerMessage{
   transport: string,
 }
 
@@ -177,4 +179,27 @@ export interface MSPositionConnectMessage extends MSPeerMessage{
 export interface MSPositionMessage extends MSMessage{
   position: number[]
   orientation: number
+}
+
+
+//  Request status to the meida server.
+export interface TransportStatus{
+  id: string
+  appData: unknown
+}
+export interface ProducerStatus extends TransportStatus{
+    closed: boolean
+}
+export interface ConsumerStatus extends ProducerStatus{
+    producerId: string
+}
+export interface MSServerStatusStream{
+  transports: TransportStatus[]
+  producers: ProducerStatus[]
+  consumers: ConsumerStatus[]
+}
+type MSStatusType = 'streams'
+export interface MSServerStatusMessage extends MSMessage{
+  statusType: MSStatusType
+  status?: MSServerStatusStream
 }
