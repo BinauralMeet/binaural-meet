@@ -191,22 +191,22 @@ export const Footer: React.FC<{height?:number}> = (props) => {
     if (bottomItem) rv.push(bottomItem)
     return rv
   }
-  function closeMicMenu(did:string) {
-    if (did) {
+  function closeMicMenu(did:string|null) {
+    if (did !== null) {
       participants.local.devicePreference.audioinput = did
       participants.local.saveMediaSettingsToStorage()
     }
     setMicMenuEl(null)
   }
-  function closeSpeakerMenu(did:string) {
-    if (did) {
+  function closeSpeakerMenu(did:string|null) {
+    if (did !== null) {
       participants.local.devicePreference.audiooutput = did
       participants.local.saveMediaSettingsToStorage()
     }
     setSpeakerMenuEl(null)
   }
-  function closeVideoMenu(did:string) {
-    if (did) {
+  function closeVideoMenu(did:string|null) {
+    if (did !== null) {
       participants.local.devicePreference.videoinput = did
       participants.local.saveMediaSettingsToStorage()
     }
@@ -250,7 +250,7 @@ export const Footer: React.FC<{height?:number}> = (props) => {
           : <SpeakerOnIcon style={{width:iconSize, height:iconSize}} /> }
       </FabMain>
       {speakerMenuEl ? <Menu anchorEl={speakerMenuEl} keepMounted={true}
-        open={Boolean(speakerMenuEl)} onClose={() => { closeSpeakerMenu('') }}>
+        open={Boolean(speakerMenuEl)} onClose={() => { closeSpeakerMenu(null) }}>
         {getMenuItems('audiooutput')}
       </Menu> : undefined}
 
@@ -274,7 +274,7 @@ export const Footer: React.FC<{height?:number}> = (props) => {
             : <MicIcon style={{width:iconSize, height:iconSize}} /> }
       </FabWithTooltip>
       {micMenuEl ? <Menu anchorEl={micMenuEl} keepMounted={true}
-        open={Boolean(micMenuEl)} onClose={() => { closeMicMenu('') }}>
+        open={Boolean(micMenuEl)} onClose={() => { closeMicMenu(null) }}>
         {getMenuItems('audioinput')}
       </Menu> : undefined}
 
@@ -292,7 +292,7 @@ export const Footer: React.FC<{height?:number}> = (props) => {
           : <VideoIcon style={{width:iconSize, height:iconSize}} /> }
       </FabMain>
       {videoMenuEl ? <Menu anchorEl={videoMenuEl} keepMounted={true}
-        open={Boolean(videoMenuEl)} onClose={() => { closeVideoMenu('') }}>
+        open={Boolean(videoMenuEl)} onClose={() => { closeVideoMenu(null) }}>
         {getMenuItems('videoinput')}
       </Menu> : undefined}
 
