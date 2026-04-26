@@ -1,7 +1,6 @@
 import {MAP_CENTER} from '@components/Constants'
 import {MapObject as IMapObject} from '@models/MapObject'
 import {Pose2DMap} from '@models/utils'
-import { playbackAudioDebug } from '@models/utils/playbackAudioDebug'
 import _ from 'lodash'
 import { computed, makeObservable, observable} from 'mobx'
 import {shallowObservable, Store} from './utils'
@@ -40,16 +39,5 @@ export class MediaClip{
   @observable pause = false
   constructor(){
     makeObservable(this)
-    playbackAudioDebug('MediaClip constructed initial state', {
-      pause: this.pause,
-      hasAudioBlob: !!this.audioBlob,
-      hasVideoBlob: !!this.videoBlob,
-      audioDuration: this.audioDuration,
-      audioFrom: this.audioFrom,
-      audioTime: this.audioTime,
-      videoFrom: this.videoFrom,
-      videoTime: this.videoTime,
-      rate: this.rate,
-    })
   }
 }

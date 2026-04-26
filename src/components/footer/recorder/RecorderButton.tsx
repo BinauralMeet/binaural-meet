@@ -1,7 +1,7 @@
 import {acceleratorText2El} from '@components/utils/formatter'
 import {makeStyles} from '@material-ui/styles'
 import {useTranslation} from '@models/locales'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {FabWithTooltip} from '@components/utils/FabEx'
 import {RecorderDialog, RecorderStepType, SetRecorderStepType} from './RecorderDialog'
 import PlayIcon from '@material-ui/icons/PlayArrow'
@@ -14,7 +14,6 @@ import { Observer } from 'mobx-react-lite'
 import { Button, IconButton, MenuItem, Paper, Select, Slider, TextField } from '@material-ui/core'
 import _, { isNumber } from 'lodash'
 import { autorun } from 'mobx'
-import { playbackAudioDebug } from '@models/utils/playbackAudioDebug'
 
 const useStyles = makeStyles({
   root: {
@@ -35,7 +34,7 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
   const [seekOffset, setSeekOffset] = useState(player.offset)
   const [seekOffsetText, setSeekOffsetText] = useState(offsetNumberToText(player.offset))
   const [rate, setRate] = useState(1.0)
-  const doSeek = _.throttle((offset)=>{player.seek(offset)}, 500)
+  const doSeek = useMemo(() => _.throttle((offset:number)=>{player.seek(offset)}, 500), [])
   const refPauseBySeek = useRef<boolean>(false)
 
   function offsetNumberToText(offset: number){
@@ -81,6 +80,7 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
     })
     return ()=>{disposer()}
   }, [])
+  useEffect(()=>()=>{doSeek.cancel()}, [doSeek])
 
   return (
     <div className={classes.root}>
@@ -136,11 +136,7 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
                     }
                   }}
                   onChangeCommitted={(_ev, val)=>{
-                    playbackAudioDebug('RecorderButton seek committed', {
-                      val,
-                      playerState: player.state,
-                      refPauseBySeek: refPauseBySeek.current,
-                    })
+                    doSeek.cancel()
                     if (isNumber(val)){
                       setSeekOffsetAndText(val)
                       player.seek(val)
@@ -178,7 +174,6 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
           <FabWithTooltip size={props.size}
             title = {acceleratorText2El(t('ttPause'))}
             aria-label="share" onClick={() => {
-              playbackAudioDebug('RecorderButton pause user action', {playerState: player.state})
               player.pause()
             }}>
             <PauseIcon color='primary' style={{width:iconSize, height:iconSize}} />
@@ -187,7 +182,6 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
           <FabWithTooltip size={props.size}
             title = {acceleratorText2El(t('ttPlay'))}
             aria-label="share" onClick={() => {
-              playbackAudioDebug('RecorderButton resume user action', {playerState: player.state})
               player.play()
             }}>
             <PlayIcon style={{width:iconSize, height:iconSize}} />

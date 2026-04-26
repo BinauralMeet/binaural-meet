@@ -1,30 +1,6 @@
 import { MediaClip } from "@stores/MapObject"
 import { seekMediaElement } from "@models/utils"
-import { playbackAudioDebug } from "@models/utils/playbackAudioDebug"
 import { NodeGroup, PlayMode, setAudioOutputDevice } from "./NodeGroup"
-
-const describeMediaElement = (audio?: HTMLAudioElement) => {
-  if (!audio) return undefined
-  const audioEx: any = audio
-  return {
-    readyState: audio.readyState,
-    networkState: audio.networkState,
-    paused: audio.paused,
-    muted: audio.muted,
-    volume: audio.volume,
-    currentTime: audio.currentTime,
-    duration: Number.isFinite(audio.duration) ? audio.duration : String(audio.duration),
-    hasSrc: !!audio.src,
-    srcPrefix: audio.src ? audio.src.slice(0, 24) : '',
-    hasSrcObject: !!audio.srcObject,
-    sinkId: audioEx.sinkId,
-    error: audio.error ? {code: audio.error.code, message: audio.error.message} : undefined,
-  }
-}
-const describePlaybackError = (e: unknown) => {
-  if (e instanceof Error) return {name: e.name, message: e.message}
-  return e
-}
 
 type ActiveAudioPath = 'blob' | 'element' | 'none'
 
@@ -38,6 +14,7 @@ export class NodeGroupForPlayback extends NodeGroup {
   private preparedPath: ActiveAudioPath = 'none'
   private preparedBlob?: Blob
   private tinyDurationRetryCount = 0
+  private targetAudioTime = 0
 
   private activeAudioPath(): ActiveAudioPath {
     if (this.playMode === 'Context') return 'blob'
@@ -77,6 +54,7 @@ export class NodeGroupForPlayback extends NodeGroup {
     this.preparedPath = 'none'
     this.preparedBlob = undefined
     this.tinyDurationRetryCount = 0
+    this.targetAudioTime = 0
   }
 
   private recreateBlobAudio() {
@@ -108,28 +86,20 @@ export class NodeGroupForPlayback extends NodeGroup {
     this.activeObjectUrl = audioUrl
     this.preparedPath = activePath
     this.preparedBlob = clip.audioBlob
-
-    playbackAudioDebug('prepare active playback audio', {
-      activePath,
-      revision,
-      audioOffset,
-      audioDuration: clip.audioDuration,
-      blobSize: clip.audioBlob.size,
-      blobType: clip.audioBlob.type,
-    })
+    this.targetAudioTime = audioOffset
 
     if (activePath === 'blob') {
       this.releaseElementAudio()
       const audio = this.recreateBlobAudio()
       audio.src = audioUrl
       audio.playbackRate = clip.rate
-      seekPromises.push(this.seekAfterMetadata(audio, audioOffset, revision, activePath, clip.audioDuration))
+      seekPromises.push(this.seekAfterMetadata(audio, audioOffset, revision, clip.audioDuration))
     }else if (activePath === 'element') {
       this.releaseBlobAudio()
       const audio = this.recreateElementAudio()
       audio.src = audioUrl
       audio.playbackRate = clip.rate
-      seekPromises.push(this.seekAfterMetadata(audio, audioOffset, revision, activePath, clip.audioDuration))
+      seekPromises.push(this.seekAfterMetadata(audio, audioOffset, revision, clip.audioDuration))
     }
   }
 
@@ -140,6 +110,20 @@ export class NodeGroupForPlayback extends NodeGroup {
     return undefined
   }
 
+  private playbackAudioTime(currentTime: number) {
+    return Math.max(0, currentTime)
+  }
+
+  private ensureActiveAudioTime(audio: HTMLAudioElement | undefined, path: ActiveAudioPath) {
+    if (!audio || path === 'none' || audio.readyState < 1) return
+    const seekTo = this.playbackAudioTime(this.targetAudioTime)
+    if (Math.abs(audio.currentTime - seekTo) >= 0.05) {
+      try {
+        audio.currentTime = seekTo
+      } catch(e) {}
+    }
+  }
+
   playClip(clip?:MediaClip){  //  called by autorun() at ConnectedGroup.ts
     if (!clip) return
     //  Check time to play from.
@@ -147,55 +131,14 @@ export class NodeGroupForPlayback extends NodeGroup {
       console.warn(`Audio from:${clip.audioFrom} start:${clip.audioTime}`)
     }
 
-
-    const clipChanged = !this.clipPlaying || clip.audioBlob !== this.clipPlaying.audioBlob
-      || clip.audioFrom !== this.clipPlaying.audioFrom || clip.pause !== this.clipPlaying.pause
-      || clip.rate !== this.clipPlaying.rate || clip.audioDuration !== this.clipPlaying.audioDuration
     const hasAudioBlob = !!clip.audioBlob
-    const bloblessActiveClip = !hasAudioBlob && !clip.pause
     const activePath = this.activeAudioPath()
-    if (clipChanged) {
-      playbackAudioDebug('NodeGroupForPlayback.playClip', {
-        activePath,
-        preparedPath: this.preparedPath,
-        hypothesisBloblessActiveClip: bloblessActiveClip,
-        hasAudioBlob,
-        audioBlobSize: clip.audioBlob?.size,
-        audioBlobType: clip.audioBlob?.type,
-        audioDuration: clip.audioDuration,
-        audioFrom: clip.audioFrom,
-        audioTime: clip.audioTime,
-        pause: clip.pause,
-        rate: clip.rate,
-        playMode: this.playMode,
-        sourceRevision: this.sourceRevision,
-        audioDeviceId: this.audioDeviceId,
-      })
-    }
-    if (bloblessActiveClip) {
-      playbackAudioDebug('BLOBLESS_ACTIVE_CLIP playClip entered before audioBlob is set', {
-        clipChanged,
-        audioFrom: clip.audioFrom,
-        audioTime: clip.audioTime,
-        pause: clip.pause,
-        rate: clip.rate,
-        sourceRevision: this.sourceRevision,
-        hasExistingBlobElement: !!this.audioElementForBlob,
-        hasExistingElement: !!this.audioElement,
-        previousHasAudioBlob: !!this.clipPlaying?.audioBlob,
-        previousPause: this.clipPlaying?.pause,
-      })
-    }
 
     let playNow = false
     const seekPromises: Promise<void>[] = []
     let seekBeforePlay = false
 
     if (!hasAudioBlob && this.clipPlaying?.audioBlob) {
-      playbackAudioDebug('audio blob cleared; release prepared playback audio', {
-        activePath,
-        preparedPath: this.preparedPath,
-      })
       this.pauseElements()
       this.releaseBlobAudio()
       this.releaseElementAudio()
@@ -205,22 +148,7 @@ export class NodeGroupForPlayback extends NodeGroup {
     //  Update audioBlob
     const audioOffset = Math.max(0, (clip.audioFrom - clip.audioTime) / 1000.0)
     if (clip.audioBlob && (clip.audioBlob !== this.preparedBlob || activePath !== this.preparedPath)){
-      /*  const {audioBlob, videoBlob, ...clipLog} = clip
-          const clipStr = JSON.stringify(clipLog)
-          console.log(`playClip audioBlob ${clipStr}`) // */
       const revision = ++this.sourceRevision
-      playbackAudioDebug('audio blob changed', {
-        revision,
-        audioOffset,
-        activePath,
-        preparedPath: this.preparedPath,
-        hadBloblessActiveClipBeforeBlob: bloblessActiveClip || (!this.clipPlaying?.audioBlob && this.clipPlaying?.pause === false),
-        previousHasAudioBlob: !!this.clipPlaying?.audioBlob,
-        previousPause: this.clipPlaying?.pause,
-        audioDuration: clip.audioDuration,
-        blobSize: clip.audioBlob.size,
-        blobType: clip.audioBlob.type,
-      })
       this.prepareActiveAudio(clip, audioOffset, revision, seekPromises)
       seekBeforePlay = !clip.pause
       playNow = false
@@ -229,19 +157,11 @@ export class NodeGroupForPlayback extends NodeGroup {
     //  Update currentTime and playbackRate
     if (hasAudioBlob && clip.audioFrom !== this.clipPlaying?.audioFrom && !seekPromises.length){
       const revision = ++this.sourceRevision
-      playbackAudioDebug('audioFrom changed; seeking existing audio elements', {
-        revision,
-        activePath,
-        hypothesisSeekWithoutBlob: !hasAudioBlob,
-        hypothesisBloblessActiveClip: bloblessActiveClip,
-        audioOffset,
-        audioFrom: clip.audioFrom,
-        audioTime: clip.audioTime,
-      })
       this.pauseElements()
+      this.targetAudioTime = audioOffset
       const activeAudio = this.activeAudioElement()
       if (activeAudio && activePath !== 'none') {
-        seekPromises.push(this.seekAfterMetadata(activeAudio, audioOffset, revision, activePath, clip.audioDuration))
+        seekPromises.push(this.seekAfterMetadata(activeAudio, audioOffset, revision, clip.audioDuration))
       }
       seekBeforePlay = !clip.pause
       playNow = false
@@ -254,9 +174,6 @@ export class NodeGroupForPlayback extends NodeGroup {
 
     //  play for both
     if (clip.pause !== this.clipPlaying?.pause){
-      const {videoBlob, audioBlob, ...clipLog} = clip
-      //  console.log(`NGP: ${clip.pause?'Pause':'Play'} ${JSON.stringify(clipLog)}`)
-      playbackAudioDebug('clip pause changed', {...clipLog})
       if (clip.pause){
         this.pauseElements()
       }else if (hasAudioBlob && !seekBeforePlay){
@@ -274,19 +191,6 @@ export class NodeGroupForPlayback extends NodeGroup {
       this.pendingSeek = Promise.all(seekPromises).then(()=>{})
     }
     //  play() if needed
-    if (seekBeforePlay || playNow) {
-      playbackAudioDebug('play decision', {
-        seekBeforePlay,
-        playNow,
-        activePath: this.activeAudioPath(),
-        hypothesisBloblessActiveClip: bloblessActiveClip,
-        willPlayWithoutAudioBlob: !hasAudioBlob,
-        sourceRevision: this.sourceRevision,
-        pendingSeek: seekPromises.length,
-        blobAudio: describeMediaElement(this.audioElementForBlob),
-        elementAudio: describeMediaElement(this.audioElement),
-      })
-    }
     if (seekBeforePlay) this.playElementsAfterSeek(this.sourceRevision, this.pendingSeek)
     if (playNow) this.playElements(this.sourceRevision)
   }
@@ -296,14 +200,8 @@ export class NodeGroupForPlayback extends NodeGroup {
   }
 
   private waitForUsableDuration(audio: HTMLAudioElement, expectedDurationMs: number,
-                                revision: number, path: 'blob' | 'element' | 'unknown') {
+                                revision: number) {
     if (!this.isDurationImplausiblyTiny(audio, expectedDurationMs)) return Promise.resolve()
-    playbackAudioDebug('waiting because playback audio duration is implausibly tiny', {
-      path,
-      revision,
-      expectedDurationMs,
-      audio: describeMediaElement(audio),
-    })
     return new Promise<void>((resolve) => {
       let timeout = 0
       const finish = () => {
@@ -328,57 +226,22 @@ export class NodeGroupForPlayback extends NodeGroup {
   }
 
   private seekAfterMetadata(audio: HTMLAudioElement, currentTime: number, revision = this.sourceRevision,
-                            path: 'blob' | 'element' | 'unknown' = 'unknown', expectedDurationMs = 0){
+                            expectedDurationMs = 0){
     if (revision !== this.sourceRevision) {
-      playbackAudioDebug('seek skipped by stale revision', {path, revision, sourceRevision: this.sourceRevision})
       return Promise.resolve()
     }
-    playbackAudioDebug('seek start', {
-      path,
-      currentTime,
-      revision,
-      expectedDurationMs,
-      audio: describeMediaElement(audio),
-    })
     return seekMediaElement(audio, currentTime).then(() => {
-      return this.waitForUsableDuration(audio, expectedDurationMs, revision, path)
-    }).then(() => {
-      playbackAudioDebug('seek done', {
-        path,
-        currentTime,
-        revision,
-        expectedDurationMs,
-        durationStillImplausible: this.isDurationImplausiblyTiny(audio, expectedDurationMs),
-        audio: describeMediaElement(audio),
-      })
+      return this.waitForUsableDuration(audio, expectedDurationMs, revision)
     })
   }
   private playElementsAfterSeek(revision: number, seekReady: Promise<void>){
-    playbackAudioDebug('waiting seek before play', {revision, sourceRevision: this.sourceRevision})
     seekReady.then(() => {
-      playbackAudioDebug('seek promise resolved before play', {
-        revision,
-        sourceRevision: this.sourceRevision,
-        pause: this.clipPlaying?.pause,
-      })
       if (revision !== this.sourceRevision || this.clipPlaying?.pause) { return }
       this.playElements(revision)
     })
   }
   private playElements(revision: number){
-    if (this.clipPlaying){
-      const {videoBlob, audioBlob, ...clipLog} = this.clipPlaying
-      //console.log(`playElements for ${JSON.stringify(clipLog)}`)
-      playbackAudioDebug('playElements requested', {...clipLog})
-    }
     this.applyAudioOutput().then(() => {
-      playbackAudioDebug('applyAudioOutput resolved before play()', {
-        revision,
-        sourceRevision: this.sourceRevision,
-        pause: this.clipPlaying?.pause,
-        blobAudio: describeMediaElement(this.audioElementForBlob),
-        elementAudio: describeMediaElement(this.audioElement),
-      })
       if (revision !== this.sourceRevision || this.clipPlaying?.pause) { return }
       this.playElementsWithCurrentOutput(revision)
     })
@@ -391,29 +254,13 @@ export class NodeGroupForPlayback extends NodeGroup {
       if (revision === group.sourceRevision && !group.clipPlaying?.pause){
         const audio = getAudio(group)
         const expectedDurationMs = group.clipPlaying?.audioDuration || 0
+        group.ensureActiveAudioTime(audio, path)
         if (group.isDurationImplausiblyTiny(audio, expectedDurationMs) && group.tinyDurationRetryCount < 10) {
           group.tinyDurationRetryCount += 1
-          playbackAudioDebug('play delayed because playback audio duration is implausibly tiny', {
-            path,
-            activePath,
-            revision,
-            retry: group.tinyDurationRetryCount,
-            expectedDurationMs,
-            audio: describeMediaElement(audio),
-          })
           group.playRetryTimers.push(window.setTimeout(()=>playAgain(group, path, getAudio), 100))
           return
         }
-        playbackAudioDebug('calling play() for playback audio', {path, activePath, audio: describeMediaElement(audio)})
-        audio?.play().then(() => {
-          playbackAudioDebug('play() succeeded for playback audio', {path, activePath, audio: describeMediaElement(audio)})
-        }).catch((e)=>{
-          playbackAudioDebug('play() failed for playback audio', {
-            path,
-            activePath,
-            error: describePlaybackError(e),
-            audio: describeMediaElement(audio),
-          })
+        audio?.play().catch(()=>{
           group.playRetryTimers.push(window.setTimeout(()=>playAgain(group, path, getAudio), 100))
         })
       }
@@ -430,19 +277,12 @@ export class NodeGroupForPlayback extends NodeGroup {
   }
 
   private pauseElements(){
-    playbackAudioDebug('pauseElements', {
-      blobAudio: describeMediaElement(this.audioElementForBlob),
-      elementAudio: describeMediaElement(this.audioElement),
-    })
     this.clearPlayRetryTimers()
     this.audioElementForBlob?.pause()
     this.audioElement?.pause()
   }
 
   private clearPlayRetryTimers(){
-    if (this.playRetryTimers.length) {
-      playbackAudioDebug('clear play retry timers', {count: this.playRetryTimers.length})
-    }
     for(const timer of this.playRetryTimers){
       window.clearTimeout(timer)
     }
@@ -451,10 +291,6 @@ export class NodeGroupForPlayback extends NodeGroup {
 
   private applyAudioOutput(){
     if (!this.audioDeviceId) {
-      playbackAudioDebug('applyAudioOutput skipped; audioDeviceId is empty', {
-        blobAudio: describeMediaElement(this.audioElementForBlob),
-        elementAudio: describeMediaElement(this.audioElement),
-      })
       return Promise.resolve(false)
     }
 
@@ -465,48 +301,23 @@ export class NodeGroupForPlayback extends NodeGroup {
     if (this.audioElement) {
       promises.push(setAudioOutputDevice(this.audioElement, this.audioDeviceId))
     }
-    playbackAudioDebug('applyAudioOutput start', {audioDeviceId: this.audioDeviceId, count: promises.length})
     return Promise.all(promises).then((results) => {
-      playbackAudioDebug('applyAudioOutput done', {
-        audioDeviceId: this.audioDeviceId,
-        results,
-        blobAudio: describeMediaElement(this.audioElementForBlob),
-        elementAudio: describeMediaElement(this.audioElement),
-      })
       return results.some(Boolean)
     })
   }
 
   setAudioOutput(id: string) {
-    playbackAudioDebug('NodeGroupForPlayback.setAudioOutput', {
-      id,
-      currentAudioDeviceId: this.audioDeviceId,
-      blobAudio: describeMediaElement(this.audioElementForBlob),
-      elementAudio: describeMediaElement(this.audioElement),
-    })
     const promises = [super.setAudioOutput(id)]
     if (this.audioElementForBlob) {
       promises.push(setAudioOutputDevice(this.audioElementForBlob, id))
     }
     return Promise.all(promises).then((results) => {
-      playbackAudioDebug('NodeGroupForPlayback.setAudioOutput done', {
-        id,
-        results,
-        blobAudio: describeMediaElement(this.audioElementForBlob),
-        elementAudio: describeMediaElement(this.audioElement),
-      })
       return results.some(Boolean)
     })
   }
 
   setPlayMode(playMode: PlayMode|undefined) {
     //  Ignore NodeGroup.setPlayMode()
-    playbackAudioDebug('NodeGroupForPlayback.setPlayMode', {
-      playMode,
-      previousPlayMode: this.playMode,
-      blobAudio: describeMediaElement(this.audioElementForBlob),
-      elementAudio: describeMediaElement(this.audioElement),
-    })
     this.playMode = playMode
     if (this.audioElementForBlob) this.audioElementForBlob.volume = playMode === 'Context' ? 1 : 0
     this.updateVolume() //  for this.audioElement

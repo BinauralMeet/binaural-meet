@@ -1,39 +1,53 @@
-import { playbackAudioDebug } from './playbackAudioDebug'
+const SEEK_TOLERANCE = 0.08
 
-export function seekMediaElement(media: HTMLMediaElement, currentTime: number, timeout = 1000) {
+export function seekMediaElement(media: HTMLMediaElement, currentTime: number, timeout = 3000) {
   return new Promise<void>((resolve) => {
     const targetTime = Math.max(0, currentTime)
-    let fallback = 0
+    let finishTimer = 0
+    let retryTimer = 0
     let durationPrepared = false
+    let finished = false
+    let attempts = 0
+    let seekTo = targetTime
+
+    const isNearTarget = () => Math.abs(media.currentTime - seekTo) < SEEK_TOLERANCE
+
+    const cleanup = () => {
+      media.removeEventListener('seeked', check)
+      media.removeEventListener('error', finish)
+      media.removeEventListener('loadeddata', check)
+      media.removeEventListener('canplay', check)
+      media.removeEventListener('timeupdate', check)
+      if (finishTimer) window.clearTimeout(finishTimer)
+      if (retryTimer) window.clearTimeout(retryTimer)
+    }
 
     const finish = () => {
-      playbackAudioDebug('seekMediaElement finish', {
-        targetTime,
-        currentTime: media.currentTime,
-        duration: Number.isFinite(media.duration) ? media.duration : String(media.duration),
-        hasSrc: !!media.src,
-        srcPrefix: media.src ? media.src.slice(0, 24) : '',
-        hasSrcObject: !!media.srcObject,
-        readyState: media.readyState,
-        networkState: media.networkState,
-      })
-      media.removeEventListener('seeked', finish)
-      media.removeEventListener('error', finish)
-      if (fallback) window.clearTimeout(fallback)
+      if (finished) return
+      finished = true
+      cleanup()
       resolve()
     }
 
+    const scheduleRetry = () => {
+      if (finished || retryTimer) return
+      retryTimer = window.setTimeout(() => {
+        retryTimer = 0
+        seek()
+      }, 80)
+    }
+
+    const check = () => {
+      if (isNearTarget()) {
+        finish()
+      }else if (media.readyState >= 2 && attempts < 8){
+        scheduleRetry()
+      }
+    }
+
     const seek = () => {
-      playbackAudioDebug('seekMediaElement seek', {
-        targetTime,
-        currentTime: media.currentTime,
-        duration: Number.isFinite(media.duration) ? media.duration : String(media.duration),
-        hasSrc: !!media.src,
-        srcPrefix: media.src ? media.src.slice(0, 24) : '',
-        hasSrcObject: !!media.srcObject,
-        readyState: media.readyState,
-        networkState: media.networkState,
-      })
+      if (finished) return
+      seekTo = targetTime
       if (!durationPrepared && media.duration === Infinity && targetTime > 0) {
         durationPrepared = true
         let prepared = false
@@ -50,7 +64,6 @@ export function seekMediaElement(media: HTMLMediaElement, currentTime: number, t
         media.addEventListener('timeupdate', prepareSeek, {once: true})
         prepareTimer = window.setTimeout(prepareSeek, 500)
         try {
-          playbackAudioDebug('seekMediaElement prepare infinite duration', {targetTime})
           media.currentTime = Number.MAX_SAFE_INTEGER
         }catch(e) {
           prepareSeek()
@@ -59,21 +72,21 @@ export function seekMediaElement(media: HTMLMediaElement, currentTime: number, t
       }
 
       try {
-        const duration = Number.isFinite(media.duration) ? media.duration : undefined
-        const seekTo = duration === undefined ? targetTime : Math.min(targetTime, Math.max(0, duration - 0.01))
         if (Math.abs(media.currentTime - seekTo) < 0.05) {
-          playbackAudioDebug('seekMediaElement already near target', {
-            targetTime,
-            seekTo,
-            currentTime: media.currentTime,
-          })
-          resolve()
+          finish()
           return
         }
-        media.addEventListener('seeked', finish, {once: true})
+        attempts += 1
+        media.addEventListener('seeked', check, {once: true})
         media.addEventListener('error', finish, {once: true})
-        fallback = window.setTimeout(finish, timeout)
+        media.addEventListener('loadeddata', check)
+        media.addEventListener('canplay', check)
+        media.addEventListener('timeupdate', check)
+        if (!finishTimer) finishTimer = window.setTimeout(finish, timeout)
         media.currentTime = seekTo
+        if (!media.seeking) {
+          check()
+        }
       }catch(e) {
         console.warn(`Failed to seek media element to ${targetTime}.`, e)
         finish()
@@ -83,14 +96,6 @@ export function seekMediaElement(media: HTMLMediaElement, currentTime: number, t
     if (media.readyState >= 1) {
       seek()
     }else {
-      playbackAudioDebug('seekMediaElement waiting loadedmetadata', {
-        targetTime,
-        hasSrc: !!media.src,
-        srcPrefix: media.src ? media.src.slice(0, 24) : '',
-        hasSrcObject: !!media.srcObject,
-        readyState: media.readyState,
-        networkState: media.networkState,
-      })
       media.addEventListener('loadedmetadata', seek, {once: true})
       media.load()
     }

@@ -15,7 +15,6 @@ import { Divider, IconButton, TextField } from '@material-ui/core'
 import { Observer } from 'mobx-react-lite'
 import {map} from '@stores/'
 import { timeToHourMinSec } from '@models/utils/date'
-import { playbackAudioDebug } from '@models/utils/playbackAudioDebug'
 
 export const RecorderMenu: React.FC<DialogPageProps> = (props) => {
   const {t} = useTranslation()
@@ -49,10 +48,6 @@ export const RecorderMenu: React.FC<DialogPageProps> = (props) => {
     }
   }
   function playPausePlayback(id?: number){
-    playbackAudioDebug('RecorderMenu.playPausePlayback user action', {
-      playerState: player.state,
-      id,
-    })
     if (player.state === 'play'){
       player.pause()
       props.setRecorderStep('none')
@@ -62,20 +57,13 @@ export const RecorderMenu: React.FC<DialogPageProps> = (props) => {
         if (record && record.blob){
           props.setRecorderStep('none')
           player.load(record.blob, record.title, true).then(()=>{
-            playbackAudioDebug('RecorderMenu record load resolved; calling player.play()', {
-              title: record.title,
-              id,
-              playerState: player.state,
-            })
             player.play()
           })
         }
       }else{
-        playbackAudioDebug('RecorderMenu calling player.play() without loading', {playerState: player.state})
         player.play()
       }
     }else if (player.state === 'pause'){
-      playbackAudioDebug('RecorderMenu resume playback', {playerState: player.state})
       player.play()
     }
   }
@@ -125,18 +113,8 @@ export const RecorderMenu: React.FC<DialogPageProps> = (props) => {
           onChange={ (ev) => {
             const files = ev.currentTarget?.files
             if (files && files.length) {
-              playbackAudioDebug('RecorderMenu file selected user action', {
-                name: files[0].name,
-                size: files[0].size,
-                startTime,
-              })
               props.setRecorderStep('none')
               player.load(files[0], files[0].name, true).then(()=>{
-                playbackAudioDebug('RecorderMenu file load resolved; seek then play', {
-                  name: files[0].name,
-                  startTime,
-                  playerState: player.state,
-                })
                 player.seek(Number(startTime))
                 player.play()
               })

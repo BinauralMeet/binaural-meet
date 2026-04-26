@@ -4,7 +4,6 @@ import errorInfo from '@stores/ErrorInfo'
 import {autorun} from 'mobx'
 import {getAudioOutputDevice, NodeGroup, PlayMode, setAudioOutputDevice} from './NodeGroup'
 import { NodeGroupForPlayback } from './NodeGroupForPlayback'
-import { playbackAudioDebug } from '@models/utils/playbackAudioDebug'
 
 export class StereoManager {
   private readonly audioContext: AudioContext = new window.AudioContext()
@@ -114,25 +113,12 @@ export class StereoManager {
   }
 
   public setAudioOutput(deviceId:string) {
-    playbackAudioDebug('StereoManager.setAudioOutput start', {
-      deviceId,
-      playMode: this.playMode,
-      audioOutputMuted: this.audioOutputMuted,
-      nodeCount: Object.keys(this.nodes).length,
-    })
     this.audioDeviceId = deviceId
     const promises = [setAudioOutputDevice(this.audioElement, deviceId)]
     for (const node in this.nodes) {
       promises.push(this.nodes[node].setAudioOutput(deviceId))
     }
     return Promise.all(promises).then((results) => {
-      playbackAudioDebug('StereoManager.setAudioOutput done', {
-        deviceId,
-        results,
-        playMode: this.playMode,
-        audioOutputMuted: this.audioOutputMuted,
-        sinkId: getAudioOutputDevice(this.audioElement),
-      })
       if (results.some(Boolean) && this.playMode === 'Context' && !this.audioOutputMuted) {
         this.audioContext.resume().catch(()=>{})
         this.audioElement.play().catch(()=>{})
