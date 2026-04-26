@@ -1,6 +1,7 @@
 import {AvatarProps} from './ComposedAvatar'
 import {makeStyles} from '@material-ui/core/styles'
 import { MediaClip } from '@stores/MapObject'
+import { seekMediaElement } from '@models/utils'
 import { autorun } from 'mobx'
 import React, {useEffect, useRef} from 'react'
 
@@ -31,6 +32,8 @@ export const ClipAvatar: React.FC<AvatarProps> = (props: AvatarProps) => {
   const classes = useStyles(props)
   const videoRef = useRef<HTMLVideoElement>(null)
   const prevClipRef = useRef<MediaClip|undefined>(undefined)
+  const seekPromiseRef = useRef<Promise<void>>(Promise.resolve())
+  const seekRevisionRef = useRef(0)
 
   useEffect(
     () => {
@@ -59,7 +62,17 @@ export const ClipAvatar: React.FC<AvatarProps> = (props: AvatarProps) => {
           // console.log(`ClipAvatar autorun clip:${audioBlob?'A':' '}${videoBlob?'V':' '} ${JSON.stringify(clipLog)} `)
 
           if (clip && clip.videoBlob){
-            if (clip.videoBlob !== prev?.videoBlob){
+            const videoBlobChanged = clip.videoBlob !== prev?.videoBlob
+            let seekPromise: Promise<void>|undefined
+            const playAfterSeek = () => {
+              const revision = seekRevisionRef.current
+              seekPromiseRef.current.then(() => {
+                if (revision === seekRevisionRef.current && !props.participant.clip?.pause) {
+                  video.play().catch(()=>{})
+                }
+              })
+            }
+            if (videoBlobChanged){
               //console.log('videoBlob set')
               const url = URL.createObjectURL(clip.videoBlob)
               video.src = url
@@ -68,16 +81,21 @@ export const ClipAvatar: React.FC<AvatarProps> = (props: AvatarProps) => {
             if (clip.rate !== prev?.rate){
               video.playbackRate = clip.rate
             }
-            if (clip.videoFrom !== prev?.videoFrom){
+            if (videoBlobChanged || clip.videoFrom !== prev?.videoFrom){
               const ct = (clip.videoFrom - clip.videoTime) / 1000.0
               if (ct < 0){
                 clip.videoBlob = undefined
+              }else{
+                seekRevisionRef.current += 1
+                seekPromise = seekMediaElement(video, ct)
+                seekPromiseRef.current = seekPromise
               }
-              video.currentTime = ct
             }
             if (clip.pause !== prev?.pause){
               if (clip.pause) video.pause()
-              else video.play()
+              else playAfterSeek()
+            }else if (!clip.pause && seekPromise){
+              playAfterSeek()
             }
             prevClipRef.current = {...clip}
           }

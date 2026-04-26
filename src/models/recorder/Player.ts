@@ -2,7 +2,7 @@ import {ISharedContent, ISharedContentToSend, SharedContentInfoData} from '@mode
 import {BaseInformation, RemoteInformation, Viewpoint} from '@models/Participant'
 import {diffSet, str2Mouse, str2Pose} from '@models/utils'
 import {TrackStates} from '@stores/participants/ParticipantBase'
-import {computed, makeObservable, observable} from 'mobx'
+import {computed, makeObservable, observable, runInAction} from 'mobx'
 import {BMMessage} from '@models/conference/DataMessage'
 import {MessageType} from '@models/conference/DataMessageType'
 import { MediaClip } from '@stores/MapObject'
@@ -10,7 +10,16 @@ import {MediaKind, BlobKind, recLog} from './RecorderTypes'
 import participants from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
 import { VrmRig } from '@models/utils/vrmIK'
+import { playbackAudioDebug } from '@models/utils/playbackAudioDebug'
 declare const d:any                  //  from index.html
+
+function defaultMimeTypeForPlayback(kind: BlobKind) {
+  switch (kind) {
+    case 'audio': return 'audio/webm'
+    case 'video': return 'video/webm'
+    default: return ''
+  }
+}
 
 interface BlobHeader{
   cid?: string
@@ -117,6 +126,12 @@ class Player{
     this.header_ = new RecordHeader()
   }
   load(archiveOr: Blob|undefined, title: string, loadMedia: boolean){
+    playbackAudioDebug('Player.load start', {
+      title,
+      loadMedia,
+      archiveSize: archiveOr?.size,
+      hasCachedArchive: !!this.archive,
+    })
     this.clear()
     if (archiveOr) this.archive = archiveOr
     else archiveOr = this.archive
@@ -136,6 +151,18 @@ class Player{
         archive.slice(start, start+headerLen).text().then(text => {
           start += headerLen
           const headers = JSON.parse(text) as BlobHeader[]
+          playbackAudioDebug('Player.load headers parsed', {
+            title,
+            headers: headers.map(h => ({
+              kind: h.kind,
+              role: h.role,
+              pid: h.pid,
+              cid: h.cid,
+              time: h.time,
+              duration: h.duration,
+              size: h.size,
+            })),
+          })
           //  recLog(JSON.stringify(headers))
           for(const header of headers){
             if (header.role === 'message'){
@@ -154,7 +181,18 @@ class Player{
               this.header_.blobs.push(header)
               if (loadMedia){
                 archive.slice(start, start+header.size).arrayBuffer().then(ab => {
-                  const blob = new Blob([ab])
+                  const mimeType = defaultMimeTypeForPlayback(header.kind)
+                  const blob = new Blob([ab], mimeType ? {type: mimeType} : undefined)
+                  playbackAudioDebug('Player.load media blob created', {
+                    kind: header.kind,
+                    role: header.role,
+                    pid: header.pid,
+                    cid: header.cid,
+                    time: header.time,
+                    duration: header.duration,
+                    originalSize: header.size,
+                    blob: {size: blob.size, type: blob.type},
+                  })
                   this.medias.push(new MediaPlay(blob, header))
                   count ++
                   if (count === headers.length){ resolve() }
@@ -176,6 +214,15 @@ class Player{
     return promise
   }
   seek(offset: number){
+    playbackAudioDebug('Player.seek start', {
+      offset,
+      currentTime: this.currentTime,
+      startTime: this.startTime,
+      state: this.state,
+      mediasPlaying: this.mediasPlaying.map(m => ({
+        kind: m.kind, pid: m.pid, cid: m.cid, time: m.time, duration: m.duration,
+      })),
+    })
     const messages = Array.from(this.messages)
     const medias = Array.from(this.medias)
     messages.sort((a,b) => a.time - b.time)
@@ -198,8 +245,24 @@ class Player{
     while (medias.length && medias[0].time <= this.currentTime){
       const media = medias.shift()!
       if (this.playMedia(media, this.currentTime)){
+        playbackAudioDebug('Player.seek playMedia accepted', {
+          kind: media.kind,
+          pid: media.pid,
+          cid: media.cid,
+          time: media.time,
+          duration: media.duration,
+          timeFrom: this.currentTime,
+        })
         this.addPlayingMedia(media)
       }else{
+        playbackAudioDebug('Player.seek playMedia skipped', {
+          kind: media.kind,
+          pid: media.pid,
+          cid: media.cid,
+          time: media.time,
+          duration: media.duration,
+          timeFrom: this.currentTime,
+        })
         mediasNotPlayed.push(media)
       }
     }
@@ -216,6 +279,17 @@ class Player{
     this.setRateToClips(rate)
   }
   play(){
+    playbackAudioDebug('Player.play start', {
+      state: this.state,
+      currentTime: this.currentTime,
+      offset: this.offset,
+      mediaCount: this.medias.length,
+      mediasPlaying: this.mediasPlaying.map(m => ({
+        kind: m.kind, pid: m.pid, cid: m.cid, time: m.time, duration: m.duration,
+      })),
+      pidsPlaying: Array.from(this.pidsPlaying.values()),
+      cidsPlaying: Array.from(this.cidsPlaying.values()),
+    })
     this.state_ = 'play'
     this.setPauseToClips(false)
 
@@ -240,10 +314,16 @@ class Player{
       messages.splice(0, ffTo)
     }
 
-    const ffToMedia = medias.findIndex(m=>m.time >= this.currentTime) - 1
-    if (ffToMedia > 0){  //  skip to ffToMedia
-      medias.splice(0, ffToMedia)
-    }
+    const mediasToPlay = medias.filter(media => {
+      const alreadyEnded = media.duration && media.time + media.duration <= this.currentTime
+      return !alreadyEnded && !this.mediasPlaying.includes(media)
+    })
+    playbackAudioDebug('Player.play media queue prepared', {
+      queued: mediasToPlay.map(m => ({
+        kind: m.kind, pid: m.pid, cid: m.cid, time: m.time, duration: m.duration,
+      })),
+    })
+    medias.splice(0, medias.length, ...mediasToPlay)
 
     let lastTime = Date.now()
     const step = () => {
@@ -261,6 +341,14 @@ class Player{
       //  Play media
       while (medias.length && medias[0].time < this.currentTime){
         const media = medias.shift()!
+        playbackAudioDebug('Player.play interval media due', {
+          kind: media.kind,
+          pid: media.pid,
+          cid: media.cid,
+          mediaTime: media.time,
+          duration: media.duration,
+          currentTime: this.currentTime,
+        })
         if (this.playMedia(media, this.currentTime)){
           this.addPlayingMedia(media)
         }
@@ -300,6 +388,11 @@ class Player{
     recLog(`${pause? 'Pause' : 'Play'}`
       + ` pids: ${JSON.stringify(Array.from(this.pidsPlaying.values()))}`
       + ` cids: ${JSON.stringify(Array.from(this.cidsPlaying.values()))}`)
+    playbackAudioDebug('Player.setPauseToClips', {
+      pause,
+      pidsPlaying: Array.from(this.pidsPlaying.values()),
+      cidsPlaying: Array.from(this.cidsPlaying.values()),
+    })
     this.pidsPlaying.forEach(pid=>{
       const p = participants.playback.get(pid)
       if (p && p.clip){
@@ -314,6 +407,12 @@ class Player{
     })
   }
   pause(){
+    playbackAudioDebug('Player.pause', {
+      currentTime: this.currentTime,
+      mediasPlaying: this.mediasPlaying.map(m => ({
+        kind: m.kind, pid: m.pid, cid: m.cid, time: m.time, duration: m.duration,
+      })),
+    })
     this.state_ = 'pause'
     if (this.playInterval){
       window.clearInterval(this.playInterval)
@@ -327,6 +426,7 @@ class Player{
       if (clip){
         clip.pause = true
         clip.audioBlob = undefined
+        clip.audioDuration = 0
         clip.videoBlob = undefined
       }
     }
@@ -335,6 +435,7 @@ class Player{
       if (clip){
         clip.pause = true
         clip.audioBlob = undefined
+        clip.audioDuration = 0
         clip.videoBlob = undefined
       }
     }
@@ -365,7 +466,10 @@ class Player{
     const clip = media.pid ? participants.playback.get(`p_${media.pid}`)?.clip :
       media.cid ? contents.playbackClips.get(`p_${media.cid}`) : undefined
     if (clip){
-      if (media.kind === 'audio') clip.audioBlob = undefined
+      if (media.kind === 'audio') {
+        clip.audioBlob = undefined
+        clip.audioDuration = 0
+      }
       if (media.kind === 'video') clip.videoBlob = undefined
     }
   }
@@ -393,7 +497,27 @@ class Player{
   }
 
   private playMedia(media:MediaPlay, timeFrom:number){
+    playbackAudioDebug('Player.playMedia start', {
+      kind: media.kind,
+      pid: media.pid,
+      cid: media.cid,
+      mediaTime: media.time,
+      duration: media.duration,
+      timeFrom,
+      currentTime: this.currentTime,
+      state: this.state,
+      blob: {size: media.blob.size, type: media.blob.type},
+    })
     if (media.duration && media.duration < timeFrom - media.time || this.currentTime < media.time){
+      playbackAudioDebug('Player.playMedia rejected by time window', {
+        kind: media.kind,
+        pid: media.pid,
+        cid: media.cid,
+        mediaTime: media.time,
+        duration: media.duration,
+        timeFrom,
+        currentTime: this.currentTime,
+      })
       return false //  Already ended or not start yet. Skip to play
     }
     ///*
@@ -412,21 +536,41 @@ class Player{
       this.cids.add(cid)
       clip = contents.getOrCreatePlaybackClip(cid)
     }
-    if (this.state === 'pause') clip!.pause = true
-    if (media.kind === 'audio'){
-      clip!.audioTime = media.time
-      clip!.audioFrom = timeFrom
-      clip!.rate = this.rate
-      clip!.audioBlob = media.blob
-    }else if (media.kind === 'video'){
-      clip!.videoTime = media.time
-      clip!.videoFrom = timeFrom
-      clip!.rate = this.rate
-      clip!.videoBlob = media.blob
-    }else{
-      console.error(`Unknown media kind ${media.kind}`)
-    }
-    if (this.state === 'play') clip!.pause = false
+    runInAction(() => {
+      if (media.kind === 'audio'){
+        clip!.audioTime = media.time
+        clip!.audioFrom = timeFrom
+        clip!.audioDuration = media.duration
+        clip!.rate = this.rate
+        clip!.audioBlob = media.blob
+      }else if (media.kind === 'video'){
+        clip!.videoTime = media.time
+        clip!.videoFrom = timeFrom
+        clip!.rate = this.rate
+        clip!.videoBlob = media.blob
+      }else{
+        console.error(`Unknown media kind ${media.kind}`)
+      }
+      if (this.state === 'pause') clip!.pause = true
+      if (this.state === 'play') clip!.pause = false
+    })
+    playbackAudioDebug('Player.playMedia clip updated', {
+      kind: media.kind,
+      pid: media.pid,
+      cid: media.cid,
+      clip: clip ? {
+        audioTime: clip.audioTime,
+        audioFrom: clip.audioFrom,
+        hasAudioBlob: !!clip.audioBlob,
+        audioDuration: clip.audioDuration,
+        audioBlob: clip.audioBlob ? {size: clip.audioBlob.size, type: clip.audioBlob.type} : undefined,
+        videoTime: clip.videoTime,
+        videoFrom: clip.videoFrom,
+        hasVideoBlob: !!clip.videoBlob,
+        pause: clip.pause,
+        rate: clip.rate,
+      } : undefined,
+    })
     return true
   }
 

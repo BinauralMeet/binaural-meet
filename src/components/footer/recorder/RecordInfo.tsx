@@ -9,6 +9,7 @@ import { timeToHourMinSec } from '@models/utils/date'
 import { contentTypeIcons } from '@components/map/Share/Content'
 import SpeakerOnIcon from '@material-ui/icons/VolumeUp'
 import VideoIcon from '@material-ui/icons/Videocam'
+import { playbackAudioDebug } from '@models/utils/playbackAudioDebug'
 
 export const RecordInfo: React.FC<DialogPageProps> = (props) => {
 
@@ -29,8 +30,23 @@ export const RecordInfo: React.FC<DialogPageProps> = (props) => {
       const endTimeStr = timeToHourMinSec(blob.time! - startTime + blob.duration!)
       const kindIcon = blob.kind === 'audio' ? <SpeakerOnIcon /> : <VideoIcon />
       const onClick = () => {
+        playbackAudioDebug('RecordInfo item user action', {
+          recorderStep: props.recorderStep,
+          kind: blob.kind,
+          role: blob.role,
+          pid: blob.pid,
+          cid: blob.cid,
+          blobTime: blob.time,
+          duration: blob.duration,
+          playerState: player.state,
+        })
         if(props.recorderStep === 'infoFromMenu'){
           player.load(undefined, player.title, true)?.then(()=>{
+            playbackAudioDebug('RecordInfo load resolved; pause seek play', {
+              kind: blob.kind,
+              blobTime: blob.time,
+              playerState: player.state,
+            })
             //console.log(`seek ${player.title}`)
             player.pause()
             player.seek(blob.time! - startTime)

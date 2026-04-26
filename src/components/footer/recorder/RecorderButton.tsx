@@ -14,6 +14,7 @@ import { Observer } from 'mobx-react-lite'
 import { Button, IconButton, MenuItem, Paper, Select, Slider, TextField } from '@material-ui/core'
 import _, { isNumber } from 'lodash'
 import { autorun } from 'mobx'
+import { playbackAudioDebug } from '@models/utils/playbackAudioDebug'
 
 const useStyles = makeStyles({
   root: {
@@ -134,7 +135,16 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
                       }
                     }
                   }}
-                  onChangeCommitted={()=>{
+                  onChangeCommitted={(_ev, val)=>{
+                    playbackAudioDebug('RecorderButton seek committed', {
+                      val,
+                      playerState: player.state,
+                      refPauseBySeek: refPauseBySeek.current,
+                    })
+                    if (isNumber(val)){
+                      setSeekOffsetAndText(val)
+                      player.seek(val)
+                    }
                     if (refPauseBySeek.current){
                       refPauseBySeek.current = false
                       player.play()
@@ -168,6 +178,7 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
           <FabWithTooltip size={props.size}
             title = {acceleratorText2El(t('ttPause'))}
             aria-label="share" onClick={() => {
+              playbackAudioDebug('RecorderButton pause user action', {playerState: player.state})
               player.pause()
             }}>
             <PauseIcon color='primary' style={{width:iconSize, height:iconSize}} />
@@ -176,6 +187,7 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
           <FabWithTooltip size={props.size}
             title = {acceleratorText2El(t('ttPlay'))}
             aria-label="share" onClick={() => {
+              playbackAudioDebug('RecorderButton resume user action', {playerState: player.state})
               player.play()
             }}>
             <PlayIcon style={{width:iconSize, height:iconSize}} />

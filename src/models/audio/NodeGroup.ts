@@ -50,7 +50,7 @@ export class NodeGroup {
   protected playMode: PlayMode|undefined
   protected audibility = false
 
-  private audioDeviceId = ''
+  protected audioDeviceId = ''
   private distance = 1
 
   constructor(context: AudioContext, destination: MediaStreamAudioDestinationNode,
