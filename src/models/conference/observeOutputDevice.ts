@@ -13,10 +13,11 @@ autorun(() => {
   const setAudioSink = () => {
     const did = participants.local.devicePreference.audiooutput
     if (did){
-      audioManager.setAudioOutput(did)
-      if (did !== audioManager.getAudioOutput()){
-        timeout = window.setTimeout(setAudioSink, 3000)
-      }
+      audioManager.setAudioOutput(did).then(() => {
+        if (did !== audioManager.getAudioOutput()){
+          timeout = window.setTimeout(setAudioSink, 3000)
+        }
+      })
     }
   }
   setAudioSink()

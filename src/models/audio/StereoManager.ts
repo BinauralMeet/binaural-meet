@@ -105,10 +105,17 @@ export class StereoManager {
   }
 
   public setAudioOutput(deviceId:string) {
-    setAudioOutputDevice(this.audioElement, deviceId)
+    const promises = [setAudioOutputDevice(this.audioElement, deviceId)]
     for (const node in this.nodes) {
       this.nodes[node].setAudioOutput(deviceId)
     }
+    return Promise.all(promises).then((results) => {
+      if (results.some(Boolean) && this.playMode === 'Context' && !this.audioOutputMuted) {
+        this.audioContext.resume().catch(()=>{})
+        this.audioElement.play().catch(()=>{})
+      }
+      return results.some(Boolean)
+    })
   }
   public getAudioOutput(){
     return getAudioOutputDevice(this.audioElement)

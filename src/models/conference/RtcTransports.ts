@@ -21,11 +21,16 @@ export class RtcTransports extends RtcConnection{
   public get sendTransport(){return this.sendTransport_}
   private sendTransportPromise?: Promise<mediasoup.types.Transport>
   private localProducers: mediasoup.types.Producer[] = []
+  private mediaReconnectTimer = 0
 
   private remotePeers_ = new Map<string, RemotePeer>()
   public get remotePeers(){ return this.remotePeers_ }
 
   public clear(){
+    if (this.mediaReconnectTimer) {
+      window.clearTimeout(this.mediaReconnectTimer)
+      this.mediaReconnectTimer = 0
+    }
     this.remotePeers.clear()
     this.localProducers.forEach(p => p.close())
     this.localProducers = []
@@ -73,6 +78,7 @@ export class RtcTransports extends RtcConnection{
         transport.on('connectionstatechange', (state) => {
           //  console.log(`transport ${transport.id} connectionstatechange ${state}`);
           if (dir==='receive' && state === 'connected'){
+            this.clearMediaReconnectTimer()
             assert(remote)
             const consumers = Array.from(remote.producers.values()).map(p => p.consumer).filter(c => c)
             for(const consumer of consumers){
@@ -81,15 +87,47 @@ export class RtcTransports extends RtcConnection{
               consumer!.resume()
             }
           }
-          if (state === 'closed' || state === 'failed' || state === 'disconnected') {
-            //  console.log('transport closed ... leaving the room and resetting');
-            //TODO: leaveRoom();
+          if (dir === 'send' && state === 'connected') {
+            this.clearMediaReconnectTimer()
+          }
+          if (state === 'failed' || state === 'disconnected') {
+            this.scheduleMediaReconnect(dir, state)
           }
         });
         resolve(transport)
       }).catch(reject)
     })
     return promise
+  }
+
+  private clearMediaReconnectTimer(){
+    if (this.mediaReconnectTimer) {
+      window.clearTimeout(this.mediaReconnectTimer)
+      this.mediaReconnectTimer = 0
+    }
+  }
+
+  private getActiveTransports(){
+    const transports = [
+      this.sendTransport,
+      ...Array.from(this.remotePeers.values()).map(peer => peer.transport)
+    ]
+    return transports.filter((transport): transport is mediasoup.types.Transport =>
+      transport !== undefined && transport.connectionState !== 'closed')
+  }
+
+  private scheduleMediaReconnect(dir:MSTransportDirection, state:string){
+    if (this.mediaReconnectTimer) { return }
+    const wait = state === 'failed' ? 1000 : 15000
+    this.mediaReconnectTimer = window.setTimeout(() => {
+      this.mediaReconnectTimer = 0
+      const activeTransports = this.getActiveTransports()
+      const hasConnectedTransport = activeTransports.some(transport => transport.connectionState === 'connected')
+      if (dir === 'send' || !hasConnectedTransport) {
+        console.warn(`WebRTC ${dir} transport ${state}; reconnecting the room.`)
+        super.disconnect(3000, `WebRTC ${dir} transport ${state}`)
+      }
+    }, wait)
   }
 
   private getSendTransport(){

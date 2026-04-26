@@ -4,17 +4,17 @@ import {mulV3, normV} from '@models/utils/coordinates'
 import errorInfo from '@stores/ErrorInfo'
 import {ConfigurableParams, ConfigurableProp} from './StereoParameters'
 
-export function setAudioOutputDevice(audio: HTMLAudioElement, deviceId: string) {
+export function setAudioOutputDevice(audio: HTMLAudioElement, deviceId: string): Promise<boolean> {
   const audioEx:any = audio
   if (audioEx?.setSinkId) {
-    audioEx.setSinkId(deviceId).then(
-      () => {
-        //  console.debug('audio.setSinkId:', deviceId, ' success')
-      },
-    ).catch(
-      () => { console.warn('audio.setSinkId:', deviceId, ' failed') },
-    )
+    return audioEx.setSinkId(deviceId).then(
+      () => true,
+    ).catch((e: Error) => {
+      console.warn('audio.setSinkId:', deviceId, ' failed', e)
+      return false
+    })
   }
+  return Promise.resolve(false)
 }
 export function getAudioOutputDevice(audio: HTMLAudioElement) {
   const audioEx:any = audio
@@ -138,7 +138,12 @@ export class NodeGroup {
     if (this.audioDeviceId !== id) {
       this.audioDeviceId = id
       if (this.audioElement) {
-        setAudioOutputDevice(this.audioElement, this.audioDeviceId)
+        setAudioOutputDevice(this.audioElement, this.audioDeviceId).then((success) => {
+          if (success && this.playMode === 'Element' && !this.audibility) { return }
+          if (success && this.playMode === 'Element') {
+            this.audioElement?.play().catch(()=>{})
+          }
+        })
       }
     }
   }

@@ -20,7 +20,7 @@ export class ConnectedManager {
   private playbackContentsMemo = new Map<string, ISharedContent>()
 
   public setAudioOutput(deviceId: string) {
-    this.manager.setAudioOutput(deviceId)
+    return this.manager.setAudioOutput(deviceId)
   }
   public getAudioOutput(){
     return this.manager.getAudioOutput()

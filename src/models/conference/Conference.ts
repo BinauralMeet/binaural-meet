@@ -341,10 +341,16 @@ export class Conference {
           return
       }
       //  Do not call "this.removeLocalTrack(this.localMicTrack)" here. The producer will reused.
+      const oldTrack = this.localMicTrack
       this.localMicTrack = track
       this.dataConnection.audioMeter.setSource(this.localMicTrack)
       if (track){
-        this.addOrReplaceLocalTrack(track, 96*1024).then(()=>{resolve()}).catch(reject)
+        this.addOrReplaceLocalTrack(track, 96*1024).then(()=>{
+          if (oldTrack && oldTrack.track !== track.track) {
+            oldTrack.track.stop()
+          }
+          resolve()
+        }).catch(reject)
       }else{
         this.removeLocalTrackByRole(true, 'avatar', 'audio')
         resolve()
@@ -356,9 +362,15 @@ export class Conference {
 
   private doSetLocalCameraTrack(track:MSTrack|undefined) {
     const promise = new Promise<mediasoup.types.Producer|void>((resolve, reject) => {
+      const oldTrack = this.localCameraTrack
       this.localCameraTrack = track
       if (this.localCameraTrack){
-        this.addOrReplaceLocalTrack(this.localCameraTrack, 128*1024).then(resolve).catch(reject)
+        this.addOrReplaceLocalTrack(this.localCameraTrack, 128*1024).then((producer)=>{
+          if (oldTrack && oldTrack.track !== this.localCameraTrack?.track) {
+            oldTrack.track.stop()
+          }
+          resolve(producer)
+        }).catch(reject)
       }else{
         resolve()
       }
@@ -456,7 +468,7 @@ export class Conference {
   }
   private onProducerRemoved(producers: RemoteProducer[], remote: RemotePeer){
     const removes = [...producers]
-    remote.producers = remote.producers.filter(p => removes.find(r => !isEqualMSRP(p, r)))
+    remote.producers = remote.producers.filter(p => !removes.find(r => isEqualMSRP(p, r)))
     for(const producer of producers){
       this.removeConsumer(producer)
       this.priorityCalculator.onRemoveProducer(producer)
