@@ -22,6 +22,7 @@ export class RtcTransports extends RtcConnection{
   private sendTransportPromise?: Promise<mediasoup.types.Transport>
   private localProducers: mediasoup.types.Producer[] = []
   private mediaReconnectTimer = 0
+  private iceRestartingTransports = new Set<string>()
 
   private remotePeers_ = new Map<string, RemotePeer>()
   public get remotePeers(){ return this.remotePeers_ }
@@ -31,6 +32,7 @@ export class RtcTransports extends RtcConnection{
       window.clearTimeout(this.mediaReconnectTimer)
       this.mediaReconnectTimer = 0
     }
+    this.iceRestartingTransports.clear()
     this.remotePeers.clear()
     this.localProducers.forEach(p => p.close())
     this.localProducers = []
@@ -91,7 +93,7 @@ export class RtcTransports extends RtcConnection{
             this.clearMediaReconnectTimer()
           }
           if (state === 'failed' || state === 'disconnected') {
-            this.scheduleMediaReconnect(dir, state)
+            this.scheduleIceRestart(transport, dir, state)
           }
         });
         resolve(transport)
@@ -127,6 +129,32 @@ export class RtcTransports extends RtcConnection{
         console.warn(`WebRTC ${dir} transport ${state}; reconnecting the room.`)
         super.disconnect(3000, `WebRTC ${dir} transport ${state}`)
       }
+    }, wait)
+  }
+
+  private scheduleIceRestart(transport: mediasoup.types.Transport, dir:MSTransportDirection, state:string){
+    if (this.iceRestartingTransports.has(transport.id)) { return }
+    this.iceRestartingTransports.add(transport.id)
+    const wait = state === 'failed' ? 0 : 3000
+    window.setTimeout(() => {
+      if (transport.connectionState === 'connected' || transport.connectionState === 'closed') {
+        this.iceRestartingTransports.delete(transport.id)
+        return
+      }
+      super.restartIce(transport).then((iceParameters) => {
+        transport.restartIce({iceParameters}).then(() => {
+          this.iceRestartingTransports.delete(transport.id)
+          this.scheduleMediaReconnect(dir, state)
+        }).catch((e) => {
+          this.iceRestartingTransports.delete(transport.id)
+          console.warn(`Client-side ICE restart failed for ${dir} transport ${transport.id}.`, e)
+          this.scheduleMediaReconnect(dir, state)
+        })
+      }).catch((e) => {
+        this.iceRestartingTransports.delete(transport.id)
+        console.warn(`Server-side ICE restart failed for ${dir} transport ${transport.id}.`, e)
+        this.scheduleMediaReconnect(dir, state)
+      })
     }, wait)
   }
 

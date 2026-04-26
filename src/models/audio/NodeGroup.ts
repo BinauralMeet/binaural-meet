@@ -135,17 +135,16 @@ export class NodeGroup {
   }
 
   setAudioOutput(id: string) {
-    if (this.audioDeviceId !== id) {
-      this.audioDeviceId = id
-      if (this.audioElement) {
-        setAudioOutputDevice(this.audioElement, this.audioDeviceId).then((success) => {
-          if (success && this.playMode === 'Element' && !this.audibility) { return }
-          if (success && this.playMode === 'Element') {
-            this.audioElement?.play().catch(()=>{})
-          }
-        })
+    const changed = this.audioDeviceId !== id
+    this.audioDeviceId = id
+    if (!changed || !this.audioElement) { return Promise.resolve(false) }
+
+    return setAudioOutputDevice(this.audioElement, this.audioDeviceId).then((success) => {
+      if (success && this.playMode === 'Element' && this.audibility) {
+        this.audioElement?.play().catch(()=>{})
       }
-    }
+      return success
+    })
   }
 
   updateStream(stream: MediaStream | undefined) {

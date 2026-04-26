@@ -4,7 +4,7 @@ export type MSMessageType =
   'connect' | 'preConnect' | 'join' | 'pong' | 'rtpCapabilities' | 'leave' | 'leave_error' |
   'remoteUpdate' | 'remoteLeft' | 'peerLeft' | 'checkAdmin' | 'addAdmin'| 'removeAdmin' | 'addLogin' | 'removeLogin' |
   'workerAdd' | 'workerDelete' | 'workerUpdate' |
-  'createTransport' | 'closeTransport' | 'connectTransport' |
+  'createTransport' | 'closeTransport' | 'connectTransport' | 'restartIce' |
   'produceTransport' | 'closeProducer' | 'consumeTransport' | 'resumeConsumer' |
   'streamingStart' | 'streamingStop' | 'uploadFile' | 'serverStatus'
 export interface MSMessage{
@@ -116,6 +116,15 @@ export interface MSConnectTransportMessage extends MSPeerMessage{
 }
 export interface MSConnectTransportReply extends MSPeerMessage{
   error: string
+}
+
+export interface MSRestartIceMessage extends MSPeerMessage{
+  transport: string
+}
+export interface MSRestartIceReply extends MSPeerMessage{
+  transport: string
+  iceParameters?: mediasoup.types.IceParameters
+  error?: string
 }
 
 export interface MSProduceTransportMessage extends MSPeerMessage{

@@ -11,6 +11,7 @@ export class StereoManager {
 
   private readonly audioElement = new Audio()   //  audioElement for context mode
   private playMode: PlayMode = 'Pause'
+  private audioDeviceId = ''
 
   nodes: {
     [key: string]: NodeGroup,
@@ -22,16 +23,23 @@ export class StereoManager {
 
   addSpeaker(id: string) {
     assert(this.nodes[id] === undefined)
-    this.nodes[id] = new NodeGroup(this.audioContext, this.audioDestination,
-                                   this.playMode, !this.audioOutputMuted)
+    const node = new NodeGroup(this.audioContext, this.audioDestination,
+                               this.playMode, !this.audioOutputMuted)
+    this.nodes[id] = node
+    if (this.audioDeviceId) {
+      node.setAudioOutput(this.audioDeviceId).catch(()=>{})
+    }
 
-    return this.nodes[id]
+    return node
   }
   addPlayback(id: string) {
     assert(this.nodes[id] === undefined)
     const node = new NodeGroupForPlayback(this.audioContext, this.audioDestination,
                                    this.playMode, !this.audioOutputMuted)
     this.nodes[id] = node
+    if (this.audioDeviceId) {
+      node.setAudioOutput(this.audioDeviceId).catch(()=>{})
+    }
 
     return node
   }
@@ -105,9 +113,10 @@ export class StereoManager {
   }
 
   public setAudioOutput(deviceId:string) {
+    this.audioDeviceId = deviceId
     const promises = [setAudioOutputDevice(this.audioElement, deviceId)]
     for (const node in this.nodes) {
-      this.nodes[node].setAudioOutput(deviceId)
+      promises.push(this.nodes[node].setAudioOutput(deviceId))
     }
     return Promise.all(promises).then((results) => {
       if (results.some(Boolean) && this.playMode === 'Context' && !this.audioOutputMuted) {

@@ -181,6 +181,7 @@ class Player{
     messages.sort((a,b) => a.time - b.time)
     medias.sort((a,b) => a.time - b.time)
     this.currentTime_ = this.startTime + offset
+    this.clearPlayingMedia()
     //recLog(`seek ct=${this.currentTime}`)
     //let time = this.startTime + offset
     let ffTo = messages.findIndex(m=>m.time > this.currentTime) - 1
@@ -192,29 +193,20 @@ class Player{
     //  Play medias playing at currentTime
     this.pidsPlaying.clear()
     this.cidsPlaying.clear()
+    this.mediasPlaying = []
     const mediasNotPlayed:MediaPlay[] = []  //  Medias too early or too late for current time.
     while (medias.length && medias[0].time <= this.currentTime){
       const media = medias.shift()!
       if (this.playMedia(media, this.currentTime)){
-        if (media.pid) this.pidsPlaying.add(`p_${media.pid}`)
-        if (media.cid) this.cidsPlaying.add(`p_${media.cid}`)
-        this.mediasPlaying.push(media)
+        this.addPlayingMedia(media)
       }else{
         mediasNotPlayed.push(media)
       }
     }
     mediasNotPlayed.push(...medias)
     for(const media of mediasNotPlayed){
-      let clip
-      if (media.pid && !this.pidsPlaying.has(`p_${media.pid}`)){
-        clip = participants.playback.get(`p_${media.pid}`)?.clip
-      }
-      if (media.cid && !this.cidsPlaying.has(`p_${media.cid}`)){
-        clip = contents.playbackClips.get(`p_${media.cid}`)
-      }
-      if (clip){
-        if (media.kind === 'audio') clip.audioBlob = undefined
-        if (media.kind === 'video') clip.videoBlob = undefined
+      if (!this.hasPlayingMediaFor(media)){
+        this.clearMediaBlob(media)
       }
     }
     return ffTo
@@ -270,22 +262,19 @@ class Player{
       while (medias.length && medias[0].time < this.currentTime){
         const media = medias.shift()!
         if (this.playMedia(media, this.currentTime)){
-          if (media.pid) this.pidsPlaying.add(`p_${media.pid}`)
-          if (media.cid) this.pidsPlaying.add(`p_${media.cid}`)
-          this.mediasPlaying.push(media)
+          this.addPlayingMedia(media)
         }
       }
       //  remove playing media
-      const remains:MediaPlay[] = []
-      for(const media of medias){
-        if (media.time + media.duration > this.currentTime){
-          remains.push(media)
-        }else{
-          if (media.pid) this.pidsPlaying.delete(`p_${media.pid}`)
-          if (media.cid) this.cidsPlaying.delete(`p_${media.cid}`)
+      const ended = this.mediasPlaying.filter(media => media.time + media.duration <= this.currentTime)
+      const remains = this.mediasPlaying.filter(media => media.time + media.duration > this.currentTime)
+      this.mediasPlaying = remains
+      for(const media of ended){
+        if (!this.hasPlayingMediaFor(media)){
+          this.clearMediaBlob(media)
         }
       }
-      this.mediasPlaying = remains
+      this.updatePlayingSets()
 
       if (this.currentTime > this.endTime){
         this.pause()
@@ -331,6 +320,54 @@ class Player{
       this.playInterval = 0
     }
     this.setPauseToClips(true)
+  }
+  private clearPlayingMedia(){
+    for(const pid of this.pidsPlaying){
+      const clip = participants.playback.get(pid)?.clip
+      if (clip){
+        clip.pause = true
+        clip.audioBlob = undefined
+        clip.videoBlob = undefined
+      }
+    }
+    for(const cid of this.cidsPlaying){
+      const clip = contents.playbackClips.get(cid)
+      if (clip){
+        clip.pause = true
+        clip.audioBlob = undefined
+        clip.videoBlob = undefined
+      }
+    }
+    this.pidsPlaying.clear()
+    this.cidsPlaying.clear()
+    this.mediasPlaying = []
+  }
+  private addPlayingMedia(media: MediaPlay){
+    if (!this.mediasPlaying.includes(media)){
+      this.mediasPlaying.push(media)
+    }
+    if (media.pid) this.pidsPlaying.add(`p_${media.pid}`)
+    if (media.cid) this.cidsPlaying.add(`p_${media.cid}`)
+  }
+  private updatePlayingSets(){
+    this.pidsPlaying.clear()
+    this.cidsPlaying.clear()
+    for(const media of this.mediasPlaying){
+      if (media.pid) this.pidsPlaying.add(`p_${media.pid}`)
+      if (media.cid) this.cidsPlaying.add(`p_${media.cid}`)
+    }
+  }
+  private hasPlayingMediaFor(media: MediaPlay){
+    return this.mediasPlaying.some(m =>
+      m.kind === media.kind && m.pid === media.pid && m.cid === media.cid)
+  }
+  private clearMediaBlob(media: MediaPlay){
+    const clip = media.pid ? participants.playback.get(`p_${media.pid}`)?.clip :
+      media.cid ? contents.playbackClips.get(`p_${media.cid}`) : undefined
+    if (clip){
+      if (media.kind === 'audio') clip.audioBlob = undefined
+      if (media.kind === 'video') clip.videoBlob = undefined
+    }
   }
   stop(){
     this.state_ = 'stop'

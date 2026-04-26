@@ -7,7 +7,9 @@ import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSConnectMessage, MS
   MSCloseProducerReply, MSStreamingStartMessage,MSUploadFileMessage, MSStreamingStopMessage, MSAddAdminMessage,
   MSPreConnectMessage,
   MSCheckAdminMessage,
-  RoomLoginInfo} from './MediaMessages'
+  RoomLoginInfo,
+  MSRestartIceMessage,
+  MSRestartIceReply} from './MediaMessages'
 import * as mediasoup from 'mediasoup-client';
 import {connLog} from '@models/utils'
 import {RtcTransportStatsGot} from './RtcTransportStatsGot'
@@ -68,6 +70,7 @@ export class RtcConnection{
     this.handlers.set('createTransport', this.onCreateTransport)
     this.handlers.set('rtpCapabilities', this.onRtpCapabilities)
     this.handlers.set('connectTransport', this.onConnectTransport)
+    this.handlers.set('restartIce', this.onRestartIce)
     this.handlers.set('produceTransport', this.onProduceTransport)
     this.handlers.set('closeProducer', this.onCloseProducer)
     this.handlers.set('consumeTransport', this.onConsumeTransport)
@@ -541,6 +544,26 @@ export class RtcConnection{
       this.resolveMessage(msg, '')
     }
 
+  }
+
+  public restartIce(transport: mediasoup.types.Transport){
+    const promise = new Promise<mediasoup.types.IceParameters>((resolve, reject) => {
+      const msg:MSRestartIceMessage = {
+        type:'restartIce',
+        peer:this.peer,
+        transport: transport.id,
+      }
+      this.sendWithPromise(msg, resolve, reject)
+    })
+    return promise
+  }
+  private onRestartIce(base:MSMessage){
+    const msg = base as MSRestartIceReply
+    if (msg.error || !msg.iceParameters){
+      this.rejectMessage(msg, msg.error)
+    }else{
+      this.resolveMessage(msg, msg.iceParameters)
+    }
   }
 
   private onUploadFile(base:MSMessage){
