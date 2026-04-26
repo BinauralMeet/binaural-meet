@@ -40,6 +40,7 @@ export class StereoManager {
     if (this.audioDeviceId) {
       node.setAudioOutput(this.audioDeviceId).catch(()=>{})
     }
+    this.preparePlaybackOutput()
 
     return node
   }
@@ -128,6 +129,12 @@ export class StereoManager {
   }
   public getAudioOutput(){
     return getAudioOutputDevice(this.audioElement)
+  }
+
+  public preparePlaybackOutput(){
+    if (this.audioOutputMuted) { return }
+    this.audioContext.resume().catch(()=>{})
+    this.audioElement.play().catch(()=>{})
   }
 
   set audioOutputMuted(muted: boolean) {

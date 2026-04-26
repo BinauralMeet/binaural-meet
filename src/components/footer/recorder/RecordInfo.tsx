@@ -9,6 +9,7 @@ import { timeToHourMinSec } from '@models/utils/date'
 import { contentTypeIcons } from '@components/map/Share/Content'
 import SpeakerOnIcon from '@material-ui/icons/VolumeUp'
 import VideoIcon from '@material-ui/icons/Videocam'
+import { manager as audioManager } from '@models/audio'
 
 export const RecordInfo: React.FC<DialogPageProps> = (props) => {
 
@@ -30,6 +31,7 @@ export const RecordInfo: React.FC<DialogPageProps> = (props) => {
       const kindIcon = blob.kind === 'audio' ? <SpeakerOnIcon /> : <VideoIcon />
       const onClick = () => {
         if(props.recorderStep === 'infoFromMenu'){
+          audioManager.preparePlaybackOutput()
           player.load(undefined, player.title, true)?.then(()=>{
             //console.log(`seek ${player.title}`)
             player.pause()

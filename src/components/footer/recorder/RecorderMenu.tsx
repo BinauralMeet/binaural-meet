@@ -15,6 +15,7 @@ import { Divider, IconButton, TextField } from '@material-ui/core'
 import { Observer } from 'mobx-react-lite'
 import {map} from '@stores/'
 import { timeToHourMinSec } from '@models/utils/date'
+import { manager as audioManager } from '@models/audio'
 
 
 export const RecorderMenu: React.FC<DialogPageProps> = (props) => {
@@ -56,6 +57,7 @@ export const RecorderMenu: React.FC<DialogPageProps> = (props) => {
       if (id){
         const record = records?.find(r => r.id === id)
         if (record && record.blob){
+          audioManager.preparePlaybackOutput()
           props.setRecorderStep('none')
           player.load(record.blob, record.title, true).then(()=>{
             player.play()
@@ -114,6 +116,7 @@ export const RecorderMenu: React.FC<DialogPageProps> = (props) => {
           onChange={ (ev) => {
             const files = ev.currentTarget?.files
             if (files && files.length) {
+              audioManager.preparePlaybackOutput()
               props.setRecorderStep('none')
               player.load(files[0], files[0].name, true).then(()=>{
                 player.seek(Number(startTime))

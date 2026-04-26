@@ -25,6 +25,9 @@ export class ConnectedManager {
   public getAudioOutput(){
     return this.manager.getAudioOutput()
   }
+  public preparePlaybackOutput(){
+    this.manager.preparePlaybackOutput()
+  }
   constructor() {
     if (urlParameters.testBot !== null) { return }
 

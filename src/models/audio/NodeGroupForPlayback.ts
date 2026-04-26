@@ -1,5 +1,5 @@
 import { MediaClip } from "@stores/MapObject"
-import { NodeGroup, PlayMode } from "./NodeGroup"
+import { NodeGroup, PlayMode, setAudioOutputDevice } from "./NodeGroup"
 
 export class NodeGroupForPlayback extends NodeGroup {
   private audioElementForBlob?: HTMLAudioElement
@@ -115,6 +115,11 @@ export class NodeGroupForPlayback extends NodeGroup {
       const {videoBlob, audioBlob, ...clipLog} = this.clipPlaying
       //console.log(`playElements for ${JSON.stringify(clipLog)}`)
     }
+    this.applyAudioOutput().then(() => {
+      this.playElementsWithCurrentOutput()
+    })
+  }
+  private playElementsWithCurrentOutput(){
     const playAgain = (group: NodeGroupForPlayback) => {
       if (!group.clipPlaying?.pause){
         group.audioElementForBlob?.play().catch(()=>{
@@ -131,6 +136,27 @@ export class NodeGroupForPlayback extends NodeGroup {
       }
     }
     playAgain2(this)
+  }
+
+  private applyAudioOutput(){
+    if (!this.audioDeviceId) { return Promise.resolve(false) }
+
+    const promises: Promise<boolean>[] = []
+    if (this.audioElementForBlob) {
+      promises.push(setAudioOutputDevice(this.audioElementForBlob, this.audioDeviceId))
+    }
+    if (this.audioElement) {
+      promises.push(setAudioOutputDevice(this.audioElement, this.audioDeviceId))
+    }
+    return Promise.all(promises).then((results) => results.some(Boolean))
+  }
+
+  setAudioOutput(id: string) {
+    const promises = [super.setAudioOutput(id)]
+    if (this.audioElementForBlob) {
+      promises.push(setAudioOutputDevice(this.audioElementForBlob, id))
+    }
+    return Promise.all(promises).then((results) => results.some(Boolean))
   }
 
 

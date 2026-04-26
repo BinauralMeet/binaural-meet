@@ -10,6 +10,7 @@ import {MediaKind, BlobKind, recLog} from './RecorderTypes'
 import participants from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
 import { VrmRig } from '@models/utils/vrmIK'
+import { manager as audioManager } from '@models/audio'
 declare const d:any                  //  from index.html
 
 interface BlobHeader{
@@ -216,6 +217,7 @@ class Player{
     this.setRateToClips(rate)
   }
   play(){
+    audioManager.preparePlaybackOutput()
     this.state_ = 'play'
     this.setPauseToClips(false)
 
