@@ -559,11 +559,21 @@ export class RtcConnection{
   }
   private onRestartIce(base:MSMessage){
     const msg = base as MSRestartIceReply
-    if (msg.error || !msg.iceParameters){
-      this.rejectMessage(msg, msg.error)
-    }else{
-      this.resolveMessage(msg, msg.iceParameters)
+    if (msg.sn && this.promises.has(msg.sn)) {
+      // Reply to client-initiated restartIce request
+      if (msg.error || !msg.iceParameters) {
+        this.rejectMessage(msg, msg.error)
+      } else {
+        this.resolveMessage(msg, msg.iceParameters)
+      }
+    } else if (!msg.error && msg.iceParameters) {
+      // Server-initiated ICE restart: new ICE params pushed from server
+      this.onServerInitiatedIceRestart(msg)
     }
+  }
+
+  protected onServerInitiatedIceRestart(_msg: MSRestartIceReply) {
+    // Overridden in RtcTransports
   }
 
   private onUploadFile(base:MSMessage){

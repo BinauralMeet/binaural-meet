@@ -1,4 +1,4 @@
-import {MSTransportDirection} from './MediaMessages'
+import {MSTransportDirection, MSRestartIceReply} from './MediaMessages'
 import {RtcConnection, RemotePeer, MSTrack, RemoteProducer, TrackRoles} from './RtcConnection'
 import {RtcTransportStatsGot, updateTransportStat} from './RtcTransportStatsGot'
 import * as mediasoup from 'mediasoup-client'
@@ -116,6 +116,24 @@ export class RtcTransports extends RtcConnection{
     ]
     return transports.filter((transport): transport is mediasoup.types.Transport =>
       transport !== undefined && transport.connectionState !== 'closed')
+  }
+
+  private findTransport(id: string): {transport: mediasoup.types.Transport, dir: MSTransportDirection} | undefined {
+    if (this.sendTransport_?.id === id) return {transport: this.sendTransport_!, dir: 'send'}
+    for (const peer of this.remotePeers.values()) {
+      if (peer.transport?.id === id) return {transport: peer.transport!, dir: 'receive'}
+    }
+  }
+
+  protected onServerInitiatedIceRestart(msg: MSRestartIceReply) {
+    const found = this.findTransport(msg.transport)
+    if (!found || !msg.iceParameters) { return }
+    const {transport, dir} = found
+    if (this.iceRestartingTransports.has(transport.id)) { return }  // client-initiated restart in progress
+    transport.restartIce({iceParameters: msg.iceParameters}).catch((e) => {
+      console.warn(`Server-initiated ICE restart failed for ${dir} transport ${transport.id}.`, e)
+      this.scheduleMediaReconnect(dir, 'failed')
+    })
   }
 
   private scheduleMediaReconnect(dir:MSTransportDirection, state:string){
