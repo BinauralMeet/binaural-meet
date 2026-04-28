@@ -409,6 +409,9 @@ export class RtcConnection{
             this.prevPeer = this.peer_
             this.peer_ = ''
           }
+          // Reject all in-flight requests so callers don't hang indefinitely.
+          this.promises.forEach(({reject}) => reject?.('disconnected'))
+          this.promises.clear()
           resolve()
         }
       }
