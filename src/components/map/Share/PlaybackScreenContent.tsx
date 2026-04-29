@@ -1,5 +1,5 @@
 import {makeStyles} from '@material-ui/core/styles'
-import {assert} from '@models/utils'
+import {assert, seekMediaElement} from '@models/utils'
 import React, {useEffect, useRef} from 'react'
 import {ContentProps} from './Content'
 import {autorun} from 'mobx'
@@ -21,18 +21,43 @@ export const PlaybackScreenContent: React.FC<ContentProps> = (props:ContentProps
   const refPlayingClip = useRef<MediaClip|undefined>(undefined)
   const refTimeout = useRef(0)
   const refWaitPlay = useRef(false)
+  const refSeekPromise = useRef<Promise<void>>(Promise.resolve())
+  const refSeekRevision = useRef(0)
 
   function updateClip(){
     const playingClip = refPlayingClip.current
     const clip = sharedContents.playbackClips.get(props.content.id)
     const video = ref.current
     if (video && clip){
-      if (clip.videoBlob && clip.videoBlob !== playingClip?.videoBlob){
-        video.src = URL.createObjectURL(clip.videoBlob)
+      const videoBlobChanged = !!clip.videoBlob && clip.videoBlob !== playingClip?.videoBlob
+      let seekPromise: Promise<void>|undefined
+      const playFunc = (revision = refSeekRevision.current) => {
+        refSeekPromise.current.then(() => {
+          if (revision !== refSeekRevision.current) { return }
+          const currentClip = sharedContents.playbackClips.get(props.content.id)
+          if (currentClip?.pause) { return }
+          refWaitPlay.current = true
+          video.play().then(()=>{
+            recLog(`C ${props.content.id} played`)
+            refWaitPlay.current = false
+            if (refTimeout.current){
+              window.clearTimeout(refTimeout.current)
+              refTimeout.current = 0
+            }
+          }).catch(()=>{
+            refWaitPlay.current = false
+            refTimeout.current = window.setTimeout(() => playFunc(revision), 100)
+          })
+        })
+      }
+      if (videoBlobChanged){
+        video.src = URL.createObjectURL(clip.videoBlob!)
         video.playbackRate = clip.rate
       }
-      if (clip.videoFrom !== playingClip?.videoFrom){
-        video.currentTime = (clip.videoFrom - clip.videoTime) / 1000.0
+      if (videoBlobChanged || clip.videoFrom !== playingClip?.videoFrom){
+        refSeekRevision.current += 1
+        seekPromise = seekMediaElement(video, (clip.videoFrom - clip.videoTime) / 1000.0)
+        refSeekPromise.current = seekPromise
       }
       if (clip.rate !== playingClip?.rate){
         video.playbackRate = clip.rate
@@ -54,22 +79,10 @@ export const PlaybackScreenContent: React.FC<ContentProps> = (props:ContentProps
           }
           pause()
         }else{
-          const playFunc = () => {
-            refWaitPlay.current = true
-            video.play().then(()=>{
-              recLog(`C ${props.content.id} played`)
-              refWaitPlay.current = false
-              if (refTimeout.current){
-                window.clearTimeout(refTimeout.current)
-                refTimeout.current = 0
-              }
-            }).catch(()=>{
-              refWaitPlay.current = false
-              refTimeout.current = window.setTimeout(playFunc, 100)
-            })
-          }
           playFunc()
         }
+      }else if (!clip.pause && seekPromise){
+        playFunc()
       }
       refPlayingClip.current = {...clip}
     }

@@ -1,7 +1,7 @@
 import {acceleratorText2El} from '@components/utils/formatter'
 import {makeStyles} from '@material-ui/styles'
 import {useTranslation} from '@models/locales'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {FabWithTooltip} from '@components/utils/FabEx'
 import {RecorderDialog, RecorderStepType, SetRecorderStepType} from './RecorderDialog'
 import PlayIcon from '@material-ui/icons/PlayArrow'
@@ -34,7 +34,7 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
   const [seekOffset, setSeekOffset] = useState(player.offset)
   const [seekOffsetText, setSeekOffsetText] = useState(offsetNumberToText(player.offset))
   const [rate, setRate] = useState(1.0)
-  const doSeek = _.throttle((offset)=>{player.seek(offset)}, 500)
+  const doSeek = useMemo(() => _.throttle((offset:number)=>{player.seek(offset)}, 500), [])
   const refPauseBySeek = useRef<boolean>(false)
 
   function offsetNumberToText(offset: number){
@@ -80,6 +80,7 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
     })
     return ()=>{disposer()}
   }, [])
+  useEffect(()=>()=>{doSeek.cancel()}, [doSeek])
 
   return (
     <div className={classes.root}>
@@ -134,7 +135,12 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
                       }
                     }
                   }}
-                  onChangeCommitted={()=>{
+                  onChangeCommitted={(_ev, val)=>{
+                    doSeek.cancel()
+                    if (isNumber(val)){
+                      setSeekOffsetAndText(val)
+                      player.seek(val)
+                    }
                     if (refPauseBySeek.current){
                       refPauseBySeek.current = false
                       player.play()
