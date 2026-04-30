@@ -7,13 +7,15 @@ import {ConfigurableParams, ConfigurableProp} from './StereoParameters'
 export function setAudioOutputDevice(audio: HTMLAudioElement, deviceId: string): Promise<boolean> {
   const audioEx:any = audio
   if (audioEx?.setSinkId) {
+    console.log(`[SPK] setSinkId(${deviceId}) on element sinkId=${audioEx.sinkId}`)
     return audioEx.setSinkId(deviceId).then(
-      () => true,
+      () => { console.log(`[SPK] setSinkId(${deviceId}) succeeded`); return true },
     ).catch((e: Error) => {
       console.warn('audio.setSinkId:', deviceId, ' failed', e)
       return false
     })
   }
+  console.log(`[SPK] setSinkId not supported`)
   return Promise.resolve(false)
 }
 export function getAudioOutputDevice(audio: HTMLAudioElement) {

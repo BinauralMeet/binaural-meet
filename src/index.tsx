@@ -1,5 +1,6 @@
 import {App} from '@components/App'
 import '@models/audio'  // init audio manager (DO NOT delete)
+import {manager as audioManager} from '@models/audio'
 import {i18nInit} from '@models/locales'
 import {resolveAtEnd} from '@models/utils'
 import errorInfo from '@stores/ErrorInfo'
@@ -71,4 +72,20 @@ function startConference() {
   })
 
   errorInfo.connectionStart()
+
+  if (import.meta.env.DEV) {
+    ;(window as any).__testHelpers = {
+      setSpeakerDevice: (deviceId: string) => {
+        participants.local.devicePreference.audiooutput = deviceId
+      },
+      getSpeakerDeviceSinkId: () => audioManager.getAudioOutput(),
+      getAudioOutputDevices: async () => {
+        const devices = await navigator.mediaDevices.enumerateDevices()
+        return devices
+          .filter(d => d.kind === 'audiooutput')
+          .map(d => ({ deviceId: d.deviceId, label: d.label }))
+      },
+      getOutputPreference: () => participants.local.devicePreference.audiooutput,
+    }
+  }
 }

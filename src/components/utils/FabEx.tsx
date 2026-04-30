@@ -29,6 +29,7 @@ interface MyFabProps{
   title?: string | React.ReactElement,
   size?: number,
   divRef?: React.RefObject<HTMLDivElement>
+  'aria-label'?: string
 }
 
 
@@ -48,6 +49,7 @@ export const FabMain: React.FC<MyFabProps> = (props) => {
         ev.preventDefault()
         if (props.onClickMore) { props.onClickMore(ev) }
       }}
+      aria-label={props['aria-label']}
       color = {props.color} onFocus = {(e) => { (e.target as HTMLElement)?.blur() }}>
       {props.children}
     </Fab>

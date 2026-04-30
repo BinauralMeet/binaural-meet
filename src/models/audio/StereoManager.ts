@@ -115,14 +115,17 @@ export class StereoManager {
 
   public setAudioOutput(deviceId:string) {
     this.audioDeviceId = deviceId
+    const audioEx:any = this.audioElement
+    console.log(`[SPK] setAudioOutput called: deviceId=${deviceId} playMode=${this.playMode} muted=${this.audioOutputMuted} sinkId=${audioEx.sinkId} hasSinkId=${!!audioEx.setSinkId} nodeCount=${Object.keys(this.nodes).length}`)
     const promises = [setAudioOutputDevice(this.audioElement, deviceId)]
     for (const node in this.nodes) {
       promises.push(this.nodes[node].setAudioOutput(deviceId))
     }
     return Promise.all(promises).then((results) => {
+      console.log(`[SPK] setAudioOutput results: ${JSON.stringify(results)} some=${results.some(Boolean)} playMode=${this.playMode} muted=${this.audioOutputMuted} sinkId=${audioEx.sinkId}`)
       if (results.some(Boolean) && this.playMode === 'Context' && !this.audioOutputMuted) {
         this.audioContext.resume().catch(()=>{})
-        this.audioElement.play().catch(()=>{})
+        this.audioElement.play().catch((e)=>{ console.warn('[SPK] play() failed:', e) })
       }
       return results.some(Boolean)
     })
