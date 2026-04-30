@@ -1,15 +1,22 @@
 import {App} from '@components/App'
-import '@models/audio'  // init audio manager (DO NOT delete)
+// Side-effect import: instantiates ConnectedManager singleton. Must use bare
+// `import '...'` (not `import {} from '...'`) so Rollup preserves it in production builds.
+import '@models/audio'
 import {manager as audioManager} from '@models/audio'
 import {i18nInit} from '@models/locales'
 import {resolveAtEnd} from '@models/utils'
 import errorInfo from '@stores/ErrorInfo'
-import '@stores/index'  // init store (DO NOT delete)
+// Side-effect import: instantiates all store singletons (participants, contents, map, …).
+// Must use bare `import '...'` for the same reason as above.
+import '@stores/index'
 import contents from '@stores/sharedContents/SharedContents'
 import {configure} from "mobx"
 import ReactDOM from 'react-dom'
 import {conference} from '@models/conference'
 import {participants} from '@stores/index'
+// Side-effect import: registers a module-level MobX autorun that watches
+// devicePreference.audiooutput and calls audioManager.setAudioOutput().
+// Must use bare `import '...'` — `import {} from '...'` is tree-shaken by Rollup.
 import '@models/conference/observeOutputDevice'
 
 configure({
