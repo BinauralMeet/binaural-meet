@@ -2,8 +2,8 @@ import {MAP_CENTER} from '@components/Constants'
 import {MapObject as IMapObject} from '@models/MapObject'
 import {Pose2DMap} from '@models/utils'
 import _ from 'lodash'
-import { computed, makeObservable, observable} from 'mobx'
-import {shallowObservable, Store} from './utils'
+import { makeObservable, observable} from 'mobx'
+import {Store} from './utils'
 
 export const defaultValue: IMapObject = {
   pose: {
@@ -20,10 +20,6 @@ export class MapObject implements Store<IMapObject> {
     makeObservable(this)
   }
 
-  static fromPlain(obj: IMapObject) {
-    const store = new MapObject()
-    store.pose = shallowObservable(_.cloneDeep(obj.pose))
-  }
 }
 
 

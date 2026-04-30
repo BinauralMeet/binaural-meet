@@ -62,7 +62,6 @@ export const PlaybackScreenContent: React.FC<ContentProps> = (props:ContentProps
       if (clip.rate !== playingClip?.rate){
         video.playbackRate = clip.rate
       }
-      //  console.log(`CCC pause=${clip.pause}, ${clip.pause!==playingClip?.pause?'Diff':'s'}`)
       if (clip.pause !== playingClip?.pause){
         if (clip.pause){
           const pause = () => {

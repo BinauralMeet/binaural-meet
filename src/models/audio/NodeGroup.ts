@@ -4,18 +4,20 @@ import {mulV3, normV} from '@models/utils/coordinates'
 import errorInfo from '@stores/ErrorInfo'
 import {ConfigurableParams, ConfigurableProp} from './StereoParameters'
 
+const spkLog = import.meta.env.DEV ? console.log.bind(console) : (..._: any[]) => {}
+
 export function setAudioOutputDevice(audio: HTMLAudioElement, deviceId: string): Promise<boolean> {
   const audioEx:any = audio
   if (audioEx?.setSinkId) {
-    console.log(`[SPK] setSinkId(${deviceId}) on element sinkId=${audioEx.sinkId}`)
+    spkLog(`[SPK] setSinkId(${deviceId}) on element sinkId=${audioEx.sinkId}`)
     return audioEx.setSinkId(deviceId).then(
-      () => { console.log(`[SPK] setSinkId(${deviceId}) succeeded`); return true },
+      () => { spkLog(`[SPK] setSinkId(${deviceId}) succeeded`); return true },
     ).catch((e: Error) => {
       console.warn('audio.setSinkId:', deviceId, ' failed', e)
       return false
     })
   }
-  console.log(`[SPK] setSinkId not supported`)
+  spkLog(`[SPK] setSinkId not supported`)
   return Promise.resolve(false)
 }
 export function getAudioOutputDevice(audio: HTMLAudioElement) {
@@ -72,10 +74,6 @@ export class NodeGroup {
     switch (playMode) {
       case 'Pause': {
         this.sourceNode?.disconnect()
-        /*try {
-          this.pannerNode.disconnect(this.destination)
-        }catch (e) {}*/
-
         if (this.interval) {
           window.clearInterval(this.interval)
           this.interval = 0
@@ -87,7 +85,6 @@ export class NodeGroup {
       }
       case 'Context': {
         this.sourceNode?.connect(this.pannerNode)
-        //  this.pannerNode.connect(this.destination)
         if (this.interval) {
           window.clearInterval(this.interval)
           this.interval = 0
@@ -99,10 +96,6 @@ export class NodeGroup {
       }
       case 'Element': {
         this.sourceNode?.disconnect()
-        /*try {
-          this.pannerNode.disconnect(this.destination)
-        }catch (e) {}*/
-
         if (!this.audioElement) {
           this.audioElement = this.createAudioElement()
         }
@@ -112,14 +105,11 @@ export class NodeGroup {
             () => {
               if (!errorInfo.type) {
                 this?.audioElement?.play().then(() => {
-                  //  console.warn(`Succeed to play in NodeGroup`)
                   if (this.interval) {
                     window.clearInterval(this.interval)
                     this.interval = 0
                   }
-                }).catch(reason => {
-                  //  console.warn(`Failed to play in NodeGroup reason:${reason}`)
-                })
+                }).catch(_reason => {})
               }
             },
             500,

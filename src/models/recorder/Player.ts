@@ -77,7 +77,6 @@ class MediaPlay{
     }else{
       this.kind = 'invalid'
     }
-    //recLog(`MediaPlay URL:${URL.createObjectURL(this.blob)} ${JSON.stringify(this)}`)
   }
 }
 type PlayerState = 'play' | 'pause' | 'stop'
@@ -196,8 +195,6 @@ class Player{
     medias.sort((a,b) => a.time - b.time)
     this.currentTime_ = this.startTime + offset
     this.clearPlayingMedia()
-    //recLog(`seek ct=${this.currentTime}`)
-    //let time = this.startTime + offset
     let ffTo = messages.findIndex(m=>m.time > this.currentTime) - 1
     if (ffTo === -2) ffTo = messages.length
     if (ffTo > 0){  //  first forward to ffTo
@@ -236,26 +233,15 @@ class Player{
 
     const messages = Array.from(this.messages)
     const medias = Array.from(this.medias)
-    //*
-
-    //  */
-
     messages.sort((a,b) => a.time - b.time)
     medias.sort((a,b) => a.time - b.time)
 
-    recLog(`Play ${medias.length} medias.`)
-    for(const media of medias){
-      const {blob, ...m} = media
-      recLog(`${JSON.stringify(m)}`)
-    }
-
-    //let time = this.startTime + offset
     const ffTo = messages.findIndex(m=>m.time >= this.currentTime) - 1
     if (ffTo > 0){  //  skip to ffTo
       messages.splice(0, ffTo)
     }
 
-    const mediasToPlay = medias.filter(media => {
+    const mediasToPlay = medias.filter((media) => {
       const alreadyEnded = media.duration && media.time + media.duration <= this.currentTime
       return !alreadyEnded && !this.mediasPlaying.includes(media)
     })

@@ -5,6 +5,8 @@ import {autorun} from 'mobx'
 import {getAudioOutputDevice, NodeGroup, PlayMode, setAudioOutputDevice} from './NodeGroup'
 import { NodeGroupForPlayback } from './NodeGroupForPlayback'
 
+const spkLog = import.meta.env.DEV ? console.log.bind(console) : (..._: any[]) => {}
+
 export class StereoManager {
   private readonly audioContext: AudioContext = new window.AudioContext()
   private readonly audioDestination = this.audioContext.createMediaStreamDestination()
@@ -45,7 +47,6 @@ export class StereoManager {
     return node
   }
   removeSpeaker(id: string) {
-    //  console.log('remove speaker')
     this.nodes[id].dispose()
     delete this.nodes[id]
   }
@@ -80,9 +81,7 @@ export class StereoManager {
         const interval = window.setInterval(
           () => {
             if (errorInfo.type) { return }
-            // console.log(`Audio context = ${this.audioContext.state}  element = ${this.audioElement.played}`)
             if (this.audioContext.state !== 'suspended') {
-              //  console.log('AudioContext successfully resumed')
               window.clearInterval(interval)
             }
             this.audioContext.resume()
@@ -116,16 +115,16 @@ export class StereoManager {
   public setAudioOutput(deviceId:string) {
     this.audioDeviceId = deviceId
     const audioEx:any = this.audioElement
-    console.log(`[SPK] setAudioOutput called: deviceId=${deviceId} playMode=${this.playMode} muted=${this.audioOutputMuted} sinkId=${audioEx.sinkId} hasSinkId=${!!audioEx.setSinkId} nodeCount=${Object.keys(this.nodes).length}`)
+    spkLog(`[SPK] setAudioOutput called: deviceId=${deviceId} playMode=${this.playMode} muted=${this.audioOutputMuted} sinkId=${audioEx.sinkId} hasSinkId=${!!audioEx.setSinkId} nodeCount=${Object.keys(this.nodes).length}`)
     const promises = [setAudioOutputDevice(this.audioElement, deviceId)]
     for (const node in this.nodes) {
       promises.push(this.nodes[node].setAudioOutput(deviceId))
     }
     return Promise.all(promises).then((results) => {
-      console.log(`[SPK] setAudioOutput results: ${JSON.stringify(results)} some=${results.some(Boolean)} playMode=${this.playMode} muted=${this.audioOutputMuted} sinkId=${audioEx.sinkId}`)
+      spkLog(`[SPK] setAudioOutput results: ${JSON.stringify(results)} some=${results.some(Boolean)} playMode=${this.playMode} muted=${this.audioOutputMuted} sinkId=${audioEx.sinkId}`)
       if (results.some(Boolean) && this.playMode === 'Context' && !this.audioOutputMuted) {
         this.audioContext.resume().catch(()=>{})
-        this.audioElement.play().catch((e)=>{ console.warn('[SPK] play() failed:', e) })
+        this.audioElement.play().catch((e)=>{ spkLog('[SPK] play() failed:', e) })
       }
       return results.some(Boolean)
     })

@@ -99,7 +99,6 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
                     if (ev.key === 'Enter'){
                       const offset = offsetTextToNumber(seekOffsetText)
                       setSeekOffsetAndText(offset)
-                      //console.log('Text::onChange', seekOffset)
                       doSeek(offset)
                     }
                   }}
