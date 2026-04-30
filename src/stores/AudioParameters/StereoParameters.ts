@@ -56,10 +56,12 @@ export class StereoParameters implements ConfigurableParams {
 const stereoParameters = new StereoParameters()
 export default stereoParameters
 
-autorun(() => {
-  const bcast = participants.local.physics.onStage
-  stereoParameters.setBroadcast(bcast)
-})
+export function startBroadcastObservation() {
+  autorun(() => {
+    const bcast = participants.local.physics.onStage
+    stereoParameters.setBroadcast(bcast)
+  })
+}
 
 export function calcVolume(dist: number){
   const mul = ((dist * dist) / (stereoParameters.refDistance * stereoParameters.refDistance)

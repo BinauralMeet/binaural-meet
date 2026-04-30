@@ -14,10 +14,8 @@ import {configure} from "mobx"
 import ReactDOM from 'react-dom'
 import {conference} from '@models/conference'
 import {participants} from '@stores/index'
-// Side-effect import: registers a module-level MobX autorun that watches
-// devicePreference.audiooutput and calls audioManager.setAudioOutput().
-// Must use bare `import '...'` — `import {} from '...'` is tree-shaken by Rollup.
-import '@models/conference/observeOutputDevice'
+import {startOutputDeviceObservation} from '@models/conference/observeOutputDevice'
+import {startBroadcastObservation} from '@stores/AudioParameters/StereoParameters'
 
 configure({
     enforceActions: "never",
@@ -78,6 +76,8 @@ function startConference() {
     localStorage.setItem('log', logStr)
   })
 
+  startOutputDeviceObservation()
+  startBroadcastObservation()
   errorInfo.connectionStart()
 
   if (import.meta.env.DEV) {

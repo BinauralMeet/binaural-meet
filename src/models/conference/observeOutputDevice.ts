@@ -5,22 +5,23 @@ import {autorun} from 'mobx'
 declare const d: any  //  from index.html
 d.audioManager = audioManager
 
-//  headphone or audio output device update
-let timeout = 0
-autorun(() => {
-  if (timeout){
-    window.clearTimeout(timeout)
-    timeout = 0
-  }
-  const setAudioSink = () => {
-    const did = participants.local.devicePreference.audiooutput
-    if (did){
-      audioManager.setAudioOutput(did).then(() => {
-        if (did !== audioManager.getAudioOutput()){
-          timeout = window.setTimeout(setAudioSink, 3000)
-        }
-      })
+export function startOutputDeviceObservation() {
+  let timeout = 0
+  autorun(() => {
+    if (timeout){
+      window.clearTimeout(timeout)
+      timeout = 0
     }
-  }
-  setAudioSink()
-})
+    const setAudioSink = () => {
+      const did = participants.local.devicePreference.audiooutput
+      if (did){
+        audioManager.setAudioOutput(did).then(() => {
+          if (did !== audioManager.getAudioOutput()){
+            timeout = window.setTimeout(setAudioSink, 3000)
+          }
+        })
+      }
+    }
+    setAudioSink()
+  })
+}
