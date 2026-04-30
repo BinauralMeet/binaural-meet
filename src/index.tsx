@@ -10,7 +10,7 @@ import {configure} from "mobx"
 import ReactDOM from 'react-dom'
 import {conference} from '@models/conference'
 import {participants} from '@stores/index'
-import {} from '@models/conference/observeOutputDevice'
+import '@models/conference/observeOutputDevice'
 
 configure({
     enforceActions: "never",
