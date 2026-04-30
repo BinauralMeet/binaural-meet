@@ -31,16 +31,19 @@ export class ConnectedManager {
   constructor() {
     if (urlParameters.testBot !== null) { return }
 
-    autorun(this.onRemotesChange)
-    autorun(this.onPlaybacksChange)
-    autorun(this.onPlaybackContentsChange)
-    autorun(this.onScreenContentsChange)
-    autorun(
-      () => {
+    // Defer autorun registration by one microtask so that all ES modules
+    // involved in circular dependencies finish initializing before the
+    // first autorun fires (avoids TDZ ReferenceErrors on `contents` / `conference`).
+    queueMicrotask(() => {
+      autorun(this.onRemotesChange)
+      autorun(this.onPlaybacksChange)
+      autorun(this.onPlaybackContentsChange)
+      autorun(this.onScreenContentsChange)
+      autorun(() => {
         const muteSpeaker = participants.local.muteSpeaker || participants.local.physics.awayFromKeyboard
         this.manager.switchPlayMode(participants.local.useStereoAudio ? 'Context' : 'Element', muteSpeaker)
-      },
-    )
+      })
+    })
   }
 
   private onRemotesChange = () => {
