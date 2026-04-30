@@ -2,6 +2,9 @@ import {manager as audioManager} from '@models/audio'
 import participants from '@stores/participants/Participants'
 import {autorun} from 'mobx'
 
+declare const d: any  //  from index.html
+d.audioManager = audioManager
+
 //  headphone or audio output device update
 let timeout = 0
 autorun(() => {
