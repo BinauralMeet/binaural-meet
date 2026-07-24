@@ -2,40 +2,19 @@ import {getProxiedUrl} from '@models/api/CORS'
 import {assert} from '@models/utils'
 import {makeObservable, observable} from 'mobx'
 import {Observer} from 'mobx-react-lite'
-import {getDocument, GlobalWorkerOptions, renderTextLayer} from 'pdfjs-dist'
-import {PDFDocumentLoadingTask, PDFDocumentProxy, PDFPageProxy} from 'pdfjs-dist/types/display/api'
+import {getDocument, GlobalWorkerOptions, TextLayer} from 'pdfjs-dist'
+import type {PDFDocumentLoadingTask, PDFDocumentProxy, PDFPageProxy, RenderTask} from 'pdfjs-dist'
+import PdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import React, {useEffect, useRef} from 'react'
 import {ContentProps} from './Content'
 import { pointerStoppers } from '@components/utils'
 import { PageControl } from './PageControl'
 import {contents} from '@stores/'
 
-////GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.7.570/es5/build/pdf.worker.js'
-GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.7.570/build/pdf.worker.js'
+//  Bundle the worker via Vite so its version always matches pdfjs-dist.
+GlobalWorkerOptions.workerSrc = PdfWorkerUrl
 const CANVAS_SCALE = 3
-
-export declare class RenderTask {
-  constructor(internalRenderTask: any);
-  _internalRenderTask: any
-  /**
-   * Callback for incremental rendering -- a function that will be called
-   * each time the rendering is paused.  To continue rendering call the
-   * function that is the first argument to the callback.
-   * @type {function}
-   */
-  onContinue: Function
-  /**
-   * Promise for rendering task completion.
-   * @type {Promise<void>}
-   */
-  get promise(): Promise<void>;
-  /**
-   * Cancels the rendering task. If the task is currently rendering it will
-   * not be cancelled until graphics pauses with a timeout. The promise that
-   * this object extends will be rejected when cancelled.
-   */
-  cancel(): void
-}
+const CMAP_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.1.200/cmaps/'
 
 class Member{
   props!: ContentProps
@@ -107,27 +86,30 @@ class Member{
         if (this.renderTask){
           this.renderTask.cancel()
         }
-        this.renderTask = page.render({canvasContext: ctx, viewport})
+        this.renderTask = page.render({canvasContext: ctx, canvas: this.canvas, viewport})
         this.renderTask.promise.then(()=>{
           page.getTextContent().then((textContent)=>{
-            // Pass the data to the method for rendering of text over the pdf canvas.
+            // Render a transparent, selectable text layer over the pdf canvas.
             if (this.textDiv) {
-              const children = this.textDiv.childNodes
+              const container = this.textDiv
+              const children = container.childNodes
               Array.from(children.values()).forEach(c => c.remove())
-              const texts: HTMLElement[] = []
-              renderTextLayer({
-                textContent: textContent,
-                container: this.textDiv,
+              //  v6 TextLayer positions runs relative to this scale factor.
+              container.style.setProperty('--total-scale-factor', `${viewport.scale}`)
+              const textLayer = new TextLayer({
+                textContentSource: textContent,
+                container,
                 viewport,
-                textDivs: texts
               })
-              texts.forEach(text => {
-                text.style.position='absolute'
-                text.style.color='transparent'
-                text.style.whiteSpace='pre'
-                text.style.transformOrigin='0% 0%'
-                text.style.whiteSpace='nowrap'
-                text.style.verticalAlign='top'
+              textLayer.render().then(()=>{
+                textLayer.textDivs.forEach(text => {
+                  text.style.position='absolute'
+                  text.style.color='transparent'
+                  text.style.whiteSpace='pre'
+                  text.style.transformOrigin='0% 0%'
+                  text.style.whiteSpace='nowrap'
+                  text.style.verticalAlign='top'
+                })
               })
             }
           })
@@ -150,7 +132,7 @@ class Member{
       }else if (!this.getDocTask) {
         this.getDocTask = getDocument({
           url: getProxiedUrl(this.mainUrl),
-          cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.7.570/cmaps/',
+          cMapUrl: CMAP_URL,
           cMapPacked: true,
         })
         this.getDocTask.promise.then((doc) => {
@@ -160,7 +142,7 @@ class Member{
         }).catch(reason => {
           this.getDocTask = getDocument({
             url: this.mainUrl,
-            cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.7.570/cmaps/',
+            cMapUrl: CMAP_URL,
             cMapPacked: true,
           })
           this.getDocTask.promise.then((doc) => {
