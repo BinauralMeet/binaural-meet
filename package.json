@@ -42,8 +42,8 @@
     "react-split-pane": "^0.1.92",
     "react-use-gesture": "^7.0.15",
     "three": "^0.185",
-    "vite": "^5.0.12",
-    "vite-tsconfig-paths": "^4.3.1",
+    "vite": "^8",
+    "vite-tsconfig-paths": "^6",
     "yt-player": "https://github.com/BinauralMeet/yt-player.git"
   },
   "scripts": {
@@ -100,7 +100,7 @@
     "@types/react-sidebar": "^3.0.0",
     "@types/three": "^0.185",
     "@types/throttle-debounce": "^2.1.0",
-    "@vitejs/plugin-react-swc": "^3.5.0",
+    "@vitejs/plugin-react-swc": "^4",
     "import": "^0.0.6",
     "typescript": "^5",
     "vite-plugin-mediapipe": "^0.1.0"
