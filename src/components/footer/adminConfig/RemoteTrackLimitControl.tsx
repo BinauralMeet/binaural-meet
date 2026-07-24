@@ -3,7 +3,7 @@ import Grid from '@material-ui/core/Grid'
 import Slider from '@material-ui/core/Slider'
 import {t} from '@models/locales'
 import React from 'react'
-import { useObserver } from 'mobx-react-lite'
+import { observer } from 'mobx-react-lite'
 import {participants} from '@stores/'
 
 interface MySliderProps{
@@ -22,10 +22,10 @@ const MySlider: React.FC<MySliderProps> = (props) => {
   </Grid>
 }
 
-export const RemoteTrackLimitControl: React.FC = () => {
+export const RemoteTrackLimitControl: React.FC = observer(() => {
   const local = participants.local
-  const videoLimit = useObserver(() => local.remoteVideoLimit)
-  const audioLimit = useObserver(() => local.remoteAudioLimit)
+  const videoLimit = local.remoteVideoLimit
+  const audioLimit = local.remoteAudioLimit
   const videoSlider = <MySlider value={videoLimit >= 0 ? videoLimit : MAX}
     setValue={(v) => {
       local.remoteVideoLimit = v === MAX ? -1 : v
@@ -47,5 +47,5 @@ export const RemoteTrackLimitControl: React.FC = () => {
       labelPlacement='start'
     />
   </>
-}
+})
 RemoteTrackLimitControl.displayName = 'RemoteTrackLimitControl'

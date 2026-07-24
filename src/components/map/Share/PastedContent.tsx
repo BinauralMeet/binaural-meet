@@ -2,13 +2,13 @@ import {ISharedContent, TIME_RESOLUTION_IN_MS} from '@models/ISharedContent'
 import {createContent, createContentsFromDataTransfer} from '@stores/sharedContents/SharedContentCreator'
 import {default as sharedContents} from '@stores/sharedContents/SharedContents'
 import _ from 'lodash'
-import {useObserver} from 'mobx-react-lite'
+import {observer} from 'mobx-react-lite'
 import React, {useEffect} from 'react'
 import {MouseOrTouch, RndContent} from './RndContent'
 import {map} from '@stores/'
 
 
-export const PastedContent: React.FC = () => {
+export const PastedContent: React.FC = observer(() => {
   //  Pasted handler. It prevents paste to dialog.
   function onPaste(evt: ClipboardEvent) {
     //  console.log(`onPaste called enabled:${sharedContents.pasteEnabled}`)
@@ -81,7 +81,7 @@ export const PastedContent: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   )
-  const pastedContent = useObserver(() => sharedContents.pasted)
+  const pastedContent = sharedContents.pasted
   //  console.log('Pasted contents rendered.')
 
   return (
@@ -99,4 +99,4 @@ export const PastedContent: React.FC = () => {
       }}
     />
   )
-}
+})

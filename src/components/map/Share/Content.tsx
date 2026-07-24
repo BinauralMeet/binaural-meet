@@ -11,7 +11,7 @@ import SubjectIcon from '@material-ui/icons/Subject'
 import YouTubeIcon from '@material-ui/icons/YouTube'
 import {ContentType, ISharedContent} from '@models/ISharedContent'
 import {t} from '@models/locales'
-import {useObserver} from 'mobx-react-lite'
+import {observer} from 'mobx-react-lite'
 import React from 'react'
 import {GDrive} from './GDrive'
 import {PDF} from './PDF'
@@ -87,9 +87,9 @@ export interface ContentProps{
   updateAndSend: (c: ISharedContent) => void
   updateOnly: (c:ISharedContent) => void
 }
-export const RawContent: React.FC<ContentProps> = (props:ContentProps) => {
+export const RawContent: React.FC<ContentProps> = observer((props:ContentProps) => {
   const classes = useStyles()
-  const editing = useObserver(() => contents.editing === props.content.id)
+  const editing = contents.editing === props.content.id
 
   let rv
   if (props.content.type === 'img') {
@@ -117,7 +117,7 @@ export const RawContent: React.FC<ContentProps> = (props:ContentProps) => {
   }
 
   return rv
-}
+})
 
 export const Content = (props: ContentProps) =>
   React.useMemo(() => <RawContent {...props} />,

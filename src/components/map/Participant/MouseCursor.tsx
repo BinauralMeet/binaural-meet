@@ -1,6 +1,6 @@
 import {Tooltip} from '@material-ui/core'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
-import {useObserver} from 'mobx-react-lite'
+import {observer} from 'mobx-react-lite'
 import React from 'react'
 import {participants} from '@stores/'
 
@@ -9,10 +9,10 @@ interface MouseCursorProps{
 }
 
 
-export const MouseCursor: React.FC<MouseCursorProps> = (props:MouseCursorProps) => {
+export const MouseCursor: React.FC<MouseCursorProps> = observer((props:MouseCursorProps) => {
   const participant = participants.find(props.participantId) as ParticipantBase
-  const position = useObserver(() => participant.mouse.position)
-  const name = useObserver(() => participant.information.name)
+  const position = participant.mouse.position
+  const name = participant.information.name
   const [color] = participant.getColor()
   if (!position) {
     return <div />
@@ -29,4 +29,4 @@ export const MouseCursor: React.FC<MouseCursorProps> = (props:MouseCursorProps) 
 
   return isLocal ? cursor
     :<Tooltip title={name}>{cursor}</Tooltip>
-}
+})

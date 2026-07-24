@@ -1,7 +1,7 @@
 import {MAP_SIZE} from '@components/Constants'
 import {makeStyles} from '@material-ui/core/styles'
 import {rgb2Color} from '@models/utils'
-import {Observer, useObserver} from 'mobx-react-lite'
+import {Observer, observer} from 'mobx-react-lite'
 import React from 'react'
 import { MapProps } from '../map'
 import {roomInfo} from '@stores/'
@@ -55,20 +55,18 @@ interface BackgroundStyleProps extends MapProps{
   fill: number[]
 }
 
-export const Background: React.FC<MapProps> = (props) => {
+export const Background: React.FC<MapProps> = observer((props) => {
   const styleProps = {
     color: [0,0,0],
     fill: [0,0,0],
     ...props
   }
-  useObserver(()=>{
-    styleProps.color = roomInfo.backgroundColor
-    styleProps.fill = roomInfo.backgroundFill
-  })
+  styleProps.color = roomInfo.backgroundColor
+  styleProps.fill = roomInfo.backgroundFill
   const classes = useStyles(styleProps)
 
   return <Observer>{() => {
     return <div className={classes.img} />
   }}</Observer>
-}
+})
 Background.displayName = 'Background'

@@ -16,7 +16,7 @@ import VideoOffIcon from '@material-ui/icons/VideocamOff'
 import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
 import SpeakerOnIcon from '@material-ui/icons/VolumeUp'
 import {useTranslation} from '@models/locales'
-import {useObserver} from 'mobx-react-lite'
+import {observer} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import {AdminConfigForm} from './adminConfig/AdminConfigForm'
 import {BroadcastControl} from './BroadcastControl'
@@ -48,7 +48,7 @@ class Member{
   touched = false
 }
 
-export const Footer: React.FC<{height?:number}> = (props) => {
+export const Footer: React.FC<{height?:number}> = observer((props) => {
   //  show or not
   const [showFooter, setShowFooterRaw] = React.useState<boolean>(true)
   const [showAdmin, setShowAdmin] = React.useState<boolean>(false)
@@ -97,7 +97,7 @@ export const Footer: React.FC<{height?:number}> = (props) => {
   function checkMouseOnBottom() {
     return map.screenSize[1] - (map.mouse[1] - map.offset[1]) < 90
   }
-  const mouseOnBottom = useObserver(checkMouseOnBottom)
+  const mouseOnBottom = checkMouseOnBottom()
   useEffect(() => {
     if (checkMouseOnBottom()) { member.touched = true }
     setShowFooter(mouseOnBottom || !member.touched)
@@ -221,12 +221,12 @@ export const Footer: React.FC<{height?:number}> = (props) => {
   }
 
   //  observer
-  const mute = useObserver(() => ({
+  const mute = ({
     muteA: participants.local.muteAudio,  //  mic
     muteS: participants.local.muteSpeaker,  //  speaker
     muteV: participants.local.muteVideo,  //  camera
     onStage: participants.local.physics.onStage
-  }))
+  })
   const fabSize = props.height
   const iconSize = props.height ? props.height * 0.7 : 36
 
@@ -316,5 +316,5 @@ export const Footer: React.FC<{height?:number}> = (props) => {
       </Popover> : undefined}
     </Collapse>
   </div>
-}
+})
 Footer.displayName = 'Footer'

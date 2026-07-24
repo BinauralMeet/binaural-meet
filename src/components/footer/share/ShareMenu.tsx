@@ -30,7 +30,7 @@ import {createContent, createContentFromText, createContentOfIframe, createConte
   createContentOfVideo} from '@stores/sharedContents/SharedContentCreator'
 import {SharedContents} from '@stores/sharedContents/SharedContents'
 import {isArray} from 'lodash'
-import {Observer, useObserver} from 'mobx-react-lite'
+import {Observer, observer} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import {CameraSelectorMember} from './CameraSelector'
 import {DialogIconItem} from '@components/utils/DialogIconItem'
@@ -122,11 +122,11 @@ export interface DialogPageProps {
   setStep: (step: Step) => void
 }
 
-export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
+export const ShareMenu: React.FC<ShareMenuProps> = observer((props) => {
   const {t} = useTranslation()
-  const mainScreen = useObserver(() => (
-    {stream: contents.mainScreenStream, owner: contents.mainScreenOwner}))
-  const showMouse = useObserver(() => participants.local.mouse.show)
+  const mainScreen = (
+    {stream: contents.mainScreenStream, owner: contents.mainScreenOwner})
+  const showMouse = participants.local.mouse.show
   const fileInput = useRef<HTMLInputElement>(null)
   const [openMore, setOpenMore] = React.useState(false)
 
@@ -379,5 +379,5 @@ export const ShareMenu: React.FC<ShareMenuProps> = (props) => {
       </Collapse>
     </List>
   )
-}
+})
 ShareMenu.displayName = 'ShareMenu'

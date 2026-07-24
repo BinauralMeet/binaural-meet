@@ -3,7 +3,7 @@ import Grid from '@material-ui/core/Grid'
 import Popover from '@material-ui/core/Popover'
 import Switch from '@material-ui/core/Switch'
 import {useTranslation} from '@models/locales'
-import {useObserver} from 'mobx-react-lite'
+import {observer} from 'mobx-react-lite'
 import {FabWithTooltip} from '@components/utils/FabEx'
 import Button from '@material-ui/core/Button'
 import {participants} from '@stores/'
@@ -22,9 +22,9 @@ const iconPeople = {
 	"height": 32,
 	"body": "<path fill=\"currentColor\" d=\"M21.066 20.667c1.227-.682 1.068-3.31-.354-5.874c-.61-1.104-1.36-1.998-2.11-2.623a5.23 5.23 0 0 1-3.1 1.03a5.23 5.23 0 0 1-3.105-1.03c-.75.625-1.498 1.52-2.11 2.623c-1.423 2.563-1.58 5.192-.35 5.874c.548.312 1.126.078 1.722-.496a10.5 10.5 0 0 0-.167 1.874c0 2.938 1.14 5.312 2.543 5.312c.846 0 1.265-.865 1.466-2.188c.2 1.314.62 2.188 1.46 2.188c1.397 0 2.546-2.375 2.546-5.312c0-.66-.062-1.29-.168-1.873c.6.575 1.176.813 1.726.497zM15.5 12.2a4.279 4.279 0 1 0-.003-8.557A4.279 4.279 0 0 0 15.5 12.2m8.594 2.714a3.514 3.514 0 0 0 0-7.025a3.513 3.513 0 1 0 .001 7.027zm4.28 2.13c-.502-.908-1.116-1.642-1.732-2.155a4.3 4.3 0 0 1-2.546.845c-.756 0-1.46-.207-2.076-.55c.496 1.093.803 2.2.86 3.19c.094 1.516-.38 2.64-1.328 3.165a2 2 0 0 1-.653.224c-.057.392-.096.8-.096 1.23c0 2.413.935 4.362 2.088 4.362c.694 0 1.04-.71 1.204-1.796c.163 1.08.508 1.796 1.2 1.796c1.145 0 2.09-1.95 2.09-4.36c0-.543-.053-1.06-.14-1.54c.492.473.966.668 1.418.408c1.007-.56.877-2.718-.29-4.82zm-21.468-2.13a3.512 3.512 0 1 0-3.514-3.512a3.515 3.515 0 0 0 3.514 3.514zm2.535 6.622c-1.592-.885-1.738-3.524-.456-6.354a4.24 4.24 0 0 1-2.078.553c-.956 0-1.832-.32-2.55-.846c-.615.512-1.228 1.246-1.732 2.153c-1.167 2.104-1.295 4.262-.287 4.82c.45.258.925.065 1.414-.406a9 9 0 0 0-.135 1.538c0 2.412.935 4.36 2.088 4.36c.694 0 1.04-.71 1.204-1.795c.165 1.08.51 1.796 1.2 1.796c1.147 0 2.09-1.95 2.09-4.36c0-.433-.04-.842-.097-1.234a2 2 0 0 1-.66-.226z\" />"
 }
-export const SoundSetting: React.FC<{}> = () => {
-  const soundLocalizationBase = useObserver(() => participants.local.soundLocalizationBase)
-  const stereo = useObserver(() => participants.local.useStereoAudio)
+export const SoundSetting: React.FC<{}> = observer(() => {
+  const soundLocalizationBase = participants.local.soundLocalizationBase
+  const stereo = participants.local.useStereoAudio
   const {t} = useTranslation()
 
   return <>
@@ -53,13 +53,13 @@ export const SoundSetting: React.FC<{}> = () => {
       </Grid>
     </Container>
   </>
-}
+})
 SoundSetting.displayName = 'SoundSetting'
 
-export const AvatarSetting: React.FC<{}> = () => {
-  const avatarDisplay2_5D = useObserver(() => participants.local.avatarDisplay2_5D)
-  const avatarDisplay3D = useObserver(() => participants.local.avatarDisplay3D)
-  const viewRotateByFace = useObserver(() => participants.local.viewRotateByFace)
+export const AvatarSetting: React.FC<{}> = observer(() => {
+  const avatarDisplay2_5D = participants.local.avatarDisplay2_5D
+  const avatarDisplay3D = participants.local.avatarDisplay3D
+  const viewRotateByFace = participants.local.viewRotateByFace
   const {t} = useTranslation()
 
   return <>
@@ -98,7 +98,7 @@ export const AvatarSetting: React.FC<{}> = () => {
         {t('alAvatar2_5D')}
     </Container>
   </>
-}
+})
 AvatarSetting.displayName = 'AvatarSetting'
 
 function checkCamera(){
@@ -108,10 +108,10 @@ function checkCamera(){
   }
 }
 
-export const Fab3DSettings: React.FC<{size?: number, iconSize:number}> = (props) => {
+export const Fab3DSettings: React.FC<{size?: number, iconSize:number}> = observer((props) => {
   const [anchor, setAnchor] = React.useState<Element|null>(null)
   const [showDetails, setShowDetails] = React.useState(false)
-  const avatarDisplay3D = useObserver(() => participants.local.avatarDisplay3D)
+  const avatarDisplay3D = participants.local.avatarDisplay3D
 
 
   const switch3D = () => {
@@ -151,5 +151,5 @@ export const Fab3DSettings: React.FC<{size?: number, iconSize:number}> = (props)
       </div>
     </Popover>
   </>
-}
+})
 Fab3DSettings.displayName = 'Fab3DSettings'

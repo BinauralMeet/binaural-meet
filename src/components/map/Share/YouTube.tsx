@@ -3,7 +3,7 @@ import {PARTICIPANT_SIZE} from '@models/Participant'
 import {assert, normV, shallowEqualsForMap, subV2} from '@models/utils'
 import {calcVolume} from '@stores/AudioParameters/StereoParameters'
 import {contentLog} from '@models/utils'
-import {useObserver} from 'mobx-react-lite'
+import {observer} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import YouTubePlayer from 'yt-player'
 import {ContentProps} from './Content'
@@ -243,7 +243,7 @@ function checkPositionsForVolume(member:YTMember){
  *  paused=time time=current time in the clip.
 */
 
-export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
+export const YouTube: React.FC<ContentProps> = observer((props:ContentProps) => {
   assert(props.content.type === 'youtube')
   const classes = useStyles()
   const memberRef = useRef<YTMember>(new YTMember())
@@ -251,7 +251,7 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
   member.props = props
 
   //  Editing (No sync) ?
-  const editing = useObserver(() => contents.editing === props.content.id)
+  const editing = contents.editing === props.content.id
 
   //  Check params and reflect them to ytPlayer
   const oldParams = member.params
@@ -416,4 +416,4 @@ export const YouTube: React.FC<ContentProps> = (props:ContentProps) => {
   )
 
   return <div id={`YT${props.content.id}`} className={classes.iframe} />
-}
+})

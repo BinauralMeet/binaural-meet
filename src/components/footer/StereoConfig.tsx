@@ -6,7 +6,7 @@ import RolloffNearIcon from '@material-ui/icons/SignalWifi1Bar'
 import RolloffFarIcon from '@material-ui/icons/SignalWifi3Bar'
 import {assert} from '@models/utils'
 import {stereoParametersStore} from '@stores/AudioParameters'
-import {useObserver} from 'mobx-react-lite'
+import {observer} from 'mobx-react-lite'
 import React from 'react'
 
 const useStyles = makeStyles((theme) => {
@@ -26,9 +26,9 @@ export interface StereoConfigProp{
   onClose: () => void
 }
 
-export const StereoConfig: React.FunctionComponent<StereoConfigProp> = (props: StereoConfigProp) => {
+export const StereoConfig: React.FunctionComponent<StereoConfigProp> = observer((props: StereoConfigProp) => {
   const classes = useStyles()
-  const hearableRange = useObserver(() => Math.round(stereoParametersStore.hearableRange))
+  const hearableRange = Math.round(stereoParametersStore.hearableRange)
   //  1 / ( 1 + rolloff/refDist * (Max(dist/refDist, 1) - 1) )
   const handleChange = (event: React.ChangeEvent<{}>, value: number | number[]) => {
     assert(typeof value === 'number')
@@ -66,7 +66,7 @@ export const StereoConfig: React.FunctionComponent<StereoConfigProp> = (props: S
 
     </div>
   </Popover>
-}
+})
 StereoConfig.displayName = 'ConfigurationDialog'
 
 function valuetext(value:number) {

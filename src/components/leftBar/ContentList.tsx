@@ -9,8 +9,7 @@ import {useTranslation} from '@models/locales'
 import {getRandomColor, mulV2, rgb2Color} from '@models/utils'
 import {isDarkColor} from '@models/utils'
 import {autorun} from 'mobx'
-import {Observer} from 'mobx-react-lite'
-import {useObserver} from 'mobx-react-lite'
+import {Observer, observer} from 'mobx-react-lite'
 import React from 'react'
 import {contentTypeIcons} from '../map/Share/Content'
 import {styleForList} from '../utils/styles'
@@ -97,9 +96,9 @@ export const ContentLine: React.FC<TextLineStyle & {content: SharedContentInfo}>
   }}</Observer>
 }
 
-export const ContentList: React.FC<TextLineStyle>  = (props) => {
+export const ContentList: React.FC<TextLineStyle>  = observer((props) => {
   //  console.log('Render RawContentList')
-  const all = useObserver(() => {
+  const all = (() => {
     const all:SharedContentInfo[] =
       Array.from(contents.roomContentsInfo.size ? contents.roomContentsInfo.values() : contents.all)
     all.sort((a,b) => {
@@ -112,13 +111,13 @@ export const ContentList: React.FC<TextLineStyle>  = (props) => {
     })
 
     return all
-  })
-  const editing = useObserver(() => contents.editing)
+  })()
+  const editing = contents.editing
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
   const elements = all.map(c =>
     <ContentLine key={c.id} content = {c} {...props} />)
   const {t} = useTranslation()
-  const textColor = useObserver(() => isDarkColor(roomInfo.backgroundFill) ? 'white' : 'black')
+  const textColor = isDarkColor(roomInfo.backgroundFill) ? 'white' : 'black'
 
   return <div className={classes.container} >
     <div className={classes.title} style={{color:textColor, height:props.lineHeight}}>{t('Contents')}
@@ -130,5 +129,5 @@ export const ContentList: React.FC<TextLineStyle>  = (props) => {
     </div>
     {elements}
   </div>
-}
+})
 ContentList.displayName = 'ContentList'

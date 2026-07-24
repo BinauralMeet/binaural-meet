@@ -1,5 +1,5 @@
 import {makeStyles} from '@material-ui/core'
-import {useObserver} from 'mobx-react-lite'
+import {observer} from 'mobx-react-lite'
 import React, {useEffect, useRef, useState} from 'react'
 import {contents} from '@stores/'
 
@@ -29,9 +29,9 @@ export interface MainScreenProps{
   showAllTracks?:boolean
 }
 
-export const MainScreen: React.FC<MainScreenProps> = (props) => {
+export const MainScreen: React.FC<MainScreenProps> = observer((props) => {
   const classes = useStyles()
-  const stream = useObserver(() => (contents.mainScreenStream))
+  const stream = (contents.mainScreenStream)
   const videoRef = useRef<HTMLVideoElement>(null)
   useEffect(
     () => {
@@ -92,5 +92,5 @@ export const MainScreen: React.FC<MainScreenProps> = (props) => {
       </div>
     </div>
   )
-}
+})
 MainScreen.displayName = 'MainScreen'

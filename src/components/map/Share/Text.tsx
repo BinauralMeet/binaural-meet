@@ -8,7 +8,7 @@ import {compTextMessage, TextMessage, TextMessages} from '@models/ISharedContent
 import {assert, findTextColorRGB} from '@models/utils'
 import {getRandomColorRGB, rgba} from '@models/utils'
 import _ from 'lodash'
-import {Observer, useObserver} from 'mobx-react-lite'
+import {Observer, observer} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import {ContentProps} from './Content'
 import {map, contents, participants} from '@stores/'
@@ -165,7 +165,7 @@ const useStyles = makeStyles({
   },
 })
 
-export const Text: React.FC<ContentProps> = (props:ContentProps) => {
+export const Text: React.FC<ContentProps> = observer((props:ContentProps) => {
   assert(props.content.type === 'text')
   const memberRef = React.useRef<TextMember>(new TextMember())
   const member = memberRef.current
@@ -174,7 +174,7 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
   const url = props.content.url
   const newTexts = JSON.parse(url) as TextMessages
   //const refEdit = useRef<HTMLDivElement>(null)
-  const editing = useObserver(() => contents.editing === props.content.id)
+  const editing = contents.editing === props.content.id
   if (editing){
     contents.setBeforeChangeEditing((cur, next) => {
       if (cur === props.content.id && next === ''){
@@ -264,4 +264,4 @@ export const Text: React.FC<ContentProps> = (props:ContentProps) => {
     >
     {textDivs}
   </div>
-}
+})

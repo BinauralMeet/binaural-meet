@@ -10,7 +10,7 @@ import SignalCellular3BarIcon from '@material-ui/icons/SignalCellular3Bar'
 import SignalCellular4BarIcon from '@material-ui/icons/SignalCellular4Bar'
 import {useTranslation} from '@models/locales'
 import React from 'react'
-import {useObserver} from 'mobx-react-lite'
+import {observer} from 'mobx-react-lite'
 import { getStatFromTransport, StreamStat, RtcTransportStatsGot } from '@models/conference/RtcTransportStatsGot'
 import * as mediasoup from 'mediasoup-client'
 
@@ -52,10 +52,10 @@ export interface ConnectionQualityDialogProps{
   onClose?: ()=>void
 }
 export const ConnectionQualityDialog: React.FC<ConnectionQualityDialogProps>
-  = (props: ConnectionQualityDialogProps) => {
+  = observer((props: ConnectionQualityDialogProps) => {
   const {t} = useTranslation()
   const rawStat = getStatFromTransport(props.transport)
-  const stat = useObserver<RtcTransportStatsGot|undefined>(()=> (rawStat ? {...rawStat} : undefined))
+  const stat = rawStat ? {...rawStat} : undefined
 
   return <Popover open={props.open} anchorEl={props.anchorEl} >
     <DialogTitle>
@@ -73,7 +73,7 @@ export const ConnectionQualityDialog: React.FC<ConnectionQualityDialogProps>
     </DialogContent>
     <br />
   </Popover>
-}
+})
 
 
 export interface SignalIconProps{

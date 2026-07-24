@@ -1,7 +1,7 @@
 import MenuItem from '@material-ui/core/MenuItem'
 import {createContentOfVideo} from '@stores/sharedContents/SharedContentCreator'
 import {makeObservable, observable} from 'mobx'
-import {useObserver} from 'mobx-react-lite'
+import {observer} from 'mobx-react-lite'
 import React, {useEffect} from 'react'
 import {DialogPageProps} from './Step'
 import {createLocalCamera} from '@models/conference/faceCamera'
@@ -19,10 +19,10 @@ interface CameraSelectorProps extends DialogPageProps{
   cameras: CameraSelectorMember
 }
 
-export const CameraSelector: React.FC<CameraSelectorProps> = (props) => {
+export const CameraSelector: React.FC<CameraSelectorProps> = observer((props) => {
   const {setStep} = props
-  const videoMenuItems = useObserver(() =>
-    props.cameras.videos.map((info, idx) => makeMenuItem(info, closeVideoMenu, idx)))
+  const videoMenuItems =
+    props.cameras.videos.map((info, idx) => makeMenuItem(info, closeVideoMenu, idx))
   function makeMenuItem(info: MediaDeviceInfo, close:(did:string) => void, key:number):JSX.Element {
     let selected = false
     selected = info.deviceId === participants.local.devicePreference.videoinput
@@ -66,5 +66,5 @@ export const CameraSelector: React.FC<CameraSelectorProps> = (props) => {
   return <>
     {videoMenuItems}
   </>
-}
+})
 CameraSelector.displayName = 'CameraSelector'

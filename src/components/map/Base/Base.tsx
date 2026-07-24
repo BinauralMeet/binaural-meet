@@ -6,7 +6,7 @@ import {
 } from '@models/utils'
 import {addV2, mulV2, normV, subV2} from '@models/utils/coordinates'
 import {SCALE_LIMIT} from '@stores/Map'
-import {useObserver} from 'mobx-react-lite'
+import {observer} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import ResizeObserver from 'react-resize-observer'
 import {useGesture} from 'react-use-gesture'
@@ -66,8 +66,8 @@ class BaseMember{
   lastOrientation?:number
 }
 
-export const Base: React.FC = (props) => {
-  const matrix = useObserver(() => map.matrix)
+export const Base: React.FC = observer((props) => {
+  const matrix = map.matrix
   const container = useRef<HTMLDivElement>(null)
   const outer = useRef<HTMLDivElement>(null)
   let [rotateByMouse, setRotateByMouseRaw] = React.useState<boolean>(false)
@@ -82,7 +82,7 @@ export const Base: React.FC = (props) => {
   function offset():[number, number] {
     return map.offset
   }
-  const thirdPersonView = useObserver(() => participants.local.thirdPersonView)
+  const thirdPersonView = participants.local.thirdPersonView
   const memRef = useRef<BaseMember>(new BaseMember())
   const mem = memRef.current
 
@@ -429,6 +429,6 @@ export const Base: React.FC = (props) => {
       </div>
     </div>
   </>
-}
+})
 Base.displayName = 'MapBase'
 

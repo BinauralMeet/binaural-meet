@@ -1,6 +1,6 @@
 import {Participant, PARTICIPANT_SIZE} from '@models/Participant'
 import {urlParameters} from '@models/url'
-import {useObserver} from 'mobx-react-lite'
+import {observer} from 'mobx-react-lite'
 import React, { useEffect } from 'react'
 import {MemoedLocalParticipant as LocalParticipant} from './LocalParticipant'
 import {MouseCursor} from './MouseCursor'
@@ -36,8 +36,8 @@ const Line: React.FC<LineProps> = (props) => {
 }
 
 
-export const ParticipantLayer: React.FC<{vrmAvatars:VRMAvatars}> = (props) => {
-  const remotes = useObserver(() => {
+export const ParticipantLayer: React.FC<{vrmAvatars:VRMAvatars}> = observer((props) => {
+  const remotes = (() => {
     const rs = Array.from(participants.remote.values()).filter(r => r.physics.located)
     const all:Participant[] = Array.from(rs)
     all.push(participants.local)
@@ -47,31 +47,29 @@ export const ParticipantLayer: React.FC<{vrmAvatars:VRMAvatars}> = (props) => {
     }
     //rs.sort((a,b) => a.pose.position[1] - b!.pose.position[1])
     return rs
-  })
-  const localId = useObserver(() => participants.localId)
+  })()
+  const localId = participants.localId
   const remoteElements = remotes.map((r, index) => <RemoteParticipant key={r.id}
     participant={r} size={PARTICIPANT_SIZE} zIndex={index} />)
   const localElement = (<LocalParticipant key={'local'} participant={participants.local}
     size={PARTICIPANT_SIZE} />)
-  const lines = useObserver(
-    () => Array.from(participants.yarnPhones).map((rid) => {
+  const lines = Array.from(participants.yarnPhones).map((rid) => {
       const start = participants.local.pose.position
       const remote = participants.remote.get(rid)
       if (!remote) { return undefined }
       const end = remote.pose.position
 
       return <Line start={start} end={end} key={rid} remote={rid}/>
-    }),
-  )
-  const playIds = useObserver(()=> Array.from(participants.playback.keys()))
+    })
+  const playIds = Array.from(participants.playback.keys())
   const playbackElements = playIds.map((id, index) => <PlaybackParticipant key={id}
     participant={participants.playback.get(id)!} size={PARTICIPANT_SIZE} zIndex={index}/>)
 
-  const mouseIds = useObserver(() => Array.from(participants.remote.keys()).filter(id => (participants.find(id)!.mouse.show)))
+  const mouseIds = Array.from(participants.remote.keys()).filter(id => (participants.find(id)!.mouse.show))
   const remoteMouseCursors = mouseIds.map(
     id => <MouseCursor key={`M_${id}`} participantId={id}/>)
 
-  const showLocalMouse = useObserver(() => participants.local.mouse.show)
+  const showLocalMouse = participants.local.mouse.show
   const localMouseCursor = showLocalMouse
     ? <MouseCursor key={'M_local'} participantId={localId} /> : undefined
 
@@ -160,6 +158,6 @@ export const ParticipantLayer: React.FC<{vrmAvatars:VRMAvatars}> = (props) => {
       {localMouseCursor}
     </div>
   )
-}
+})
 
 ParticipantLayer.displayName = 'ParticipantsLayer'

@@ -5,7 +5,7 @@ import {Icon} from '@iconify/react'
 import {makeStyles} from '@material-ui/styles'
 import { conference } from '@models/conference'
 import {useTranslation} from '@models/locales'
-import {useObserver} from 'mobx-react-lite'
+import {observer} from 'mobx-react-lite'
 import React from 'react'
 import {FabWithTooltip} from '@components/utils/FabEx'
 import {ShareDialog} from './ShareDialog'
@@ -23,9 +23,9 @@ interface ShareButtonProps{
   size?: number
   iconSize?: number
 }
-export const ShareButton: React.FC<ShareButtonProps> = (props) => {
+export const ShareButton: React.FC<ShareButtonProps> = observer((props) => {
   const classes = useStyles()
-  const sharing = useObserver(() => contents.getLocalRtcContentIds().length || contents.mainScreenOwner === conference.rtcTransports.peer)
+  const sharing = contents.getLocalRtcContentIds().length || contents.mainScreenOwner === conference.rtcTransports.peer
   const {t} = useTranslation()
 
   return (
@@ -40,6 +40,6 @@ export const ShareButton: React.FC<ShareButtonProps> = (props) => {
         : undefined}
     </div>
   )
-}
+})
 
 ShareButton.displayName = 'ShareButton'

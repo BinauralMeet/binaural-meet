@@ -95,6 +95,8 @@ export const TheEntrance: React.FC = () => {
         </p>
         <br />
         <TextField
+          id="entrance-name"
+          name="entrance-name"
           label={t("YourName")}
           multiline={false}
           value={name}
@@ -107,6 +109,8 @@ export const TheEntrance: React.FC = () => {
         />
         <Box mt={4}>
           <TextField
+            id="entrance-venue"
+            name="entrance-venue"
             label={t("Venue")}
             multiline={false}
             value={room}

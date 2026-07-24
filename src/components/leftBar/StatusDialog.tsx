@@ -4,7 +4,7 @@ import Popper, { PopperProps } from '@material-ui/core/Popper'
 import { StreamStat, RtcTransportStatsGot } from '@models/conference/RtcTransportStatsGot'
 import React from 'react'
 import {conference} from '@models/conference'
-import { useObserver } from 'mobx-react-lite'
+import { observer } from 'mobx-react-lite'
 import errorInfo from '@stores/ErrorInfo'
 import {useTranslation} from '@models/locales'
 import {ConnectionStat} from '@components/map/Participant/SignalQuality'
@@ -22,9 +22,9 @@ function resetDataConnection(){
 export interface StatusDialogProps extends Omit<PopperProps, 'children'>{
   close: () => void,
 }
-export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogProps) => {
+export const StatusDialog: React.FC<StatusDialogProps> = observer((props: StatusDialogProps) => {
   const {t} = useTranslation()
-  const stat = useObserver(()=>{
+  const stat = (()=>{
     const stats:RtcTransportStatsGot[] = []
     const senderStat = conference.rtcTransports.sendTransport?.appData?.stat as (RtcTransportStatsGot|undefined)
     if (senderStat) stats.push(senderStat)
@@ -69,10 +69,10 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
       servers,
       data,
     }
-  })
-  const loads = useObserver(()=>{
+  })()
+  const loads = (()=>{
     return {loadRtc: messageLoads.loadRtc, loadData: messageLoads.loadData, rttData: messageLoads.rttData}
-  })
+  })()
 
   const {close, ...poperProps} = props
   return <Popper {...poperProps} disablePortal={false} style={{zIndex:2}}>
@@ -101,4 +101,4 @@ export const StatusDialog: React.FC<StatusDialogProps> = (props: StatusDialogPro
         >{t('emClose')}</Button>
     </Paper>
   </Popper>
-}
+})

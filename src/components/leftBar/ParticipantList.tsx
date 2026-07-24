@@ -10,7 +10,7 @@ import {getColorOfParticipant} from '@models/Participant'
 import {isDarkColor} from '@models/utils'
 import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import {autorun} from 'mobx'
-import {Observer, useObserver} from 'mobx-react-lite'
+import {Observer, observer} from 'mobx-react-lite'
 import React, { CSSProperties } from 'react'
 import {styleForList} from '../utils/styles'
 import {TextLineStyle} from './LeftBar'
@@ -23,11 +23,11 @@ import megaphoneIcon from '@iconify/icons-mdi/megaphone'
 import {t} from '@models/locales'
 import {participants, map, roomInfo} from '@stores/'
 
-export const ParticipantLine: React.FC<TextLineStyle&{participant: ParticipantBase}> = (props) => {
-  const name = useObserver(() => (props.participant.information.name))
-  const avatarSrc = useObserver(() => (props.participant.information.avatarSrc))
-  const colors = useObserver(() => getColorOfParticipant(props.participant.information))
-  const size = useObserver(() => props.lineHeight)
+export const ParticipantLine: React.FC<TextLineStyle&{participant: ParticipantBase}> = observer((props) => {
+  const name = (props.participant.information.name)
+  const avatarSrc = (props.participant.information.avatarSrc)
+  const colors = getColorOfParticipant(props.participant.information)
+  const size = props.lineHeight
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
   const [showForm, setShowForm] = React.useState(false)
   const ref = React.useRef<HTMLButtonElement>(null)
@@ -111,7 +111,7 @@ export const ParticipantLine: React.FC<TextLineStyle&{participant: ParticipantBa
         anchorEl={ref.current} anchorOrigin={{vertical:'top', horizontal:'right'}} />
     }
   </>}</Observer>
-}
+})
 
 export const RawParticipantList: React.FC<TextLineStyle&{localId: string, remoteIds: string[]}> = (props) => {
   const [showStat, setShowStat] = React.useState(false)
@@ -169,10 +169,10 @@ export const RawParticipantList: React.FC<TextLineStyle&{localId: string, remote
 RawParticipantList.displayName = 'ParticipantList'
 
 export const ParticipantList = React.memo<TextLineStyle>(
-  (props) => {
-    const localId = useObserver(() => participants.localId)
-    const ids = useObserver(() => Array.from(participants.remote.keys()))
+  observer((props) => {
+    const localId = participants.localId
+    const ids = Array.from(participants.remote.keys())
 
     return <RawParticipantList {...props} localId={localId} remoteIds = {ids} />
-  },
+  }),
 )

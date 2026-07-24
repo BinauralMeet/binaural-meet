@@ -23,7 +23,7 @@ import {addV2, extractScaleX, extractScaleY, mulV, rotateVector2DByDegree, subV2
 import {copyContentToClipboard, moveContentToBottom, moveContentToTop} from '@stores/sharedContents/SharedContentCreator'
 import {TITLE_HEIGHT} from '@stores/sharedContents/SharedContents'
 import _ from 'lodash'
-import {useObserver} from 'mobx-react-lite'
+import {observer} from 'mobx-react-lite'
 import React, {useEffect, useLayoutEffect, useRef, useState} from 'react'
 import {Rnd} from 'react-rnd'
 import {useGesture} from 'react-use-gesture'
@@ -62,7 +62,7 @@ class RndContentMember{
 
 //  -----------------------------------------------------------------------------------
 //  The RnDContent component
-export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => {
+export const RndContent: React.FC<RndContentProps> = observer((props:RndContentProps) => {
   /*
   function rotateG2C(gv: [number, number]) {
     const lv = mapData.rotateFromWindow(gv)
@@ -94,8 +94,8 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
   const [preciseOrientation, setPreciseOrientation] = useState(pose.orientation)
   const [dragging, setDragging] = useState(false)
   const rnd = useRef<Rnd>(null)                         //  ref to rnd to update position and size
-  const editing = useObserver(() => contents.editing === props.content.id)
-  const zoomed = useObserver(() => map.zoomed)
+  const editing = contents.editing === props.content.id
+  const zoomed = map.zoomed
   function setEditing(flag: boolean) { contents.setEditing(flag ? props.content.id : '') }
   const memberRef = useRef<RndContentMember>(new RndContentMember())
   const member = memberRef.current
@@ -471,7 +471,7 @@ export const RndContent: React.FC<RndContentProps> = (props:RndContentProps) => 
       <GoogleAuthDrive doAuth={doGoogleAuth}/>
     </div >
   )
-}
+})
 
 const buttonStyle = {
   '&:hover': {
