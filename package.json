@@ -41,7 +41,7 @@
     "react-rnd": "https://github.com/hasevr/react-rnd.git",
     "react-split-pane": "^0.1.92",
     "react-use-gesture": "^7.0.15",
-    "three": "^0.174",
+    "three": "^0.185",
     "vite": "^5.0.12",
     "vite-tsconfig-paths": "^4.3.1",
     "yt-player": "https://github.com/BinauralMeet/yt-player.git"
@@ -98,11 +98,11 @@
     "@types/react-color": "^3.0.4",
     "@types/react-dom": "^17.0.0",
     "@types/react-sidebar": "^3.0.0",
-    "@types/three": "^0.174",
+    "@types/three": "^0.185",
     "@types/throttle-debounce": "^2.1.0",
     "@vitejs/plugin-react-swc": "^3.5.0",
     "import": "^0.0.6",
-    "typescript": "^4.1.2",
+    "typescript": "^5",
     "vite-plugin-mediapipe": "^0.1.0"
   },
   "resolutions": {

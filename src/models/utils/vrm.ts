@@ -221,7 +221,7 @@ function replaceTextureColor(vrm: VRM, colorBase:number[], colorTo:number[]){
   const context = canvas.getContext('2d');
   if (context){
     const tex = (vrm.materials![0] as any).map as THREE.Texture
-    context.drawImage(tex.image, 0, 0)
+    context.drawImage(tex.image as CanvasImageSource, 0, 0)
     const image = context.getImageData(0,0, 256,256)
     const base = mulV(1.0/255.0, colorBase)
     const baseLen = normV(base)

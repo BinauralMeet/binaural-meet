@@ -64,7 +64,7 @@ export class ErrorInfo {
     if (this.type === ''){
       const types = diffSet(this.types, this.supressedTypes)
       if (types.size){
-        this.type = types.values().next().value
+        this.type = types.values().next().value!
       }
     }
 
