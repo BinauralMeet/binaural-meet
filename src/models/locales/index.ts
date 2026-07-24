@@ -6,7 +6,7 @@ import {JaKeyList, jaTranslate} from './ja'
 
 export type KeyList = EnKeyList & JaKeyList
 export function t(key: KeyList, options?:string | TOptions) {
-  return i18n.t(key, options)
+  return i18n.t(key, options as TOptions)
 }
 export interface UseTranslationResponse{
   t:(key: KeyList) => string
