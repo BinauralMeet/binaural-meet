@@ -48,6 +48,7 @@
   },
   "scripts": {
     "start": "vite",
+    "start:sandbox-proxy": "vite --base=/sandbox/port3000/",
     "build": "tsc && vite build",
     "serve": "vite preview"
   },
@@ -101,8 +102,7 @@
     "@types/throttle-debounce": "^5",
     "@vitejs/plugin-react-swc": "^4",
     "import": "^0.0.6",
-    "typescript": "^5",
-    "vite-plugin-mediapipe": "^0.1.0"
+    "typescript": "^5"
   },
   "resolutions": {
     "@types/react": "^17.0.34"

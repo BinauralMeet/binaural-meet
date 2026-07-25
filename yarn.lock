@@ -1777,11 +1777,6 @@ use-sync-external-store@^1.4.0, use-sync-external-store@^1.6.0:
   resolved "https://registry.yarnpkg.com/use-sync-external-store/-/use-sync-external-store-1.6.0.tgz#b174bfa65cb2b526732d9f2ac0a408027876f32d"
   integrity sha512-Pp6GSwGP/NrPIrxVFAIkOQeyw8lFenOHijQWkUTrDvrF4ALqylP2C/KCkeS9dpUM3KvYRQhna5vt7IL95+ZQ9w==
 
-vite-plugin-mediapipe@^0.1.0:
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/vite-plugin-mediapipe/-/vite-plugin-mediapipe-0.1.0.tgz#67a03904c25b94ffb6ca4fb6c095f8c50dabff59"
-  integrity sha512-B0H6ZqQbzDizG93v0vk2X2SOEhrwavuHkhE2SMUoh2KnRk9+KhNtqaxyxWm7Wj63kcCUMnuCrFYB8aLxmkDwNA==
-
 vite-tsconfig-paths@^6:
   version "6.1.1"
   resolved "https://registry.yarnpkg.com/vite-tsconfig-paths/-/vite-tsconfig-paths-6.1.1.tgz#d5c28cba79c89ebf76489ef1040024b21df6da3a"
