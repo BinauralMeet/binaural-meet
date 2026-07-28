@@ -1,13 +1,21 @@
-import roomInfo from '@stores/room/RoomInfo'
+import {observable, makeObservable} from 'mobx'
 
+// Google Drive auth state, kept alongside the Drive API/URL logic that
+// consumes it instead of in the general-purpose RoomInfo store.
+class GDriveAuth {
+  @observable email = ''  //  Email to access Google Drive
+  @observable token = ''  //  Token to access Google Drive
+  constructor() { makeObservable(this) }
+}
+export const gDriveAuth = new GDriveAuth()
 
 export function getInformationOfGDriveContent(fileId: string){
   //  console.log('gapi try to get mimeType')
   const API_KEY = 'AIzaSyCE4B2cKycH0fVmBznwfr1ynnNf2qNEU9M'
   const rv = new Promise<{name:string, mimeType:string}>((resolve, reject)=>{
     if (gapi){
-      if (roomInfo.gDriveToken){
-        gapi.client.setToken({access_token: roomInfo.gDriveToken})
+      if (gDriveAuth.token){
+        gapi.client.setToken({access_token: gDriveAuth.token})
       }else{
         gapi.client.setApiKey(API_KEY)
       }

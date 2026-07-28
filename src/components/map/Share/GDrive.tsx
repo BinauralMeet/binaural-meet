@@ -1,7 +1,7 @@
 import {makeStyles} from '@material-ui/core/styles'
 import {t} from '@models/locales'
 import {assert} from '@models/utils'
-import {MIMETYPE_GOOGLE_APP_PRESENTATION, getGDriveUrl, getInformationOfGDriveContent, getPage, getSlides, isGDrivePreviewScrollable} from '@stores/sharedContents/GDriveUtil'
+import {MIMETYPE_GOOGLE_APP_PRESENTATION, gDriveAuth, getGDriveUrl, getInformationOfGDriveContent, getPage, getSlides, isGDrivePreviewScrollable} from '@stores/sharedContents/GDriveUtil'
 import {Observer} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import {ContentProps} from './Content'
@@ -9,7 +9,7 @@ import axios from 'axios'
 import { PageControl } from './PageControl'
 import { getParamsFromUrl, getStringFromParams } from '@stores/sharedContents/SharedContentCreator'
 import _ from 'lodash'
-import {contentSyncService, roomInfo} from '@stores/'
+import {contentSyncService} from '@stores/'
 
 const useStyles = makeStyles({
   iframe: {
@@ -134,8 +134,8 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
   return <Observer>{()=>{
     const vscroll = isGDrivePreviewScrollable(mimeType)
     //  console.log(`vscroll=${vscroll}  mimeType=${mimeType}`)
-    if (fileId && (!mimeType || member.prevToken !== roomInfo.gDriveToken)) {
-      member.prevToken = roomInfo.gDriveToken
+    if (fileId && (!mimeType || member.prevToken !== gDriveAuth.token)) {
+      member.prevToken = gDriveAuth.token
       //  console.log(`GDrive: id:${fileId}, mime:${mimeType}  token:${member.prevToken}`)
       getInformationOfGDriveContent(fileId).then((res)=>{
         if ((res.name && props.content.name !== res.name) || res.mimeType){

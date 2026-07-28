@@ -1,5 +1,5 @@
 import { useGoogleLogin } from "@react-oauth/google";
-import roomInfo from "@stores/room/RoomInfo";
+import { gDriveAuth } from "@stores/sharedContents/GDriveUtil";
 import axios from 'axios';
 import React, { useEffect } from "react";
 
@@ -19,8 +19,8 @@ export const GoogleAuthDrive: React.FC<GoogleAuthLoginProps> = (props: GoogleAut
       )
       // console.log(`GDrive Auth userInfo: ${JSON.stringify(userInfo)}.`)
       // Second time call conference.auth to check if the user has the permission to enter the room
-      roomInfo.gDriveEmail = userInfo.data.email
-      roomInfo.gDriveToken = tokenResponse.access_token
+      gDriveAuth.email = userInfo.data.email
+      gDriveAuth.token = tokenResponse.access_token
     },
     onNonOAuthError: errorResponse => {
       //console.log(`non auth error.`)

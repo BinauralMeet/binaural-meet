@@ -13,8 +13,6 @@ export class RoomInfo{
   @observable backgroundColor = this.defaultBackgroundColor
 
   @observable loginEmail = ''     //  Email to login and enter room
-  @observable gDriveEmail = ''    //  Email to ascess Google Drive
-  @observable gDriveToken = ''    //  Token to access Google Drive
   constructor() {
     makeObservable(this)
   }

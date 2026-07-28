@@ -16,6 +16,7 @@ import {SignalQualityButton} from './SignalQuality'
 import {Choose3DAvatar, vrmUrlBase} from './LocalParticipant3DAvatarForm'
 import {Grid} from '@material-ui/core'
 import {participants, map, roomInfo} from '@stores/'
+import {gDriveAuth} from '@stores/sharedContents/GDriveUtil'
 
 
 function makeEmailDisp(email: string){
@@ -199,7 +200,7 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
             map.focusOn(local)
           }}>{t('ctFocus')}</Button>
       </Box>
-      {roomInfo.loginEmail || roomInfo.gDriveEmail ?
+      {roomInfo.loginEmail || gDriveAuth.email ?
         <Box >
           <Grid container>
             <Grid item xs={6}> <div style={{fontSize:12}}>{t('lsLoginEmail')}</div>
@@ -209,7 +210,7 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
             </Grid>
             <Grid item xs={6}> <div style={{fontSize:12}}>{t('lsGDriveEmail')}</div>
               <Box>
-                {roomInfo.gDriveEmail}
+                {gDriveAuth.email}
               </Box>
             </Grid>
           </Grid>
