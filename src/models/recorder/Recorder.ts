@@ -13,7 +13,8 @@ import participants from '@stores/participants/Participants'
 import contentStore from '@stores/sharedContents/ContentStore'
 import contentSyncService from '@stores/sharedContents/ContentSyncService'
 import contentTrackStore from '@stores/sharedContents/ContentTrackStore'
-import {MediaRecData, MediaRole, MediaKind, BlobKind, recLog, DBRecord, DBMediaRec, DBBlob} from './RecorderTypes'
+import {MediaRecData, MediaRole, MediaKind, BlobKind, recLog, DBRecord, DBMediaRec, DBBlob,
+  BlobHeader, Message, MessagesHeader, DBRecMessage} from './RecorderTypes'
 declare const d:any                  //  from index.html
 
 const recorderDb = new Dexie('recorderDb');
@@ -82,44 +83,6 @@ class MediaRec implements MediaRecData{
     this.onData(this)
   }
 }
-interface BlobHeader{
-  cid?: string
-  pid?: string
-  role: string
-  size: number
-  kind: BlobKind
-  time?: number
-  duration?: number
-}
-
-class Message{
-  msg: BMMessage
-  time: number
-  constructor(msg: BMMessage, time?:number){
-    this.msg = msg
-    this.time = time ? time : Date.now()
-  }
-}
-interface MessagesHeader{
-  startTime: number
-  endTime: number
-  messages: Message[]
-}
-export interface RecordHeader{
-  messages: MessagesHeader
-  blobs: BlobHeader[]
-}
-const defaultRecordHeader:RecordHeader = {
-  messages:{messages:[], startTime:0, endTime: 0},
-  blobs:[]
-}
-export interface DBRecMessage{
-  id?: number
-  messages: Message[]
-  length: number
-}
-
-
 export class Recorder{
   recordingMedias = new Map<string, MediaRec>()
 
@@ -137,7 +100,8 @@ export class Recorder{
     MessageType.PARTICIPANT_ON_STAGE, MessageType.CONTENT_UPDATE_REQUEST,
     MessageType.PARTICIPANT_LEFT,
     MessageType.CONTENT_REMOVE_REQUEST,
-    MessageType.AUDIO_LEVEL
+    MessageType.AUDIO_LEVEL,
+    MessageType.PARTICIPANT_VRMRIG
   ])
   private lastMessageValues= new Map<string, string>()
 

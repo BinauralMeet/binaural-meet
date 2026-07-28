@@ -6,7 +6,7 @@ import {computed, makeObservable, observable, runInAction} from 'mobx'
 import {BMMessage} from '@models/conference/DataMessage'
 import {MessageType} from '@models/conference/DataMessageType'
 import { MediaClip } from '@stores/media/MediaClip'
-import {MediaKind, BlobKind, recLog} from './RecorderTypes'
+import {MediaKind, BlobKind, recLog, BlobHeader, Message, MessagesHeader, RecordHeader} from './RecorderTypes'
 import participants from '@stores/participants/Participants'
 import playbackStore from '@stores/sharedContents/PlaybackStore'
 import { VrmRig } from '@models/utils/vrmIK'
@@ -19,39 +19,6 @@ function defaultMimeTypeForPlayback(kind: BlobKind) {
     case 'video': return 'video/webm'
     default: return ''
   }
-}
-
-interface BlobHeader{
-  cid?: string
-  pid?: string
-  role: string
-  size: number
-  kind: BlobKind
-  time?: number
-  duration?: number
-}
-
-class Message{
-  msg: BMMessage
-  time: number
-  constructor(msg: BMMessage, time?:number){
-    this.msg = msg
-    this.time = time ? time : Date.now()
-  }
-}
-class MessagesHeader{
-  startTime = 0
-  endTime = 0
-  messages: Message[] = []
-}
-export class RecordHeader{
-  messages = new MessagesHeader()
-  blobs: BlobHeader[] = []
-}
-export interface DBRecMessage{
-  id?: number
-  messages: Message[]
-  length: number
 }
 
 class MediaPlay{
