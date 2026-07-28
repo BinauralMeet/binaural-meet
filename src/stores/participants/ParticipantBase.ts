@@ -49,20 +49,18 @@ export class TrackStates implements Store<ITrackStates>{
   }
 }
 
-export class ParticipantBase extends MapObject implements Store<IParticipantBase> {
+// Parameterized over the concrete information type so subclasses (which each only
+// ever hold one member of the LocalInformation|RemoteInformation union) get a
+// correctly narrowed `information` for free, instead of each redeclaring its own
+// getter/setter pair just to override the type.
+export class ParticipantBase<TInfo extends LocalInformation | RemoteInformation = LocalInformation | RemoteInformation>
+  extends MapObject implements Store<IParticipantBase> {
   @observable id = ''
   @observable zIndex = 0
   @observable.shallow physics = defaultPhysics
   @observable.shallow viewpoint = defaultViewpoint
   @observable.shallow mouse:Mouse = {position:[0, 0], show:false}
-  @observable.shallow information_: LocalInformation | RemoteInformation
-  // Add getter and setter to avoid information redifined in LocalParticipant and RemoteParticipant
-  get information(): LocalInformation | RemoteInformation {
-      return this.information_;
-  }
-  set information(value: LocalInformation | RemoteInformation) {
-      this.information_ = value;
-  }
+  @observable.shallow information: TInfo
   @observable muteAudio = false
   @observable muteSpeaker = false
   @observable muteVideo = false
@@ -82,24 +80,22 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
 
   constructor(isLocal=false) {
     super()
-    if (isLocal){
-      this.information_ = defaultInformation
-    }else{
-      this.information_ = defaultRemoteInformation
-    }
+    // Cast is safe: callers pick isLocal to match the TInfo they instantiate with
+    // (LocalParticipant passes true, Remote/PlaybackParticipant pass false/omit it).
+    this.information = (isLocal ? defaultInformation : defaultRemoteInformation) as TInfo
     makeObservable(this)
   }
 
   getColor() {
-    let color = this.information_.color
+    let color = this.information.color
     if (!color.length) {
-      if (this.information_.name.length){
-        color = getRandomColorRGB(this.information_.name)
+      if (this.information.name.length){
+        color = getRandomColorRGB(this.information.name)
       }else{
         color = [0xD0, 0xD0, 0xE0]
       }
     }
-    let textColor = this.information_.textColor
+    let textColor = this.information.textColor
     if (!textColor.length) {
       textColor = findTextColorRGB(color)
     }
@@ -110,14 +106,14 @@ export class ParticipantBase extends MapObject implements Store<IParticipantBase
   }
 
   getColorRGB() {
-    return this.information_.color.length ? this.information_.color : getRandomColorRGB(this.information_.name)
+    return this.information.color.length ? this.information.color : getRandomColorRGB(this.information.name)
   }
   getTextColorRGB() {
-    let textColor = this.information_.textColor
+    let textColor = this.information.textColor
     if (!textColor.length) {
-      let color = this.information_.color
+      let color = this.information.color
       if (!color.length) {
-        color = getRandomColorRGB(this.information_.name)
+        color = getRandomColorRGB(this.information.name)
       }
       textColor = findTextColorRGB(color)
     }

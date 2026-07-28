@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { saveToStorage, loadFromStorage } from '../utils/PersistentStore'
+import { saveToStorage, loadFromStorage, readFromStorage } from '../utils/PersistentStore'
 
 describe('PersistentStore', () => {
   beforeEach(() => {
@@ -35,5 +35,11 @@ describe('PersistentStore', () => {
     const loaded = { a: 0, b: 'kept' }
     loadFromStorage(loaded, 'partialKey')
     expect(loaded).toEqual({ a: 1, b: 'kept' })
+  })
+
+  it('readFromStorage returns a fresh parsed value or undefined', () => {
+    expect(readFromStorage('missingKey')).toBeUndefined()
+    saveToStorage({ a: 1 }, 'readKey')
+    expect(readFromStorage<{ a: number }>('readKey')).toEqual({ a: 1 })
   })
 })

@@ -8,3 +8,8 @@ export function loadFromStorage(obj: object, key: string, storage: Storage = loc
     Object.assign(obj, JSON.parse(str))
   }
 }
+
+export function readFromStorage<T>(key: string, storage: Storage = localStorage): T | undefined {
+  const str = storage.getItem(key)
+  return str ? JSON.parse(str) as T : undefined
+}

@@ -1,15 +1,15 @@
 import { ISharedContent } from '@models/ISharedContent'
 import {LocalInformation, LocalParticipant as ILocalParticipant, Physics, RemoteInformation, TrackStates, AvatarType} from '@models/Participant'
-import {urlParameters} from '@models/url'
-import {checkImageUrl, isVrmUrl, mulV2, Pose2DMap, subV2} from '@models/utils'
+import {mulV2, Pose2DMap, subV2} from '@models/utils'
 import {MapData} from '@stores/map/Map'
 import {Store} from '@stores/utils'
-import md5 from 'md5'
+import {loadFromStorage, readFromStorage, saveToStorage} from '@stores/utils/PersistentStore'
 import {action, computed, makeObservable, observable} from 'mobx'
-import {autorun} from 'mobx'
 import {DevicePreference} from './localPlugins'
 import {ParticipantBase, TracksStore} from './ParticipantBase'
 import { AllLandmarks } from '@models/utils/vrmIK'
+import {applyUrlOverrides} from './localParticipantUrlOverrides'
+import {setupAvatarSrcAutorun} from './localParticipantAvatarAutorun'
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
 
@@ -35,7 +35,7 @@ interface PhysicsInfo{
 
 type UploaderPreference = 'gyazo' | 'gdrive'
 
-export class LocalParticipant extends ParticipantBase implements Store<ILocalParticipant> {
+export class LocalParticipant extends ParticipantBase<LocalInformation> implements Store<ILocalParticipant> {
   devicePreference = new DevicePreference()
   @observable.shallow tracks = new TracksStore()
   @observable useStereoAudio = false  //  will be override by url switch
@@ -50,13 +50,6 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
   @observable remoteAudioLimit = config.remoteAudioLimit as number || -1
   @observable faceDir = 0
   @observable.ref landmarks:AllLandmarks = {}
-  // init information
-  get information(): LocalInformation {
-    return this.information_ as LocalInformation;
-  }
-  set information(value: LocalInformation) {
-      this.information_ = value;
-  }
   @observable.ref informationToSend:RemoteInformation|undefined
   @action setThirdPersonView(tpv: boolean) { this.thirdPersonView = tpv }
   @computed get trackStates():TrackStates {
@@ -82,40 +75,10 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
     this.informationToSend = undefined
     makeObservable(this)
     this.loadInformationFromStorage()
-    if (urlParameters.name) { this.information.name = urlParameters.name }
-    this.useStereoAudio = urlParameters.headphone !== null ? true : false
-    //  console.debug('URL headphone', urlParameters.headphone)
-    this.muteAudio = urlParameters.muteMic !== null ? true : false
-    //  console.debug('URL muteMic', urlParameters.muteMic)
-    this.muteVideo = urlParameters.cameraOn !== null ? false : true
-    //  console.debug('URL cameraOn', urlParameters.cameraOn)
+    applyUrlOverrides(this)
     this.loadMediaSettingsFromStorage()
     this.loadPhysicsFromStorage()
-    autorun(() => { //  image avatar
-      const gravatar = 'https://www.gravatar.com/avatar/'
-      const vrm = 'https://'
-      let src = this.information.avatarSrc
-      if ((!src || src.includes(gravatar, 0) || src.includes(vrm, 0)) && this.information.email){
-        const email = this.information.email.trim()
-        if (email.includes(vrm) && isVrmUrl(email)){
-          src = email
-        }else{
-          const hash = md5(this.information.email.trim().toLowerCase())
-          src = `${gravatar}${hash}?d=404`
-        }
-      }
-      if (src){
-        if (isVrmUrl(src)){
-          this.information.avatarSrc = src
-        }else{
-          checkImageUrl(src).then((src)=>{
-            this.information.avatarSrc = src
-          }).catch(()=>{
-            //this.information.avatarSrc = '' //  This could make infinite loop.
-          })
-        }
-      }
-    })
+    setupAvatarSrcAutorun(this)
   }
 
   public showVrm(){
@@ -132,24 +95,14 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
   }
   //  save and load participant's name etc.
   saveInformationToStorage(isLocalStorage:boolean) {
-    let storage = sessionStorage
-    if (isLocalStorage) { storage = localStorage }
-    //  console.log(storage === localStorage ? 'Save to localStorage' : 'Save to sessionStorage')
-    storage.setItem('localParticipantInformation', JSON.stringify(this.information))
+    saveToStorage(this.information, 'localParticipantInformation', isLocalStorage ? localStorage : sessionStorage)
   }
   @action.bound
   loadInformationFromStorage() {
-    let storage = localStorage
-    if (sessionStorage.getItem('localParticipantInformation')) {
-      storage = sessionStorage
-    }
-    //  console.debug(storage === localStorage ? 'Load from localStorage' : 'Load from sessionStorage')
-    const infoInStr = storage.getItem('localParticipantInformation')
-    if (infoInStr) {
-      Object.assign(this.information, JSON.parse(infoInStr))
-      if (this.information.avatar === 'circle'){
-        this.information.avatar = config.avatar as AvatarType
-      }
+    const storage = sessionStorage.getItem('localParticipantInformation') ? sessionStorage : localStorage
+    loadFromStorage(this.information, 'localParticipantInformation', storage)
+    if (this.information.avatar === 'circle'){
+      this.information.avatar = config.avatar as AvatarType
     }
   }
 
@@ -174,18 +127,13 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
       viewRotateByFace: this.viewRotateByFace,
       uploadPreference: this.uploaderPreference,
     }
-    //  console.log(storage === localStorage ? 'Save to localStorage' : 'Save to sessionStorage')
-    localStorage.setItem('localParticipantStreamControl', JSON.stringify(muteStatus))
-    sessionStorage.setItem('localParticipantStreamControl', JSON.stringify(muteStatus))
+    saveToStorage(muteStatus, 'localParticipantStreamControl', localStorage)
+    saveToStorage(muteStatus, 'localParticipantStreamControl', sessionStorage)
   }
   @action.bound
   loadMediaSettingsFromStorage(rv?: MediaSettings) {
-    const settingStrInLocal = localStorage.getItem('localParticipantStreamControl')
-    const settingStrInSession = sessionStorage.getItem('localParticipantStreamControl')
-    let settingLocal: MediaSettings|undefined = undefined
-    let settingSession: MediaSettings|undefined = undefined
-    if (settingStrInLocal) { settingLocal = JSON.parse(settingStrInLocal) as MediaSettings }
-    if (settingStrInSession) { settingSession = JSON.parse(settingStrInSession) as MediaSettings }
+    const settingLocal = readFromStorage<MediaSettings>('localParticipantStreamControl', localStorage)
+    const settingSession = readFromStorage<MediaSettings>('localParticipantStreamControl', sessionStorage)
     const setting = settingLocal
     if (setting){
       setting.stream.muteVideo = true
@@ -210,25 +158,17 @@ export class LocalParticipant extends ParticipantBase implements Store<ILocalPar
 
   //  Save and load physics
   savePhysicsToStorage(isLocalStorage:boolean) {
-    let storage = sessionStorage
-    if (isLocalStorage) { storage = localStorage }
-    //  console.log(storage === localStorage ? 'Save to localStorage' : 'Save to sessionStorage')
     const physics: PhysicsInfo = {
       pose: this.pose,
       physics: this.physics,
     }
-    storage.setItem('localParticipantPhysics', JSON.stringify(physics))
+    saveToStorage(physics, 'localParticipantPhysics', isLocalStorage ? localStorage : sessionStorage)
   }
   @action.bound
   loadPhysicsFromStorage() {
-    let storage = localStorage
-    if (sessionStorage.getItem('localParticipantPhysics')) {
-      storage = sessionStorage
-    }
-    //  console.debug(storage === localStorage ? 'Load from localStorage' : 'Load from sessionStorage')
-    const str = storage.getItem('localParticipantPhysics')
-    if (str) {
-      const physics = JSON.parse(str) as PhysicsInfo
+    const storage = sessionStorage.getItem('localParticipantPhysics') ? sessionStorage : localStorage
+    const physics = readFromStorage<PhysicsInfo>('localParticipantPhysics', storage)
+    if (physics) {
       Object.assign(this.physics, physics.physics)
       Object.assign(this.pose, physics.pose)
     }

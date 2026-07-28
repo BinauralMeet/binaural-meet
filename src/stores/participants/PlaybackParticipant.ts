@@ -5,14 +5,7 @@ import {Store} from '../utils'
 import {ParticipantBase, TrackStates} from './ParticipantBase'
 import {MediaClip} from '@stores/media/MediaClip'
 
-export class PlaybackParticipant extends ParticipantBase implements Store<IPlaybackParticipant> {
-  // init information
-  get information(): RemoteInformation {
-    return this.information_ as RemoteInformation;
-  }
-  set information(value: RemoteInformation) {
-      this.information_ = value;
-  }
+export class PlaybackParticipant extends ParticipantBase<RemoteInformation> implements Store<IPlaybackParticipant> {
   @observable trackStates = new TrackStates()
   @observable called = false
   @observable inLocalsZone = false
