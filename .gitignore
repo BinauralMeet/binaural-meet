@@ -21,3 +21,6 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# codewhale (terminal coding agent) session state
+.codewhale/
