@@ -6,7 +6,7 @@ import contentTrackStore from '@stores/sharedContents/ContentTrackStore'
 import {ContentSyncTransport} from '@stores/sharedContents/ContentSyncTransport'
 import errorInfo from '@stores/room/ErrorInfo'
 import {ConferenceStatusTransport} from '@stores/room/ConferenceStatusTransport'
-import {ClientToServerOnlyMessageType, MessageType, StringArrayMessageTypes} from './DataMessageType'
+import {MessageType} from './DataMessageType'
 import {MSTrack, TrackRoles, RemoteProducer, RemotePeer} from './RtcConnection'
 import {RtcTransportStatsGot} from './RtcTransportStatsGot'
 import {RtcTransports} from './RtcTransports'
@@ -24,10 +24,6 @@ import { ISharedContent } from '@models/ISharedContent'
 // config.js
 declare const d:any                  //  from index.html
 
-//  Cathegolies of BMMessage's types
-const stringArrayMessageTypesForClient = new Set(StringArrayMessageTypes)
-stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.CONTENT_UPDATE_REQUEST_BY_ID)
-stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.REQUEST_PARTICIPANT_STATES)
 export interface AuthInfo{
   email?:string
   token?:string
