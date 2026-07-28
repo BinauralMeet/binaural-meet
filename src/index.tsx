@@ -21,6 +21,12 @@ configure({
     enforceActions: "never",
 })
 
+// Wire the audio layer's need for "which remote tracks are being consumed"
+// to conference here, in the composition root, rather than having
+// models/audio import @models/conference directly (which would create a
+// cycle, since models/audio is instantiated very early in bootstrap).
+audioManager.setAudiosToConsumeAccessor(() => conference.priorityCalculator.tracksToConsume.audios)
+
 
 i18nInit().then(main)
 

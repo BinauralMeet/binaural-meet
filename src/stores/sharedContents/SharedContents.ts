@@ -1,4 +1,3 @@
-import {MessageType} from '@models/conference/DataMessageType'
 import {isContentWallpaper, ISharedContent, SharedContentInfo} from '@models/ISharedContent'
 import {PARTICIPANT_SIZE} from '@models/Participant'
 import {TrackRoles, TrackKind} from '@models/conference/RtcConnection'
@@ -9,7 +8,7 @@ import participants from '@stores/participants/Participants'
 import {EventEmitter} from 'eventemitter3'
 import {action, autorun, makeObservable, observable} from 'mobx'
 import {createContent, defaultContent, moveContentToTop} from './SharedContentCreator'
-import {conference} from '@models/conference'
+import {ContentSyncTransport} from './ContentSyncTransport'
 import _ from 'lodash'
 import { MediaClip } from '@stores/media/MediaClip'
 
@@ -26,6 +25,12 @@ export interface PeerAndTracks {
 
 export class SharedContents extends EventEmitter {
   private contentIdCounter = 0
+  // Injected once by Conference (the composition root) so this store never
+  // imports @models/conference directly. See ContentSyncTransport.ts.
+  private syncTransport?: ContentSyncTransport
+  public setSyncTransport(transport: ContentSyncTransport) {
+    this.syncTransport = transport
+  }
   constructor() {
     super()
     makeObservable(this)
@@ -162,11 +167,11 @@ export class SharedContents extends EventEmitter {
   }
   public getLocalRtcContentIds(){
     return Array.from(this.contentTracks.keys())
-      .filter(cid=>this.contentTracks.get(cid)!.peer === conference.rtcTransports.peer)
+      .filter(cid=>this.contentTracks.get(cid)!.peer === this.syncTransport?.localPeer)
   }
   public getRemoteRtcContentIds(){
     return Array.from(this.contentTracks.keys())
-      .filter(cid=>this.contentTracks.get(cid)!.peer !== conference.rtcTransports.peer)
+      .filter(cid=>this.contentTracks.get(cid)!.peer !== this.syncTransport?.localPeer)
   }
 
   //  Playback Clips
@@ -266,7 +271,7 @@ export class SharedContents extends EventEmitter {
   //  updated by local user
   updateByLocal(newContent: ISharedContent) {
     this.roomContents.set(newContent.id, newContent)
-    conference.dataConnection.sync.sendContentUpdateRequest('', [newContent])
+    this.syncTransport?.sendContentUpdateRequest('', [newContent])
     this.updateAll()
     this.roomContentsInfo.set(newContent.id, newContent)
   }
@@ -274,8 +279,8 @@ export class SharedContents extends EventEmitter {
   //  removed by local user
   removeByLocal(cid: string) {
     if (cid === 'mainScreen'){
-      if (this.mainScreenOwner === conference.rtcTransports.peer){
-        conference.removeLocalTrackByRole(true, 'mainScreen')
+      if (this.mainScreenOwner === this.syncTransport?.localPeer){
+        this.syncTransport?.removeLocalTrackByRole(true, 'mainScreen')
       }
     }else{
       const toRemove = this.roomContents.get(cid)
@@ -283,14 +288,14 @@ export class SharedContents extends EventEmitter {
         this.disposeContent(toRemove)
         this.roomContents.delete(cid)
       }
-      conference.dataConnection.sync.sendContentRemoveRequest('', [cid])
+      this.syncTransport?.sendContentRemoveRequest('', [cid])
       this.roomContentsInfo.delete(cid)
     }
     this.updateAll()
   }
   //  request content by id which is not received yet.
   requestContent(cids: string[]){
-    conference.dataConnection.sendMessage(MessageType.CONTENT_UPDATE_REQUEST_BY_ID, cids)
+    this.syncTransport?.requestContentUpdateById(cids)
   }
   //  Update request from remote.
   updateByRemoteRequest(cs: ISharedContent[]) {
@@ -321,7 +326,7 @@ export class SharedContents extends EventEmitter {
 
   removeAllContents(){
     const cids = Array.from(this.roomContentsInfo.keys())
-    conference.dataConnection.sync.sendContentRemoveRequest('', cids)
+    this.syncTransport?.sendContentRemoveRequest('', cids)
     this.roomContents.clear()
     this.roomContentsInfo.clear()
     this.updateAll()
@@ -348,7 +353,7 @@ export class SharedContents extends EventEmitter {
       const peerAndTracks = this.contentTracks.get(c.id)
       if (peerAndTracks?.peer) {
         if (peerAndTracks.peer === participants.localId){
-          conference.removeLocalTrackByRole(true, c.id)
+          this.syncTransport?.removeLocalTrackByRole(true, c.id)
           this.contentTracks.delete(c.id)
         }else{
           //  Track will removed via rtcTransports

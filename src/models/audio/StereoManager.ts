@@ -1,4 +1,4 @@
-import { conference } from '@models/conference'
+import {RemoteObjectInfo} from '@models/conference/priorityTypes'
 import {assert} from '@models/utils'
 import errorInfo from '@stores/room/ErrorInfo'
 import {autorun} from 'mobx'
@@ -18,6 +18,14 @@ export class StereoManager {
   nodes: {
     [key: string]: NodeGroup,
   } = {}
+
+  // Injected once by Conference/index.tsx (the composition root) so this model
+  // never imports @models/conference directly, which would create a cycle
+  // (models/audio is imported very early, before Conference exists).
+  private getAudiosToConsume?: () => RemoteObjectInfo[]
+  public setAudiosToConsumeAccessor(fn: () => RemoteObjectInfo[]) {
+    this.getAudiosToConsume = fn
+  }
 
   constructor() {
     this.audioElement.srcObject = this.audioDestination.stream
@@ -56,7 +64,8 @@ export class StereoManager {
     if (this.playMode === 'Pause') {
       //  this occurs only once when valid playMode has been set
       autorun(() => {
-        const accepts = new Set(conference.priorityCalculator.tracksToConsume.audios.map(
+        const audiosToConsume = this.getAudiosToConsume?.() ?? []
+        const accepts = new Set(audiosToConsume.map(
           info => info.producer.role === 'avatar' ? info.producer.peer.peer : info.producer.role
         ))
         for (const id in this.nodes) {

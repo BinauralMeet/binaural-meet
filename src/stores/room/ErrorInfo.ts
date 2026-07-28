@@ -6,11 +6,17 @@ import {addV2, diffSet, mulV2} from '@models/utils'
 import map from '@stores/map/Map'
 import participants from '@stores/participants/Participants'
 import {action, autorun, computed, makeObservable, observable, when} from 'mobx'
-import {conference} from '@models/conference'
+import {ConferenceStatusTransport} from './ConferenceStatusTransport'
 
 export type ErrorType = '' | 'connection' | 'retry' | 'noMic' | 'micPermission' | 'rtcTransports' | 'dataConnection' | 'entrance' | 'afk' | 'kicked' | 'noEnterPremission' | 'notAdmin'|'roomInfo'
 
 export class ErrorInfo {
+  // Injected once by Conference (the composition root) so this store never
+  // imports @models/conference directly. See ConferenceStatusTransport.ts.
+  private conferenceStatus?: ConferenceStatusTransport
+  public setConferenceStatusTransport(transport: ConferenceStatusTransport) {
+    this.conferenceStatus = transport
+  }
   @computed get fatal() { return !this.type }
   @observable type:ErrorType = 'entrance'
   @observable types: Set<ErrorType> = new Set()
@@ -91,10 +97,10 @@ export class ErrorInfo {
     })
   }
   public startToListenRtcTransports(){
-    conference.rtcTransports.addListener('disconnect', this.checkConnection)
+    this.conferenceStatus?.addRtcDisconnectListener(this.checkConnection)
   }
   public stopToListenRtcTransports(){
-    conference.rtcTransports.removeListener('disconnect', this.checkConnection)
+    this.conferenceStatus?.removeRtcDisconnectListener(this.checkConnection)
   }
   public onDestruct(){
     this.stopToListenRtcTransports()
@@ -151,10 +157,10 @@ export class ErrorInfo {
     }
   }
   @action checkConnection = () => {
-    if (!conference.isRtcConnected()) {
+    if (!this.conferenceStatus?.isRtcConnected()) {
       this.setType('rtcTransports')
       window.setTimeout(this.checkConnection.bind(this), 1000)
-    }else if (!conference.isDataConnected()){
+    }else if (!this.conferenceStatus?.isDataConnected()){
       this.setType('dataConnection')
       window.setTimeout(this.checkConnection.bind(this), 1000)
     }else {
@@ -166,7 +172,7 @@ export class ErrorInfo {
     }
   }
   @action checkMic() {
-    if (participants.localId && !participants.local.muteAudio && !conference.getLocalMicTrack()) {
+    if (participants.localId && !participants.local.muteAudio && !this.conferenceStatus?.getLocalMicTrack()) {
       if (this.audioInputs.length) {
         this.setType('micPermission')
         //  this.message += 'You have: '
@@ -212,10 +218,8 @@ export class ErrorInfo {
       this.oscillator?.frequency.setValueAtTime(440 + counter % 440, ctxA.currentTime) // 440HzはA4(4番目のラ)
       //  update camera image
       const colors = ['green', 'blue']
-      const nearestVideo = conference.priorityCalculator.tracksToConsume.videos[0]?.producer
-      const nearestAudio = conference.priorityCalculator.tracksToConsume.audios[0]?.producer
-      if (nearestVideo && nearestVideo.consumer?.track.muted) { colors[0] = 'yellow' }
-      if (nearestAudio && nearestAudio.consumer?.track.muted) { colors[1] = 'red' }
+      if (this.conferenceStatus?.isNearestVideoMuted()) { colors[0] = 'yellow' }
+      if (this.conferenceStatus?.isNearestAudioMuted()) { colors[1] = 'red' }
       ctx.fillStyle = colors[0]
       ctx.beginPath()
       ctx.ellipse(width * 0.63, height * 0.33, width * 0.1, height * 0.4, counter / 20, 0, Math.PI * 2)
@@ -268,8 +272,8 @@ export class ErrorInfo {
     const vidoeStream = (this.canvas as any).captureStream(20) as MediaStream
     const videoTrack = vidoeStream.getVideoTracks()[0]
     const audioTrack = destination.stream.getAudioTracks()[0]
-    conference.setLocalCameraTrack({track:videoTrack, peer:participants.local.id, role:'avatar'})
-    conference.setLocalMicTrack({track:audioTrack, peer:participants.local.id, role:'avatar'})
+    this.conferenceStatus?.setLocalCameraTrack({track:videoTrack, peer:participants.local.id, role:'avatar'})
+    this.conferenceStatus?.setLocalMicTrack({track:audioTrack, peer:participants.local.id, role:'avatar'})
   }
 }
 

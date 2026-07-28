@@ -1,5 +1,6 @@
 import { ISharedContent } from '@models/ISharedContent'
 import {PlaybackParticipant, RemoteParticipant} from '@models/Participant'
+import {RemoteObjectInfo} from '@models/conference/priorityTypes'
 import {urlParameters} from '@models/url'
 import {diffMap} from '@models/utils'
 import participants from '@stores/participants/Participants'
@@ -9,6 +10,11 @@ import {ConnectedGroup, ConnectedGroupForPlayback} from './ConnectedGroup'
 import {StereoManager} from './StereoManager'
 export class ConnectedManager {
   private readonly manager = new StereoManager()
+
+  // Forwarded to StereoManager; see its setAudiosToConsumeAccessor comment.
+  public setAudiosToConsumeAccessor(fn: () => RemoteObjectInfo[]) {
+    this.manager.setAudiosToConsumeAccessor(fn)
+  }
 
   private readonly connectedGroups: {
     [key: string]: ConnectedGroup|ConnectedGroupForPlayback,
@@ -32,8 +38,17 @@ export class ConnectedManager {
     if (urlParameters.testBot !== null) { return }
 
     // Defer autorun registration by one microtask so that all ES modules
-    // involved in circular dependencies finish initializing before the
-    // first autorun fires (avoids TDZ ReferenceErrors on `contents` / `conference`).
+    // involved in circular dependencies finish initializing before the first
+    // autorun fires (avoids a TDZ ReferenceError on `contents`). Verified
+    // (2026-07-28) that this is NOT about SharedContents/ErrorInfo/StereoManager
+    // importing @models/conference anymore -- those cycles are gone (see
+    // ContentSyncTransport.ts / ConferenceStatusTransport.ts / the injected
+    // audiosToConsume accessor). It's a separate cycle: @components/App's tree
+    // reaches @stores/sharedContents/SharedContents (this module) before that
+    // module finishes its own top-level evaluation, and that same chain also
+    // reaches @models/audio (this class), so removing the defer makes
+    // `contents` observably TDZ at construction time. Tracing and fixing that
+    // component-tree-driven cycle is out of scope for this pass.
     queueMicrotask(() => {
       autorun(this.onRemotesChange)
       autorun(this.onPlaybacksChange)

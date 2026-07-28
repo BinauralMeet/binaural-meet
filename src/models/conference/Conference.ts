@@ -2,7 +2,10 @@ import {KickTime} from '@models/KickTime'
 import {assert, fixIdString, connLog} from '@models/utils'
 import {default as participants} from '@stores/participants/Participants'
 import contents from '@stores/sharedContents/SharedContents'
-import {ClientToServerOnlyMessageType, StringArrayMessageTypes} from './DataMessageType'
+import {ContentSyncTransport} from '@stores/sharedContents/ContentSyncTransport'
+import errorInfo from '@stores/room/ErrorInfo'
+import {ConferenceStatusTransport} from '@stores/room/ConferenceStatusTransport'
+import {ClientToServerOnlyMessageType, MessageType, StringArrayMessageTypes} from './DataMessageType'
 import {MSTrack, TrackRoles, RemoteProducer, RemotePeer} from './RtcConnection'
 import {RtcTransportStatsGot} from './RtcTransportStatsGot'
 import {RtcTransports} from './RtcTransports'
@@ -29,7 +32,7 @@ export interface AuthInfo{
   token?:string
 }
 
-export class Conference {
+export class Conference implements ContentSyncTransport, ConferenceStatusTransport {
   public authInfo:AuthInfo={}
   private room_=''    //  room name
   public get room(){ return this.room_ }
@@ -45,7 +48,50 @@ export class Conference {
   private positionConnection_ = new PositionConnection()
   public get positionConnection(){ return this.positionConnection_ }
 
+  //  ContentSyncTransport (see stores/sharedContents/ContentSyncTransport.ts):
+  //  lets SharedContents request these without importing @models/conference.
+  public get localPeer(){ return this.rtcTransports.peer }
+  public sendContentUpdateRequest(pid: string, updatedContents: ISharedContent[]){
+    this.dataConnection.sync.sendContentUpdateRequest(pid, updatedContents)
+  }
+  public sendContentRemoveRequest(pid: string, removedIds: string[]){
+    this.dataConnection.sync.sendContentRemoveRequest(pid, removedIds)
+  }
+  public requestContentUpdateById(cids: string[]){
+    this.dataConnection.sendMessage(MessageType.CONTENT_UPDATE_REQUEST_BY_ID, cids)
+  }
+
+  //  ConferenceStatusTransport (see stores/room/ConferenceStatusTransport.ts):
+  //  lets ErrorInfo request these without importing @models/conference.
+  public addRtcDisconnectListener(cb: () => void){
+    this.rtcTransports.addListener('disconnect', cb)
+  }
+  public removeRtcDisconnectListener(cb: () => void){
+    this.rtcTransports.removeListener('disconnect', cb)
+  }
+  public isNearestVideoMuted(){
+    const producer = this.priorityCalculator.tracksToConsume.videos[0]?.producer
+    return !!(producer && producer.consumer?.track.muted)
+  }
+  public isNearestAudioMuted(){
+    const producer = this.priorityCalculator.tracksToConsume.audios[0]?.producer
+    return !!(producer && producer.consumer?.track.muted)
+  }
+
   constructor(){
+    // Deferred by a microtask, matching the same-purpose defer in
+    // ConnectedManager's constructor: the original code never touched
+    // `contents`/`errorInfo` synchronously during Conference's own
+    // construction (only from methods invoked later), which is what made it
+    // safe regardless of the exact module-evaluation order some other,
+    // unrelated import cycle (component-tree-driven, not conference-related)
+    // puts `new Conference()` in. These two lines are the first place
+    // Conference synchronously touches either at construction time, so they
+    // need the same deferral to avoid a TDZ ReferenceError.
+    queueMicrotask(() => {
+      contents.setSyncTransport(this)
+      errorInfo.setConferenceStatusTransport(this)
+    })
     this.rtcTransports.addListener('remoteUpdate', this.onRemoteUpdate)
     this.rtcTransports.addListener('remoteLeft', this.onRemoteLeft)
     this.priorityCalculator = new PriorityCalculator(this)
