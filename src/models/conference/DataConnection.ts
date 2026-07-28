@@ -255,8 +255,21 @@ export class DataConnection {
     if (dest){
       msg.d = dest
     }
-    const idx = this.messagesToSendToRelay.findIndex(m =>
-      m.t === msg.t && m.r === msg.r && m.p === msg.p && m.d === msg.d)
+    //  ROOM_PROP multiplexes many differently-named properties under one message
+    //  type ([name, value] tuples), unlike every other type here (one type = one
+    //  property, so "same type -> same queue slot" is a valid dedup key). Also
+    //  match the property name so e.g. queuing backgroundFill then backgroundColor
+    //  before a flush doesn't let the second overwrite/drop the first.
+    const roomPropName = type === MessageType.ROOM_PROP ? (value as [string, string])[0] : undefined
+    const idx = this.messagesToSendToRelay.findIndex(m => {
+      if (m.t !== msg.t || m.r !== msg.r || m.p !== msg.p || m.d !== msg.d){ return false }
+      if (roomPropName === undefined){ return true }
+      try {
+        return (JSON.parse(m.v) as [string, string])[0] === roomPropName
+      } catch {
+        return false
+      }
+    })
     if (idx >= 0){
       if (stringArrayMessageTypesForClient.has(msg.t)){
         const oldV = JSON.parse(this.messagesToSendToRelay[idx].v) as string[]
