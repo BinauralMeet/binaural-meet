@@ -2,7 +2,7 @@ import {PARTICIPANT_SIZE} from '@models/Participant'
 import {Pose3DAudio} from '@models/utils'
 import {mulV3, normV} from '@models/utils/coordinates'
 import errorInfo from '@stores/room/ErrorInfo'
-import {ConfigurableParams, ConfigurableProp} from './StereoParameters'
+import {BROADCAST_DISTANCE, ConfigurableParams, ConfigurableProp} from './StereoParameterTypes'
 
 const spkLog = import.meta.env.DEV ? console.log.bind(console) : (..._: any[]) => {}
 
@@ -39,8 +39,6 @@ const DEFAULT_PANNER_NODE_CONFIG: Partial<PannerNode> & {refDistance: number} = 
   coneOuterGain: 0,
 }
 */
-export const BROADCAST_DISTANCE = 100000
-
 export type PlayMode = 'Context' | 'Element' | 'Pause'
 
 export class NodeGroup {

@@ -30,12 +30,29 @@ function getRelativePoseFromObject(localPose: Pose2DMap, participant: Participan
   return getRelativePose(localPose, remotePose)
 }
 
-export class ConnectedGroup {
-  private readonly disposers: IReactionDisposer[] = []
+// Shared disposer bookkeeping + the panner-config autorun wiring common to
+// both ConnectedGroup and ConnectedGroupForPlayback.
+abstract class ConnectedGroupBase {
+  protected readonly disposers: IReactionDisposer[] = []
 
+  protected wirePannerConfig(group: NodeGroup) {
+    this.disposers.push(autorun(
+      () => group.updatePannerConfig(stereoParametersStore),
+    ))
+  }
+
+  dispose() {
+    for (const disposer of this.disposers) {
+      disposer()
+    }
+  }
+}
+
+export class ConnectedGroup extends ConnectedGroupBase {
   //  content or remote will be given.
   constructor(content: ISharedContent|undefined,
     remote: RemoteParticipant|undefined, group: NodeGroup) {
+      super()
       const local = participants.local
       this.disposers.push(autorun(()=>{
         const base = _.clone(local.pose)
@@ -109,26 +126,17 @@ export class ConnectedGroup {
       },
     ))
 
-    this.disposers.push(autorun(
-      () => group.updatePannerConfig(stereoParametersStore),
-    ))
+    this.wirePannerConfig(group)
 
     this.disposers.push(autorun(
       () => group.updateBroadcast(remote?.physics.onStage ? true : false),
     ))
   }
-
-  dispose() {
-    for (const disposer of this.disposers) {
-      disposer()
-    }
-  }
 }
 
-export class ConnectedGroupForPlayback {
-  private readonly disposers: IReactionDisposer[] = []
-
+export class ConnectedGroupForPlayback extends ConnectedGroupBase {
   constructor(group: NodeGroupForPlayback, participant?: PlaybackParticipant, cid?: string) {
+    super()
     const local = participants.local
     this.disposers.push(autorun(
       () => {
@@ -158,14 +166,6 @@ export class ConnectedGroupForPlayback {
       },
     ))
 
-    this.disposers.push(autorun(
-      () => group.updatePannerConfig(stereoParametersStore),
-    ))
-  }
-
-  dispose() {
-    for (const disposer of this.disposers) {
-      disposer()
-    }
+    this.wirePannerConfig(group)
   }
 }

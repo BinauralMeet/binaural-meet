@@ -1,5 +1,4 @@
-import {BROADCAST_DISTANCE} from '@models/audio/NodeGroup'
-import {ConfigurableParams} from '@models/audio/StereoParameters'
+import {BROADCAST_DISTANCE, ConfigurableParams} from '@models/audio/StereoParameterTypes'
 import {PARTICIPANT_SIZE} from '@models/Participant'
 import participants from '@stores/participants/Participants'
 import {action, autorun, computed, makeObservable, observable} from 'mobx'
