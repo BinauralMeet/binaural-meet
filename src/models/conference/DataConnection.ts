@@ -1,6 +1,6 @@
 import {MAP_SIZE} from '@components/Constants'
 import {recorder} from '@models/recorder'
-import map from '@stores/Map'
+import map from '@stores/map/Map'
 import {default as participants} from '@stores/participants/Participants'
 import roomInfo from '@stores/room/RoomInfo'
 import {BMMessage} from './DataMessage'

@@ -5,7 +5,7 @@ import {
   radian2Degree, rotate90ClockWise, rotateVector2D, transformPoint2D, transfromAt, vectorLength,
 } from '@models/utils'
 import {addV2, mulV2, normV, subV2} from '@models/utils/coordinates'
-import {SCALE_LIMIT} from '@stores/Map'
+import {SCALE_LIMIT} from '@stores/map/Map'
 import {observer} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import ResizeObserver from 'react-resize-observer'

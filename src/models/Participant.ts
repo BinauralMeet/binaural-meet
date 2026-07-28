@@ -2,7 +2,7 @@ import {ISharedContent} from '@models/ISharedContent'
 import {MapObject} from './MapObject'
 import {findReverseColorRGB, findTextColorRGB, getRandomColorRGB, rgb2Color} from './utils/color'
 import {Mouse} from './utils/coordinates'
-import { MediaClip } from '@stores/MapObject'
+import { MediaClip } from '@stores/media/MediaClip'
 import {AllLandmarks, VrmRig} from './utils/vrmIK'
 
 export const PARTICIPANT_SIZE = 60

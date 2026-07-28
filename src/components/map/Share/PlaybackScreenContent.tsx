@@ -4,7 +4,7 @@ import React, {useEffect, useRef} from 'react'
 import {ContentProps} from './Content'
 import {autorun} from 'mobx'
 import sharedContents from '@stores/sharedContents/SharedContents'
-import {MediaClip} from '@stores/MapObject'
+import {MediaClip} from '@stores/media/MediaClip'
 import { recLog } from '@models/recorder/RecorderTypes'
 
 const useStyles = makeStyles({

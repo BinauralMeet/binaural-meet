@@ -5,7 +5,7 @@ import { StreamStat, RtcTransportStatsGot } from '@models/conference/RtcTranspor
 import React from 'react'
 import {conference} from '@models/conference'
 import { observer } from 'mobx-react-lite'
-import errorInfo from '@stores/ErrorInfo'
+import errorInfo from '@stores/room/ErrorInfo'
 import {useTranslation} from '@models/locales'
 import {ConnectionStat} from '@components/map/Participant/SignalQuality'
 import {messageLoads} from '@stores/media/MessageLoads'

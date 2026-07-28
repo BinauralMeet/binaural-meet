@@ -1,7 +1,7 @@
 import React, {useRef} from 'react'
 import * as THREE from 'three'
 import {freeRenderTarget, freeScene, VRMAvatar, VRMAvatars} from "@models/utils/vrm"
-import map from "@stores/Map"
+import map from "@stores/map/Map"
 import { participants } from "@stores/participants"
 
 //  for debug drawing

@@ -11,7 +11,7 @@ import {action, autorun, makeObservable, observable} from 'mobx'
 import {createContent, defaultContent, moveContentToTop} from './SharedContentCreator'
 import {conference} from '@models/conference'
 import _ from 'lodash'
-import { MediaClip } from '@stores/MapObject'
+import { MediaClip } from '@stores/media/MediaClip'
 
 export const TITLE_HEIGHT = 24
 

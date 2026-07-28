@@ -5,7 +5,7 @@ import '@models/audio'
 import {manager as audioManager} from '@models/audio'
 import {i18nInit} from '@models/locales'
 import {resolveAtEnd} from '@models/utils'
-import errorInfo from '@stores/ErrorInfo'
+import errorInfo from '@stores/room/ErrorInfo'
 // Side-effect import: instantiates all store singletons (participants, contents, map, …).
 // Must use bare `import '...'` for the same reason as above.
 import '@stores/index'

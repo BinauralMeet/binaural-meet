@@ -1,7 +1,7 @@
 import {urlParameters} from '@models/url'
 import {isPortrait, isSmartphone} from '@models/utils'
 import { rgb2Color } from '@models/utils'
-import errorInfo from '@stores/ErrorInfo'
+import errorInfo from '@stores/room/ErrorInfo'
 import roomInfo from '@stores/room/RoomInfo'
 import sharedContentsStore from '@stores/sharedContents/SharedContents'
 import {Observer} from 'mobx-react-lite'

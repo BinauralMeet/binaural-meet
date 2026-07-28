@@ -1,6 +1,6 @@
 import {AvatarProps} from './ComposedAvatar'
 import {makeStyles} from '@material-ui/core/styles'
-import { MediaClip } from '@stores/MapObject'
+import { MediaClip } from '@stores/media/MediaClip'
 import { autorun } from 'mobx'
 import React, {useEffect, useRef} from 'react'
 

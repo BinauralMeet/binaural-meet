@@ -2,7 +2,7 @@
 // use axios
 import { useGoogleLogin } from "@react-oauth/google";
 import {conference} from '@models/conference'
-import errorInfo from "@stores/ErrorInfo";
+import errorInfo from "@stores/room/ErrorInfo";
 import roomInfo from "@stores/room/RoomInfo";
 import axios from 'axios';
 import React, { useEffect } from "react";

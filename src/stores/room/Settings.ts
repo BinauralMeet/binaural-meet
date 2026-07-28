@@ -1,6 +1,6 @@
 import {makeObservable, observable} from 'mobx'
+import {loadFromStorage, saveToStorage} from '@stores/utils/PersistentStore'
 
-const storage = localStorage
 export class Settings {
   @observable lpsId=''
   @observable lpsUrl=''
@@ -10,14 +10,10 @@ export class Settings {
     this.load()
   }
   save(){
-    storage.setItem('settings', JSON.stringify(this))
+    saveToStorage(this, 'settings')
   }
   load(){
-    const str = storage.getItem('settings')
-    if (str){
-      const obj = JSON.parse(str)
-      Object.assign(this, obj)
-    }
+    loadFromStorage(this, 'settings')
   }
 }
 export const settings = new Settings()

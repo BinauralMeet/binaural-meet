@@ -6,7 +6,7 @@ import {
 import {findReverseColorRGB, findTextColorRGB, getRandomColorRGB, isVrmUrl, rgb2Color} from '@models/utils'
 import {Mouse} from '@models/utils'
 import { VrmRig } from '@models/utils/vrmIK'
-import {MapObject} from '@stores/MapObject'
+import {MapObject} from '@stores/map/MapObject'
 import {Store} from '@stores/utils'
 import {action, computed, makeObservable, observable} from 'mobx'
 

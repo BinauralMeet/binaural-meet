@@ -1,4 +1,4 @@
-import { MediaClip } from "@stores/MapObject"
+import { MediaClip } from "@stores/media/MediaClip"
 import { seekMediaElement } from "@models/utils"
 import { NodeGroup, PlayMode, setAudioOutputDevice } from "./NodeGroup"
 

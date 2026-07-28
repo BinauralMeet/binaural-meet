@@ -1,7 +1,7 @@
 import {PARTICIPANT_SIZE} from '@models/Participant'
 import {Pose3DAudio} from '@models/utils'
 import {mulV3, normV} from '@models/utils/coordinates'
-import errorInfo from '@stores/ErrorInfo'
+import errorInfo from '@stores/room/ErrorInfo'
 import {ConfigurableParams, ConfigurableProp} from './StereoParameters'
 
 const spkLog = import.meta.env.DEV ? console.log.bind(console) : (..._: any[]) => {}

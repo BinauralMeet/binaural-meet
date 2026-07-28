@@ -1,8 +1,8 @@
 import {t} from '@models/locales'
 import participants from '@stores/participants/Participants'
 import {action, makeObservable, observable} from 'mobx'
-import { LocalParticipant } from './participants/LocalParticipant'
-import { RemoteParticipant } from './participants/RemoteParticipant'
+import { LocalParticipant } from '@stores/participants/LocalParticipant'
+import { RemoteParticipant } from '@stores/participants/RemoteParticipant'
 
 export type ChatMessageType = 'text' | 'log' | 'called' | 'callTo' | 'private'
 export interface ChatMessageToSend{

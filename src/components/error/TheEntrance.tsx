@@ -9,7 +9,7 @@ import TranslateIcon from "@material-ui/icons/Translate";
 import { i18nSupportedLngs, useTranslation } from "@models/locales";
 import { urlParameters } from "@models/url";
 import { isPortrait, isSmartphone } from "@models/utils";
-import errorInfo from "@stores/ErrorInfo";
+import errorInfo from "@stores/room/ErrorInfo";
 import React, { useState } from "react";
 import { ErrorDialogFrame } from "./ErrorDialog";
 import {tfDivStyle, tfIStyle, tfLStyle} from '@components/utils'

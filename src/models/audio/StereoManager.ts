@@ -1,6 +1,6 @@
 import { conference } from '@models/conference'
 import {assert} from '@models/utils'
-import errorInfo from '@stores/ErrorInfo'
+import errorInfo from '@stores/room/ErrorInfo'
 import {autorun} from 'mobx'
 import {getAudioOutputDevice, NodeGroup, PlayMode, setAudioOutputDevice} from './NodeGroup'
 import { NodeGroupForPlayback } from './NodeGroupForPlayback'
