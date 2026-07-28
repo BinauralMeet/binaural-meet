@@ -290,7 +290,8 @@ export function applyMPLandmarkToVrm(avatar:VRMAvatar, landmarks: AllLandmarks|u
   }
 }
 
-export function freeRenderTarget(target: THREE.WebGLRenderTarget) {
+export function freeRenderTarget(target: THREE.WebGLRenderTarget | null | undefined) {
+  if (!target) { return }
   if (target.texture) {
     target.texture.dispose();
   }

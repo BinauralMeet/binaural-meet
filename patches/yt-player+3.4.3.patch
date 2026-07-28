@@ -1,0 +1,23 @@
+diff --git a/node_modules/yt-player/index.js b/node_modules/yt-player/index.js
+index 1969dc5..f2af809 100644
+--- a/node_modules/yt-player/index.js
++++ b/node_modules/yt-player/index.js
+@@ -296,9 +296,16 @@ class YouTubePlayer extends EventEmitter {
+   }
+ 
+   _loadIframeAPI (cb) {
+-    // If API is loaded, there is nothing else to do
++    // If API is loaded, there is nothing else to do.
++    // Defer the callback to a microtask instead of calling it synchronously:
++    // callers (e.g. YouTubePlayer(id) followed by player.load(videoId)) expect
++    // load() to run before the API-ready callback fires, same as when the API
++    // is still loading. Calling cb() synchronously here (which happens for
++    // every player after the first one on a page) fires this.load(this.videoId, ...)
++    // with this.videoId still null, creating a videoless YT.Player and dropping
++    // the real load() call that follows.
+     if (window.YT && typeof window.YT.Player === 'function') {
+-      return cb(null, window.YT)
++      return Promise.resolve().then(() => cb(null, window.YT))
+     }
+ 
+     // Otherwise, queue callback until API is loaded

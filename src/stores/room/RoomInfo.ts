@@ -32,4 +32,7 @@ export class RoomInfo{
   }
 }
 
-export default new RoomInfo()
+const roomInfo = new RoomInfo()
+declare const d:any
+d.roomInfo = roomInfo
+export default roomInfo

@@ -1,7 +1,7 @@
 import {Chat} from '@stores/Chat'
 import {MapData} from '@stores/Map'
 import {Participants} from '@stores/participants/Participants'
-import {RoomInfo} from '@stores/RoomInfo'
+import {RoomInfo} from '@stores/room/RoomInfo'
 import {SharedContents} from '@stores/sharedContents/SharedContents'
 
 export function formatTimestamp(stamp: number){

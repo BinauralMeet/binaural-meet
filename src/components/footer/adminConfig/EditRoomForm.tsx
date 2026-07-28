@@ -2,7 +2,7 @@ import { Button, ButtonProps, DialogTitle } from '@material-ui/core'
 import Box from '@material-ui/core/Box'
 import TextField from '@material-ui/core/TextField'
 import { conference } from '@models/conference'
-import roomInfo from '@stores/RoomInfo'
+import roomInfo from '@stores/room/RoomInfo'
 import {Observer} from 'mobx-react-lite'
 import React from 'react'
 

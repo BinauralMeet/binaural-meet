@@ -6,6 +6,7 @@ import {conference} from '@models/conference'
 import {MessageType} from '@models/conference/DataMessageType'
 import {isDarkColor, rgb2Color} from '@models/utils'
 import contents from '@stores/sharedContents/SharedContents'
+import {runInAction} from 'mobx'
 import {Observer} from 'mobx-react-lite'
 import React from 'react'
 import {SketchPicker} from 'react-color'
@@ -142,8 +143,16 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
           <SketchPicker color = {{r:roomInfo.backgroundFill[0], g:roomInfo.backgroundFill[1],
             b:roomInfo.backgroundFill[2]}} disableAlpha
             onChange={(color, event)=>{
-              event.preventDefault()
-              roomInfo.backgroundFill = [color.rgb.r, color.rgb.g, color.rgb.b]
+              try {
+                if (event && typeof event.preventDefault === 'function') {
+                  event.preventDefault()
+                }
+                runInAction(() => {
+                  roomInfo.backgroundFill = [color.rgb.r, color.rgb.g, color.rgb.b]
+                })
+              } catch(e: any) {
+                console.error('BackgroundFill onChange error:', e.message, e.stack); alert('BGColor error: ' + e.message)
+              }
             }}
           />
         </Popover>

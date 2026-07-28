@@ -5,7 +5,7 @@ import {makeStyles} from '@material-ui/core/styles'
 import RolloffNearIcon from '@material-ui/icons/SignalWifi1Bar'
 import RolloffFarIcon from '@material-ui/icons/SignalWifi3Bar'
 import {assert} from '@models/utils'
-import {stereoParametersStore} from '@stores/AudioParameters'
+import {stereoParametersStore} from '@stores/media'
 import {observer} from 'mobx-react-lite'
 import React from 'react'
 

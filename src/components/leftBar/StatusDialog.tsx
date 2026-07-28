@@ -8,7 +8,7 @@ import { observer } from 'mobx-react-lite'
 import errorInfo from '@stores/ErrorInfo'
 import {useTranslation} from '@models/locales'
 import {ConnectionStat} from '@components/map/Participant/SignalQuality'
-import {messageLoads} from '@stores/MessageLoads'
+import {messageLoads} from '@stores/media/MessageLoads'
 
 declare const config:any             //  from ../../config.js included from index.html
 

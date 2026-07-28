@@ -1,7 +1,7 @@
 import {makeStyles} from '@material-ui/core/styles'
 import {PARTICIPANT_SIZE} from '@models/Participant'
 import {assert, normV, shallowEqualsForMap, subV2} from '@models/utils'
-import {calcVolume} from '@stores/AudioParameters/StereoParameters'
+import {calcVolume} from '@stores/media/StereoParameters'
 import {contentLog} from '@models/utils'
 import {observer} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
@@ -289,7 +289,7 @@ export const YouTube: React.FC<ContentProps> = observer((props:ContentProps) => 
           //member.skipOnPlaying = 1
           selfPlayed = true
           member.params.set('playing', String(-1))
-          player.play()
+          // autoplay moved to loadList/load below
         }
         member.player = player
         contentLog()(`YTPlayer for ${id} created`)
@@ -385,15 +385,19 @@ export const YouTube: React.FC<ContentProps> = observer((props:ContentProps) => 
       //  set video clip id
       const player = member.player
       if (player) {
-        if (member.params.has('list')) {
+        const listId = member.params.get('list')
+        const videoId = member.params.get('v')
+        //  YouTube radio/dynamic mixes (RD-prefixed) don't work with loadList
+        //  in the IFrame API; fall back to loading the single video.
+        if (listId && !listId.startsWith('RD')) {
           player.loadList({
             listType:'playlist',
-            list:member.params.get('list') as string,
-          })
-          contentLog()(`YT loadList: ${member.params.get('list')}`)
-        }else if (member.params.has('v')) {
-          player.load(member.params.get('v') as string)
-          contentLog()(`YT load: ${member.params.get('v')}`)
+            list: listId,
+          }, true)
+          contentLog()(`YT loadList: ${listId}`)
+        }else if (videoId) {
+          player.load(videoId, true)
+          contentLog()(`YT load: ${videoId}`)
         }
       }
 
@@ -403,7 +407,14 @@ export const YouTube: React.FC<ContentProps> = observer((props:ContentProps) => 
 
       return () => {
         if (member.player) {
-          member.player.destroy()
+          const player = member.player
+          member.player = undefined
+          console.log('[YT CLEANUP] destroying player for', props.content.id, '- div in DOM:', !!document.getElementById(props.content.id))
+          try {
+            player.destroy()
+          } catch (e) {
+            contentLog()('YT destroy caught:', (typeof e === 'object' ? String((e as any).message || e) : String(e)))
+          }
         }
         member.player = undefined
         if (member.volumeIntervalTimer){

@@ -1,4 +1,4 @@
-import roomInfo from '@stores/RoomInfo'
+import roomInfo from '@stores/room/RoomInfo'
 
 
 export function getInformationOfGDriveContent(fileId: string){

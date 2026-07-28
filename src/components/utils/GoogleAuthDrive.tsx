@@ -1,5 +1,5 @@
 import { useGoogleLogin } from "@react-oauth/google";
-import roomInfo from "@stores/RoomInfo";
+import roomInfo from "@stores/room/RoomInfo";
 import axios from 'axios';
 import React, { useEffect } from "react";
 

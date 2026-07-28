@@ -15,7 +15,7 @@ import ReactDOM from 'react-dom'
 import {conference} from '@models/conference'
 import {participants} from '@stores/index'
 import {startOutputDeviceObservation} from '@models/conference/observeOutputDevice'
-import {startBroadcastObservation} from '@stores/AudioParameters/StereoParameters'
+import {startBroadcastObservation} from '@stores/media/StereoParameters'
 
 configure({
     enforceActions: "never",

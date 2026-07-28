@@ -94,7 +94,6 @@ function freeThreeContext(ctx: WebGLContext){
 
   if (ctx.renderer) {
     ctx.renderer.dispose()
-    ctx.renderer.forceContextLoss()
   }
 
   freeScene(ctx.scene)

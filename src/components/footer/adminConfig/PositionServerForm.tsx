@@ -1,6 +1,6 @@
 import Box from '@material-ui/core/Box'
 import TextField from '@material-ui/core/TextField'
-import settings from '@stores/Settings'
+import settings from '@stores/room/Settings'
 import {Observer} from 'mobx-react-lite'
 import React from 'react'
 

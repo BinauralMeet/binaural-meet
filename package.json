@@ -50,7 +50,10 @@
     "start": "vite",
     "start:sandbox-proxy": "vite --base=/sandbox/port3000/",
     "build": "tsc && vite build",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "postinstall": "patch-package"
   },
   "eslintConfig": {
     "extends": [
@@ -85,6 +88,9 @@
     "@iconify/icons-mdi": "^1.1.13",
     "@iconify/react": "^6",
     "@react-oauth/google": "^0.13",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/react": "^16.3.2",
     "@types/deep-equal": "^1.0.1",
     "@types/gapi": "^0.0.47",
     "@types/gapi.auth2": "^0.0.61",
@@ -102,7 +108,12 @@
     "@types/throttle-debounce": "^5",
     "@vitejs/plugin-react-swc": "^4",
     "import": "^0.0.6",
-    "typescript": "^5"
+    "jsdom": "^29.1.1",
+    "patch-package": "^8.0.1",
+    "playwright": "^1.62.0",
+    "typescript": "^5",
+    "vitest": "^4.1.10",
+    "ws": "^8.21.1"
   },
   "resolutions": {
     "@types/react": "^17.0.34"

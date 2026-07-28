@@ -81,6 +81,9 @@ export function createContentOfIframe(urlStr: string, map: MapData) {
       if (url.hostname === 'youtu.be') {
         params.set('v', url.pathname.slice(1))
       }
+      // Strip parameters that are not useful for the YouTube player.
+      params.delete('start_radio')
+      params.delete('feature')
       pasted.url = ''
       for (const param of params) {
         if (pasted.url === '') {

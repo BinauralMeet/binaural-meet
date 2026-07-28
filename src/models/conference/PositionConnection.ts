@@ -1,7 +1,7 @@
 import {default as participants} from '@stores/participants/Participants'
 import {MSMessage, MSPositionConnectMessage, MSPositionMessage } from './MediaMessages'
 import { autorun } from 'mobx'
-import settings from '@stores/Settings'
+import settings from '@stores/room/Settings'
 import {conference} from '@models/conference'
 import {positionLog} from '@models/utils'
 
