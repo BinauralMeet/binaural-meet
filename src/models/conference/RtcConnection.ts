@@ -45,7 +45,7 @@ export interface RemotePeer{
 declare const config:any                  //  from ../../config.js included from index.html
 
 //  Log level and module log options
-const rtcLog = connLog()
+const rtcLog = connLog
 
 const SEND_INTERVAL = 10 * 1000
 
@@ -112,7 +112,7 @@ export class RtcConnection{
         const msg:MSMessage = {
           type: 'pong'
         }
-        rtcLog("RtcC: pong sent.")
+        rtcLog()("RtcC: pong sent.")
         this.mainServer.send(JSON.stringify(msg))
         this.lastSendTime = now
       }
@@ -120,7 +120,7 @@ export class RtcConnection{
       const deadline = now + timeToProcess
       while(this.rtcQueue.length && now < deadline){
         const msg = this.rtcQueue.shift()!
-        rtcLog(`RtcC: processMessag(${msg.type})`, msg)
+        rtcLog()(`RtcC: processMessag(${msg.type})`, msg)
         const func = this.handlers.get(msg.type)
         if (func){
           func.bind(this)(msg)
@@ -298,11 +298,11 @@ export class RtcConnection{
       }
       const onMessageEvent = (ev: MessageEvent<any>)=> {
         const msg = JSON.parse(ev.data) as MSMessage
-        rtcLog(`onMessage(${msg.type})`)
+        rtcLog()(`onMessage(${msg.type})`)
         this.rtcQueue.push(msg)
       }
       const onCloseEvent = () => {
-        rtcLog('onClose() for mainServer')
+        rtcLog()('onClose() for mainServer')
         this.disconnect()
       }
       const onErrorEvent = (ev:any) => {
@@ -330,7 +330,7 @@ export class RtcConnection{
     if (!this.mainServer){
       console.error(`RTCConnection: preConnect() must be called before connect().`)
     }
-    rtcLog(`RtcC: connect(${room}, ${peer}, ${token}, ${email})`)
+    rtcLog()(`RtcC: connect(${room}, ${peer}, ${token}, ${email})`)
     const promise = new Promise<string>((resolve, reject)=>{
       this.connected = true
       const msg:MSConnectMessage = {
@@ -342,14 +342,14 @@ export class RtcConnection{
       }
       if (this.prevPeer) {
         msg.peerJustBefore = this.prevPeer
-        rtcLog(`reconnect with previous peer id '${this.prevPeer}'`)
+        rtcLog()(`reconnect with previous peer id '${this.prevPeer}'`)
       }
       this.sendWithPromise(msg, resolve, reject)
     })
     return promise
   }
   private onConnect(base: MSMessage){
-    rtcLog(`RtcC: onConnect( ${JSON.stringify(base)}`)
+    rtcLog()(`RtcC: onConnect( ${JSON.stringify(base)}`)
     const msg = base as MSConnectMessage
     if (msg.error){
       //  console.log(`onConnect failed: ${msg.error}`)
@@ -362,11 +362,11 @@ export class RtcConnection{
           peer:msg.peer,
           room:msg.room
         }
-        rtcLog(`RtcC: join sent ${JSON.stringify(joinMsg)}`)
+        rtcLog()(`RtcC: join sent ${JSON.stringify(joinMsg)}`)
         this.mainServer.send(JSON.stringify(joinMsg))
         this.lastSendTime = Date.now()
         this.loadDevice(msg.peer).then(()=>{
-          rtcLog(`RtcC: loadDevice success.`)
+          rtcLog()(`RtcC: loadDevice success.`)
           this.resolveMessage(msg, msg.peer)
           this.emitter.emit('connect')
           //  this.startPingPong()
@@ -402,7 +402,7 @@ export class RtcConnection{
           if (this.connected){
             this.connected = false
             this.emit('disconnect')
-            rtcLog(`mainServer emits 'disconnect'`)
+            rtcLog()(`mainServer emits 'disconnect'`)
           }
           this.mainServer = undefined
           if (this.peer_){
