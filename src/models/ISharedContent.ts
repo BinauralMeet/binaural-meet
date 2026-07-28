@@ -99,30 +99,75 @@ export function loadToContents(them: ISharedContentToSend[]) {
 export const TIME_RESOLUTION_IN_MS = 100
 export const TEN_YEAR = 1000 * 60 * 60 * 24 * 365 * 10 / TIME_RESOLUTION_IN_MS
 
+//  Exhaustiveness helper: if a new ContentType is added without updating one of
+//  the switches below, TypeScript errors here instead of silently falling through.
+function assertNeverContentType(type: never): never {
+  throw new Error(`Unhandled ContentType: ${type}`)
+}
+
 //  Does content use keyinput during editing or not.
-export function doseContentEditingUseKeyinput(c: ISharedContent){
-  return c.type === 'text' || c.type === 'pdf'
+export function doseContentEditingUseKeyinput(c: ISharedContent): boolean {
+  switch (c.type) {
+    case 'text': case 'pdf':
+      return true
+    case 'img': case 'youtube': case 'iframe': case 'screen': case 'camera':
+    case 'gdrive': case 'whiteboard': case 'playbackScreen': case 'playbackCamera': case '':
+      return false
+    default:
+      return assertNeverContentType(c.type)
+  }
 }
 //  can this type of content be a wall paper or not
-export function canContentBeAWallpaper(c?: ISharedContent){
-  return c && (c.type !== 'camera' && c.type !== 'screen')
+export function canContentBeAWallpaper(c?: ISharedContent): boolean {
+  if (!c) return false
+  switch (c.type) {
+    case 'camera': case 'screen':
+      return false
+    case 'img': case 'text': case 'pdf': case 'youtube': case 'iframe':
+    case 'gdrive': case 'whiteboard': case 'playbackScreen': case 'playbackCamera': case '':
+      return true
+    default:
+      return assertNeverContentType(c.type)
+  }
 }
 //  editable or not
-export function isContentEditable(c?: ISharedContent) {
-  return c && (c.type === 'text' || c.type === 'iframe' || c.type === 'pdf' ||
-    c.type === 'whiteboard' || c.type === 'gdrive' || c.type === 'youtube')
+export function isContentEditable(c?: ISharedContent): boolean {
+  if (!c) return false
+  switch (c.type) {
+    case 'text': case 'iframe': case 'pdf': case 'whiteboard': case 'gdrive': case 'youtube':
+      return true
+    case 'img': case 'screen': case 'camera': case 'playbackScreen': case 'playbackCamera': case '':
+      return false
+    default:
+      return assertNeverContentType(c.type)
+  }
 }
 //  maximizable or not
-export function isContentMaximizable(c?: ISharedContent) {
-  return c && (c.type === 'iframe' || c.type === 'pdf' || c.type === 'whiteboard' ||
-    c.type === 'gdrive' || c.type === 'youtube' || c.type === 'screen' || c.type === 'camera'
-    ||  (c.type === 'img' && c.size[0] > MAXIMIZABLE_IMAGE_MIN_WIDTH)
-    ||  (c.type === 'text' && c.size[0] > MAXIMIZABLE_IMAGE_MIN_WIDTH)
-  )
-
+export function isContentMaximizable(c?: ISharedContent): boolean {
+  if (!c) return false
+  switch (c.type) {
+    case 'iframe': case 'pdf': case 'whiteboard': case 'gdrive': case 'youtube':
+    case 'screen': case 'camera':
+      return true
+    case 'img': case 'text':
+      return c.size[0] > MAXIMIZABLE_IMAGE_MIN_WIDTH
+    case 'playbackScreen': case 'playbackCamera': case '':
+      return false
+    default:
+      return assertNeverContentType(c.type)
+  }
 }
-export function isContentRequireLogin(c?: ISharedContent) {
-  return c && (c.type === 'gdrive')
+export function isContentRequireLogin(c?: ISharedContent): boolean {
+  if (!c) return false
+  switch (c.type) {
+    case 'gdrive':
+      return true
+    case 'img': case 'text': case 'pdf': case 'youtube': case 'iframe': case 'screen': case 'camera':
+    case 'whiteboard': case 'playbackScreen': case 'playbackCamera': case '':
+      return false
+    default:
+      return assertNeverContentType(c.type)
+  }
 }
 //  wallpaper or not
 export function isContentWallpaper(c?: ISharedContent) {
@@ -132,8 +177,17 @@ export const CONTENT_OUT_OF_RANGE_VALUE = 1024*1024
 export function isContentOutOfRange(c?: ISharedContent) {
   return !c || c.pose.position[0] === CONTENT_OUT_OF_RANGE_VALUE
 }
-export function isContentRtc(c?: SharedContentInfoData){
-  return c && (c.type === 'camera' || c.type === 'screen')
+export function isContentRtc(c?: SharedContentInfoData): boolean {
+  if (!c) return false
+  switch (c.type) {
+    case 'camera': case 'screen':
+      return true
+    case 'img': case 'text': case 'pdf': case 'youtube': case 'iframe':
+    case 'gdrive': case 'whiteboard': case 'playbackScreen': case 'playbackCamera': case '':
+      return false
+    default:
+      return assertNeverContentType(c.type)
+  }
 }
 
 export interface WallpaperStore {

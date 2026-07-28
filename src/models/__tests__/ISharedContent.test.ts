@@ -73,6 +73,11 @@ describe('isContentEditable', () => {
     expect(isContentEditable(makeContent({ type: '' }))).toBe(false)
   })
 
+  it('returns false for playbackScreen and playbackCamera', () => {
+    expect(isContentEditable(makeContent({ type: 'playbackScreen' }))).toBe(false)
+    expect(isContentEditable(makeContent({ type: 'playbackCamera' }))).toBe(false)
+  })
+
   it('returns falsy for undefined (current behavior)', () => {
     expect(isContentEditable(undefined)).toBeFalsy()
   })
@@ -117,6 +122,11 @@ describe('isContentMaximizable', () => {
 
   it('returns true for large text (width > 200)', () => {
     expect(isContentMaximizable(makeContent({ type: 'text', size: [300, 200] }))).toBe(true)
+  })
+
+  it('returns false for playbackScreen and playbackCamera', () => {
+    expect(isContentMaximizable(makeContent({ type: 'playbackScreen' }))).toBe(false)
+    expect(isContentMaximizable(makeContent({ type: 'playbackCamera' }))).toBe(false)
   })
 
   it('returns falsy for undefined (current behavior)', () => {
