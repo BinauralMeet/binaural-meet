@@ -28,7 +28,8 @@ import {useTranslation} from '@models/locales'
 import {MSTrack} from '@models/conference/RtcConnection'
 import {createContent, createContentFromText, createContentOfIframe, createContentOfText,
   createContentOfVideo} from '@stores/sharedContents/SharedContentCreator'
-import {SharedContents} from '@stores/sharedContents/SharedContents'
+import {ContentStore} from '@stores/sharedContents/ContentStore'
+import {ContentSyncService} from '@stores/sharedContents/ContentSyncService'
 import {isArray} from 'lodash'
 import {Observer, observer} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
@@ -38,10 +39,10 @@ import {Step} from './Step'
 import {conference} from '@models/conference'
 import { dateTimeString } from '@models/utils/date'
 import { isSmartphone } from '@models/utils'
-import {contents, map, participants} from '@stores/'
+import {contentStore, contentSyncService, contentTrackStore, map, participants} from '@stores/'
 
 function startCapture() {
-  const fps = contents.screenFps
+  const fps = contentStore.screenFps
   return new Promise<MediaStream>((resolve, reject) => {
     navigator.mediaDevices.getDisplayMedia({
       audio:{
@@ -81,8 +82,8 @@ function startCapture() {
   })
 }
 
-function downloadItems(contents:SharedContents) {
-  const content = JSON.stringify(contentsToSave(contents.all))
+function downloadItems(contentStore:ContentStore) {
+  const content = JSON.stringify(contentsToSave(contentStore.all))
   const blob = new Blob([content], {type: 'text/plain'})
 
   const a = document.createElement('a')
@@ -96,7 +97,7 @@ function downloadItems(contents:SharedContents) {
     window.URL.revokeObjectURL(url)
   },         0)
 }
-function importItems(ev: React.ChangeEvent<HTMLInputElement>, contents: SharedContents) {
+function importItems(ev: React.ChangeEvent<HTMLInputElement>, contentSyncService: ContentSyncService) {
   const files = ev.currentTarget?.files
   if (files && files.length) {
     files[0].text().then((text) => {
@@ -107,7 +108,7 @@ function importItems(ev: React.ChangeEvent<HTMLInputElement>, contents: SharedCo
           if (content.type === 'screen' || content.type === 'camera') { return }
           const newContent = createContent()
           Object.assign(newContent, content)
-          contents.addLocalContent(newContent)
+          contentSyncService.addLocalContent(newContent)
         })
       }
     })
@@ -125,7 +126,7 @@ export interface DialogPageProps {
 export const ShareMenu: React.FC<ShareMenuProps> = observer((props) => {
   const {t} = useTranslation()
   const mainScreen = (
-    {stream: contents.mainScreenStream, owner: contents.mainScreenOwner})
+    {stream: contentTrackStore.mainScreenStream, owner: contentTrackStore.mainScreenOwner})
   const showMouse = participants.local.mouse.show
   const fileInput = useRef<HTMLInputElement>(null)
   const [openMore, setOpenMore] = React.useState(false)
@@ -150,20 +151,20 @@ export const ShareMenu: React.FC<ShareMenuProps> = observer((props) => {
   }
   const downloadFile = () => {
     setStep('none')
-    downloadItems(contents)
+    downloadItems(contentStore)
   }
   const createText = () => {
     //  setStep('text')
     setStep('none')
     const tc = createContentOfText('', map)
-    contents.shareContent(tc)
-    contents.setEditing(tc.id)
+    contentStore.shareContent(tc)
+    contentSyncService.setEditing(tc.id)
   }
   const createFromClipboard = () => {
     setStep('none')
     navigator.clipboard.readText().then(str => {
       createContentFromText(str, map).then(c => {
-        contents.shareContent(c)
+        contentStore.shareContent(c)
       })
     })
   }
@@ -175,17 +176,17 @@ export const ShareMenu: React.FC<ShareMenuProps> = observer((props) => {
     rand.forEach(i => randStr += i.toString(16))
     createContentOfIframe(
       `https://wbo.ophir.dev/boards/BinauralMeet_${conference.room}_${randStr}`, map).then((c) => {
-      contents.shareContent(c)
-       contents.setEditing(c.id)
+      contentStore.shareContent(c)
+       contentSyncService.setEditing(c.id)
     })
   }
   const createScreen = () => {
     startCapture().then((ms) => {
       if (ms.getTracks().length) {
         const content = createContentOfVideo(ms.getTracks(), map, 'screen')
-        contents.assignId(content)
-        contents.getOrCreateContentTracks(conference.rtcTransports.peer, content.id)
-        contents.shareContent(content)
+        contentSyncService.assignId(content)
+        contentTrackStore.getOrCreateContentTracks(conference.rtcTransports.peer, content.id)
+        contentStore.shareContent(content)
         ms.getTracks().forEach((track) => {
           const msTrack:MSTrack = {
             track,
@@ -203,12 +204,12 @@ export const ShareMenu: React.FC<ShareMenuProps> = observer((props) => {
     setStep('none')
   }
   const closeAllScreens = () => {
-    const cids = contents.getLocalRtcContentIds()
-    cids.forEach(cid => contents.removeByLocal(cid))
+    const cids = contentTrackStore.getLocalRtcContentIds()
+    cids.forEach(cid => contentSyncService.removeByLocal(cid))
     setStep('none')
   }
   const screenAsBackgrouond = () => {
-    if (contents.mainScreenOwner === participants.localId){
+    if (contentTrackStore.mainScreenOwner === participants.localId){
       conference.removeLocalTrackByRole(true, 'mainScreen')
     } else {
       startCapture().then((ms) => {
@@ -220,8 +221,8 @@ export const ShareMenu: React.FC<ShareMenuProps> = observer((props) => {
               role: 'mainScreen'
             }
             conference.addOrReplaceLocalTrack(msTrack)
-            contents.mainScreenOwner = participants.localId
-            contents.mainScreenStream = ms
+            contentTrackStore.mainScreenOwner = participants.localId
+            contentTrackStore.mainScreenStream = ms
           })
         }
       })
@@ -315,24 +316,24 @@ export const ShareMenu: React.FC<ShareMenuProps> = observer((props) => {
         onClick={createScreen}
         secondEl = {<FormControl component="fieldset">
           <Observer>{
-            ()=> <RadioGroup row aria-label="screen-fps" name="FPS" value={contents.screenFps}
-              onChange={(ev)=>{ contents.setScreenFps(Number(ev.target.value)) }}
+            ()=> <RadioGroup row aria-label="screen-fps" name="FPS" value={contentStore.screenFps}
+              onChange={(ev)=>{ contentStore.setScreenFps(Number(ev.target.value)) }}
               onClick={(ev)=>{
                 ev.stopPropagation()
                 window.setTimeout(createScreen, 100)
               }}
             >
-              <RadioWithLabel value="1" checked={contents.screenFps===1}/>
-              <RadioWithLabel value="5" checked={contents.screenFps===5}/>
-              <RadioWithLabel value="15" checked={contents.screenFps===15}/>
-              <RadioWithLabel value="30" checked={contents.screenFps===30}/>
-              <RadioWithLabel value="60" checked={contents.screenFps===60}
+              <RadioWithLabel value="1" checked={contentStore.screenFps===1}/>
+              <RadioWithLabel value="5" checked={contentStore.screenFps===5}/>
+              <RadioWithLabel value="15" checked={contentStore.screenFps===15}/>
+              <RadioWithLabel value="30" checked={contentStore.screenFps===30}/>
+              <RadioWithLabel value="60" checked={contentStore.screenFps===60}
                 label={<span>60&nbsp;&nbsp;&nbsp;&nbsp;{t('fps')}</span>} />
             </RadioGroup>
           }</Observer>
         </FormControl>}
       />}
-      {contents.getLocalRtcContentIds().length ?
+      {contentTrackStore.getLocalRtcContentIds().length ?
         <div style={{paddingLeft:'1em'}}><DialogIconItem dense key = "stopScreen"
           icon={<Icon icon={bxWindowClose} />}
           text={t('stopScreen')}
@@ -346,7 +347,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = observer((props) => {
         onChange={
           (ev) => {
             setStep('none')
-            importItems(ev, contents)
+            importItems(ev, contentSyncService)
           }
         }
       />

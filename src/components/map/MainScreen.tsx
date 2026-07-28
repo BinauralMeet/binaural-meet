@@ -1,7 +1,7 @@
 import {makeStyles} from '@material-ui/core'
 import {observer} from 'mobx-react-lite'
 import React, {useEffect, useRef, useState} from 'react'
-import {contents} from '@stores/'
+import {contentTrackStore} from '@stores/'
 
 const useStyles = makeStyles({
   videoContainer: {
@@ -31,7 +31,7 @@ export interface MainScreenProps{
 
 export const MainScreen: React.FC<MainScreenProps> = observer((props) => {
   const classes = useStyles()
-  const stream = (contents.mainScreenStream)
+  const stream = (contentTrackStore.mainScreenStream)
   const videoRef = useRef<HTMLVideoElement>(null)
   useEffect(
     () => {

@@ -9,7 +9,7 @@ import errorInfo from '@stores/room/ErrorInfo'
 // Side-effect import: instantiates all store singletons (participants, contents, map, …).
 // Must use bare `import '...'` for the same reason as above.
 import '@stores/index'
-import contents from '@stores/sharedContents/SharedContents'
+import contentTrackStore from '@stores/sharedContents/ContentTrackStore'
 import {configure} from "mobx"
 import ReactDOM from 'react-dom'
 import {conference} from '@models/conference'
@@ -59,7 +59,7 @@ function startConference() {
 
     //  prevent leaving from and reloading browser, when the user shares screen(s).
     if (!errorInfo.type &&
-      (contents.getLocalRtcContentIds().length || contents.mainScreenOwner === participants.localId)) {
+      (contentTrackStore.getLocalRtcContentIds().length || contentTrackStore.mainScreenOwner === participants.localId)) {
       logStr += 'Ask user. '
       ev.preventDefault()
       ev.stopImmediatePropagation()

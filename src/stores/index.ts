@@ -2,13 +2,19 @@ import participants from './participants/Participants'
 import map from './map/Map'
 import roomInfo from './room/RoomInfo'
 import settings from './room/Settings'
-import contents from './sharedContents/SharedContents'
+import contentStore from './sharedContents/ContentStore'
+import contentSyncService from './sharedContents/ContentSyncService'
+import contentTrackStore from './sharedContents/ContentTrackStore'
+import playbackStore from './sharedContents/PlaybackStore'
 import chat from './room/Chat'
 import stereoParameters from './media/StereoParameters'
 const stereoParametersStore = stereoParameters
 import {messageLoads} from './media/MessageLoads'
 export {participants}
-export {contents}
+export {contentStore}
+export {contentSyncService}
+export {contentTrackStore}
+export {playbackStore}
 export {map}
 export {roomInfo}
 export {settings}

@@ -33,14 +33,13 @@ import {ISharedContent} from '@models/ISharedContent'
 import {canContentBeAWallpaper, isContentEditable, isContentWallpaper} from '@models/ISharedContent'
 import {t} from '@models/locales'
 import {Pose2DMap} from '@models/utils'
-import {copyContentToClipboard,  makeContentWallpaper,
-   moveContentToBottom, moveContentToTop} from '@stores/sharedContents/SharedContentCreator'
-import {TITLE_HEIGHT} from '@stores/sharedContents/SharedContents'
+import {copyContentToClipboard,  makeContentWallpaper} from '@stores/sharedContents/SharedContentCreator'
+import {TITLE_HEIGHT, moveContentToBottom, moveContentToTop} from '@stores/sharedContents/ContentStore'
 import {Observer} from 'mobx-react-lite'
 import React, {Fragment} from 'react'
 import {contentTypeIcons, editButtonTip} from './Content'
 import {RndContentProps} from './RndContent'
-import {contents, map} from '@stores/'
+import {contentSyncService, map} from '@stores/'
 
 //type PopoverPropsNoOnClose = Omit<PopoverProps, 'onClose'>
 type PopoverPropsNoOnClose = Omit<PopoverProps, 'onClose' | 'content'>;
@@ -85,7 +84,7 @@ class SharedContentFormMember{
     this.pinned = props.content.pinned
     this.name = props.content.name
     this.pose = props.content.pose
-    this.editing = contents.editing
+    this.editing = contentSyncService.editing
   }
   restore(props: SharedContentFormProps){
     if (!props.content) { return }
@@ -93,7 +92,7 @@ class SharedContentFormMember{
     props.content.pinned = this.pinned
     props.content.name = this.name
     props.content.pose = this.pose
-    contents.setEditing(this.editing)
+    contentSyncService.setEditing(this.editing)
   }
 }
 export const SharedContentForm: React.FC<SharedContentFormProps> = (props: SharedContentFormProps) => {
@@ -178,9 +177,9 @@ export const SharedContentForm: React.FC<SharedContentFormProps> = (props: Share
             }}/>, <Icon icon={pinIcon} height={TITLE_HEIGHT} />, t('ctPin'), 'pin'),
           <Fragment key="edit">{isContentEditable(props.content) ?
             Row(editButtonTip(true, props.content),<DoneIcon />,
-            <Switch color="primary" checked={props.content?.id === contents.editing} onChange={(ev, checked)=>{
+            <Switch color="primary" checked={props.content?.id === contentSyncService.editing} onChange={(ev, checked)=>{
               if (!props.content) { return }
-              contents.setEditing(checked ? props.content.id : '')
+              contentSyncService.setEditing(checked ? props.content.id : '')
             }}/>, <EditIcon />, editButtonTip(false, props.content)) : undefined}</Fragment>,
           <Fragment key="wall">{canContentBeAWallpaper(props.content) ?
             Row(t('ctUnWallpaper'), <Icon icon={imageLine} height={TITLE_HEIGHT}/>,

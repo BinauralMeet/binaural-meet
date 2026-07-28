@@ -10,7 +10,9 @@ import {Dexie, IndexableType, Table} from 'dexie'
 import { conference } from '@models/conference/Conference'
 import { dateTimeString } from '@models/utils/date'
 import participants from '@stores/participants/Participants'
-import contents from '@stores/sharedContents/SharedContents'
+import contentStore from '@stores/sharedContents/ContentStore'
+import contentSyncService from '@stores/sharedContents/ContentSyncService'
+import contentTrackStore from '@stores/sharedContents/ContentTrackStore'
 import {MediaRecData, MediaRole, MediaKind, BlobKind, recLog, DBRecord, DBMediaRec, DBBlob} from './RecorderTypes'
 declare const d:any                  //  from index.html
 
@@ -174,7 +176,7 @@ export class Recorder{
     }))
 
     //  Record all contents
-    const cs = contentsToSend(contents.all)
+    const cs = contentsToSend(contentStore.all)
     this.messages.push({msg:{t:MessageType.CONTENT_UPDATE_REQUEST, v:JSON.stringify(cs)}, time: Date.now()})
     //  Record all participants
     const allParticipants:ParticipantBase[] = Array.from(participants.remote.values())
@@ -545,11 +547,11 @@ export class Recorder{
       }
     }
     //  Contents
-    const rtcContents = contents.getAllRtcContentIds()
+    const rtcContents = contentTrackStore.getAllRtcContentIds()
     for (const rcid of rtcContents){
-      const c = contents.find(rcid)
+      const c = contentSyncService.find(rcid)
       if (c && (c.type === 'screen' || c.type === 'camera')){
-        const tracks = contents.contentTracks.get(rcid)!.tracks
+        const tracks = contentTrackStore.contentTracks.get(rcid)!.tracks
         for(const track of tracks){
           let id
           if (track.kind === 'audio'){

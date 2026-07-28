@@ -1,7 +1,7 @@
 import {makeStyles} from '@material-ui/core/styles'
 import {ISharedContent} from '@models/ISharedContent'
 import {assert, mulV2} from '@models/utils'
-import contents from '@stores/sharedContents/SharedContents'
+import contentTrackStore from '@stores/sharedContents/ContentTrackStore'
 import { autorun } from 'mobx'
 import React, {useEffect, useRef} from 'react'
 import {ContentProps} from './Content'
@@ -37,7 +37,7 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
     //  Create tracks.
     if (!member.current?.tracks){
       member.current = {
-        tracks: contents.getOrCreateContentTracks('', props.content.id).tracks,
+        tracks: contentTrackStore.getOrCreateContentTracks('', props.content.id).tracks,
         content: props.content,
       }
       if (member.current.tracks.length > 2) {
@@ -83,7 +83,7 @@ export const ScreenContent: React.FC<ContentProps> = (props:ContentProps) => {
         const tracks = ref.current.srcObject instanceof MediaStream && ref.current.srcObject.getTracks()
         if (tracks && tracks.length) {
           const video = tracks.find(track => track.kind === 'video')
-          const peer = contents.contentTracks.get(member.current.content.id)?.peer
+          const peer = contentTrackStore.contentTracks.get(member.current.content.id)?.peer
           if (peer === participants.local.id){
             const settings = video?.getSettings()
             const newSize = [settings?.width || 0, settings?.height || 0] as [number, number]

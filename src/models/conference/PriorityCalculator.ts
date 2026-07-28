@@ -4,7 +4,7 @@ import {isContentRtc} from '@models/ISharedContent'
 import {PARTICIPANT_SIZE} from '@models/Participant'
 import {participants} from '@stores/'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
-import contents from '@stores/sharedContents/SharedContents'
+import contentSyncService from '@stores/sharedContents/ContentSyncService'
 import {autorun, IReactionDisposer, makeObservable, observable} from 'mobx'
 import {RemoteObjectInfo, LocalObjectInfo} from './priorityTypes'
 import {priorityLog, PRIORITYLOG} from '@models/utils'
@@ -42,7 +42,7 @@ function extractRemoteObjectInfo(producer: RemoteProducer): RemoteObjectInfo|und
       muted: false,
     }
   }else{
-    const content = contents.find(producer.role)!
+    const content = contentSyncService.find(producer.role)!
     return content ? {
       id:producer.role,
       producer,
@@ -302,7 +302,7 @@ export class PriorityCalculator {
         this.updateSet.add(id)
       }else {  //  contents
         this.remoteDisposers.set(id, autorun(() => {
-          const c = contents.roomContents.get(id)
+          const c = contentSyncService.roomContents.get(id)
           if (isContentRtc(c)){
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const moved = c!.pose.position

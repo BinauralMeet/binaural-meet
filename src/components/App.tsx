@@ -3,7 +3,7 @@ import {isPortrait, isSmartphone} from '@models/utils'
 import { rgb2Color } from '@models/utils'
 import errorInfo from '@stores/room/ErrorInfo'
 import roomInfo from '@stores/room/RoomInfo'
-import sharedContentsStore from '@stores/sharedContents/SharedContents'
+import contentTrackStore from '@stores/sharedContents/ContentTrackStore'
 import {Observer} from 'mobx-react-lite'
 import React, {Fragment, useRef} from 'react'
 import SplitPane from 'react-split-pane'
@@ -54,7 +54,7 @@ export const App: React.FC<{}> = () => {
           <>
             <MainScreen showAllTracks = {DEBUG_VIDEO} />
             <Observer>{() =>
-              <Map transparent={sharedContentsStore.mainScreenStream !== undefined || DEBUG_VIDEO} />
+              <Map transparent={contentTrackStore.mainScreenStream !== undefined || DEBUG_VIDEO} />
             }</Observer>
             <Footer height={(isSmartphone() && isPortrait()) ? 100 : undefined} />
           </>

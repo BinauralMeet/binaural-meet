@@ -1,6 +1,6 @@
 import {useTranslation} from '@models/locales'
 import {createContentOfImage} from '@stores/sharedContents/SharedContentCreator'
-import sharedContents from '@stores/sharedContents/SharedContents'
+import contentStore from '@stores/sharedContents/ContentStore'
 import {DropzoneArea} from 'material-ui-dropzone'
 import React, {useState, useEffect} from 'react'
 import {DialogPageProps} from './Step'
@@ -91,7 +91,7 @@ export const ImageInput: React.FC<ImageInputProps> = (props) => {
               IMAGE_OFFSET_Y * i,
             ], uploadType
             ).then((imageContent) =>
-              sharedContents.shareContent(imageContent)
+              contentStore.shareContent(imageContent)
             );
           });
         }}

@@ -8,7 +8,7 @@ import {MessageType} from '@models/conference/DataMessageType'
 import { MediaClip } from '@stores/media/MediaClip'
 import {MediaKind, BlobKind, recLog} from './RecorderTypes'
 import participants from '@stores/participants/Participants'
-import contents from '@stores/sharedContents/SharedContents'
+import playbackStore from '@stores/sharedContents/PlaybackStore'
 import { VrmRig } from '@models/utils/vrmIK'
 import { manager as audioManager } from '@models/audio'
 declare const d:any                  //  from index.html
@@ -292,7 +292,7 @@ class Player{
       }
     })
     this.cidsPlaying.forEach(cid=>{
-      const clip = contents.playbackClips.get(cid)
+      const clip = playbackStore.playbackClips.get(cid)
       if (clip){
         clip.rate = rate
       }
@@ -309,7 +309,7 @@ class Player{
       }
     })
     this.cidsPlaying.forEach(cid=>{
-      const clip = contents.playbackClips.get(cid)
+      const clip = playbackStore.playbackClips.get(cid)
       if (clip){
         clip.pause = pause
       }
@@ -334,7 +334,7 @@ class Player{
       }
     }
     for(const cid of this.cidsPlaying){
-      const clip = contents.playbackClips.get(cid)
+      const clip = playbackStore.playbackClips.get(cid)
       if (clip){
         clip.pause = true
         clip.audioBlob = undefined
@@ -367,7 +367,7 @@ class Player{
   }
   private clearMediaBlob(media: MediaPlay){
     const clip = media.pid ? participants.playback.get(`p_${media.pid}`)?.clip :
-      media.cid ? contents.playbackClips.get(`p_${media.cid}`) : undefined
+      media.cid ? playbackStore.playbackClips.get(`p_${media.cid}`) : undefined
     if (clip){
       if (media.kind === 'audio') {
         clip.audioBlob = undefined
@@ -393,7 +393,7 @@ class Player{
     this.pids.clear()
     this.pidsPlaying.clear()
     this.cids.forEach(cid=>{
-      contents.removePlayback(cid)
+      playbackStore.removePlayback(cid)
     })
     this.cids.clear()
     this.cidsPlaying.clear()
@@ -417,7 +417,7 @@ class Player{
     }else if (media.cid){
       const cid = `p_${media.cid}`
       this.cids.add(cid)
-      clip = contents.getOrCreatePlaybackClip(cid)
+      clip = playbackStore.getOrCreatePlaybackClip(cid)
     }
     runInAction(() => {
       if (media.kind === 'audio'){
@@ -527,8 +527,8 @@ class Player{
     }
     const cidsDelete = diffSet(cidsBefore, this.cids)
     for(const cid of cidsDelete){
-      contents.playbackContents.delete(cid)
-      contents.playbackClips.delete(cid)
+      playbackStore.playbackContents.delete(cid)
+      playbackStore.playbackClips.delete(cid)
     }
   }
   private playMessage(msg: BMMessage, playFrom: number){
@@ -584,14 +584,14 @@ class Player{
       if (c.type === 'camera' || c.type === 'screen'){
         c.type = c.type === 'camera' ? 'playbackCamera' : 'playbackScreen'
       }
-      contents.updatePlayback(c)
+      playbackStore.updatePlayback(c)
       this.cids.add(c.id)
     }
   }
   private onContentRemoveRequest(msg: BMMessage){
     const cids = JSON.parse(msg.v) as string[]
     for(const cid of cids){
-      contents.removePlayback(`p_${cid}`)
+      playbackStore.removePlayback(`p_${cid}`)
       this.cids.delete(`p_${cid}`)
     }
   }

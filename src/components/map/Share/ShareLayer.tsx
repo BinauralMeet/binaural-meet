@@ -5,7 +5,7 @@ import {Observer} from 'mobx-react-lite'
 import React from 'react'
 import {PastedContent} from './PastedContent'
 import {SharedContent} from './SharedContent'
-import {contents} from '@stores/'
+import {contentStore} from '@stores/'
 import {MapProps} from '../map'
 
 const useStyles = makeStyles({
@@ -22,7 +22,7 @@ export const ShareLayer: React.FC<MapProps> = (props) => {
     <Observer>{
       ()=>{
         const filtered = props.transparent ?
-          contents.all.filter(c => !isContentWallpaper(c)) : contents.all
+          contentStore.all.filter(c => !isContentWallpaper(c)) : contentStore.all
 
         return <>{
           filtered.map(val =>

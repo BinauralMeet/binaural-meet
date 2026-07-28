@@ -11,7 +11,7 @@ import _ from 'lodash'
 import {Observer, observer} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import {ContentProps} from './Content'
-import {map, contents, participants} from '@stores/'
+import {map, contentSyncService, participants} from '@stores/'
 
 class TextMember{
   messages: TextMessage[] = []
@@ -89,7 +89,7 @@ export const TextEdit: React.FC<TextEditProps> = (props:TextEditProps) => {
           if (sendTextLater){ sendTextLater.cancel() }
           sendText(text, props)
           map.keyInputUsers.delete(props.content.id)
-          contents.setEditing('')
+          contentSyncService.setEditing('')
         }
       }}
     />
@@ -174,15 +174,15 @@ export const Text: React.FC<ContentProps> = observer((props:ContentProps) => {
   const url = props.content.url
   const newTexts = JSON.parse(url) as TextMessages
   //const refEdit = useRef<HTMLDivElement>(null)
-  const editing = contents.editing === props.content.id
+  const editing = contentSyncService.editing === props.content.id
   if (editing){
-    contents.setBeforeChangeEditing((cur, next) => {
+    contentSyncService.setBeforeChangeEditing((cur, next) => {
       if (cur === props.content.id && next === ''){
         if (ref.current){
           member.messages = member.messages.filter(text => text.message.length)
           onUpdateTexts(member.messages, ref.current, props)
         }
-        contents.setBeforeChangeEditing() //  clear me
+        contentSyncService.setBeforeChangeEditing() //  clear me
       }
     })
   }

@@ -2,7 +2,6 @@ import {Chat} from '@stores/room/Chat'
 import {MapData} from '@stores/map/Map'
 import {Participants} from '@stores/participants/Participants'
 import {RoomInfo} from '@stores/room/RoomInfo'
-import {SharedContents} from '@stores/sharedContents/SharedContents'
 
 export function formatTimestamp(stamp: number){
   const textDate = new Date(stamp)

@@ -3,7 +3,7 @@ import Dialog from '@material-ui/core/Dialog'
 import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
 import {useTranslation} from '@models/locales'
-import sharedContents from '@stores/sharedContents/SharedContents'
+import contentStore from '@stores/sharedContents/ContentStore'
 import React from 'react'
 import {RecorderMenu} from './RecorderMenu'
 import {map} from '@stores/'
@@ -27,8 +27,8 @@ export const RecorderDialog: React.FC<DialogPageProps> = (props:DialogPageProps)
     }
   }
 
-  //  console.debug(`step=${step}, pasteEnabled=${sharedContents.pasteEnabled}`)
-  sharedContents.pasteEnabled = props.recorderStep === 'none' || props.recorderStep === 'menu'
+  //  console.debug(`step=${step}, pasteEnabled=${contentStore.pasteEnabled}`)
+  contentStore.pasteEnabled = props.recorderStep === 'none' || props.recorderStep === 'menu'
 
   const {t} = useTranslation()
   const stepTitle: {

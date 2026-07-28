@@ -7,7 +7,7 @@ import {observer} from 'mobx-react-lite'
 import React, {useEffect, useRef} from 'react'
 import YouTubePlayer from 'yt-player'
 import {ContentProps} from './Content'
-import {contents, participants} from '@stores/'
+import {contentSyncService, participants} from '@stores/'
 
 const PLAYTIME_TOLERANCE = 0.1
 const CHECK_INTERVAL = 333
@@ -251,7 +251,7 @@ export const YouTube: React.FC<ContentProps> = observer((props:ContentProps) => 
   member.props = props
 
   //  Editing (No sync) ?
-  const editing = contents.editing === props.content.id
+  const editing = contentSyncService.editing === props.content.id
 
   //  Check params and reflect them to ytPlayer
   const oldParams = member.params

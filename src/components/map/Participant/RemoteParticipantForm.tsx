@@ -11,7 +11,8 @@ import {t} from '@models/locales'
 import chat from '@stores/room/Chat'
 import participants from '@stores/participants/Participants'
 import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
-import contents from '@stores/sharedContents/SharedContents'
+import contentStore from '@stores/sharedContents/ContentStore'
+import contentSyncService from '@stores/sharedContents/ContentSyncService'
 import React from 'react'
 import {SignalQualityButton} from './SignalQuality'
 import {map, roomInfo} from '@stores/'
@@ -37,10 +38,10 @@ export const RemoteParticipantForm: React.FC<RemoteParticipantFormProps> = (prop
     if (ev.key === 'Enter' && clear === 'clear') {
       if (!props.participant) { return }
       const remoteContents:string[] = []
-      contents.all.forEach(c => {
+      contentStore.all.forEach(c => {
         if (c.ownerName === props.participant?.information.name) remoteContents.push(c.id)
       })
-      remoteContents.forEach(cid => contents.removeByLocal(cid))
+      remoteContents.forEach(cid => contentSyncService.removeByLocal(cid))
 
       props.close()
     }

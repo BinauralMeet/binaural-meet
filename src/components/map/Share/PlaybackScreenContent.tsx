@@ -3,7 +3,7 @@ import {assert, seekMediaElement} from '@models/utils'
 import React, {useEffect, useRef} from 'react'
 import {ContentProps} from './Content'
 import {autorun} from 'mobx'
-import sharedContents from '@stores/sharedContents/SharedContents'
+import playbackStore from '@stores/sharedContents/PlaybackStore'
 import {MediaClip} from '@stores/media/MediaClip'
 import { recLog } from '@models/recorder/RecorderTypes'
 
@@ -26,7 +26,7 @@ export const PlaybackScreenContent: React.FC<ContentProps> = (props:ContentProps
 
   function updateClip(){
     const playingClip = refPlayingClip.current
-    const clip = sharedContents.playbackClips.get(props.content.id)
+    const clip = playbackStore.playbackClips.get(props.content.id)
     const video = ref.current
     if (video && clip){
       const videoBlobChanged = !!clip.videoBlob && clip.videoBlob !== playingClip?.videoBlob
@@ -34,7 +34,7 @@ export const PlaybackScreenContent: React.FC<ContentProps> = (props:ContentProps
       const playFunc = (revision = refSeekRevision.current) => {
         refSeekPromise.current.then(() => {
           if (revision !== refSeekRevision.current) { return }
-          const currentClip = sharedContents.playbackClips.get(props.content.id)
+          const currentClip = playbackStore.playbackClips.get(props.content.id)
           if (currentClip?.pause) { return }
           refWaitPlay.current = true
           video.play().then(()=>{

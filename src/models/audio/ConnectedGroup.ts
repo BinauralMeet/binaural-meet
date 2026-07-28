@@ -5,7 +5,8 @@ import {getRect, isCircleInRect, Pose2DMap} from '@models/utils'
 import {convertToAudioCoordinate, getRelativePose, mulV2, normV} from '@models/utils'
 import {stereoParametersStore} from '@stores/media'
 import participants from '@stores/participants/Participants'
-import contents from '@stores/sharedContents/SharedContents'
+import contentTrackStore from '@stores/sharedContents/ContentTrackStore'
+import playbackStore from '@stores/sharedContents/PlaybackStore'
 import _ from 'lodash'
 import {autorun, IReactionDisposer} from 'mobx'
 import {NodeGroup} from './NodeGroup'
@@ -99,7 +100,7 @@ export class ConnectedGroup {
 
     this.disposers.push(autorun(
       () => {
-        const track = remote ? remote.tracks.audio : contents.getContentTrack(content!.id, 'audio')
+        const track = remote ? remote.tracks.audio : contentTrackStore.getContentTrack(content!.id, 'audio')
         const ms = new MediaStream()
         if (track){
           ms.addTrack(track)
@@ -135,7 +136,7 @@ export class ConnectedGroupForPlayback {
         if (local.soundLocalizationBase === 'user') { base.orientation = 0 }
         let content
         if (!participant && cid){
-          content = contents.findPlayback(cid)
+          content = playbackStore.findPlayback(cid)
         }
         // locate sound source.
         const relativePose = getRelativePoseFromObject(base, participant, content)
@@ -150,7 +151,7 @@ export class ConnectedGroupForPlayback {
         //console.log(`playBlob(${play.audioBlob})`)
         let clip
         if (!participant && cid){
-          clip = contents.playbackClips.get(cid)
+          clip = playbackStore.playbackClips.get(cid)
         }
         group.playClip(participant ? participant.clip : clip)
         //if (content) console.log(`playBlob: ${JSON.stringify(content?.audioBlob)} c:${JSON.stringify(content)}`)

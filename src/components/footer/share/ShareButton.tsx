@@ -9,7 +9,7 @@ import {observer} from 'mobx-react-lite'
 import React from 'react'
 import {FabWithTooltip} from '@components/utils/FabEx'
 import {ShareDialog} from './ShareDialog'
-import {contents} from '@stores/'
+import {contentTrackStore} from '@stores/'
 
 
 const useStyles = makeStyles({
@@ -25,7 +25,7 @@ interface ShareButtonProps{
 }
 export const ShareButton: React.FC<ShareButtonProps> = observer((props) => {
   const classes = useStyles()
-  const sharing = contents.getLocalRtcContentIds().length || contents.mainScreenOwner === conference.rtcTransports.peer
+  const sharing = contentTrackStore.getLocalRtcContentIds().length || contentTrackStore.mainScreenOwner === conference.rtcTransports.peer
   const {t} = useTranslation()
 
   return (

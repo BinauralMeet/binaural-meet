@@ -9,7 +9,7 @@ import axios from 'axios'
 import { PageControl } from './PageControl'
 import { getParamsFromUrl, getStringFromParams } from '@stores/sharedContents/SharedContentCreator'
 import _ from 'lodash'
-import {contents, roomInfo} from '@stores/'
+import {contentSyncService, roomInfo} from '@stores/'
 
 const useStyles = makeStyles({
   iframe: {
@@ -78,7 +78,7 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
   //  Scroll to given 'top' param
   useEffect(() => {
     const top = Number(member.params.get('top'))
-    const editing = contents.editing === props.content.id
+    const editing = contentSyncService.editing === props.content.id
     if (!editing && !member.scrolling && divScroll.current
       && !isNaN(top) && top !== divScroll.current.scrollTop) {
       divScroll.current.onscroll = () => {}
@@ -94,7 +94,7 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
   useEffect(() => {
     //console.log('useEffect() for onscroll called.')
     function doSendScroll() {
-      const editing = contents.editing === props.content.id
+      const editing = contentSyncService.editing === props.content.id
       if (editing){
 
       }else{
@@ -123,7 +123,7 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
       divScroll.current.onscroll = member.onscroll
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [divScroll.current, contents.roomContents])
+  }, [divScroll.current, contentSyncService.roomContents])
 
   //  console.log(`Name:${props.content.name} mime: ${mimeType}`)
   const classes = useStyles(props)
@@ -164,7 +164,7 @@ export const GDrive: React.FC<ContentProps> = (props:ContentProps) => {
         updateUrl(member)
       })
     }
-    const editing = contents.editing === props.content.id
+    const editing = contentSyncService.editing === props.content.id
     //  console.log(`getDriveUrl: ${editing}, ${JSON.stringify(Array.from(member.params))}`)
     const url = getGDriveUrl(editing, member.params)
     //  console.log(`getDriveUrl: ${editing}, ${JSON.stringify(Array.from(member.params))}`)

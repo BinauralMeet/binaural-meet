@@ -20,8 +20,8 @@ import {doseContentEditingUseKeyinput, isContentWallpaper, isContentEditable, is
 import {t} from '@models/locales'
 import {Pose2DMap} from '@models/utils'
 import {addV2, extractScaleX, extractScaleY, mulV, rotateVector2DByDegree, subV2} from '@models/utils'
-import {copyContentToClipboard, moveContentToBottom, moveContentToTop} from '@stores/sharedContents/SharedContentCreator'
-import {TITLE_HEIGHT} from '@stores/sharedContents/SharedContents'
+import {copyContentToClipboard} from '@stores/sharedContents/SharedContentCreator'
+import {TITLE_HEIGHT, moveContentToBottom, moveContentToTop} from '@stores/sharedContents/ContentStore'
 import _ from 'lodash'
 import {observer} from 'mobx-react-lite'
 import React, {useEffect, useLayoutEffect, useRef, useState} from 'react'
@@ -32,7 +32,7 @@ import {Content, contentTypeIcons, editButtonTip} from './Content'
 import {ISharedContentProps} from './SharedContent'
 import {SharedContentForm} from './SharedContentForm'
 import { GoogleAuthDrive } from '@components/utils/GoogleAuthDrive'
-import {contents, map} from '@stores/'
+import {contentSyncService, map} from '@stores/'
 
 const MOUSE_RIGHT = 2
 
@@ -94,9 +94,9 @@ export const RndContent: React.FC<RndContentProps> = observer((props:RndContentP
   const [preciseOrientation, setPreciseOrientation] = useState(pose.orientation)
   const [dragging, setDragging] = useState(false)
   const rnd = useRef<Rnd>(null)                         //  ref to rnd to update position and size
-  const editing = contents.editing === props.content.id
+  const editing = contentSyncService.editing === props.content.id
   const zoomed = map.zoomed
-  function setEditing(flag: boolean) { contents.setEditing(flag ? props.content.id : '') }
+  function setEditing(flag: boolean) { contentSyncService.setEditing(flag ? props.content.id : '') }
   const memberRef = useRef<RndContentMember>(new RndContentMember())
   const member = memberRef.current
   function setShowForm(show: boolean){

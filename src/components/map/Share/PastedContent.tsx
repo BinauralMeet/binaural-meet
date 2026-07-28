@@ -1,6 +1,7 @@
 import {ISharedContent, TIME_RESOLUTION_IN_MS} from '@models/ISharedContent'
 import {createContent, createContentsFromDataTransfer} from '@stores/sharedContents/SharedContentCreator'
-import {default as sharedContents} from '@stores/sharedContents/SharedContents'
+import contentStore from '@stores/sharedContents/ContentStore'
+import contentSyncService from '@stores/sharedContents/ContentSyncService'
 import _ from 'lodash'
 import {observer} from 'mobx-react-lite'
 import React, {useEffect} from 'react'
@@ -11,8 +12,8 @@ import {map} from '@stores/'
 export const PastedContent: React.FC = observer(() => {
   //  Pasted handler. It prevents paste to dialog.
   function onPaste(evt: ClipboardEvent) {
-    //  console.log(`onPaste called enabled:${sharedContents.pasteEnabled}`)
-    if (sharedContents.pasteEnabled && map.keyInputUsers.size === 0 && evt.clipboardData) {
+    //  console.log(`onPaste called enabled:${contentStore.pasteEnabled}`)
+    if (contentStore.pasteEnabled && map.keyInputUsers.size === 0 && evt.clipboardData) {
       evt.preventDefault()
       setContent(evt.clipboardData)
     }
@@ -32,9 +33,9 @@ export const PastedContent: React.FC = observer(() => {
     createContentsFromDataTransfer(dataTransfer, map).then(cs => {
       for(const c of cs){
         if (SHARE_DIRECT) {
-          sharedContents.shareContent(c)
+          contentStore.shareContent(c)
         } else {
-          sharedContents.setPasted(c)
+          contentStore.setPasted(c)
         }
       }
     })
@@ -45,8 +46,8 @@ export const PastedContent: React.FC = observer(() => {
     //  Add the pasted content to sharedContents and clear the pastedContent.
     pastedContent.zorder = Math.floor(Date.now() / TIME_RESOLUTION_IN_MS)
     pastedContent.pinned = true
-    sharedContents.addLocalContent(_.cloneDeep(pastedContent))
-    sharedContents.setPasted(createContent())
+    contentSyncService.addLocalContent(_.cloneDeep(pastedContent))
+    contentStore.setPasted(createContent())
   }
 
   useEffect(
@@ -81,21 +82,21 @@ export const PastedContent: React.FC = observer(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   )
-  const pastedContent = sharedContents.pasted
+  const pastedContent = contentStore.pasted
   //  console.log('Pasted contents rendered.')
 
   return (
     <RndContent hideAll={pastedContent.type === ''} content={pastedContent}
       onShare = {(evt: MouseOrTouch) => { onShare() }}
       onClose = {(evt: MouseOrTouch) => {
-        sharedContents.setPasted(createContent())
+        contentStore.setPasted(createContent())
         evt.stopPropagation()
       }}
       updateAndSend = {(nc: ISharedContent) => {
-        sharedContents.setPasted(nc)
+        contentStore.setPasted(nc)
       }}
       updateOnly = {(nc: ISharedContent) => {
-        sharedContents.setPasted(nc)
+        contentStore.setPasted(nc)
       }}
     />
   )

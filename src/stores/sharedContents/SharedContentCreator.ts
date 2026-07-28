@@ -10,7 +10,6 @@ import {MapData} from '@stores/map/Map'
 import {defaultValue as mapObjectDefaultValue} from '@stores/map/MapObject'
 import _ from 'lodash'
 import participants from '../participants/Participants'
-import sharedContents from './SharedContents'
 import {contentLog} from '@models/utils'
 import { getGDriveUrl } from './GDriveUtil'
 
@@ -457,36 +456,10 @@ export function getStringFromParams(params: Map<string, string>){
   return url
 }
 
-//  change zorder to the top.
-export function moveContentToTop(c: SharedContentImp) {
-  if (isContentWallpaper(c)){
-    let top = sharedContents.sorted.findIndex(c => c.zorder > TEN_YEAR)
-    if (top < 0){ top = sharedContents.sorted.length }
-    top -= 1
-    if (top >= 0){
-      const order = sharedContents.sorted[top].zorder + 1
-      c.zorder = order <= TEN_YEAR ? order : TEN_YEAR
-    }
-  }else{
-    c.zorder = Math.floor(Date.now() / TIME_RESOLUTION_IN_MS)
-  }
-}
-//  change zorder to the bottom.
-export function moveContentToBottom(c: SharedContentImp) {
-  if (isContentWallpaper(c)){
-    const bottom = sharedContents.sorted[0]
-    if (bottom !== c) {
-      c.zorder = bottom.zorder - 1
-    }
-  }else{
-    const bottom = sharedContents.sorted.find(c => c.zorder > TEN_YEAR)
-    if (!bottom) {
-      moveContentToTop(c)
-    }else{
-      c.zorder = bottom.zorder - 1
-    }
-  }
-}
+//  moveContentToTop()/moveContentToBottom() moved to ContentStore.ts:
+//  they need the live `sorted` collection, which would otherwise force
+//  SharedContentCreator to import ContentStore (circular, since ContentStore
+//  already imports createContent() from here).
 //  change zorder to far below the bottom.
 export function makeContentWallpaper(c: SharedContentImp, flag: boolean) {
   //if (isContentWallpaper(c)) { return }

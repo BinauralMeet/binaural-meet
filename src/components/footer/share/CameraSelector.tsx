@@ -7,7 +7,7 @@ import {DialogPageProps} from './Step'
 import {createLocalCamera} from '@models/conference/faceCamera'
 import {conference} from '@models/conference'
 import { dialogStyle } from '@components/utils'
-import {contents, participants, map} from '@stores/'
+import {contentStore, contentSyncService, contentTrackStore, participants, map} from '@stores/'
 
 export class CameraSelectorMember{
   @observable.shallow videos: MediaDeviceInfo[] = []
@@ -37,10 +37,10 @@ export const CameraSelector: React.FC<CameraSelectorProps> = observer((props) =>
     if (did) {
       createLocalCamera(false, did).then((msTrack)=>{
         const content = createContentOfVideo([msTrack.track], map, 'screen')
-        contents.assignId(content)
+        contentSyncService.assignId(content)
         msTrack.role = content.id
-        contents.getOrCreateContentTracks(conference.rtcTransports.peer, content.id)
-        contents.shareContent(content)
+        contentTrackStore.getOrCreateContentTracks(conference.rtcTransports.peer, content.id)
+        contentStore.shareContent(content)
         conference.addOrReplaceLocalTrack(msTrack)
       })
     }

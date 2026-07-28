@@ -13,7 +13,7 @@ import errorInfo from '@stores/room/ErrorInfo'
 import {MediaSettings} from '@stores/participants/LocalParticipant'
 import participants from '@stores/participants/Participants'
 import roomInfo from '@stores/room/RoomInfo'
-import contents from '@stores/sharedContents/SharedContents'
+import contentSyncService from '@stores/sharedContents/ContentSyncService'
 import {autorun, IReactionDisposer} from 'mobx'
 import {BMMessage} from './DataMessage'
 import {DataConnection} from './DataConnection'
@@ -192,12 +192,12 @@ export class DataSync{
   }
   private onContentOut(cids: string[]){
     cids.forEach(cid => {
-      const content = contents.find(cid)
+      const content = contentSyncService.find(cid)
       if (content){
         const newContent = Object.assign({}, content)
         newContent.pose = {position: [CONTENT_OUT_OF_RANGE_VALUE, CONTENT_OUT_OF_RANGE_VALUE],
           orientation: content.pose.orientation}
-        contents.updateByRemoteRequest([newContent])
+        contentSyncService.updateByRemoteRequest([newContent])
         //  console.log(`content out ${cid}`)
       }
     })
@@ -320,15 +320,15 @@ export class DataSync{
   }
   //  contents
   private onContentInfoUpdate(cs:ISharedContent[]){
-    cs.forEach(c => contents.roomContentsInfo.set(c.id, c))
+    cs.forEach(c => contentSyncService.roomContentsInfo.set(c.id, c))
   }
   private onContentUpdateRequest(cds:ISharedContentToSend[]){
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const cs = receiveToContents(cds)
-    contents.updateByRemoteRequest(cs)
+    contentSyncService.updateByRemoteRequest(cs)
   }
   private onContentRemoveRequest(cids:string[]){
-    contents.removeByRemoteRequest(cids)
+    contentSyncService.removeByRemoteRequest(cids)
   }
 
   observeStart(){

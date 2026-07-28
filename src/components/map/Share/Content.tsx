@@ -8,7 +8,7 @@ import {PlaybackScreenContent} from './PlaybackScreenContent'
 import {ScreenContent} from './ScreenContent'
 import {Text} from './Text'
 import {YouTube} from './YouTube'
-import {contents} from '@stores/'
+import {contentSyncService} from '@stores/'
 import {contentTypeIcons, editButtonTip} from './contentUtils'
 export {contentTypeIcons, editButtonTip}
 
@@ -84,7 +84,7 @@ const contentRenderers: Partial<Record<ContentType, ContentRenderer>> & { '': Co
 
 export const RawContent: React.FC<ContentProps> = observer((props:ContentProps) => {
   const classes = useStyles()
-  const editing = contents.editing === props.content.id
+  const editing = contentSyncService.editing === props.content.id
   const renderer = contentRenderers[props.content.type] ?? contentRenderers['']
 
   return <>{renderer(props, {classes, editing})}</>
@@ -94,7 +94,7 @@ export const Content = React.memo(
   (props: ContentProps) =>
     React.useMemo(() => <RawContent {...props} />,
     //  eslint-disable-next-line react-hooks/exhaustive-deps
-    [props.content.url, props.content.id, props.content.type, contents.editing === props.content.id,
+    [props.content.url, props.content.id, props.content.type, contentSyncService.editing === props.content.id,
      props.content.pose, props.content.size, props.content.originalSize]),
   (prev, next) =>
     prev.content.id === next.content.id

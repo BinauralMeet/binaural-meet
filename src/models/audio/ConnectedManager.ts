@@ -4,7 +4,9 @@ import {RemoteObjectInfo} from '@models/conference/priorityTypes'
 import {urlParameters} from '@models/url'
 import {diffMap} from '@models/utils'
 import participants from '@stores/participants/Participants'
-import contents from '@stores/sharedContents/SharedContents'
+import contentSyncService from '@stores/sharedContents/ContentSyncService'
+import contentTrackStore from '@stores/sharedContents/ContentTrackStore'
+import playbackStore from '@stores/sharedContents/PlaybackStore'
 import {autorun} from 'mobx'
 import {ConnectedGroup, ConnectedGroupForPlayback} from './ConnectedGroup'
 import {StereoManager} from './StereoManager'
@@ -39,15 +41,15 @@ export class ConnectedManager {
 
     // Defer autorun registration by one microtask so that all ES modules
     // involved in circular dependencies finish initializing before the first
-    // autorun fires (avoids a TDZ ReferenceError on `contents`). Verified
-    // (2026-07-28) that this is NOT about SharedContents/ErrorInfo/StereoManager
-    // importing @models/conference anymore -- those cycles are gone (see
+    // autorun fires (avoids a TDZ ReferenceError). Verified (2026-07-28) that
+    // this is NOT about ContentSyncService/ErrorInfo/StereoManager importing
+    // @models/conference anymore -- those cycles are gone (see
     // ContentSyncTransport.ts / ConferenceStatusTransport.ts / the injected
     // audiosToConsume accessor). It's a separate cycle: @components/App's tree
-    // reaches @stores/sharedContents/SharedContents (this module) before that
-    // module finishes its own top-level evaluation, and that same chain also
-    // reaches @models/audio (this class), so removing the defer makes
-    // `contents` observably TDZ at construction time. Tracing and fixing that
+    // reaches the sharedContents stores (this module's own dependencies)
+    // before they finish their own top-level evaluation, and that same chain
+    // also reaches @models/audio (this class), so removing the defer makes
+    // observables TDZ at construction time. Tracing and fixing that
     // component-tree-driven cycle is out of scope for this pass.
     queueMicrotask(() => {
       autorun(this.onRemotesChange)
@@ -80,7 +82,7 @@ export class ConnectedManager {
     //  console.log('Update connectedGroups:', this.connectedGroups)
   }
   private onPlaybackContentsChange = () => {
-    const newPlaybackContents = new Map(contents.playbackContents)
+    const newPlaybackContents = new Map(playbackStore.playbackContents)
     const added = diffMap(newPlaybackContents, this.playbackContentsMemo)
     const removed = diffMap(this.playbackContentsMemo, newPlaybackContents)
     removed.forEach(this.removePlayback)
@@ -90,8 +92,8 @@ export class ConnectedManager {
   }
 
   private onScreenContentsChange = () => {
-    const audioRemoteContents = contents.getRemoteRtcContentIds().filter(cid => contents.getContentTrack(cid, 'audio'))
-    const newRemotes = new Map(audioRemoteContents.map(cid => [cid, contents.find(cid)!]))
+    const audioRemoteContents = contentTrackStore.getRemoteRtcContentIds().filter(cid => contentTrackStore.getContentTrack(cid, 'audio'))
+    const newRemotes = new Map(audioRemoteContents.map(cid => [cid, contentSyncService.find(cid)!]))
     const added = diffMap(newRemotes, this.contentsMemo)
     const removed = diffMap(this.contentsMemo, newRemotes)
     removed.forEach(this.removeContent)

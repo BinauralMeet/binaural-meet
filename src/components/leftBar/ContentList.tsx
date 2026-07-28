@@ -14,7 +14,7 @@ import React from 'react'
 import {contentTypeIcons} from '../map/Share/Content'
 import {styleForList} from '../utils/styles'
 import {TextLineStyle} from './LeftBar'
-import {contents, map, roomInfo} from '@stores/'
+import {contentStore, contentSyncService, map, roomInfo} from '@stores/'
 
 
 function locatedContentOnly(content: ISharedContent|undefined){
@@ -42,7 +42,7 @@ export const ContentLine: React.FC<TextLineStyle & {content: SharedContentInfo}>
     if (props.content.color?.length){ colors[0] = rgb2Color(props.content.color) }
     if (props.content.textColor?.length){ colors[1] = rgb2Color(props.content.textColor) }
     if (showForm){
-      targetContent = locatedContentOnly(contents.find(props.content.id))
+      targetContent = locatedContentOnly(contentSyncService.find(props.content.id))
     }
 
     return <>
@@ -50,13 +50,13 @@ export const ContentLine: React.FC<TextLineStyle & {content: SharedContentInfo}>
         <Button ref={ref} variant="contained" className={classes.line}
           style={{backgroundColor:colors[0], color:colors[1], margin: '1px 0 1px 0', padding:0, textTransform:'none'}}
           onClick={() => {
-            const found = contents.find(props.content.id)
+            const found = contentSyncService.find(props.content.id)
             if (found){
               map.focusOn(found, mulV2(0.5, found.size))
             }else{
-              contents.requestContent([props.content.id])
+              contentSyncService.requestContent([props.content.id])
               const disposer = autorun(()=>{
-                const found = contents.find(props.content.id)
+                const found = contentSyncService.find(props.content.id)
                 if (found){
                   map.focusOn(found, mulV2(0.5, found.size))
                   disposer()
@@ -65,14 +65,14 @@ export const ContentLine: React.FC<TextLineStyle & {content: SharedContentInfo}>
             }
           }}
           onContextMenu={() => {
-            const found = locatedContentOnly(contents.find(props.content.id))
+            const found = locatedContentOnly(contentSyncService.find(props.content.id))
             if (found){
               setShowForm(true)
               map.keyInputUsers.add('contentForm')
             }else{
-              contents.requestContent([props.content.id])
+              contentSyncService.requestContent([props.content.id])
               const disposer = autorun(()=>{
-                const found = locatedContentOnly(contents.find(props.content.id))
+                const found = locatedContentOnly(contentSyncService.find(props.content.id))
                 if (found){
                   setShowForm(true)
                   map.keyInputUsers.add('contentForm')
@@ -100,7 +100,7 @@ export const ContentList: React.FC<TextLineStyle>  = observer((props) => {
   //  console.log('Render RawContentList')
   const all = (() => {
     const all:SharedContentInfo[] =
-      Array.from(contents.roomContentsInfo.size ? contents.roomContentsInfo.values() : contents.all)
+      Array.from(contentSyncService.roomContentsInfo.size ? contentSyncService.roomContentsInfo.values() : contentStore.all)
     all.sort((a,b) => {
       let rv = a.name.localeCompare(b.name)
       if (rv === 0 && a.ownerName){ rv = a.ownerName.localeCompare(b.ownerName) }
@@ -112,7 +112,7 @@ export const ContentList: React.FC<TextLineStyle>  = observer((props) => {
 
     return all
   })()
-  const editing = contents.editing
+  const editing = contentSyncService.editing
   const classes = styleForList({height:props.lineHeight, fontSize:props.fontSize})
   const elements = all.map(c =>
     <ContentLine key={c.id} content = {c} {...props} />)
@@ -123,7 +123,7 @@ export const ContentList: React.FC<TextLineStyle>  = observer((props) => {
     <div className={classes.title} style={{color:textColor, height:props.lineHeight}}>{t('Contents')}
       {editing ? <Button variant="contained" size="small" color="primary"
         style={{marginLeft:4, padding:2, height:props.lineHeight}}
-        onClick={()=>{ contents.setEditing('')}}>
+        onClick={()=>{ contentSyncService.setEditing('')}}>
           <Icon icon={doneIcon} className={classes.line} style={{width:props.fontSize*1.2}}/>
           <span className={classes.line} style={{paddingTop:props.fontSize*0.1}}>{t('shareEditEnd')}</span></Button>: undefined}
     </div>

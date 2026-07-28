@@ -1,7 +1,8 @@
 import {KickTime} from '@models/KickTime'
 import {assert, fixIdString, connLog} from '@models/utils'
 import {default as participants} from '@stores/participants/Participants'
-import contents from '@stores/sharedContents/SharedContents'
+import contentSyncService from '@stores/sharedContents/ContentSyncService'
+import contentTrackStore from '@stores/sharedContents/ContentTrackStore'
 import {ContentSyncTransport} from '@stores/sharedContents/ContentSyncTransport'
 import errorInfo from '@stores/room/ErrorInfo'
 import {ConferenceStatusTransport} from '@stores/room/ConferenceStatusTransport'
@@ -89,7 +90,8 @@ export class Conference implements ContentSyncTransport, ConferenceStatusTranspo
     // Conference synchronously touches either at construction time, so they
     // need the same deferral to avoid a TDZ ReferenceError.
     queueMicrotask(() => {
-      contents.setSyncTransport(this)
+      contentSyncService.setSyncTransport(this)
+      contentTrackStore.setSyncTransport(this)
       errorInfo.setConferenceStatusTransport(this)
     })
     this.rtcTransports.addListener('remoteUpdate', this.onRemoteUpdate)
@@ -194,9 +196,9 @@ export class Conference implements ContentSyncTransport, ConferenceStatusTranspo
           const camera = this.getLocalCameraTrack()
           this.setLocalCameraTrack(undefined).catch(()=>{})
           this.setLocalCameraTrack(camera).catch(()=>{})
-          const cidRtcLocals = contents.getLocalRtcContentIds()
+          const cidRtcLocals = contentTrackStore.getLocalRtcContentIds()
           for(const cid of cidRtcLocals){
-            const tracks = contents.getContentTracks(cid)
+            const tracks = contentTrackStore.getContentTracks(cid)
             const msTracks = tracks?.tracks.map((t)=>({track:t, peer:tracks.peer, role: cid}))
             msTracks?.forEach((t) => { this.addOrReplaceLocalTrack(t).catch() })
           }
@@ -341,10 +343,10 @@ export class Conference implements ContentSyncTransport, ConferenceStatusTranspo
           participants.local.tracks.avatar = track.track
         }
       }else{
-        contents.addTrack(track.peer, track.role, track.track)
+        contentTrackStore.addTrack(track.peer, track.role, track.track)
         if (track.track.kind === 'video'){
           track.track.addEventListener('ended', ()=>{
-            contents.removeByLocal(track.role)
+            contentSyncService.removeByLocal(track.role)
           })
         }
       }
@@ -361,7 +363,7 @@ export class Conference implements ContentSyncTransport, ConferenceStatusTranspo
       if (kind === 'audio' || !kind) participants.local.tracks.audio = undefined
       if (kind === 'video' || !kind) participants.local.tracks.avatar = undefined
     }else{
-      contents.removeTrack(this.rtcTransports.peer, role, kind)
+      contentTrackStore.removeTrack(this.rtcTransports.peer, role, kind)
     }
     this.rtcTransports.RemoveTrackByRole(stopTrack, role, kind)
   }
@@ -526,7 +528,7 @@ export class Conference implements ContentSyncTransport, ConferenceStatusTranspo
         if (producer.role === 'avatar'){
           participants.addRemoteTrack(producer.peer.peer, consumer.track)
         }else{
-          contents.addTrack(producer.peer.peer, producer.role, consumer.track)
+          contentTrackStore.addTrack(producer.peer.peer, producer.role, consumer.track)
         }
         connLog()(`Conference.addConsumer(): p:${producer.id} consumed.`)
         resolve()
@@ -544,16 +546,16 @@ export class Conference implements ContentSyncTransport, ConferenceStatusTranspo
       if (producer.role === 'avatar'){
         participants.removeRemoteTrack(producer.peer.peer, producer.kind)
       }else{
-        contents.removeTrack(producer.peer.peer, producer.role, producer.kind)
+        contentTrackStore.removeTrack(producer.peer.peer, producer.role, producer.kind)
       }
     }
   }
 
   private sendLocalRtcContents(){
-    const localRtcCids = contents.getLocalRtcContentIds()
+    const localRtcCids = contentTrackStore.getLocalRtcContentIds()
     const localRtcContents:ISharedContent[]  = []
     for (const cid of localRtcCids){
-      const c = contents.find(cid)
+      const c = contentSyncService.find(cid)
       if (c) localRtcContents.push(c)
     }
     //console.log(`sendLocalRtcContents called for ${participants.localId} ${JSON.stringify(localRtcContents)}`)

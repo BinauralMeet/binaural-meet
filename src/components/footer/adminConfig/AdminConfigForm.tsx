@@ -5,7 +5,8 @@ import TextField from '@material-ui/core/TextField'
 import {conference} from '@models/conference'
 import {MessageType} from '@models/conference/DataMessageType'
 import {isDarkColor, rgb2Color} from '@models/utils'
-import contents from '@stores/sharedContents/SharedContents'
+import contentStore from '@stores/sharedContents/ContentStore'
+import contentSyncService from '@stores/sharedContents/ContentSyncService'
 import {runInAction} from 'mobx'
 import {Observer} from 'mobx-react-lite'
 import React from 'react'
@@ -106,14 +107,14 @@ export const AdminConfigForm: React.FC<AdminConfigFormProps> = (props: AdminConf
       <Box m={2}>
         <Button {...btnArgs} onClick={() => {
           if (roomInfo.isAdmin) {
-            contents.removeAllContents()
+            contentSyncService.removeAllContents()
           }
         }}> Remove all Contents </Button>&emsp;
         <Button {...btnArgs} onClick={() => {
             if (roomInfo.isAdmin){
-              const ids = new Set(contents.roomContentsInfo.keys())
-              contents.all.forEach(c => ids.add(c.id))
-              contents.all.filter(c => c.ownerName === clearName).forEach(c => contents.removeByLocal(c.id))
+              const ids = new Set(contentSyncService.roomContentsInfo.keys())
+              contentStore.all.forEach(c => ids.add(c.id))
+              contentStore.all.filter(c => c.ownerName === clearName).forEach(c => contentSyncService.removeByLocal(c.id))
             }
         }}> Clear contents by user name </Button> &thinsp;
         <TextField label="name" type="text" style={{marginTop:-12}}

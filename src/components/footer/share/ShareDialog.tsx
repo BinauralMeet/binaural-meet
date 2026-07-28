@@ -4,7 +4,7 @@ import DialogContent from '@material-ui/core/DialogContent'
 import DialogTitle from '@material-ui/core/DialogTitle'
 import {useTranslation} from '@models/locales'
 import {createContentOfIframe, createContentOfText} from '@stores/sharedContents/SharedContentCreator'
-import sharedContents from '@stores/sharedContents/SharedContents'
+import contentStore from '@stores/sharedContents/ContentStore'
 import React, {useRef, useState} from 'react'
 import {CameraSelector} from './CameraSelector'
 import {CameraSelectorMember} from './CameraSelector'
@@ -42,7 +42,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props:ShareDialogProps) 
         return <TextInput
             setStep={setStep}
             onFinishInput={(value) => {
-              sharedContents.shareContent(createContentOfText(value, map))
+              contentStore.shareContent(createContentOfText(value, map))
               //  console.debug(`share text: ${value}`)
             }}
             textLabel = "Text"
@@ -53,7 +53,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props:ShareDialogProps) 
             setStep={setStep}
             onFinishInput={(value) => {
               createContentOfIframe(value, map).then((c) => {
-                sharedContents.shareContent(c)
+                contentStore.shareContent(c)
               })
             }}
             textLabel = "URL"
@@ -67,7 +67,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props:ShareDialogProps) 
         return <GoogleDriveImport
         setStep={setStep} onSelectedFile={(value) => {
           createContentOfIframe(value, map).then((c) => {
-            sharedContents.shareContent(c)
+            contentStore.shareContent(c)
           })
         }} />
       default:
@@ -75,8 +75,8 @@ export const ShareDialog: React.FC<ShareDialogProps> = (props:ShareDialogProps) 
     }
   }
 
-  //  console.debug(`step=${step}, pasteEnabled=${sharedContents.pasteEnabled}`)
-  sharedContents.pasteEnabled = step === 'none' || step === 'menu'
+  //  console.debug(`step=${step}, pasteEnabled=${contentStore.pasteEnabled}`)
+  contentStore.pasteEnabled = step === 'none' || step === 'menu'
 
   const {t} = useTranslation()
   const stepTitle: {
