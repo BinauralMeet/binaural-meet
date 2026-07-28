@@ -4,11 +4,6 @@ import {freeRenderTarget, freeScene, VRMAvatar, VRMAvatars} from "@models/utils/
 import map from "@stores/map/Map"
 import { participants } from "@stores/participants"
 
-//  for debug drawing
-import { drawFikStructure } from "@models/utils/vrmIK"
-import { FACEMESH_TESSELATION, HAND_CONNECTIONS, POSE_CONNECTIONS } from "@mediapipe/holistic"
-import * as MP from '@mediapipe/drawing_utils'
-
 declare const d:any                  //  from index.html
 
 const animationPeriod = 60  //  1/60ms =  17 frame / sec
@@ -111,16 +106,13 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
     const vas = props.vrmAvatars
 
     let ctx = refWebGLContext.current = createThreeContext(props.refCanvasGL.current)
-    ctx.canvas.addEventListener('webglcontextlost', (ev)=>{
+    const onContextLost = (ev: Event) => {
       freeThreeContext(ctx)
       console.log('webglcontextlost');
       ev.preventDefault();
       ctx = refWebGLContext.current = createThreeContext(ctx.canvas)
-    })
-
-
-    let c2d = props.refCanvas2D.current?.getContext("2d")
-    if (c2d===null) c2d=undefined
+    }
+    ctx.canvas.addEventListener('webglcontextlost', onContextLost)
 
     //  render
     let prevTime = 0
@@ -137,34 +129,6 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
       ctx.renderer.clear(true, true, true)
 
       //  console.log(`canvas2: ${refCanvas2.current}`)
-      /*
-      if (props.refCanvas2D.current){
-        const c2d = props.refCanvas2D.current.getContext("2d")
-        //  draw landmakrs
-        const lms = participants.local.landmarks
-        if (lms.image){
-          if (c2d){
-            props.refCanvas2D.current.width = lms.image.width
-            props.refCanvas2D.current.height = lms.image.height
-            c2d.drawImage(lms.image, 0, 0, props.refCanvas2D.current.width, props.refCanvas2D.current.height)
-            MP.drawConnectors(c2d, lms.poseLm, POSE_CONNECTIONS,
-                        { color: '#00FF00', lineWidth: 4 }); // Green lines
-            MP.drawLandmarks(c2d, lms.poseLm,
-                        { color: '#FF0000', lineWidth: 2, radius: 3 }); // Red dots
-            MP.drawConnectors(c2d, lms.faceLm, FACEMESH_TESSELATION,
-                                         { color: 'rgba(200, 200, 200, 0.5)', lineWidth: 1 }); // Light grey, semi-transparent
-            const handLandmarkStyle = { color: '#FFFFFF', lineWidth: 2, radius: 3 }; // White dots
-            const leftHandConnectionStyle = { color: '#CC0000', lineWidth: 4 };     // Dark Red lines
-            const rightHandConnectionStyle = { color: '#00CC00', lineWidth: 4 };    // Dark Green lines
-            MP.drawConnectors(c2d, lms.leftHandLm, HAND_CONNECTIONS, leftHandConnectionStyle);
-            MP.drawLandmarks(c2d, lms.leftHandLm, handLandmarkStyle);
-            MP.drawConnectors(c2d, lms.rightHandLm, HAND_CONNECTIONS, rightHandConnectionStyle);
-            MP.drawLandmarks(c2d, lms.rightHandLm, handLandmarkStyle);
-          }
-        }
-        //  drawIK
-        if (vas.local?.structure && c2d) drawFikStructure(vas.local.structure, lms, c2d)
-      } //*/
 
       if(vas.local && vas.local.structure?.face){
         //  Fliter face direction and set it for sound localization etc.
@@ -214,36 +178,6 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
           const viewDir = [-Math.sin(rad), -Math.cos(rad)]
           camera3D.position.set(participants.local.pose.position[0]*posScale - viewDir[0]*viewScale, cameraHeight, participants.local.pose.position[1]*posScale - viewDir[1]*viewScale)
           camera3D.lookAt(participants.local.pose.position[0]*posScale, cameraHeight, participants.local.pose.position[1]*posScale)
-
-          //  draw local avatar
-          /*
-          if (vas.local){
-            const viewportSize = [ctx.offscreen.width, ctx.offscreen.height]
-            const cameraOff = new THREE.PerspectiveCamera(45, viewportSize[0]/viewportSize[1], 0.1, 100000)
-            cameraOff.updateProjectionMatrix()
-            const cameraHeight = 0.9
-            const viewScale = 0.5
-            cameraOff.position.set(participants.local.pose.position[0]*posScale - viewDir[0]*viewScale, cameraHeight, participants.local.pose.position[1]*posScale - viewDir[1]*viewScale)
-            cameraOff.lookAt(participants.local.pose.position[0]*posScale, cameraHeight-0.2, participants.local.pose.position[1]*posScale)
-
-            //  offscreen rendering
-            ctx.renderer.setRenderTarget(ctx.offscreen)
-            ctx.renderer.clear(true, true, true)
-            ctx.scene.add(vas.local.vrm.scene)
-            ctx.renderer.render(ctx.scene, cameraOff)
-            ctx.scene.remove(vas.local.vrm.scene)
-            //  set onscreen position and render it
-            ctx.selfSprite.position.x = vas.local.vrm.scene.position.x
-            ctx.selfSprite.position.z = vas.local.vrm.scene.position.z
-            ctx.selfSprite.position.y = 0.8
-            ctx.selfSprite.scale.x = 0.5*(ctx.offscreen.width / ctx.offscreen.height)
-            ctx.selfSprite.scale.y = 0.5
-            ctx.renderer.setRenderTarget(ctx.onscreen)
-            ctx.scene.add(ctx.selfSprite)
-            ctx.renderer.render(ctx.scene, camera3D)
-            ctx.scene.remove(ctx.selfSprite)
-          }
-*/
 
           //  draw remote 3D avatars and self sprite
           for(const avatar of remotes){
@@ -326,6 +260,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId)
       }
+      ctx.canvas.removeEventListener('webglcontextlost', onContextLost)
       freeThreeContext(ctx)
       //  console.log('WebGL unmount')
     }
