@@ -1,23 +1,13 @@
-import {ISharedContent} from '@models/ISharedContent'
-import {PlaybackParticipant as IPlaybackParticipant, RemoteInformation} from '@models/Participant'
-import {action, makeObservable, observable} from 'mobx'
+import {PlaybackParticipant as IPlaybackParticipant} from '@models/Participant'
+import {makeObservable, observable} from 'mobx'
 import {Store} from '../utils'
-import {ParticipantBase, TrackStates} from './ParticipantBase'
 import {MediaClip} from '@stores/media/MediaClip'
+import {RemoteOrPlaybackParticipant} from './RemoteOrPlaybackParticipant'
 
-export class PlaybackParticipant extends ParticipantBase<RemoteInformation> implements Store<IPlaybackParticipant> {
-  @observable trackStates = new TrackStates()
-  @observable called = false
-  @observable inLocalsZone = false
-  @observable.ref closedZone: ISharedContent | undefined = undefined
+export class PlaybackParticipant extends RemoteOrPlaybackParticipant implements Store<IPlaybackParticipant> {
   @observable clip?:MediaClip
-  lastDistance = 0
   constructor(id:string) {
-    super()
+    super(id)
     makeObservable(this)
-    this.id = id
-  }
-  @action call(){
-    this.called = true
   }
 }

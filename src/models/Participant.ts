@@ -23,17 +23,25 @@ export interface ParticipantBase extends MapObject{
   vrmRig?: VrmRig
 }
 
-export interface PlaybackParticipant extends ParticipantBase {
+// Common to PlaybackParticipant and RemoteParticipant, mirroring the store-side
+// RemoteOrPlaybackParticipant: both are driven by RemoteInformation and carry
+// call/zone-tracking state, differing only in where their media comes from
+// (a live RTC track vs. a recorded clip).
+export interface RemoteOrPlaybackParticipant extends ParticipantBase {
+  information: RemoteInformation
   trackStates: TrackStates
+  called: boolean
+  inLocalsZone: boolean
+  closedZone?: ISharedContent
   audioLevel: number
 }
 
-export interface RemoteParticipant extends ParticipantBase {
-  closedZone?: ISharedContent
-  inLocalsZone: boolean
+export interface PlaybackParticipant extends RemoteOrPlaybackParticipant {
+  clip?: MediaClip
+}
+
+export interface RemoteParticipant extends RemoteOrPlaybackParticipant {
   tracks: Tracks
-  trackStates: TrackStates
-  audioLevel: number
 }
 
 
