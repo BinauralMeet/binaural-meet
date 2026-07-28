@@ -16,6 +16,7 @@ import {Observer} from 'mobx-react-lite'
 import React from 'react'
 import {SignalQualityIcon} from './SignalQuality'
 import { ComposedAvatar } from '@components/avatar/ComposedAvatar'
+import {COLOR} from '../../utils/styles'
 import _ from 'lodash'
 
 const renderLog = false ? console.log : (..._:any)=>{}
@@ -318,8 +319,8 @@ const MainAvatar: React.FC<MainAvatarProps> = React.memo((props) => {
           (participant.trackStates.micMuted ? <MicOffIcon className={classesSize.icon} color="secondary" /> : undefined)}
         {!participant.trackStates.micMuted && participant.physics.onStage ?
           <Icon className={classesSize.icon} icon={megaphoneIcon} color="gold" /> : undefined }
-        {props.isPlayback ? <PlayArrowIcon className={classesSize.iconLeft} htmlColor="#0C0" /> : undefined}
-        {participant.recording ? <RecordIcon className={classesSize.iconLeft} htmlColor="#D00" /> : undefined}
+        {props.isPlayback ? <PlayArrowIcon className={classesSize.iconLeft} htmlColor={COLOR.active} /> : undefined}
+        {participant.recording ? <RecordIcon className={classesSize.iconLeft} htmlColor={COLOR.recording} /> : undefined}
       </div>
     </Tooltip>
   }</Observer>

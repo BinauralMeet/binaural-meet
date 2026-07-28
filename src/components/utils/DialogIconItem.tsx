@@ -3,6 +3,7 @@ import {Tooltip} from '@material-ui/core'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemAvatar from '@material-ui/core/ListItemAvatar'
 import React from 'react'
+import {FONT_SIZE} from './styles'
 
 interface DialogIconItemProps {
   icon?: JSX.Element
@@ -15,7 +16,7 @@ interface DialogIconItemProps {
   onClick?: () => void
 }
 
-const fontSize = '1.3em'
+const fontSize = FONT_SIZE.small
 const height = '1em'
 
 export const DialogIconItem: React.FC<DialogIconItemProps> = (props) => {

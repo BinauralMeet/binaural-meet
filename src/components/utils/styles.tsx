@@ -100,14 +100,33 @@ export const fontScale = isSmartphone() ? smartphoneScale : 1
 export const dialogStyle:React.CSSProperties = {fontSize: fontScale*18}
 export const titleStyle:React.CSSProperties = {fontSize:fontScale*22}
 
+//  Named em-based icon/font sizes -- these are the values already in use scattered across the
+//  codebase, just given names. Do not add new values here without checking for an existing match.
+export const FONT_SIZE = {
+  icon: '1.2em',
+  small: '1.3em',
+  medium: '1.4em',
+  large: '1.5em',
+}
+
+//  Colors reused verbatim (by value, not by intent) in multiple components.
+export const COLOR = {
+  recording: '#D00',
+  active: '#0C0',
+}
+
+export const RADIUS = {
+  contentCorner: '0.5em',
+}
+
 export const tfIStyle:React.CSSProperties = {
-  fontSize: `1.5em`,
-  height: `1.5em`,
+  fontSize: FONT_SIZE.large,
+  height: FONT_SIZE.large,
 }
 export const iconStyle = {}//{fontSize:`${1.5*fontScale}rem`}
 export const tfLStyle = {}//{ fontSize: `${fontScale}em` }
 export const tfDivStyle = {}//{ height: `${fontScale*3}em` }
-export const buttonStyle:React.CSSProperties = {textTransform: 'none', fontSize:'1.2em'}//{fontSize: `${fontScale}em`}
+export const buttonStyle:React.CSSProperties = {textTransform: 'none', fontSize:FONT_SIZE.icon}//{fontSize: `${fontScale}em`}
 export const inputStyle = buttonStyle
 export const translateIconStyle = {fontSize: fontScale*24}
 
@@ -119,7 +138,7 @@ export interface RadioWithLabelProps {
 export function RadioWithLabel(props:RadioWithLabelProps){
   return <FormControlLabel value={props.value} control={
     <span style={dialogStyle}>
-      <Radio style={{fontSize:'1.4em'}}
+      <Radio style={{fontSize:FONT_SIZE.medium}}
         value={props.value}
         checked={props.checked}
         checkedIcon={<Icon icon={radioButtonCheckedIcon} color="secondary"/>}
@@ -137,7 +156,7 @@ export interface CheckWithLabelProps {
 export function CheckWithLabel(props:CheckWithLabelProps){
   return <FormControlLabel control={
     <span style={dialogStyle}>
-      <Checkbox style={{fontSize:'1.4em'}}
+      <Checkbox style={{fontSize:FONT_SIZE.medium}}
         onChange={props.onChange}
         checked={props.checked}
         checkedIcon={<Icon icon={checkboxCheckedIcon} color="secondary"/>}

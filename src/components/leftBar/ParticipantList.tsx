@@ -12,7 +12,7 @@ import {ParticipantBase} from '@stores/participants/ParticipantBase'
 import {autorun} from 'mobx'
 import {Observer, observer} from 'mobx-react-lite'
 import React, { CSSProperties } from 'react'
-import {styleForList} from '../utils/styles'
+import {styleForList, COLOR} from '../utils/styles'
 import {TextLineStyle} from './LeftBar'
 import {StatusDialog} from './StatusDialog'
 import RecordIcon from '@material-ui/icons/FiberManualRecord'
@@ -87,7 +87,7 @@ export const ParticipantLine: React.FC<TextLineStyle&{participant: ParticipantBa
       <div className={classes.outer} style={{margin:'1px 0 1px 0'}}>
         <IconButton style={{margin:0, padding:0}} onClick={onClick} onContextMenu={onContextMenu}>
           <ImageAvatar border={true} colors={colors} size={size} name={name} avatarSrc={avatarSrc} />
-          {props.participant.recording ? <RecordIcon style={iconL} htmlColor="#D00"/> : undefined }
+          {props.participant.recording ? <RecordIcon style={iconL} htmlColor={COLOR.recording}/> : undefined }
           {props.participant.muteSpeaker ? <SpeakerOffIcon style={iconR} color="secondary"/> :
             props.participant.muteAudio ? <MicOffIcon style={iconR} color="secondary"/> : undefined }
           {props.participant.physics.onStage ? <Icon style={iconR} icon={megaphoneIcon} color="gold" />: undefined}
@@ -157,7 +157,7 @@ export const RawParticipantList: React.FC<TextLineStyle&{localId: string, remote
       >
         {recording ?
           <Tooltip title={t('ttBeingRecorded')}>
-            <RecordIcon htmlColor='#D00' style={icon}/>
+            <RecordIcon htmlColor={COLOR.recording} style={icon}/>
           </Tooltip> : undefined}
         {(participants.remote.size + 1).toString()} in {conference.room}</div>
       <StatusDialog open={showStat}

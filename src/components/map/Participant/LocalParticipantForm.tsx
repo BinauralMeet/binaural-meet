@@ -18,6 +18,7 @@ import {Grid} from '@material-ui/core'
 import {participants, map, roomInfo} from '@stores/'
 import {gDriveAuth} from '@stores/sharedContents/GDriveUtil'
 
+const LABEL_FONT_SIZE = 12
 
 function makeEmailDisp(email: string){
   const lastSlashIdx = email.lastIndexOf('/')+1
@@ -103,7 +104,7 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
             onKeyDown={onKeyDown} fullWidth={true}
           />
           <Box mt={3}>
-            <div style={{fontSize:12}}>{t('lsColor')}</div>
+            <div style={{fontSize:LABEL_FONT_SIZE}}>{t('lsColor')}</div>
             <Box ml={2}>
               <Button variant="contained"
                 style={{backgroundColor:rgb2Color(rgb), color:textColor, ...buttonStyle}}
@@ -137,11 +138,11 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
             </Box>
           </Box>
           <Box mt={3}>
-            <div style={{fontSize:12}}>{t('lsAvatar')}</div>
+            <div style={{fontSize:LABEL_FONT_SIZE}}>{t('lsAvatar')}</div>
             <Box mt={-1} ml={2}>
               <form key="information" onSubmit = {uploadAvatarSrc}
                 style={{display:'inline', lineHeight:'2em'}}>
-                <div style={{fontSize:12, marginTop:8}}>{t('lsImageFile')}
+                <div style={{fontSize:LABEL_FONT_SIZE, marginTop:8}}>{t('lsImageFile')}
                 </div>
                 {local.information.avatarSrc && !isVrmUrl(local.information.avatarSrc) ? <>
                   <img src={local.information.avatarSrc} style={{height:'1.5em', verticalAlign:'middle'}} alt="avatar"/>
@@ -170,7 +171,7 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
             </Box>
           </Box>
           <Box mt={3}>
-            <div style={{fontSize:12}}>{t('lsNotification')}</div>
+            <div style={{fontSize:LABEL_FONT_SIZE}}>{t('lsNotification')}</div>
             <Box mt={-1} ml={2}>
             <CheckWithLabel checked={local.information.notifyCall}
               onChange={(ev)=>{local.information.notifyCall = ev.target.checked}}
@@ -203,12 +204,12 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
       {roomInfo.loginEmail || gDriveAuth.email ?
         <Box >
           <Grid container>
-            <Grid item xs={6}> <div style={{fontSize:12}}>{t('lsLoginEmail')}</div>
+            <Grid item xs={6}> <div style={{fontSize:LABEL_FONT_SIZE}}>{t('lsLoginEmail')}</div>
               <Box>
                 {roomInfo.loginEmail}
               </Box>
             </Grid>
-            <Grid item xs={6}> <div style={{fontSize:12}}>{t('lsGDriveEmail')}</div>
+            <Grid item xs={6}> <div style={{fontSize:LABEL_FONT_SIZE}}>{t('lsGDriveEmail')}</div>
               <Box>
                 {gDriveAuth.email}
               </Box>

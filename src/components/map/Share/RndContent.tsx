@@ -25,13 +25,23 @@ import {TITLE_HEIGHT, moveContentToBottom, moveContentToTop} from '@stores/share
 import _ from 'lodash'
 import {observer} from 'mobx-react-lite'
 import React, {useEffect, useLayoutEffect, useRef, useState} from 'react'
-import {Rnd} from 'react-rnd'
+//  NOTE: `react-rnd` and `re-resizable` are NOT the upstream packages here — package.json points
+//  them at personal forks (hasevr/react-rnd, hasevr/re-resizable#forRnd) that add rotation support
+//  neither library has natively. The forks are ~5 years unrebased against upstream (as of 2026).
+//  Do NOT `yarn upgrade`/`yarn upgrade react-rnd` back to the real upstream package — it has no
+//  equivalent to `Resizable.orientation` (see the mutation of `rnd.current.resizable.orientation`
+//  below), so rotation support would silently stop working with no type error and no runtime error.
+import {Position, ResizableDelta, Rnd} from 'react-rnd'
+import {ResizeDirection} from 're-resizable'
+//  `react-use-gesture` was renamed to `@use-gesture/react` in 2021; this is the last release under
+//  the old name, so there will be no further updates under this package name.
 import {useGesture} from 'react-use-gesture'
-import { FullGestureState, UserHandlersPartial } from 'react-use-gesture/dist/types'
+import { FullGestureState, UserHandlersPartial, UseGestureEvent } from 'react-use-gesture/dist/types'
 import {Content, contentTypeIcons, editButtonTip} from './Content'
 import {ISharedContentProps} from './SharedContent'
 import {SharedContentForm} from './SharedContentForm'
 import { GoogleAuthDrive } from '@components/utils/GoogleAuthDrive'
+import {COLOR, RADIUS} from '../../utils/styles'
 import {contentSyncService, map} from '@stores/'
 
 const MOUSE_RIGHT = 2
@@ -120,6 +130,12 @@ export const RndContent: React.FC<RndContentProps> = observer((props:RndContentP
   )
 
   function setPoseAndSizeToRnd(){
+    //  `orientation` is a public field of the forked re-resizable's `Resizable` class (used by its
+    //  resize-handle math to account for the box's current rotation), but it is NOT exposed as a
+    //  `ResizableProps` prop -- there is no `<Rnd orientation={...}>` to pass it through normally.
+    //  Mutating it via the ref is therefore the only way to feed rotation into resize math with the
+    //  current fork. If the fork's internal field is ever renamed, this line stops doing anything
+    //  (no compile error, no runtime error) and resize handles will silently ignore rotation.
     if (rnd.current) { rnd.current.resizable.orientation = pose.orientation + map.rotation }
     const titleHeight = showTitle ? TITLE_HEIGHT : 0
     rnd.current?.updatePosition({x:pose.position[0], y:pose.position[1] - titleHeight})
@@ -207,7 +223,7 @@ export const RndContent: React.FC<RndContentProps> = observer((props:RndContentP
   }
 
   //  drag for title area
-  function dragHandler(delta:[number, number], buttons:number, event:any) {
+  function dragHandler(delta:[number, number], buttons:number, event:UseGestureEvent|undefined) {
     if (member.dragCanceled){ return }
     const ROTATION_IN_DEGREE = 360
     const ROTATION_STEP = 15
@@ -299,7 +315,7 @@ export const RndContent: React.FC<RndContentProps> = observer((props:RndContentP
     if (!member.dragCanceled){ updateHandler() }
     member.dragCanceled = false
   }
-  function onResize(evt:MouseEvent | TouchEvent, dir: any, elem:HTMLDivElement, delta:any, pos:any) {
+  function onResize(evt:MouseEvent | TouchEvent, dir: ResizeDirection, elem:HTMLDivElement, delta:ResizableDelta, pos:Position) {
     evt.stopPropagation(); evt.preventDefault()
     //  console.log(`dragcancel:${member.dragCanceled}`)
     if (member.dragCanceled) {
@@ -429,7 +445,7 @@ export const RndContent: React.FC<RndContentProps> = observer((props:RndContentP
             anchorEl={contentRef.current} anchorOrigin={{vertical:'top', horizontal:'right'}}
           />
           <div className={classes.note} onClick={onClickShare} onTouchStart={stop}>Share</div>
-          {props.content.playback ? <div className={classes.close} ><PlayArrowIcon htmlColor="#0C0" /></div> :
+          {props.content.playback ? <div className={classes.close} ><PlayArrowIcon htmlColor={COLOR.active} /></div> :
             (props.content.pinned || isContentWallpaper(props.content)) ? undefined :
               <div className={classes.close} onClick={onClickClose} onTouchStart={stop}>
                 <CloseRoundedIcon /></div>}
@@ -498,7 +514,7 @@ const useStyles = makeStyles({
     })
   },
   rndCls: (props: StyleProps) => ({
-    borderRadius: props.showTitle ? '0.5em 0.5em 0 0' : '0 0 0 0',
+    borderRadius: props.showTitle ? `${RADIUS.contentCorner} ${RADIUS.contentCorner} 0 0` : '0 0 0 0',
     backgroundColor: props.props.content.noFrame ? 'rgba(0,0,0,0)' :
       settings.useTransparent ? 'rgba(200,200,200,0.5)' : 'rgba(200,200,200,1)',
     boxShadow: props.props.content.noFrame ? undefined :
@@ -553,7 +569,7 @@ const useStyles = makeStyles({
     props.showTitle ? {
       visibility: props.props.onShare ? 'visible' : 'hidden',
       whiteSpace: 'pre',
-      borderRadius: '0.5em 0 0 0',
+      borderRadius: `${RADIUS.contentCorner} 0 0 0`,
       ...buttonStyle,
     } : {
       visibility: 'hidden',
@@ -596,7 +612,7 @@ const useStyles = makeStyles({
     margin:0,
     padding:0,
     height: TITLE_HEIGHT,
-    borderRadius: '0 0.5em 0 0',
+    borderRadius: `0 ${RADIUS.contentCorner} 0 0`,
     cursor: 'default',
     ...buttonStyle,
   }),
