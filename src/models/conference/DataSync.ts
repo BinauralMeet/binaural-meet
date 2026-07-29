@@ -83,7 +83,7 @@ export class DataSync{
       onReceive: (_v, from) => this.onCallRemote(from),
     })
     registerMessageType(MessageType.CHAT_MESSAGE, {
-      merge: 'overwrite',
+      merge: 'instant',
       onReceive: (msg, from) => this.onChatMessage(from, msg),
     })
     registerMessageType(MessageType.CONTENT_REMOVE_REQUEST, {

@@ -11,7 +11,9 @@ import {MessageValue} from './DataMessageType'
 import {MessageTypePayloadMap} from './DataMessagePayloads'
 import {PlaybackParticipant} from '@stores/participants/RemoteOrPlaybackParticipant'
 
-export type MergeStrategy = 'overwrite' | 'objectArray' | 'stringArray'
+//  'instant': never merged with a same-type entry already queued -- always sent as its own
+//  message (e.g. CHAT_MESSAGE, a log of discrete events rather than a "latest value wins" field).
+export type MergeStrategy = 'overwrite' | 'objectArray' | 'stringArray' | 'instant'
 
 export interface MessageTypeRegistryEntry<T extends MessageValue = MessageValue>{
   merge?: MergeStrategy

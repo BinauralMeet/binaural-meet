@@ -255,7 +255,11 @@ export class DataConnection {
     //  match the property name so e.g. queuing backgroundFill then backgroundColor
     //  before a flush doesn't let the second overwrite/drop the first.
     const roomPropName = type === MessageType.ROOM_PROP ? (value as [string, string])[0] : undefined
-    const idx = this.messagesToSendToRelay.findIndex(m => {
+    //  CHAT_MESSAGE is a log of discrete events, not a "latest value wins" state field --
+    //  unlike every other overwrite-merged type here, two chat messages queued to the same
+    //  (type, room, peer, dest) before a flush must NOT collapse into one (that would
+    //  silently drop the earlier message). Force idx=-1 so it's always pushed as a new entry.
+    const idx = type === MessageType.CHAT_MESSAGE ? -1 : this.messagesToSendToRelay.findIndex(m => {
       if (m.t !== msg.t || m.r !== msg.r || m.p !== msg.p || m.d !== msg.d){ return false }
       if (roomPropName === undefined){ return true }
       try {
