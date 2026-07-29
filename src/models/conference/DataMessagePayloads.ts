@@ -14,6 +14,7 @@ import {ISharedContent, ISharedContentToSend} from '@models/ISharedContent'
 import {ChatMessageToSend} from '@stores/room/Chat'
 import {VrmRig} from '@models/utils/vrmIK'
 import {MessageType} from './DataMessageType'
+import {RoomPropertyName} from '@stores/room/RoomInfo'
 
 export interface MessageTypePayloadMap {
   [MessageType.PARTICIPANT_AFK]: boolean
@@ -32,7 +33,7 @@ export interface MessageTypePayloadMap {
   [MessageType.MUTE_VIDEO]: boolean
   [MessageType.MUTE_AUDIO]: boolean
   [MessageType.AUDIO_LEVEL]: number
-  [MessageType.RELOAD_BROWSER]: undefined         //  never actually sent (see comment in DataMessageType.ts)
+  [MessageType.RELOAD_BROWSER]: Record<string, never>  //  actually sent from AdminConfigForm as {} -- despite the stale "not used" comment on the type constant
   [MessageType.KICK]: string                      //  reason
   [MessageType.CONTENT_UPDATE_REQUEST]: ISharedContentToSend[]
   [MessageType.CONTENT_INFO_UPDATE]: ISharedContent[]
@@ -46,7 +47,7 @@ export interface MessageTypePayloadMap {
   [MessageType.REQUEST_PARTICIPANT_STATES]: string[]  //  pids
   [MessageType.PARTICIPANT_LEFT]: string[]        //  ids
   [MessageType.PARTICIPANT_LEFT_BY_ERROR]: {errorType: string, code: number, reason: string}
-  [MessageType.ROOM_PROP]: [string, string | undefined]  //  [propertyName, value]
+  [MessageType.ROOM_PROP]: [RoomPropertyName, string | undefined]  //  [propertyName, value]
   [MessageType.REQUEST_TO]: string[]              //  pids
   [MessageType.PONG]: undefined                   //  wire value is the literal empty string '', not JSON
 }

@@ -29,7 +29,7 @@ export const InstantMessageType = {
   MUTE_VIDEO: 'm_mute_video',                   //  boolean, ask to mute video
   MUTE_AUDIO: 'm_mute_audio',                   //  boolean, ask to mute audio
   AUDIO_LEVEL: 'ma',                            //  audio level notification
-  RELOAD_BROWSER: 'm_reload',                   //  not used, ask to reload browser
+  RELOAD_BROWSER: 'm_reload',                   //  ask a participant's browser to reload (admin action)
   KICK: 'm_kick',                               //  reason:string
 } as const
 export type InstantMessageKeys = keyof typeof InstantMessageType

@@ -22,6 +22,7 @@ import {notification} from './Notification'
 import {connLog} from '@models/utils'
 import {VrmRig} from '@models/utils/vrmIK'
 import {registerMessageType, getMessageTypeEntry} from './MessageTypeRegistry'
+import {parseMessageValue} from './DataMessagePayloads'
 
 const syncLog = connLog
 
@@ -412,27 +413,27 @@ export class DataSync{
       return
     }
     switch(msg.t){
-      case MessageType.ROOM_PROP: this.onRoomProp(...(JSON.parse(msg.v) as [RoomPropertyName, string|undefined])); break
+      case MessageType.ROOM_PROP: this.onRoomProp(...parseMessageValue(MessageType.ROOM_PROP, msg.v)); break
       case MessageType.REQUEST_ALL: this.sendAllAboutMe(false); break
       case MessageType.REQUEST_TO: this.sendAllAboutMe(false); break
-      case MessageType.PARTICIPANT_LEFT: this.onParticipantLeft(JSON.parse(msg.v)); break
+      case MessageType.PARTICIPANT_LEFT: this.onParticipantLeft(parseMessageValue(MessageType.PARTICIPANT_LEFT, msg.v)); break
       case MessageType.CALL_REMOTE: this.onCallRemote(msg.p); break
-      case MessageType.CHAT_MESSAGE: this.onChatMessage(msg.p, JSON.parse(msg.v)); break
-      case MessageType.CONTENT_REMOVE_REQUEST: this.onContentRemoveRequest(JSON.parse(msg.v)); break
-      case MessageType.CONTENT_UPDATE_REQUEST: this.onContentUpdateRequest(JSON.parse(msg.v)); break
-      case MessageType.CONTENT_INFO_UPDATE: this.onContentInfoUpdate(JSON.parse(msg.v)); break
-      case MessageType.PARTICIPANT_INFO: this.onParticipantInfo(msg.p, JSON.parse(msg.v)); break
-      case MessageType.PARTICIPANT_MOUSE: this.onParticipantMouse(msg.p, JSON.parse(msg.v)); break
-      case MessageType.PARTICIPANT_POSE: this.onParticipantPose(msg.p, JSON.parse(msg.v)); break
-      case MessageType.PARTICIPANT_TRACKLIMITS: this.onParticipantTrackLimits(JSON.parse(msg.v)); break
-      case MessageType.YARN_PHONE: this.onYarnPhone(msg.p, JSON.parse(msg.v)); break
+      case MessageType.CHAT_MESSAGE: this.onChatMessage(msg.p, parseMessageValue(MessageType.CHAT_MESSAGE, msg.v)); break
+      case MessageType.CONTENT_REMOVE_REQUEST: this.onContentRemoveRequest(parseMessageValue(MessageType.CONTENT_REMOVE_REQUEST, msg.v)); break
+      case MessageType.CONTENT_UPDATE_REQUEST: this.onContentUpdateRequest(parseMessageValue(MessageType.CONTENT_UPDATE_REQUEST, msg.v)); break
+      case MessageType.CONTENT_INFO_UPDATE: this.onContentInfoUpdate(parseMessageValue(MessageType.CONTENT_INFO_UPDATE, msg.v)); break
+      case MessageType.PARTICIPANT_INFO: this.onParticipantInfo(msg.p, parseMessageValue(MessageType.PARTICIPANT_INFO, msg.v)); break
+      case MessageType.PARTICIPANT_MOUSE: this.onParticipantMouse(msg.p, parseMessageValue(MessageType.PARTICIPANT_MOUSE, msg.v)); break
+      case MessageType.PARTICIPANT_POSE: this.onParticipantPose(msg.p, parseMessageValue(MessageType.PARTICIPANT_POSE, msg.v)); break
+      case MessageType.PARTICIPANT_TRACKLIMITS: this.onParticipantTrackLimits(parseMessageValue(MessageType.PARTICIPANT_TRACKLIMITS, msg.v)); break
+      case MessageType.YARN_PHONE: this.onYarnPhone(msg.p, parseMessageValue(MessageType.YARN_PHONE, msg.v)); break
       case MessageType.RELOAD_BROWSER: this.onReloadBrower(); break
-      case MessageType.MUTE_VIDEO: this.onMuteVideo(JSON.parse(msg.v)); break
-      case MessageType.MUTE_AUDIO: this.onMuteAudio(JSON.parse(msg.v)); break
-      case MessageType.KICK: this.onKicked(msg.p, JSON.parse(msg.v)); break
-      case MessageType.PARTICIPANT_OUT: this.onParticipantOut(JSON.parse(msg.v)); break
-      case MessageType.MOUSE_OUT: this.onMouseOut(JSON.parse(msg.v)); break
-      case MessageType.CONTENT_OUT: this.onContentOut(JSON.parse(msg.v)); break
+      case MessageType.MUTE_VIDEO: this.onMuteVideo(parseMessageValue(MessageType.MUTE_VIDEO, msg.v)); break
+      case MessageType.MUTE_AUDIO: this.onMuteAudio(parseMessageValue(MessageType.MUTE_AUDIO, msg.v)); break
+      case MessageType.KICK: this.onKicked(msg.p, parseMessageValue(MessageType.KICK, msg.v)); break
+      case MessageType.PARTICIPANT_OUT: this.onParticipantOut(parseMessageValue(MessageType.PARTICIPANT_OUT, msg.v)); break
+      case MessageType.MOUSE_OUT: this.onMouseOut(parseMessageValue(MessageType.MOUSE_OUT, msg.v)); break
+      case MessageType.CONTENT_OUT: this.onContentOut(parseMessageValue(MessageType.CONTENT_OUT, msg.v)); break
       default:
         syncLog(`Unhandled message type ${msg.t} from ${msg.p}`)
         break

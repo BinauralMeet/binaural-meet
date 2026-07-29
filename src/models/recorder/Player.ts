@@ -1,4 +1,4 @@
-import {ISharedContent, ISharedContentToSend, SharedContentInfoData} from '@models/ISharedContent'
+import {ISharedContent, ISharedContentToSend, SharedContentInfoData, receiveToContents} from '@models/ISharedContent'
 import {BaseInformation, RemoteInformation, Viewpoint} from '@models/Participant'
 import {diffSet, fixWebmDuration, str2Mouse, str2Pose} from '@models/utils'
 import {TrackStates} from '@stores/participants/ParticipantBase'
@@ -6,6 +6,7 @@ import {computed, makeObservable, observable, runInAction} from 'mobx'
 import {BMMessage} from '@models/conference/DataMessage'
 import {MessageType, MessageValue} from '@models/conference/DataMessageType'
 import {registerMessageType, getMessageTypeEntry} from '@models/conference/MessageTypeRegistry'
+import {parseMessageValue, stringifyMessageValue} from '@models/conference/DataMessagePayloads'
 import { MediaClip } from '@stores/media/MediaClip'
 import {MediaKind, BlobKind, recLog, BlobHeader, Message, MessagesHeader, RecordHeader,
   toPlaybackId, PLAYBACK_TICK_MS} from './RecorderTypes'
@@ -436,16 +437,16 @@ class Player{
     const contentMessages = new Map<string, Message>
     for(const m of ff){
       if (m.msg.t === MessageType.CONTENT_UPDATE_REQUEST){
-        const contents = JSON.parse(m.msg.v) as ISharedContentToSend[]
+        const contents = parseMessageValue(MessageType.CONTENT_UPDATE_REQUEST, m.msg.v)
         for(const content of contents){
           const newMessage = {...m}
           newMessage.msg = {...m.msg}
-          newMessage.msg.v = JSON.stringify([content])
+          newMessage.msg.v = stringifyMessageValue(MessageType.CONTENT_UPDATE_REQUEST, [content])
           contentMessages.set(content.id, newMessage)
         }
       }else if (m.msg.t === MessageType.CONTENT_REMOVE_REQUEST){
         if (bRemove){
-          const cids = JSON.parse(m.msg.v) as string[]
+          const cids = parseMessageValue(MessageType.CONTENT_REMOVE_REQUEST, m.msg.v)
           for(const cid of cids){
             contentMessages.delete(cid)
           }
@@ -453,7 +454,7 @@ class Player{
       }else if (m.msg.p){
         if (m.msg.t === MessageType.PARTICIPANT_LEFT){
           if (bRemove){
-            const pidsLeft = JSON.parse(m.msg.v) as string[]
+            const pidsLeft = parseMessageValue(MessageType.PARTICIPANT_LEFT, m.msg.v)
             for(const pid of pidsLeft){
               participantMessages.delete(pid)
             }
@@ -479,13 +480,13 @@ class Player{
     participantMessages.forEach((p,pid) => {
       p.forEach(msgs => {
         if (msgs.msg.t === MessageType.PARTICIPANT_INFO){
-          const info = JSON.parse(msgs.msg.v) as RemoteInformation
+          const info = parseMessageValue(MessageType.PARTICIPANT_INFO, msgs.msg.v)
           parts.set(pid, info)
         }
       })
     })
     contentMessages.forEach(msg => {
-      const cs = JSON.parse(msg.msg.v) as ISharedContentToSend[]
+      const cs = parseMessageValue(MessageType.CONTENT_UPDATE_REQUEST, msg.msg.v)
       const c = cs[0]
       conts.set(c.id, c)
     })
@@ -560,14 +561,18 @@ class Player{
     }
   }
   private removeParticipants(msg: BMMessage){
-    const pidsRemove = JSON.parse(msg.v) as string[]
+    const pidsRemove = parseMessageValue(MessageType.PARTICIPANT_LEFT, msg.v)
     for(const pid of pidsRemove){
       participants.playback.delete(toPlaybackId(pid))
       this.pids.delete(toPlaybackId(pid))
     }
   }
   private onContentUpdateRequest(msg: BMMessage, from: number){
-    const cs = JSON.parse(msg.v) as ISharedContent[]
+    //  parseMessageValue() correctly returns ISharedContentToSend[] (the wire shape) --
+    //  a prior unchecked `as ISharedContent[]` cast here skipped receiveToContents(),
+    //  silently leaving overlapZones/surroundingZones undefined despite ISharedContent
+    //  declaring them required.
+    const cs = receiveToContents(parseMessageValue(MessageType.CONTENT_UPDATE_REQUEST, msg.v))
     for(const c of cs){
       //  recLog('CONTENT_UPDATE_REQUEST:', c)
       c.id = toPlaybackId(c.id)
@@ -579,7 +584,7 @@ class Player{
     }
   }
   private onContentRemoveRequest(msg: BMMessage){
-    const cids = JSON.parse(msg.v) as string[]
+    const cids = parseMessageValue(MessageType.CONTENT_REMOVE_REQUEST, msg.v)
     for(const cid of cids){
       playbackStore.removePlayback(toPlaybackId(cid))
       this.cids.delete(toPlaybackId(cid))

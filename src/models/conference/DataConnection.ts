@@ -4,7 +4,8 @@ import map from '@stores/map/Map'
 import {default as participants} from '@stores/participants/Participants'
 import roomInfo, {RoomPropertyName} from '@stores/room/RoomInfo'
 import {BMMessage} from './DataMessage'
-import {ClientToServerOnlyMessageType, MessageType, ObjectArrayMessageTypes, StringArrayMessageTypes} from './DataMessageType'
+import {ClientToServerOnlyMessageType, MessageType, MessageValue, ObjectArrayMessageTypes, StringArrayMessageTypes} from './DataMessageType'
+import {MessageTypePayloadMap, stringifyMessageValue} from './DataMessagePayloads'
 import {DataSync} from '@models/conference/DataSync'
 import {AudioMeter} from '@models/audio/AudioMeter'
 import {connLog} from '@models/utils'
@@ -231,7 +232,7 @@ export class DataConnection {
 
   receivedMessages: BMMessage[] = []
 
-  sendMessage(type:string, value:any, dest?: string, sendRandP?: boolean) {
+  sendMessage<T extends MessageValue>(type: T, value: MessageTypePayloadMap[T], dest?: string, sendRandP?: boolean) {
     if (!this.dataSocket || this.dataSocket.readyState !== WebSocket.OPEN){ return }
     if (!this.room || !this.peer){
       console.warn(`Relay Socket: Not connected. room:${this.room} id:${this.peer}.`)
@@ -282,11 +283,11 @@ export class DataConnection {
         }
         this.messagesToSendToRelay[idx].v = JSON.stringify(oldV)
       }else{  //  overwrite
-        msg.v = JSON.stringify(value)
+        msg.v = stringifyMessageValue(type, value)
         this.messagesToSendToRelay[idx] = msg
       }
     }else{
-      msg.v = JSON.stringify(value)
+      msg.v = stringifyMessageValue(type, value)
       this.messagesToSendToRelay.push(msg)
     }
 
