@@ -101,6 +101,20 @@ export const AvatarSetting: React.FC<{}> = observer(() => {
 })
 AvatarSetting.displayName = 'AvatarSetting'
 
+export const LoadAdjustmentSetting: React.FC<{}> = observer(() => {
+  const autoLoadAdjustment = participants.local.autoLoadAdjustment
+  const {t} = useTranslation()
+
+  return <Container>
+    <Checkbox checked={autoLoadAdjustment === true} onChange={(ev, checked) => {
+      participants.local.autoLoadAdjustment = checked
+      participants.local.saveMediaSettingsToStorage()
+    }} name="autoLoadAdjustment" />
+    {t('autoLoadAdjustment')}
+  </Container>
+})
+LoadAdjustmentSetting.displayName = 'LoadAdjustmentSetting'
+
 function checkCamera(){
   const local = participants.local
   if (!local.avatarDisplay3D && !local.avatarDisplay2_5D && !local.muteVideo){
@@ -148,6 +162,7 @@ export const Fab3DSettings: React.FC<{size?: number, iconSize:number}> = observe
         <AvatarSetting />
         {t('slSoundLocalization')} <br />
         <SoundSetting />
+        <LoadAdjustmentSetting />
       </div>
     </Popover>
   </>

@@ -150,6 +150,7 @@ export const jaTranslate = {
   alBodyView: '体',
   alAvatar2_5D: '2.5D',
   alAvatar2D: '2D',
+  autoLoadAdjustment: 'CPU/ネットワーク負荷が高いときに自動で品質を下げる',
   showNoAvatar: 'なし',
   slMonaural: 'なし (モノラル)',
   slBinaural: '空間 (バイノーラル)',

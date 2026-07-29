@@ -154,6 +154,7 @@ export const enTranslate = {
   alBodyView: 'Body',
   alAvatar2_5D: '2.5D',
   alavatar2D: '2D',
+  autoLoadAdjustment: 'Automatically reduce quality under high CPU/network load',
   slMonaural: 'None (Monaural)',
   slBinaural: 'Spatial (Binaural)',
   slAvatar: 'Avatar (avatar\'s direction)',
