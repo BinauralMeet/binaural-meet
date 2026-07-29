@@ -4,6 +4,7 @@ import {freeRenderTarget, freeScene, VRMAvatar, VRMAvatars} from "@models/utils/
 import map from "@stores/map/Map"
 import { participants } from "@stores/participants"
 import {loadAdjuster} from "@models/conference/LoadAdjuster"
+import {selectByProximity} from "@models/conference/LoadAdjusterLogic"
 
 declare const d:any                  //  from index.html
 
@@ -32,6 +33,22 @@ function createAvatarCamera(viewportSize:[number, number]){
 
   return camera
 }
+
+//  CPU-load response (see LoadAdjuster.ts / docs/auto-load-adjustment-design.md §4.2): when
+//  loadAdjuster.autoAvatarLimit is finite, keep only the closest `limit` remote VRM avatars
+//  updated/rendered each frame. This does not unmount/dispose the excluded avatars (they stay
+//  loaded in vas.remotes) -- only skips the per-frame update+render cost, since repeatedly
+//  reloading VRM models under fluctuating load would be worse than the load it's trying to fix.
+function selectAvatarsToRender(remotes: VRMAvatar[], localPos: [number, number], limit: number): VRMAvatar[] {
+  return selectByProximity(
+    remotes.map(avatar => ({
+      item: avatar,
+      onStage: avatar.participant.physics.onStage,
+      position: avatar.participant.pose.position,
+    })),
+    localPos, limit)
+}
+
 function renderAvatar(ctx: WebGLContext, avatar:VRMAvatar, camera:THREE.Camera, ori?:number, distIn?: number){
   if (ori===undefined){
     const oriOffset = (avatar.participant.pose.orientation+360*2) % 360 - 180
@@ -159,7 +176,8 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
 
       if (participants.local.avatarDisplay2_5D || participants.local.avatarDisplay3D){
         //  Update avatars
-        const remotes = Array.from(vas.remotes.values())
+        const remotes = selectAvatarsToRender(
+          Array.from(vas.remotes.values()), participants.local.pose.position, loadAdjuster.autoAvatarLimit)
         const avatars = vas.local? [...remotes, vas.local] : remotes
         for(const avatar of avatars){
           avatar.vrm.scene.position.x = avatar.participant.pose.position[0]*posScale

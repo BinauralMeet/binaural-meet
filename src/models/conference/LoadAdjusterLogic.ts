@@ -97,3 +97,22 @@ export function combineLimit(roomLimit: number, autoLimit: number): number {
   if (roomLimit < 0) { return autoLimit }
   return Math.min(roomLimit, autoLimit)
 }
+
+export interface PositionedItem<T> {
+  item: T
+  onStage: boolean
+  position: [number, number]
+}
+
+//  CPU-load response (see WebGLCanvas.tsx): keeps only the closest `limit` items to `localPos`,
+//  same "onstage = always kept" rule PriorityCalculator.ts uses for video/audio priority. Generic
+//  over the item type so it's usable (and testable) without depending on VRMAvatar/THREE.js types.
+export function selectByProximity<T>(items: PositionedItem<T>[], localPos: [number, number], limit: number): T[] {
+  if (limit === Infinity || items.length <= limit) { return items.map(i => i.item) }
+  const withPriority = items.map(({item, onStage, position}) => {
+    const priority = onStage ? 0 : Math.hypot(position[0] - localPos[0], position[1] - localPos[1])
+    return {item, priority}
+  })
+  withPriority.sort((a, b) => a.priority - b.priority)
+  return withPriority.slice(0, limit).map(wp => wp.item)
+}

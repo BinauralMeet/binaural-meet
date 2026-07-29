@@ -1,5 +1,6 @@
 import {describe, it, expect} from 'vitest'
-import {stepLoadLevel, makeHysteresisState, CONFIRM_WORSEN_MS, CONFIRM_RECOVER_MS, combineLimit} from '../LoadAdjusterLogic'
+import {stepLoadLevel, makeHysteresisState, CONFIRM_WORSEN_MS, CONFIRM_RECOVER_MS, combineLimit,
+  selectByProximity, PositionedItem} from '../LoadAdjusterLogic'
 
 describe('stepLoadLevel', () => {
   it('stays at the same level when raw matches current', () => {
@@ -85,5 +86,31 @@ describe('combineLimit', () => {
   it('takes the smaller of the two when both restrict', () => {
     expect(combineLimit(5, 3)).toBe(3)
     expect(combineLimit(2, 3)).toBe(2)
+  })
+})
+
+describe('selectByProximity', () => {
+  function item(id: string, position: [number, number], onStage = false): PositionedItem<string> {
+    return {item: id, onStage, position}
+  }
+
+  it('returns everything unchanged when the limit is Infinity', () => {
+    const items = [item('a', [0, 0]), item('b', [100, 100])]
+    expect(selectByProximity(items, [0, 0], Infinity)).toEqual(['a', 'b'])
+  })
+
+  it('returns everything unchanged when already at or under the limit', () => {
+    const items = [item('a', [0, 0]), item('b', [100, 100])]
+    expect(selectByProximity(items, [0, 0], 5)).toEqual(['a', 'b'])
+  })
+
+  it('keeps the closest items to localPos and drops the rest', () => {
+    const items = [item('far', [100, 0]), item('near', [1, 0]), item('mid', [10, 0])]
+    expect(selectByProximity(items, [0, 0], 2)).toEqual(['near', 'mid'])
+  })
+
+  it('always keeps onstage items regardless of distance', () => {
+    const items = [item('near', [1, 0]), item('far-onstage', [1000, 0], true), item('mid', [10, 0])]
+    expect(selectByProximity(items, [0, 0], 2)).toEqual(['far-onstage', 'near'])
   })
 })
