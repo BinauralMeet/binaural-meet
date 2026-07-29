@@ -3,6 +3,7 @@ import * as THREE from 'three'
 import {freeRenderTarget, freeScene, VRMAvatar, VRMAvatars} from "@models/utils/vrm"
 import map from "@stores/map/Map"
 import { participants } from "@stores/participants"
+import {loadAdjuster} from "@models/conference/LoadAdjuster"
 
 declare const d:any                  //  from index.html
 
@@ -122,7 +123,11 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
     let animationFrameId: number;
     let animate = (time:number) => {
       animationFrameId = requestAnimationFrame(animate)
-      if (time - prevTime < frameThrottleMs) return
+      const dt = time - prevTime
+      if (dt < frameThrottleMs) return
+      //  prevTime===0 only on the very first frame -- `dt` there is bogus (time since page load,
+      //  not since a previous rendered frame), so skip feeding it to the load detector.
+      if (prevTime !== 0) { loadAdjuster.recordFrameInterval(dt, frameThrottleMs) }
       prevTime = time
 
       if (!props.refCanvasGL.current) return
