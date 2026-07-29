@@ -103,12 +103,10 @@ export class Recorder{
   private stoppedMedias: MediaRec[] = []
   private disposers:IReactionDisposer[] = []
   //  Types not yet migrated to MessageTypeRegistry.ts's `recordable` field -- see recordMessage()
-  //  below, which checks the registry first and only falls back to this Set.
+  //  below, which checks the registry first and only falls back to this Set. Only PARTICIPANT_LEFT
+  //  remains -- it's migrated last (see the comment on its special-case in Player.playMessage()).
   private MessageTypesToRecord = new Set<string>([
-    MessageType.PARTICIPANT_INFO, MessageType.PARTICIPANT_POSE, MessageType.PARTICIPANT_MOUSE,
-    MessageType.CONTENT_UPDATE_REQUEST,
     MessageType.PARTICIPANT_LEFT,
-    MessageType.CONTENT_REMOVE_REQUEST,
   ])
   private lastMessageValues= new Map<string, string>()
 

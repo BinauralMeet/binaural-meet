@@ -1,5 +1,5 @@
 import {ISharedContent, ISharedContentToSend, SharedContentInfoData, receiveToContents} from '@models/ISharedContent'
-import {BaseInformation, RemoteInformation, Viewpoint} from '@models/Participant'
+import {BaseInformation, Viewpoint} from '@models/Participant'
 import {diffSet, fixWebmDuration, str2Mouse, str2Pose} from '@models/utils'
 import {TrackStates} from '@stores/participants/ParticipantBase'
 import {computed, makeObservable, observable, runInAction} from 'mobx'
@@ -106,6 +106,15 @@ class Player{
     })
     registerMessageType(MessageType.AUDIO_LEVEL, {
       onPlayback: (level, p) => { p.audioLevel = level },
+    })
+    registerMessageType(MessageType.PARTICIPANT_INFO, {
+      onPlayback: (info, p) => { p.information = info },
+    })
+    registerMessageType(MessageType.PARTICIPANT_POSE, {
+      onPlayback: (poseStr, p) => { p.pose = str2Pose(poseStr) },
+    })
+    registerMessageType(MessageType.PARTICIPANT_MOUSE, {
+      onPlayback: (mouseStr, p) => { p.mouse = str2Mouse(mouseStr) },
     })
   }
 
@@ -533,18 +542,10 @@ class Player{
         const p = pid ? participants.getOrCreatePlayback(pid) : undefined
       let notHandled = true
       if (p){
-        notHandled = false
-        const v = JSON.parse(msg.v)
         const registered = getMessageTypeEntry(msg.t as MessageValue)
         if (registered?.onPlayback){
-          registered.onPlayback(v, p)
-        }else{
-          switch(msg.t){
-            case MessageType.PARTICIPANT_INFO: p.information = v as RemoteInformation; break
-            case MessageType.PARTICIPANT_POSE: p.pose = str2Pose(v as string); break
-            case MessageType.PARTICIPANT_MOUSE: p.mouse = str2Mouse(v as string); break
-            default: notHandled = true; break
-          }
+          notHandled = false
+          registered.onPlayback(JSON.parse(msg.v), p)
         }
       }
       if (notHandled){

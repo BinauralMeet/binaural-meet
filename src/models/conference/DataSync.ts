@@ -66,6 +66,86 @@ export class DataSync{
       merge: 'overwrite', recordable: true,
       onReceive: (level, from) => this.onParticipantAudioLevel(from, level),
     })
+    registerMessageType(MessageType.ROOM_PROP, {
+      merge: 'overwrite',
+      onReceive: (v) => this.onRoomProp(v[0], v[1]),
+    })
+    registerMessageType(MessageType.REQUEST_ALL, {
+      merge: 'overwrite',
+      onReceive: () => this.sendAllAboutMe(false),
+    })
+    registerMessageType(MessageType.REQUEST_TO, {
+      merge: 'overwrite',
+      onReceive: () => this.sendAllAboutMe(false),
+    })
+    registerMessageType(MessageType.CALL_REMOTE, {
+      merge: 'overwrite',
+      onReceive: (_v, from) => this.onCallRemote(from),
+    })
+    registerMessageType(MessageType.CHAT_MESSAGE, {
+      merge: 'overwrite',
+      onReceive: (msg, from) => this.onChatMessage(from, msg),
+    })
+    registerMessageType(MessageType.CONTENT_REMOVE_REQUEST, {
+      merge: 'stringArray', recordable: true,
+      onReceive: (cids) => this.onContentRemoveRequest(cids),
+    })
+    registerMessageType(MessageType.CONTENT_UPDATE_REQUEST, {
+      merge: 'objectArray', recordable: true,
+      onReceive: (cds) => this.onContentUpdateRequest(cds),
+    })
+    registerMessageType(MessageType.CONTENT_INFO_UPDATE, {
+      merge: 'objectArray',
+      onReceive: (cs) => this.onContentInfoUpdate(cs),
+    })
+    registerMessageType(MessageType.PARTICIPANT_INFO, {
+      merge: 'overwrite', recordable: true,
+      onReceive: (info, from) => this.onParticipantInfo(from, info),
+    })
+    registerMessageType(MessageType.PARTICIPANT_MOUSE, {
+      merge: 'overwrite', recordable: true,
+      onReceive: (mouseStr, from) => this.onParticipantMouse(from, mouseStr),
+    })
+    registerMessageType(MessageType.PARTICIPANT_POSE, {
+      merge: 'overwrite', recordable: true,
+      onReceive: (poseStr, from) => this.onParticipantPose(from, poseStr),
+    })
+    registerMessageType(MessageType.PARTICIPANT_TRACKLIMITS, {
+      merge: 'overwrite',
+      onReceive: (limits) => this.onParticipantTrackLimits(limits),
+    })
+    registerMessageType(MessageType.YARN_PHONE, {
+      merge: 'overwrite',
+      onReceive: (pids, from) => this.onYarnPhone(from, pids),
+    })
+    registerMessageType(MessageType.RELOAD_BROWSER, {
+      merge: 'overwrite',
+      onReceive: () => this.onReloadBrower(),
+    })
+    registerMessageType(MessageType.MUTE_VIDEO, {
+      merge: 'overwrite',
+      onReceive: (v) => this.onMuteVideo(v),
+    })
+    registerMessageType(MessageType.MUTE_AUDIO, {
+      merge: 'overwrite',
+      onReceive: (v) => this.onMuteAudio(v),
+    })
+    registerMessageType(MessageType.KICK, {
+      merge: 'overwrite',
+      onReceive: (reason, from) => this.onKicked(from, reason),
+    })
+    registerMessageType(MessageType.PARTICIPANT_OUT, {
+      merge: 'stringArray',
+      onReceive: (pids) => this.onParticipantOut(pids),
+    })
+    registerMessageType(MessageType.MOUSE_OUT, {
+      merge: 'stringArray',
+      onReceive: (pids) => this.onMouseOut(pids),
+    })
+    registerMessageType(MessageType.CONTENT_OUT, {
+      merge: 'stringArray',
+      onReceive: (cids) => this.onContentOut(cids),
+    })
   }
   sendAllAboutMe(bSendRandP: boolean){
     syncLog('sendAllAboutMe called.')
@@ -413,27 +493,9 @@ export class DataSync{
       return
     }
     switch(msg.t){
-      case MessageType.ROOM_PROP: this.onRoomProp(...parseMessageValue(MessageType.ROOM_PROP, msg.v)); break
-      case MessageType.REQUEST_ALL: this.sendAllAboutMe(false); break
-      case MessageType.REQUEST_TO: this.sendAllAboutMe(false); break
+      //  PARTICIPANT_LEFT is migrated last -- see MessageTypeRegistry.ts and the
+      //  early special-case for it in Player.playMessage().
       case MessageType.PARTICIPANT_LEFT: this.onParticipantLeft(parseMessageValue(MessageType.PARTICIPANT_LEFT, msg.v)); break
-      case MessageType.CALL_REMOTE: this.onCallRemote(msg.p); break
-      case MessageType.CHAT_MESSAGE: this.onChatMessage(msg.p, parseMessageValue(MessageType.CHAT_MESSAGE, msg.v)); break
-      case MessageType.CONTENT_REMOVE_REQUEST: this.onContentRemoveRequest(parseMessageValue(MessageType.CONTENT_REMOVE_REQUEST, msg.v)); break
-      case MessageType.CONTENT_UPDATE_REQUEST: this.onContentUpdateRequest(parseMessageValue(MessageType.CONTENT_UPDATE_REQUEST, msg.v)); break
-      case MessageType.CONTENT_INFO_UPDATE: this.onContentInfoUpdate(parseMessageValue(MessageType.CONTENT_INFO_UPDATE, msg.v)); break
-      case MessageType.PARTICIPANT_INFO: this.onParticipantInfo(msg.p, parseMessageValue(MessageType.PARTICIPANT_INFO, msg.v)); break
-      case MessageType.PARTICIPANT_MOUSE: this.onParticipantMouse(msg.p, parseMessageValue(MessageType.PARTICIPANT_MOUSE, msg.v)); break
-      case MessageType.PARTICIPANT_POSE: this.onParticipantPose(msg.p, parseMessageValue(MessageType.PARTICIPANT_POSE, msg.v)); break
-      case MessageType.PARTICIPANT_TRACKLIMITS: this.onParticipantTrackLimits(parseMessageValue(MessageType.PARTICIPANT_TRACKLIMITS, msg.v)); break
-      case MessageType.YARN_PHONE: this.onYarnPhone(msg.p, parseMessageValue(MessageType.YARN_PHONE, msg.v)); break
-      case MessageType.RELOAD_BROWSER: this.onReloadBrower(); break
-      case MessageType.MUTE_VIDEO: this.onMuteVideo(parseMessageValue(MessageType.MUTE_VIDEO, msg.v)); break
-      case MessageType.MUTE_AUDIO: this.onMuteAudio(parseMessageValue(MessageType.MUTE_AUDIO, msg.v)); break
-      case MessageType.KICK: this.onKicked(msg.p, parseMessageValue(MessageType.KICK, msg.v)); break
-      case MessageType.PARTICIPANT_OUT: this.onParticipantOut(parseMessageValue(MessageType.PARTICIPANT_OUT, msg.v)); break
-      case MessageType.MOUSE_OUT: this.onMouseOut(parseMessageValue(MessageType.MOUSE_OUT, msg.v)); break
-      case MessageType.CONTENT_OUT: this.onContentOut(parseMessageValue(MessageType.CONTENT_OUT, msg.v)); break
       default:
         syncLog(`Unhandled message type ${msg.t} from ${msg.p}`)
         break
