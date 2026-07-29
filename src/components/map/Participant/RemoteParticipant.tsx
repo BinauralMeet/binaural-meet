@@ -1,6 +1,6 @@
 import {MoreButton, moreButtonControl, MoreButtonMember} from '@components/utils/MoreButton'
 import participants from '@stores/participants/Participants'
-import {RemoteParticipant as RemoteParticipantStore} from '@stores/participants/RemoteParticipant'
+import {RemoteParticipant as RemoteParticipantStore} from '@stores/participants/RemoteOrPlaybackParticipant'
 import React, { CSSProperties } from 'react'
 import {Participant, ParticipantProps} from './Participant'
 import {RemoteParticipantForm} from './RemoteParticipantForm'

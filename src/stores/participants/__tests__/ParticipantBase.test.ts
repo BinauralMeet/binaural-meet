@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 
 describe('ParticipantBase information typing', () => {
   it('RemoteParticipant.information is a RemoteInformation shape by default', async () => {
-    const { RemoteParticipant } = await import('../RemoteParticipant')
+    const { RemoteParticipant } = await import('../RemoteOrPlaybackParticipant')
     const p = new RemoteParticipant('remote-1')
     expect(p.information).toBeDefined()
     expect(typeof p.information.name).toBe('string')
@@ -10,7 +10,7 @@ describe('ParticipantBase information typing', () => {
   })
 
   it('PlaybackParticipant.information is a RemoteInformation shape by default', async () => {
-    const { PlaybackParticipant } = await import('../PlaybackParticipant')
+    const { PlaybackParticipant } = await import('../RemoteOrPlaybackParticipant')
     const p = new PlaybackParticipant('playback-1')
     expect(p.information).toBeDefined()
     expect(typeof p.information.name).toBe('string')
@@ -26,7 +26,7 @@ describe('ParticipantBase information typing', () => {
   })
 
   it('assigning information on one instance does not affect another', async () => {
-    const { RemoteParticipant } = await import('../RemoteParticipant')
+    const { RemoteParticipant } = await import('../RemoteOrPlaybackParticipant')
     const a = new RemoteParticipant('a')
     const b = new RemoteParticipant('b')
     a.information = { ...a.information, name: 'Alice' }

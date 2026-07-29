@@ -9,8 +9,7 @@ import RecordIcon from '@material-ui/icons/FiberManualRecord'
 import SpeakerOffIcon from '@material-ui/icons/VolumeOff'
 import {addV2, mulV2, normV, rotateVector2DByDegree, subV2} from '@models/utils'
 import {LocalParticipant} from '@stores/participants/LocalParticipant'
-import {PlaybackParticipant} from '@stores/participants/PlaybackParticipant'
-import {RemoteParticipant} from '@stores/participants/RemoteParticipant'
+import {PlaybackParticipant as PlaybackParticipantStore, RemoteParticipant} from '@stores/participants/RemoteOrPlaybackParticipant'
 import {participants} from '@stores/participants'
 import {Observer} from 'mobx-react-lite'
 import React from 'react'
@@ -90,7 +89,7 @@ const useStylesWithSize = makeStyles({
   }),
 })
 
-type AnyParticipant = LocalParticipant | RemoteParticipant | PlaybackParticipant
+type AnyParticipant = LocalParticipant | RemoteParticipant | PlaybackParticipantStore
 interface BasicProps{
   participant: AnyParticipant
   size: number
@@ -109,7 +108,7 @@ export interface ParticipantProps extends MainAvatarProps{
 
 
 
-function getColor(participant:LocalParticipant|RemoteParticipant|PlaybackParticipant){
+function getColor(participant:LocalParticipant|RemoteParticipant|PlaybackParticipantStore){
   return participant ? participant.getColor() : ['white', 'black']
 }
 function calcOuterRadius(props:{size:number}){
@@ -382,3 +381,7 @@ export const Participant: React.FC<ParticipantProps> = (props) => {
   }}</Observer>
 }
 Participant.displayName = 'Participant'
+
+export const PlaybackParticipant: React.FC<ParticipantProps> = (props) => {
+  return <Participant {...props} isLocal={false} isPlayback={true}/>
+}

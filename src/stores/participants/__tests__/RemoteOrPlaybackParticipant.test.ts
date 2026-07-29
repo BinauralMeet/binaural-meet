@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 
 describe('RemoteOrPlaybackParticipant shared behavior', () => {
   it('RemoteParticipant starts with the expected zone/distance/call defaults', async () => {
-    const { RemoteParticipant } = await import('../RemoteParticipant')
+    const { RemoteParticipant } = await import('../RemoteOrPlaybackParticipant')
     const p = new RemoteParticipant('remote-1')
     expect(p.called).toBe(false)
     expect(p.inLocalsZone).toBe(false)
@@ -11,7 +11,7 @@ describe('RemoteOrPlaybackParticipant shared behavior', () => {
   })
 
   it('PlaybackParticipant starts with the same zone/distance/call defaults', async () => {
-    const { PlaybackParticipant } = await import('../PlaybackParticipant')
+    const { PlaybackParticipant } = await import('../RemoteOrPlaybackParticipant')
     const p = new PlaybackParticipant('playback-1')
     expect(p.called).toBe(false)
     expect(p.inLocalsZone).toBe(false)
@@ -20,8 +20,8 @@ describe('RemoteOrPlaybackParticipant shared behavior', () => {
   })
 
   it('call() sets called=true on both', async () => {
-    const { RemoteParticipant } = await import('../RemoteParticipant')
-    const { PlaybackParticipant } = await import('../PlaybackParticipant')
+    const { RemoteParticipant } = await import('../RemoteOrPlaybackParticipant')
+    const { PlaybackParticipant } = await import('../RemoteOrPlaybackParticipant')
     const r = new RemoteParticipant('r')
     const p = new PlaybackParticipant('p')
     r.call()
@@ -31,7 +31,7 @@ describe('RemoteOrPlaybackParticipant shared behavior', () => {
   })
 
   it('inLocalsZone/closedZone/lastDistance are independent per instance', async () => {
-    const { RemoteParticipant } = await import('../RemoteParticipant')
+    const { RemoteParticipant } = await import('../RemoteOrPlaybackParticipant')
     const a = new RemoteParticipant('a')
     const b = new RemoteParticipant('b')
     a.inLocalsZone = true
@@ -41,8 +41,8 @@ describe('RemoteOrPlaybackParticipant shared behavior', () => {
   })
 
   it('RemoteParticipant has tracks, PlaybackParticipant has clip (not each other\'s)', async () => {
-    const { RemoteParticipant } = await import('../RemoteParticipant')
-    const { PlaybackParticipant } = await import('../PlaybackParticipant')
+    const { RemoteParticipant } = await import('../RemoteOrPlaybackParticipant')
+    const { PlaybackParticipant } = await import('../RemoteOrPlaybackParticipant')
     const r = new RemoteParticipant('r')
     const p = new PlaybackParticipant('p')
     expect(r.tracks).toBeDefined()
