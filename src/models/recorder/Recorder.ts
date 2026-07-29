@@ -17,19 +17,26 @@ import {MediaRecData, MediaRole, MediaKind, BlobKind, recLog, DBRecord, DBMediaR
   BlobHeader, Message, MessagesHeader, DBRecMessage, RECORD_DB_FLUSH_INTERVAL_MS} from './RecorderTypes'
 declare const d:any                  //  from index.html
 
-const recorderDb = new Dexie('recorderDb');
-recorderDb.version(1).stores({
-  records: '++id, title, room, duration, time',
-  recMessages: '++id',
-  recMedias: 'id',
-  blobs: '++id'
-});
+//  Constructed lazily on first access (rather than as a module-load-time side effect) so that
+//  simply importing this module -- e.g. for its types -- does not open an IndexedDB connection.
+let recorderDbInstance: Dexie | undefined
+function getRecorderDb(): Dexie{
+  if (!recorderDbInstance){
+    recorderDbInstance = new Dexie('recorderDb')
+    recorderDbInstance.version(1).stores({
+      records: '++id, title, room, duration, time',
+      recMessages: '++id',
+      recMedias: 'id',
+      blobs: '++id'
+    })
+  }
+  return recorderDbInstance
+}
 
-
-export const dbRecords = (recorderDb as any).records as Table
-export const dbMediaRecs = (recorderDb as any).recMedias as Table
-export const dbMessageRecs = (recorderDb as any).recMessages as Table
-export const dbBlobs = (recorderDb as any).blobs as Table
+export function dbRecords(): Table { return (getRecorderDb() as any).records as Table }
+export function dbMediaRecs(): Table { return (getRecorderDb() as any).recMedias as Table }
+export function dbMessageRecs(): Table { return (getRecorderDb() as any).recMessages as Table }
+export function dbBlobs(): Table { return (getRecorderDb() as any).blobs as Table }
 class MediaRec implements MediaRecData{
   private media: MediaRecorder
   get stream(){ return this.media.stream }
@@ -133,7 +140,7 @@ export class Recorder{
       title: '',
       blob: undefined,
     }
-    dbRecords.add(dbRec)
+    dbRecords().add(dbRec)
     //  list all track related to participants and contents
     this.disposers.push(autorun(()=>{
       this.observeAndRecordMedia()
@@ -179,9 +186,9 @@ export class Recorder{
         console.log(`getMediaData.then: medias:${medias.length}`)
 
         this.makeRecord(medias).then((dbr)=>{
-          dbBlobs.clear().then(()=>{
-            dbMediaRecs.clear().then(()=>{
-              dbMessageRecs.clear().then(()=>resolve(dbr))
+          dbBlobs().clear().then(()=>{
+            dbMediaRecs().clear().then(()=>{
+              dbMessageRecs().clear().then(()=>resolve(dbr))
             })
           })
         }).catch(reject)
@@ -193,7 +200,7 @@ export class Recorder{
 
   //  delete a saved record by its DBRecord id
   public deleteRecord(id: number){
-    return dbRecords.delete(id)
+    return dbRecords().delete(id)
   }
 
   //  called by DataConnection.ts
@@ -224,7 +231,7 @@ export class Recorder{
       }
       this.saveMediaRecordings().then(()=>{
         for (const media of medias){
-          dbMediaRecs.get(media.id).then((inDb)=>{
+          dbMediaRecs().get(media.id).then((inDb)=>{
             const dbMedia:DBMediaRec = inDb ? inDb as DBMediaRec : {
               id: media.id,
               startTime: media.startTime,
@@ -242,11 +249,11 @@ export class Recorder{
             for(const blob of blobsToAdd){
               const dbBlob:DBBlob = { blob }
               //  eslint-disable-next-line no-loop-func
-              dbBlobs.add(dbBlob).then((blobId:IndexableType)=>{
+              dbBlobs().add(dbBlob).then((blobId:IndexableType)=>{
                 dbMedia.blobs.push(blobId as number)
                 addCount++
                 if (addCount === blobsToAdd.length){
-                  dbMediaRecs.put(dbMedia, dbMedia.id).then(()=>{
+                  dbMediaRecs().put(dbMedia, dbMedia.id).then(()=>{
                     resolveAll()
                   })
                 }
@@ -255,7 +262,7 @@ export class Recorder{
           })
         }
       })
-      dbMessageRecs.toArray().then((dbMsgs:DBRecMessage[])=>{
+      dbMessageRecs().toArray().then((dbMsgs:DBRecMessage[])=>{
         const dbLen = dbMsgs.reduce((p,c) => p + c.length, 0)
         if (this.messages.length > dbLen){
           const messagesToAdd = this.messages.slice(dbLen)
@@ -263,7 +270,7 @@ export class Recorder{
             messages:messagesToAdd,
             length:messagesToAdd.length
           }
-          dbMessageRecs.add(dbMsgToAdd).then(()=>{
+          dbMessageRecs().add(dbMsgToAdd).then(()=>{
             resolveAll()
           })
         }else{
@@ -280,11 +287,11 @@ export class Recorder{
     const promise = new Promise<DBRecord>((resolve, reject)=>{
       if (recorder.recording || this.converting) { reject(); return }
       this.converting = true
-      dbRecords.where({title:''}).count(nRecord => {
+      dbRecords().where({title:''}).count(nRecord => {
         if (nRecord === 0){ reject(); return}
         //  recLog(`convert start nRecord=${nRecord}`)
-        dbMessageRecs.toArray((dbMsgs:DBRecMessage[])=>{
-          dbMediaRecs.toArray((dbMedias:DBMediaRec[])=>{
+        dbMessageRecs().toArray((dbMsgs:DBRecMessage[])=>{
+          dbMediaRecs().toArray((dbMedias:DBMediaRec[])=>{
             const medias: MediaRecData[] = []
             if (dbMsgs.length || dbMedias.length){
               this.messages = []
@@ -292,9 +299,9 @@ export class Recorder{
               const resolveAll = () => {
                 count --
                 if (count === 0){
-                  dbMessageRecs.clear().then(()=>{
-                    dbMediaRecs.clear().then(()=>{
-                      dbBlobs.clear().then(()=>{
+                  dbMessageRecs().clear().then(()=>{
+                    dbMediaRecs().clear().then(()=>{
+                      dbBlobs().clear().then(()=>{
                         this.endTime = maxEndTime
                         this.makeRecord(medias, true).then((dbRec)=>{
                           this.converting = false
@@ -327,7 +334,7 @@ export class Recorder{
                 }
                 medias.push(media)
                 m.blobs.forEach((b, i)=>{
-                  dbBlobs.get(b).then((b:DBBlob)=>{
+                  dbBlobs().get(b).then((b:DBBlob)=>{
                     blobs[i] = b.blob
                     resolveAll()
                   })
@@ -379,7 +386,7 @@ export class Recorder{
 
   private makeRecord(medias: MediaRecData[], useDbData?: boolean){
     const promise = new Promise<DBRecord>((resolve, reject) => {
-      dbRecords.where({title:''}).toArray().then((records)=>{
+      dbRecords().where({title:''}).toArray().then((records)=>{
         if (records.length){
           console.log(`makeRecord: ms:${medias.length} recs:${records.length}`)
           const record = records.pop()
@@ -404,11 +411,11 @@ export class Recorder{
           }
 
           for(const r of records) {
-            dbRecords.delete(r.id).then(resolveAll).catch(()=>{
+            dbRecords().delete(r.id).then(resolveAll).catch(()=>{
               reject('Failed to delete record from IndexedDB')
             })
           }
-          dbRecords.put(saveRecord, saveRecord.id).then(()=>{
+          dbRecords().put(saveRecord, saveRecord.id).then(()=>{
             resolveAll()
           }).catch(()=>{
             reject('Failed to add record to IndexedDB')

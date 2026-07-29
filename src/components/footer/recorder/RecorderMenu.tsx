@@ -98,7 +98,7 @@ export const RecorderMenu: React.FC<DialogPageProps> = (props) => {
   })
 
   const records = useLiveQuery(async ()=>{
-    return await dbRecords.where('title').notEqual('').toArray()
+    return await dbRecords().where('title').notEqual('').toArray()
   }) as DBRecord[] | undefined
 
   return (
