@@ -6,6 +6,10 @@ import * as Kalidokit from 'kalidokit'
 import {square} from './coordinates';
 import {VRMAvatar} from './vrm';
 import {PoseLandmark, HandLandmark} from './mediapipeLandmarks';
+import {DEFAULT_RIG_LERP_AMOUNT, IK_SOLVE_DISTANCE_THRESHOLD, FACE_ONLY_CHEST_LERP, FACE_ONLY_SPINE_LERP,
+  HAND_ORIENTATION_SLERP, FINGER_ROTATION_SLERP, ARM_CHAIN_SLERP, NECK_ROTATION_DAMPENER,
+  MOUTH_BLENDSHAPE_LERP, EYE_LOOK_TARGET_LERP, HIPS_ROTATION_DAMPENER, CHEST_ROTATION_DAMPENER,
+  SPINE_ROTATION_DAMPENER, SPINE_CHEST_LERP_AMOUNT, HEAD_VRM_OFFSET_Z, NECK_PITCH_CORRECTION} from './vrmIkTuning';
 
 export interface AllLandmarks{
   faceLm?: NormalizedLandmarkList
@@ -68,7 +72,7 @@ function rigRotation(
   name: VRMHumanBoneName,
   rotation = { x: 0, y: 0, z: 0 },
   dampener = 1,
-  lerpAmount = 0.3
+  lerpAmount = DEFAULT_RIG_LERP_AMOUNT
 ){
   if (!vrm) { return }
   const humanoid = vrm.humanoid;
@@ -162,8 +166,8 @@ export function createStrcture3DEx(vrm: VRM): FikStructure3DEx{
   const structure:FikStructure3DEx = new FIK.Structure3D() as FikStructure3DEx
   structure.add(new FIK.Chain3D())
   structure.add(new FIK.Chain3D())
-  structure.chains[0].setSolveDistanceThreshold(0.01)
-  structure.chains[1].setSolveDistanceThreshold(0.01)
+  structure.chains[0].setSolveDistanceThreshold(IK_SOLVE_DISTANCE_THRESHOLD)
+  structure.chains[1].setSolveDistanceThreshold(IK_SOLVE_DISTANCE_THRESHOLD)
   structure.lengthsList = [[
     vrm.humanoid.getNormalizedBoneNode('leftLowerArm')!.position.length(),
     vrm.humanoid.getNormalizedBoneNode('leftHand')!.position.length(),
@@ -247,8 +251,8 @@ export function updateStructure3DEx(vrm:VRM, structure: FikStructure3DEx, lms: A
     if (structure.face){
       applyFaceRigToVrm(vrm, structure.face)
       if (!lms.poseLm3d || !lms.poseLm){
-        rigRotation(vrm, "chest", new THREE.Euler(0,-structure.face.head.y,0), 1, 0.2);
-        rigRotation(vrm, "spine", new THREE.Euler(0,-structure.face.head.y,0), 1, 0.1);
+        rigRotation(vrm, "chest", new THREE.Euler(0,-structure.face.head.y,0), 1, FACE_ONLY_CHEST_LERP);
+        rigRotation(vrm, "spine", new THREE.Euler(0,-structure.face.head.y,0), 1, FACE_ONLY_SPINE_LERP);
       }
     }
   }
@@ -267,7 +271,7 @@ export function updateStructure3DEx(vrm:VRM, structure: FikStructure3DEx, lms: A
     const m4Head = structure.m4wHipsInv.clone().multiply(head.matrixWorld)
     const mrHead = m4Head.clone()
     removeTranslateion(mrHead)
-    const offset = new THREE.Vector3(0, 0, -0.15).applyMatrix4(mrHead) //  LM and VRM head center's
+    const offset = new THREE.Vector3(0, 0, HEAD_VRM_OFFSET_Z).applyMatrix4(mrHead) //  LM and VRM head center's
     const headPos = getTranslation(m4Head).add(offset)
     structure.mrHeadInv = mrHead.clone().invert()
     const hLmHead = scaleLm(lms.poseLm3d[PoseLandmark.NOSE], structure)
@@ -343,7 +347,7 @@ export function updateStructure3DEx(vrm:VRM, structure: FikStructure3DEx, lms: A
       removeTranslateion(m4LowerArm)
       const mrlHand = mrHand.clone().premultiply(m4LowerArm.transpose())
       const qlHand = new THREE.Quaternion().setFromRotationMatrix(mrlHand)
-      vrm.humanoid.getNormalizedBoneNode(`${lr}Hand`)?.quaternion.slerp(qlHand, 0.5)
+      vrm.humanoid.getNormalizedBoneNode(`${lr}Hand`)?.quaternion.slerp(qlHand, HAND_ORIENTATION_SLERP)
 
       //  Compute and apply fingers
       const thumbLms = [mp2VrmV3(lms[HandLandmark.THUMB_CMC], structure), mp2VrmV3(lms[HandLandmark.THUMB_MCP], structure), mp2VrmV3(lms[HandLandmark.THUMB_IP], structure), mp2VrmV3(lms[HandLandmark.THUMB_TIP], structure)]
@@ -369,7 +373,7 @@ export function updateStructure3DEx(vrm:VRM, structure: FikStructure3DEx, lms: A
           const curDir = new THREE.Vector3().subVectors(lms[i+1], lms[i]).normalize().applyQuaternion(prevQuat.clone().invert())
           const quat = new THREE.Quaternion().setFromUnitVectors(orgDir!, curDir)
           if (node){
-            node.quaternion.slerp(quat, 0.5)
+            node.quaternion.slerp(quat, FINGER_ROTATION_SLERP)
             prevQuat.multiply(node.quaternion)
           }
           node = nextNode
@@ -439,7 +443,7 @@ function applyChainToVrmBones(vrmBones: (THREE.Object3D|null)[], chain: FIK.Chai
     const curDir = new THREE.Vector3().subVectors(bone.end, bone.start).normalize().applyQuaternion(qhPrev.clone().invert())
     const quat = new THREE.Quaternion().setFromUnitVectors(orgDir!, curDir)
     if (node){
-      node.quaternion.slerp(quat, 0.5)
+      node.quaternion.slerp(quat, ARM_CHAIN_SLERP)
       qhPrev.multiply(node.quaternion)
     }
   }
@@ -448,9 +452,9 @@ function applyChainToVrmBones(vrmBones: (THREE.Object3D|null)[], chain: FIK.Chai
 let oldLookTarget = new THREE.Euler()
 function applyFaceRigToVrm(vrm:VRM, faceRig:Kalidokit.TFace){
   if(!vrm){return}
-  const rot = {x:faceRig.head.x-0.1, y:-faceRig.head.y, z:-faceRig.head.z}
+  const rot = {x:faceRig.head.x-NECK_PITCH_CORRECTION, y:-faceRig.head.y, z:-faceRig.head.z}
   //console.log(`rigRot: ${JSON.stringify(rot)}`)
-  rigRotation(vrm, "neck", rot, 0.7);
+  rigRotation(vrm, "neck", rot, NECK_ROTATION_DAMPENER);
 
   // Blendshapes and Preset Name Schema
   const Blendshape = vrm.expressionManager!
@@ -465,18 +469,18 @@ function applyFaceRigToVrm(vrm:VRM, faceRig:Kalidokit.TFace){
   Blendshape.setValue(PresetName.BlinkRight, eyeL);
 
   // Interpolate and set mouth blendshapes
-  Blendshape.setValue(PresetName.Ih, lerp(faceRig.mouth.shape.I,Blendshape.getValue(PresetName.Ih)!, .5));
-  Blendshape.setValue(PresetName.Aa, lerp(faceRig.mouth.shape.A,Blendshape.getValue(PresetName.Aa)!, .5));
-  Blendshape.setValue(PresetName.Ee, lerp(faceRig.mouth.shape.E,Blendshape.getValue(PresetName.Ee)!, .5));
-  Blendshape.setValue(PresetName.Oh, lerp(faceRig.mouth.shape.O,Blendshape.getValue(PresetName.Oh)!, .5));
-  Blendshape.setValue(PresetName.Ou, lerp(faceRig.mouth.shape.U,Blendshape.getValue(PresetName.Ou)!, .5));
+  Blendshape.setValue(PresetName.Ih, lerp(faceRig.mouth.shape.I,Blendshape.getValue(PresetName.Ih)!, MOUTH_BLENDSHAPE_LERP));
+  Blendshape.setValue(PresetName.Aa, lerp(faceRig.mouth.shape.A,Blendshape.getValue(PresetName.Aa)!, MOUTH_BLENDSHAPE_LERP));
+  Blendshape.setValue(PresetName.Ee, lerp(faceRig.mouth.shape.E,Blendshape.getValue(PresetName.Ee)!, MOUTH_BLENDSHAPE_LERP));
+  Blendshape.setValue(PresetName.Oh, lerp(faceRig.mouth.shape.O,Blendshape.getValue(PresetName.Oh)!, MOUTH_BLENDSHAPE_LERP));
+  Blendshape.setValue(PresetName.Ou, lerp(faceRig.mouth.shape.U,Blendshape.getValue(PresetName.Ou)!, MOUTH_BLENDSHAPE_LERP));
 
   //PUPILS
   //interpolate pupil and keep a copy of the value
   let lookTarget =
     new THREE.Euler(
-      lerp(-oldLookTarget.x , faceRig.pupil.y, .4),
-      lerp(oldLookTarget.y, faceRig.pupil.x, .4),
+      lerp(-oldLookTarget.x , faceRig.pupil.y, EYE_LOOK_TARGET_LERP),
+      lerp(oldLookTarget.y, faceRig.pupil.x, EYE_LOOK_TARGET_LERP),
       0,
       "XYZ"
     )
@@ -490,9 +494,9 @@ function applyHipsToVrm(vrm: VRM, structure: FikStructure3DEx){
     const rotSpine = {...structure.hips.Spine}
     rotHip.y *= -1;     rotHip.z *= -1
     rotSpine.y *= -1;   rotSpine.z *= -1
-    rigRotation(vrm, "hips", rotHip, 0.7);
-    rigRotation(vrm, "chest", rotSpine, 0.25, .3);
-    rigRotation(vrm, "spine", rotSpine, 0.45, .3);
+    rigRotation(vrm, "hips", rotHip, HIPS_ROTATION_DAMPENER);
+    rigRotation(vrm, "chest", rotSpine, CHEST_ROTATION_DAMPENER, SPINE_CHEST_LERP_AMOUNT);
+    rigRotation(vrm, "spine", rotSpine, SPINE_ROTATION_DAMPENER, SPINE_CHEST_LERP_AMOUNT);
   }
 }
 

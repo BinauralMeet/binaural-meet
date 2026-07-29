@@ -3,6 +3,8 @@ import {Holistic, Results} from '@mediapipe/holistic'
 import {FaceMesh} from '@mediapipe/face_mesh'
 import {dataRequestInterval} from '@models/conference/DataConnection'
 import {AllLandmarks} from '@models/utils/vrmIK'
+import {HOLISTIC_MIN_DETECTION_CONFIDENCE, HOLISTIC_MIN_TRACKING_CONFIDENCE,
+  MP_CAPTURE_WIDTH, MP_CAPTURE_HEIGHT, MP_CAPTURE_FRAME_RATE} from '@models/utils/vrmIkTuning'
 
 //  @mediapipe/holistic's `Results` (its public, typed result shape) does not declare
 //  `poseWorldLandmarks` at all, even though the underlying library does populate it at runtime --
@@ -24,8 +26,8 @@ let holistic = new Holistic({locateFile: (file) => {
 holistic.setOptions({
   modelComplexity: 0,
   smoothLandmarks: true,
-  minDetectionConfidence: 0.7,
-  minTrackingConfidence: 0.7,
+  minDetectionConfidence: HOLISTIC_MIN_DETECTION_CONFIDENCE,
+  minTrackingConfidence: HOLISTIC_MIN_TRACKING_CONFIDENCE,
   refineFaceLandmarks:true
 })
 
@@ -56,13 +58,13 @@ export function startMpTrack(faceOnly: boolean, did?:string) {
 
     const rtcVideo = {...config.rtc.videoConstraints.video,
       width:{
-        ideal:320,
+        ideal:MP_CAPTURE_WIDTH,
       },
       height:{
-        ideal:240,
+        ideal:MP_CAPTURE_HEIGHT,
       },
       frameRate: {
-        ideal: 10,
+        ideal: MP_CAPTURE_FRAME_RATE,
       },
     }
     navigator.mediaDevices.getUserMedia(
