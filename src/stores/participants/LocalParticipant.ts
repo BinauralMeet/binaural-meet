@@ -72,7 +72,8 @@ export interface MediaSettings{
   avatarDisplay2_5D: boolean,
   avatarDisplay3D: boolean,
   viewRotateByFace: boolean,
-  uploadPreference: string
+  uploadPreference: string,
+  autoLoadAdjustment: boolean,
 }
 
 interface PhysicsInfo{
@@ -92,6 +93,10 @@ export class LocalParticipant extends ParticipantBase<LocalInformation> implemen
   @observable avatarDisplay3D:boolean = config.avatarDisplay3D!==undefined ? config.avatarDisplay3D : true
   @observable viewRotateByFace:boolean = config.viewRotateByFace!==undefined ? config.viewRotateByFace : false
   @observable uploaderPreference:UploaderPreference = config.uploaderPreference ? config.uploaderPreference : 'gyazo'
+  //  See docs/auto-load-adjustment-design.md and LoadAdjuster.ts. Default on: it only restricts
+  //  anything once real load is detected, so leaving it off by default would just mean unstable
+  //  sessions stay unstable until the user finds the setting.
+  @observable autoLoadAdjustment:boolean = config.autoLoadAdjustment!==undefined ? config.autoLoadAdjustment : true
   @observable.ref zone:ISharedContent|undefined = undefined    //  The zone on which the local participant located.
   @observable remoteVideoLimit = config.remoteVideoLimit as number || -1
   @observable remoteAudioLimit = config.remoteAudioLimit as number || -1
@@ -173,6 +178,7 @@ export class LocalParticipant extends ParticipantBase<LocalInformation> implemen
       avatarDisplay3D: this.avatarDisplay3D,
       viewRotateByFace: this.viewRotateByFace,
       uploadPreference: this.uploaderPreference,
+      autoLoadAdjustment: this.autoLoadAdjustment,
     }
     saveToStorage(muteStatus, 'localParticipantStreamControl', localStorage)
     saveToStorage(muteStatus, 'localParticipantStreamControl', sessionStorage)
@@ -199,6 +205,8 @@ export class LocalParticipant extends ParticipantBase<LocalInformation> implemen
 //        this.viewRotateByFace = setting.viewRotateByFace!==undefined ? setting.viewRotateByFace :
 //          (config.viewRotateByFace !== undefined ? config.viewRotateByFace : false)
           this.viewRotateByFace = false
+        this.autoLoadAdjustment = setting.autoLoadAdjustment!==undefined ? setting.autoLoadAdjustment :
+          (config.autoLoadAdjustment !== undefined ? config.autoLoadAdjustment : true)
       }
     }
   }
