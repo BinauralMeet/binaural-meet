@@ -1,17 +1,64 @@
 import { ISharedContent } from '@models/ISharedContent'
 import {LocalInformation, LocalParticipant as ILocalParticipant, Physics, RemoteInformation, TrackStates, AvatarType} from '@models/Participant'
-import {mulV2, Pose2DMap, subV2} from '@models/utils'
+import {checkImageUrl, isVrmUrl, mulV2, Pose2DMap, subV2} from '@models/utils'
+import {urlParameters} from '@models/url'
 import {MapData} from '@stores/map/Map'
 import {Store} from '@stores/utils'
 import {loadFromStorage, readFromStorage, saveToStorage} from '@stores/utils/PersistentStore'
-import {action, computed, makeObservable, observable} from 'mobx'
-import {DevicePreference} from './localPlugins'
+import md5 from 'md5'
+import {action, autorun, computed, makeObservable, observable} from 'mobx'
 import {ParticipantBase, TracksStore} from './ParticipantBase'
 import { AllLandmarks } from '@models/utils/vrmIK'
-import {applyUrlOverrides} from './localParticipantUrlOverrides'
-import {setupAvatarSrcAutorun} from './localParticipantAvatarAutorun'
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
+
+export class DevicePreference {
+  constructor() {
+    makeObservable(this)
+  }
+  @observable audioinput:string|undefined = undefined
+  @observable videoinput:string|undefined = undefined
+  @observable audiooutput:string|undefined = undefined
+}
+
+// Applies ?name=/?headphone/?muteMic/?cameraOn URL params as one-time overrides
+// on top of whatever was just loaded from storage.
+function applyUrlOverrides(participant: LocalParticipant): void {
+  if (urlParameters.name) { participant.information.name = urlParameters.name }
+  participant.useStereoAudio = urlParameters.headphone !== null
+  participant.muteAudio = urlParameters.muteMic !== null
+  participant.muteVideo = urlParameters.cameraOn === null
+}
+
+// Keeps LocalParticipant.information.avatarSrc in sync with a Gravatar/VRM lookup
+// derived from information.email, whenever no explicit avatarSrc is already set.
+function setupAvatarSrcAutorun(participant: LocalParticipant): void {
+  autorun(() => { //  image avatar
+    const gravatar = 'https://www.gravatar.com/avatar/'
+    const vrm = 'https://'
+    let src = participant.information.avatarSrc
+    if ((!src || src.includes(gravatar, 0) || src.includes(vrm, 0)) && participant.information.email){
+      const email = participant.information.email.trim()
+      if (email.includes(vrm) && isVrmUrl(email)){
+        src = email
+      }else{
+        const hash = md5(participant.information.email.trim().toLowerCase())
+        src = `${gravatar}${hash}?d=404`
+      }
+    }
+    if (src){
+      if (isVrmUrl(src)){
+        participant.information.avatarSrc = src
+      }else{
+        checkImageUrl(src).then((src)=>{
+          participant.information.avatarSrc = src
+        }).catch(()=>{
+          //participant.information.avatarSrc = '' //  This could make infinite loop.
+        })
+      }
+    }
+  })
+}
 
 export interface MediaSettings{
   stream:{
