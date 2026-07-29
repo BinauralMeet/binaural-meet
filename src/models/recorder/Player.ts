@@ -4,7 +4,8 @@ import {diffSet, fixWebmDuration, str2Mouse, str2Pose} from '@models/utils'
 import {TrackStates} from '@stores/participants/ParticipantBase'
 import {computed, makeObservable, observable, runInAction} from 'mobx'
 import {BMMessage} from '@models/conference/DataMessage'
-import {MessageType} from '@models/conference/DataMessageType'
+import {MessageType, MessageValue} from '@models/conference/DataMessageType'
+import {registerMessageType, getMessageTypeEntry} from '@models/conference/MessageTypeRegistry'
 import { MediaClip } from '@stores/media/MediaClip'
 import {MediaKind, BlobKind, recLog, BlobHeader, Message, MessagesHeader, RecordHeader,
   toPlaybackId, PLAYBACK_TICK_MS} from './RecorderTypes'
@@ -83,6 +84,28 @@ class Player{
   get title(){ return this.title_ }
   constructor(){
     makeObservable(this)
+    this.registerMessageTypes()
+  }
+  //  Descriptor-based dispatch, migrated incrementally type-by-type -- see MessageTypeRegistry.ts.
+  private registerMessageTypes(){
+    registerMessageType(MessageType.PARTICIPANT_AFK, {
+      onPlayback: (afk, p) => { p.physics.awayFromKeyboard = afk },
+    })
+    registerMessageType(MessageType.PARTICIPANT_ON_STAGE, {
+      onPlayback: (onStage, p) => { p.physics.onStage = onStage },
+    })
+    registerMessageType(MessageType.PARTICIPANT_TRACKSTATES, {
+      onPlayback: (states, p) => { Object.assign(p.trackStates, states) },
+    })
+    registerMessageType(MessageType.PARTICIPANT_VIEWPOINT, {
+      onPlayback: (viewpoint, p) => { Object.assign(p.viewpoint, viewpoint) },
+    })
+    registerMessageType(MessageType.PARTICIPANT_VRMRIG, {
+      onPlayback: (rig, p) => { p.vrmRig = rig },
+    })
+    registerMessageType(MessageType.AUDIO_LEVEL, {
+      onPlayback: (level, p) => { p.audioLevel = level },
+    })
   }
 
   clear(){
@@ -511,17 +534,16 @@ class Player{
       if (p){
         notHandled = false
         const v = JSON.parse(msg.v)
-        switch(msg.t){
-          case MessageType.PARTICIPANT_INFO: p.information = v as RemoteInformation; break
-          case MessageType.PARTICIPANT_POSE: p.pose = str2Pose(v as string); break
-          case MessageType.PARTICIPANT_MOUSE: p.mouse = str2Mouse(v as string); break
-          case MessageType.PARTICIPANT_AFK: p.physics.awayFromKeyboard = v as boolean; break
-          case MessageType.PARTICIPANT_TRACKSTATES: Object.assign(p.trackStates, v as TrackStates); break
-          case MessageType.PARTICIPANT_VIEWPOINT: Object.assign(p.viewpoint, v as Viewpoint); break
-          case MessageType.PARTICIPANT_ON_STAGE: p.physics.onStage = v as boolean; break
-          case MessageType.PARTICIPANT_VRMRIG: p.vrmRig = v as VrmRig; break
-          case MessageType.AUDIO_LEVEL: p.audioLevel = v as number; break
-          default: notHandled = true; break
+        const registered = getMessageTypeEntry(msg.t as MessageValue)
+        if (registered?.onPlayback){
+          registered.onPlayback(v, p)
+        }else{
+          switch(msg.t){
+            case MessageType.PARTICIPANT_INFO: p.information = v as RemoteInformation; break
+            case MessageType.PARTICIPANT_POSE: p.pose = str2Pose(v as string); break
+            case MessageType.PARTICIPANT_MOUSE: p.mouse = str2Mouse(v as string); break
+            default: notHandled = true; break
+          }
         }
       }
       if (notHandled){

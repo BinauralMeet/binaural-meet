@@ -5,7 +5,8 @@ import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import {RemoteParticipant} from '@stores/participants/RemoteOrPlaybackParticipant'
 import {autorun, IReactionDisposer, makeObservable, observable} from 'mobx'
 import {BMMessage} from '@models/conference/DataMessage'
-import {MessageType} from '@models/conference/DataMessageType'
+import {MessageType, MessageValue} from '@models/conference/DataMessageType'
+import {getMessageTypeEntry} from '@models/conference/MessageTypeRegistry'
 import {Dexie, IndexableType, Table} from 'dexie'
 import { conference } from '@models/conference/Conference'
 import { dateTimeString } from '@models/utils/date'
@@ -101,14 +102,13 @@ export class Recorder{
   private intervalTimer=0
   private stoppedMedias: MediaRec[] = []
   private disposers:IReactionDisposer[] = []
+  //  Types not yet migrated to MessageTypeRegistry.ts's `recordable` field -- see recordMessage()
+  //  below, which checks the registry first and only falls back to this Set.
   private MessageTypesToRecord = new Set<string>([
     MessageType.PARTICIPANT_INFO, MessageType.PARTICIPANT_POSE, MessageType.PARTICIPANT_MOUSE,
-    MessageType.PARTICIPANT_AFK, MessageType.PARTICIPANT_TRACKSTATES, MessageType.PARTICIPANT_VIEWPOINT,
-    MessageType.PARTICIPANT_ON_STAGE, MessageType.CONTENT_UPDATE_REQUEST,
+    MessageType.CONTENT_UPDATE_REQUEST,
     MessageType.PARTICIPANT_LEFT,
     MessageType.CONTENT_REMOVE_REQUEST,
-    MessageType.AUDIO_LEVEL,
-    MessageType.PARTICIPANT_VRMRIG
   ])
   private lastMessageValues= new Map<string, string>()
 
@@ -203,9 +203,13 @@ export class Recorder{
     return dbRecords().delete(id)
   }
 
+  private isRecordable(t: string){
+    const registered = getMessageTypeEntry(t as MessageValue)
+    return registered ? !!registered.recordable : this.MessageTypesToRecord.has(t)
+  }
   //  called by DataConnection.ts
   public recordMessage(msg:BMMessage){
-    if (this.recording && this.MessageTypesToRecord.has(msg.t)){
+    if (this.recording && this.isRecordable(msg.t)){
       if (msg.t === MessageType.PARTICIPANT_MOUSE || msg.t === MessageType.PARTICIPANT_POSE){
         if (this.lastMessageValues.get(msg.t) !== msg.v){
           this.lastMessageValues.set(msg.t, msg.v)

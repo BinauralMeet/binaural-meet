@@ -17,10 +17,11 @@ import contentSyncService from '@stores/sharedContents/ContentSyncService'
 import {autorun, IReactionDisposer} from 'mobx'
 import {BMMessage} from './DataMessage'
 import {DataConnection} from './DataConnection'
-import {MessageType} from './DataMessageType'
+import {MessageType, MessageValue} from './DataMessageType'
 import {notification} from './Notification'
 import {connLog} from '@models/utils'
 import {VrmRig} from '@models/utils/vrmIK'
+import {registerMessageType, getMessageTypeEntry} from './MessageTypeRegistry'
 
 const syncLog = connLog
 
@@ -31,6 +32,39 @@ export class DataSync{
   constructor(c:DataConnection) {
     this.connection = c
     //  window.setInterval(()=>{ this.checkRemoteAlive() }, 1000)
+    this.registerMessageTypes()
+  }
+  //  Descriptor-based dispatch, migrated incrementally type-by-type -- see MessageTypeRegistry.ts.
+  //  A type registered here is fully removed from the legacy switch in onBmMessage below.
+  private registerMessageTypes(){
+    registerMessageType(MessageType.PARTICIPANT_AFK, {
+      merge: 'overwrite', recordable: true,
+      onReceive: (afk, from) => this.onAfkChanged(from, afk),
+    })
+    registerMessageType(MessageType.PARTICIPANT_RECORDING, {
+      merge: 'overwrite', recordable: false,
+      onReceive: (rec, from) => this.onRecordingChanged(from, rec),
+    })
+    registerMessageType(MessageType.PARTICIPANT_ON_STAGE, {
+      merge: 'overwrite', recordable: true,
+      onReceive: (onStage, from) => this.onParticipantOnStage(from, onStage),
+    })
+    registerMessageType(MessageType.PARTICIPANT_TRACKSTATES, {
+      merge: 'overwrite', recordable: true,
+      onReceive: (states, from) => this.onParticipantTrackState(from, states),
+    })
+    registerMessageType(MessageType.PARTICIPANT_VIEWPOINT, {
+      merge: 'overwrite', recordable: true,
+      onReceive: (viewpoint, from) => this.onParticipantViewpoint(from, viewpoint),
+    })
+    registerMessageType(MessageType.PARTICIPANT_VRMRIG, {
+      merge: 'overwrite', recordable: true,
+      onReceive: (rig, from) => this.onParticipantVrmRig(from, rig),
+    })
+    registerMessageType(MessageType.AUDIO_LEVEL, {
+      merge: 'overwrite', recordable: true,
+      onReceive: (level, from) => this.onParticipantAudioLevel(from, level),
+    })
   }
   sendAllAboutMe(bSendRandP: boolean){
     syncLog('sendAllAboutMe called.')
@@ -372,12 +406,15 @@ export class DataSync{
       return
     }
     recorder.recordMessage(msg)
+    const registered = getMessageTypeEntry(msg.t as MessageValue)
+    if (registered?.onReceive){
+      registered.onReceive(JSON.parse(msg.v), msg.p)
+      return
+    }
     switch(msg.t){
       case MessageType.ROOM_PROP: this.onRoomProp(...(JSON.parse(msg.v) as [RoomPropertyName, string|undefined])); break
       case MessageType.REQUEST_ALL: this.sendAllAboutMe(false); break
       case MessageType.REQUEST_TO: this.sendAllAboutMe(false); break
-      case MessageType.PARTICIPANT_AFK: this.onAfkChanged(msg.p, JSON.parse(msg.v)); break
-      case MessageType.PARTICIPANT_RECORDING: this.onRecordingChanged(msg.p, JSON.parse(msg.v)); break
       case MessageType.PARTICIPANT_LEFT: this.onParticipantLeft(JSON.parse(msg.v)); break
       case MessageType.CALL_REMOTE: this.onCallRemote(msg.p); break
       case MessageType.CHAT_MESSAGE: this.onChatMessage(msg.p, JSON.parse(msg.v)); break
@@ -387,12 +424,7 @@ export class DataSync{
       case MessageType.PARTICIPANT_INFO: this.onParticipantInfo(msg.p, JSON.parse(msg.v)); break
       case MessageType.PARTICIPANT_MOUSE: this.onParticipantMouse(msg.p, JSON.parse(msg.v)); break
       case MessageType.PARTICIPANT_POSE: this.onParticipantPose(msg.p, JSON.parse(msg.v)); break
-      case MessageType.PARTICIPANT_ON_STAGE: this.onParticipantOnStage(msg.p, JSON.parse(msg.v)); break
-      case MessageType.PARTICIPANT_TRACKSTATES: this.onParticipantTrackState(msg.p, JSON.parse(msg.v)); break
-      case MessageType.PARTICIPANT_VIEWPOINT: this.onParticipantViewpoint(msg.p, JSON.parse(msg.v)); break
-      case MessageType.AUDIO_LEVEL: this.onParticipantAudioLevel(msg.p, JSON.parse(msg.v)); break
       case MessageType.PARTICIPANT_TRACKLIMITS: this.onParticipantTrackLimits(JSON.parse(msg.v)); break
-      case MessageType.PARTICIPANT_VRMRIG: this.onParticipantVrmRig(msg.p, JSON.parse(msg.v)); break
       case MessageType.YARN_PHONE: this.onYarnPhone(msg.p, JSON.parse(msg.v)); break
       case MessageType.RELOAD_BROWSER: this.onReloadBrower(); break
       case MessageType.MUTE_VIDEO: this.onMuteVideo(JSON.parse(msg.v)); break
