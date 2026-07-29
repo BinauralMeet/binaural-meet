@@ -6,7 +6,8 @@ import {computed, makeObservable, observable, runInAction} from 'mobx'
 import {BMMessage} from '@models/conference/DataMessage'
 import {MessageType} from '@models/conference/DataMessageType'
 import { MediaClip } from '@stores/media/MediaClip'
-import {MediaKind, BlobKind, recLog, BlobHeader, Message, MessagesHeader, RecordHeader} from './RecorderTypes'
+import {MediaKind, BlobKind, recLog, BlobHeader, Message, MessagesHeader, RecordHeader,
+  toPlaybackId, PLAYBACK_TICK_MS} from './RecorderTypes'
 import participants from '@stores/participants/Participants'
 import playbackStore from '@stores/sharedContents/PlaybackStore'
 import { VrmRig } from '@models/utils/vrmIK'
@@ -249,7 +250,7 @@ class Player{
         this.pause()
       }
     }
-    if (!this.playInterval) this.playInterval = window.setInterval(step, 30)
+    if (!this.playInterval) this.playInterval = window.setInterval(step, PLAYBACK_TICK_MS)
   }
   setRateToClips(rate: number){
     this.pidsPlaying.forEach(pid=>{
@@ -317,15 +318,15 @@ class Player{
     if (!this.mediasPlaying.includes(media)){
       this.mediasPlaying.push(media)
     }
-    if (media.pid) this.pidsPlaying.add(`p_${media.pid}`)
-    if (media.cid) this.cidsPlaying.add(`p_${media.cid}`)
+    if (media.pid) this.pidsPlaying.add(toPlaybackId(media.pid))
+    if (media.cid) this.cidsPlaying.add(toPlaybackId(media.cid))
   }
   private updatePlayingSets(){
     this.pidsPlaying.clear()
     this.cidsPlaying.clear()
     for(const media of this.mediasPlaying){
-      if (media.pid) this.pidsPlaying.add(`p_${media.pid}`)
-      if (media.cid) this.cidsPlaying.add(`p_${media.cid}`)
+      if (media.pid) this.pidsPlaying.add(toPlaybackId(media.pid))
+      if (media.cid) this.cidsPlaying.add(toPlaybackId(media.cid))
     }
   }
   private hasPlayingMediaFor(media: MediaPlay){
@@ -333,8 +334,8 @@ class Player{
       m.kind === media.kind && m.pid === media.pid && m.cid === media.cid)
   }
   private clearMediaBlob(media: MediaPlay){
-    const clip = media.pid ? participants.playback.get(`p_${media.pid}`)?.clip :
-      media.cid ? playbackStore.playbackClips.get(`p_${media.cid}`) : undefined
+    const clip = media.pid ? participants.playback.get(toPlaybackId(media.pid))?.clip :
+      media.cid ? playbackStore.playbackClips.get(toPlaybackId(media.cid)) : undefined
     if (clip){
       if (media.kind === 'audio') {
         clip.audioBlob = undefined
@@ -376,13 +377,13 @@ class Player{
 
     let clip:MediaClip|undefined = undefined
     if (media.pid){
-      const pid = `p_${media.pid}`
+      const pid = toPlaybackId(media.pid)
       this.pids.add(pid)
       const p = participants.getOrCreatePlayback(pid)
       if (!p.clip) p.clip = new MediaClip()
       clip = p.clip
     }else if (media.cid){
-      const cid = `p_${media.cid}`
+      const cid = toPlaybackId(media.cid)
       this.cids.add(cid)
       clip = playbackStore.getOrCreatePlaybackClip(cid)
     }
@@ -503,7 +504,7 @@ class Player{
     if (msg.t === MessageType.PARTICIPANT_LEFT){
       this.removeParticipants(msg)
     }else{
-      const pid = msg.p ? `p_${msg.p}` : ''
+      const pid = msg.p ? toPlaybackId(msg.p) : ''
       if (pid) this.pids.add(pid)
         const p = pid ? participants.getOrCreatePlayback(pid) : undefined
       let notHandled = true
@@ -539,15 +540,15 @@ class Player{
   private removeParticipants(msg: BMMessage){
     const pidsRemove = JSON.parse(msg.v) as string[]
     for(const pid of pidsRemove){
-      participants.playback.delete(`p_${pid}`)
-      this.pids.delete(`p_${pid}`)
+      participants.playback.delete(toPlaybackId(pid))
+      this.pids.delete(toPlaybackId(pid))
     }
   }
   private onContentUpdateRequest(msg: BMMessage, from: number){
     const cs = JSON.parse(msg.v) as ISharedContent[]
     for(const c of cs){
       //  recLog('CONTENT_UPDATE_REQUEST:', c)
-      c.id = `p_${c.id}`
+      c.id = toPlaybackId(c.id)
       if (c.type === 'camera' || c.type === 'screen'){
         c.type = c.type === 'camera' ? 'playbackCamera' : 'playbackScreen'
       }
@@ -558,8 +559,8 @@ class Player{
   private onContentRemoveRequest(msg: BMMessage){
     const cids = JSON.parse(msg.v) as string[]
     for(const cid of cids){
-      playbackStore.removePlayback(`p_${cid}`)
-      this.cids.delete(`p_${cid}`)
+      playbackStore.removePlayback(toPlaybackId(cid))
+      this.cids.delete(toPlaybackId(cid))
     }
   }
 }

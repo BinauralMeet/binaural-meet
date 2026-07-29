@@ -34,7 +34,7 @@ export const RecorderMenu: React.FC<DialogPageProps> = (props) => {
   function deleteRecord(id: number){
     const record = records?.find(r => r.id === id)
     if (record && record.id){
-      dbRecords.delete(record.id)
+      recorder.deleteRecord(record.id)
     }
   }
   function downloadRecord(id: number){

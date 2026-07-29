@@ -1,6 +1,8 @@
 import {acceleratorText2El} from '@components/utils/formatter'
 import {makeStyles} from '@material-ui/styles'
 import {useTranslation} from '@models/locales'
+import {timeToHourMinSecDec} from '@models/utils/date'
+import {SEEK_THROTTLE_MS} from '@models/recorder/RecorderTypes'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {FabWithTooltip} from '@components/utils/FabEx'
 import {RecorderDialog, RecorderStepType, SetRecorderStepType} from './RecorderDialog'
@@ -32,22 +34,11 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
   const iconSize = props.iconSize ? props.iconSize : 36
   const duration = player.duration
   const [seekOffset, setSeekOffset] = useState(player.offset)
-  const [seekOffsetText, setSeekOffsetText] = useState(offsetNumberToText(player.offset))
+  const [seekOffsetText, setSeekOffsetText] = useState(timeToHourMinSecDec(player.offset))
   const [rate, setRate] = useState(1.0)
-  const doSeek = useMemo(() => _.throttle((offset:number)=>{player.seek(offset)}, 500), [])
+  const doSeek = useMemo(() => _.throttle((offset:number)=>{player.seek(offset)}, SEEK_THROTTLE_MS), [])
   const refPauseBySeek = useRef<boolean>(false)
 
-  function offsetNumberToText(offset: number){
-    const decimal = (offset % 1000).toString().padEnd(2, '0').slice(0, 2)
-    offset = Math.floor(offset / 1000)
-    const sec = (offset % 60).toString().padStart(2, '0')
-    offset = Math.floor(offset / 60)
-    const min = (offset % 60).toString().padStart(2, '0')
-    offset = Math.floor(offset / 60)
-    const hour = offset
-
-    return `${hour? `${hour}:` : ''}${min}:${sec}.${decimal}`
-  }
   function offsetTextToNumber(text: string){
     const timeA = text.split(':')
     let time = 0
@@ -72,7 +63,7 @@ export const RecorderButton: React.FC<RecorderButtonProps> = (props) => {
 
   function setSeekOffsetAndText(offset: number){
     setSeekOffset(offset)
-    setSeekOffsetText(offsetNumberToText(offset))
+    setSeekOffsetText(timeToHourMinSecDec(offset))
   }
   useEffect(()=>{
     const disposer = autorun(()=>{

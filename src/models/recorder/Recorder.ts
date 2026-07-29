@@ -14,7 +14,7 @@ import contentStore from '@stores/sharedContents/ContentStore'
 import contentSyncService from '@stores/sharedContents/ContentSyncService'
 import contentTrackStore from '@stores/sharedContents/ContentTrackStore'
 import {MediaRecData, MediaRole, MediaKind, BlobKind, recLog, DBRecord, DBMediaRec, DBBlob,
-  BlobHeader, Message, MessagesHeader, DBRecMessage} from './RecorderTypes'
+  BlobHeader, Message, MessagesHeader, DBRecMessage, RECORD_DB_FLUSH_INTERVAL_MS} from './RecorderTypes'
 declare const d:any                  //  from index.html
 
 const recorderDb = new Dexie('recorderDb');
@@ -156,7 +156,7 @@ export class Recorder{
     if (this.intervalTimer) window.clearInterval(this.intervalTimer)
     this.intervalTimer = window.setInterval(()=>{
       this.saveDiffToDB()
-    }, 30 * 1000)
+    }, RECORD_DB_FLUSH_INTERVAL_MS)
   }
 
   /// stop and save to db
@@ -189,6 +189,11 @@ export class Recorder{
     })
 
     return promise
+  }
+
+  //  delete a saved record by its DBRecord id
+  public deleteRecord(id: number){
+    return dbRecords.delete(id)
   }
 
   //  called by DataConnection.ts

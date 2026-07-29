@@ -68,3 +68,17 @@ export interface DBRecMessage{
   messages: Message[]
   length: number
 }
+
+//  Timing constants for the record/playback subsystem, named and collected here rather than
+//  scattered as inline literals across Recorder.ts/Player.ts/the recorder UI components.
+export const RECORD_DB_FLUSH_INTERVAL_MS = 30 * 1000
+export const PLAYBACK_TICK_MS = 30
+export const SEEK_THROTTLE_MS = 500
+export const PLAYBACK_RETRY_POLL_MS = 100
+
+//  Playback-side participants/content are keyed by this prefix to keep them distinct from live
+//  (non-playback) ids sharing the same underlying pid/cid.
+const PLAYBACK_ID_PREFIX = 'p_'
+export function toPlaybackId(id: string){
+  return `${PLAYBACK_ID_PREFIX}${id}`
+}

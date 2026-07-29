@@ -5,7 +5,7 @@ import {ContentProps} from './Content'
 import {autorun} from 'mobx'
 import playbackStore from '@stores/sharedContents/PlaybackStore'
 import {MediaClip} from '@stores/media/MediaClip'
-import { recLog } from '@models/recorder/RecorderTypes'
+import { recLog, PLAYBACK_RETRY_POLL_MS } from '@models/recorder/RecorderTypes'
 
 const useStyles = makeStyles({
   video: {
@@ -46,7 +46,7 @@ export const PlaybackScreenContent: React.FC<ContentProps> = (props:ContentProps
             }
           }).catch(()=>{
             refWaitPlay.current = false
-            refTimeout.current = window.setTimeout(() => playFunc(revision), 100)
+            refTimeout.current = window.setTimeout(() => playFunc(revision), PLAYBACK_RETRY_POLL_MS)
           })
         })
       }
@@ -68,7 +68,7 @@ export const PlaybackScreenContent: React.FC<ContentProps> = (props:ContentProps
             if (refWaitPlay.current){
               window.clearTimeout(refTimeout.current)
               refTimeout.current = 0
-              window.setTimeout(pause, 100)
+              window.setTimeout(pause, PLAYBACK_RETRY_POLL_MS)
             }else{
               window.clearTimeout(refTimeout.current)
               refTimeout.current = 0
