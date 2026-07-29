@@ -5,6 +5,7 @@ import * as FIK from 'fullik';
 import * as Kalidokit from 'kalidokit'
 import {square} from './coordinates';
 import {VRMAvatar} from './vrm';
+import {PoseLandmark, HandLandmark} from './mediapipeLandmarks';
 
 export interface AllLandmarks{
   faceLm?: NormalizedLandmarkList
@@ -126,7 +127,7 @@ export function drawFikStructure(structure: FikStructure3DEx, landmarks:AllLandm
   if (!landmarks.poseLm3d) return
   drawChain(structure.chains[0], c2d, [[255,255,0],[255,0,0]], true)
   drawChain(structure.chains[1], c2d, [[255,0,255],[0,0,255]], true)
-  const head = mp2VrmV3(landmarks.poseLm3d[0], structure)
+  const head = mp2VrmV3(landmarks.poseLm3d[PoseLandmark.NOSE], structure)
   const lh = structure.chains[0].bones[0].start
   const rh = structure.chains[1].bones[0].start
   drawLine([lh, head, rh], c2d, [[255,0,0],[255,255,255],[0,0,255]], true)
@@ -256,7 +257,10 @@ export function updateStructure3DEx(vrm:VRM, structure: FikStructure3DEx, lms: A
   const head = vrm.humanoid.getNormalizedBoneNode('head')
   if (lms.poseLm3d && hips && head){
     //  Update the transformation from landmarks to VRM's head coordinate so that heads take the same position.
-    const mpHandToHandLength = lengthSumForMP([lms.poseLm3d[15], lms.poseLm3d[13], lms.poseLm3d[11], lms.poseLm3d[12], lms.poseLm3d[14], lms.poseLm3d[16]])
+    const mpHandToHandLength = lengthSumForMP([
+      lms.poseLm3d[PoseLandmark.LEFT_WRIST], lms.poseLm3d[PoseLandmark.LEFT_ELBOW],
+      lms.poseLm3d[PoseLandmark.LEFT_SHOULDER], lms.poseLm3d[PoseLandmark.RIGHT_SHOULDER],
+      lms.poseLm3d[PoseLandmark.RIGHT_ELBOW], lms.poseLm3d[PoseLandmark.RIGHT_WRIST]])
     structure.scale = structure.vrmHandToHandLength / mpHandToHandLength
     structure.m4wHipsInv = hips.matrixWorld.clone().invert()
 
@@ -266,7 +270,7 @@ export function updateStructure3DEx(vrm:VRM, structure: FikStructure3DEx, lms: A
     const offset = new THREE.Vector3(0, 0, -0.15).applyMatrix4(mrHead) //  LM and VRM head center's
     const headPos = getTranslation(m4Head).add(offset)
     structure.mrHeadInv = mrHead.clone().invert()
-    const hLmHead = scaleLm(lms.poseLm3d[0], structure)
+    const hLmHead = scaleLm(lms.poseLm3d[PoseLandmark.NOSE], structure)
     hLmHead.applyMatrix4(structure.mrHeadInv)
     structure.hHeadTohLm = new THREE.Vector3().subVectors(hLmHead, headPos)
     /*
@@ -282,8 +286,8 @@ export function updateStructure3DEx(vrm:VRM, structure: FikStructure3DEx, lms: A
     const leftArmRoot = getTranslation(leftUpperArm!.matrixWorld.clone().premultiply(structure.m4wHipsInv))
     const rightArmRoot = getTranslation(rightUpperArm!.matrixWorld.clone().premultiply(structure.m4wHipsInv))
     const lmArms = [    //  Landmarks for arms
-      [leftArmRoot, mp2VrmV3(lms.poseLm3d[13], structure), mp2VrmV3(lms.poseLm3d[15], structure)],
-      [rightArmRoot, mp2VrmV3(lms.poseLm3d[14], structure), mp2VrmV3(lms.poseLm3d[16], structure)]]
+      [leftArmRoot, mp2VrmV3(lms.poseLm3d[PoseLandmark.LEFT_ELBOW], structure), mp2VrmV3(lms.poseLm3d[PoseLandmark.LEFT_WRIST], structure)],
+      [rightArmRoot, mp2VrmV3(lms.poseLm3d[PoseLandmark.RIGHT_ELBOW], structure), mp2VrmV3(lms.poseLm3d[PoseLandmark.RIGHT_WRIST], structure)]]
     //  Update IK chain for arms
     updateFikChain(structure.chains[0], structure.lengthsList[0], lmArms[0])
     updateFikChain(structure.chains[1], structure.lengthsList[1], lmArms[1])
@@ -317,7 +321,7 @@ export function updateStructure3DEx(vrm:VRM, structure: FikStructure3DEx, lms: A
   function applyHand(lr:'left'|'right', lms: LandmarkList, vrm:VRM, structure: FikStructure3DEx){
     //  Compute and apply hand orientation
     //  wrist, index, pinky
-    const hand = [mp2VrmV3(lms[0], structure), mp2VrmV3(lms[5], structure), mp2VrmV3(lms[17], structure)]
+    const hand = [mp2VrmV3(lms[HandLandmark.WRIST], structure), mp2VrmV3(lms[HandLandmark.INDEX_FINGER_MCP], structure), mp2VrmV3(lms[HandLandmark.PINKY_MCP], structure)]
     const indexToPinky = new THREE.Vector3().subVectors(hand[2], hand[1])
     const handCenter = new THREE.Vector3().addVectors(hand[1], indexToPinky.clone().multiplyScalar(0.5))
     indexToPinky.normalize()
@@ -342,12 +346,12 @@ export function updateStructure3DEx(vrm:VRM, structure: FikStructure3DEx, lms: A
       vrm.humanoid.getNormalizedBoneNode(`${lr}Hand`)?.quaternion.slerp(qlHand, 0.5)
 
       //  Compute and apply fingers
-      const thumbLms = [mp2VrmV3(lms[1], structure), mp2VrmV3(lms[2], structure), mp2VrmV3(lms[3], structure), mp2VrmV3(lms[4], structure)]
+      const thumbLms = [mp2VrmV3(lms[HandLandmark.THUMB_CMC], structure), mp2VrmV3(lms[HandLandmark.THUMB_MCP], structure), mp2VrmV3(lms[HandLandmark.THUMB_IP], structure), mp2VrmV3(lms[HandLandmark.THUMB_TIP], structure)]
       const fourFingersLmses = [
-        [mp2VrmV3(lms[5], structure), mp2VrmV3(lms[6], structure), mp2VrmV3(lms[7], structure), mp2VrmV3(lms[8], structure)],
-        [mp2VrmV3(lms[9], structure), mp2VrmV3(lms[10], structure), mp2VrmV3(lms[11], structure), mp2VrmV3(lms[12], structure)],
-        [mp2VrmV3(lms[13], structure), mp2VrmV3(lms[14], structure), mp2VrmV3(lms[15], structure), mp2VrmV3(lms[16], structure)],
-        [mp2VrmV3(lms[17], structure), mp2VrmV3(lms[18], structure), mp2VrmV3(lms[19], structure), mp2VrmV3(lms[20], structure)],
+        [mp2VrmV3(lms[HandLandmark.INDEX_FINGER_MCP], structure), mp2VrmV3(lms[HandLandmark.INDEX_FINGER_PIP], structure), mp2VrmV3(lms[HandLandmark.INDEX_FINGER_DIP], structure), mp2VrmV3(lms[HandLandmark.INDEX_FINGER_TIP], structure)],
+        [mp2VrmV3(lms[HandLandmark.MIDDLE_FINGER_MCP], structure), mp2VrmV3(lms[HandLandmark.MIDDLE_FINGER_PIP], structure), mp2VrmV3(lms[HandLandmark.MIDDLE_FINGER_DIP], structure), mp2VrmV3(lms[HandLandmark.MIDDLE_FINGER_TIP], structure)],
+        [mp2VrmV3(lms[HandLandmark.RING_FINGER_MCP], structure), mp2VrmV3(lms[HandLandmark.RING_FINGER_PIP], structure), mp2VrmV3(lms[HandLandmark.RING_FINGER_DIP], structure), mp2VrmV3(lms[HandLandmark.RING_FINGER_TIP], structure)],
+        [mp2VrmV3(lms[HandLandmark.PINKY_MCP], structure), mp2VrmV3(lms[HandLandmark.PINKY_PIP], structure), mp2VrmV3(lms[HandLandmark.PINKY_DIP], structure), mp2VrmV3(lms[HandLandmark.PINKY_TIP], structure)],
       ]
       applyFinger('Thumb', thumbBoneNames, thumbLms)
       fourFingerNames.forEach( (fname, f)=>{

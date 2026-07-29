@@ -6,7 +6,9 @@ import { participants } from "@stores/participants"
 
 declare const d:any                  //  from index.html
 
-const animationPeriod = 60  //  1/60ms =  17 frame / sec
+//  Minimum ms between rendered frames inside the requestAnimationFrame loop below -- caps
+//  rendering to roughly 1000/60 =~ 17fps regardless of the browser's actual RAF rate.
+const frameThrottleMs = 60
 const posScale = 0.01
 
 interface WebGLContext{
@@ -120,7 +122,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
     let animationFrameId: number;
     let animate = (time:number) => {
       animationFrameId = requestAnimationFrame(animate)
-      if (time - prevTime < animationPeriod) return
+      if (time - prevTime < frameThrottleMs) return
       prevTime = time
 
       if (!props.refCanvasGL.current) return
@@ -158,7 +160,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = (props:WebGLCanvasProps) 
           avatar.vrm.scene.position.x = avatar.participant.pose.position[0]*posScale
           avatar.vrm.scene.position.z = avatar.participant.pose.position[1]*posScale
           avatar.vrm.scene.rotation.y = -avatar.participant.pose.orientation / 180 * Math.PI
-          avatar.vrm.update(animationPeriod / 1000);   //  Update model to render physics
+          avatar.vrm.update(frameThrottleMs / 1000);   //  Update model to render physics
         }
 
         //  3D mode
