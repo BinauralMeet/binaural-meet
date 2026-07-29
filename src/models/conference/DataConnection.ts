@@ -2,7 +2,7 @@ import {MAP_SIZE} from '@components/Constants'
 import {recorder} from '@models/recorder'
 import map from '@stores/map/Map'
 import {default as participants} from '@stores/participants/Participants'
-import roomInfo from '@stores/room/RoomInfo'
+import roomInfo, {RoomPropertyName} from '@stores/room/RoomInfo'
 import {BMMessage} from './DataMessage'
 import {ClientToServerOnlyMessageType, MessageType, ObjectArrayMessageTypes, StringArrayMessageTypes} from './DataMessageType'
 import {DataSync} from '@models/conference/DataSync'
@@ -50,7 +50,7 @@ export class DataConnection {
   public isConnected(){
     return this.dataSocket?.readyState === WebSocket.OPEN
   }
-  public setRoomProp(name:string, value:string){
+  public setRoomProp(name:RoomPropertyName, value:string){
     this.sendMessage(MessageType.ROOM_PROP, [name, value])
     roomInfo.onUpdateProp(name, value)
   }

@@ -12,7 +12,7 @@ import chat, { ChatMessage, ChatMessageToSend } from '@stores/room/Chat'
 import errorInfo from '@stores/room/ErrorInfo'
 import {MediaSettings} from '@stores/participants/LocalParticipant'
 import participants from '@stores/participants/Participants'
-import roomInfo from '@stores/room/RoomInfo'
+import roomInfo, {RoomPropertyName} from '@stores/room/RoomInfo'
 import contentSyncService from '@stores/sharedContents/ContentSyncService'
 import {autorun, IReactionDisposer} from 'mobx'
 import {BMMessage} from './DataMessage'
@@ -103,7 +103,7 @@ export class DataSync{
   }
 
   //  message handler
-  private onRoomProp(key: string, value: string){
+  private onRoomProp(key: RoomPropertyName, value: string|undefined){
     roomInfo.onUpdateProp(key, value)
   }
   private onParticipantTrackLimits(limits:number[]){
@@ -373,7 +373,7 @@ export class DataSync{
     }
     recorder.recordMessage(msg)
     switch(msg.t){
-      case MessageType.ROOM_PROP: this.onRoomProp(...(JSON.parse(msg.v) as [string, string])); break
+      case MessageType.ROOM_PROP: this.onRoomProp(...(JSON.parse(msg.v) as [RoomPropertyName, string|undefined])); break
       case MessageType.REQUEST_ALL: this.sendAllAboutMe(false); break
       case MessageType.REQUEST_TO: this.sendAllAboutMe(false); break
       case MessageType.PARTICIPANT_AFK: this.onAfkChanged(msg.p, JSON.parse(msg.v)); break
