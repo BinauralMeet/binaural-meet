@@ -21,7 +21,7 @@ export let dataRequestInterval:number = 100
 declare const config:any             //  from ../../config.js included from index.html
 
 //  Cathegolies of BMMessage's types
-const stringArrayMessageTypesForClient = new Set(StringArrayMessageTypes)
+const stringArrayMessageTypesForClient = new Set<string>(StringArrayMessageTypes)
 stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.CONTENT_UPDATE_REQUEST_BY_ID)
 stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.REQUEST_PARTICIPANT_STATES)
 
