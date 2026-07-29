@@ -1496,7 +1496,7 @@ fsevents@~2.3.3:
   resolved "https://registry.yarnpkg.com/fsevents/-/fsevents-2.3.3.tgz#cac6407785d03675a2a5e1a5305c697b347d90d6"
   integrity sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==
 
-"fullik@https://github.com/lo-th/fullik.git":
+"fullik@https://github.com/lo-th/fullik.git#3f22da98a0fa0051416b20077af5142aec3dfc2e":
   version "1.3.3"
   resolved "https://github.com/lo-th/fullik.git#3f22da98a0fa0051416b20077af5142aec3dfc2e"
 
@@ -1814,7 +1814,7 @@ jss@10.10.0, jss@^10.5.1:
     is-in-browser "^1.1.3"
     tiny-warning "^1.0.2"
 
-"kalidokit@https://github.com/BinauralMeet/kalidokit.git":
+"kalidokit@https://github.com/BinauralMeet/kalidokit.git#05cf7fd87c0f2056245c422804ed68508b112896":
   version "1.1.5"
   resolved "https://github.com/BinauralMeet/kalidokit.git#05cf7fd87c0f2056245c422804ed68508b112896"
 
