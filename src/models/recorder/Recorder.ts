@@ -102,12 +102,6 @@ export class Recorder{
   private intervalTimer=0
   private stoppedMedias: MediaRec[] = []
   private disposers:IReactionDisposer[] = []
-  //  Types not yet migrated to MessageTypeRegistry.ts's `recordable` field -- see recordMessage()
-  //  below, which checks the registry first and only falls back to this Set. Only PARTICIPANT_LEFT
-  //  remains -- it's migrated last (see the comment on its special-case in Player.playMessage()).
-  private MessageTypesToRecord = new Set<string>([
-    MessageType.PARTICIPANT_LEFT,
-  ])
   private lastMessageValues= new Map<string, string>()
 
   constructor(){
@@ -202,8 +196,7 @@ export class Recorder{
   }
 
   private isRecordable(t: string){
-    const registered = getMessageTypeEntry(t as MessageValue)
-    return registered ? !!registered.recordable : this.MessageTypesToRecord.has(t)
+    return !!getMessageTypeEntry(t as MessageValue)?.recordable
   }
   //  called by DataConnection.ts
   public recordMessage(msg:BMMessage){

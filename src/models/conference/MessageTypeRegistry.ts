@@ -4,9 +4,12 @@
 //  recorded at all (Recorder.recordMessage) -- replacing four independently-maintained switch/Set
 //  blocks that previously had to be updated in lockstep for every message type.
 //
-//  Migrated incrementally, type by type (see snazzy-petting-journal.md Phase 3) -- a message type
-//  with no registered entry here simply falls through to the legacy switch/Set logic in DataSync.ts/
-//  Player.ts/Recorder.ts/DataConnection.ts, so partial adoption is safe by construction.
+//  Migrated incrementally, type by type (see snazzy-petting-journal.md Phase 3). DataSync.ts's
+//  receive dispatch and Recorder.ts's recordability check now consult only this registry (every
+//  type that's ever received/recorded is registered). Player.ts's per-participant playback dispatch
+//  and DataConnection.ts's send-side merge/dedup still fall back to their own legacy switch/Set
+//  logic for types not covered here (content-type messages don't fit the per-participant onPlayback
+//  shape, and the `merge` field isn't wired into sendMessage yet), so partial adoption stays safe.
 import {MessageValue} from './DataMessageType'
 import {MessageTypePayloadMap} from './DataMessagePayloads'
 import {PlaybackParticipant} from '@stores/participants/RemoteOrPlaybackParticipant'

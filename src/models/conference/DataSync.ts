@@ -22,7 +22,6 @@ import {notification} from './Notification'
 import {connLog} from '@models/utils'
 import {VrmRig} from '@models/utils/vrmIK'
 import {registerMessageType, getMessageTypeEntry} from './MessageTypeRegistry'
-import {parseMessageValue} from './DataMessagePayloads'
 
 const syncLog = connLog
 
@@ -145,6 +144,15 @@ export class DataSync{
     registerMessageType(MessageType.CONTENT_OUT, {
       merge: 'stringArray',
       onReceive: (cids) => this.onContentOut(cids),
+    })
+    //  PARTICIPANT_LEFT's onReceive fits the registry fine, but unlike every other type
+    //  here it's a *global* removal (no single target participant) -- Player.playMessage()
+    //  and Recorder's recordability check special-case it structurally the same way they
+    //  special-case CONTENT_UPDATE_REQUEST/CONTENT_REMOVE_REQUEST, so only onReceive/
+    //  recordable move here; there's no onPlayback to add.
+    registerMessageType(MessageType.PARTICIPANT_LEFT, {
+      merge: 'overwrite', recordable: true,
+      onReceive: (ids) => this.onParticipantLeft(ids),
     })
   }
   sendAllAboutMe(bSendRandP: boolean){
@@ -476,7 +484,6 @@ export class DataSync{
   }
 
 
-  // tslint:disable-next-line: cyclomatic-complexity
   onBmMessage(msg: BMMessage){
     if (msg.t!==MessageType.AUDIO_LEVEL && msg.t!==MessageType.PARTICIPANT_MOUSE){
       syncLog(`Recv data msg: ${msg.t}: ${msg.v}`)
@@ -490,15 +497,8 @@ export class DataSync{
     const registered = getMessageTypeEntry(msg.t as MessageValue)
     if (registered?.onReceive){
       registered.onReceive(JSON.parse(msg.v), msg.p)
-      return
-    }
-    switch(msg.t){
-      //  PARTICIPANT_LEFT is migrated last -- see MessageTypeRegistry.ts and the
-      //  early special-case for it in Player.playMessage().
-      case MessageType.PARTICIPANT_LEFT: this.onParticipantLeft(parseMessageValue(MessageType.PARTICIPANT_LEFT, msg.v)); break
-      default:
-        syncLog(`Unhandled message type ${msg.t} from ${msg.p}`)
-        break
+    }else{
+      syncLog(`Unhandled message type ${msg.t} from ${msg.p}`)
     }
   }
 }
