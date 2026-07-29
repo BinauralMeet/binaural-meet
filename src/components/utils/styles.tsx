@@ -10,6 +10,19 @@ import checkboxUncheckedIcon from '@iconify/icons-ic/round-check-box-outline-bla
 import {Icon} from '@iconify/react'
 import Checkbox from '@material-ui/core/Checkbox'
 
+//  Named z-index tiers -- same numeric values as before, just given names. This is a rename pass
+//  only; stacking order must not change, so verify visually (dialogs/cursor/participants/content
+//  overlap) before relying on this after touching any of these sites.
+export const Z_INDEX = {
+  splitter: 1,
+  statusDialog: 2,
+  chatOverlay: 1000,
+  participantLocal: 5000,
+  cursorLocal: 6000,
+  cursorRemoteOffset: 4000,
+  participantLayerTop: 0x7FFF,
+}
+
 export const styleCommon = makeStyles({
   back:{
     position: 'absolute',
@@ -31,7 +44,7 @@ export const styleCommon = makeStyles({
 export const styleForSplit = makeStyles({
   resizerVertical: {
     background: '#000',
-    zIndex: 1,
+    zIndex: Z_INDEX.splitter,
     boxSizing: 'border-box',
     backgroundClip: 'padding-box',
     width: 11,
@@ -42,7 +55,7 @@ export const styleForSplit = makeStyles({
   },
   resizerHorizontal: {
     background: 'gray',
-    zIndex: 1,
+    zIndex: Z_INDEX.splitter,
     boxSizing: 'border-box',
     backgroundClip: 'padding-box',
     height: 10.5,

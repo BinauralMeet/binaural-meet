@@ -10,6 +10,7 @@ import { participants } from '@stores/'
 import { VRMAvatars, applyMPLandmarkToVrm, updateVrmAvatar} from '@models/utils/vrm'
 import { autorun } from 'mobx'
 import { extractVrmRig, applyVrmRig} from '@models/utils/vrmIK'
+import {Z_INDEX} from '@components/utils/styles'
 
 interface LineProps {
   start: [number, number]
@@ -152,7 +153,7 @@ export const ParticipantLayer: React.FC<{vrmAvatars:VRMAvatars}> = observer((pro
 
   //  zIndex is needed to show the participants over the share layer.
   return(
-    <div style={{position:'absolute', zIndex:0x7FFF}}>
+    <div style={{position:'absolute', zIndex:Z_INDEX.participantLayerTop}}>
       {lines}
       {playbackElements}
       {remoteElements}

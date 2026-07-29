@@ -9,6 +9,7 @@ import errorInfo from '@stores/room/ErrorInfo'
 import {useTranslation} from '@models/locales'
 import {ConnectionStat} from '@components/map/Participant/SignalQuality'
 import {messageLoads} from '@stores/media/MessageLoads'
+import {Z_INDEX} from '@components/utils/styles'
 
 declare const config:any             //  from ../../config.js included from index.html
 
@@ -75,7 +76,7 @@ export const StatusDialog: React.FC<StatusDialogProps> = observer((props: Status
   })()
 
   const {close, ...poperProps} = props
-  return <Popper {...poperProps} disablePortal={false} style={{zIndex:2}}>
+  return <Popper {...poperProps} disablePortal={false} style={{zIndex:Z_INDEX.statusDialog}}>
     <Paper style={{background:'rgba(255,255,255,1)', padding:'0.4em'}}>
       <div style={{overflowY:'auto'}}>
         <strong>{t('connectionStatus')}</strong>

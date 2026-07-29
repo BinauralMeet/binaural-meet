@@ -11,7 +11,7 @@ import {isDarkColor} from '@models/utils'
 import {ChatMessage, ChatMessageToSend, ChatMessageType} from '@stores/room/Chat'
 import {Observer} from 'mobx-react-lite'
 import React from 'react'
-import {styleForList} from '../utils/styles'
+import {styleForList, Z_INDEX} from '../utils/styles'
 import {TextLineStyle} from './LeftBar'
 import {conference} from '@models/conference'
 import {chat, participants, map, roomInfo} from '@stores/'
@@ -91,7 +91,7 @@ export const ChatInBar: React.FC<TextLineStyle>  = (props) => {
     overflowY:'auto', overflowX:'clip', whiteSpace: 'pre-line'}} >
     <form noValidate autoComplete="off">
       <Tooltip title={t('cmSend')} placement="right">
-        <div style={{position:'relative', top:26, marginTop:-26, textAlign:'right', zIndex:1000}}>
+        <div style={{position:'relative', top:26, marginTop:-26, textAlign:'right', zIndex:Z_INDEX.chatOverlay}}>
           <IconButton size={'small'} onClick={()=>{
             const nameTo = chat.sendTo ?
               participants?.find(chat.sendTo)?.information?.name : undefined

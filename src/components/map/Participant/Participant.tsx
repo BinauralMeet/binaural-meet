@@ -15,7 +15,7 @@ import {Observer} from 'mobx-react-lite'
 import React from 'react'
 import {SignalQualityIcon} from './SignalQuality'
 import { ComposedAvatar } from '@components/avatar/ComposedAvatar'
-import {COLOR} from '../../utils/styles'
+import {COLOR, Z_INDEX} from '../../utils/styles'
 import _ from 'lodash'
 
 const renderLog = false ? console.log : (..._:any)=>{}
@@ -367,7 +367,7 @@ export const Participant: React.FC<ParticipantProps> = (props) => {
     const depends = [participant.information.name, participant.information.color, participant.information.textColor]
 
 
-    return <><div className={classesPose.root} style={{zIndex:props.isLocal ? 5000 : props.zIndex}}>
+    return <><div className={classesPose.root} style={{zIndex:props.isLocal ? Z_INDEX.participantLocal : props.zIndex}}>
       <Shadow participant={props.participant} size={props.size} />
       <div className={classesPose.pointerRotate}>
         <OuterUnder participant={props.participant} size={props.size} isLocal={props.isLocal} />
