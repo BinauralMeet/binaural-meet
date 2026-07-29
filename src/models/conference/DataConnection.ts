@@ -4,8 +4,9 @@ import map from '@stores/map/Map'
 import {default as participants} from '@stores/participants/Participants'
 import roomInfo, {RoomPropertyName} from '@stores/room/RoomInfo'
 import {BMMessage} from './DataMessage'
-import {ClientToServerOnlyMessageType, MessageType, MessageValue, ObjectArrayMessageTypes, StringArrayMessageTypes} from './DataMessageType'
+import {ClientToServerOnlyMessageType, MessageType, MessageValue} from './DataMessageType'
 import {MessageTypePayloadMap, stringifyMessageValue} from './DataMessagePayloads'
+import {getMessageTypeEntry, registerMessageType} from './MessageTypeRegistry'
 import {DataSync} from '@models/conference/DataSync'
 import {AudioMeter} from '@models/audio/AudioMeter'
 import {connLog} from '@models/utils'
@@ -21,10 +22,12 @@ export let dataRequestInterval:number = 100
 // config.js
 declare const config:any             //  from ../../config.js included from index.html
 
-//  Cathegolies of BMMessage's types
-const stringArrayMessageTypesForClient = new Set<string>(StringArrayMessageTypes)
-stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.CONTENT_UPDATE_REQUEST_BY_ID)
-stringArrayMessageTypesForClient.add(ClientToServerOnlyMessageType.REQUEST_PARTICIPANT_STATES)
+//  Send-only types (client-to-server, never received back so DataSync.ts never registers
+//  them) still need a `merge` entry for sendMessage()'s queue-dedup below -- this module
+//  owns that registration since no other module will.
+registerMessageType(ClientToServerOnlyMessageType.CONTENT_UPDATE_REQUEST_BY_ID, {merge: 'stringArray'})
+registerMessageType(ClientToServerOnlyMessageType.REQUEST_PARTICIPANT_STATES, {merge: 'stringArray'})
+registerMessageType(ClientToServerOnlyMessageType.REQUEST_RANGE, {merge: 'overwrite'})
 
 type DataConnectionEvent = 'disconnect'
 
@@ -249,17 +252,18 @@ export class DataConnection {
     if (dest){
       msg.d = dest
     }
+    //  Single source of truth for how a type's queued-but-unflushed messages combine --
+    //  see MessageTypeRegistry.ts. Falls back to 'overwrite' for the handful of
+    //  client-to-server-only types that register their `merge` field below instead of
+    //  in DataSync.ts (they're never received, so DataSync never registers them).
+    const merge = getMessageTypeEntry(type)?.merge ?? 'overwrite'
     //  ROOM_PROP multiplexes many differently-named properties under one message
     //  type ([name, value] tuples), unlike every other type here (one type = one
     //  property, so "same type -> same queue slot" is a valid dedup key). Also
     //  match the property name so e.g. queuing backgroundFill then backgroundColor
     //  before a flush doesn't let the second overwrite/drop the first.
     const roomPropName = type === MessageType.ROOM_PROP ? (value as [string, string])[0] : undefined
-    //  CHAT_MESSAGE is a log of discrete events, not a "latest value wins" state field --
-    //  unlike every other overwrite-merged type here, two chat messages queued to the same
-    //  (type, room, peer, dest) before a flush must NOT collapse into one (that would
-    //  silently drop the earlier message). Force idx=-1 so it's always pushed as a new entry.
-    const idx = type === MessageType.CHAT_MESSAGE ? -1 : this.messagesToSendToRelay.findIndex(m => {
+    const idx = merge === 'instant' ? -1 : this.messagesToSendToRelay.findIndex(m => {
       if (m.t !== msg.t || m.r !== msg.r || m.p !== msg.p || m.d !== msg.d){ return false }
       if (roomPropName === undefined){ return true }
       try {
@@ -269,13 +273,13 @@ export class DataConnection {
       }
     })
     if (idx >= 0){
-      if (stringArrayMessageTypesForClient.has(msg.t)){
+      if (merge === 'stringArray'){
         const oldV = JSON.parse(this.messagesToSendToRelay[idx].v) as string[]
         for(const ne of value as string[]){
           if (oldV.findIndex(e => e === ne) < 0){ oldV.push(ne) }
         }
         this.messagesToSendToRelay[idx].v = JSON.stringify(oldV)
-      }else if (ObjectArrayMessageTypes.has(msg.t)){
+      }else if (merge === 'objectArray'){
         const oldV = JSON.parse(this.messagesToSendToRelay[idx].v) as {id:string}[]
         for(const ne of value as {id:string}[]){
           const found = oldV.findIndex(e => e.id === ne.id)
