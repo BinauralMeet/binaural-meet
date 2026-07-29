@@ -88,3 +88,12 @@ export function videoLimitFor(cpu: LoadLevel, network: LoadLevel): number {
 export function audioLimitFor(network: LoadLevel): number {
   return AUDIO_LIMIT_BY_NETWORK_LEVEL[network]
 }
+
+//  remoteVideoLimit/remoteAudioLimit (room-wide policy, see PriorityCalculator.ts) use -1 for
+//  "unlimited"; the auto limits above use Infinity for the same concept. Combines the two without
+//  ever loosening the room policy -- the auto limit only ever restricts further.
+export function combineLimit(roomLimit: number, autoLimit: number): number {
+  if (autoLimit === Infinity) { return roomLimit }
+  if (roomLimit < 0) { return autoLimit }
+  return Math.min(roomLimit, autoLimit)
+}

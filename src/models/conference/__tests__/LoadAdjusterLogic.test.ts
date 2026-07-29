@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest'
-import {stepLoadLevel, makeHysteresisState, CONFIRM_WORSEN_MS, CONFIRM_RECOVER_MS} from '../LoadAdjusterLogic'
+import {stepLoadLevel, makeHysteresisState, CONFIRM_WORSEN_MS, CONFIRM_RECOVER_MS, combineLimit} from '../LoadAdjusterLogic'
 
 describe('stepLoadLevel', () => {
   it('stays at the same level when raw matches current', () => {
@@ -66,5 +66,24 @@ describe('stepLoadLevel', () => {
     expect(stepLoadLevel(state, 0, now)).toBe(1)
     now += CONFIRM_RECOVER_MS
     expect(stepLoadLevel(state, 0, now)).toBe(0)
+  })
+})
+
+describe('combineLimit', () => {
+  it('returns unlimited (-1) when both the room policy and the auto limit are unlimited', () => {
+    expect(combineLimit(-1, Infinity)).toBe(-1)
+  })
+
+  it('never loosens an unlimited auto limit into a room limit', () => {
+    expect(combineLimit(5, Infinity)).toBe(5)
+  })
+
+  it('applies the auto limit alone when the room policy is unlimited', () => {
+    expect(combineLimit(-1, 3)).toBe(3)
+  })
+
+  it('takes the smaller of the two when both restrict', () => {
+    expect(combineLimit(5, 3)).toBe(3)
+    expect(combineLimit(2, 3)).toBe(2)
   })
 })

@@ -8,6 +8,8 @@ import contentSyncService from '@stores/sharedContents/ContentSyncService'
 import {autorun, IReactionDisposer, makeObservable, observable} from 'mobx'
 import {RemoteObjectInfo, LocalObjectInfo} from './priorityTypes'
 import {priorityLog} from '@models/utils'
+import {loadAdjuster} from './LoadAdjuster'
+import {combineLimit} from './LoadAdjusterLogic'
 
 function getIdFromProducer(p: RemoteProducer){
   if (p.role === 'avatar') return p.peer.peer
@@ -124,7 +126,10 @@ export class PriorityCalculator {
     })
     autorun(() => {
       const local = participants.local
-      this.setLimits([local.remoteVideoLimit, local.remoteAudioLimit])
+      this.setLimits([
+        combineLimit(local.remoteVideoLimit, loadAdjuster.autoVideoLimit),
+        combineLimit(local.remoteAudioLimit, loadAdjuster.autoAudioLimit),
+      ])
     })
 
     this.local = extractLocalObjectInfo(participants.local)
