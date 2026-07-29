@@ -33,7 +33,7 @@ export class DataSync{
     //  window.setInterval(()=>{ this.checkRemoteAlive() }, 1000)
   }
   sendAllAboutMe(bSendRandP: boolean){
-    syncLog()('sendAllAboutMe called.')
+    syncLog('sendAllAboutMe called.')
     this.sendPoseMessage(bSendRandP)
     this.sendMouseMessage()
     participants.local.sendInformation()
@@ -51,7 +51,6 @@ export class DataSync{
   sendMouseMessage(){
     const mouseStr = mouse2Str(participants.local.mouse)
     this.connection.sendMessage(MessageType.PARTICIPANT_MOUSE, mouseStr)
-    //  console.log(`Mouse: ${mouseStr} sent.`)
   }
   sendParticipantInfo(){
     if (!participants.local.informationToSend){ return }
@@ -125,7 +124,6 @@ export class DataSync{
   }
   private onChatMessage(pid: string|undefined, msg: ChatMessageToSend){
     assert(pid)
-    //  console.log(`PRIVATE_MESSAGE_RECEIVED id:${id}, text:${msg.msg}, ts:${msg.ts}`)
     const from = participants.find(pid)
     if (from){
       chat.addMessage(new ChatMessage(msg.msg, from.id, from.information.name,
@@ -198,7 +196,6 @@ export class DataSync{
         newContent.pose = {position: [CONTENT_OUT_OF_RANGE_VALUE, CONTENT_OUT_OF_RANGE_VALUE],
           orientation: content.pose.orientation}
         contentSyncService.updateByRemoteRequest([newContent])
-        //  console.log(`content out ${cid}`)
       }
     })
   }
@@ -219,7 +216,7 @@ export class DataSync{
           chat.participantNameChanged(from, name)
         }
       }
-      syncLog()(`Info of ${from} received.`)
+      syncLog(`Info of ${from} received.`)
     }
   }
   private onParticipantTrackState(from:string|undefined, states:TrackStates){
@@ -289,7 +286,6 @@ export class DataSync{
   }
   private onYarnPhone(from:string|undefined, connectedPids:string[]){
     assert(from)
-    //  console.log(`yarn from ${from} local:${participants.localId}`)
     const myself = connectedPids.find(id => id === participants.localId)
     if (myself) {
       if (!participants.yarnPhones.has(from)){
@@ -368,9 +364,9 @@ export class DataSync{
   // tslint:disable-next-line: cyclomatic-complexity
   onBmMessage(msg: BMMessage){
     if (msg.t!==MessageType.AUDIO_LEVEL && msg.t!==MessageType.PARTICIPANT_MOUSE){
-      syncLog()(`Recv data msg: ${msg.t}: ${msg.v}`)
+      syncLog(`Recv data msg: ${msg.t}: ${msg.v}`)
     }
-    //syncLog()(`Recv data msg: ${JSON.stringify(msgs)}.`)
+    //syncLog(`Recv data msg: ${JSON.stringify(msgs)}.`)
     if (msg.v === undefined) {
       console.error(`Recv data msg ${msg.t} with value of undefined.`)
       return
@@ -406,7 +402,7 @@ export class DataSync{
       case MessageType.MOUSE_OUT: this.onMouseOut(JSON.parse(msg.v)); break
       case MessageType.CONTENT_OUT: this.onContentOut(JSON.parse(msg.v)); break
       default:
-        console.log(`Unhandled message type ${msg.t} from ${msg.p}`)
+        syncLog(`Unhandled message type ${msg.t} from ${msg.p}`)
         break
     }
   }

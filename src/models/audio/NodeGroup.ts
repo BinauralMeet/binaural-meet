@@ -3,8 +3,7 @@ import {Pose3DAudio} from '@models/utils'
 import {mulV3, normV} from '@models/utils/coordinates'
 import errorInfo from '@stores/room/ErrorInfo'
 import {BROADCAST_DISTANCE, ConfigurableParams, ConfigurableProp} from './StereoParameterTypes'
-
-const spkLog = import.meta.env.DEV ? console.log.bind(console) : (..._: any[]) => {}
+import {spkLog} from './spkLog'
 
 export function setAudioOutputDevice(audio: HTMLAudioElement, deviceId: string): Promise<boolean> {
   const audioEx:any = audio

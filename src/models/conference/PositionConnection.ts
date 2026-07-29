@@ -44,7 +44,7 @@ export class PositionConnection {
     this.room_ = room
     this.peer_ = peer
     this.name_ = name
-    positionLog()(`connect to position server(${room}, ${peer}, ${name})`)
+    positionLog(`connect to position server(${room}, ${peer}, ${name})`)
 
     const promise = new Promise<void>((resolve, reject)=>{
       if (!url){ reject(); return }
@@ -52,7 +52,7 @@ export class PositionConnection {
         console.warn(`positionSocket already exists.`)
       }
       const onOpen = () => {
-        positionLog()('position connected.')
+        positionLog('position connected.')
         const msg:MSPositionConnectMessage = {
           type: 'positionConnect',
           id: this.id,
@@ -85,7 +85,7 @@ export class PositionConnection {
         this.positionSocket?.close(3000, 'onError')
       }
       const onClose = () => {
-        positionLog()('onClose() for position socket')
+        positionLog('onClose() for position socket')
         this.disconnect()
       }
       const setHandler = () => {

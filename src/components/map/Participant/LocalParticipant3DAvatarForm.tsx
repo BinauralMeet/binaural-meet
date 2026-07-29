@@ -63,7 +63,7 @@ function render3d(ctx: AvatarImage, vrm: VRM, size: number[]){
     renderer.setSize(size[0], size[1])
     renderer.setPixelRatio(window.devicePixelRatio * 4)
     renderer.render(scene, camera)
-    formLog()(`render ${ctx.id}`)
+    formLog(`render ${ctx.id}`)
 
     //  remove
     const url = canvas.toDataURL()
@@ -94,20 +94,20 @@ function getVRMLoader() {
 
 function loadFile(mem: Member){
   const loader = getVRMLoader()
-  formLog()(`files: ${mem.files}`)
+  formLog(`files: ${mem.files}`)
 
   for(const file of mem.files){
     let aimg:AvatarImage|undefined = mem.images.find(c => c.id === file)
     if (aimg) continue
     aimg = new AvatarImage(file)
     loader.load(`${vrmUrlBase}${file}`, (gltf) => {
-      formLog()(`${file} loaded.`)
+      formLog(`${file} loaded.`)
       if (!aimg) return
       const vrm = gltf.userData.vrm;
       if (!vrm) return;
       vrm.scene.rotation.y = Math.PI
       render3d(aimg, vrm, avatarSize)
-      formLog()(`${file} vrm got.`)
+      formLog(`${file} vrm got.`)
     }, undefined, (error) => {
       console.error('Failed to load VRM file:', error)
     })

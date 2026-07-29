@@ -7,7 +7,7 @@ import {BMMessage} from './DataMessage'
 import {ClientToServerOnlyMessageType, MessageType, ObjectArrayMessageTypes, StringArrayMessageTypes} from './DataMessageType'
 import {DataSync} from '@models/conference/DataSync'
 import {AudioMeter} from '@models/audio/AudioMeter'
-import {connLog, connDebug} from '@models/utils'
+import {connLog} from '@models/utils'
 import {EventEmitter} from 'eventemitter3'
 import {MSConnectMessage} from './MediaMessages'
 import {messageLoads} from '@stores/media/MessageLoads'
@@ -15,7 +15,6 @@ import { conference } from './Conference'
 
 //  Log level and module log options
 export const dataLog = connLog
-export const dataDebug = connDebug
 export let dataRequestInterval:number = 100
 
 // config.js
@@ -52,7 +51,6 @@ export class DataConnection {
     return this.dataSocket?.readyState === WebSocket.OPEN
   }
   public setRoomProp(name:string, value:string){
-    //  console.log(`setRoomProp(${name}, ${value})`)
     this.sendMessage(MessageType.ROOM_PROP, [name, value])
     roomInfo.onUpdateProp(name, value)
   }
@@ -70,7 +68,7 @@ export class DataConnection {
     this.peer_ = peer //This is the username
 
 
-    dataLog()(`connect(${room}, ${peer})`)
+    dataLog(`connect(${room}, ${peer})`)
     const self = this as DataConnection
 
 
@@ -80,7 +78,7 @@ export class DataConnection {
         console.warn(`dataSocket already exists.`)
       }
       function onOpen(){
-        dataLog()('data connected.')
+        dataLog('data connected.')
         self.messagesToSendToRelay = []
         if (config.dataServer){
           const msg:MSConnectMessage = {
@@ -110,13 +108,11 @@ export class DataConnection {
         resolve()
       }
       function onMessage(ev: MessageEvent<any>){
-        //  console.log(`ws:`, ev)
         if (typeof ev.data === 'string') {
           self.lastReceivedTime = Date.now()
           self.relayRttLast = self.lastReceivedTime - self.lastRequestTime
 
           const msgs = JSON.parse(ev.data) as BMMessage[]
-          //  console.log(`Relay sock onMessage len:${msgs.length}`)
           //*
           if (msgs.length){
             self.receivedMessages.push(...msgs)
@@ -126,7 +122,6 @@ export class DataConnection {
             self.relayRttAverage = alpha * self.relayRttLast + (1-alpha) * self.relayRttAverage
           }
           messageLoads.rttData = self.relayRttLast
-          //console.log(`RTT data: ${self.relayRttAverage}   ${self.relayRttLast}`)
         }
       }
       function onError(){
@@ -134,7 +129,7 @@ export class DataConnection {
         self.dataSocket?.close(3000, 'onError')
       }
       function onClose(){
-        dataLog()('onClose() for dataSocket')
+        dataLog('onClose() for dataSocket')
         self.disconnect()
       }
       function setHandler(){
@@ -174,7 +169,7 @@ export class DataConnection {
       func()
     })
     this.emit('disconnect')
-    connLog()(`dataSocket emits 'disconnect'`)
+    connLog(`dataSocket emits 'disconnect'`)
     return promise
   }
   public forceClose(){
@@ -207,7 +202,6 @@ export class DataConnection {
       dataRequestInterval = Math.min(
         //Math.max((this.relayRttAverage-20) * participants.remote.size/40, 0) + 20, 3*1000)
         Math.max((this.relayRttAverage-20), 0) + 20, 3*1000)
-        //console.log(`RTTAve:${this.relayRttAverage.toFixed(2)} Last:${this.relayRttLast}  dataRequestInterval=${dataRequestInterval}`)
         const REQUEST_WAIT_TIMEOUT = dataRequestInterval + 10 * 1000  //  wait 10 sec when failed to receive message.
       if (now < deadline && this.dataSocket && !this.receivedMessages.length
         && now - this.lastRequestTime > dataRequestInterval
@@ -220,7 +214,7 @@ export class DataConnection {
           this.flushSendMessages()
       }else{
         if (now >= deadline){
-          console.debug(`Too heavy to send REQUEST_RANGE. ${(now - deadline).toFixed(0)}ms.`)
+          dataLog(`Too heavy to send REQUEST_RANGE. ${(now - deadline).toFixed(0)}ms.`)
         }
         if (now - this.lastSentTime > 3 * 1000){
           const msg:BMMessage = {
@@ -231,7 +225,6 @@ export class DataConnection {
           this.flushSendMessages()
         }
       }
-      //  console.log(`step RTT:${this.relayRttAverage} remain:${deadline - Date.now()}/${timeToProcess}`)
     }
     this.stepTimeout = window.setTimeout(()=>{this.step()}, period)
   }
@@ -289,14 +282,12 @@ export class DataConnection {
         }
         this.messagesToSendToRelay[idx].v = JSON.stringify(oldV)
       }else{  //  overwrite
-        //console.log(`overwrite messageType: ${msg.t}`)
         msg.v = JSON.stringify(value)
         this.messagesToSendToRelay[idx] = msg
       }
     }else{
       msg.v = JSON.stringify(value)
       this.messagesToSendToRelay.push(msg)
-      //console.log(`msg:${JSON.stringify(msg)} messages: ${JSON.stringify(this.messagesToSendToRelay)}`)
     }
 
     if (recorder.recording){
@@ -310,10 +301,8 @@ export class DataConnection {
     if (this.dataSocket?.readyState === WebSocket.OPEN){
       this.dataSocket.send(JSON.stringify(this.messagesToSendToRelay))
       this.lastSentTime = Date.now()
-      //  console.log(`Sent bmMessages: ${JSON.stringify(this.messagesToSendToRelay)}`)
       this.messagesToSendToRelay = []
     }else{
-      //  console.log(`Wait to send bmMessages: ${JSON.stringify(this.messagesToSendToRelay)}`)
       this.dataSocket?.addEventListener('open', ()=> {
         const waitAndSend = ()=>{
           if(this.dataSocket?.readyState !== WebSocket.OPEN){

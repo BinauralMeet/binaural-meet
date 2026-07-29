@@ -4,8 +4,7 @@ import errorInfo from '@stores/room/ErrorInfo'
 import {autorun} from 'mobx'
 import {getAudioOutputDevice, NodeGroup, PlayMode, setAudioOutputDevice} from './NodeGroup'
 import { NodeGroupForPlayback } from './NodeGroupForPlayback'
-
-const spkLog = import.meta.env.DEV ? console.log.bind(console) : (..._: any[]) => {}
+import {spkLog} from './spkLog'
 
 export class StereoManager {
   private readonly audioContext: AudioContext = new window.AudioContext()

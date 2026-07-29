@@ -7,7 +7,7 @@ import {LocalParticipant} from '@stores/participants/LocalParticipant'
 import contentSyncService from '@stores/sharedContents/ContentSyncService'
 import {autorun, IReactionDisposer, makeObservable, observable} from 'mobx'
 import {RemoteObjectInfo, LocalObjectInfo} from './priorityTypes'
-import {priorityLog, PRIORITYLOG} from '@models/utils'
+import {priorityLog} from '@models/utils'
 
 function getIdFromProducer(p: RemoteProducer){
   if (p.role === 'avatar') return p.peer.peer
@@ -227,10 +227,10 @@ export class PriorityCalculator {
 
     //  done
     this.tracksToConsume = {videos, audios}
-    if (PRIORITYLOG()){
+    if (priorityLog.enabled){
       const vstrs = videos.map(i => i.producer.role==='avatar' ? 'p:' + i.producer.peer.peer : 'c:'+i.producer.role)
       const astrs = audios.map(i => i.producer.role==='avatar' ? 'p:' + i.producer.peer.peer : 'c:'+i.producer.role)
-      console.log(`Priority: video=${vstrs} audio=${astrs}`)
+      priorityLog(`Priority: video=${vstrs} audio=${astrs}`)
     }
   }
 
@@ -276,11 +276,11 @@ export class PriorityCalculator {
     if (disposer) {
       disposer()
     }else{
-      priorityLog()(`Cannot find disposer for remote object with id: ${id}`)
+      priorityLog(`Cannot find disposer for remote object with id: ${id}`)
     }
     this.remoteDisposers.delete(id)
     this.updateSet.add(id)
-    priorityLog()('onRemoveObject:', id, this.priorityMaps[0])
+    priorityLog('onRemoveObject:', id, this.priorityMaps[0])
   }
   public onAddProducer(producer: RemoteProducer){
     const id = getIdFromProducer(producer)

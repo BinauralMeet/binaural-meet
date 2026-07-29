@@ -131,7 +131,7 @@ export class Conference implements ContentSyncTransport, ConferenceStatusTranspo
   }
   public enter(room: string, token:string|undefined, email:string|undefined):Promise<string>{
     room = fixIdString(room)
-    connLog()(`enter to room ${room}.`)
+    connLog(`enter to room ${room}.`)
 
     const promise = new Promise<string>((resolve, reject) => {
       //  check last kicked time and stop the operation if recently kicked.
@@ -153,7 +153,7 @@ export class Conference implements ContentSyncTransport, ConferenceStatusTranspo
       //  connect to peer
       const peer = participants.local.information.name.substring(0, 4).replaceAll(' ','_').replaceAll(':','_')
       this.rtcTransports.connect(room, peer, token, email).then((peer)=>{
-        connLog()('rtc connected.')
+        connLog('rtc connected.')
         //  enter succeed. set room and authInfo to the conference.
         this.room_ = room
         this.setAuthInfo(token, email)
@@ -526,7 +526,7 @@ export class Conference implements ContentSyncTransport, ConferenceStatusTranspo
         }else{
           contentTrackStore.addTrack(producer.peer.peer, producer.role, consumer.track)
         }
-        connLog()(`Conference.addConsumer(): p:${producer.id} consumed.`)
+        connLog(`Conference.addConsumer(): p:${producer.id} consumed.`)
         resolve()
       }).catch((e) => {
         console.error(`Conference.addConsumer() p:${producer.id} ${e}`)

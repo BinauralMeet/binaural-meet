@@ -1,48 +1,53 @@
-// config.js
+import {loadFromStorage, saveToStorage} from '@stores/utils/PersistentStore'
+
 declare const d:any               //  from index.html
 
-d.CONNECTIONLOG = false
-d.CONTENTLOG = false
-d.EVENTLOG = false
-d.FORMLOG = false
-d.POSITIONLOG = false
-d.PRIORITYLOG = false
-d.SENDLOG = false
-d.TRACKLOG = false                // show add, remove... of tracks
+export type LogCategory = 'CONNECTION' | 'CONTENT' | 'FORM' | 'POSITION' | 'PRIORITY'
 
+const STORAGE_KEY = 'bm:debugLog'
+const state: Record<LogCategory, boolean> = {
+  CONNECTION: false,
+  CONTENT: false,
+  FORM: false,
+  POSITION: false,
+  PRIORITY: false,
+}
+loadFromStorage(state, STORAGE_KEY)
 
-export function CONNECTIONLOG(){ return d.CONNECTIONLOG as boolean}
-export function CONTENTLOG() { return d.CONTENTLOG as boolean}
-export function FORMLOG(){ return d.FORMLOG as boolean}
-export function POSITIONLOG(){ return d.POSITIONLOG as boolean}
-export function PRIORITYLOG() { return d.PRIORITYLOG as boolean}
-export function SENDLOG(){ return d.SENDLOG as boolean}
+function isEnabled(category: LogCategory){
+  return state[category]
+}
+function setEnabled(category: LogCategory, value: boolean){
+  state[category] = value
+  saveToStorage(state, STORAGE_KEY)
+}
 
-function noLog(..._data:any[]){}
-export function connLog(){
-  return d.CONNECTIONLOG ? console.log : noLog
+export interface CategoryLogger{
+  (...args: any[]): void
+  readonly enabled: boolean
 }
-export function connDebug(){
-  return d.CONNECTIONLOG ? console.debug : noLog
+function makeLog(category: LogCategory): CategoryLogger{
+  const log = ((...args: any[]) => {
+    if (isEnabled(category)) console.log(`[${category}]`, ...args)
+  }) as CategoryLogger
+  Object.defineProperty(log, 'enabled', {get: () => isEnabled(category)})
+  return log
 }
-export function sendLog(){
-  return d.SENDLOG ? console.log : noLog
-}
-export function formLog(){
-  return d.FORMLOG ? console.log : noLog
-}
-export function positionLog(){
-  return d.POSITIONLOG ? console.log : noLog
-}
-export function priorityLog(){
-  return d.PRIORITYLOG ? console.log : noLog
-}
-export function priorityDebug(){
-  return d.PRIORITYLOG ? console.debug : noLog
-}
-export function contentLog(){
-  return d.CONTENTLOG ? console.log : noLog
-}
-export function contentDebug(){
-  return d.CONTENTLOG ? console.debug : noLog
+
+//  Each of these is directly callable (`connLog('...')`) and checks its flag on every call -- there
+//  is no separate factory step to call once and cache, so a toggle always takes effect immediately.
+//  For guarding a multi-line block instead of a single log call, use e.g. `if (priorityLog.enabled)`.
+export const connLog = makeLog('CONNECTION')
+export const contentLog = makeLog('CONTENT')
+export const formLog = makeLog('FORM')
+export const positionLog = makeLog('POSITION')
+export const priorityLog = makeLog('PRIORITY')
+
+//  Devtools entry point: `d.log.set('CONNECTION', true)` toggles a category and persists it to
+//  localStorage (survives reload), `d.log.get()` shows current state. Namespaced under `d.log`
+//  rather than flat `d.CONNECTIONLOG` to avoid colliding with `d`'s other role of exposing
+//  singletons (`d.contentStore`, `d.participants`, etc.) for debugging.
+d.log = {
+  get: () => ({...state}),
+  set: (category: LogCategory, value: boolean) => setEnabled(category, value),
 }

@@ -13,7 +13,7 @@ export const sharedContentHandler = (props: {content:SharedContentInfo}) => {
     onClose: (evt: MouseOrTouch) => {
       if (props.content.playback) return //  for playback contents do nothing
 
-      contentLog()('RndContent onClose for ', props.content.id)
+      contentLog('RndContent onClose for ', props.content.id)
       evt.stopPropagation()
       map.keyInputUsers.delete(props.content.id)
       map.keyInputUsers.delete('contentForm')
