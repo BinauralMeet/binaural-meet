@@ -73,10 +73,11 @@ export const ParticipantLayer: React.FC<{vrmAvatars:VRMAvatars}> = observer((pro
   const localMouseCursor = showLocalMouse
     ? <MouseCursor key={'M_local'} participantId={localId} /> : undefined
 
-  if (urlParameters.testBot !== null) { return <div /> }
+  const isTestBot = urlParameters.testBot !== null
 
   useEffect(()=>{
     //  console.log('ParticipantLayer mount')
+    if (isTestBot) return undefined
     const vas = props.vrmAvatars
     if (!vas) return
     const dispoLocalApplyMediaPipe = autorun(()=>{
@@ -145,7 +146,9 @@ export const ParticipantLayer: React.FC<{vrmAvatars:VRMAvatars}> = observer((pro
         vas.local = undefined
       }
     }
-  }, [props.vrmAvatars])
+  }, [props.vrmAvatars, isTestBot])
+
+  if (isTestBot) { return <div /> }
 
   //  zIndex is needed to show the participants over the share layer.
   return(

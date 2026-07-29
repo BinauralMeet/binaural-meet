@@ -1,8 +1,18 @@
 import participants from '@stores/participants/Participants'
-import {Holistic} from '@mediapipe/holistic'
+import {Holistic, Results} from '@mediapipe/holistic'
 import {FaceMesh} from '@mediapipe/face_mesh'
 import {dataRequestInterval} from '@models/conference/DataConnection'
 import {AllLandmarks} from '@models/utils/vrmIK'
+
+//  @mediapipe/holistic's `Results` (its public, typed result shape) does not declare
+//  `poseWorldLandmarks` at all, even though the underlying library does populate it at runtime --
+//  it is only reachable via this minified/internal property name. There is no public, typed
+//  alternative in the installed version of this library. If a future version of the library (or a
+//  migration to @mediapipe/tasks-vision) renames/removes this internal field, this is the one place
+//  that needs to change -- 3D pose landmarks would otherwise silently become `undefined`.
+function getPoseWorldLandmarks(results: Results){
+  return (results as any).za
+}
 
 // config.js
 declare const config:any                  //  from ../../config.js included from index.html
@@ -29,7 +39,7 @@ faceMesh.setOptions({
 
 //  camera device selection
 let videoEl: HTMLVideoElement|undefined
-let runMeidaPipe = false
+let runMediaPipe = false
 export function stopMpTrack(){
   if (videoEl){
     videoEl.srcObject = null
@@ -37,7 +47,7 @@ export function stopMpTrack(){
     videoEl = undefined
   }
   participants.local.landmarks = {}
-  runMeidaPipe = false
+  runMediaPipe = false
 }
 export function startMpTrack(faceOnly: boolean, did?:string) {
   stopMpTrack()
@@ -78,7 +88,7 @@ export function startMpTrack(faceOnly: boolean, did?:string) {
           const lms:AllLandmarks = {
             faceLm: results.faceLandmarks,
             poseLm: results.poseLandmarks,
-            poseLm3d: (results as any).za,
+            poseLm3d: getPoseWorldLandmarks(results),
             leftHandLm: results.leftHandLandmarks,
             rightHandLm: results.rightHandLandmarks,
             image: results.image
@@ -87,7 +97,7 @@ export function startMpTrack(faceOnly: boolean, did?:string) {
         })
       }
       function timer(detector:Holistic | FaceMesh){
-        if (runMeidaPipe){
+        if (runMediaPipe){
           if (videoEl?.videoWidth){
             detector.send({image: videoEl}).then(()=>{
               window.setTimeout(()=>{timer(detector)}, dataRequestInterval)
@@ -97,7 +107,7 @@ export function startMpTrack(faceOnly: boolean, did?:string) {
           }
         }
       }
-      runMeidaPipe = true
+      runMediaPipe = true
       timer(faceOnly ? faceMesh : holistic)
       resolutionFunc()
     }).catch(rejectionFunc)
