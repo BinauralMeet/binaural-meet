@@ -141,8 +141,30 @@ export class ErrorInfo {
         window.setTimeout(this.checkConnection.bind(this), 4 * 1000)
       })
     }else { //  testBot
+      this.enterRoomAsTestBot()
       window.setTimeout(this.startTestBot.bind(this), 3000)
     }
+  }
+  //  There is no human here to click TheEntrance's "Enter The Venue" button (the only other
+  //  caller of preEnter()/enter() -- see components/error/TheEntrance.tsx), and testBot mode
+  //  intentionally suppresses that dialog (see the constructor's this.clear() call above) since a
+  //  headless bot can't interact with it anyway. So testBot must join the room itself, mirroring
+  //  TheEntrance.onClose's guest-entry branch (no Google auth support -- a login-gated room simply
+  //  can't be joined by a bot).
+  private enterRoomAsTestBot(){
+    const room = urlParameters.room ?? ''
+    this.conferenceStatus?.preEnter(room).then(loginRequired => {
+      if (loginRequired){
+        console.warn(`testBot: room "${room}" requires login, testBot cannot join it.`)
+
+        return
+      }
+      participants.local.information.role = 'guest'
+      this.conferenceStatus?.enter(room, undefined, undefined).then(() => {
+        this.clear()
+        this.startToListenRtcTransports()
+      }).catch((e) => { console.warn(`testBot: failed to enter room "${room}".`, e) })
+    }).catch((e) => { console.warn(`testBot: preEnter for room "${room}" failed.`, e) })
   }
   @action clear(type?: ErrorType) {
     if (type === 'afk'){

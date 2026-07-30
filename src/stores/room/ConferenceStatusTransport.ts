@@ -14,4 +14,6 @@ export interface ConferenceStatusTransport {
   removeRtcDisconnectListener(cb: () => void): void
   isNearestVideoMuted(): boolean
   isNearestAudioMuted(): boolean
+  preEnter(room: string): Promise<boolean>
+  enter(room: string, token: string | undefined, email: string | undefined): Promise<string>
 }
