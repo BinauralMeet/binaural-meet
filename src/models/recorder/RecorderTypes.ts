@@ -82,3 +82,14 @@ const PLAYBACK_ID_PREFIX = 'p_'
 export function toPlaybackId(id: string){
   return `${PLAYBACK_ID_PREFIX}${id}`
 }
+
+//  Given ascending-sorted times, returns the count of entries with time <= target -- i.e. how
+//  many messages from the start of a sorted array should be included when fast-forwarding to
+//  `target` (Player.ts's seek()). Extracted as a pure, isolable function after a bug where an
+//  extra `- 1` dropped exactly the last qualifying message from every seek.
+export function countUpTo(times: number[], target: number): number {
+  for (let i = 0; i < times.length; i++) {
+    if (times[i] > target) { return i }
+  }
+  return times.length
+}

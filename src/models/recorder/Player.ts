@@ -9,7 +9,7 @@ import {registerMessageType, getMessageTypeEntry} from '@models/conference/Messa
 import {parseMessageValue, stringifyMessageValue} from '@models/conference/DataMessagePayloads'
 import { MediaClip } from '@stores/media/MediaClip'
 import {MediaKind, BlobKind, recLog, BlobHeader, Message, MessagesHeader, RecordHeader,
-  toPlaybackId, PLAYBACK_TICK_MS} from './RecorderTypes'
+  toPlaybackId, PLAYBACK_TICK_MS, countUpTo} from './RecorderTypes'
 import participants from '@stores/participants/Participants'
 import playbackStore from '@stores/sharedContents/PlaybackStore'
 import { VrmRig } from '@models/utils/vrmIK'
@@ -196,8 +196,14 @@ class Player{
     medias.sort((a,b) => a.time - b.time)
     this.currentTime_ = this.startTime + offset
     this.clearPlayingMedia()
-    let ffTo = messages.findIndex(m=>m.time > this.currentTime) - 1
-    if (ffTo === -2) ffTo = messages.length
+    //  ffTo = count of messages with time <= currentTime, to include in the fast-forward pass
+    //  below. A previous version computed this as `findIndex(time > currentTime) - 1`, which
+    //  dropped exactly the last qualifying message from every seek -- e.g. seeking to a time
+    //  between a content's add and its later remove would summarize as if the add never
+    //  happened (content missing), and seeking to a time after a remove would summarize as if
+    //  the remove never happened (content stuck visible), depending on which message landed on
+    //  the boundary. See RecorderTypes.ts's countUpTo() for the (now unit-tested) index math.
+    const ffTo = countUpTo(messages.map(m => m.time), this.currentTime)
     if (ffTo > 0){  //  first forward to ffTo
       const ffMsgs = messages.splice(0, ffTo)
       this.fastForwardMessage(ffMsgs, this.currentTime)
