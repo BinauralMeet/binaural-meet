@@ -11,20 +11,11 @@ import React, {useEffect, useRef} from 'react'
 import ResizeObserver from 'react-resize-observer'
 import {useGesture} from 'react-use-gesture'
 import {map, participants} from '@stores/'
+import {limitScale as limitScaleLogic} from './BaseLogic'
 
 //  utility
 function limitScale(currentScale: number, scale: number): number {
-  const targetScale = currentScale * scale
-
-  if (targetScale > SCALE_LIMIT.maxScale) {
-    return SCALE_LIMIT.maxScale / currentScale
-  }
-
-  if (targetScale < SCALE_LIMIT.minScale) {
-    return SCALE_LIMIT.minScale / currentScale
-  }
-
-  return scale
+  return limitScaleLogic(currentScale, scale, SCALE_LIMIT.minScale, SCALE_LIMIT.maxScale)
 }
 
 interface StyleProps {
