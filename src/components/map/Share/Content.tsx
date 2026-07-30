@@ -90,13 +90,19 @@ export const RawContent: React.FC<ContentProps> = observer((props:ContentProps) 
   return <>{renderer(props, {classes, editing})}</>
 })
 
-export const Content = React.memo(
-  (props: ContentProps) =>
-    React.useMemo(() => <RawContent {...props} />,
-    //  eslint-disable-next-line react-hooks/exhaustive-deps
-    [props.content.url, props.content.id, props.content.type, contentSyncService.editing === props.content.id,
-     props.content.pose, props.content.size, props.content.originalSize]),
-  (prev, next) =>
-    prev.content.id === next.content.id
-)
+//  NOT wrapped in React.memo: an outer memo here previously used an `id`-only comparator
+//  (content id never changes for a given piece of content, so it always reported "equal" and
+//  permanently blocked re-renders), which shadowed this useMemo's own, correctly-scoped
+//  dependency list before it ever got a chance to run. That silently broke propagation of any
+//  content update that doesn't change identity -- e.g. a remote peer's YouTube seek/pause/rate
+//  change (a `url`-only update) never re-rendered the player for other viewers, while
+//  position/size dragging happened to still work since RndContent (the parent) reads those
+//  fields directly via its own MobX observer subscription, bypassing this component entirely.
+//  This useMemo alone is the correct/sufficient memoization: it only creates a new <RawContent>
+//  element when one of the listed fields actually changes.
+export const Content = (props: ContentProps) =>
+  React.useMemo(() => <RawContent {...props} />,
+  //  eslint-disable-next-line react-hooks/exhaustive-deps
+  [props.content.url, props.content.id, props.content.type, contentSyncService.editing === props.content.id,
+   props.content.pose, props.content.size, props.content.originalSize])
 Content.displayName = 'Content'
