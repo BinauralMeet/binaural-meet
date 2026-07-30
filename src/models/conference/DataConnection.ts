@@ -7,6 +7,7 @@ import {BMMessage} from './DataMessage'
 import {ClientToServerOnlyMessageType, MessageType, MessageValue} from './DataMessageType'
 import {MessageTypePayloadMap, stringifyMessageValue} from './DataMessagePayloads'
 import {getMessageTypeEntry, registerMessageType} from './MessageTypeRegistry'
+import {findQueueSlot} from './DataConnectionQueueLogic'
 import {DataSync} from '@models/conference/DataSync'
 import {AudioMeter} from '@models/audio/AudioMeter'
 import {connLog} from '@models/utils'
@@ -263,15 +264,7 @@ export class DataConnection {
     //  match the property name so e.g. queuing backgroundFill then backgroundColor
     //  before a flush doesn't let the second overwrite/drop the first.
     const roomPropName = type === MessageType.ROOM_PROP ? (value as [string, string])[0] : undefined
-    const idx = merge === 'instant' ? -1 : this.messagesToSendToRelay.findIndex(m => {
-      if (m.t !== msg.t || m.r !== msg.r || m.p !== msg.p || m.d !== msg.d){ return false }
-      if (roomPropName === undefined){ return true }
-      try {
-        return (JSON.parse(m.v) as [string, string])[0] === roomPropName
-      } catch {
-        return false
-      }
-    })
+    const idx = findQueueSlot(this.messagesToSendToRelay, msg, merge, roomPropName)
     if (idx >= 0){
       if (merge === 'stringArray'){
         const oldV = JSON.parse(this.messagesToSendToRelay[idx].v) as string[]
