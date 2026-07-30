@@ -11,7 +11,7 @@ import React, {useEffect, useRef} from 'react'
 import ResizeObserver from 'react-resize-observer'
 import {useGesture} from 'react-use-gesture'
 import {map, participants} from '@stores/'
-import {limitScale as limitScaleLogic} from './BaseLogic'
+import {limitScale as limitScaleLogic, thirdPersonViewRotationAngle} from './BaseLogic'
 
 //  utility
 function limitScale(currentScale: number, scale: number): number {
@@ -80,19 +80,12 @@ export const Base: React.FC = observer((props) => {
   const center = transformPoint2D(matrix, participants.local.pose.position)
   if (thirdPersonView !== mem.prebThirdPersonView) {
     mem.prebThirdPersonView = thirdPersonView
-    if (thirdPersonView) {
-      const mapRot = radian2Degree(extractRotation(matrix))
-      if (mapRot) {
-        const newMatrix = rotateMap(-mapRot, center)
-        map.setCommittedMatrix(newMatrix)
-      }
-    }else {
-      const avatarRot = participants.local.pose.orientation
-      const mapRot = radian2Degree(extractRotation(matrix))
-      if (avatarRot + mapRot) {
-        const newMatrix = rotateMap(-(avatarRot + mapRot), center)
-        map.setCommittedMatrix(newMatrix)
-      }
+    const mapRot = radian2Degree(extractRotation(matrix))
+    const avatarRot = participants.local.pose.orientation
+    const angle = thirdPersonViewRotationAngle(thirdPersonView, mapRot, avatarRot)
+    if (angle !== undefined) {
+      const newMatrix = rotateMap(angle, center)
+      map.setCommittedMatrix(newMatrix)
     }
   }
 
