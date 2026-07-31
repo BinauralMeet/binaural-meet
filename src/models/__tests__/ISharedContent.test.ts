@@ -8,6 +8,8 @@ import {
   isContentRtc,
   isContentOutOfRange,
   doseContentEditingUseKeyinput,
+  contentsToSend,
+  contentsToSave,
 } from '../ISharedContent'
 import type { ISharedContent } from '../ISharedContent'
 
@@ -234,5 +236,52 @@ describe('doseContentEditingUseKeyinput', () => {
     expect(doseContentEditingUseKeyinput(makeContent({ type: 'iframe' }))).toBe(false)
     expect(doseContentEditingUseKeyinput(makeContent({ type: 'gdrive' }))).toBe(false)
     expect(doseContentEditingUseKeyinput(makeContent({ type: 'img' }))).toBe(false)
+  })
+})
+
+//  Regression: contentsToSend()/contentsToSave() used to strip zIndex/playback/zones (and, for
+//  Save, id) by deleting them directly on the passed-in objects. Every call site
+//  (sendContentUpdateRequest, Recorder.start(), downloadItems()) passes the *same* content
+//  objects that ContentStore.all/sorted -- and thus the live map rendering -- also hold onto, so
+//  that in-place delete silently corrupted the on-screen content the moment it was next sent:
+//  zIndex is only recomputed by ContentStore's own reactive autorun on roomContents changes, and
+//  deleting a property on an object already in that Map doesn't trigger it again, so the content
+//  was stuck at z-index:auto (rendering behind anything else with an explicit zIndex, e.g. a
+//  wallpaper image) until some unrelated store change happened to force a fresh recompute.
+describe('contentsToSend', () => {
+  it('does not mutate the objects passed in', () => {
+    const original = makeContent({ zIndex: 5 })
+    contentsToSend([original])
+    expect((original as any).zIndex).toBe(5)
+  })
+
+  it('strips zIndex/playback/zones from the returned copy', () => {
+    const original = makeContent({ zIndex: 5, playback: true })
+    const [sent] = contentsToSend([original])
+    expect((sent as any).zIndex).toBeUndefined()
+    expect((sent as any).playback).toBeUndefined()
+  })
+
+  it('keeps the original id on the returned copy', () => {
+    const original = makeContent({ id: 'keep-me' })
+    const [sent] = contentsToSend([original])
+    expect(sent.id).toBe('keep-me')
+  })
+})
+
+describe('contentsToSave', () => {
+  it('does not mutate the objects passed in', () => {
+    const original = makeContent({ id: 'keep-me', zIndex: 5 })
+    contentsToSave([original])
+    expect(original.id).toBe('keep-me')
+    expect((original as any).zIndex).toBe(5)
+  })
+
+  it('strips id/zIndex/playback/zones from the returned copy', () => {
+    const original = makeContent({ id: 'drop-me', zIndex: 5, playback: true })
+    const [saved] = contentsToSave([original])
+    expect((saved as any).id).toBeUndefined()
+    expect((saved as any).zIndex).toBeUndefined()
+    expect((saved as any).playback).toBeUndefined()
   })
 })

@@ -58,14 +58,21 @@ export interface ISharedContentToSend extends MapObject, SharedContentDataToSend
 export interface ISharedContentToSave extends MapObject, SharedContentDataToSend{
 }
 
+//  Callers (sendContentUpdateRequest, Recorder.start()) pass in the same live content objects
+//  that ContentStore.all/sorted (and thus RndContent's rendering) also hold onto -- e.g.
+//  zIndex is recomputed by ContentStore's own reactive autorun, not stored durably, so deleting
+//  it in place here would corrupt the currently-displayed content the moment it's next sent,
+//  silently dropping it to z-index:auto (stacks behind anything else that still has one, like a
+//  wallpaper image) until some unrelated store change happens to trigger a fresh recompute.
+//  Strip the transport-irrelevant fields from a copy instead.
 export function contentsToSend(them: ISharedContent[]) {
-  for(const content of them){
-    const c = content as any
+  return them.map(content => {
+    const c = {...content} as any
     delete c.playback
     delete c.zIndex
     delete c.zones
-  }
-  return them as ISharedContentToSend[]
+    return c
+  }) as ISharedContentToSend[]
 }
 export function receiveToContents(them: ISharedContentToSend[]) {
   for(const content of them){
@@ -75,15 +82,18 @@ export function receiveToContents(them: ISharedContentToSend[]) {
   }
   return them as ISharedContent[]
 }
+//  Same reasoning as contentsToSend() above -- downloadItems() (ShareMenu.tsx) passes
+//  contentStore.all directly, so mutating in place would delete id/zIndex/etc. from the
+//  currently-displayed content just from exporting the room. Strip from a copy instead.
 export function contentsToSave(them: ISharedContent[]) {
-  for(const content of them){
-    const c = content as any
+  return them.map(content => {
+    const c = {...content} as any
     delete c.playback
     delete c.zIndex
     delete c.zones
     delete c.id
-  }
-  return them as ISharedContentToSave[]
+    return c
+  }) as ISharedContentToSave[]
 }
 let loadToContentConut = 1
 export function loadToContents(them: ISharedContentToSend[]) {
