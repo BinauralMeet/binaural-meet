@@ -199,7 +199,17 @@ export class DataConnection {
       while(now < deadline && this.receivedMessages.length){
         const msg = this.receivedMessages.shift()
         if (msg){
-          this.sync.onBmMessage(msg)
+          //  A single malformed/unexpected message must not kill this loop -- step() only
+          //  reschedules itself (via the setTimeout at the bottom of this function) if it
+          //  returns normally, so an uncaught exception here would silently stop all further
+          //  message processing (and, transitively, all further sends -- no more PONGs would
+          //  go out, so the server's websocketTimeout would eventually disconnect this client).
+          //  Same hardening as dataServer.ts's Phase 0 fix, mirrored on the client.
+          try{
+            this.sync.onBmMessage(msg)
+          }catch(e){
+            console.error(`Error handling received message ${msg.t}:`, e)
+          }
         }
         now = Date.now()
       }
