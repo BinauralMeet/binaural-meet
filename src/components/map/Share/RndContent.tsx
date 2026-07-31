@@ -291,6 +291,16 @@ export const RndContent: React.FC<RndContentProps> = observer((props:RndContentP
       }
       member.buttons = 0
     },
+  }
+  //  Stop propagation while editing so that placing a text cursor inside the content (e.g. a
+  //  Text content's <textarea>, which fills nearly the whole content area) isn't misinterpreted
+  //  as starting a drag. This guard must NOT apply to the title bar: it's a dedicated drag
+  //  handle, entirely separate from the editable area, and needs to keep working immediately
+  //  after content is created (createText() in ShareMenu.tsx auto-enters editing on creation --
+  //  without this split, a freshly-created content couldn't be repositioned at all until the
+  //  user first ended editing).
+  const handlerForContent:UserHandlersPartial = {
+    ...handlerForTitle,
     onPointerUp: (arg) => { if(editing) {arg.stopPropagation()} },
     onPointerDown: (arg) => { if(editing) {arg.stopPropagation()} },
     onMouseUp: (arg) => { if(editing) {arg.stopPropagation()} },
@@ -298,7 +308,6 @@ export const RndContent: React.FC<RndContentProps> = observer((props:RndContentP
     onTouchStart: (arg) => { if(editing) {arg.stopPropagation() }},
     onTouchEnd: (arg) => { if(editing) {arg.stopPropagation()} },
   }
-  const handlerForContent:UserHandlersPartial = Object.assign({}, handlerForTitle)
   handlerForContent.onDrag = (args: FullGestureState<'drag'>) => {
     //  console.log('onDragBody:', args.delta)
     if (isFixed || map.keyInputUsers.has(props.content.id)) { return }
