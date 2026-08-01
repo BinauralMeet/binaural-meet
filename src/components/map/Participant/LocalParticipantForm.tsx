@@ -13,22 +13,13 @@ import {Observer} from 'mobx-react-lite'
 import React, {useState} from 'react'
 import {SketchPicker} from 'react-color'
 import {SignalQualityButton} from './SignalQuality'
-import {Choose3DAvatar, vrmUrlBase} from './LocalParticipant3DAvatarForm'
+import {Choose3DAvatar} from './LocalParticipant3DAvatarForm'
+import {makeEmailDisp, makeEmailInput} from '@models/utils/avatarUrl'
 import {Grid} from '@material-ui/core'
 import {participants, map, roomInfo} from '@stores/'
 import {gDriveAuth} from '@stores/sharedContents/GDriveUtil'
 
 const LABEL_FONT_SIZE = 12
-
-function makeEmailDisp(email: string){
-  const lastSlashIdx = email.lastIndexOf('/')+1
-  const base = email.substring(0, lastSlashIdx)
-  if (base === vrmUrlBase){
-    const file = email.substring(lastSlashIdx)
-    return file
-  }
-  return email
-}
 
 export interface LocalParticipantFormProps{
   open: boolean
@@ -159,7 +150,7 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
                   value={makeEmailDisp(local.information.email)}
                   style={{...tfDivStyle, marginTop:8}}
                   inputProps={{style: tfIStyle, autoFocus:true}} InputLabelProps={{style: tfLStyle}}
-                  onChange={event => local.information.email = event.target.value}
+                  onChange={event => local.information.email = makeEmailInput(event.target.value)}
                   onKeyDown={onKeyDown} fullWidth={true}
                 />
                 <Button variant="contained" size="small"
