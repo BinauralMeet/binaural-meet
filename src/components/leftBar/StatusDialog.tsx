@@ -11,9 +11,18 @@ import {ConnectionStat} from '@components/map/Participant/SignalQuality'
 import {messageLoads} from '@stores/media/MessageLoads'
 import {Z_INDEX} from '@components/utils/styles'
 import {loadAdjuster} from '@models/conference/LoadAdjuster'
+import {participants} from '@stores/'
 
-function limitStr(limit: number){
-  return limit === Infinity ? '∞' : String(limit)
+//  One-line summary of the auto load adjustment state: whether it is on, the current
+//  cpu/network levels, and only those caps it actually applies right now.
+function adjustStr(){
+  if (!participants.local.autoLoadAdjustment){ return 'off' }
+  const {cpu, network} = loadAdjuster.loadState
+  const limits:[string, number][] = [['avatar', loadAdjuster.autoAvatarLimit],
+    ['video', loadAdjuster.autoVideoLimit], ['audio', loadAdjuster.autoAudioLimit]]
+  const applied = limits.filter(([, limit]) => limit !== Infinity)
+    .map(([name, limit]) => `${name}≤${limit}`).join(' ')
+  return `cpu${cpu}/net${network} ${applied ? applied : 'no limit'}`
 }
 
 declare const config:any             //  from ../../config.js included from index.html
@@ -94,11 +103,7 @@ export const StatusDialog: React.FC<StatusDialogProps> = observer((props: Status
         >{t('emResetData')}</Button>
         <br />
         <div> Load: rtc  {(loads.loadRtc*100).toPrecision(3)}%  data {(loads.loadData*100).toPrecision(3)}% &nbsp; RTT:{loads.rttData}ms</div>
-        {(loadAdjuster.loadState.cpu > 0 || loadAdjuster.loadState.network > 0) &&
-          <div> Auto load adjustment: cpu={loadAdjuster.loadState.cpu} network={loadAdjuster.loadState.network}
-            &nbsp; avatar&le;{limitStr(loadAdjuster.autoAvatarLimit)}
-            &nbsp; video&le;{limitStr(loadAdjuster.autoVideoLimit)}
-            &nbsp; audio&le;{limitStr(loadAdjuster.autoAudioLimit)}</div>}
+        <div> Auto: {adjustStr()}</div>
         <div> Data: {stat.data}</div>
         {stat.servers.length === 0 ? <div>'No RTC server'</div> :
           stat.servers.map((server, idx) => <div key={idx}>
