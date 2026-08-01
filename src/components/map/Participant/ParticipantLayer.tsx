@@ -97,7 +97,9 @@ export const ParticipantLayer: React.FC<{vrmAvatars:VRMAvatars}> = observer((pro
             dispoLocal()
             dispoLocalApplyMediaPipe()
           }
-        })
+        //  Failure is already reported by loadVrmAvatar(); an avatar that won't load
+        //  simply stays absent.
+        }).catch(()=>{})
       }
     })
     const dispo = autorun(()=>{
@@ -122,7 +124,7 @@ export const ParticipantLayer: React.FC<{vrmAvatars:VRMAvatars}> = observer((pro
                   dispoRemoteApplyRig()
                   dispoRemote()
                 }
-              })
+              }).catch(()=>{})
             }
           })
         }

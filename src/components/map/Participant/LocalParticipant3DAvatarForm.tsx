@@ -12,6 +12,8 @@ import { participants } from '@stores/index'
 import {formLog} from '@models/utils'
 import { freeScene, freeVrm } from '@models/utils/vrm'
 import { ImageSearch } from '@material-ui/icons'
+import {withCorsRetry} from '@models/api/CORS'
+import {vrmUrlBase} from '@models/utils/avatarUrl'
 
 export interface LocalParticipantFormProps{
   open: boolean
@@ -81,7 +83,6 @@ function render3d(ctx: AvatarImage, vrm: VRM, size: number[]){
   }
 }
 
-export const vrmUrlBase = 'https://binaural.me/public_packages/uploader/vrm/avatar/'
 const avatarSize = [150,200]
 
 function getVRMLoader() {
@@ -100,7 +101,9 @@ function loadFile(mem: Member){
     let aimg:AvatarImage|undefined = mem.images.find(c => c.id === file)
     if (aimg) continue
     aimg = new AvatarImage(file)
-    loader.load(`${vrmUrlBase}${file}`, (gltf) => {
+    withCorsRetry(`${vrmUrlBase}${file}`, url => new Promise<any>((resolve, reject)=>{
+      loader.load(url, resolve, undefined, reject)
+    })).then((gltf) => {
       formLog(`${file} loaded.`)
       if (!aimg) return
       const vrm = gltf.userData.vrm;
@@ -108,7 +111,7 @@ function loadFile(mem: Member){
       vrm.scene.rotation.y = Math.PI
       render3d(aimg, vrm, avatarSize)
       formLog(`${file} vrm got.`)
-    }, undefined, (error) => {
+    }).catch((error) => {
       console.error('Failed to load VRM file:', error)
     })
     mem.images.push(aimg)
@@ -125,6 +128,7 @@ export const Choose3DAvatar: React.FC<LocalParticipantFormProps> = (props: Local
   }
 
   const [list, setList] = React.useState<JSX.Element[]|undefined>()
+  const [error, setError] = React.useState<string>('')
   const memberRef = React.useRef<Member|null>(null)
 
   useEffect(()=>{
@@ -135,11 +139,19 @@ export const Choose3DAvatar: React.FC<LocalParticipantFormProps> = (props: Local
       }
     }
     const mem = memberRef.current
-    const vrmUrl = `${vrmUrlBase}index.php?files`
-    const req = new XMLHttpRequest();
-    req.onload = (e) => {
-      const text = req.responseText
-      mem.files = JSON.parse(text)
+    withCorsRetry(`${vrmUrlBase}index.php?files`, url => fetch(url).then((res) => {
+      if (!res.ok){ throw new Error(`${res.status} ${res.statusText} from ${url}`) }
+
+      return res.json() as Promise<string[]>
+    //  Report failures: without this the dialog just stays empty, which is indistinguishable
+    //  from "the collection is empty".
+    })).catch((e) => {
+      setError(`Failed to fetch the avatar list from ${vrmUrlBase} -- ${e.message}`)
+
+      return undefined
+    }).then((files) => {
+      if (!files){ return }
+      mem.files = files
       loadFile(mem)
       setList(mem?.images.map((aimg)=>{
         return <div key={aimg.id} style={{ display:'inline-block', padding:'0 10 0 10',
@@ -158,9 +170,7 @@ export const Choose3DAvatar: React.FC<LocalParticipantFormProps> = (props: Local
           {aimg.id}
         </div>
       }) )
-    };
-    req.open("GET", vrmUrl);
-    req.send();
+    })
 
     return () => {
       mem.images.forEach(aimg => {
@@ -187,6 +197,7 @@ export const Choose3DAvatar: React.FC<LocalParticipantFormProps> = (props: Local
         {t('btClose')}</Button>
     </DialogTitle>
     <DialogContent>
+      {error ? <div style={{color:'red'}}>{error}</div> : undefined}
       <div style={{display:'flex', flexWrap:'wrap', alignItems:'top', gap:'10px 10px'}}>
         {list}
       </div>

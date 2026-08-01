@@ -6,6 +6,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { addV, subV } from 'react-use-gesture'
 import { makeObservable, observable } from 'mobx'
 import { createStrcture3DEx, drawFikStructure, FikStructure3DEx, updateStructure3DEx, setRestingPoseToVrm, AllLandmarks } from './vrmIK'
+import { withCorsRetry } from '@models/api/CORS'
 
 declare const d:any                  //  from index.html
 
@@ -142,7 +143,7 @@ export function updateVrmAvatar(avatar:VRMAvatar|undefined, participant: Partici
         updateNameLabel(avatar, participant)
         //  console.log(`avatar for ${participant.id} loaded.`)
         resolve(avatar)
-      })
+      }).catch(reject)
     }else{
       updateNameLabel(avatar, participant)
       resolve(avatar)
@@ -250,8 +251,12 @@ function loadVrmAvatar(participant: ParticipantBase){
       loader = new GLTFLoader()
       loader.register(parser => new VRMLoaderPlugin(parser))
     }
-    loader.load(
-      participant.information.avatarSrc,
+    //  The .vrm files (binaural.me's collection included) are served without CORS headers, so
+    //  they only load directly when the app is served from that same origin; elsewhere the
+    //  retry goes through the CORS proxy.
+    withCorsRetry(participant.information.avatarSrc, url => new Promise<any>((res, rej)=>{
+      loader.load(url, res, undefined, rej)
+    })).then(
       (gltf) => {
         const vrm = gltf.userData.vrm as VRM
         if (!vrm) return;
@@ -270,7 +275,10 @@ function loadVrmAvatar(participant: ParticipantBase){
         }
         resolve(vrm)
       },
-    )
+    ).catch((e)=>{
+      console.error(`Failed to load VRM avatar ${participant.information.avatarSrc}:`, e)
+      reject(e)
+    })
   })
   return promise
 }
