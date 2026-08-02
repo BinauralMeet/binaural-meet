@@ -102,12 +102,13 @@ export interface MSCreateTransportMessage extends MSPeerMessage{
 }
 //  s->c
 export interface MSCreateTransportReply extends MSPeerMessage{
-  transport: string
-  iceParameters:mediasoup.types.IceParameters
-  iceCandidates:mediasoup.types.IceCandidate[]
-  dtlsParameters:mediasoup.types.DtlsParameters
+  transport?: string
+  iceParameters?:mediasoup.types.IceParameters
+  iceCandidates?:mediasoup.types.IceCandidate[]
+  dtlsParameters?:mediasoup.types.DtlsParameters
   dir: MSTransportDirection
   iceServers?: RTCIceServer[]
+  error?: string
 }
 
 export interface MSConnectTransportMessage extends MSPeerMessage{

@@ -499,11 +499,17 @@ export class RtcConnection{
   }
   private onCreateTransport(base: MSMessage){
     const msg = base as MSCreateTransportReply
-    const {type, peer, transport, iceServers, ...params} = msg
+    if (msg.error || !msg.transport || !msg.iceParameters || !msg.iceCandidates || !msg.dtlsParameters){
+      this.rejectMessage(msg, msg.error ?? 'createTransport: server sent an incomplete reply')
+
+      return
+    }
     const option: mediasoup.types.TransportOptions = {
-      id:transport,
-      ...params,
-      iceServers,
+      id: msg.transport,
+      iceParameters: msg.iceParameters,
+      iceCandidates: msg.iceCandidates,
+      dtlsParameters: msg.dtlsParameters,
+      iceServers: msg.iceServers,
       iceTransportPolicy: 'all',
     }
 
