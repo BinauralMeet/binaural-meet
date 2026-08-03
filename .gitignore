@@ -24,3 +24,6 @@ yarn-error.log*
 
 # codewhale (terminal coding agent) session state
 .codewhale/
+
+# Claude Code local session/permission state
+.claude/
