@@ -1,30 +1,49 @@
-# Protocol for Shared contents
+# Shared contents
 
-### Specification
-- Each participant can share new content.
-  - A content has id, type, text (URL), pose, size, name, and owner_name properties.
+> Rewritten after the `refactor/architecture-cleanup` roadmap (Phase 5/6) split
+> the former `SharedContents` god-class into four focused stores. This
+> describes the current shape; see that branch's commit history for how it
+> got here.
 
-- Way to sync
-  - Contents are owned by dataServer.
-  - The dataServer does not distinguish the owner of the content.
-  - When updated, the packet from the participant will update the server's content and be relayed to necessary participants.
+### Data model
 
-```tsx
-class MapObject{
-  pose: Pose2D
-}
-class Content: MapObject{
-  id:string
-  type:string
-  url:string
-  size: [number, number]
-  zorder: number //  unix timestamp when shared or moved to top.
-}
+- `ISharedContent` (`src/models/ISharedContent.ts`) is a single interface, not
+  a union type: every content has an `id`, `type` (`ContentType` — `'img' |
+  'text' | 'pdf' | 'youtube' | 'iframe' | 'screen' | 'camera' | 'gdrive' |
+  'whiteboard' | 'playbackScreen' | 'playbackCamera' | ''`), pose, size,
+  `zorder`, `name`/`ownerName`.
+- Behavior that varies per type (editable? maximizable? requires login? is an
+  RTC track?) lives as free functions in that same file
+  (`isContentEditable`, `isContentMaximizable`, `isContentRtc`, ...), each a
+  `switch` over `c.type` ending in `assertNeverContentType(c.type)` — adding a
+  new `ContentType` without updating one of these switches is a compile error,
+  not a silent fallthrough.
+- `zorder` is a Unix timestamp (ms / `TIME_RESOLUTION_IN_MS`) set when a
+  content is shared or moved to top/bottom (`moveContentToTop`/
+  `moveContentToBottom` in `ContentStore.ts`). Wallpapers use a separate low
+  range (`<= TEN_YEAR`); everything else sits above it.
 
-```
-- Each participant can control all shared contents.
-- Even when a participant leaves the room, the contents will remain.
-- When all participants leave the room, the contents in the room will gone.
+### The four stores (`src/stores/sharedContents/`)
 
-### Arbitrations
-- When two or more contents have the same zorder, the zorder of the content with the larger id will be incremented.
+| Store | Owns | Notes |
+|---|---|---|
+| `ContentSyncService` | `roomContents`/`roomContentsInfo` (the raw synced collections), local CRUD (`addLocalContent`, `removeByLocal`, ...), remote update/remove handling, the "who is editing" flag | Sends/receives through `ContentSyncTransport`, injected once by `Conference` via `setSyncTransport(this)` — this store (like other stores) never imports `@models/conference` directly, only the small transport interface |
+| `ContentTrackStore` | `contentTracks` (cid → `MediaStreamTrack[]`), `mainScreenStream`/`mainScreenOwner` | Local RTC track bookkeeping only, no network protocol of its own |
+| `PlaybackStore` | `playbackContents`, `playbackClips` (recorded-clip playback) | Fully independent of sync/RTC — a recorded content is never sent over the wire |
+| `ContentStore` | Derived view state: `all`/`sorted`/`zones`/`closedZones`, `pasted`, `screenFps` | Reactively recomputed (MobX `autorun`) from `ContentSyncService.roomContents` + `PlaybackStore.playbackContents`; this is what components render from |
+
+`SharedContentCreator.ts` holds the factory functions (`createContent`,
+`defaultContent`) and the send/save field allowlists used when serializing a
+content for the wire or for export.
+
+### Sync behavior
+
+- Contents are owned by the server (`dataServer`); the server does not
+  distinguish who owns a content.
+- A local update goes through `ContentSyncService.updateByLocal()`, which
+  writes `roomContents` locally and calls
+  `syncTransport.sendContentUpdateRequest()` — relayed to other participants
+  by the server.
+- Any participant can update or remove any content. A content outlives the
+  participant that created it; it is only gone once every participant has
+  left the room.

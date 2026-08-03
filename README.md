@@ -16,5 +16,5 @@ If you plan a meet in the future, please reserve it by adding the schedule and t
 
 
 ## Node and yarn currently used:
-# node v20.14.0
+# node >=20.19 (required by vite 8 / vitest 4 / jsdom 29's `engines` field)
 # yarn 1.22.22

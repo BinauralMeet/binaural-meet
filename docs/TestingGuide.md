@@ -1,6 +1,9 @@
-# Testing Guide (ai1.binaural.me)
+# Testing Guide (ai1.haselab.net)
 
 このサーバー上で Binaural Meet の開発・テストを行う際の手順。
+サーバー起動やmediasoupポート運用など、クライアント/サーバーをまたぐ運用面の詳細は
+`bm/` ワークスペース側のドキュメントを参照(このリポジトリ単体では見えない場所に
+あるので、そちらにアクセスできる場合のみ)。
 
 ## 1. 開発サーバーの起動
 
