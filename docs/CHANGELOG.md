@@ -5,6 +5,13 @@
 
 日付が付く記録はここに。現在形の事実は各 topic README へ。
 
+## 2026-08-05 — conferenceトピックを新設 {#2026-08-05-conference-doc-added}
+
+`src/models/conference/`(通話・データ同期・位置情報を束ねる`Conference`本体)には
+設計・仕様のdocsが無かったので、コード(`Conference.ts`および
+`RtcConnection`/`RtcTransports`/`DataConnection`/`DataSync`/`PositionConnection`/
+`MediaMessages`等)を読んで新設した。
+
 ## 2026-08-05 — auto-load-adjustment-designを実装内容に合わせて更新 {#2026-08-05-auto-load-adjustment-doc-sync}
 
 `auto-load-adjustment-design`は2026-07-29時点のドラフトのままで、同日中に
