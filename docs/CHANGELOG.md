@@ -5,6 +5,15 @@
 
 日付が付く記録はここに。現在形の事実は各 topic README へ。
 
+## 2026-08-05 — auto-load-adjustment-designを実装内容に合わせて更新 {#2026-08-05-auto-load-adjustment-doc-sync}
+
+`auto-load-adjustment-design`は2026-07-29時点のドラフトのままで、同日中に
+実装された`LoadAdjuster.ts`/`LoadAdjusterLogic.ts`(コミット `fb6e1d0`〜
+`733808a`、"N/N"の6コミット、いずれも`master`に直接コミット済み)の内容と
+食い違っていた。ドキュメントを現状の実装に合わせて書き直し、ドラフトから
+簡略化した点(検出指標の単一化、CPU対応を人数カリングに統一、等)は
+`design`節に移した。
+
 ## 2026-08-05 — docs を `bm/docs/binaural-meet/` からこのリポジトリに移動 {#2026-08-05-docs-moved-in}
 
 それまで architecture/development-guide/testing-guide/shared-contents/
