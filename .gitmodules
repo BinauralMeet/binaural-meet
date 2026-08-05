@@ -1,0 +1,3 @@
+[submodule "docs/bin"]
+	path = docs/bin
+	url = https://github.com/haselab-net/doc-tool.git
