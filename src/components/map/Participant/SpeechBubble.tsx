@@ -50,6 +50,10 @@ export const SpeechBubble: React.FC<SpeechBubbleProps> = (props) => {
       left: 0,
       top: -(props.size * HALF + 6),
       transform: 'translate(-50%, -100%)',
+      //  The participant's root div is 0x0 (it only positions things), so an absolutely
+      //  positioned child resolves percentage/auto widths against zero and wraps into a
+      //  one-character column. max-content sizes the bubble to its text instead.
+      width: 'max-content',
       maxWidth: MAX_WIDTH,
       //  Long utterances must not turn into a wall of text over the map; two lines, then ellipsis.
       display: '-webkit-box',
