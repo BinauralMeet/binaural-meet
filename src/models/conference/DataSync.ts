@@ -14,6 +14,7 @@ import errorInfo from '@stores/room/ErrorInfo'
 import {MediaSettings} from '@stores/participants/LocalParticipant'
 import participants from '@stores/participants/Participants'
 import roomInfo, {RoomPropertyName} from '@stores/room/RoomInfo'
+import settings from '@stores/room/Settings'
 import contentSyncService from '@stores/sharedContents/ContentSyncService'
 import {autorun, IReactionDisposer} from 'mobx'
 import {BMMessage} from './DataMessage'
@@ -187,6 +188,16 @@ export class DataSync{
     this.sendViewpointNow()
     this.sendAfkChanged()
     this.sendRecordingChanged()
+    this.sendSttLang()
+  }
+  //  Which language this participant speaks and reads. Part of "all about me" rather than only a
+  //  reaction to the setting changing: it is normally restored from localStorage before the room
+  //  is even joined, so a client that only announced it on change would never announce it at all,
+  //  and the server -- which collects these to decide what to translate into -- would translate
+  //  nothing for this participant (`stt-translation#ingest`).
+  sendSttLang(){
+    this.connection.sendMessage(MessageType.PARTICIPANT_STT_LANG,
+      {speak: settings.sttSpeak || 'auto', show: settings.sttShow || ''})
   }
   //
   sendPoseMessage(bSendRandP: boolean){

@@ -6,7 +6,6 @@
 //  Sits in models/ rather than stores/ for the same reason models/recorder does: it needs both
 //  `conference` and the stores, and `architecture#arch` forbids stores from importing conference.
 import {conference} from '@models/conference'
-import {MessageType} from '@models/conference/DataMessageType'
 import {action, autorun, IReactionDisposer, makeObservable, observable} from 'mobx'
 import participants from '@stores/participants/Participants'
 import settings from '@stores/room/Settings'
@@ -16,6 +15,7 @@ class SttClient{
   private disposers: IReactionDisposer[] = []
   private started = false
   private startedLang = ''
+  private sentLanguages = ''
   //  Why STT is not running even though it was switched on (no backend configured, too many
   //  sessions, ...). The footer button shows it: a silently-dead feature is worse than a refusal.
   @observable lastError = ''
@@ -43,13 +43,15 @@ class SttClient{
       }
     }))
 
-    //  What language we read is part of our participant state: the server collects it from
-    //  everyone in the room to decide what to translate into.
+    //  Re-announce the languages when the user changes them mid-meeting. The announcement on
+    //  joining is DataSync.sendAllAboutMe()'s job -- this autorun cannot do it, because whether
+    //  the data connection is up is not observable, so its first run (during enter(), before the
+    //  connection exists) would be its last.
     this.disposers.push(autorun(() => {
-      const show = settings.sttShow || ''
-      const speak = settings.sttSpeak || 'auto'
-      if (!conference.dataConnection.isConnected()){ return }
-      conference.dataConnection.sendMessage(MessageType.PARTICIPANT_STT_LANG, {speak, show})
+      const languages = `${settings.sttSpeak}|${settings.sttShow}`
+      if (languages === this.sentLanguages || !conference.dataConnection.isConnected()){ return }
+      this.sentLanguages = languages
+      conference.dataConnection.sync.sendSttLang()
     }))
   }
 
@@ -84,6 +86,7 @@ class SttClient{
     this.disposers = []
     this.started = false
     this.startedLang = ''
+    this.sentLanguages = ''
     transcript.clear()
   }
 }
