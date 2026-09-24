@@ -7,6 +7,7 @@ import contentSyncService from './sharedContents/ContentSyncService'
 import contentTrackStore from './sharedContents/ContentTrackStore'
 import playbackStore from './sharedContents/PlaybackStore'
 import chat from './room/Chat'
+import transcript from './room/Transcript'
 import stereoParameters from './media/StereoParameters'
 const stereoParametersStore = stereoParameters
 import {messageLoads} from './media/MessageLoads'
@@ -19,5 +20,6 @@ export {map}
 export {roomInfo}
 export {settings}
 export {chat}
+export {transcript}
 export {stereoParametersStore}
 export {messageLoads}

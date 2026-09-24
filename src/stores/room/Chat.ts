@@ -3,8 +3,11 @@ import participants from '@stores/participants/Participants'
 import {action, makeObservable, observable} from 'mobx'
 import { LocalParticipant } from '@stores/participants/LocalParticipant'
 import { RemoteParticipant } from '@stores/participants/RemoteOrPlaybackParticipant'
+import { Utterance } from './Transcript'
 
-export type ChatMessageType = 'text' | 'log' | 'called' | 'callTo' | 'private'
+//  'stt' is a transcribed utterance rather than something the participant typed
+//  (bm workspace doc: `stt-translation`).
+export type ChatMessageType = 'text' | 'log' | 'called' | 'callTo' | 'private' | 'stt'
 export interface ChatMessageToSend{
   msg:string, //  message
   ts:number,  //  timestamp
@@ -18,6 +21,10 @@ export class ChatMessage {
   avatarUrl
   timestamp
   colors
+  //  Only for type 'stt': the live utterance this line came from. The line renders through it
+  //  instead of through `text`, so a translation arriving after the line was added updates what
+  //  is already on screen.
+  utterance?: Utterance
   constructor(text:string, pid: string, name:string, avatarUrl:string,
     colors:string[], timestamp: number, type:ChatMessageType) {
     this.text = text

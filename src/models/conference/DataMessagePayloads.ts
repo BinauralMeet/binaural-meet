@@ -13,7 +13,7 @@ import {RemoteInformation, TrackStates, Viewpoint} from '@models/Participant'
 import {ISharedContent, ISharedContentToSend} from '@models/ISharedContent'
 import {ChatMessageToSend} from '@stores/room/Chat'
 import {VrmRig} from '@models/utils/vrmIK'
-import {MessageType} from './DataMessageType'
+import {MessageType, SpeechInterim, SpeechText, SpeechTranslation, SttLangInfo} from './DataMessageType'
 import {RoomPropertyName} from '@stores/room/RoomInfo'
 
 export interface MessageTypePayloadMap {
@@ -26,6 +26,10 @@ export interface MessageTypePayloadMap {
   [MessageType.PARTICIPANT_ON_STAGE]: boolean
   [MessageType.PARTICIPANT_INFO]: RemoteInformation
   [MessageType.PARTICIPANT_VRMRIG]: VrmRig
+  [MessageType.PARTICIPANT_STT_LANG]: SttLangInfo
+  [MessageType.SPEECH_INTERIM]: SpeechInterim
+  [MessageType.SPEECH_TEXT]: SpeechText
+  [MessageType.SPEECH_TRANSLATION]: SpeechTranslation
   [MessageType.PARTICIPANT_TRACKLIMITS]: number[]
   [MessageType.YARN_PHONE]: string[]              //  connected pids
   [MessageType.CHAT_MESSAGE]: ChatMessageToSend

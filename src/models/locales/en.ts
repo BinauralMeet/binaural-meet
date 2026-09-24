@@ -49,6 +49,12 @@ export const enTranslate = {
 
   ttCreateAndshare: '_Create and share',
   ttMicMute: '_Mic mute',
+  ttStt: 'Subtitles (speech to text)',
+  sttUnavailable: 'Subtitles unavailable: {{reason}}',
+  sttSpeakLang: 'Language I speak',
+  sttShowLang: 'Show subtitles in',
+  sttLangAuto: 'Detect automatically',
+  sttLangOriginal: 'Original language',
   ttPlay: 'Play (_r)',
   ttPause: 'Pause (_r)',
   ttStop: 'Stop (_p)',

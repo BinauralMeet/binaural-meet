@@ -14,6 +14,7 @@ import {participants} from '@stores/participants'
 import {Observer} from 'mobx-react-lite'
 import React from 'react'
 import {SignalQualityIcon} from './SignalQuality'
+import {SpeechBubble} from './SpeechBubble'
 import { ComposedAvatar } from '@components/avatar/ComposedAvatar'
 import {COLOR, Z_INDEX} from '../../utils/styles'
 import _ from 'lodash'
@@ -376,6 +377,8 @@ export const Participant: React.FC<ParticipantProps> = (props) => {
         </div>
         <OuterOver participant={props.participant} size={props.size} isLocal={props.isLocal}/>
         </div>
+      {/*  Outside pointerRotate: the subtitle stays upright however the avatar is turned.  */}
+      <SpeechBubble pid={participant.id} size={props.size} />
     </div>
   </>
   }}</Observer>

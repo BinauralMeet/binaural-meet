@@ -17,6 +17,7 @@ export const StoredMessageType = {
   ...ParticipantMessageType,
   PARTICIPANT_INFO: 'p_info',                   //  RemoteInformation, -> presence
   PARTICIPANT_VRMRIG: 'p_vrm',
+  PARTICIPANT_STT_LANG: 'p_lang',               //  SttLangInfo, spoken/subtitle language
 } as const
 
 export type StoredMessageKeys = keyof typeof StoredMessageType
@@ -31,6 +32,12 @@ export const InstantMessageType = {
   AUDIO_LEVEL: 'ma',                            //  audio level notification
   RELOAD_BROWSER: 'm_reload',                   //  ask a participant's browser to reload (admin action)
   KICK: 'm_kick',                               //  reason:string
+  //  Speech-to-text. All three are produced by the server (recognition runs there, see the bm
+  //  workspace doc `stt-translation`), not by the speaking client, but they travel as ordinary
+  //  instant messages attributed to the speaker.
+  SPEECH_INTERIM: 'stt_i',                      //  SpeechInterim, provisional text, not recorded
+  SPEECH_TEXT: 'stt_t',                         //  SpeechText, one finished utterance
+  SPEECH_TRANSLATION: 'stt_tr',                 //  SpeechTranslation, translations of one utterance
 } as const
 export type InstantMessageKeys = keyof typeof InstantMessageType
 export const InstantMessageTypes = new Set<string>(Object.values(InstantMessageType))
@@ -75,3 +82,31 @@ export const MessageType = {
 } as const
 export type MessageKeys = keyof typeof MessageType
 export type MessageValue = typeof MessageType[MessageKeys]
+
+//  Payload shapes for the SPEECH_* / PARTICIPANT_STT_LANG messages. Unlike the other payloads
+//  (which live in the client-only DataMessagePayloads.ts), these are declared here because the
+//  *server* is what produces SPEECH_*: recognition and translation both run there, so both sides
+//  need the same shape and this file is the one that gets copied to bmMediasoupServer.
+//
+//  `sid` ties one utterance's interim updates, its final text and its translations together:
+//  `${pid}-${seq}`, allocated by the media worker when a speech segment opens.
+export interface SpeechInterim{
+  sid: string
+  text: string
+  lang: string
+}
+export interface SpeechText{
+  sid: string
+  text: string
+  lang: string
+  ts: number
+}
+export interface SpeechTranslation{
+  sid: string
+  pid: string
+  texts: {[lang: string]: string}
+}
+export interface SttLangInfo{
+  speak: string   //  language the participant speaks ('auto' to let the recognizer decide)
+  show: string    //  language the participant wants subtitles in
+}

@@ -9,7 +9,9 @@ import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSConnectMessage, MS
   MSCheckAdminMessage,
   RoomLoginInfo,
   MSRestartIceMessage,
-  MSRestartIceReply} from './MediaMessages'
+  MSRestartIceReply,
+  MSSttStartMessage,
+  MSSttStopMessage} from './MediaMessages'
 import * as mediasoup from 'mediasoup-client';
 import {connLog} from '@models/utils'
 import {RtcTransportStatsGot} from './RtcTransportStatsGot'
@@ -49,7 +51,7 @@ const rtcLog = connLog
 
 const SEND_INTERVAL = 10 * 1000
 
-type RtcConnectionEvent = 'remoteUpdate' | 'remoteLeft' | 'connect' | 'disconnect'
+type RtcConnectionEvent = 'remoteUpdate' | 'remoteLeft' | 'connect' | 'disconnect' | 'sttStarted'
 
 export class RtcConnection{
   private peer_=''
@@ -83,6 +85,7 @@ export class RtcConnection{
     this.handlers.set('addLogin', this.onAddRemoveAdminLogin)
     this.handlers.set('removeLogin', this.onAddRemoveAdminLogin)
     this.handlers.set('checkAdmin', this.onCheckAdmin)
+    this.handlers.set('sttStart', this.onSttStart)
     try{
       this.device = new mediasoup.Device();
     }catch (error:any){
@@ -700,6 +703,34 @@ export class RtcConnection{
     }
     this.mainServer?.send(JSON.stringify(msg))
     this.lastSendTime = Date.now()
+  }
+
+  //  Asks the media server to transcribe our own mic producer. Recognized text does not come back
+  //  as a reply to this -- it arrives as SPEECH_* data messages like anybody else's (see the bm
+  //  workspace doc `stt-translation`). The reply only says whether the request was accepted.
+  public sttStart(room: string, producers: mediasoup.types.Producer[], lang: string){
+    const msg:MSSttStartMessage = {
+      type: 'sttStart',
+      peer: this.peer,
+      room,
+      producers: producers.map(p => p.id),
+      lang,
+    }
+    this.mainServer?.send(JSON.stringify(msg))
+    this.lastSendTime = Date.now()
+  }
+  public sttStop(room: string){
+    const msg:MSSttStopMessage = {
+      type: 'sttStop',
+      peer: this.peer,
+      room,
+    }
+    this.mainServer?.send(JSON.stringify(msg))
+    this.lastSendTime = Date.now()
+  }
+  private onSttStart(base: MSMessage){
+    const msg = base as MSSttStartMessage
+    this.emit('sttStarted', msg.error)
   }
 
   private emitter = new EventEmitter()

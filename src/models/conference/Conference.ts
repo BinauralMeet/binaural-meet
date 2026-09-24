@@ -18,6 +18,7 @@ import { PriorityCalculator, trackInfoMerege, VideoAudioTrackInfo, videoAudioTra
 import { isEqualMSRP } from '@models/conference/MediaMessages'
 import {RemoteObjectInfo } from './priorityTypes'
 import {inputChangeObservationStart, inputChangeObservationStop} from './observeInputDevice'
+import {sttClient} from '@models/stt/SttClient'
 import { PositionConnection } from './PositionConnection'
 import { ISharedContent } from '@models/ISharedContent'
 
@@ -227,6 +228,10 @@ export class Conference implements ContentSyncTransport, ConferenceStatusTranspo
             this.positionConnection.connect()
           }
 
+          //  Watches the mic/settings and asks the server to transcribe us when STT is on
+          //  (bm workspace doc: `stt-translation`). Idempotent, so reconnects are free.
+          sttClient.start()
+
           //  To access from debug console, add object d to the window.
           d.conference = this
         }).catch(() => { console.log('Device enumeration error') })
@@ -312,6 +317,7 @@ export class Conference implements ContentSyncTransport, ConferenceStatusTranspo
 
   public leave(){
     const promise = new Promise<void>((resolve)=>{
+      sttClient.stop()
       this.rtcTransports.removeListener('disconnect', this.onRtcDisconnect)
       this.rtcTransports.leave()
       this.dataConnection.removeListener('disconnect', this.onDataDisconnect)

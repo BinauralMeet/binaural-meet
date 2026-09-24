@@ -11,6 +11,7 @@ import { MediaClip } from '@stores/media/MediaClip'
 import {MediaKind, BlobKind, recLog, BlobHeader, Message, MessagesHeader, RecordHeader,
   toPlaybackId, PLAYBACK_TICK_MS, countUpTo} from './RecorderTypes'
 import participants from '@stores/participants/Participants'
+import transcript from '@stores/room/Transcript'
 import playbackStore from '@stores/sharedContents/PlaybackStore'
 import { VrmRig } from '@models/utils/vrmIK'
 import { manager as audioManager } from '@models/audio'
@@ -115,6 +116,14 @@ class Player{
     })
     registerMessageType(MessageType.PARTICIPANT_MOUSE, {
       onPlayback: (mouseStr, p) => { p.mouse = str2Mouse(mouseStr) },
+    })
+    //  Subtitles during playback come from the recorded messages, replayed into the same
+    //  transcript store the live session uses (bm workspace doc: `stt-translation`).
+    registerMessageType(MessageType.SPEECH_TEXT, {
+      onPlayback: (payload, p) => { transcript.onFinal(p.id, payload) },
+    })
+    registerMessageType(MessageType.SPEECH_TRANSLATION, {
+      onPlayback: (payload) => { transcript.onTranslation(payload) },
     })
   }
 

@@ -5,6 +5,12 @@ export class Settings {
   @observable lpsId=''
   @observable lpsUrl=''
 
+  //  Speech-to-text (bm workspace doc: `stt-translation`). Off by default: turning it on
+  //  publishes what you say, as text, to everyone in the room.
+  @observable sttEnabled=false
+  @observable sttSpeak='auto'   //  language you speak, or 'auto' to let the recognizer decide
+  @observable sttShow=''        //  language you want subtitles in ('' = whatever was spoken)
+
   constructor(){
     makeObservable(this)
     this.load()

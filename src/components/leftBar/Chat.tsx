@@ -14,7 +14,7 @@ import React from 'react'
 import {styleForList, Z_INDEX} from '../utils/styles'
 import {TextLineStyle} from './LeftBar'
 import {conference} from '@models/conference'
-import {chat, participants, map, roomInfo} from '@stores/'
+import {chat, participants, map, roomInfo, settings, transcript} from '@stores/'
 
 const colorMapBlack: { [key in ChatMessageType]: string } = {
   text: 'black',
@@ -22,6 +22,7 @@ const colorMapBlack: { [key in ChatMessageType]: string } = {
   callTo: 'black',
   log: 'black',
   private: 'purple',
+  stt: '#333',
 }
 const colorMapWhite: { [key in ChatMessageType]: string } = {
   text: 'white',
@@ -29,6 +30,7 @@ const colorMapWhite: { [key in ChatMessageType]: string } = {
   callTo: 'white',
   log: 'white',
   private: 'purple',
+  stt: '#ddd',
 }
 
 
@@ -41,6 +43,11 @@ export const ChatLine: React.FC<TextLineStyle &{message: ChatMessage}> = (props)
     const timestamp = formatTimestamp(props.message.timestamp)    //  make formated timestamp for tooltip
     const colorMap = isDarkColor(roomInfo.backgroundFill) ? colorMapWhite : colorMapBlack
     const backColor = isDarkColor(roomInfo.backgroundFill) ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.3)'
+    //  A transcribed line renders through its utterance rather than the text it was created
+    //  with, so the translation that arrives moments later updates this line in place.
+    const text = props.message.utterance
+      ? transcript.textFor(props.message.utterance, settings.sttShow)
+      : props.message.text
 
     return <Tooltip title={
       props.message.type==='private' ?
@@ -57,8 +64,9 @@ export const ChatLine: React.FC<TextLineStyle &{message: ChatMessage}> = (props)
             avatarSrc={props.message.avatarUrl} size={lineHeight} border={true}
           />
         </span>
-        <span style={{color:colorMap[props.message.type]}}>
-          {textToLinkedText(props.message.text)}
+        <span style={{color:colorMap[props.message.type],
+          fontStyle: props.message.type === 'stt' ? 'italic' : undefined}}>
+          {textToLinkedText(text)}
         </span>
     </div>
    </Tooltip>

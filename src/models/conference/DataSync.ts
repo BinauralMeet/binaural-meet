@@ -9,6 +9,7 @@ import {mouse2Str, pose2Str, str2Mouse, str2Pose} from '@models/utils'
 import {normV, subV2} from '@models/utils'
 import {assert} from '@models/utils'
 import chat, { ChatMessage, ChatMessageToSend } from '@stores/room/Chat'
+import transcript from '@stores/room/Transcript'
 import errorInfo from '@stores/room/ErrorInfo'
 import {MediaSettings} from '@stores/participants/LocalParticipant'
 import participants from '@stores/participants/Participants'
@@ -17,7 +18,7 @@ import contentSyncService from '@stores/sharedContents/ContentSyncService'
 import {autorun, IReactionDisposer} from 'mobx'
 import {BMMessage} from './DataMessage'
 import {DataConnection} from './DataConnection'
-import {MessageType, MessageValue} from './DataMessageType'
+import {MessageType, MessageValue, SpeechText} from './DataMessageType'
 import {notification} from './Notification'
 import {connLog} from '@models/utils'
 import {VrmRig} from '@models/utils/vrmIK'
@@ -84,6 +85,27 @@ export class DataSync{
     registerMessageType(MessageType.CHAT_MESSAGE, {
       merge: 'instant',
       onReceive: (msg, from) => this.onChatMessage(from, msg),
+    })
+    //  Speech-to-text (bm workspace doc: `stt-translation`). These are produced by the server,
+    //  not by the speaking client, but they arrive attributed to the speaker like any other
+    //  participant message. Interim text is deliberately not recordable: it is a provisional
+    //  hypothesis that the final text of the same utterance replaces.
+    registerMessageType(MessageType.SPEECH_INTERIM, {
+      merge: 'overwrite',
+      onReceive: (v, from) => transcript.onInterim(from, v),
+    })
+    registerMessageType(MessageType.SPEECH_TEXT, {
+      merge: 'instant', recordable: true,
+      onReceive: (v, from) => this.onSpeechText(from, v),
+    })
+    registerMessageType(MessageType.SPEECH_TRANSLATION, {
+      merge: 'instant', recordable: true,
+      onReceive: (v) => transcript.onTranslation(v),
+    })
+    registerMessageType(MessageType.PARTICIPANT_STT_LANG, {
+      merge: 'overwrite', recordable: true,
+      onReceive: () => {},    //  only the server reads this: it is the list of languages to
+                              //  translate into. Clients keep their own setting locally.
     })
     registerMessageType(MessageType.CONTENT_REMOVE_REQUEST, {
       merge: 'stringArray', recordable: true,
@@ -252,6 +274,20 @@ export class DataSync{
       chat.addMessage(new ChatMessage(msg.msg, from.id, from.information.name,
         from.information.avatarSrc, from.getColor(), msg.ts, msg.to ? 'private':'text'))
     }
+  }
+  //  A finished utterance goes to the transcript (which the speech bubbles read) and, as a chat
+  //  line, to the chat pane. The line holds the utterance itself rather than a copy of its text,
+  //  so the translation that arrives a moment later updates the line that is already on screen.
+  private onSpeechText(pid: string|undefined, payload: SpeechText){
+    transcript.onFinal(pid, payload)
+    if (!pid){ return }
+    const from = participants.find(pid)
+    const utterance = transcript.utterances[transcript.utterances.length - 1]
+    if (!from || !utterance || utterance.sid !== payload.sid){ return }
+    const line = new ChatMessage(payload.text, from.id, from.information.name,
+      from.information.avatarSrc, from.getColor(), payload.ts || Date.now(), 'stt')
+    line.utterance = utterance
+    chat.addMessage(line)
   }
   private onCallRemote(from:string|undefined){
     assert(from)

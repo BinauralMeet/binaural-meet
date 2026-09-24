@@ -6,7 +6,8 @@ export type MSMessageType =
   'workerAdd' | 'workerDelete' | 'workerUpdate' |
   'createTransport' | 'closeTransport' | 'connectTransport' | 'restartIce' |
   'produceTransport' | 'closeProducer' | 'consumeTransport' | 'resumeConsumer' |
-  'streamingStart' | 'streamingStop' | 'uploadFile' | 'serverStatus'
+  'streamingStart' | 'streamingStop' | 'uploadFile' | 'serverStatus' |
+  'sttStart' | 'sttStop' | 'sttResult'
 export interface MSMessage{
   type: MSMessageType
   sn?: number
@@ -179,6 +180,27 @@ export interface MSStreamingStartMessage extends MSPeerMessage{
 }
 export interface MSStreamingStopMessage extends MSPeerMessage{
   id: string
+}
+
+//  Server-side speech-to-text (see the bm workspace doc `stt-translation`). The client asks the
+//  media worker to transcribe its own mic producer; recognized text comes back not as a reply to
+//  this message but as SPEECH_* data messages, injected into the room by the main server.
+export interface MSSttStartMessage extends MSPeerMessage{
+  room: string
+  producers: string[]   //  the peer's own audio producer ids
+  lang: string          //  spoken-language hint, or 'auto'
+  error?: string        //  set on the reply when the request was refused
+}
+export interface MSSttStopMessage extends MSPeerMessage{
+  room: string
+}
+//  worker -> main only. Never relayed to a peer: main injects it into the room's data channel.
+export interface MSSttResultMessage extends MSPeerMessage{
+  room: string
+  sid: string           //  utterance id, shared by every interim/final of one utterance
+  text: string
+  lang: string
+  final: boolean
 }
 
 export interface MSPositionConnectMessage extends MSPeerMessage{

@@ -1,4 +1,4 @@
-import {MSTransportDirection, MSRestartIceReply} from './MediaMessages'
+import {MSTransportDirection, MSRestartIceReply, MSTrackRole} from './MediaMessages'
 import {RtcConnection, RemotePeer, MSTrack, RemoteProducer, TrackRoles} from './RtcConnection'
 import {RtcTransportStatsGot, updateTransportStat} from './RtcTransportStatsGot'
 import * as mediasoup from 'mediasoup-client'
@@ -26,6 +26,16 @@ export class RtcTransports extends RtcConnection{
 
   private remotePeers_ = new Map<string, RemotePeer>()
   public get remotePeers(){ return this.remotePeers_ }
+
+  //  The producer currently carrying a given local track kind/role -- e.g. the mic, whose id
+  //  server-side speech-to-text needs in order to name what it should transcribe.
+  public getLocalProducer(role: MSTrackRole, kind: string){
+    return this.localProducers.find(p => {
+      const track = (p.appData as ProducerData).track
+
+      return track.role === role && track.track.kind === kind
+    })
+  }
 
   public clear(){
     if (this.mediaReconnectTimer) {

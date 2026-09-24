@@ -23,6 +23,7 @@ import {BroadcastControl} from './BroadcastControl'
 import {FaceControl} from './FaceControl'
 import {FabMain, FabWithTooltip} from '@components/utils/FabEx'
 import {ShareButton} from './share/ShareButton'
+import {SttButton} from './SttButton'
 import {RecorderButton} from './recorder/RecorderButton'
 import {Fab3DSettings} from './Fab3DSettings'
 import { player, recorder } from '@models/recorder'
@@ -295,6 +296,8 @@ export const Footer: React.FC<{height?:number}> = observer((props) => {
         open={Boolean(videoMenuEl)} onClose={() => { closeVideoMenu(null) }}>
         {getMenuItems('videoinput')}
       </Menu> : undefined}
+
+      <SttButton size={fabSize} iconSize={iconSize} />
 
       <ShareButton {...props} size={fabSize} iconSize={iconSize} showDialog={showShare}
         setShowDialog={setShowShare} />
