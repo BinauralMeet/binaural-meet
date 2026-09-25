@@ -99,7 +99,10 @@ export interface SpeechText{
   sid: string
   text: string
   lang: string
-  ts: number
+  ts: number          //  server clock when the utterance ended
+  durationMs?: number //  how long it took to say; ts - durationMs is when it started.
+                      //  Lets a client tell "kept talking" from "paused", which it cannot do
+                      //  from arrival times: recognition lags speech by seconds.
 }
 export interface SpeechTranslation{
   sid: string

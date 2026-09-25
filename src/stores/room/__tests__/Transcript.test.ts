@@ -1,10 +1,19 @@
-import {describe, it, expect} from 'vitest'
-import {Transcript, BUBBLE_LINGER_MS} from '../Transcript'
+import {describe, it, expect, vi, afterEach} from 'vitest'
+import {Transcript, bubbleDurationMs} from '../Transcript'
 
 const SID = 'p1-1'
 
 function interim(text: string, sid = SID){ return {sid, text, lang: 'ja'} }
+
+//  Bubble timing runs on the local clock (see onFinal), so drive it rather than passing
+//  timestamps in the payload.
+function at(ms: number){ vi.setSystemTime(ms) }
+afterEach(() => { vi.useRealTimers() })
 function final(text: string, ts = 1000, sid = SID){ return {sid, text, lang: 'ja', ts} }
+//  A final as the server sends it: ts is when the speaking stopped, durationMs how long it took.
+function spoken(text: string, ts: number, durationMs: number, sid = SID){
+  return {sid, text, lang: 'ja', ts, durationMs}
+}
 
 describe('Transcript', () => {
   it('replaces the provisional text of an utterance as new hypotheses arrive', () => {
@@ -68,16 +77,75 @@ describe('Transcript', () => {
     expect(transcript.latest.get('p2')?.text).toBe('べつの人')
   })
 
-  it('shows a bubble while speaking and for a while after, then stops', () => {
+  it('shows a bubble while speaking and long enough to read it afterwards', () => {
+    vi.useFakeTimers()
     const transcript = new Transcript()
     transcript.onInterim('p1', interim('話し中'))
-    //  An unfinished utterance shows however long it takes to say.
-    expect(transcript.bubbleOf('p1', 1e12)?.text).toBe('話し中')
+    //  An unfinished utterance shows however long it takes to say, and is marked provisional.
+    expect(transcript.bubbleOf('p1', 1e12)).toEqual({text: '話し中', provisional: true})
 
-    transcript.onFinal('p1', final('話した。', 10000))
-    expect(transcript.bubbleOf('p1', 10000 + BUBBLE_LINGER_MS - 1)?.text).toBe('話した。')
-    expect(transcript.bubbleOf('p1', 10000 + BUBBLE_LINGER_MS)).toBeUndefined()
+    at(10000)
+    transcript.onFinal('p1', final('話した。'))
+    const shown = bubbleDurationMs('話した。')
+    expect(transcript.bubbleOf('p1', 10000 + shown - 1)).toEqual({text: '話した。', provisional: false})
+    expect(transcript.bubbleOf('p1', 10000 + shown)).toBeUndefined()
     expect(transcript.bubbleOf('nobody', 10000)).toBeUndefined()
+  })
+
+  it('gives longer text more time to be read', () => {
+    const short = bubbleDurationMs('はい')
+    const long = bubbleDurationMs('あ'.repeat(60))
+    expect(long).toBeGreaterThan(short)
+    //  ...but neither vanishes instantly nor parks itself over the map forever.
+    expect(short).toBeGreaterThanOrEqual(2500)
+    expect(bubbleDurationMs('あ'.repeat(10000))).toBeLessThanOrEqual(25000)
+  })
+
+  it('grows the bubble while the speaker keeps going', () => {
+    vi.useFakeTimers()
+    const transcript = new Transcript()
+    //  Recognition arrives seconds after the speech, and with varying lag -- the arrival times
+    //  here are deliberately far apart to prove the run is judged on speech time instead.
+    at(20000)
+    transcript.onFinal('p1', spoken('ひとつ目。', 10000, 2000, 'p1-1'))
+    at(26000)
+    transcript.onFinal('p1', spoken('ふたつ目。', 13000, 2000, 'p1-2'))   //  spoken 1s later
+    expect(transcript.bubbleOf('p1', 26000)?.text).toBe('ひとつ目。 ふたつ目。')
+  })
+
+  it('starts a new bubble after a real pause', () => {
+    vi.useFakeTimers()
+    const transcript = new Transcript()
+    at(20000)
+    transcript.onFinal('p1', spoken('前の話。', 10000, 2000, 'p1-1'))
+    at(26000)
+    transcript.onFinal('p1', spoken('別の話。', 20000, 2000, 'p1-2'))   //  8s of silence between
+    expect(transcript.bubbleOf('p1', 26000)?.text).toBe('別の話。')
+  })
+
+  it('drops the oldest utterances once the run gets long', () => {
+    vi.useFakeTimers()
+    const transcript = new Transcript()
+    for (let i = 0; i < 12; i += 1){
+      at(10000 + i)
+      transcript.onFinal('p1', spoken('あ'.repeat(20), 10000 + i * 2000, 2000, `p1-${i}`))
+    }
+    const text = transcript.bubbleOf('p1', 10012)!.text
+    expect(text.length).toBeLessThanOrEqual(140 + 20)
+    //  What survives is the most recent speech, not the start of the monologue.
+    expect(text.endsWith('あ'.repeat(20))).toBe(true)
+  })
+
+  it('shows the run in the reader\'s language', () => {
+    vi.useFakeTimers()
+    const transcript = new Transcript()
+    at(10000)
+    transcript.onFinal('p1', spoken('ひとつ目。', 10000, 2000, 'p1-1'))
+    at(11000)
+    transcript.onFinal('p1', spoken('ふたつ目。', 12000, 2000, 'p1-2'))
+    transcript.onTranslation({sid: 'p1-1', pid: 'p1', texts: {en: 'First.'}})
+    transcript.onTranslation({sid: 'p1-2', pid: 'p1', texts: {en: 'Second.'}})
+    expect(transcript.bubbleOf('p1', 11000, 'en')?.text).toBe('First. Second.')
   })
 
   it('ignores results with no participant attached', () => {

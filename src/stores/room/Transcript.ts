@@ -9,15 +9,57 @@
 import type {SpeechInterim, SpeechText, SpeechTranslation} from '@models/conference/DataMessageType'
 import {action, makeObservable, observable} from 'mobx'
 
-//  How long a finished utterance keeps showing next to the avatar. Long enough to read a short
-//  sentence, short enough that a silent participant is not left with a stale bubble.
-export const BUBBLE_LINGER_MS = 4000
+//  How long a finished utterance keeps showing next to the avatar. Reading takes time
+//  proportional to the text, so a fixed delay either rushes a long sentence or leaves a stale
+//  bubble after a short one. ~10 characters per second is comfortable for subtitles in both
+//  Japanese and English; the floor covers interjections, the ceiling stops one sentence from
+//  parking itself over the map.
+const BUBBLE_BASE_MS = 2500
+const BUBBLE_MS_PER_CHAR = 140
+const BUBBLE_MAX_MS = 25000
+
+//  Silence shorter than this leaves the bubble alone: the utterances around it are one stretch
+//  of speech shown as one growing bubble. Longer than the VAD's own hangover (500ms), which cuts
+//  on any short pause -- breathing between clauses must not split the bubble the way it splits
+//  the transcript. Measured in *speech* time (ts/durationMs, stamped by the server when the
+//  speaking stopped), never in arrival time: recognition lags speech by seconds and by a varying
+//  amount, so arrival gaps say nothing about whether the speaker paused.
+const BUBBLE_RUN_GAP_MS = 2500
+
+//  A run stops growing at this many characters: past it, whole utterances drop off the front.
+//  Someone talking for a minute straight should not end up with a wall of text over their avatar.
+const BUBBLE_MAX_CHARS = 140
+
 const UTTERANCES_MAX = 1000
+
+//  Did `next` start soon enough after `prev` ended to count as the same stretch of speech?
+//  Both times come from the same server clock, so the comparison is safe across machines; when
+//  the server did not say (older recordings), fall back to when this client saw them.
+export function isSameRun(prev: Utterance, next: Utterance){
+  if (prev.ts && next.ts && next.durationMs){
+    return next.ts - next.durationMs - prev.ts <= BUBBLE_RUN_GAP_MS
+  }
+
+  return next.startTime - prev.endTime <= BUBBLE_RUN_GAP_MS
+}
+
+export function bubbleDurationMs(text: string){
+  return Math.min(BUBBLE_BASE_MS + text.length * BUBBLE_MS_PER_CHAR, BUBBLE_MAX_MS)
+}
+
+//  What the bubble shows: the run of utterances joined, and whether it ends in provisional text.
+export interface Bubble{
+  text: string
+  provisional: boolean
+}
 
 export class Utterance{
   readonly sid: string
   readonly pid: string
-  readonly startTime: number
+  readonly startTime: number    //  local clock: when this client first saw the utterance
+  //  Speech time, from the server. Absent until the utterance is final.
+  @observable ts = 0
+  @observable durationMs = 0
   @observable lang: string
   @observable text: string
   @observable final = false
@@ -81,7 +123,13 @@ export class Transcript{
     utterance.text = payload.text
     utterance.lang = payload.lang
     utterance.final = true
-    utterance.endTime = payload.ts || Date.now()
+    utterance.ts = payload.ts || 0
+    utterance.durationMs = payload.durationMs || 0
+    //  Local clock, not payload.ts: startTime is local too, and both drive how long the bubble
+    //  stays up and whether two utterances are one stretch of speech. Mixing in the server's
+    //  clock would make those decisions wrong by however far the two clocks have drifted.
+    //  payload.ts is what the chat line timestamps itself with -- that is a different question.
+    utterance.endTime = Date.now()
   }
 
   @action onTranslation(payload: SpeechTranslation){
@@ -104,13 +152,42 @@ export class Transcript{
     return utterance.translations.get(primary) ?? utterance.text
   }
 
-  //  The bubble shows an utterance while it is being spoken and for a moment afterwards.
-  bubbleOf(pid: string, now: number){
-    const utterance = this.latest.get(pid)
-    if (!utterance){ return undefined }
-    if (!utterance.final){ return utterance }
+  //  The bubble shows everything this participant has said in one continuous stretch, so it
+  //  grows while they keep talking, and stays up afterwards for as long as it takes to read.
+  bubbleOf(pid: string, now: number, showLang = ''): Bubble|undefined{
+    const last = this.latest.get(pid)
+    if (!last){ return undefined }
 
-    return now - utterance.endTime < BUBBLE_LINGER_MS ? utterance : undefined
+    //  Walk back over the run: each utterance that began soon after the previous one ended is
+    //  part of the same stretch of speech.
+    const run: Utterance[] = []
+    let index = this.utterances.lastIndexOf(last)
+    let earliest = last
+    while (index >= 0){
+      const utterance = this.utterances[index]
+      if (utterance.pid !== pid){ index -= 1; continue }
+      if (utterance !== last && !isSameRun(utterance, earliest)){ break }
+      run.unshift(utterance)
+      earliest = utterance
+      index -= 1
+    }
+
+    //  Still being spoken: no expiry, and the provisional tail is marked as such.
+    if (!last.final){
+      return {text: this.joinRun(run, showLang), provisional: true}
+    }
+    const text = this.joinRun(run, showLang)
+    if (now - last.endTime >= bubbleDurationMs(text)){ return undefined }
+
+    return {text, provisional: false}
+  }
+
+  private joinRun(run: Utterance[], showLang: string){
+    const texts = run.map(u => this.textFor(u, showLang)).filter(t => t)
+    //  Drop from the front rather than truncating mid-word: the most recent words matter most.
+    while (texts.length > 1 && texts.join(' ').length > BUBBLE_MAX_CHARS){ texts.shift() }
+
+    return texts.join(' ')
   }
 
   @action clear(){

@@ -201,6 +201,9 @@ export interface MSSttResultMessage extends MSPeerMessage{
   text: string
   lang: string
   final: boolean
+  durationMs?: number   //  length of the speech this text came from (finals only)
+  ts?: number           //  when the speech ended, as the worker saw it -- not when recognition
+                        //  finished, which lags it by seconds
 }
 
 export interface MSPositionConnectMessage extends MSPeerMessage{
