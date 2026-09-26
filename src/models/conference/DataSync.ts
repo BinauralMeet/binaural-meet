@@ -19,7 +19,7 @@ import contentSyncService from '@stores/sharedContents/ContentSyncService'
 import {autorun, IReactionDisposer} from 'mobx'
 import {BMMessage} from './DataMessage'
 import {DataConnection} from './DataConnection'
-import {MessageType, MessageValue, SpeechText} from './DataMessageType'
+import {MessageType, MessageValue, SpeechText, SttLangInfo} from './DataMessageType'
 import {notification} from './Notification'
 import {connLog} from '@models/utils'
 import {VrmRig} from '@models/utils/vrmIK'
@@ -105,8 +105,9 @@ export class DataSync{
     })
     registerMessageType(MessageType.PARTICIPANT_STT_LANG, {
       merge: 'overwrite', recordable: true,
-      onReceive: () => {},    //  only the server reads this: it is the list of languages to
-                              //  translate into. Clients keep their own setting locally.
+      //  The server reads the languages out of this (what to translate into); clients read only
+      //  the `on` flag, which is what turns transcription on for the whole room.
+      onReceive: (info, from) => this.onSttLang(from, info),
     })
     registerMessageType(MessageType.CONTENT_REMOVE_REQUEST, {
       merge: 'stringArray', recordable: true,
@@ -197,7 +198,7 @@ export class DataSync{
   //  nothing for this participant (`stt-translation#ingest`).
   sendSttLang(){
     this.connection.sendMessage(MessageType.PARTICIPANT_STT_LANG,
-      {speak: settings.sttSpeak || 'auto', show: settings.sttShow || ''})
+      {speak: settings.sttSpeak || 'auto', show: settings.sttShow || '', on: settings.showSubtitles})
   }
   //
   sendPoseMessage(bSendRandP: boolean){
@@ -319,6 +320,13 @@ export class DataSync{
     assert(from)
     const remote = participants.find(from)
     if (remote){ remote.recording = rec }
+  }
+  private onSttLang(from:string|undefined, info: SttLangInfo){
+    assert(from)
+    const remote = participants.find(from)
+    //  `on` missing means a client that predates the field: treat it as showing subtitles, so an
+    //  old client in the room cannot quietly stop everyone else's.
+    if (remote){ remote.sttOn = info.on !== false }
   }
   public onKicked(pid:string|undefined, reason:string){
     assert(pid)

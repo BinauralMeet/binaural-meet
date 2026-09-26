@@ -48,9 +48,9 @@ const configVrc = {
 }
 
 const configLocal = {
-  mainServer: 'wss://localhost:3100',
-  dataServer: 'wss://localhost:3100',
+  mainServer: 'wss://ai1.haselab.net/sandbox/port3100/',
+  dataServer: 'wss://ai1.haselab.net/sandbox/port3100/',
   corsProxyUrl: 'https://binaural.me/cors_proxy/',
 }
 
-const config = Object.assign(Object.assign({}, commonConfig), configTitech)
+const config = Object.assign(Object.assign({}, commonConfig), configLocal)

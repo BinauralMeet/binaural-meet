@@ -31,22 +31,3 @@ describe('RoomInfo color assignment', () => {
     expect(roomInfo.backgroundColor).toEqual([0xB9, 0xB2, 0xC4])
   })
 })
-
-describe('stt room property', () => {
-  it('follows the room, since transcription is something the room does or does not do', async () => {
-    const { default: roomInfo } = await import('../room/RoomInfo')
-    expect(roomInfo.stt).toBe(false)
-    roomInfo.onUpdateProp('stt', 'true')
-    expect(roomInfo.stt).toBe(true)
-    roomInfo.onUpdateProp('stt', 'false')
-    expect(roomInfo.stt).toBe(false)
-  })
-
-  it('treats the property being cleared as off', async () => {
-    const { default: roomInfo } = await import('../room/RoomInfo')
-    roomInfo.onUpdateProp('stt', 'true')
-    roomInfo.onUpdateProp('stt', undefined)
-    expect(roomInfo.stt).toBe(false)
-    expect(roomInfo.roomProps.has('stt')).toBe(false)
-  })
-})

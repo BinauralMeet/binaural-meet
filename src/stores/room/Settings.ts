@@ -5,9 +5,12 @@ export class Settings {
   @observable lpsId=''
   @observable lpsUrl=''
 
-  //  Speech-to-text (bm workspace doc: `stt-translation`). Whether the room transcribes at all
-  //  is the room's own property (roomInfo.stt); these are each participant's own view of it.
-  @observable showSubtitles=true  //  do I want to see subtitles at all
+  //  Speech-to-text (bm workspace doc: `stt-translation`). Each participant's own view of it --
+  //  but `showSubtitles` is more than a view: the room transcribes exactly while somebody has it
+  //  on (`stt-translation#ui`), so it defaults to off. Defaulting to on would mean every room
+  //  transcribing everybody from the moment it opens, which nobody asked for and which costs
+  //  recognizer time for nobody's benefit.
+  @observable showSubtitles=false //  do I want to see subtitles at all
   @observable sttSpeak='auto'     //  language you speak, or 'auto' to let the recognizer decide
   @observable sttShow=''          //  language you want subtitles in ('' = whatever was spoken)
 

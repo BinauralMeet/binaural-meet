@@ -112,4 +112,8 @@ export interface SpeechTranslation{
 export interface SttLangInfo{
   speak: string   //  language the participant speaks ('auto' to let the recognizer decide)
   show: string    //  language the participant wants subtitles in
+  on?: boolean    //  whether this participant is displaying subtitles at all. There is no separate
+                  //  room switch: recognition runs for everyone as soon as *anyone* turns their
+                  //  subtitles on, which is what this field carries. Optional so a client older
+                  //  than this field is read as "on" instead of silently keeping the room mute.
 }

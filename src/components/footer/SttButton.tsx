@@ -1,19 +1,20 @@
-//  Footer control for subtitles. Two different things live behind it, and the split is the point:
-//  the button itself is *my* view (show subtitles or not, and in which language), while the menu
-//  carries the room's own switch -- whether anything is transcribed at all, which is everyone's.
+//  Footer control for subtitles. The button is *my* view (show subtitles or not, and in which
+//  language), and the menu only carries the two language choices -- there is no switch for
+//  transcription itself: turning subtitles on anywhere in the room starts it for everyone
+//  (`stt-translation#ui`), so the one visible switch is the one people actually think about.
 import {FabWithTooltip} from '@components/utils/FabEx'
 import Menu from '@material-ui/core/Menu'
 import MenuItem from '@material-ui/core/MenuItem'
 import ListSubheader from '@material-ui/core/ListSubheader'
-import Switch from '@material-ui/core/Switch'
 import SubtitlesIcon from '@material-ui/icons/Subtitles'
 import SubtitlesOffIcon from '@material-ui/icons/SpeakerNotesOff'
-import {conference} from '@models/conference'
 import {t, useTranslation} from '@models/locales'
 import {sttClient} from '@models/stt/SttClient'
+import {anyoneWantsSubtitles} from '@models/stt/SttLogic'
 import {Observer} from 'mobx-react-lite'
 import React from 'react'
-import {roomInfo, settings} from '@stores/'
+import participants from '@stores/participants/Participants'
+import {settings} from '@stores/'
 
 //  Kept short on purpose: these are the languages the recognizer and the translator are actually
 //  expected to handle here. 'auto' lets the recognizer decide; '' means "show me the original".
@@ -31,16 +32,16 @@ export const SttButton: React.FC<SttButtonProps> = (props) => {
 
   return <Observer>{() => {
     const showing = settings.showSubtitles
-    const roomOn = roomInfo.stt
+    //  Somebody else's subtitles being on means my voice is being transcribed even while I am
+    //  not reading any. That is worth saying out loud rather than leaving the button looking off.
+    const roomOn = anyoneWantsSubtitles(showing, Array.from(participants.remote.values()))
     const error = sttClient.lastError
-    //  Three states worth telling apart: nothing is being transcribed, it is but I am not
-    //  looking, and it is and I am.
     const title = error ? t('sttUnavailable', {reason: error})
-      : !roomOn ? t('ttSttRoomOff')
-        : showing ? t('ttSttShown') : t('ttSttHidden')
+      : showing ? t('ttSttShown')
+        : roomOn ? t('ttSttHiddenOthersOn') : t('ttSttHidden')
 
     return <>
-      <FabWithTooltip size={props.size} color={showing && roomOn ? 'secondary' : 'primary'}
+      <FabWithTooltip size={props.size} color={showing ? 'secondary' : 'primary'}
         aria-label="stt" title={title}
         onClick={() => {
           settings.showSubtitles = !settings.showSubtitles
@@ -53,13 +54,6 @@ export const SttButton: React.FC<SttButtonProps> = (props) => {
       </FabWithTooltip>
       {menuEl ? <Menu anchorEl={menuEl} keepMounted={true} open={Boolean(menuEl)}
         onClose={() => setMenuEl(null)}>
-        {/*  The room's switch, not this participant's: it starts transcribing everyone.  */}
-        <MenuItem onClick={() => {
-          conference.dataConnection.setRoomProp('stt', roomOn ? 'false' : 'true')
-        }}>
-          <Switch checked={roomOn} size="small" />
-          {t('sttRoomSwitch')}
-        </MenuItem>
         <ListSubheader>{t('sttSpeakLang')}</ListSubheader>
         {SPEAK_LANGS.map(lang => <MenuItem key={`speak-${lang}`}
           selected={settings.sttSpeak === lang}

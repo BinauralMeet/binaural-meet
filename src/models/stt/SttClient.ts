@@ -1,6 +1,6 @@
 //  Drives server-side speech-to-text from the client: asks the media server to transcribe our own
-//  mic producer while STT is on and the mic is live, and tells the room which language we want
-//  subtitles in. Recognition itself happens on the server (bm workspace doc: `stt-translation`),
+//  mic producer while somebody in the room is showing subtitles and our mic is live, and tells
+//  the room which language we want subtitles in and whether we are showing them. Recognition itself happens on the server (bm workspace doc: `stt-translation`),
 //  so there is no audio handling here at all.
 //
 //  Sits in models/ rather than stores/ for the same reason models/recorder does: it needs both
@@ -8,9 +8,9 @@
 import {conference} from '@models/conference'
 import {action, autorun, IReactionDisposer, makeObservable, observable} from 'mobx'
 import participants from '@stores/participants/Participants'
-import roomInfo from '@stores/room/RoomInfo'
 import settings from '@stores/room/Settings'
 import transcript from '@stores/room/Transcript'
+import {anyoneWantsSubtitles} from './SttLogic'
 
 class SttClient{
   private disposers: IReactionDisposer[] = []
@@ -35,11 +35,10 @@ class SttClient{
 
     this.disposers.push(autorun(() => {
       const local = participants.local
-      //  The room decides whether anything is transcribed; a participant's own switch only
-      //  decides whether they look at the result. Muting still stops transcription outright --
-      //  "muted but still subtitled" is a privacy failure, not a display preference -- so it is
-      //  a condition of this one start/stop decision.
-      const wanted = roomInfo.stt && !local.muteAudio && !!conference.getLocalMicTrack()
+      //  Muting stops transcription outright -- "muted but still subtitled" is a privacy failure,
+      //  not a display preference -- so it is a condition of this one start/stop decision, even
+      //  though somebody else's subtitle switch is what asks for it.
+      const wanted = this.wantedByAnyone && !local.muteAudio && !!conference.getLocalMicTrack()
       const lang = settings.sttSpeak || 'auto'
       if (wanted && (!this.started || this.startedLang !== lang)){
         this.doStart(lang)
@@ -58,25 +57,33 @@ class SttClient{
     //  the data connection is up is not observable, so its first run (during enter(), before the
     //  connection exists) would be its last.
     this.disposers.push(autorun(() => {
-      const languages = `${settings.sttSpeak}|${settings.sttShow}`
+      //  `showSubtitles` rides along: it is what tells the others to start being transcribed,
+      //  so it has to reach them the moment it changes, not at the next reconnect.
+      const languages = `${settings.sttSpeak}|${settings.sttShow}|${settings.showSubtitles}`
       if (languages === this.sentLanguages || !conference.dataConnection.isConnected()){ return }
       this.sentLanguages = languages
       conference.dataConnection.sync.sendSttLang()
     }))
   }
 
+  //  Reading `participants.remote` inside the autorun is what makes a remote turning their
+  //  subtitles on (or leaving the room) start/stop our own transcription.
+  private get wantedByAnyone(){
+    return anyoneWantsSubtitles(settings.showSubtitles, Array.from(participants.remote.values()))
+  }
+
   @action private onStarted(error: string|undefined){
     this.lastError = error || ''
     if (!error){ return }
-    //  The server refused. The room's switch is left alone -- it is everyone's, and the refusal
-    //  is the same for everyone -- but this client stops claiming a session it does not have,
-    //  and the footer says why nothing is appearing.
+    //  The server refused. Nobody's subtitle switch is touched -- the refusal is the same for
+    //  everyone, and flipping someone else's setting would hide it -- but this client stops
+    //  claiming a session it does not have, and the footer says why nothing is appearing.
     this.started = false
     console.warn(`stt: server refused: ${error}`)
   }
 
   private ensureStarted(){
-    if (!roomInfo.stt || participants.local.muteAudio){ return }
+    if (!this.wantedByAnyone || participants.local.muteAudio){ return }
     const producer = conference.rtcTransports.getLocalProducer('avatar', 'audio')
     if (!producer || (this.started && this.startedProducer === producer.id)){ return }
     this.doStart(this.startedLang || settings.sttSpeak || 'auto')

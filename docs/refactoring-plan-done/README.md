@@ -372,10 +372,8 @@ src/models/content/
 
 ## 6. 未確定・議論が必要な点 {#open-questions}
 
-1. **`Store<T>` 型ユーティリティ**: `stores/utils.ts` で `export type Store<T> = { [K in keyof T]: T[K] | (T[K] & IObservable) }` としているが、これが実際に役立っているか要検証。不要なら削除。
+1. **グローバル公開**: `declare const d:any; d.xxx = xxx` が多数のストアで使われている。デバッグ用途なら維持、そうでなければ削除。
 
-2. **EventEmitter の継承**: `SharedContents extends EventEmitter` としているが、MobX との併用で設計が複雑になっている。イベント部分を MobX の reaction/authorun に置き換えられるか検討。
-
-3. **グローバル公開**: `declare const d:any; d.xxx = xxx` が多数のストアで使われている。デバッグ用途なら維持、そうでなければ削除。
-
-4. **`localPlugins/` ディレクトリ**: 現在 `DevicePreference.ts` のみ。将来プラグイン機構を目指した構造と思われるが、今のままならフラットに統合しても良い。
+他に挙がっていた3点(`Store<T>`型ユーティリティ/`SharedContents`の`EventEmitter`継承/
+`localPlugins/`ディレクトリ)は、その後の実装で解決済み。詳細は
+`CHANGELOG#2026-08-05-open-questions-resolved`。

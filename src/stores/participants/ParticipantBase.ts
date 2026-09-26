@@ -67,6 +67,10 @@ export class ParticipantBase<TInfo extends LocalInformation | RemoteInformation 
   @observable audioLevel = 0
   @action setAudioLevel(a:number) { this.audioLevel = a }
   @observable recording = false
+  //  This participant is displaying subtitles (their PARTICIPANT_STT_LANG said so). Everyone
+  //  needs to know, not just the person themselves: one viewer anywhere in the room is what
+  //  starts transcription for all of us (`stt-translation#ui`).
+  @observable sttOn = false
   // determines whether the audio would be rendered
   @computed get showAudio () {
     return !this.muteAudio
