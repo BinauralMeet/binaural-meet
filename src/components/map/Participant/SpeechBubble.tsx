@@ -36,6 +36,7 @@ export const SpeechBubble: React.FC<SpeechBubbleProps> = (props) => {
   }, [])
 
   return <Observer>{() => {
+    if (!settings.showSubtitles){ return null }
     //  Subtitles follow the conversation you are actually in: text from across the room would
     //  clutter the map with speech you cannot hear. The chat pane still lists every utterance.
     if (!isAudible(props.pid)){ return null }

@@ -137,7 +137,10 @@ export const ChatInBar: React.FC<TextLineStyle>  = (props) => {
     </form>
     <div>{  /* for indent: style={{marginLeft: '0.5em', textIndent: '-0.5em'}} */}
       <Observer>{()=><>{
-        chat.messages.map((m, idx) =>
+        //  Turning subtitles off hides the transcript here too: one switch, one meaning --
+        //  "do not show me what was said out loud" -- rather than gone from the map but still
+        //  scrolling past in the chat.
+        chat.messages.filter(m => m.type !== 'stt' || settings.showSubtitles).map((m, idx) =>
           <ChatLine key={idx} message={m} {...props} /> )
         }</>}</Observer>
     </div>

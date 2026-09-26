@@ -5,11 +5,11 @@ export class Settings {
   @observable lpsId=''
   @observable lpsUrl=''
 
-  //  Speech-to-text (bm workspace doc: `stt-translation`). Off by default: turning it on
-  //  publishes what you say, as text, to everyone in the room.
-  @observable sttEnabled=false
-  @observable sttSpeak='auto'   //  language you speak, or 'auto' to let the recognizer decide
-  @observable sttShow=''        //  language you want subtitles in ('' = whatever was spoken)
+  //  Speech-to-text (bm workspace doc: `stt-translation`). Whether the room transcribes at all
+  //  is the room's own property (roomInfo.stt); these are each participant's own view of it.
+  @observable showSubtitles=true  //  do I want to see subtitles at all
+  @observable sttSpeak='auto'     //  language you speak, or 'auto' to let the recognizer decide
+  @observable sttShow=''          //  language you want subtitles in ('' = whatever was spoken)
 
   constructor(){
     makeObservable(this)

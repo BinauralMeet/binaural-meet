@@ -49,7 +49,10 @@ export const enTranslate = {
 
   ttCreateAndshare: '_Create and share',
   ttMicMute: '_Mic mute',
-  ttStt: 'Subtitles (speech to text)',
+  ttSttShown: 'Subtitles shown (click to hide)',
+  ttSttHidden: 'Subtitles hidden (click to show)',
+  ttSttRoomOff: 'Nobody is being transcribed in this room yet',
+  sttRoomSwitch: 'Transcribe this room (everyone)',
   sttUnavailable: 'Subtitles unavailable: {{reason}}',
   sttSpeakLang: 'Language I speak',
   sttShowLang: 'Show subtitles in',
