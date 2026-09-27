@@ -47,10 +47,14 @@ export function bubbleDurationMs(text: string){
   return Math.min(BUBBLE_BASE_MS + text.length * BUBBLE_MS_PER_CHAR, BUBBLE_MAX_MS)
 }
 
-//  What the bubble shows: the run of utterances joined, and whether it ends in provisional text.
+//  What the bubble shows: the run of utterances joined, whether it ends in provisional text, and
+//  whether any part of it wanted a translation that never came (dropped by the backend as
+//  low-confidence, or simply unavailable) and is showing the original language instead -- that
+//  reads very differently from an actual translation, so the caller styles it differently too.
 export interface Bubble{
   text: string
   provisional: boolean
+  untranslated: boolean
 }
 
 export class Utterance{
@@ -143,13 +147,26 @@ export class Transcript{
   }
 
   //  What to display: the translation into the reader's language when there is one, otherwise
-  //  the original. A participant reading in the language it was spoken in sees the original.
+  //  the original. A participant reading in the language it was spoken in sees the original --
+  //  that is a normal, fully-expected case, not the "wanted a translation and didn't get one"
+  //  case `wantedTranslation` reports below.
   textFor(utterance: Utterance, showLang: string){
     if (!showLang){ return utterance.text }
     const primary = showLang.split(/[-_]/)[0].toLowerCase()
     if (primary === utterance.lang.split(/[-_]/)[0].toLowerCase()){ return utterance.text }
 
     return utterance.translations.get(primary) ?? utterance.text
+  }
+
+  //  True when this utterance is in a language the reader did not ask for, and no translation
+  //  into their language has arrived (yet, or ever -- the two look the same to the reader, who
+  //  just sees original-language text where a translation was expected).
+  private wantedTranslation(utterance: Utterance, showLang: string){
+    if (!showLang){ return false }
+    const primary = showLang.split(/[-_]/)[0].toLowerCase()
+    if (primary === utterance.lang.split(/[-_]/)[0].toLowerCase()){ return false }
+
+    return !utterance.translations.has(primary)
   }
 
   //  The bubble shows everything this participant has said in one continuous stretch, so it
@@ -174,20 +191,25 @@ export class Transcript{
 
     //  Still being spoken: no expiry, and the provisional tail is marked as such.
     if (!last.final){
-      return {text: this.joinRun(run, showLang), provisional: true}
+      const {text, untranslated} = this.joinRun(run, showLang)
+
+      return {text, provisional: true, untranslated}
     }
-    const text = this.joinRun(run, showLang)
+    const {text, untranslated} = this.joinRun(run, showLang)
     if (now - last.endTime >= bubbleDurationMs(text)){ return undefined }
 
-    return {text, provisional: false}
+    return {text, provisional: false, untranslated}
   }
 
   private joinRun(run: Utterance[], showLang: string){
     const texts = run.map(u => this.textFor(u, showLang)).filter(t => t)
     //  Drop from the front rather than truncating mid-word: the most recent words matter most.
     while (texts.length > 1 && texts.join(' ').length > BUBBLE_MAX_CHARS){ texts.shift() }
+    //  One untranslated segment is enough to flag the whole bubble: a bubble that is half a real
+    //  translation and half a same-looking original would be more confusing distinguished than not.
+    const untranslated = run.some(u => this.wantedTranslation(u, showLang))
 
-    return texts.join(' ')
+    return {text: texts.join(' '), untranslated}
   }
 
   @action clear(){

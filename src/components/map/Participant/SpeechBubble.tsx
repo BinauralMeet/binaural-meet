@@ -43,6 +43,17 @@ export const SpeechBubble: React.FC<SpeechBubbleProps> = (props) => {
     const bubble = transcript.bubbleOf(props.pid, Date.now(), settings.sttShow)
     if (!bubble || !bubble.text){ return null }
 
+    //  Provisional text is dimmer than confirmed text, so a hypothesis that is about to be
+    //  rewritten does not look like something the speaker definitely said. Untranslated text (a
+    //  translation was wanted but never came, so this is the original language) gets a warm tint
+    //  instead of the neutral white/gray -- otherwise it reads as a real translation, and a
+    //  reader who does not know the source language cannot tell the two apart from the text alone.
+    const {backgroundColor, color} = bubble.untranslated
+      ? {backgroundColor: bubble.provisional ? 'rgba(255,241,199,0.72)' : 'rgba(255,241,199,0.92)',
+        color: bubble.provisional ? '#7a5b00' : '#5c4400'}
+      : {backgroundColor: bubble.provisional ? 'rgba(255,255,255,0.72)' : 'rgba(255,255,255,0.92)',
+        color: bubble.provisional ? '#444' : 'black'}
+
     return <div style={{
       position: 'absolute',
       left: 0,
@@ -57,10 +68,8 @@ export const SpeechBubble: React.FC<SpeechBubbleProps> = (props) => {
       //  is the run's character budget in the store, not a cut-off here that would hide words.
       padding: '3px 9px',
       borderRadius: 8,
-      //  Provisional text is dimmer than confirmed text, so a hypothesis that is about to be
-      //  rewritten does not look like something the speaker definitely said.
-      backgroundColor: bubble.provisional ? 'rgba(255,255,255,0.72)' : 'rgba(255,255,255,0.92)',
-      color: bubble.provisional ? '#444' : 'black',
+      backgroundColor,
+      color,
       fontSize: 14,
       lineHeight: 1.35,
       whiteSpace: 'pre-wrap',

@@ -82,12 +82,14 @@ describe('Transcript', () => {
     const transcript = new Transcript()
     transcript.onInterim('p1', interim('話し中'))
     //  An unfinished utterance shows however long it takes to say, and is marked provisional.
-    expect(transcript.bubbleOf('p1', 1e12)).toEqual({text: '話し中', provisional: true})
+    expect(transcript.bubbleOf('p1', 1e12))
+      .toEqual({text: '話し中', provisional: true, untranslated: false})
 
     at(10000)
     transcript.onFinal('p1', final('話した。'))
     const shown = bubbleDurationMs('話した。')
-    expect(transcript.bubbleOf('p1', 10000 + shown - 1)).toEqual({text: '話した。', provisional: false})
+    expect(transcript.bubbleOf('p1', 10000 + shown - 1))
+      .toEqual({text: '話した。', provisional: false, untranslated: false})
     expect(transcript.bubbleOf('p1', 10000 + shown)).toBeUndefined()
     expect(transcript.bubbleOf('nobody', 10000)).toBeUndefined()
   })
@@ -145,7 +147,32 @@ describe('Transcript', () => {
     transcript.onFinal('p1', spoken('ふたつ目。', 12000, 2000, 'p1-2'))
     transcript.onTranslation({sid: 'p1-1', pid: 'p1', texts: {en: 'First.'}})
     transcript.onTranslation({sid: 'p1-2', pid: 'p1', texts: {en: 'Second.'}})
-    expect(transcript.bubbleOf('p1', 11000, 'en')?.text).toBe('First. Second.')
+    const bubble = transcript.bubbleOf('p1', 11000, 'en')
+    expect(bubble?.text).toBe('First. Second.')
+    //  Both segments got a real translation, so nothing here fell back to the original.
+    expect(bubble?.untranslated).toBe(false)
+  })
+
+  it('flags the bubble untranslated when a wanted translation never arrives', () => {
+    vi.useFakeTimers()
+    const transcript = new Transcript()
+    at(10000)
+    transcript.onFinal('p1', spoken('ひとつ目。', 10000, 2000, 'p1-1'))
+    //  No onTranslation for this utterance -- e.g. dropped as low-confidence, or the service
+    //  never answered. The reader still sees the original language, but the bubble says so.
+    const bubble = transcript.bubbleOf('p1', 11000, 'en')
+    expect(bubble?.text).toBe('ひとつ目。')
+    expect(bubble?.untranslated).toBe(true)
+  })
+
+  it('is not untranslated when the reader wants the language it was spoken in', () => {
+    vi.useFakeTimers()
+    const transcript = new Transcript()
+    at(10000)
+    transcript.onFinal('p1', spoken('ひとつ目。', 10000, 2000, 'p1-1'))
+    //  No translation exists at all, but none was needed: the reader reads Japanese.
+    expect(transcript.bubbleOf('p1', 11000, 'ja')?.untranslated).toBe(false)
+    expect(transcript.bubbleOf('p1', 11000, '')?.untranslated).toBe(false)
   })
 
   it('ignores results with no participant attached', () => {
