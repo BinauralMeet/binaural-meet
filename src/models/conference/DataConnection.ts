@@ -36,6 +36,12 @@ const dataServer = config.dataServer || config.bmRelayServer
 
 export class DataConnection {
   dataSocket:WebSocket|undefined = undefined //  Socket for message passing via data server
+  //  The listeners connect() attaches to the current dataSocket, kept so a later connect()
+  //  call can detach them from a still-lingering old socket before replacing it (see there).
+  private dataSocketListeners: {
+    open: () => void, message: (ev: MessageEvent<any>) => void,
+    error: () => void, close: () => void,
+  } | undefined = undefined
   private peer_=''
   public get peer(){ return this.peer_ }
   private room_=''
@@ -80,7 +86,27 @@ export class DataConnection {
     const promise = new Promise<void>((resolve, reject)=>{
       if (!dataServer){ reject(); return }
       if (this.dataSocket){
-        console.warn(`dataSocket already exists.`)
+        //  A reconnect (e.g. Conference's onDataDisconnect) can fire while the previous socket
+        //  is still technically open server-side (the client saw it die locally before the
+        //  server's own 'close' arrived). Overwriting `dataSocket` here used to just abandon
+        //  the old one still wired to onClose->disconnect(): closing it later would emit a
+        //  second 'disconnect' for a session already being replaced (re-triggering whatever
+        //  reconnect logic caused this call in the first place) and send PARTICIPANT_LEFT under
+        //  the *new* peer/room this.peer_/this.room_ were just set to above -- kicking the
+        //  identity we are about to (re)establish. Detach the old socket's listeners and close
+        //  it directly instead, so it can neither emit nor mis-attribute anything.
+        console.warn(`dataSocket already exists; detaching and closing it before reconnecting.`)
+        const old = this.dataSocket
+        const oldListeners = this.dataSocketListeners
+        if (oldListeners){
+          old.removeEventListener('open', oldListeners.open)
+          old.removeEventListener('message', oldListeners.message)
+          old.removeEventListener('error', oldListeners.error)
+          old.removeEventListener('close', oldListeners.close)
+        }
+        old.close()
+        this.dataSocket = undefined
+        this.dataSocketListeners = undefined
       }
       function onOpen(){
         dataLog('data connected.')
@@ -100,6 +126,7 @@ export class DataConnection {
         const msg = JSON.parse(ev.data) as MSConnectMessage
         self.dataSocket?.removeEventListener('message', onFirstMessage)
         self.dataSocket?.addEventListener('message', onMessage)
+        if (self.dataSocketListeners){ self.dataSocketListeners.message = onMessage }
         self.requestAll(true)
         self.flushSendMessages()
         //  start periodical communication with data server.
@@ -142,6 +169,7 @@ export class DataConnection {
         self.dataSocket?.addEventListener('message', onFirstMessage)
         self.dataSocket?.addEventListener('open', onOpen)
         self.dataSocket?.addEventListener('close', onClose)
+        self.dataSocketListeners = {open: onOpen, message: onFirstMessage, error: onError, close: onClose}
       }
       this.dataSocket = new WebSocket(dataServer)
       setHandler()
@@ -168,6 +196,7 @@ export class DataConnection {
         }else{
           this.dataSocket?.close()
           this.dataSocket = undefined
+          this.dataSocketListeners = undefined
           resolve()
         }
       }
