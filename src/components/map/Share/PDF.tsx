@@ -1,4 +1,4 @@
-import {getProxiedUrl} from '@models/api/CORS'
+import {proxiedUnlessSameOrigin} from '@models/api/CORS'
 import {assert} from '@models/utils'
 import {makeObservable, observable} from 'mobx'
 import {Observer} from 'mobx-react-lite'
@@ -131,7 +131,7 @@ class Member{
         resolve(this.document)
       }else if (!this.getDocTask) {
         this.getDocTask = getDocument({
-          url: getProxiedUrl(this.mainUrl),
+          url: proxiedUnlessSameOrigin(this.mainUrl),
           cMapUrl: CMAP_URL,
           cMapPacked: true,
         })

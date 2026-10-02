@@ -1,4 +1,4 @@
-import {getProxiedUrl} from '@models/api/CORS'
+import {proxiedUnlessSameOrigin} from '@models/api/CORS'
 import GoogleDrive from '@models/api/GoogleDrive'
 import {getImageSize, uploadToGyazo} from '@models/api/Gyazo'
 import {ContentType, isContentWallpaper, ISharedContent, TEN_YEAR, TextMessages,
@@ -118,7 +118,7 @@ export function createContentOfIframe(urlStr: string, map: MapData) {
       makeItPdf(pasted, urlStr, map)
     }else {  //  generic iframe
       //  get mime type first
-      getMimeType(getProxiedUrl(urlStr)).then((type)=>{
+      getMimeType(proxiedUnlessSameOrigin(urlStr)).then((type)=>{
         if (type==='application/pdf'){
           makeItPdf(pasted, urlStr, map)
           resolve(pasted)
