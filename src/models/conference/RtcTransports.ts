@@ -2,6 +2,7 @@ import {MSTransportDirection, MSRestartIceReply, MSTrackRole} from './MediaMessa
 import {RtcConnection, RemotePeer, MSTrack, RemoteProducer, TrackRoles} from './RtcConnection'
 import {RtcTransportStatsGot, updateTransportStat} from './RtcTransportStatsGot'
 import * as mediasoup from 'mediasoup-client'
+import {noteConnectionEvent} from './ConnectionLog'
 
 function assert(input: any): asserts input {
   if (!input) {
@@ -103,6 +104,7 @@ export class RtcTransports extends RtcConnection{
             this.clearMediaReconnectTimer()
           }
           if (state === 'failed' || state === 'disconnected') {
+            noteConnectionEvent('transport', `${dir} ${state}`)
             this.scheduleIceRestart(transport, dir, state)
           }
         });

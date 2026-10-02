@@ -6,6 +6,7 @@ import DialogTitle from '@material-ui/core/DialogTitle'
 import Popover, { PopoverOrigin, PopoverReference } from '@material-ui/core/Popover'
 import TextField from '@material-ui/core/TextField'
 import {uploadToGyazo} from '@models/api/Gyazo'
+import GoogleDrive from '@models/api/GoogleDrive'
 import { conference } from '@models/conference'
 import {useTranslation} from '@models/locales'
 import {isDarkColor, isVrmUrl, rgb2Color} from '@models/utils'
@@ -60,9 +61,10 @@ export const LocalParticipantForm: React.FC<LocalParticipantFormProps> = (props:
   function uploadAvatarSrc(ev: React.FormEvent) {
     ev.preventDefault()
     if (file) {
-      uploadToGyazo(file).then((url) => {
+      //  Same rule as pasted images: the user's own Gyazo if connected, Google Drive otherwise.
+      uploadToGyazo(file).catch(() => GoogleDrive.uploadFileToGoogleDrive(file)).then((url) => {
         local.information.avatarSrc = url
-      })
+      }).catch((e) => { console.warn(`avatar image upload failed: ${e}`) })
     }
   }
 

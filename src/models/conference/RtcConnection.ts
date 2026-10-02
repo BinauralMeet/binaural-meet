@@ -16,6 +16,7 @@ import * as mediasoup from 'mediasoup-client';
 import {connLog} from '@models/utils'
 import {RtcTransportStatsGot} from './RtcTransportStatsGot'
 import {messageLoads} from '@stores/media/MessageLoads'
+import {clientEnvironment, describeClose, noteConnectionEvent, takeConnectionEvents} from './ConnectionLog'
 
 export type TrackRoles = 'avatar' | 'mainScreen' | string
 export type TrackKind = 'audio' | 'video'
@@ -80,6 +81,7 @@ export class RtcConnection{
     this.handlers.set('remoteUpdate', this.onRemoteUpdate)
     this.handlers.set('remoteLeft', this.onRemoteLeft)
     this.handlers.set('uploadFile', this.onUploadFile)
+    this.handlers.set('gyazoToken', this.onGyazoToken)
     this.handlers.set('addAdmin', this.onAddRemoveAdminLogin)
     this.handlers.set('removeAdmin', this.onAddRemoveAdminLogin)
     this.handlers.set('addLogin', this.onAddRemoveAdminLogin)
@@ -255,12 +257,14 @@ export class RtcConnection{
         //rtcLog(`onMessage(${msg.type})`)
         this.rtcQueue.push(msg)
       }
-      const onCloseEvent = () => {
+      const onCloseEvent = (ev: CloseEvent) => {
         rtcLog('onClose() for mainServer')
+        noteConnectionEvent('rtcClose', describeClose(ev))
         this.disconnect()
       }
       const onErrorEvent = () => {
         console.error(`Error in WebSocket for ${config.mainServer}`)
+        noteConnectionEvent('rtcError')
         this.disconnect(3000, 'onError')
       }
 
@@ -365,6 +369,10 @@ export class RtcConnection{
         }
         rtcLog(`RtcC: join sent ${JSON.stringify(joinMsg)}`)
         this.mainServer.send(JSON.stringify(joinMsg))
+        //  What happened to this client's connections since it last got this far, plus which
+        //  browser it is -- the part of a disconnect only the client can see (ConnectionLog.ts).
+        this.mainServer.send(JSON.stringify({type: 'clientLog', ...clientEnvironment(),
+          events: takeConnectionEvents()}))
         this.lastSendTime = Date.now()
         this.loadDevice(msg.peer).then(()=>{
           rtcLog(`RtcC: loadDevice success.`)
@@ -583,6 +591,22 @@ export class RtcConnection{
 
   protected onServerInitiatedIceRestart(_msg: MSRestartIceReply) {
     // Overridden in RtcTransports
+  }
+
+  //  Trades a Gyazo OAuth code for the user's token; the server holds the client_secret this needs.
+  public exchangeGyazoCode(code: string, redirectUri: string):Promise<string>{
+    return new Promise<string>((resolve, reject) => {
+      const msg = {type: 'gyazoToken', code, redirectUri} as MSMessage
+      this.sendWithPromise(msg, resolve, reject)
+    })
+  }
+  private onGyazoToken(base:MSMessage){
+    const msg = base as MSMessage & {token?: string, error?: string}
+    if (msg.token){
+      this.resolveMessage(msg, msg.token)
+    }else{
+      this.rejectMessage(msg, msg.error || 'gyazo token exchange failed')
+    }
   }
 
   private onUploadFile(base:MSMessage){

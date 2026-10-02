@@ -12,6 +12,9 @@ import FormControlLabel from "@material-ui/core/FormControlLabel";
 import FormControl from "@material-ui/core/FormControl";
 import FormLabel from "@material-ui/core/FormLabel";
 import {map} from '@stores/'
+import Button from "@material-ui/core/Button";
+import {useObserver} from 'mobx-react-lite'
+import {connectGyazo, forgetGyazoToken, gyazoAuth, gyazoConfigured} from '@models/api/GyazoAuth'
 
 
 interface ImageInputProps extends DialogPageProps{
@@ -53,6 +56,21 @@ export const ImageInput: React.FC<ImageInputProps> = (props) => {
     sessionStorage.setItem("uploadTypePreferences", uploadType);
   }, [uploadType]);
 
+  //  Gyazo uploads go into the user's own account, so they need connecting once; until then
+  //  (or if it fails) images go to Google Drive instead.
+  const [gyazoError, setGyazoError] = useState('')
+  const gyazoConnection = useObserver(() => gyazoAuth.connected ?
+    <Box mt={1}>{t('gyazoConnected')}{' '}
+      <Button size="small" onClick={() => forgetGyazoToken()}>{t('gyazoDisconnect')}</Button>
+    </Box> :
+    <Box mt={1}>
+      <Button size="small" variant="outlined" onClick={() => {
+        setGyazoError('')
+        connectGyazo().catch((e) => setGyazoError(`${e}`))
+      }}>{t('gyazoConnect')}</Button>
+      {' '}{gyazoError ? `${t('gyazoConnectFailed')}: ${gyazoError}` : t('gyazoNotConnected')}
+    </Box>)
+
 
   return (
     <>
@@ -71,12 +89,13 @@ export const ImageInput: React.FC<ImageInputProps> = (props) => {
           >
             <FormControlLabel value="gyazo" control={<Radio />} label="Gyazo" />
             <FormControlLabel
-              value="gdrve"
+              value="gdrive"
               control={<Radio />}
               label="Google Drive"
             />
           </RadioGroup>
         </FormControl>
+        {gyazoConfigured() ? gyazoConnection : undefined}
       </Box>
 
       <Input

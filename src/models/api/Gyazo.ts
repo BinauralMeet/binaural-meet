@@ -1,37 +1,61 @@
+import {forgetGyazoToken, getGyazoToken} from './GyazoAuth'
+
 export interface GayazoReturnType{
   url: string,
   size: [number, number],
 }
+
+//  How long to look for the uploaded image in the user's list before giving up.
+const FIND_TRIES = 6
+const FIND_INTERVAL_MS = 700
+
+//  Uploads into the user's own Gyazo (connected via GyazoAuth.ts) and resolves with its URL.
+//
+//  upload.gyazo.com does not allow other sites to read its answer (no Access-Control-Allow-Origin;
+//  checked 2026-10-02), so the URL in that answer is out of reach. The upload itself still goes
+//  through -- a multipart form POST is a "simple" request -- and api.gyazo.com, which does allow
+//  cross-site reads, then tells us the user's newest image: the one just uploaded. Nothing passes
+//  through any server of ours. Rejects when not connected, so callers fall back to Google Drive.
 export function uploadToGyazo(imageData: Blob):Promise<string> {
-  const promise = new Promise<string>((resolutionFunc, rejectionFunc) => {
-    const formData = new FormData()
-    formData.append('access_token', 'e9889a51fca19f2712ec046016b7ec0808953103e32cd327b91f11bfddaa8533')
-    formData.append('imagedata', imageData)
-    fetch('https://upload.gyazo.com/api/upload', {method: 'POST', body: formData})
-    .then(response => response.json().then(json => ({ok: response.ok, status: response.status, json})))
-    .then(({ok, status, json}) => {
-      //  A refused upload (e.g. a revoked token: 401 {"message": "You are not authorized."},
-      //  2026-10-02) still answers with JSON, just without a url. Resolving with that undefined
-      //  url used to make the paste silently do nothing.
-      if (!ok || typeof json?.url !== 'string'){
-        console.warn(`Gyazo upload refused (${status}): ${json?.message ?? ''}`)
-        rejectionFunc('refused')
+  const token = getGyazoToken()
+  if (!token){ return Promise.reject('not connected') }
+  const started = Date.now() - 5000   //  allow for some clock skew between us and Gyazo
 
-        return
-      }
-      resolutionFunc(json.url)
-    })
-    .catch((error) => {
-      if (`${error}` === 'TypeError: Failed to fetch'){
-        rejectionFunc('type')
-      }else{
-        console.error(error)
-        rejectionFunc('')
-      }
-    })
+  const formData = new FormData()
+  formData.append('access_token', token)
+  formData.append('imagedata', imageData)
+
+  return fetch('https://upload.gyazo.com/api/upload', {method: 'POST', body: formData, mode: 'no-cors'})
+    .then(() => findNewestSince(token, started))
+}
+
+function findNewestSince(token: string, since: number): Promise<string>{
+  return new Promise<string>((resolve, reject) => {
+    let tries = 0
+    const look = () => {
+      tries += 1
+      fetch(`https://api.gyazo.com/api/images?per_page=1&access_token=${encodeURIComponent(token)}`)
+      .then((res) => {
+        if (res.status === 401){
+          //  The user revoked BM in Gyazo: forget the token so the next paste asks again.
+          forgetGyazoToken()
+          throw new Error('gyazo token revoked')
+        }
+
+        return res.json()
+      }).then((list) => {
+        const newest = Array.isArray(list) ? list[0] : undefined
+        if (newest?.url && Date.parse(newest.created_at) >= since){
+          resolve(newest.url)
+        }else if (tries < FIND_TRIES){
+          window.setTimeout(look, FIND_INTERVAL_MS)
+        }else{
+          reject('uploaded image not found')
+        }
+      }).catch((e) => reject(`${e}`))
+    }
+    look()
   })
-
-  return promise
 }
 
 export function getImageSize(url: string) {

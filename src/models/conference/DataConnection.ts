@@ -15,6 +15,7 @@ import {EventEmitter} from 'eventemitter3'
 import {MSConnectMessage} from './MediaMessages'
 import {messageLoads} from '@stores/media/MessageLoads'
 import { conference } from './Conference'
+import {describeClose, noteConnectionEvent} from './ConnectionLog'
 
 //  Log level and module log options
 export const dataLog = connLog
@@ -158,10 +159,12 @@ export class DataConnection {
       }
       function onError(){
         console.error(`Error in WebSocket for ${dataServer}`)
+        noteConnectionEvent('dataError')
         self.dataSocket?.close(3000, 'onError')
       }
-      function onClose(){
+      function onClose(ev?: CloseEvent){
         dataLog('onClose() for dataSocket')
+        noteConnectionEvent('dataClose', describeClose(ev))
         self.disconnect()
       }
       function setHandler(){

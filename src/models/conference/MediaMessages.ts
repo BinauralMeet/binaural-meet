@@ -7,7 +7,7 @@ export type MSMessageType =
   'createTransport' | 'closeTransport' | 'connectTransport' | 'restartIce' |
   'produceTransport' | 'closeProducer' | 'consumeTransport' | 'resumeConsumer' |
   'streamingStart' | 'streamingStop' | 'uploadFile' | 'serverStatus' |
-  'sttStart' | 'sttStop' | 'sttResult'
+  'sttStart' | 'sttStop' | 'sttResult' | 'clientLog' | 'gyazoToken'
 export interface MSMessage{
   type: MSMessageType
   sn?: number

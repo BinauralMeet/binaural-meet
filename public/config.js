@@ -39,6 +39,11 @@ const configTitech = {
   //bmRelayServer: 'wss://data.titech.binaural.me',
   //dataServer: 'ws://localhost:80',
   corsProxyUrl: 'https://binaural.me/cors_proxy/',
+  //  Gyazo OAuth app (each user uploads into their own Gyazo; models/api/GyazoAuth.ts). The client
+  //  id is public by design; the secret lives only in the main server's config.js. The redirect
+  //  URI must be exactly the one registered with the app.
+  gyazoClientId: 'wpmsU2tIX64AaCj3t_vERkEZh2E69jUF',
+  gyazoRedirectUri: 'https://binaural.me/',
 }
 
 const configVrc = {

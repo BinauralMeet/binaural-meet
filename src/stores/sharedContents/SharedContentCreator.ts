@@ -170,9 +170,9 @@ export function createContentOfImage(imageFile: File, map: MapData, offset?:[num
     .then(url => createContentOfImageUrl(url, map, offset))
   if (uploadType === 'gdrive'){ return viaDrive() }
 
-  //  Gyazo first (the default), Drive whenever Gyazo cannot take the image -- whatever the
-  //  reason: a blocked request, a revoked token, an answer without a url. Before 2026-10-02 only
-  //  a blocked request fell back, so a dead token made every paste quietly do nothing.
+  //  The user's own Gyazo when they have connected it (GyazoAuth.ts), Google Drive otherwise or
+  //  whenever Gyazo cannot take the image. Before 2026-10-02 only a blocked request fell back, so
+  //  a dead shared token made every paste quietly do nothing.
   return uploadToGyazo(imageFile)
     .then(url => createContentOfImageUrl(url, map, offset))
     .catch((error) => {

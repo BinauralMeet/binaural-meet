@@ -16,6 +16,8 @@ import {conference} from '@models/conference'
 import {participants} from '@stores/index'
 import {startOutputDeviceObservation} from '@models/conference/observeOutputDevice'
 import {startBroadcastObservation} from '@stores/media/StereoParameters'
+import {noteConnectionEvent, watchNetworkEvents} from '@models/conference/ConnectionLog'
+import {handleGyazoCallback} from '@models/api/GyazoAuth'
 
 configure({
     enforceActions: "never",
@@ -28,7 +30,9 @@ configure({
 audioManager.setAudiosToConsumeAccessor(() => conference.priorityCalculator.tracksToConsume.audios)
 
 
-i18nInit().then(main)
+//  The Gyazo OAuth popup lands on this very page; when that is all this load is, hand the code to
+//  the opener and stop here rather than starting a second copy of the app (GyazoAuth.ts).
+if (!handleGyazoCallback()){ i18nInit().then(main) }
 
 function main() {
   /*  //  Show last log for beforeunload
@@ -53,7 +57,11 @@ function renderDOM() {
 
 let logStr = ''
 function startConference() {
+  watchNetworkEvents()
   window.addEventListener('beforeunload', (ev) => {
+    //  A reload is the most common way a session ends badly (2026-10-02's meeting: most of
+    //  the server-side "errors" were exactly this); the next join tells the server it happened.
+    noteConnectionEvent('unload', document.visibilityState)
     logStr = `${logStr}beforeunload called. ${Date()} `
     localStorage.setItem('log', logStr)
 

@@ -21,6 +21,7 @@ import {inputChangeObservationStart, inputChangeObservationStop} from './observe
 import {sttClient} from '@models/stt/SttClient'
 import { PositionConnection } from './PositionConnection'
 import { ISharedContent } from '@models/ISharedContent'
+import {noteConnectionEvent} from './ConnectionLog'
 
 // config.js
 declare const d:any                  //  from index.html
@@ -260,6 +261,10 @@ export class Conference implements ContentSyncTransport, ConferenceStatusTranspo
     return promise
   }
 
+  public exchangeGyazoCode(code: string, redirectUri: string){
+    return this.rtcTransports.exchangeGyazoCode(code, redirectUri)
+  }
+
   public addAdmin(email: string){
     return this.rtcTransports.addAdmin(email)
   }
@@ -284,6 +289,7 @@ export class Conference implements ContentSyncTransport, ConferenceStatusTranspo
   }
   private onRtcDisconnect = () => {
     console.log(`onRtcDisconnect called.`)
+    noteConnectionEvent('reconnectRtc')
     //*
     inputChangeObservationStop()
     this.clearRtc()
@@ -299,6 +305,7 @@ export class Conference implements ContentSyncTransport, ConferenceStatusTranspo
 
   private onDataDisconnect = () => {
     console.log(`onDataDisconnect called.`)
+    noteConnectionEvent('reconnectData')
     //*
     const func = ()=>{
       if (this.rtcTransports.isConnected()){
