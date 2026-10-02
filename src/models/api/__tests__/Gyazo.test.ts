@@ -12,13 +12,18 @@ const TOKEN_KEY = 'gyazoAccessToken'
 beforeEach(() => { localStorage.clear() })
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals() })
 
-function stubFetch(listAnswers: Array<{status?: number, body: any}>){
+//  `listAnswers` may be a function of the description the upload carried, to play the part of
+//  Gyazo listing the image that was just uploaded.
+function stubFetch(listAnswers: Array<{status?: number, body: any}>, uploaded?: (desc: string) => any){
   const calls: string[] = []
+  let desc = ''
   vi.stubGlobal('fetch', vi.fn((url: string, init?: any) => {
     calls.push(`${init?.method || 'GET'} ${url.split('?')[0]}`)
     if (url.startsWith('https://upload.gyazo.com/')){
+      desc = (init.body as FormData).get('desc') as string
       return Promise.resolve({status: 0, ok: false} as any)    //  what a no-cors POST resolves to
     }
+    if (uploaded){ return Promise.resolve({status: 200, ok: true, json: () => Promise.resolve(uploaded(desc))} as any) }
     const answer = listAnswers.length > 1 ? listAnswers.shift()! : listAnswers[0]
 
     return Promise.resolve({status: answer.status ?? 200, ok: (answer.status ?? 200) < 400,
@@ -35,18 +40,21 @@ describe('uploadToGyazo', () => {
     expect(calls).toEqual([])
   })
 
-  it('uploads with the user token and resolves with the newest image the API lists', async () => {
+  it('uploads with the user token and finds its own image by the marker it carried', async () => {
     localStorage.setItem(TOKEN_KEY, 'user-token')
-    const now = new Date().toISOString()
-    const calls = stubFetch([{body: [{url: 'https://i.gyazo.com/abc.png', created_at: now}]}])
-    await expect(uploadToGyazo(new Blob(['x']))).resolves.toBe('https://i.gyazo.com/abc.png')
+    //  Someone else's newer image comes first in the list; ours must still be the one picked.
+    const calls = stubFetch([], desc => [
+      {url: 'https://i.gyazo.com/other.png', metadata: {desc: 'Binaural Meet ffffffff'}},
+      {url: 'https://i.gyazo.com/ours.png', metadata: {desc}},
+    ])
+    await expect(uploadToGyazo(new Blob(['x']))).resolves.toBe('https://i.gyazo.com/ours.png')
     expect(calls).toEqual(['POST https://upload.gyazo.com/api/upload', 'GET https://api.gyazo.com/api/images'])
   })
 
-  it('does not take an older image for the one just uploaded', async () => {
+  it('gives up (so Drive takes over) when its image never shows up -- a no-cors failure looks like this', async () => {
     vi.useFakeTimers()
     localStorage.setItem(TOKEN_KEY, 'user-token')
-    stubFetch([{body: [{url: 'https://i.gyazo.com/old.png', created_at: '2020-01-01T00:00:00Z'}]}])
+    stubFetch([{body: [{url: 'https://i.gyazo.com/old.png', metadata: {desc: ''}}]}])
     const p = uploadToGyazo(new Blob(['x']))
     const settled = p.catch(e => e)
     await vi.runAllTimersAsync()
