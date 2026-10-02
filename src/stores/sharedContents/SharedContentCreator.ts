@@ -166,31 +166,20 @@ export function createContentOfText(message: string, map: MapData) {
 }
 export function createContentOfImage(imageFile: File, map: MapData, offset?:[number, number], uploadType?: "gyazo" | "gdrive")
   : Promise<SharedContentImp> {
-  const promise = new Promise<SharedContentImp>((resolutionFunc, rejectionFunc) => {
-    if (!uploadType || uploadType === 'gyazo'){
-      uploadToGyazo(imageFile).then((url) => {
-        createContentOfImageUrl(url, map, offset).then(resolutionFunc)
-      }).catch((error) => {
-        if (error === 'type'){
-          GoogleDrive.uploadFileToGoogleDrive(imageFile).then((url) => {
-            if(typeof url === 'string'){
-              createContentOfImageUrl(url, map, offset).then(resolutionFunc)
-            }
-          }).catch(rejectionFunc)
-        }else{
-          rejectionFunc(error)
-        }
-      })
-    }else{
-      GoogleDrive.uploadFileToGoogleDrive(imageFile).then((url) => {
-        if(typeof url === 'string'){
-          createContentOfImageUrl(url, map, offset).then(resolutionFunc).catch(rejectionFunc)
-        }
-      })
-    }
-  })
+  const viaDrive = () => GoogleDrive.uploadFileToGoogleDrive(imageFile)
+    .then(url => createContentOfImageUrl(url, map, offset))
+  if (uploadType === 'gdrive'){ return viaDrive() }
 
-  return promise
+  //  Gyazo first (the default), Drive whenever Gyazo cannot take the image -- whatever the
+  //  reason: a blocked request, a revoked token, an answer without a url. Before 2026-10-02 only
+  //  a blocked request fell back, so a dead token made every paste quietly do nothing.
+  return uploadToGyazo(imageFile)
+    .then(url => createContentOfImageUrl(url, map, offset))
+    .catch((error) => {
+      console.warn(`Gyazo upload failed (${error}); uploading to Google Drive instead.`)
+
+      return viaDrive()
+    })
 }
 
 export function createContentOfImageUrl(url: string, map: MapData,

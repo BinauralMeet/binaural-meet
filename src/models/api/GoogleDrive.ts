@@ -8,13 +8,15 @@ class GoogleDrive{
     const imageLimitation = 5242880
     if(file.size > imageLimitation) {
       console.log('file size is too big')
-      return 'reject'
+      throw 'too big'
     }
     else{
       const promise = new Promise<string>((resolutionFunc, rejectionFunc) => {
         conference.uploadFiletoGoogleDrive(file).then((result) => {
-          if(result == 'reject') {
-            rejectionFunc('reject')
+          //  The server answers 'upload error' when Drive refused the file (bmMediasoupServer
+          //  GoogleServer.uploadFile); that is not a file id.
+          if(!result || result == 'reject' || result == 'upload error') {
+            rejectionFunc(result || 'reject')
           }
           else{
             const fileID = result

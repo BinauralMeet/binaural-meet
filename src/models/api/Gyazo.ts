@@ -8,11 +8,18 @@ export function uploadToGyazo(imageData: Blob):Promise<string> {
     formData.append('access_token', 'e9889a51fca19f2712ec046016b7ec0808953103e32cd327b91f11bfddaa8533')
     formData.append('imagedata', imageData)
     fetch('https://upload.gyazo.com/api/upload', {method: 'POST', body: formData})
-    .then(response => response.json())
-    .then((responseJson) => {
-      // console.log("URL = " + responseJson.url)
-      //  To do, add URL and ask user position to place the image
-      resolutionFunc(responseJson.url)
+    .then(response => response.json().then(json => ({ok: response.ok, status: response.status, json})))
+    .then(({ok, status, json}) => {
+      //  A refused upload (e.g. a revoked token: 401 {"message": "You are not authorized."},
+      //  2026-10-02) still answers with JSON, just without a url. Resolving with that undefined
+      //  url used to make the paste silently do nothing.
+      if (!ok || typeof json?.url !== 'string'){
+        console.warn(`Gyazo upload refused (${status}): ${json?.message ?? ''}`)
+        rejectionFunc('refused')
+
+        return
+      }
+      resolutionFunc(json.url)
     })
     .catch((error) => {
       if (`${error}` === 'TypeError: Failed to fetch'){
