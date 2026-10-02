@@ -1,5 +1,5 @@
 //  A small diary of connection events, kept in localStorage and sent to the main server on the
-//  next join (bm workspace doc `bmMediasoupServer-architecture`, "clientLog").
+//  next join (bm workspace doc `bmMediasoupServer-architecture#client-log`).
 //
 //  The server can see that a socket closed and with which code, but not why: a 1005 there is
 //  just as likely "the user reloaded because their audio stopped" as "our own reconnect logic
