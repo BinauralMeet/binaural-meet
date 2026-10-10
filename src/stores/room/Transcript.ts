@@ -70,6 +70,9 @@ export class Utterance{
   //  Filled in later than the text: the server sends translations as a separate message so a
   //  slow translator cannot delay the original subtitle.
   @observable translations = observable.map<string, string>()
+  //  Translations of interim text, sent only when the server had a GPU to spare. Shown until the
+  //  translation of the final text replaces them.
+  @observable interimTranslations = observable.map<string, string>()
   @observable endTime = 0
 
   constructor(sid: string, pid: string, text: string, lang: string, startTime: number){
@@ -146,6 +149,15 @@ export class Transcript{
     }
   }
 
+  @action onInterimTranslation(payload: SpeechTranslation){
+    const utterance = this.bySid.get(payload.sid)
+    //  The final translation is better in every way; a late interim one must not cover it.
+    if (!utterance || utterance.translations.size){ return }
+    for (const lang of Object.keys(payload.texts)){
+      utterance.interimTranslations.set(lang, payload.texts[lang])
+    }
+  }
+
   //  What to display: the translation into the reader's language when there is one, otherwise
   //  the original. A participant reading in the language it was spoken in sees the original --
   //  that is a normal, fully-expected case, not the "wanted a translation and didn't get one"
@@ -155,7 +167,8 @@ export class Transcript{
     const primary = showLang.split(/[-_]/)[0].toLowerCase()
     if (primary === utterance.lang.split(/[-_]/)[0].toLowerCase()){ return utterance.text }
 
-    return utterance.translations.get(primary) ?? utterance.text
+    return utterance.translations.get(primary) ?? utterance.interimTranslations.get(primary) ??
+      utterance.text
   }
 
   //  True when this utterance is in a language the reader did not ask for, and no translation
@@ -166,7 +179,7 @@ export class Transcript{
     const primary = showLang.split(/[-_]/)[0].toLowerCase()
     if (primary === utterance.lang.split(/[-_]/)[0].toLowerCase()){ return false }
 
-    return !utterance.translations.has(primary)
+    return !utterance.translations.has(primary) && !utterance.interimTranslations.has(primary)
   }
 
   //  The bubble shows everything this participant has said in one continuous stretch, so it

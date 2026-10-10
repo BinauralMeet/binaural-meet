@@ -104,6 +104,11 @@ export class DataSync{
       merge: 'instant', recordable: true,
       onReceive: (v) => transcript.onTranslation(v),
     })
+    //  Sent only while the server has a GPU to spare; provisional like the interim text itself.
+    registerMessageType(MessageType.SPEECH_INTERIM_TRANSLATION, {
+      merge: 'overwrite',
+      onReceive: (v) => transcript.onInterimTranslation(v),
+    })
     registerMessageType(MessageType.PARTICIPANT_STT_LANG, {
       merge: 'overwrite', recordable: true,
       //  The server reads the languages out of this (what to translate into); clients read only

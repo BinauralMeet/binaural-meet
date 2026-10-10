@@ -61,6 +61,22 @@ describe('Transcript', () => {
     expect(transcript.textFor(utterance, 'ko')).toBe('こんにちは。')
   })
 
+  it('shows an interim translation until the final one replaces it', () => {
+    const transcript = new Transcript()
+    transcript.onInterim('p1', interim('こんに'))
+    transcript.onInterimTranslation({sid: SID, pid: 'p1', texts: {en: 'Hel'}})
+    const utterance = transcript.utterances[0]
+    expect(transcript.textFor(utterance, 'en')).toBe('Hel')
+    expect(transcript.bubbleOf('p1', Date.now(), 'en')).toEqual({text: 'Hel', provisional: true, untranslated: false})
+    transcript.onFinal('p1', final('こんにちは。'))
+    expect(transcript.textFor(utterance, 'en')).toBe('Hel')
+    transcript.onTranslation({sid: SID, pid: 'p1', texts: {en: 'Hello.'}})
+    expect(transcript.textFor(utterance, 'en')).toBe('Hello.')
+    //  A late interim translation does not cover the final one.
+    transcript.onInterimTranslation({sid: SID, pid: 'p1', texts: {en: 'Hel'}})
+    expect(transcript.textFor(utterance, 'en')).toBe('Hello.')
+  })
+
   it('drops a translation for an utterance it no longer has', () => {
     const transcript = new Transcript()
     expect(() => transcript.onTranslation({sid: 'gone', pid: 'p1', texts: {en: 'x'}})).not.toThrow()

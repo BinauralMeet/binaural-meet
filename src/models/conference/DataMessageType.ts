@@ -32,12 +32,13 @@ export const InstantMessageType = {
   AUDIO_LEVEL: 'ma',                            //  audio level notification
   RELOAD_BROWSER: 'm_reload',                   //  ask a participant's browser to reload (admin action)
   KICK: 'm_kick',                               //  reason:string
-  //  Speech-to-text. All three are produced by the server (recognition runs there, see the bm
+  //  Speech-to-text. All four are produced by the server (recognition runs there, see the bm
   //  workspace doc `stt-translation`), not by the speaking client, but they travel as ordinary
   //  instant messages attributed to the speaker.
   SPEECH_INTERIM: 'stt_i',                      //  SpeechInterim, provisional text, not recorded
   SPEECH_TEXT: 'stt_t',                         //  SpeechText, one finished utterance
   SPEECH_TRANSLATION: 'stt_tr',                 //  SpeechTranslation, translations of one utterance
+  SPEECH_INTERIM_TRANSLATION: 'stt_itr',        //  SpeechTranslation of interim text, not recorded
 } as const
 export type InstantMessageKeys = keyof typeof InstantMessageType
 export const InstantMessageTypes = new Set<string>(Object.values(InstantMessageType))

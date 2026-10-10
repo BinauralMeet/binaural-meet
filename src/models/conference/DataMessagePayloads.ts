@@ -30,6 +30,7 @@ export interface MessageTypePayloadMap {
   [MessageType.SPEECH_INTERIM]: SpeechInterim
   [MessageType.SPEECH_TEXT]: SpeechText
   [MessageType.SPEECH_TRANSLATION]: SpeechTranslation
+  [MessageType.SPEECH_INTERIM_TRANSLATION]: SpeechTranslation
   [MessageType.PARTICIPANT_TRACKLIMITS]: number[]
   [MessageType.YARN_PHONE]: string[]              //  connected pids
   [MessageType.CHAT_MESSAGE]: ChatMessageToSend
