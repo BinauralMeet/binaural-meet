@@ -145,6 +145,7 @@ export class Conference implements ContentSyncTransport, ConferenceStatusTranspo
           const diff = Date.now() - found.time
           const KICK_WAIT_MIN = 15  //  Can not login KICK_WAIT_MIN minutes once kicked.
           if (diff < KICK_WAIT_MIN * 60 * 1000){
+            noteConnectionEvent('reloadKickedRecently', `${Math.round(diff / 1000)}s ago`)
             window.location.reload()
             reject('kicked')
             return

@@ -24,6 +24,7 @@ import {notification} from './Notification'
 import {connLog} from '@models/utils'
 import {VrmRig} from '@models/utils/vrmIK'
 import {registerMessageType, getMessageTypeEntry} from './MessageTypeRegistry'
+import {noteConnectionEvent} from './ConnectionLog'
 
 const syncLog = connLog
 
@@ -346,6 +347,7 @@ export class DataSync{
       found.time = Date.now()
       window.localStorage.setItem('kickTimes', JSON.stringify(kickTimes))
     }
+    noteConnectionEvent('reloadByKick', `from:${pid ?? ''} ${reason ?? ''}`)
     window.setTimeout(()=>{
       window.location.reload()
     }, 10000)
@@ -490,6 +492,9 @@ export class DataSync{
     participants.local.muteAudio = value || setting.stream.muteAudio
   }
   private onReloadBrower(){
+    //  Asked by another participant (an admin action); recorded so the next join's clientLog says
+    //  why this session ended, not just that it did (ConnectionLog.ts).
+    noteConnectionEvent('reloadByRemote')
     window.location.reload()
   }
   //  contents
