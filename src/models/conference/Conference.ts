@@ -551,6 +551,9 @@ export class Conference implements ContentSyncTransport, ConferenceStatusTranspo
   }
   private removeConsumer(producer: RemoteProducer){
     if (producer.consumer){
+      //  Close the server's end as well, or it keeps sending what we no longer receive -- which
+      //  happens every time the priority calculator drops a track (bm workspace CHANGELOG 2026-10-10).
+      this.rtcTransports.closeConsumer(producer.consumer.id, producer.peer.peer)
       producer.consumer.close()
       producer.consumer = undefined
       if (producer.role === 'avatar'){

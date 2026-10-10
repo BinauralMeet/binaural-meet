@@ -3,7 +3,7 @@ import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSConnectMessage, MS
   MSRTPCapabilitiesReply, MSTransportDirection, MSCreateTransportReply, MSConnectTransportMessage,
   MSConnectTransportReply, MSProduceTransportMessage, MSProduceTransportReply, MSTrackRole,
   MSConsumeTransportMessage, MSConsumeTransportReply, MSRemoteUpdateMessage, MSRemoteLeftMessage,
-  MSResumeConsumerMessage, MSResumeConsumerReply, MSCloseProducerMessage, MSRemoteProducer,
+  MSResumeConsumerMessage, MSCloseConsumerMessage, MSResumeConsumerReply, MSCloseProducerMessage, MSRemoteProducer,
   MSCloseProducerReply, MSStreamingStartMessage,MSUploadFileMessage, MSStreamingStopMessage, MSAddAdminMessage,
   MSPreConnectMessage,
   MSCheckAdminMessage,
@@ -687,6 +687,14 @@ export class RtcConnection{
       }
       this.resolveMessage(msg, consumerOptions)
     }
+  }
+  //  consumer.close() in mediasoup-client closes only our end; the server's consumer would keep
+  //  sending that media until the remote leaves (bmMediasoupServer media.ts 'closeConsumer').
+  public closeConsumer(consumer: string, remote: string){
+    if (this.mainServer?.readyState !== WebSocket.OPEN){ return }
+    const msg:MSCloseConsumerMessage = {type: 'closeConsumer', peer: this.peer, remote, consumer}
+    this.mainServer.send(JSON.stringify(msg))
+    this.lastSendTime = Date.now()
   }
   public resumeConsumer(consumer: string, remote: string){
     const promise = new Promise<void>((resolve, reject) => {

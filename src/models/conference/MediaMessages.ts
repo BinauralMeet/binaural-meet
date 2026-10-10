@@ -7,7 +7,7 @@ export type MSMessageType =
   'createTransport' | 'closeTransport' | 'connectTransport' | 'restartIce' |
   'produceTransport' | 'closeProducer' | 'consumeTransport' | 'resumeConsumer' |
   'streamingStart' | 'streamingStop' | 'uploadFile' | 'serverStatus' |
-  'sttStart' | 'sttStop' | 'sttResult' | 'clientLog' | 'gyazoToken'
+  'sttStart' | 'sttStop' | 'sttResult' | 'clientLog' | 'gyazoToken' | 'closeConsumer'
 export interface MSMessage{
   type: MSMessageType
   sn?: number
@@ -164,6 +164,10 @@ export interface MSConsumeTransportReply extends MSPeerMessage{
 }
 
 export interface MSResumeConsumerMessage extends MSPeerMessage{
+  consumer: string
+}
+//  Tells the server this client stopped receiving a consumer, so it closes its end too. No reply.
+export interface MSCloseConsumerMessage extends MSPeerMessage{
   consumer: string
 }
 export interface MSResumeConsumerReply extends MSPeerMessage{
