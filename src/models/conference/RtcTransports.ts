@@ -205,6 +205,18 @@ export class RtcTransports extends RtcConnection{
     this.sendTransportPromise = promise //  Start to create transport
     return promise
   }
+  //  The receive transport for a remote that left: nothing will arrive on it any more. Closed here
+  //  and on the server -- otherwise both the browser's RTCPeerConnection and the server's transport
+  //  (with its UDP/TCP ports) stayed until this client itself left, one more for every remote that
+  //  came and went.
+  public closeReceiveTransport(peer: RemotePeer){
+    const transport = peer.transport
+    peer.transport = undefined
+    delete peer.transportPromise
+    if (!transport){ return }
+    this.closeTransport(transport.id)
+    transport.close()
+  }
   private getReceiveTransport(peer: RemotePeer){
     if (peer.transportPromise){ return peer.transportPromise }
     const promise = new Promise<mediasoup.types.Transport>((resolve, reject)=>{

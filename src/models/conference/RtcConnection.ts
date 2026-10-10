@@ -3,7 +3,7 @@ import {MSCreateTransportMessage, MSMessage, MSPeerMessage, MSConnectMessage, MS
   MSRTPCapabilitiesReply, MSTransportDirection, MSCreateTransportReply, MSConnectTransportMessage,
   MSConnectTransportReply, MSProduceTransportMessage, MSProduceTransportReply, MSTrackRole,
   MSConsumeTransportMessage, MSConsumeTransportReply, MSRemoteUpdateMessage, MSRemoteLeftMessage,
-  MSResumeConsumerMessage, MSCloseConsumerMessage, MSResumeConsumerReply, MSCloseProducerMessage, MSRemoteProducer,
+  MSResumeConsumerMessage, MSCloseConsumerMessage, MSCloseTransportMessage, MSResumeConsumerReply, MSCloseProducerMessage, MSRemoteProducer,
   MSCloseProducerReply, MSStreamingStartMessage,MSUploadFileMessage, MSStreamingStopMessage, MSAddAdminMessage,
   MSPreConnectMessage,
   MSCheckAdminMessage,
@@ -687,6 +687,13 @@ export class RtcConnection{
       }
       this.resolveMessage(msg, consumerOptions)
     }
+  }
+  //  Asks the server to close one of our transports (main routes it to the worker that holds it).
+  public closeTransport(transport: string){
+    if (this.mainServer?.readyState !== WebSocket.OPEN){ return }
+    const msg:MSCloseTransportMessage = {type: 'closeTransport', peer: this.peer, transport}
+    this.mainServer.send(JSON.stringify(msg))
+    this.lastSendTime = Date.now()
   }
   //  consumer.close() in mediasoup-client closes only our end; the server's consumer would keep
   //  sending that media until the remote leaves (bmMediasoupServer media.ts 'closeConsumer').

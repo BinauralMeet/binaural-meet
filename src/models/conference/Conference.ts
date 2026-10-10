@@ -509,6 +509,7 @@ export class Conference implements ContentSyncTransport, ConferenceStatusTranspo
         const remote = this.remotePeers.get(id)
         if (remote) {
           this.onProducerRemoved(remote.producers, remote)
+          this.rtcTransports.closeReceiveTransport(remote)
         }
         this.remotePeers.delete(id)
         if (this.rtcTransports.isConnected()){
