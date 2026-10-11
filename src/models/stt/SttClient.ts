@@ -17,7 +17,6 @@ class SttClient{
   private started = false
   private startedLang = ''
   private startedProducer = ''
-  private watchTimer = 0
   private sentLanguages = ''
   //  Why STT is not running even though it was switched on (no backend configured, too many
   //  sessions, ...). The footer button shows it: a silently-dead feature is worse than a refusal.
@@ -40,17 +39,20 @@ class SttClient{
       //  though somebody else's subtitle switch is what asks for it.
       const wanted = this.wantedByAnyone && !local.muteAudio && !!conference.getLocalMicTrack()
       const lang = settings.sttSpeak || 'auto'
-      if (wanted && (!this.started || this.startedLang !== lang)){
+      //  Not observed (a plain field), only compared: after a reconnect the remotes asking for
+      //  subtitles may arrive after the new producer did, and the session must follow it.
+      const producer = conference.rtcTransports.getLocalProducer('avatar', 'audio')
+      if (wanted && (!this.started || this.startedLang !== lang || this.startedProducer !== producer?.id)){
         this.doStart(lang)
       }else if (!wanted && this.started){
         this.doStop()
       }
     }))
 
-    //  A media-server restart or an RTC reconnect gives us a new producer, and the session the
-    //  server was transcribing is gone with the old one. Nothing observable changes when that
-    //  happens -- getLocalMicTrack() is a plain field -- so the only honest check is to look.
-    this.watchTimer = window.setInterval(() => this.ensureStarted(), 5000)
+    //  Joining, an RTC reconnect or a media-server restart gives us a new mic producer some time
+    //  after the autorun above has run, and the session the server was transcribing is gone with
+    //  the old one. Nothing observable changes when that happens, so start on the producer itself.
+    conference.rtcTransports.addListener('localProducer', this.onLocalProducer)
 
     //  Re-announce the languages when the user changes them mid-meeting. The announcement on
     //  joining is DataSync.sendAllAboutMe()'s job -- this autorun cannot do it, because whether
@@ -82,11 +84,9 @@ class SttClient{
     console.warn(`stt: server refused: ${error}`)
   }
 
-  //  The mic producer appears some time after enter() -- after the send transport is set up -- and
-  //  the autorun above cannot see it. Called by Conference once it exists, so the session starts
-  //  right away instead of at the next watchTimer tick (up to 5s of lost first words).
-  onMicProducerReady(){
-    if (this.disposers.length){ this.ensureStarted() }
+  private onLocalProducer = (args: any[]) => {
+    const producer = Array.isArray(args) ? args[0] : args
+    if (producer?.kind === 'audio' && producer.appData?.track?.role === 'avatar'){ this.ensureStarted() }
   }
 
   private ensureStarted(){
@@ -115,7 +115,7 @@ class SttClient{
   //  Leaving the room ends the session server-side anyway (the peer is gone); this only keeps
   //  local state from claiming a session that no longer exists.
   stop(){
-    if (this.watchTimer){ window.clearInterval(this.watchTimer); this.watchTimer = 0 }
+    conference.rtcTransports.removeListener('localProducer', this.onLocalProducer)
     this.disposers.forEach(d => d())
     this.disposers = []
     this.started = false

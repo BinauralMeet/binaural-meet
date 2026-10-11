@@ -56,6 +56,7 @@ const RECONNECT_ON_TIMEOUT = new Set<string>(['createTransport', 'connectTranspo
   'consumeTransport'])
 
 type RtcConnectionEvent = 'remoteUpdate' | 'remoteLeft' | 'connect' | 'disconnect' | 'sttStarted'
+  | 'localProducer'
 
 export class RtcConnection{
   private peer_=''
@@ -792,7 +793,7 @@ export class RtcConnection{
   public removeAllListener(){
     this.emitter.removeAllListeners()
   }
-  private emit(event:RtcConnectionEvent, ...args: any[]){
+  protected emit(event:RtcConnectionEvent, ...args: any[]){
     this.emitter.emit(event, args)
   }
 

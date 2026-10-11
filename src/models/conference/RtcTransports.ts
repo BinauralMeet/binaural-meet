@@ -288,6 +288,7 @@ export class RtcTransports extends RtcConnection{
               codec
             }).then( producer => {
               this.localProducers.push(producer)
+              this.emit('localProducer', producer)
               resolve(producer)
             }).catch(reject)
           })

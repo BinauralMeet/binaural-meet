@@ -424,7 +424,6 @@ export class Conference implements ContentSyncTransport, ConferenceStatusTranspo
           if (oldTrack && oldTrack.track !== track.track) {
             oldTrack.track.stop()
           }
-          sttClient.onMicProducerReady()
           resolve()
         }).catch(reject)
       }else{
