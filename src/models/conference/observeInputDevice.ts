@@ -6,6 +6,7 @@ import {stopMpTrack, startMpTrack} from './mediapipeCamera'
 import {stopFaceTrack, createLocalCamera} from './faceCamera'
 import {MSTrack} from '@models/conference/RtcConnection'
 import {conference} from '@models/conference'
+import {noteConnectionEvent} from './ConnectionLog'
 
 //  mic device selection
 export function createLocalMic() {
@@ -31,6 +32,24 @@ export function createLocalMic() {
   })
 
   return promise
+}
+
+//  The OS may end the capture (e.g. a phone with the page in background). Open the mic again
+//  while it is still wanted, otherwise the producer keeps sending silence until mic off/on.
+function watchMicEnded(mic: MSTrack){
+  mic.track.addEventListener('ended', ()=>{
+    if (conference.getLocalMicTrack()?.track !== mic.track) return
+    noteConnectionEvent('micEnded')
+    if (isMicMuted()) return
+    createLocalMic().then((newTrack)=>{
+      if (isMicMuted() || conference.getLocalMicTrack()?.track !== mic.track){
+        newTrack.track.stop()
+      }else{
+        watchMicEnded(newTrack)
+        conference.setLocalMicTrack(newTrack)
+      }
+    }).catch(()=>{})
+  })
 }
 
 //  mic mute and audio input device selection
@@ -95,6 +114,7 @@ export function inputChangeObservationStart(){
         if (isMicMuted()){
           newTrack.track?.stop()
         }else{
+          watchMicEnded(newTrack)
           conference.setLocalMicTrack(newTrack)
         }
       }).finally(getNotificationPermission)

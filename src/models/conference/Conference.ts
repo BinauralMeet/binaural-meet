@@ -197,7 +197,13 @@ export class Conference implements ContentSyncTransport, ConferenceStatusTranspo
           }
 
           //  Prepare trasport for local tracks
-          const mic = this.getLocalMicTrack()
+          let mic = this.getLocalMicTrack()
+          if (mic && mic.track.readyState !== 'live'){
+            //  A phone may stop the capture while the page is in background. Reusing the ended
+            //  track sends silence; leave it to the mic observer below to open a new one.
+            noteConnectionEvent('micEnded', 'on enter')
+            mic = undefined
+          }
           this.setLocalMicTrack(undefined).catch(()=>{})
           this.setLocalMicTrack(mic).catch(()=>{})
           const camera = this.getLocalCameraTrack()
