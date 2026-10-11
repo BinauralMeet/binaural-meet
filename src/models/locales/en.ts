@@ -89,6 +89,8 @@ export const enTranslate = {
   emDataConnection: 'Please check firewall setting. Binaural Meet connect to https (port 443/TCP).',
   emRtcConnection: 'Please check firewall setting. Binaural Meet connect to https (port 443/TCP).',
 
+  etReconnecting: 'Reconnecting',
+  emReconnecting: 'The connection was cut off. Reconnecting...',
   etRetry: 'Please reload',
   emRetry: 'The connection had been cut off once. Please click the reload button of the browser.',
   imageDropzoneText:'Drag and drop images here or click',

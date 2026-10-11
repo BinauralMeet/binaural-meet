@@ -148,14 +148,17 @@ export class RtcTransports extends RtcConnection{
     })
   }
 
-  private scheduleMediaReconnect(dir:MSTransportDirection, state:string){
+  //  `stuck`: a transport whose ICE restart failed. A receive transport used to be left failed
+  //  whenever any other transport was still connected -- one remote stayed silent until reload.
+  private scheduleMediaReconnect(dir:MSTransportDirection, state:string, stuck?: mediasoup.types.Transport){
     if (this.mediaReconnectTimer) { return }
     const wait = state === 'failed' ? 1000 : 15000
     this.mediaReconnectTimer = window.setTimeout(() => {
       this.mediaReconnectTimer = 0
       const activeTransports = this.getActiveTransports()
       const hasConnectedTransport = activeTransports.some(transport => transport.connectionState === 'connected')
-      if (dir === 'send' || !hasConnectedTransport) {
+      const stillStuck = stuck && stuck.connectionState !== 'connected' && stuck.connectionState !== 'closed'
+      if (dir === 'send' || !hasConnectedTransport || stillStuck) {
         console.warn(`WebRTC ${dir} transport ${state}; reconnecting the room.`)
         super.disconnect(3000, `WebRTC ${dir} transport ${state}`)
       }
@@ -178,12 +181,14 @@ export class RtcTransports extends RtcConnection{
         }).catch((e) => {
           this.iceRestartingTransports.delete(transport.id)
           console.warn(`Client-side ICE restart failed for ${dir} transport ${transport.id}.`, e)
-          this.scheduleMediaReconnect(dir, state)
+          noteConnectionEvent('iceRestartFailed', `${dir} client ${e}`)
+          this.scheduleMediaReconnect(dir, state, transport)
         })
       }).catch((e) => {
         this.iceRestartingTransports.delete(transport.id)
         console.warn(`Server-side ICE restart failed for ${dir} transport ${transport.id}.`, e)
-        this.scheduleMediaReconnect(dir, state)
+        noteConnectionEvent('iceRestartFailed', `${dir} server ${e}`)
+        this.scheduleMediaReconnect(dir, state, transport)
       })
     }, wait)
   }
@@ -199,7 +204,12 @@ export class RtcTransports extends RtcConnection{
           this.sendTransport_ = transport
           delete this.sendTransportPromise
           resolve(transport)
-        }).catch(reject)
+        }).catch((e) => {
+          //  Forget the failed attempt, or every later call gets this same rejected promise and
+          //  the transport is never tried again.
+          delete this.sendTransportPromise
+          reject(e)
+        })
       }
     })
     this.sendTransportPromise = promise //  Start to create transport
@@ -228,7 +238,10 @@ export class RtcTransports extends RtcConnection{
           peer.transport = transport
           delete peer.transportPromise
           resolve(peer.transport)
-        }).catch(reject)
+        }).catch((e) => {
+          delete peer.transportPromise
+          reject(e)
+        })
       }
     })
     peer.transportPromise = promise //  Start to create transport

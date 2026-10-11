@@ -91,3 +91,35 @@ describe('ErrorInfo testBot auto-enter', () => {
     expect(transport.enter).not.toHaveBeenCalled()
   })
 })
+
+describe('ErrorInfo after a working connection drops', () => {
+  it('shows "reconnecting" first, and the firewall error only if it does not come back', () => {
+    vi.useFakeTimers()
+    try{
+      const errorInfo = new ErrorInfo()
+      let up = true
+      const transport = {...makeTransport(), isRtcConnected: () => up}
+      errorInfo.setConferenceStatusTransport(transport)
+      errorInfo.checkConnection()
+      expect(errorInfo.type).not.toBe('reconnecting')
+
+      up = false
+      errorInfo.checkConnection()
+      expect(errorInfo.type).toBe('reconnecting')
+      vi.advanceTimersByTime(21 * 1000)
+      expect(errorInfo.type).toBe('rtcTransports')
+
+      up = true
+      vi.advanceTimersByTime(1000)
+      expect(errorInfo.types.has('rtcTransports')).toBe(false)
+      expect(errorInfo.types.has('reconnecting')).toBe(false)
+    }finally{ vi.useRealTimers() }
+  })
+
+  it('does not call the very first connection attempt a reconnect', () => {
+    const errorInfo = new ErrorInfo()
+    errorInfo.setConferenceStatusTransport({...makeTransport(), isRtcConnected: () => false})
+    errorInfo.checkConnection()
+    expect(errorInfo.type).toBe('rtcTransports')
+  })
+})

@@ -87,6 +87,8 @@ export const jaTranslate = {
 
   //  etRetry: '再接続中',
 //  emRetry: '接続が切れたので、再接続を試みています。インターネット接続を確認してください。',
+  etReconnecting: '再接続中',
+  emReconnecting: '接続が切れたので、つなぎ直しています。',
   etRetry: 'ブラウザの更新ボタンを押してください',
   emRetry: '一度接続が切れました。ブラウザの更新(リロード)ボタンを押してください。',
   imageDropzoneText:'画像をドラッグ＆ドロップするか、クリックしてください',

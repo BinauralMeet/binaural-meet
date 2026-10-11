@@ -51,6 +51,9 @@ declare const config:any                  //  from ../../config.js included from
 const rtcLog = connLog
 
 const SEND_INTERVAL = 10 * 1000
+const REPLY_TIMEOUT_MS = 20 * 1000
+const RECONNECT_ON_TIMEOUT = new Set<string>(['createTransport', 'connectTransport', 'produceTransport',
+  'consumeTransport'])
 
 type RtcConnectionEvent = 'remoteUpdate' | 'remoteLeft' | 'connect' | 'disconnect' | 'sttStarted'
 
@@ -249,32 +252,10 @@ export class RtcConnection{
       }
       else{
         rtcLog("mainServer not open")
+        reject('mainServer not open')
       }
-      const onOpenEvent = async () => {
-      }
-      const onMessageEvent = (ev: MessageEvent<any>)=> {
-        const msg = JSON.parse(ev.data) as MSMessage
-        //rtcLog(`onMessage(${msg.type})`)
-        this.rtcQueue.push(msg)
-      }
-      const onCloseEvent = (ev: CloseEvent) => {
-        rtcLog('onClose() for mainServer')
-        noteConnectionEvent('rtcClose', describeClose(ev))
-        this.disconnect()
-      }
-      const onErrorEvent = () => {
-        console.error(`Error in WebSocket for ${config.mainServer}`)
-        noteConnectionEvent('rtcError')
-        this.disconnect(3000, 'onError')
-      }
-
-      const setEventHandler = () => {
-        this.mainServer?.addEventListener('error', onErrorEvent)
-        this.mainServer?.addEventListener('message', onMessageEvent)
-        this.mainServer?.addEventListener('open', onOpenEvent)
-        this.mainServer?.addEventListener('close', onCloseEvent)
-      }
-      setEventHandler()
+      //  The reply arrives through the socket's own listeners (preConnect). Adding another set here,
+      //  as this used to, queued every later message twice per upload.
     });
     return promise
 
@@ -292,6 +273,10 @@ export class RtcConnection{
         this.disconnect(3000, 'e')
         reject(e)
       }
+      //  Events of a socket that has since been replaced must not act on the new connection: a
+      //  late close used to disconnect() the connection that had just been re-established.
+      const socket = this.mainServer
+      const current = () => socket !== undefined && this.mainServer === socket
       const onOpenEvent = () => {
         const msg:MSPreConnectMessage = {
           type:'preConnect',
@@ -303,16 +288,21 @@ export class RtcConnection{
         }
       }
       const onMessageEvent = (ev: MessageEvent<any>)=> {
+        if (!current()){ return }
         const msg = JSON.parse(ev.data) as MSMessage
         rtcLog(`onMessage(${msg.type})`)
         this.rtcQueue.push(msg)
       }
-      const onCloseEvent = () => {
+      const onCloseEvent = (ev: CloseEvent) => {
+        if (!current()){ return }
         rtcLog('onClose() for mainServer')
+        noteConnectionEvent('rtcClose', describeClose(ev))
         this.disconnect()
       }
       const onErrorEvent = (ev:any) => {
+        if (!current()){ return }
         console.error(`Error in WebSocket for ${config.mainServer}`, ev)
+        noteConnectionEvent('rtcError')
         this.disconnect(3000, 'onError')
       }
 
@@ -454,7 +444,27 @@ export class RtcConnection{
       this.setMessagePromise(msg, resolve, reject, arg)
       this.mainServer.send(JSON.stringify(msg))
       this.lastSendTime = Date.now()
+      this.watchForReply(msg)
     }
+  }
+  //  The server drops a request it cannot route (its media server just went away, the peer is
+  //  unknown) without replying, and the caller then waited forever: a transport that never came
+  //  stayed "being created", an ICE restart stayed "in progress". Give up after a while; for the
+  //  requests the media path depends on, reconnect the room instead of staying half-connected.
+  private watchForReply(msg: MSMessage){
+    const sn = msg.sn
+    if (!sn){ return }
+    window.setTimeout(() => {
+      const pending = this.promises.get(sn)
+      if (!pending){ return }
+      this.promises.delete(sn)
+      noteConnectionEvent('requestTimeout', msg.type)
+      console.warn(`RtcConnection: no reply to ${msg.type} in ${REPLY_TIMEOUT_MS}ms.`)
+      pending.reject?.(`timeout: ${msg.type}`)
+      if (RECONNECT_ON_TIMEOUT.has(msg.type) && this.connected){
+        this.disconnect(3000, `${msg.type} timed out`)
+      }
+    }, REPLY_TIMEOUT_MS)
   }
   private resolveMessage(m: MSMessage, a?:any){
     const sn = m.sn

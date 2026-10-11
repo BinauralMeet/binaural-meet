@@ -31,6 +31,14 @@ export interface AuthInfo{
   token?:string
 }
 
+//  When the page last became visible, for onRtcDisconnect's choice of how long to wait.
+let lastVisibleAt = 0
+if (typeof document !== 'undefined'){
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible'){ lastVisibleAt = Date.now() }
+  })
+}
+
 export class Conference implements ContentSyncTransport, ConferenceStatusTransport {
   public authInfo:AuthInfo={}
   private room_=''    //  room name
@@ -295,12 +303,15 @@ export class Conference implements ContentSyncTransport, ConferenceStatusTranspo
     inputChangeObservationStop()
     this.clearRtc()
     this.rtcTransports.leave()
+    //  Coming back to a backgrounded tab (a phone freezes the page and the OS drops its sockets)
+    //  is not a server in trouble: reconnect at once instead of after the usual pause.
+    const justResumed = document.visibilityState === 'visible' && Date.now() - lastVisibleAt < 10 * 1000
     window.setTimeout(()=>{
       this.preEnter(this.room).then(()=>{
         this.enter(this.room, this.authInfo.token, this.authInfo.email).then(()=>{
         })
       })
-    }, 5000)
+    }, justResumed ? 300 : 5000)
     //  */
   }
 

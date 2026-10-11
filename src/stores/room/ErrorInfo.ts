@@ -8,7 +8,9 @@ import participants from '@stores/participants/Participants'
 import {action, autorun, computed, makeObservable, observable, when} from 'mobx'
 import {ConferenceStatusTransport} from './ConferenceStatusTransport'
 
-export type ErrorType = '' | 'connection' | 'retry' | 'noMic' | 'micPermission' | 'rtcTransports' | 'dataConnection' | 'entrance' | 'afk' | 'kicked' | 'noEnterPremission' | 'notAdmin'|'roomInfo'
+export type ErrorType = '' | 'connection' | 'retry' | 'reconnecting' | 'noMic' | 'micPermission' | 'rtcTransports' | 'dataConnection' | 'entrance' | 'afk' | 'kicked' | 'noEnterPremission' | 'notAdmin'|'roomInfo'
+
+const RECONNECT_GRACE_MS = 20 * 1000
 
 export class ErrorInfo {
   // Injected once by Conference (the composition root) so this store never
@@ -23,6 +25,12 @@ export class ErrorInfo {
   @observable supressedTypes:Set<ErrorType> = new Set()
   reason? = ''
   name? = ''
+  //  When the connection that had been working was found down; 0 while connected. A drop that
+  //  heals within RECONNECT_GRACE_MS is shown as "reconnecting", not as a firewall problem --
+  //  returning to a phone's backgrounded tab always looks like this, since Android cuts the
+  //  sockets of a frozen page and the client has to reconnect.
+  private lostAt = 0
+  private everConnected = false
   @action setType(type: ErrorType, name?:string, reason?:string){
     this.type = type
     this.types.add(type)
@@ -33,6 +41,7 @@ export class ErrorInfo {
     switch(this.type){
       case 'connection': return t('etConnection')
       case 'retry': return t('etRetry')
+      case 'reconnecting': return t('etReconnecting')
       case 'noMic': return t('etNoMic')
       case 'micPermission': return t('etMicPermission')
       case 'rtcTransports': return t('etRtcConnection')
@@ -51,6 +60,7 @@ export class ErrorInfo {
     switch(this.type){
       case 'connection': return t('emConnection')
       case 'retry': return t('emRetry')
+      case 'reconnecting': return t('emReconnecting')
       case 'noMic': return t('emNoMic')
       case 'micPermission': return t('emMicPermission')
       case 'rtcTransports': return t('emRtcConnection')
@@ -179,13 +189,22 @@ export class ErrorInfo {
     }
   }
   @action checkConnection = () => {
-    if (!this.conferenceStatus?.isRtcConnected()) {
-      this.setType('rtcTransports')
-      window.setTimeout(this.checkConnection.bind(this), 1000)
-    }else if (!this.conferenceStatus?.isDataConnected()){
-      this.setType('dataConnection')
+    const rtc = this.conferenceStatus?.isRtcConnected()
+    const data = this.conferenceStatus?.isDataConnected()
+    if (!rtc || !data) {
+      const now = Date.now()
+      if (!this.lostAt){ this.lostAt = now }
+      if (this.everConnected && now - this.lostAt < RECONNECT_GRACE_MS){
+        this.setType('reconnecting')
+      }else{
+        this.clear('reconnecting')
+        this.setType(rtc ? 'dataConnection' : 'rtcTransports')
+      }
       window.setTimeout(this.checkConnection.bind(this), 1000)
     }else {
+      this.lostAt = 0
+      this.everConnected = true
+      this.clear('reconnecting')
       this.clear('rtcTransports')
       this.clear('dataConnection')
       if (urlParameters.testBot === null)  {
