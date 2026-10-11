@@ -82,6 +82,13 @@ class SttClient{
     console.warn(`stt: server refused: ${error}`)
   }
 
+  //  The mic producer appears some time after enter() -- after the send transport is set up -- and
+  //  the autorun above cannot see it. Called by Conference once it exists, so the session starts
+  //  right away instead of at the next watchTimer tick (up to 5s of lost first words).
+  onMicProducerReady(){
+    if (this.disposers.length){ this.ensureStarted() }
+  }
+
   private ensureStarted(){
     if (!this.wantedByAnyone || participants.local.muteAudio){ return }
     const producer = conference.rtcTransports.getLocalProducer('avatar', 'audio')
