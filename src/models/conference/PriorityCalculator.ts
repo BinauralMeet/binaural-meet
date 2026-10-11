@@ -108,21 +108,12 @@ export class PriorityCalculator {
 
   private conference: Conference
   constructor(conf:Conference) {
-    const recalculateInterval = 500
     this.conference = conf
-    let intervalHandle: number | undefined = undefined
     this.conference.rtcTransports.addListener('connect', ()=>{
       this.enable()
-      intervalHandle = window.setInterval(
-        () => {this.update()},
-        recalculateInterval,
-      )
     })
     this.conference.rtcTransports.addListener('disconnect', ()=>{
       this.clear()
-      if (intervalHandle !== undefined) {
-        window.clearInterval(intervalHandle)
-      }
     })
     autorun(() => {
       const local = participants.local
@@ -151,29 +142,51 @@ export class PriorityCalculator {
     this.limits[0] = limits[0]
     this.limits[1] = limits[1]
     this.limitUpdated = true
+    this.requestUpdate()
   }
 
+  //  Recalculation runs when something it depends on changed (the flags below), at most once per
+  //  UPDATE_INTERVAL: each one may consume or close tracks, so a crowd moving must not cause a
+  //  storm of them. Nothing runs while nothing changes.
   private UPDATE_INTERVAL = 500
-  private intervalId:number = 0
+  private updateTimer = 0
+  private lastUpdateAt = 0
+  private requestUpdate(){
+    if (!this._enabled || this.updateTimer){ return }
+    const wait = Math.max(0, this.lastUpdateAt + this.UPDATE_INTERVAL - Date.now())
+    this.updateTimer = window.setTimeout(()=>{
+      this.updateTimer = 0
+      this.lastUpdateAt = Date.now()
+      this.update()
+    }, wait)
+  }
+  private markUpdated(id: string){
+    this.updateSet.add(id)
+    this.requestUpdate()
+  }
   // start observing participants store
   public enable() {
+    //  A reconnect emits 'connect' again: drop the previous observers instead of piling them up.
+    this.disposers.forEach(disposer => disposer())
+    this._enabled = true
     // track local change
     const localChangeDisposer = autorun(() => {
       const local = participants.local
       this.local = extractLocalObjectInfo(local)
       this.updateAll = true
+      this.requestUpdate()
     })
     this.disposers = [localChangeDisposer]
-    this.intervalId = window.setInterval(()=>{this.update()}, this.UPDATE_INTERVAL)
     this.updateAll = true
-    this._enabled = true
+    this.requestUpdate()
   }
 
   // stop observing participants store
   public disable() {
-    window.clearInterval(this.intervalId)
-    this.intervalId = 0
+    window.clearTimeout(this.updateTimer)
+    this.updateTimer = 0
     this.disposers.forEach(disposer => disposer())
+    this.disposers = []
 
     this._enabled = false
   }
@@ -273,7 +286,7 @@ export class PriorityCalculator {
         this.onRemoveObject(id)
       }
     }else{
-      this.updateSet.add(id)
+      this.markUpdated(id)
     }
   }
   private onRemoveObject(id: string){
@@ -284,13 +297,13 @@ export class PriorityCalculator {
       priorityLog(`Cannot find disposer for remote object with id: ${id}`)
     }
     this.remoteDisposers.delete(id)
-    this.updateSet.add(id)
+    this.markUpdated(id)
     priorityLog('onRemoveObject:', id, this.priorityMaps[0])
   }
   public onAddProducer(producer: RemoteProducer){
     const id = getIdFromProducer(producer)
     if (this.remoteDisposers.has(id)){
-      this.updateSet.add(id)
+      this.markUpdated(id)
     }else{
       if (producer.role === 'avatar'){
         this.remoteDisposers.set(id, autorun(() => {
@@ -300,11 +313,11 @@ export class PriorityCalculator {
             const important = rp.physics.onStage || participants.yarnPhones.has(rp.id)
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const moved = rp.pose.position
-            this.updateSet.add(id)
+            this.markUpdated(id)
           }
         }))
       }else if (producer.role === 'mainScreen') {
-        this.updateSet.add(id)
+        this.markUpdated(id)
       }else {  //  contents
         this.remoteDisposers.set(id, autorun(() => {
           const c = contentSyncService.roomContents.get(id)
@@ -312,7 +325,7 @@ export class PriorityCalculator {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const moved = c!.pose.position
           }
-          this.updateSet.add(id)
+          this.markUpdated(id)
         }))
       }
     }

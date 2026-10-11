@@ -26,14 +26,17 @@ function isAudible(pid: string){
 }
 
 export const SpeechBubble: React.FC<SpeechBubbleProps> = (props) => {
-  //  A finished utterance disappears on a timer, and nothing else would re-render this component
-  //  when that moment arrives -- so while one is showing, tick once to clear it.
+  //  A finished utterance disappears at a set time, and nothing observable changes when that
+  //  moment arrives -- so re-render once, then. (This used to tick every second, bubble or not.)
   const [, setTick] = React.useState(0)
-  React.useEffect(() => {
-    const timer = window.setInterval(() => setTick(t => t + 1), 1000)
-
-    return () => window.clearInterval(timer)
-  }, [])
+  const expiry = React.useRef({at: 0, timer: 0})
+  React.useEffect(() => () => window.clearTimeout(expiry.current.timer), [])
+  const rerenderAt = (at: number) => {
+    if (expiry.current.at === at){ return }
+    window.clearTimeout(expiry.current.timer)
+    expiry.current.at = at
+    expiry.current.timer = window.setTimeout(() => setTick(t => t + 1), Math.max(0, at - Date.now()) + 10)
+  }
 
   return <Observer>{() => {
     if (!settings.showSubtitles){ return null }
@@ -41,6 +44,7 @@ export const SpeechBubble: React.FC<SpeechBubbleProps> = (props) => {
     //  clutter the map with speech you cannot hear. The chat pane still lists every utterance.
     if (!isAudible(props.pid)){ return null }
     const bubble = transcript.bubbleOf(props.pid, Date.now(), settings.sttShow)
+    if (bubble?.expiresAt){ rerenderAt(bubble.expiresAt) }
     if (!bubble || !bubble.text){ return null }
 
     //  Provisional text is dimmer than confirmed text, so a hypothesis that is about to be

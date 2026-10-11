@@ -105,7 +105,7 @@ describe('Transcript', () => {
     transcript.onFinal('p1', final('話した。'))
     const shown = bubbleDurationMs('話した。')
     expect(transcript.bubbleOf('p1', 10000 + shown - 1))
-      .toEqual({text: '話した。', provisional: false, untranslated: false})
+      .toEqual({text: '話した。', provisional: false, untranslated: false, expiresAt: 10000 + shown})
     expect(transcript.bubbleOf('p1', 10000 + shown)).toBeUndefined()
     expect(transcript.bubbleOf('nobody', 10000)).toBeUndefined()
   })

@@ -5,7 +5,7 @@ import {urlParameters} from '@models/url'
 import {addV2, diffSet, mulV2} from '@models/utils'
 import map from '@stores/map/Map'
 import participants from '@stores/participants/Participants'
-import {action, autorun, computed, makeObservable, observable, when} from 'mobx'
+import {action, autorun, computed, IReactionDisposer, makeObservable, observable, when} from 'mobx'
 import {ConferenceStatusTransport} from './ConferenceStatusTransport'
 
 export type ErrorType = '' | 'connection' | 'retry' | 'reconnecting' | 'noMic' | 'micPermission' | 'rtcTransports' | 'dataConnection' | 'entrance' | 'afk' | 'kicked' | 'noEnterPremission' | 'notAdmin'|'roomInfo'
@@ -212,7 +212,18 @@ export class ErrorInfo {
       }
     }
   }
-  @action checkMic() {
+  //  Watches the mic once connected: whether it is muted, and whether there is a track at all
+  //  (the track store mirrors conference.setLocalMicTrack). Used to re-check every 5s instead.
+  private micWatch?: IReactionDisposer
+  checkMic() {
+    if (this.micWatch){ return }
+    this.micWatch = autorun(() => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const observed = [participants.localId, participants.local.muteAudio, participants.local.tracks?.audio]
+      this.updateMicError()
+    })
+  }
+  @action private updateMicError() {
     if (participants.localId && !participants.local.muteAudio && !this.conferenceStatus?.getLocalMicTrack()) {
       if (this.audioInputs.length) {
         this.setType('micPermission')
@@ -222,11 +233,7 @@ export class ErrorInfo {
         this.clear('micPermission')
         this.setType('noMic')
       }
-      window.setTimeout(this.checkMic.bind(this),   5 * 1000)
     }else {
-      if (participants.local.muteAudio){
-        window.setTimeout(this.checkMic.bind(this),   5 * 1000)
-      }
       this.clear('noMic')
       this.clear('micPermission')
     }

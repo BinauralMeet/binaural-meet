@@ -325,17 +325,16 @@ export class Conference implements ContentSyncTransport, ConferenceStatusTranspo
     console.log(`onDataDisconnect called.`)
     noteConnectionEvent('reconnectData')
     //*
-    const func = ()=>{
-      if (this.rtcTransports.isConnected()){
-        this.dataConnection.connect(this.room, this.rtcTransports.peer)
-        window.setTimeout(()=>{
-          this.sendLocalRtcContents()
-        }, 2000)
-      }else{
-        window.setTimeout(func, 2000)
-      }
-    }
-    window.setTimeout(func, 2000)
+    //  Only a data-only drop is ours to repair. While RTC is down, enter() -- the only way RTC
+    //  connects -- reconnects the data connection itself once RTC is back, so waiting for RTC
+    //  here (this used to re-check it every 2s) would only race enter() for the same socket.
+    window.setTimeout(()=>{
+      if (!this.rtcTransports.isConnected() || this.dataConnection.isConnected()){ return }
+      this.dataConnection.connect(this.room, this.rtcTransports.peer)
+      window.setTimeout(()=>{
+        this.sendLocalRtcContents()
+      }, 2000)
+    }, 2000)
     //  */
 }
 

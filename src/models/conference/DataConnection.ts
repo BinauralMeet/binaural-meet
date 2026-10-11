@@ -346,20 +346,10 @@ export class DataConnection {
       this.dataSocket.send(JSON.stringify(this.messagesToSendToRelay))
       this.lastSentTime = Date.now()
       this.messagesToSendToRelay = []
-    }else{
-      this.dataSocket?.addEventListener('open', ()=> {
-        const waitAndSend = ()=>{
-          if(this.dataSocket?.readyState !== WebSocket.OPEN){
-            window.setTimeout(waitAndSend, 100)
-          }else{
-            this.dataSocket?.send(JSON.stringify(this.messagesToSendToRelay))
-            this.lastSentTime = Date.now()
-            this.messagesToSendToRelay = []
-          }
-        }
-        waitAndSend()
-      })
     }
+    //  Not open yet: leave them queued. The server's reply to dataConnect (onFirstMessage) flushes
+    //  them. (A listener on 'open' used to be added here per call; onOpen clears this queue before
+    //  any such listener runs, so all it ever sent was an empty batch.)
   }
 
   private emitter = new EventEmitter()

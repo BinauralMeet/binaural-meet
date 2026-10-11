@@ -105,18 +105,31 @@ export class RtcConnection{
   }
 
   rtcQueue = Array<MSMessage>()
-  readonly INTERVAL = 100
-  private interval=0
-  private startProcessMessage(){  //  start interval timer to process message queue.
-    if (!this.interval)
-      this.interval = window.setInterval(this.processMessage.bind(this), this.INTERVAL)
-  }
-  private processMessage(){
-    if (this.mainServer && this.mainServer.readyState === WebSocket.CONNECTING){
-      return  //  wait until OEPN.
+  //  Handlers run a little after their message arrives (not inside the socket event) and with a
+  //  time budget, so a burst of heavy messages cannot hold up frames.
+  private readonly BUDGET_MS = 50
+  private processTimer = 0
+  private keepAliveTimer = 0
+  private startProcessMessage(){  //  start the keep-alive and handle anything already queued.
+    if (!this.keepAliveTimer){
+      this.keepAliveTimer = window.setInterval(this.keepAlive.bind(this), SEND_INTERVAL / 4)
     }
+    this.scheduleProcessMessage()
+  }
+  //  Called when a message is queued or the socket opens.
+  private scheduleProcessMessage(){
+    if (!this.processTimer){
+      this.processTimer = window.setTimeout(() => {
+        this.processTimer = 0
+        this.processMessage()
+      }, 0)
+    }
+  }
+  //  A heartbeat, not polling: tells the server we are alive when we have had nothing to send.
+  private keepAlive(){
+    if (this.mainServer && this.mainServer.readyState === WebSocket.CONNECTING){ return }
     if (this.mainServer && this.mainServer.readyState === WebSocket.OPEN){
-      let now = Date.now()
+      const now = Date.now()
       if (now > this.lastSendTime + SEND_INTERVAL){
         const msg:MSMessage = {
           type: 'pong'
@@ -125,8 +138,20 @@ export class RtcConnection{
         this.mainServer.send(JSON.stringify(msg))
         this.lastSendTime = now
       }
-      const timeToProcess = this.INTERVAL * 0.5
-      const deadline = now + timeToProcess
+    }
+    if (!this.isConnected() && this.rtcQueue.length===0){
+      window.clearInterval(this.keepAliveTimer)
+      this.keepAliveTimer = 0
+    }
+  }
+  private processMessage(){
+    if (this.mainServer && this.mainServer.readyState === WebSocket.CONNECTING){
+      return  //  the socket's 'open' schedules this again.
+    }
+    if (this.mainServer && this.mainServer.readyState === WebSocket.OPEN){
+      const start = Date.now()
+      let now = start
+      const deadline = start + this.BUDGET_MS
       while(this.rtcQueue.length && now < deadline){
         const msg = this.rtcQueue.shift()!
         rtcLog(`RtcC: processMessag(${msg.type})`, msg)
@@ -138,14 +163,10 @@ export class RtcConnection{
         }
         now = Date.now()
       }
-      messageLoads.loadRtc = (now - (deadline-timeToProcess)) / timeToProcess
+      messageLoads.loadRtc = (now - start) / this.BUDGET_MS
+      if (this.rtcQueue.length){ this.scheduleProcessMessage() }   //  over budget: continue later
     }else if (this.rtcQueue.length > 0){
       console.error(`mainServer.readyState === '${this.mainServer?.readyState}' and mesgs in queue: ${JSON.stringify(this.rtcQueue)}.`)
-    }
-    //  Stop interval timer when disconnected and no messages in queue.
-    if (!this.isConnected() && this.rtcQueue.length===0 && this.interval){
-      window.clearInterval(this.interval)
-      this.interval = 0
     }
   }
 
@@ -279,6 +300,7 @@ export class RtcConnection{
       const socket = this.mainServer
       const current = () => socket !== undefined && this.mainServer === socket
       const onOpenEvent = () => {
+        this.scheduleProcessMessage()   //  anything queued while CONNECTING
         const msg:MSPreConnectMessage = {
           type:'preConnect',
           room,
@@ -293,6 +315,7 @@ export class RtcConnection{
         const msg = JSON.parse(ev.data) as MSMessage
         rtcLog(`onMessage(${msg.type})`)
         this.rtcQueue.push(msg)
+        this.scheduleProcessMessage()
       }
       const onCloseEvent = (ev: CloseEvent) => {
         if (!current()){ return }

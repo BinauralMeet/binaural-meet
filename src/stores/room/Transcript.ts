@@ -55,6 +55,7 @@ export interface Bubble{
   text: string
   provisional: boolean
   untranslated: boolean
+  expiresAt?: number    //  when a finished bubble disappears (none while still being spoken)
 }
 
 export class Utterance{
@@ -209,9 +210,10 @@ export class Transcript{
       return {text, provisional: true, untranslated}
     }
     const {text, untranslated} = this.joinRun(run, showLang)
-    if (now - last.endTime >= bubbleDurationMs(text)){ return undefined }
+    const expiresAt = last.endTime + bubbleDurationMs(text)
+    if (now >= expiresAt){ return undefined }
 
-    return {text, provisional: false, untranslated}
+    return {text, provisional: false, untranslated, expiresAt}
   }
 
   private joinRun(run: Utterance[], showLang: string){

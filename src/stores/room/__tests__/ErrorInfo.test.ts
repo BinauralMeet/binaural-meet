@@ -123,3 +123,39 @@ describe('ErrorInfo after a working connection drops', () => {
     expect(errorInfo.type).toBe('rtcTransports')
   })
 })
+
+describe('ErrorInfo mic check', () => {
+  it('follows mute and the mic track as they change, without re-checking on a timer', async () => {
+    const {observable, runInAction} = await import('mobx')
+    vi.useFakeTimers()
+    const savedLocal = participantsMock.local
+    try{
+      urlParametersMock.testBot = null
+      const local = observable({...savedLocal, muteAudio: false, tracks: {audio: undefined as unknown}})
+      participantsMock.local = local as any
+      Object.assign(participantsMock, {localId: 'me'})
+      let mic: unknown = undefined
+      const errorInfo = new ErrorInfo()
+      ;(errorInfo as any).audioInputs = [{kind: 'audioinput'}]
+      errorInfo.setConferenceStatusTransport({...makeTransport(), getLocalMicTrack: () => mic as any})
+      errorInfo.checkMic()
+      expect(errorInfo.types.has('micPermission')).toBe(true)
+
+      mic = {}
+      runInAction(() => { local.tracks.audio = {} })    //  the mic opened
+      expect(errorInfo.types.has('micPermission')).toBe(false)
+
+      mic = undefined
+      runInAction(() => { local.tracks.audio = undefined })   //  the mic went away while unmuted
+      expect(errorInfo.types.has('micPermission')).toBe(true)
+
+      runInAction(() => { local.muteAudio = true })
+      expect(errorInfo.types.has('micPermission')).toBe(false)
+      expect(vi.getTimerCount()).toBe(0)
+    }finally{
+      participantsMock.local = savedLocal
+      urlParametersMock.testBot = '1'
+      vi.useRealTimers()
+    }
+  })
+})
