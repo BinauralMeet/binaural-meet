@@ -549,9 +549,28 @@ export class Conference implements ContentSyncTransport, ConferenceStatusTranspo
       this.priorityCalculator.onRemoveProducer(producer)
     }
   }
+  //  Consuming takes a few round trips, and the priority calculator (or the remote) may drop the
+  //  producer meanwhile. removeConsumer() then has no consumer to close yet, so the one that
+  //  arrives afterwards was kept for good -- received and paid for by the server, never shown.
+  //  `wantedConsumers` is what the latest decision asked for; a consumer that arrives unwanted is
+  //  closed on arrival. `pendingConsumers` keeps a second request from consuming the same
+  //  producer twice while the first is still on its way.
+  private wantedConsumers = new Set<RemoteProducer>()
+  private pendingConsumers = new Map<RemoteProducer, Promise<void>>()
   private addConsumer(producer: RemoteProducer){
+    this.wantedConsumers.add(producer)
+    const pending = this.pendingConsumers.get(producer)
+    if (pending){ return pending }
     const promise = new Promise<void>((resolve, reject) => {
       this.rtcTransports.getConsumer(producer).then((consumer)=>{
+        if (!this.wantedConsumers.has(producer)){
+          //  No track was added for it, so none is removed: a replacing producer of the same
+          //  kind may already have put its own track there.
+          this.closeConsumer(producer)
+          connLog(`Conference.addConsumer(): p:${producer.id} dropped while consuming, closed.`)
+          resolve()
+          return
+        }
         if (producer.role === 'avatar'){
           participants.addRemoteTrack(producer.peer.peer, consumer.track)
         }else{
@@ -563,16 +582,22 @@ export class Conference implements ContentSyncTransport, ConferenceStatusTranspo
         console.error(`Conference.addConsumer() p:${producer.id} ${e}`)
         reject(e)
       })
-    })
+    }).finally(() => { this.pendingConsumers.delete(producer) })
+    this.pendingConsumers.set(producer, promise)
     return promise
   }
+  private closeConsumer(producer: RemoteProducer){
+    if (!producer.consumer){ return }
+    //  Close the server's end as well, or it keeps sending what we no longer receive -- which
+    //  happens every time the priority calculator drops a track (bm workspace CHANGELOG 2026-10-10).
+    this.rtcTransports.closeConsumer(producer.consumer.id, producer.peer.peer)
+    producer.consumer.close()
+    producer.consumer = undefined
+  }
   private removeConsumer(producer: RemoteProducer){
+    this.wantedConsumers.delete(producer)
     if (producer.consumer){
-      //  Close the server's end as well, or it keeps sending what we no longer receive -- which
-      //  happens every time the priority calculator drops a track (bm workspace CHANGELOG 2026-10-10).
-      this.rtcTransports.closeConsumer(producer.consumer.id, producer.peer.peer)
-      producer.consumer.close()
-      producer.consumer = undefined
+      this.closeConsumer(producer)
       if (producer.role === 'avatar'){
         participants.removeRemoteTrack(producer.peer.peer, producer.kind)
       }else{
