@@ -22,6 +22,11 @@ export class RtcTransports extends RtcConnection{
   public get sendTransport(){return this.sendTransport_}
   private sendTransportPromise?: Promise<mediasoup.types.Transport>
   private localProducers: mediasoup.types.Producer[] = []
+  //  produce() in flight, by role/kind. A second request while the first is still on its way to the
+  //  server used to find no producer to reuse and produce again: the server then had two producers
+  //  for the same role/kind (one carrying a stopped track), and remotes consumed one that was
+  //  closed right after ("Producer not found").
+  private pendingProducers = new Map<string, Promise<mediasoup.types.Producer>>()
   private mediaReconnectTimer = 0
   private iceRestartingTransports = new Set<string>()
 
@@ -47,6 +52,7 @@ export class RtcTransports extends RtcConnection{
     this.remotePeers.clear()
     this.localProducers.forEach(p => p.close())
     this.localProducers = []
+    this.pendingProducers.clear()
     this.sendTransport?.close()
     delete this.sendTransportPromise
     delete this.sendTransport_
@@ -258,13 +264,22 @@ export class RtcTransports extends RtcConnection{
           const old = (p.appData as ProducerData).track
           return old.role === track.role && old.track.kind === track.track.kind
         })
-        if (oldProducer){
+        const key = `${track.role}/${track.track.kind}`
+        const pending = this.pendingProducers.get(key)
+        if (!oldProducer && pending){
+          //  Wait for it, then reuse that producer. then(f, f), not catch().then(): callbacks on the
+          //  same promise run in the order they were added, so a RemoveTrackByRole() called between
+          //  two requests still acts between them.
+          const retry = () => { this.prepareSendTransport(track, maxBitRate, codec).then(resolve).catch(reject) }
+          pending.then(retry, retry)
+        }else if (oldProducer){
           oldProducer.replaceTrack(track).then(()=>{
             (oldProducer.appData as ProducerData).track = track
             oldProducer.resume()
             resolve(oldProducer)
           }).catch(reject)
         }else{
+          const produced = new Promise<mediasoup.types.Producer>((resolveProduce, rejectProduce)=>{
           this.getSendTransport().then((transport) => {
             // add track to produce
             let codecOptions=undefined
@@ -287,17 +302,30 @@ export class RtcTransports extends RtcConnection{
               codecOptions,
               codec
             }).then( producer => {
+              if (this.pendingProducers.get(key) === produced){ this.pendingProducers.delete(key) }
               this.localProducers.push(producer)
               this.emit('localProducer', producer)
-              resolve(producer)
-            }).catch(reject)
+              resolveProduce(producer)
+            }).catch(rejectProduce)
+          }).catch(rejectProduce)
           })
+          produced.catch(()=>{ if (this.pendingProducers.get(key) === produced){ this.pendingProducers.delete(key) } })
+          this.pendingProducers.set(key, produced)
+          produced.then(resolve).catch(reject)
         }
       }
     })
     return promise
   }
   public RemoveTrackByRole(stopTrack:boolean, role:TrackRoles, kind?:mediasoup.types.MediaKind){
+    //  A producer still being created would otherwise appear after this removal and stay.
+    this.pendingProducers.forEach((pending, key)=>{
+      const [pRole, pKind] = key.split('/')
+      if (pRole === role && (!kind || kind === pKind)){
+        pending.then(()=>{ this.RemoveTrackByRole(stopTrack, role, pKind as mediasoup.types.MediaKind) })
+          .catch(()=>{})
+      }
+    })
     this.localProducers.forEach((producer)=>{
       const track = (producer.appData as ProducerData).track
       if (track.role === role && (!kind || kind === track.track.kind)){
